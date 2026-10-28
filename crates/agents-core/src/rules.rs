@@ -2,6 +2,7 @@
 //! правила армий (`data/rules/ww2-berlin-cal.json`) и черновик правил агентов (`data/rules/agents-v0.json`, у каждого
 //! числа — источник или пометка «допущение»).
 
+use crate::commander::CommanderRules;
 use crate::model::{Mobility, Side, SizeClass};
 use crate::theatre::TERRAIN;
 use serde_json::Value;
@@ -220,6 +221,8 @@ pub struct CommandSu {
 #[derive(Clone, Debug)]
 pub struct Rules {
     pub command: Command,
+    /// Командующие: профили характера и мотивов, туман, коэффициенты (data/rules/commanders.json).
+    pub commanders: CommanderRules,
     pub doctrine: Doctrine,
     pub doctrine_su: DoctrineSu,
     pub remnants: Remnants,
@@ -330,6 +333,9 @@ impl Rules {
         let de = side_rules(&read(&format!("{data}/profiles/wehrmacht-1945.json"))?)?;
         let cal = read(&format!("{data}/rules/ww2-berlin-cal.json"))?;
         let mut ag = read(&format!("{data}/rules/agents-v0.json"))?;
+        // командующие — отдельный файл, вложенный под ключ commanders: поправки идут тем же путём через точку
+        let cmd = read(&format!("{data}/rules/commanders.json"))?;
+        if let Some(m) = ag.as_object_mut() { m.insert("commanders".into(), cmd); }
         if let Some(o) = overrides { apply_overrides(&mut ag, o)?; }
         let sz = |k: &str| -> Result<[f64; 3], String> {
             Ok([num(&ag, &format!("{k}.rifle"))?, num(&ag, &format!("{k}.tank"))?, num(&ag, &format!("{k}.other"))?])
@@ -440,8 +446,10 @@ impl Rules {
                 attack_sign_divisions: num(&ag, "command.de.attackSignDivisions")?,
             },
         };
+        let commanders = CommanderRules::parse(ag.get("commanders").ok_or("правила: нет commanders")?)?;
         Ok(Rules {
             command,
+            commanders,
             doctrine,
             doctrine_su,
             remnants,

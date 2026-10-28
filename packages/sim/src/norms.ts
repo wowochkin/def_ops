@@ -75,6 +75,11 @@ export function measureParam(ctx: SimContext, expr: string, agents?: unknown): n
     if (agents === undefined) throw new Error('параметр агентной модели: не переданы параметры agents-v0.json');
     return agentNumber(agents, expr.slice('agents.'.length)) ?? NaN;
   }
+  // командующие: путь «commanders.…» в commanders.json (loadAgents вкладывает его под ключ commanders, как ядро)
+  if (expr.startsWith('commanders.')) {
+    if (agents === undefined) throw new Error('параметр командующих: не переданы параметры agents-v0.json и commanders.json');
+    return agentNumber(agents, expr) ?? NaN;
+  }
   const R = ctx.rules, su = profileOf(ctx, 'su');
   const eng = su.engineering ?? ENGINEERING;
   const EN = R.engineers === false ? undefined : R.engineers;

@@ -3,6 +3,7 @@
 //! и воспроизводимым результатом на любом числе ядер.
 
 pub mod command;
+pub mod commander;
 pub mod game;
 pub mod geo;
 pub mod llm;

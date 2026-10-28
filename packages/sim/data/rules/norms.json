@@ -1770,6 +1770,1644 @@
       "rules": [
         "agents.command.de.permissionHours"
       ]
+    },
+    {
+      "id": "commander-zhukov-risk",
+      "title": "Характер командующего: Жуков Г. К. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "воспоминания Жукова (1969) и оценка Эриксона: решителен, идёт на риск ради темпа",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.zhukov.traits.risk",
+        "why": "характер по оценке биографов, не измерение: воспоминания Жукова (1969) и оценка Эриксона: решителен, идёт на риск ради темпа"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.zhukov.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-zhukov-persistence",
+      "title": "Характер командующего: Жуков Г. К. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "те же воспоминания: не отступает от замысла, давит на подчинённых",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.zhukov.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: те же воспоминания: не отступает от замысла, давит на подчинённых"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.zhukov.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-zhukov-ambition",
+      "title": "Характер командующего: Жуков Г. К. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Эриксон, Бивор: добивается Берлина для своего фронта",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.zhukov.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: Эриксон, Бивор: добивается Берлина для своего фронта"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.zhukov.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-zhukov-lossTolerance",
+      "title": "Характер командующего: Жуков Г. К. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Эриксон: принимает большие потери ради темпа и срока",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.zhukov.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Эриксон: принимает большие потери ради темпа и срока"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.zhukov.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-zhukov-obedience",
+      "title": "Характер командующего: Жуков Г. К. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Жуков (1969): исполняет указания Ставки, но спорит и настаивает",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.zhukov.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Жуков (1969): исполняет указания Ставки, но спорит и настаивает"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.zhukov.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-konev-risk",
+      "title": "Характер командующего: Конев И. С. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Конев, «Сорок пятый» (1966): энергичен, склонен к манёвру подвижными группами",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.konev.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Конев, «Сорок пятый» (1966): энергичен, склонен к манёвру подвижными группами"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.konev.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-konev-persistence",
+      "title": "Характер командующего: Конев И. С. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Конев (1966): держит замысел, меняет только по обстановке",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.konev.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Конев (1966): держит замысел, меняет только по обстановке"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.konev.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-konev-ambition",
+      "title": "Характер командующего: Конев И. С. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Эриксон, Бивор: настойчиво добивается участия в штурме Берлина",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.konev.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: Эриксон, Бивор: настойчиво добивается участия в штурме Берлина"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.konev.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-konev-lossTolerance",
+      "title": "Характер командующего: Конев И. С. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "оценка Эриксона: допускает потери, но менее, чем Жуков",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.konev.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: оценка Эриксона: допускает потери, но менее, чем Жуков"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.konev.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-konev-obedience",
+      "title": "Характер командующего: Конев И. С. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Эриксон: отстаивает свою долю задач перед Ставкой",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.konev.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Эриксон: отстаивает свою долю задач перед Ставкой"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.konev.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-rokossovsky-risk",
+      "title": "Характер командующего: Рокоссовский К. К. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Рокоссовский, «Солдатский долг» (1968): расчётлив, не рискует без подготовки",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.rokossovsky.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Рокоссовский, «Солдатский долг» (1968): расчётлив, не рискует без подготовки"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.rokossovsky.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-rokossovsky-persistence",
+      "title": "Характер командующего: Рокоссовский К. К. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Рокоссовский (1968): доводит начатое",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.rokossovsky.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Рокоссовский (1968): доводит начатое"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.rokossovsky.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-rokossovsky-ambition",
+      "title": "Характер командующего: Рокоссовский К. К. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "оценка Эриксона: не участвует в состязании за Берлин",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.rokossovsky.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: оценка Эриксона: не участвует в состязании за Берлин"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.rokossovsky.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-rokossovsky-lossTolerance",
+      "title": "Характер командующего: Рокоссовский К. К. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.rokossovsky.traits.lossTolerance",
+        "why": "допущение по биографии: бережёт войска"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.rokossovsky.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-rokossovsky-obedience",
+      "title": "Характер командующего: Рокоссовский К. К. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Рокоссовский (1968): исполнителен",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.rokossovsky.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Рокоссовский (1968): исполнителен"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.rokossovsky.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-heinrici-risk",
+      "title": "Характер командующего: Хайнрици Г. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Ле Тиссье, «Гонка за Рейхстаг» (1999): оборонительный мастер, не рискует без нужды",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.heinrici.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье, «Гонка за Рейхстаг» (1999): оборонительный мастер, не рискует без нужды"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.heinrici.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-heinrici-persistence",
+      "title": "Характер командующего: Хайнрици Г. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Ле Тиссье: упорен в обороне заранее подготовленных рубежей",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.heinrici.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье: упорен в обороне заранее подготовленных рубежей"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.heinrici.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-heinrici-ambition",
+      "title": "Характер командующего: Хайнрици Г. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.heinrici.traits.ambition",
+        "why": "допущение по биографии: честолюбия в наступлении не проявлял"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.heinrici.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-heinrici-lossTolerance",
+      "title": "Характер командующего: Хайнрици Г. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Ле Тиссье: берёт на себя спасение войск вопреки приказу",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.heinrici.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье: берёт на себя спасение войск вопреки приказу"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.heinrici.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-heinrici-obedience",
+      "title": "Характер командующего: Хайнрици Г. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Ле Тиссье: формально подчиняется, на деле уклоняется от приказов, ведущих к гибели войск",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.heinrici.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье: формально подчиняется, на деле уклоняется от приказов, ведущих к гибели войск"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.heinrici.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schoerner-risk",
+      "title": "Характер командующего: Шёрнер Ф. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Кершоу, «Конец» (2011): жесток и напорист, готов на риск",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schoerner.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Кершоу, «Конец» (2011): жесток и напорист, готов на риск"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schoerner.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schoerner-persistence",
+      "title": "Характер командующего: Шёрнер Ф. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу, Бивор: «держаться до конца»",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schoerner.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Кершоу, Бивор: «держаться до конца»"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schoerner.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schoerner-ambition",
+      "title": "Характер командующего: Шёрнер Ф. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schoerner.traits.ambition",
+        "why": "допущение: честолюбие по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schoerner.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schoerner-lossTolerance",
+      "title": "Характер командующего: Шёрнер Ф. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу: не жалеет войск и расстреливает за отход",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schoerner.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Кершоу: не жалеет войск и расстреливает за отход"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schoerner.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schoerner-obedience",
+      "title": "Характер командующего: Шёрнер Ф. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу: безоговорочно предан Гитлеру",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schoerner.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Кершоу: безоговорочно предан Гитлеру"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schoerner.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-okw-risk",
+      "title": "Характер командующего: Кейтель В. (ОКВ) — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Кейтель, воспоминания (1961): избегает самостоятельных решений",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.okw.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Кейтель, воспоминания (1961): избегает самостоятельных решений"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.okw.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-okw-persistence",
+      "title": "Характер командующего: Кейтель В. (ОКВ) — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.okw.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.okw.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-okw-ambition",
+      "title": "Характер командующего: Кейтель В. (ОКВ) — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Кейтель (1961): честолюбия к власти не проявлял",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.okw.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: Кейтель (1961): честолюбия к власти не проявлял"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.okw.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-okw-lossTolerance",
+      "title": "Характер командующего: Кейтель В. (ОКВ) — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Кершоу: передаёт приказы «держать» без поправок на потери",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.okw.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Кершоу: передаёт приказы «держать» без поправок на потери"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.okw.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-okw-obedience",
+      "title": "Характер командующего: Кейтель В. (ОКВ) — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кейтель (1961): полное послушание Гитлеру",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.okw.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Кейтель (1961): полное послушание Гитлеру"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.okw.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-busse-risk",
+      "title": "Характер командующего: Буссе Т. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Ле Тиссье, «Жуков на Одере» (1996): осторожен, исполнителен",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.busse.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье, «Жуков на Одере» (1996): осторожен, исполнителен"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.busse.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-busse-persistence",
+      "title": "Характер командующего: Буссе Т. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.busse.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.busse.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-busse-ambition",
+      "title": "Характер командующего: Буссе Т. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.busse.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.busse.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-busse-lossTolerance",
+      "title": "Характер командующего: Буссе Т. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.busse.traits.lossTolerance",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.busse.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-busse-obedience",
+      "title": "Характер командующего: Буссе Т. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Ле Тиссье: исполняет приказы свыше",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.busse.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье: исполняет приказы свыше"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.busse.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-wenck-risk",
+      "title": "Характер командующего: Венк В. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Ле Тиссье, Бивор: энергичный штабист, способный на смелый манёвр",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.wenck.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Ле Тиссье, Бивор: энергичный штабист, способный на смелый манёвр"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.wenck.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-wenck-persistence",
+      "title": "Характер командующего: Венк В. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.wenck.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.wenck.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-wenck-ambition",
+      "title": "Характер командующего: Венк В. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.wenck.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.wenck.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-wenck-lossTolerance",
+      "title": "Характер командующего: Венк В. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Бивор: бережёт людей, выводит армию",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.wenck.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Бивор: бережёт людей, выводит армию"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.wenck.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-wenck-obedience",
+      "title": "Характер командующего: Венк В. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Бивор: действует по указаниям, но самостоятелен",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.wenck.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Бивор: действует по указаниям, но самостоятелен"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.wenck.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-graeser-risk",
+      "title": "Характер командующего: Грейзер Г. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.graeser.traits.risk",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.graeser.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-graeser-persistence",
+      "title": "Характер командующего: Грейзер Г. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Гланц: армия упорно обороняется",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.graeser.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Гланц: армия упорно обороняется"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.graeser.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-graeser-ambition",
+      "title": "Характер командующего: Грейзер Г. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.graeser.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.graeser.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-graeser-lossTolerance",
+      "title": "Характер командующего: Грейзер Г. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.graeser.traits.lossTolerance",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.graeser.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-graeser-obedience",
+      "title": "Характер командующего: Грейзер Г. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.graeser.traits.obedience",
+        "why": "допущение: исполнителен"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.graeser.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-manteuffel-risk",
+      "title": "Характер командующего: Мантейфель Х. фон — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "оценка историков по Арденнам: отважен и склонен к манёвру",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.manteuffel.traits.risk",
+        "why": "характер по оценке биографов, не измерение: оценка историков по Арденнам: отважен и склонен к манёвру"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.manteuffel.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-manteuffel-persistence",
+      "title": "Характер командующего: Мантейфель Х. фон — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.manteuffel.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.manteuffel.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-manteuffel-ambition",
+      "title": "Характер командующего: Мантейфель Х. фон — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.manteuffel.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.manteuffel.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-manteuffel-lossTolerance",
+      "title": "Характер командующего: Мантейфель Х. фон — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.manteuffel.traits.lossTolerance",
+        "why": "допущение: бережёт людей"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.manteuffel.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-manteuffel-obedience",
+      "title": "Характер командующего: Мантейфель Х. фон — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.manteuffel.traits.obedience",
+        "why": "допущение: самостоятелен в рамках приказа"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.manteuffel.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-hitler-risk",
+      "title": "Характер командующего: Гитлер А. (Ставка верховного командования) — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу, «Гитлер» (2000): ставит всё на карту",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.hitler.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Кершоу, «Гитлер» (2000): ставит всё на карту"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.hitler.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-hitler-persistence",
+      "title": "Характер командующего: Гитлер А. (Ставка верховного командования) — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу: не допускает отхода и капитуляции",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.hitler.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Кершоу: не допускает отхода и капитуляции"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.hitler.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-hitler-ambition",
+      "title": "Характер командующего: Гитлер А. (Ставка верховного командования) — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу: претензия на единоличное решение",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.hitler.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: Кершоу: претензия на единоличное решение"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.hitler.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-hitler-lossTolerance",
+      "title": "Характер командующего: Гитлер А. (Ставка верховного командования) — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Кершоу: не считается с потерями",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.hitler.traits.lossTolerance",
+        "why": "характер по оценке биографов, не измерение: Кершоу: не считается с потерями"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.hitler.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-hitler-obedience",
+      "title": "Характер командующего: Гитлер А. (Ставка верховного командования) — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.hitler.traits.obedience",
+        "why": "допущение: нет старшего по должности; послушание не применимо, значение нулевое"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.hitler.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-harpe-risk",
+      "title": "Характер командующего: Харпе Й. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.harpe.traits.risk",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.harpe.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-harpe-persistence",
+      "title": "Характер командующего: Харпе Й. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.harpe.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.harpe.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-harpe-ambition",
+      "title": "Характер командующего: Харпе Й. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.harpe.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.harpe.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-harpe-lossTolerance",
+      "title": "Характер командующего: Харпе Й. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.harpe.traits.lossTolerance",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.harpe.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-harpe-obedience",
+      "title": "Характер командующего: Харпе Й. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.harpe.traits.obedience",
+        "why": "допущение: исполнителен"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.harpe.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-luettwitz-risk",
+      "title": "Характер командующего: Лютвиц Х. фон — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.luettwitz.traits.risk",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.luettwitz.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-luettwitz-persistence",
+      "title": "Характер командующего: Лютвиц Х. фон — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.luettwitz.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.luettwitz.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-luettwitz-ambition",
+      "title": "Характер командующего: Лютвиц Х. фон — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.luettwitz.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.luettwitz.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-luettwitz-lossTolerance",
+      "title": "Характер командующего: Лютвиц Х. фон — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.luettwitz.traits.lossTolerance",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.luettwitz.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-luettwitz-obedience",
+      "title": "Характер командующего: Лютвиц Х. фон — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.luettwitz.traits.obedience",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.luettwitz.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-himmler-risk",
+      "title": "Характер командующего: Гиммлер Г. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Лонгерих, «Генрих Гиммлер» (2008): в военном деле не искушён, склонен к рискованным затеям",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.himmler.traits.risk",
+        "why": "характер по оценке биографов, не измерение: Лонгерих, «Генрих Гиммлер» (2008): в военном деле не искушён, склонен к рискованным затеям"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.himmler.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-himmler-persistence",
+      "title": "Характер командующего: Гиммлер Г. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "C",
+      "historical": "Лонгерих: быстро теряет решимость",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.himmler.traits.persistence",
+        "why": "характер по оценке биографов, не измерение: Лонгерих: быстро теряет решимость"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.himmler.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-himmler-ambition",
+      "title": "Характер командующего: Гиммлер Г. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Лонгерих: стремление к влиянию при Гитлере",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.himmler.traits.ambition",
+        "why": "характер по оценке биографов, не измерение: Лонгерих: стремление к влиянию при Гитлере"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.himmler.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-himmler-lossTolerance",
+      "title": "Характер командующего: Гиммлер Г. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.himmler.traits.lossTolerance",
+        "why": "допущение"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.himmler.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-himmler-obedience",
+      "title": "Характер командующего: Гиммлер Г. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "B",
+      "historical": "Лонгерих: преданность Гитлеру до последних недель войны",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.himmler.traits.obedience",
+        "why": "характер по оценке биографов, не измерение: Лонгерих: преданность Гитлеру до последних недель войны"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.himmler.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schulz-risk",
+      "title": "Характер командующего: Шульц Ф. — риск",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schulz.traits.risk",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schulz.traits.risk"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schulz-persistence",
+      "title": "Характер командующего: Шульц Ф. — настойчивость",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schulz.traits.persistence",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schulz.traits.persistence"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schulz-ambition",
+      "title": "Характер командующего: Шульц Ф. — честолюбие",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schulz.traits.ambition",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schulz.traits.ambition"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schulz-lossTolerance",
+      "title": "Характер командующего: Шульц Ф. — терпимость к потерям",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schulz.traits.lossTolerance",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schulz.traits.lossTolerance"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-schulz-obedience",
+      "title": "Характер командующего: Шульц Ф. — послушание старшему",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.profiles.schulz.traits.obedience",
+        "why": "допущение по биографии"
+      },
+      "unit": "0…1",
+      "rules": [
+        "commanders.profiles.schulz.traits.obedience"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-fog",
+      "title": "Туман командующего: ошибка оценки сил противника и задержка сводок",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.fog.strengthError",
+        "why": "допущение: опоры в разведывательных данных нет; нужны сравнения оценок сил противника в разведсводках с фактом (также fog.reportDelayHours)"
+      },
+      "unit": "доля",
+      "rules": [
+        "commanders.fog.strengthError"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-gains",
+      "title": "Прибавки к оценке варианта: соперник, потери, фланг",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.gains.rival",
+        "why": "допущение: коэффициенты выбора варианта подбираются калибровкой (также gains.losses, gains.flank)"
+      },
+      "unit": "—",
+      "rules": [
+        "commanders.gains.rival"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "commander-weights",
+      "title": "Веса слагаемых выбора варианта",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.weights.uncertainty",
+        "why": "допущение: веса неопределённости, потерь, настойчивости, послушания подбираются калибровкой"
+      },
+      "unit": "—",
+      "rules": [
+        "commanders.weights.uncertainty"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [

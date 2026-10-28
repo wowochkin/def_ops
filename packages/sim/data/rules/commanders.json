@@ -1,0 +1,1922 @@
+{
+  "_about": "Командующие: профили характера и мотивов на начало, туман, коэффициенты выбора. Числа — параметры калибровки в пределах range; характер — по биографиям, мемуарам, оценкам историков, без опоры — допущение. Знание об ходе операции в файл не вкладывается.",
+  "fog": {
+    "strengthError": {
+      "value": 0.25,
+      "range": [
+        0,
+        0.6
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption",
+      "note": "ошибка оценки силы противника, доля"
+    },
+    "reportDelayHours": {
+      "value": 6,
+      "range": [
+        0,
+        24
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption",
+      "note": "задержка сводок, ч"
+    }
+  },
+  "gains": {
+    "rival": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    },
+    "losses": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    },
+    "flank": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    }
+  },
+  "weights": {
+    "uncertainty": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    },
+    "losses": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    },
+    "persistence": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    },
+    "obedience": {
+      "value": 1.0,
+      "range": [
+        0,
+        3
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    }
+  },
+  "cycleHours": {
+    "front": {
+      "value": 12,
+      "range": [
+        6,
+        24
+      ],
+      "source": "как command.cycleHours.front в agents-v0.json",
+      "confidence": "assumption"
+    },
+    "army": {
+      "value": 6,
+      "range": [
+        3,
+        12
+      ],
+      "source": "как command.cycleHours.army в agents-v0.json",
+      "confidence": "assumption"
+    },
+    "high": {
+      "value": 24,
+      "range": [
+        12,
+        48
+      ],
+      "source": "допущение без опоры в источниках",
+      "confidence": "assumption"
+    }
+  },
+  "lookaheadHours": {
+    "value": 0,
+    "range": [
+      0,
+      48
+    ],
+    "source": "допущение: замысел без заглядывания вперёд",
+    "confidence": "assumption"
+  },
+  "profiles": {
+    "zhukov": {
+      "name": "Жуков Г. К.",
+      "hqs": [
+        "su_1bf",
+        "su_1bf_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "воспоминания Жукова (1969) и оценка Эриксона: решителен, идёт на риск ради темпа",
+          "confidence": "B"
+        },
+        "persistence": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "те же воспоминания: не отступает от замысла, давит на подчинённых",
+          "confidence": "B"
+        },
+        "ambition": {
+          "value": 0.85,
+          "range": [
+            0.45,
+            1.0
+          ],
+          "source": "Эриксон, Бивор: добивается Берлина для своего фронта",
+          "confidence": "B"
+        },
+        "lossTolerance": {
+          "value": 0.85,
+          "range": [
+            0.45,
+            1.0
+          ],
+          "source": "Эриксон: принимает большие потери ради темпа и срока",
+          "confidence": "B"
+        },
+        "obedience": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Жуков (1969): исполняет указания Ставки, но спорит и настаивает",
+          "confidence": "C"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "rival": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "preserve": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "noEncircle": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "destroy": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "hold": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "save": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        }
+      },
+      "rival": "konev",
+      "objective": null
+    },
+    "konev": {
+      "name": "Конев И. С.",
+      "hqs": [
+        "su_1uf",
+        "su_1uf_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.75,
+          "range": [
+            0.35,
+            1.0
+          ],
+          "source": "Конев, «Сорок пятый» (1966): энергичен, склонен к манёвру подвижными группами",
+          "confidence": "B"
+        },
+        "persistence": {
+          "value": 0.75,
+          "range": [
+            0.35,
+            1.0
+          ],
+          "source": "Конев (1966): держит замысел, меняет только по обстановке",
+          "confidence": "C"
+        },
+        "ambition": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Эриксон, Бивор: настойчиво добивается участия в штурме Берлина",
+          "confidence": "B"
+        },
+        "lossTolerance": {
+          "value": 0.65,
+          "range": [
+            0.25,
+            1.0
+          ],
+          "source": "оценка Эриксона: допускает потери, но менее, чем Жуков",
+          "confidence": "C"
+        },
+        "obedience": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Эриксон: отстаивает свою долю задач перед Ставкой",
+          "confidence": "C"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.75,
+          "range": [
+            0.35,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "rival": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "preserve": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "noEncircle": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "destroy": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "hold": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        },
+        "save": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Состязание фронтов за Берлин — политическое задание на начало (Эриксон, Бивор); остальное — допущение",
+          "confidence": "C"
+        }
+      },
+      "rival": "zhukov",
+      "objective": null
+    },
+    "rokossovsky": {
+      "name": "Рокоссовский К. К.",
+      "hqs": [
+        "su_2bf"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.45,
+          "range": [
+            0.05,
+            0.85
+          ],
+          "source": "Рокоссовский, «Солдатский долг» (1968): расчётлив, не рискует без подготовки",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Рокоссовский (1968): доводит начатое",
+          "confidence": "C"
+        },
+        "ambition": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "оценка Эриксона: не участвует в состязании за Берлин",
+          "confidence": "C"
+        },
+        "lossTolerance": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "допущение по биографии: бережёт войска",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Рокоссовский (1968): исполнителен",
+          "confidence": "C"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.85,
+          "range": [
+            0.45,
+            1.0
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии и мемуарам",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "heinrici": {
+      "name": "Хайнрици Г.",
+      "hqs": [
+        "de_hgr_weichsel"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "Ле Тиссье, «Гонка за Рейхстаг» (1999): оборонительный мастер, не рискует без нужды",
+          "confidence": "B"
+        },
+        "persistence": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Ле Тиссье: упорен в обороне заранее подготовленных рубежей",
+          "confidence": "B"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии: честолюбия в наступлении не проявлял",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "Ле Тиссье: берёт на себя спасение войск вопреки приказу",
+          "confidence": "B"
+        },
+        "obedience": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Ле Тиссье: формально подчиняется, на деле уклоняется от приказов, ведущих к гибели войск",
+          "confidence": "B"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии (Ле Тиссье): оборонительный опыт, сбережение войск",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "schoerner": {
+      "name": "Шёрнер Ф.",
+      "hqs": [
+        "de_hgr_mitte"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Кершоу, «Конец» (2011): жесток и напорист, готов на риск",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Кершоу, Бивор: «держаться до конца»",
+          "confidence": "B"
+        },
+        "ambition": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение: честолюбие по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.85,
+          "range": [
+            0.45,
+            1.0
+          ],
+          "source": "Кершоу: не жалеет войск и расстреливает за отход",
+          "confidence": "B"
+        },
+        "obedience": {
+          "value": 0.95,
+          "range": [
+            0.55,
+            1.0
+          ],
+          "source": "Кершоу: безоговорочно предан Гитлеру",
+          "confidence": "B"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "preserve": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "noEncircle": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "hold": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        },
+        "save": {
+          "value": 0.1,
+          "range": [
+            0.0,
+            0.5
+          ],
+          "source": "Кершоу, Бивор: приказ «держать» принимается без рассуждений",
+          "confidence": "C"
+        }
+      },
+      "objective": null
+    },
+    "okw": {
+      "name": "Кейтель В. (ОКВ)",
+      "hqs": [
+        "de_okw"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Кейтель, воспоминания (1961): избегает самостоятельных решений",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Кейтель (1961): честолюбия к власти не проявлял",
+          "confidence": "C"
+        },
+        "lossTolerance": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Кершоу: передаёт приказы «держать» без поправок на потери",
+          "confidence": "C"
+        },
+        "obedience": {
+          "value": 1.0,
+          "range": [
+            0.6,
+            1.0
+          ],
+          "source": "Кейтель (1961): полное послушание Гитлеру",
+          "confidence": "B"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.2,
+          "range": [
+            0.0,
+            0.6
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.1,
+          "range": [
+            0.0,
+            0.5
+          ],
+          "source": "Допущение: ОКВ передаёт волю Гитлера",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "busse": {
+      "name": "Буссе Т.",
+      "hqs": [
+        "de_9a"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Ле Тиссье, «Жуков на Одере» (1996): осторожен, исполнителен",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Ле Тиссье: исполняет приказы свыше",
+          "confidence": "C"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "wenck": {
+      "name": "Венк В.",
+      "hqs": [
+        "de_12a"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.55,
+          "range": [
+            0.15,
+            0.95
+          ],
+          "source": "Ле Тиссье, Бивор: энергичный штабист, способный на смелый манёвр",
+          "confidence": "B"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Бивор: бережёт людей, выводит армию",
+          "confidence": "B"
+        },
+        "obedience": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Бивор: действует по указаниям, но самостоятелен",
+          "confidence": "C"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "graeser": {
+      "name": "Грейзер Г.",
+      "hqs": [
+        "de_4pza",
+        "de_4pza_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "persistence": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Гланц: армия упорно обороняется",
+          "confidence": "C"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "допущение: исполнителен",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "manteuffel": {
+      "name": "Мантейфель Х. фон",
+      "hqs": [
+        "de_3pza"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "оценка историков по Арденнам: отважен и склонен к манёвру",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "допущение: бережёт людей",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение: самостоятелен в рамках приказа",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "hitler": {
+      "name": "Гитлер А. (Ставка верховного командования)",
+      "hqs": [
+        "de_hc"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Кершоу, «Гитлер» (2000): ставит всё на карту",
+          "confidence": "B"
+        },
+        "persistence": {
+          "value": 1.0,
+          "range": [
+            0.6,
+            1.0
+          ],
+          "source": "Кершоу: не допускает отхода и капитуляции",
+          "confidence": "B"
+        },
+        "ambition": {
+          "value": 0.9,
+          "range": [
+            0.5,
+            1.0
+          ],
+          "source": "Кершоу: претензия на единоличное решение",
+          "confidence": "B"
+        },
+        "lossTolerance": {
+          "value": 0.95,
+          "range": [
+            0.55,
+            1.0
+          ],
+          "source": "Кершоу: не считается с потерями",
+          "confidence": "B"
+        },
+        "obedience": {
+          "value": 0.0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "допущение: нет старшего по должности; послушание не применимо, значение нулевое",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "preserve": {
+          "value": 0.1,
+          "range": [
+            0.0,
+            0.5
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "noEncircle": {
+          "value": 0.1,
+          "range": [
+            0.0,
+            0.5
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "destroy": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "hold": {
+          "value": 1.0,
+          "range": [
+            0.6,
+            1.0
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        },
+        "save": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Кершоу: приказ «держать» — общее правило Гитлера",
+          "confidence": "C"
+        }
+      },
+      "objective": null
+    },
+    "harpe": {
+      "name": "Харпе Й.",
+      "hqs": [
+        "de_hgr_a_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "persistence": {
+          "value": 0.65,
+          "range": [
+            0.25,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "допущение: исполнителен",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "luettwitz": {
+      "name": "Лютвиц Х. фон",
+      "hqs": [
+        "de_9a_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "himmler": {
+      "name": "Гиммлер Г.",
+      "hqs": [
+        "de_hgr_weichsel_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Лонгерих, «Генрих Гиммлер» (2008): в военном деле не искушён, склонен к рискованным затеям",
+          "confidence": "C"
+        },
+        "persistence": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Лонгерих: быстро теряет решимость",
+          "confidence": "C"
+        },
+        "ambition": {
+          "value": 0.8,
+          "range": [
+            0.4,
+            1.0
+          ],
+          "source": "Лонгерих: стремление к влиянию при Гитлере",
+          "confidence": "B"
+        },
+        "lossTolerance": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Лонгерих: преданность Гитлеру до последних недель войны",
+          "confidence": "B"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    },
+    "schulz": {
+      "name": "Шульц Ф.",
+      "hqs": [
+        "de_17a_vo"
+      ],
+      "traits": {
+        "risk": {
+          "value": 0.35,
+          "range": [
+            0.0,
+            0.75
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "persistence": {
+          "value": 0.6,
+          "range": [
+            0.2,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "ambition": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "lossTolerance": {
+          "value": 0.45,
+          "range": [
+            0.05,
+            0.85
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        },
+        "obedience": {
+          "value": 0.75,
+          "range": [
+            0.35,
+            1.0
+          ],
+          "source": "допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "motives": {
+        "task": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "rival": {
+          "value": 0,
+          "range": [
+            0.0,
+            0.4
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "preserve": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "noEncircle": {
+          "value": 0.5,
+          "range": [
+            0.1,
+            0.9
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "destroy": {
+          "value": 0.3,
+          "range": [
+            0.0,
+            0.7
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "hold": {
+          "value": 0.7,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        },
+        "save": {
+          "value": 0.4,
+          "range": [
+            0.0,
+            0.8
+          ],
+          "source": "Допущение по биографии",
+          "confidence": "assumption"
+        }
+      },
+      "objective": null
+    }
+  }
+}

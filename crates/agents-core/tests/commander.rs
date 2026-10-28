@@ -1,0 +1,89 @@
+//! Командующие: профили характера и мотивов, загрузка, поправки, защита от подсказки.
+
+use agents_core::commander::{Motive, Trait};
+use agents_core::rules::Rules;
+use agents_core::{repo_root, DATA_DIR};
+use serde_json::json;
+
+fn data() -> String { format!("{}/{DATA_DIR}", repo_root()) }
+
+#[test]
+fn profiles_load() {
+    let rules = Rules::load(&data()).expect("правила");
+    let c = &rules.commanders;
+    assert_eq!(c.for_hq("su_1bf").unwrap().id, "zhukov");
+    assert_eq!(c.for_hq("su_1bf_vo").unwrap().id, "zhukov");
+    assert_eq!(c.for_hq("su_1uf").unwrap().rival.as_deref(), Some("zhukov"));
+    assert!(c.for_hq("нет_такого").is_none());
+    assert_eq!(c.profiles.len(), 15);
+    for p in &c.profiles {
+        for t in [Trait::Risk, Trait::Persistence, Trait::Ambition, Trait::LossTolerance, Trait::Obedience] {
+            let v = p.traits.get(t);
+            assert!((0.0..=1.0).contains(&v), "{} {:?} = {v}", p.id, t);
+        }
+        for m in p.motives.0 { assert!((0.0..=1.0).contains(&m), "{} мотив {m}", p.id); }
+    }
+    assert!(c.profiles.iter().any(|p| p.motives.0[Motive::Rival as usize] > 0.0));
+    assert_eq!(c.cycle.front, 12);
+    assert_eq!(c.cycle.army, 6);
+    assert_eq!(c.cycle.high, 24);
+    assert_eq!(c.lookahead_hours, 0);
+}
+
+#[test]
+fn override_trait() {
+    let o = json!({"commanders.profiles.zhukov.traits.risk": 0.3});
+    let rules = Rules::load_with(&data(), Some(&o)).expect("правила");
+    assert_eq!(rules.commanders.for_hq("su_1bf").unwrap().traits.get(Trait::Risk), 0.3);
+}
+
+#[test]
+fn override_outside_range_fails() {
+    let o = json!({"commanders.profiles.zhukov.traits.risk": 1.5});
+    let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
+    assert!(e.contains("commanders.profiles.zhukov.traits.risk"), "{e}");
+    let o = json!({"commanders.profiles.nobody.traits.risk": 0.3});
+    let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
+    assert!(e.contains("нет параметра"), "{e}");
+}
+
+/// Совпадение с шаблоном «<слово на prefix…> 1945» или «<знак> <пробелы> цифра» без регулярных выражений.
+fn hint(t: &str) -> Option<String> {
+    let plain = ["1945-04", "1945-05", ".04.1945", ".05.1945", "11059", "11060", "11062", "Зеелов"];
+    for p in plain { if t.contains(p) { return Some(p.into()); } }
+    // (апрел|мая)\w* 1945
+    for stem in ["апрел", "мая"] {
+        for (i, _) in t.match_indices(stem) {
+            let rest = &t[i + stem.len()..];
+            let tail = rest.trim_start_matches(|c: char| c.is_alphanumeric() || c == '_');
+            if tail.starts_with(" 1945") { return Some(format!("{stem}… 1945")); }
+        }
+    }
+    // №\s*\d
+    for (i, _) in t.match_indices('№') {
+        if t[i + '№'.len_utf8()..].trim_start().chars().next().is_some_and(|c| c.is_ascii_digit()) { return Some("№ цифра".into()); }
+    }
+    // поворот\w* на Берлин
+    for (i, _) in t.match_indices("поворот") {
+        let tail = t[i + "поворот".len()..].trim_start_matches(|c: char| c.is_alphanumeric() || c == '_');
+        if tail.starts_with(" на Берлин") { return Some("поворот… на Берлин".into()); }
+    }
+    None
+}
+
+/// В профилях и правилах командующих нет дат операции, номеров её приказов и названий её решений.
+#[test]
+fn no_operation_hints() {
+    assert!(hint("в апреле 1945").is_some() && hint("№ 11").is_some() && hint("поворота на Берлин").is_some());
+    assert!(hint("мемуары, 1969").is_none());
+    let mut files = vec![format!("{}/rules/commanders.json", data())];
+    let src = format!("{}/src/commander", env!("CARGO_MANIFEST_DIR"));
+    for e in std::fs::read_dir(&src).unwrap() {
+        let p = e.unwrap().path();
+        if p.extension().is_some_and(|x| x == "rs") { files.push(p.to_string_lossy().into_owned()); }
+    }
+    for f in files {
+        let t = std::fs::read_to_string(&f).unwrap();
+        if let Some(h) = hint(&t) { panic!("{f}: {h}"); }
+    }
+}
