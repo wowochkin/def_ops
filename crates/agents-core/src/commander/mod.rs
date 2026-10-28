@@ -3,6 +3,7 @@
 
 pub mod motives;
 pub mod options;
+pub mod options_de;
 pub mod options_su;
 pub mod picture;
 pub mod profile;

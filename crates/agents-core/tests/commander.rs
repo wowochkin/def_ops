@@ -636,3 +636,213 @@ mod options_su {
         }
     }
 }
+
+/// Варианты немецкой стороны и Ставки: картина собирается руками, окружение — через `cut_since` дивизий.
+mod options_de {
+    use super::*;
+    use agents_core::command::control::Request;
+    use agents_core::commander::options::{Choice, Kind};
+    use agents_core::commander::options_de::{options_de, options_high};
+    use agents_core::commander::picture::{ArmyView, Picture};
+    use agents_core::geo::XY;
+    use agents_core::model::State;
+    use agents_core::world::Sim;
+
+    fn load() -> Sim {
+        let root = repo_root();
+        let (mut sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, None, None).expect("сценарий");
+        for d in &mut sim.world.divisions { d.cut_since = None; }
+        sim
+    }
+    fn hq(sim: &Sim, id: &str) -> u32 { sim.world.hqs.iter().position(|h| h.id == id).expect(id) as u32 }
+    fn view(h: u32) -> ArmyView {
+        ArmyView { hq: h, advance_km: 0.0, strength: 1.0, enemy_est: 1.0, enemy_true: 1.0, to_objective_km: None, broke_through: false }
+    }
+    fn pic(armies: Vec<ArmyView>, open: Vec<u32>) -> Picture {
+        Picture { tick: 30, armies, enemy_reserves: vec![], rival: None, open_flanks: open, pockets: vec![], to_objective_km: None }
+    }
+    fn has(v: &[Choice], f: impl Fn(&Kind) -> bool) -> bool { v.iter().any(|c| f(&c.kind)) }
+    fn check_ranges(v: Vec<Choice>) -> Vec<Choice> {
+        for ch in &v {
+            assert!((0.0..=1.0).contains(&ch.uncertainty) && (0.0..=1.0).contains(&ch.losses), "{}", ch.label);
+            assert!(ch.contrib.0.iter().all(|x| (-1.0..=1.0).contains(x)), "{}", ch.label);
+            assert!(!ch.rule.is_empty());
+        }
+        v
+    }
+    fn opts(sim: &Sim, id: &str, pic: &Picture) -> Vec<Choice> {
+        let p = sim.rules.commanders.for_hq(id).unwrap().clone();
+        check_ranges(options_de(sim, hq(sim, id), &p, pic))
+    }
+    fn high(sim: &Sim) -> Vec<Choice> {
+        let p = sim.rules.commanders.for_hq("de_hc").unwrap().clone();
+        check_ranges(options_high(sim, hq(sim, "de_hc"), &p))
+    }
+    /// Живые дивизии штаба и его подчинённых.
+    fn divs(sim: &Sim, id: &str) -> Vec<usize> {
+        let h = hq(sim, id);
+        (0..sim.world.divisions.len()).filter(|&i| {
+            let mut k = sim.world.divisions[i].hq;
+            loop { if k == h { return !sim.world.divisions[i].state.out(); } match sim.world.hqs[k as usize].parent { Some(p) => k = p, None => return false } }
+        }).collect()
+    }
+    fn cut(sim: &mut Sim, id: &str, share: f64) {
+        let v = divs(sim, id);
+        let n = ((v.len() as f64) * share).ceil() as usize;
+        for &i in v.iter().take(n) { sim.world.divisions[i].cut_since = Some(0); }
+    }
+
+    #[test]
+    fn hold_always_present() {
+        let sim = load();
+        let o = opts(&sim, "de_9a", &pic(vec![view(hq(&sim, "de_9a"))], vec![]));
+        let h = o.iter().find(|c| matches!(c.kind, Kind::Hold)).expect("держаться");
+        assert!(h.contrib.get(Motive::Hold) > 0.0 && h.contrib.get(Motive::Task) > 0.0);
+    }
+
+    /// Отход появляется при открытом фланге или охвате своих и несёт вклад в сохранение и против окружения.
+    #[test]
+    fn withdraw_needs_threat() {
+        let mut sim = load();
+        let a = hq(&sim, "de_9a");
+        let calm = opts(&sim, "de_9a", &pic(vec![view(a)], vec![]));
+        assert!(!has(&calm, |k| matches!(k, Kind::Withdraw { .. })));
+        let flank = opts(&sim, "de_9a", &pic(vec![view(a)], vec![a]));
+        let w = flank.iter().find(|c| matches!(c.kind, Kind::Withdraw { hq } if hq == a)).expect("отход");
+        assert!(w.contrib.get(Motive::Save) > 0.0 && w.contrib.get(Motive::NoEncircle) > 0.0);
+        assert!(w.contrib.get(Motive::Hold) < 0.0 && w.contrib.get(Motive::Task) < 0.0);
+        // часть дивизий отрезана — охват своих
+        cut(&mut sim, "de_9a", 0.25);
+        assert!(has(&opts(&sim, "de_9a", &pic(vec![view(a)], vec![])), |k| matches!(k, Kind::Withdraw { .. })));
+        // угроза гасит вклад «держаться» в сохранение сильнее
+        let h0 = calm.iter().find(|c| matches!(c.kind, Kind::Hold)).unwrap().contrib.get(Motive::Save);
+        let h1 = opts(&sim, "de_9a", &pic(vec![view(a)], vec![a])).into_iter().find(|c| matches!(c.kind, Kind::Hold)).unwrap().contrib.get(Motive::Save);
+        assert!(h1 < h0);
+    }
+
+    #[test]
+    fn breakout_only_in_pocket() {
+        let mut sim = load();
+        let a = hq(&sim, "de_9a");
+        let p = pic(vec![view(a)], vec![]);
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Breakout { .. })));
+        cut(&mut sim, "de_9a", 0.3);
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Breakout { .. })), "меньшинство окружено — не котёл");
+        cut(&mut sim, "de_9a", 1.0);
+        let o = opts(&sim, "de_9a", &p);
+        let b = o.iter().find(|c| matches!(c.kind, Kind::Breakout { .. })).expect("прорыв");
+        let Kind::Breakout { toward } = b.kind else { unreachable!() };
+        // цель — центр войск одной из армий снаружи
+        let centers: Vec<XY> = ["de_3pza", "de_4pza", "de_12a"].iter().map(|id| {
+            let ds = divs(&sim, id);
+            XY::new(ds.iter().map(|&i| sim.world.divisions[i].vars.pos.x).sum::<f64>() / ds.len() as f64, ds.iter().map(|&i| sim.world.divisions[i].vars.pos.y).sum::<f64>() / ds.len() as f64)
+        }).collect();
+        assert!(centers.iter().any(|c| toward.dist(*c) < 1e-6), "{toward:?}");
+        assert!(b.contrib.get(Motive::Save) > 0.0 && b.contrib.get(Motive::Preserve) > 0.0 && b.contrib.get(Motive::Hold) < 0.0);
+        // своих снаружи нет — прорываться некуда
+        for id in ["de_3pza", "de_4pza", "de_12a"] { cut(&mut sim, id, 1.0); }
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Breakout { .. })));
+    }
+
+    /// Контратака — резерв армии в пределах 40 км от вклинения противника.
+    #[test]
+    fn counterattack_needs_reserve_near_wedge() {
+        let mut sim = load();
+        let a = hq(&sim, "de_9a");
+        let ds = divs(&sim, "de_9a");
+        let enemy = (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side != sim.world.hqs[a as usize].side && !sim.world.divisions[i].state.out()).unwrap();
+        let at = sim.world.divisions[ds[0]].vars.pos;
+        sim.world.divisions[enemy].vars.pos = XY::new(at.x + 3.0, at.y);
+        sim.world.divisions[enemy].state = State::Attack(agents_core::model::AttackSub::Assault);
+        for &i in &ds { sim.world.divisions[i].state = State::Defense(agents_core::model::DefenseSub::Prepared); }
+        let p = pic(vec![view(a)], vec![]);
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Counterattack { .. })), "резерва нет");
+        sim.world.divisions[ds[1]].state = State::Reserve;
+        sim.world.divisions[ds[1]].vars.pos = XY::new(at.x - 10.0, at.y);
+        let o = opts(&sim, "de_9a", &p);
+        let c = o.iter().find(|c| matches!(c.kind, Kind::Counterattack { from, .. } if from == a)).expect("контратака");
+        assert!(c.contrib.get(Motive::Destroy) > 0.0 && c.contrib.get(Motive::Preserve) < 0.0);
+        sim.world.divisions[ds[1]].vars.pos = XY::new(at.x - 100.0, at.y);
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Counterattack { .. })), "резерв далеко");
+    }
+
+    /// Перегруппировка — с тихого участка на угрожаемый.
+    #[test]
+    fn shift_forces_quiet_to_threatened() {
+        let mut sim = load();
+        let (a, b) = (hq(&sim, "de_9a"), hq(&sim, "de_3pza"));
+        // убираем противника из соприкосновения
+        for d in &mut sim.world.divisions { if d.side != sim.world.hqs[a as usize].side { d.vars.pos = XY::new(1.0e5, 1.0e5); } }
+        for id in ["de_9a", "de_3pza"] { for i in divs(&sim, id) { sim.world.divisions[i].state = State::Reserve; } }
+        let calm = opts(&sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], vec![]));
+        assert!(!has(&calm, |k| matches!(k, Kind::ShiftForces { .. })), "угрожаемого нет");
+        let o = opts(&sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], vec![a]));
+        let s = o.iter().find(|c| matches!(c.kind, Kind::ShiftForces { from, to } if from == b && to == a)).expect("перегруппировка");
+        assert!(s.contrib.get(Motive::Hold) > 0.0);
+        // участок откуда берём — не тихий: рядом противник в бою
+        let e = (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side != sim.world.hqs[a as usize].side && !sim.world.divisions[i].state.out()).unwrap();
+        let at = sim.world.divisions[divs(&sim, "de_3pza")[0]].vars.pos;
+        sim.world.divisions[e].vars.pos = XY::new(at.x + 1.0, at.y);
+        sim.world.divisions[e].state = State::Attack(agents_core::model::AttackSub::Assault);
+        let o = opts(&sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], vec![a]));
+        assert!(!has(&o, |k| matches!(k, Kind::ShiftForces { from, .. } if *from == b)));
+    }
+
+    fn req(sim: &Sim, corps: &str, answer: Option<bool>) -> Request {
+        Request { hq: hq(sim, corps), tick: 5, division: 0, at: XY::new(0.0, 0.0), answer, answered_at: 0 }
+    }
+
+    #[test]
+    fn high_answers_each_request() {
+        let mut sim = load();
+        sim.command.requests = vec![req(&sim, "de_ci", None), req(&sim, "de_v", Some(true)), req(&sim, "de_lvi", None)];
+        let o = high(&sim);
+        for i in [0usize, 2] {
+            assert!(has(&o, |k| matches!(k, Kind::Permit { request } if *request == i)), "{i}");
+            assert!(has(&o, |k| matches!(k, Kind::Forbid { request } if *request == i)), "{i}");
+        }
+        assert!(!has(&o, |k| matches!(k, Kind::Permit { request: 1 } | Kind::Forbid { request: 1 })));
+        assert_eq!(o.iter().filter(|c| matches!(c.kind, Kind::Permit { .. } | Kind::Forbid { .. })).count(), 4);
+        let f = o.iter().find(|c| matches!(c.kind, Kind::Forbid { request: 0 })).unwrap();
+        let p = o.iter().find(|c| matches!(c.kind, Kind::Permit { request: 0 })).unwrap();
+        assert!(f.contrib.get(Motive::Hold) > 0.0 && f.contrib.get(Motive::Save) < 0.0);
+        assert!(p.contrib.get(Motive::Save) > 0.0 && p.contrib.get(Motive::Hold) < 0.0);
+        // армия под угрозой: запрет обходится дороже
+        let calm = f.contrib.get(Motive::Save);
+        cut(&mut sim, "de_9a", 0.5);
+        let o = high(&sim);
+        assert!(o.iter().find(|c| matches!(c.kind, Kind::Forbid { request: 0 })).unwrap().contrib.get(Motive::Save) < calm);
+        // нет запросов — нет вариантов запроса
+        sim.command.requests.clear();
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::Permit { .. } | Kind::Forbid { .. })));
+    }
+
+    #[test]
+    fn relief_needs_pocket() {
+        let mut sim = load();
+        let a = hq(&sim, "de_9a");
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::Relief { .. })));
+        cut(&mut sim, "de_9a", 1.0);
+        let o = high(&sim);
+        let r = o.iter().find(|c| matches!(c.kind, Kind::Relief { army, .. } if army == a)).expect("выручка");
+        assert!(r.contrib.get(Motive::Save) > 0.0);
+        // все армии отрезаны — выручать некому
+        for id in ["de_3pza", "de_4pza", "de_12a"] { cut(&mut sim, id, 1.0); }
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::Relief { .. })));
+    }
+
+    #[test]
+    fn move_reserve_needs_okw_reserve() {
+        let mut sim = load();
+        cut(&mut sim, "de_9a", 1.0);
+        let reserve = |sim: &Sim| -> Vec<usize> { divs(sim, "de_okw").into_iter().filter(|&i| sim.world.divisions[i].state == State::Reserve).collect() };
+        for i in divs(&sim, "de_okw") { sim.world.divisions[i].state = State::Defense(agents_core::model::DefenseSub::Prepared); }
+        assert!(reserve(&sim).is_empty());
+        assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
+        let i = divs(&sim, "de_okw")[0];
+        sim.world.divisions[i].state = State::Reserve;
+        let o = high(&sim);
+        let m = o.iter().find(|c| matches!(c.kind, Kind::MoveReserve { .. })).expect("перемещение резерва");
+        assert!(m.contrib.get(Motive::Save) > 0.0);
+    }
+}
