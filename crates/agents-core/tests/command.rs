@@ -29,9 +29,10 @@ fn historical_directives_load() {
 /// (передача в час 24, ещё 24 ч) — новое не должно их менять. Сменены вместе с данными: танки и орудия армий
 /// по документам в сценарии seelow-1945 (прежние — 16739435988789117129 и 11162555259053550150, на прежнем сценарии
 /// воспроизводятся), затем с темпом пехоты вне боя в глубине противника 14 → 25 км/сут (прежние — 4154387123457738608
-/// и 11143781320962904725, при 14 км/сут воспроизводятся).
-pub const SEELOW_48_DIGEST: u64 = 6188758119600658665;
-pub const LEGACY_GAME_DIGEST: u64 = 5665356261947276588;
+/// и 11143781320962904725, при 14 км/сут воспроизводятся), затем с параметрами калибровки перебором (прежние —
+/// 6188758119600658665 и 5665356261947276588).
+pub const SEELOW_48_DIGEST: u64 = 16519880440056134377;
+pub const LEGACY_GAME_DIGEST: u64 = 5949968270007021613;
 
 #[test]
 fn coordination_one_changes_nothing() {
@@ -261,7 +262,8 @@ fn corps_sim(half: f64, edit: impl Fn(&mut agents_core::world::Sim)) -> (agents_
 /// Корпус из 3 дивизий в полосе 4 км: 2 в первом эшелоне (по 1,5–2 км), 1 во втором — за первым на 5–7 км.
 #[test]
 fn corps_echelons_by_norm() {
-    let (mut sim, k) = corps_sim(2.0, |_| {});
+    // правило при доле первого эшелона 0,55, втором эшелоне в 6 км и полосе дивизии 6 км (значения правил калибруются)
+    let (mut sim, k) = corps_sim(2.0, |s| { s.rules.doctrine_su.first_echelon_share = 0.55; s.rules.command.su.second_echelon_behind_km = 6.0; s.rules.frontage_km[0] = 6.0; });
     sim.step();
     let divs: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k).collect();
     assert_eq!(divs.len(), 3);
@@ -290,7 +292,7 @@ fn narrow_band_keeps_one_first() {
 /// Без продвижения второй эшелон вводится через 48 ч.
 #[test]
 fn second_echelon_commits_by_fallback() {
-    let (mut sim, k) = corps_sim(2.0, |s| s.rules.doctrine_su.commit_depth_km = 1000.0);
+    let (mut sim, k) = corps_sim(2.0, |s| { s.rules.doctrine_su.commit_depth_km = 1000.0; s.rules.doctrine_su.first_echelon_share = 0.55; s.rules.doctrine_su.second_echelon_fallback_hours = 33.6; });
     for _ in 0..50 { sim.step(); }
     let second: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].hq == k && sim.command.role_div[i] == Role::Committed).collect();
     assert!(!second.is_empty(), "введён");
@@ -305,6 +307,7 @@ fn second_echelon_commits_by_fallback() {
 fn army_echelons_corps() {
     let mut sim = load("seelow-1945");
     agents_su(&mut sim);
+    sim.rules.doctrine_su.first_echelon_share = 0.55;
     let mut d = to_corps(&sim, "su_4gsk", 6.0);
     let a = hq(&sim, "su_8gva");
     d.from = sim.world.hqs[a as usize].parent.unwrap();
@@ -344,6 +347,7 @@ fn front_holds_tank_armies() {
 fn all_second_echelon_commit() {
     let mut sim = load("seelow-1945");
     agents_su(&mut sim);
+    sim.rules.doctrine_su.first_echelon_share = 0.55;
     sim.rules.doctrine_su.commit_depth_km = 1000.0;
     let mut d = to_corps(&sim, "su_4gsk", 6.0);
     let a = hq(&sim, "su_8gva");
