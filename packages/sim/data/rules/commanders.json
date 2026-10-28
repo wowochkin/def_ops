@@ -127,6 +127,13 @@
     "source": "допущение: замысел без заглядывания вперёд",
     "confidence": "assumption"
   },
+  "objectives": {
+    "berlin": {
+      "name": "Берлин",
+      "at": [13.376, 52.518],
+      "source": "политическая цель на начало: столица рейха (Рейхстаг); объект известен командующему заранее, ход операции в него не вкладывается"
+    }
+  },
   "profiles": {
     "zhukov": {
       "name": "Жуков Г. К.",
@@ -247,7 +254,7 @@
         }
       },
       "rival": "konev",
-      "objective": null
+      "objective": "berlin"
     },
     "konev": {
       "name": "Конев И. С.",
@@ -368,7 +375,7 @@
         }
       },
       "rival": "zhukov",
-      "objective": null
+      "objective": "berlin"
     },
     "rokossovsky": {
       "name": "Рокоссовский К. К.",

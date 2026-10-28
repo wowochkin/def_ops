@@ -2,6 +2,7 @@
 //! Числа в `commanders.json` — `{ value, range, source, confidence }`; поправки применяются до разбора,
 //! после разбора каждое число проверяется на попадание в свой `range`.
 
+use crate::geo::LngLat;
 use serde_json::Value;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,9 +55,14 @@ pub struct CommanderRules {
     pub weights: Weights,
     pub cycle: Cycle,
     pub lookahead_hours: u32,
+    /// Объекты, к которым тянутся командующие: id и место (долгота, широта); в километры театра — в картине обстановки.
+    pub objectives: Vec<(String, LngLat)>,
 }
 
 impl CommanderRules {
+    /// Место объекта по id.
+    pub fn objective_at(&self, id: &str) -> Option<LngLat> { self.objectives.iter().find(|o| o.0 == id).map(|o| o.1) }
+
     /// Профиль командующего штабом.
     pub fn for_hq(&self, hq_id: &str) -> Option<&Profile> { self.profiles.iter().find(|p| p.hqs.iter().any(|h| h == hq_id)) }
 
@@ -87,7 +93,16 @@ impl CommanderRules {
                 objective: text("objective"),
             });
         }
+        let mut objectives = Vec::new();
+        if let Some(m) = c.get("objectives").and_then(Value::as_object) {
+            for (id, o) in m {
+                let at = o.get("at").and_then(Value::as_array).filter(|a| a.len() == 2).and_then(|a| Some([a[0].as_f64()?, a[1].as_f64()?]))
+                    .ok_or_else(|| format!("правила командующих: объект {id} — нужны координаты at [долгота, широта]"))?;
+                objectives.push((id.clone(), at));
+            }
+        }
         for p in &out {
+            if let Some(o) = &p.objective { if !objectives.iter().any(|q| &q.0 == o) { return Err(format!("правила командующих: объект {o} профиля {} не найден", p.id)); } }
             if let Some(r) = &p.rival { if !out.iter().any(|q| &q.id == r) { return Err(format!("правила командующих: соперник {r} профиля {} не найден", p.id)); } }
         }
         let hours = |path: &str| -> Result<u32, String> { let v = n(path)?; if v < 0.0 || v.fract() != 0.0 { return Err(format!("правила командующих: {path} — целое число часов")); } Ok(v as u32) };
@@ -98,6 +113,7 @@ impl CommanderRules {
             weights: Weights { uncertainty: n("weights.uncertainty")?, losses: n("weights.losses")?, persistence: n("weights.persistence")?, obedience: n("weights.obedience")? },
             cycle: Cycle { front: hours("cycleHours.front")?, army: hours("cycleHours.army")?, high: hours("cycleHours.high")? },
             lookahead_hours: hours("lookaheadHours")?,
+            objectives,
         })
     }
 }

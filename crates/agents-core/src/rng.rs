@@ -16,6 +16,8 @@ pub enum Stream {
     Decide = 1,
     Combat = 2,
     Route = 3,
+    /// Ошибка разведки в картине обстановки командующего.
+    Fog = 4,
 }
 
 pub struct Rng(u64);

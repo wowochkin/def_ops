@@ -117,3 +117,79 @@ fn bad_hqs_rejected() {
     let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
     assert!(e.contains("не строка"), "{e}");
 }
+
+/// Цель профиля — объект из раздела objectives; неизвестный объект — ошибка загрузки.
+#[test]
+fn objectives_load_and_unknown_rejected() {
+    let rules = Rules::load(&data()).expect("правила");
+    let c = &rules.commanders;
+    assert_eq!(c.for_hq("su_1bf").unwrap().objective.as_deref(), Some("berlin"));
+    assert_eq!(c.for_hq("su_1uf").unwrap().objective.as_deref(), Some("berlin"));
+    assert_eq!(c.objectives.len(), 1);
+    assert_eq!(c.objectives[0].0, "berlin");
+    let o = json!({"commanders.profiles.konev.objective": "нет_такого"});
+    let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
+    assert!(e.contains("нет_такого") && e.contains("konev"), "{e}");
+}
+
+mod picture {
+    use super::*;
+    use agents_core::commander::picture::{picture, DistLog};
+    use agents_core::world::Sim;
+
+    fn load(over: Option<&serde_json::Value>) -> Sim {
+        let root = repo_root();
+        let (sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, over, None).expect("сценарий");
+        sim
+    }
+    fn hq(sim: &Sim, id: &str) -> u32 { sim.world.hqs.iter().position(|h| h.id == id).expect(id) as u32 }
+    fn run(sim: &mut Sim, hours: u32, log: &mut DistLog) { for _ in 0..hours { sim.step(); log.record(sim); } }
+
+    #[test]
+    fn picture_error_bounded() {
+        for err in [None, Some(0.0)] {
+            let o = err.map(|e| json!({"commanders.fog.strengthError": e}));
+            let mut sim = load(o.as_ref());
+            let mut log = DistLog::default();
+            run(&mut sim, 24, &mut log);
+            let e = sim.rules.commanders.fog.strength_error;
+            let h = hq(&sim, "su_1bf");
+            let p = picture(&sim, h, &log);
+            assert!(!p.armies.is_empty());
+            let mut checked = 0;
+            for a in p.armies.iter().filter(|a| a.enemy_true > 0.0) {
+                checked += 1;
+                let r = (a.enemy_est / a.enemy_true - 1.0).abs();
+                assert!(r <= e + 1e-9, "армия {} ошибка {r} > {e}", a.hq);
+                if err == Some(0.0) { assert!(r < 1e-12); }
+            }
+            assert!(checked > 0);
+        }
+    }
+
+    #[test]
+    fn picture_same_seed_same() {
+        let (mut a, mut b) = (load(None), load(None));
+        let (mut la, mut lb) = (DistLog::default(), DistLog::default());
+        run(&mut a, 12, &mut la);
+        run(&mut b, 12, &mut lb);
+        for id in ["su_1bf", "su_1uf"] {
+            let h = hq(&a, id);
+            assert_eq!(format!("{:?}", picture(&a, h, &la)), format!("{:?}", picture(&b, h, &lb)));
+        }
+    }
+
+    #[test]
+    fn rival_delayed() {
+        let mut sim = load(None);
+        let mut log = DistLog::default();
+        run(&mut sim, 24, &mut log);
+        let d = sim.rules.commanders.fog.report_delay_hours;
+        let p = picture(&sim, hq(&sim, "su_1uf"), &log);
+        let r = p.rival.expect("соперник");
+        assert_eq!(r.as_of, sim.world.tick - d);
+        assert!(r.to_objective_km > 0.0);
+        // без соперника у профиля нет и сводки о нём
+        assert!(picture(&sim, hq(&sim, "su_2bf"), &log).rival.is_none() || sim.rules.commanders.for_hq("su_2bf").unwrap().rival.is_some());
+    }
+}
