@@ -3198,6 +3198,10 @@ npm run agents:seelow     # агентная модель: Зееловские 
                           # (--params '{"pocket.breakoutKeep": 0.05}' или --params файл.json — поправки параметров agents-v0.json)
                           # (--de doctrine — штабы по доктрине; --de llm --llm-model <id> — на языковой модели;
                           #  --llm-reasoning, --llm-max-tokens, --llm-parallel auto|N, --llm-sync, --llm-by-army, --llm-probe)
+npx tsx packages/sim/tools/agents/calibrate.ts --samples 300 --seeds 1,2,3,4 --out evals-out/calib/r1
+                          # калибровка агентной модели перебором (допущения — в разумных пределах, параметры с
+                          #  источником — в коридоре норматива; --mode fronts|agents|script); --around <папка> — вокруг
+                          #  лучшего; --refine <папка> --top 8 — лучшие на 10 seed, Зееловские высоты и контроль (Висло-Одерская)
 npm run agents:app        # приложение агентной модели (Tauri; в браузере — npm run agents:web)
 npm run agents:vistula-data # сборка сценария Висло-Одерской операции для агентной модели
 npm run desktop:app       # настольное приложение всей системы (Tauri): редактор, сервисы на этой машине (нужны Rust
