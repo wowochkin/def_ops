@@ -90,16 +90,17 @@ function Picture({ s, tick, names }: { s: Snapshot | null; tick: number; names: 
   return (
     <section>
       <h4>Картина обстановки — что он знает (серым — как было на самом деле)</h4>
-      <table className="ag-vars cm-pic"><thead><tr><th>армия</th><th className="num">прошла</th><th className="num">силы</th><th>противник перед ней</th></tr></thead><tbody>
+      <table className="ag-vars cm-pic"><thead><tr><th>армия</th><th className="num" title="пройдено от исходного положения">прошла</th><th className="num" title="боевая сила армии в долях исходной">своих</th><th title="оценка разведки командующего, усл. ед. боевой силы">противник перед ней, усл. ед.</th></tr></thead><tbody>
         {p.armies.map((a) => {
-          const off = Math.abs(a.enemyEst - a.enemyTrue) > Math.max(1, 0.15 * a.enemyTrue);
+          const none = a.enemyEst < 0.5;
+          const off = none ? a.enemyTrue >= 0.5 : Math.abs(a.enemyEst - a.enemyTrue) > Math.max(1, 0.15 * a.enemyTrue);
           return <tr key={a.hq}><td>{nm(a.hq)}{a.brokeThrough ? <small title="прорвала главную полосу"> ⚑</small> : null}</td>
             <td className="num">{n0(a.advanceKm)} км</td><td className="num">{Math.round(a.strength * 100)} %</td>
-            <td>≈ {n0(a.enemyEst)}{off && <small className="muted"> (на деле {n0(a.enemyTrue)})</small>}{!off && <small className="muted"> (верно)</small>}</td></tr>;
+            <td>{none ? 'противника нет' : `≈ ${n0(a.enemyEst)} усл. ед.`}{off ? <small className="muted"> (на деле {n0(a.enemyTrue)})</small> : <small className="muted"> (верно)</small>}</td></tr>;
         })}
         {p.rival && <tr><td>соперник</td><td colSpan={3}>{nm(p.rival.hq)}: до объекта ≈ {n0(p.rival.toObjectiveKm)} км <small className="muted">(сводка Ставки, задержка {Math.max(0, tick - p.rival.asOf)} ч)</small></td></tr>}
       </tbody></table>
-      <div className="muted small">{p.openFlanks.length ? `Открытые фланги: ${p.openFlanks.map(nm).join(', ')}. ` : ''}{p.pockets.length ? `Окружённых группировок: ${p.pockets.length}. ` : ''}{p.enemyReserves.length ? `Резервов противника в глубине: ${p.enemyReserves.length}.` : ''}</div>
+      <div className="muted small">«Своих» — боевая сила армии от исходной; «прошла» — продвижение от исходного положения. {p.openFlanks.length ? `Открытые фланги: ${p.openFlanks.map(nm).join(', ')}. ` : ''}{p.pockets.length ? `Окружённых группировок: ${p.pockets.length}. ` : ''}{p.enemyReserves.length ? `Резервов противника в глубине: ${p.enemyReserves.length}.` : ''}</div>
     </section>
   );
 }
@@ -127,7 +128,7 @@ function Options({ d }: { d: Decision }) {
 }
 
 /** Разговор: вопрос, подсказки; ответ — из разбора на выбранный час (answer). */
-function Chat({ c, tick, names }: { c: AgentCommander; tick: number; names: Record<string, string> }) {
+function Chat({ c, tick, names, start }: { c: AgentCommander; tick: number; names: Record<string, string>; start: string }) {
   const [msgs, setMsgs] = useState<{ q: string; a: string; tick: number }[]>([]);
   const [text, setText] = useState('');
   const end = useRef<HTMLDivElement>(null);
@@ -153,7 +154,7 @@ function Chat({ c, tick, names }: { c: AgentCommander; tick: number; names: Reco
     <section className="cm-chat" data-hl="commander-chat">
       <h4>Разговор с командующим — {c.name} (на выбранный час)</h4>
       {msgs.length > 0 && <div className="ag-msgs">
-        {msgs.map((m, i) => <div key={i} className="cm-qa"><div className="ag-msg user">{m.q}</div><div className="ag-msg"><div className="meta">{c.name}, час {m.tick}</div>{m.a}</div></div>)}
+        {msgs.map((m, i) => <div key={i} className="cm-qa"><div className="ag-msg user">{m.q}</div><div className="ag-msg"><div className="meta">{c.name}, {when(addHours(start, m.tick))} МСК</div>{m.a}</div></div>)}
         <div ref={end} />
       </div>}
       <div className="cm-sugg">{SUGGESTIONS.map((s) => <button key={s} onClick={() => ask(s)}>{s}</button>)}</div>
@@ -186,7 +187,7 @@ export function CommanderPanel({ trace, c, tick, onTick, names }: { trace: Agent
         {d && <Options d={d} />}
       </section>
       {d && o && <section className="cm-why"><b>Почему:</b> {d.why} <span className="muted">Правило: {o.rule}. Повод: {d.trigger}.</span></section>}
-      <Chat c={c} tick={tick} names={names} />
+      <Chat c={c} tick={tick} names={names} start={trace.start} />
     </div>
   );
 }

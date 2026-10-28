@@ -33,8 +33,13 @@ fn main() {
                 sim.sources[0] = if a["su"] == "doctrine" { Source::Doctrine } else { Source::Script };
                 if a["withoutFires"] == true { sim.fires.clear(); }
                 if a["withoutWithdrawals"] == true { sim.withdrawals.clear(); }
+                // советские штабы по ступеням (как у приложения): script / fronts / journals / agents; commanders — командующие у обеих сторон
+                let mode = a["command"].as_str().unwrap_or("script").to_string();
+                let sides: &[Side] = if mode == "commanders" { &[Side::Su, Side::De] } else { &[Side::Su] };
+                let mut pending = Vec::new();
+                for &sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd)?); }
                 let hours = meta.hours;
-                Ok(agents_core::trace::run(&mut sim, hours, &meta))
+                Ok(agents_core::trace::run_fed(&mut sim, hours, &meta, pending, mode == "fronts" || mode == "journals"))
             }
             "game_start" => {
                 let path = format!("{root}/{}", a["scenario"].as_str().unwrap_or(""));

@@ -67,6 +67,9 @@ if (process.argv.includes('--check')) {
     if (t1.game.commandErrors.length) throw new Error(t1.game.commandErrors.join('; '));
     if (!t1.command.historical.every((h) => h.issued)) throw new Error('не все директивы поданы');
     if (t1.game.hour !== 12) throw new Error(`час ${t1.game.hour}`);
+    // прогон с командующими: поле commanders в ходе, у обеих сторон
+    const tc = await core.call('run_scenario', { scenario: path, seed: 1, command: 'commanders' });
+    if (!Array.isArray(tc.commanders) || !tc.commanders.some((c) => c.side === 'su') || !tc.commanders.some((c) => c.side === 'de')) throw new Error('нет командующих в ходе');
     console.log('ok');
   } finally { core.stop(); }
 }
