@@ -152,4 +152,10 @@ describe('агентная модель: события окружения и с
     const ev = checkEvents(ctx, run, { ...history, events: [{ id: 'm', title: 'у Зелова', date: '1945-04-16', kind: 'meet', place: 'Seelow', radiusKm: 10, formations: ['su_8gva'] }] } as typeof history);
     expect(ev[0].simulated).toBe('1945-04-16');
   });
+  it('событие у места, которого нет на театре, сверяется по своей точке (городские вехи на театре операции)', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const { ctx, run } = agentsToRun(base, cutTrace(), 6);
+    const ev = checkEvents(ctx, run, { ...history, events: [{ id: 'x', title: 'веха', date: '1945-04-16', kind: 'reach', side: 'su', place: 'Нет_такого_места', radiusKm: 3, at: [14.4, 52.5] }] } as typeof history);
+    expect(ev[0].simulated).toBe('1945-04-16');
+  });
 });

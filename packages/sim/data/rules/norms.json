@@ -1231,6 +1231,26 @@
       "note": "прежде — по выдержке поисковика (C); теперь — по разбору таблицы на сайте Института Дюпюи"
     },
     {
+      "id": "agents-urban-outer",
+      "title": "Темп наступления на окраинах Берлина (агентная модель)",
+      "kb": "battle:berlin-storm",
+      "source": "LT_CONQ, гл. 1",
+      "reliability": "B",
+      "historical": "на окраинах — район за день, около 2–4 км/сут (7 гв. тк, 55 гв. тбр: Лихтерфельде — Целендорф)",
+      "measure": {
+        "kind": "param",
+        "expr": "agents.combat.urban.outer"
+      },
+      "expect": [
+        2,
+        4
+      ],
+      "unit": "км/сут",
+      "rules": [
+        "agents.combat.urban.outer"
+      ]
+    },
+    {
       "id": "agents-urban-citadel",
       "title": "Темп штурма цитадели Берлина (агентная модель)",
       "kb": "battle:berlin-storm",

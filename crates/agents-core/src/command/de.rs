@@ -37,6 +37,12 @@ pub fn corps(sim: &mut Sim, h: u32, intent: &Directive, replan: bool) -> Vec<Dir
     let hold_h = sim.rules.command.de.permission_hours as u32;
     for o in dec.orders {
         let Some(&i) = o.to.first() else { continue };
+        // действующее решение доктрины (сутки после него, до ответа на запрос об отходе — срок ответа) не перевыдаётся
+        // тем же «держать / оборонять / выдвинуться» на каждые 2–3 км, на которые противник оттеснил дивизию;
+        // контратака, прорыв и отход по разрешению — сразу
+        if tick < sim.command.doc_until[i as usize] && matches!(o.kind, OrderKind::Defend | OrderKind::Hold | OrderKind::Move) { continue; }
+        let active = tick < sim.command.doc_until[i as usize];
+        if o.kind == OrderKind::Withdraw && active && sim.command.requests.iter().any(|r| r.hq == h && r.division == i && r.answer != Some(true)) { continue; }
         out.retain(|d| d.to != Target::Division(i));
         sim.command.doc_until[i as usize] = tick + 24;
         let at = o.target.unwrap_or(sim.world.divisions[i as usize].vars.pos);

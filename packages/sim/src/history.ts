@@ -95,7 +95,8 @@ export function compareStrength(ctx: SimContext, run: RunResult, history: Histor
 /** Знак события на карте переигровки: появляется в момент, когда событие случилось в расчёте (и бледный — в исторический). */
 export interface EventMarker { preset: string; name: string; note?: string; historicalAt?: string }
 
-export type HistoryEvent = { id: string; title: string; date: string; source?: string; marker?: EventMarker } & (
+export type HistoryEvent = { id: string; title: string; date: string; source?: string; marker?: EventMarker;
+  /** Точка события, если места нет на театре расчёта (городские вехи на театре операции) */ at?: LngLat } & (
   | { kind: 'reach'; side: string; place: string; radiusKm: number; /** взято: в радиусе нет боеспособных частей противника */ control?: boolean }
   | { kind: 'cut'; formation?: string; formations?: string[] }
   | { kind: 'meet'; formations: string[]; place: string; radiusKm: number }
@@ -119,14 +120,14 @@ export function checkEvents(ctx: SimContext, run: RunResult, history: History): 
   return (history.events ?? []).map((e) => {
     let when: string | null = null;
     if (e.kind === 'reach') {
-      const c = T.area(e.place)?.center;
+      const c = T.area(e.place)?.center ?? e.at;
       const side = new Set(run.final.formations.filter((f) => f.side === e.side).map((f) => f.id));
       const near = (u: Snapshot['units'][number]) => !u.destroyed && dist(T.proj.toXY(u.at), T.proj.toXY(c!)) <= e.radiusKm;
       for (const s of run.snapshots.slice(1)) { // до начала сценария событие произойти не может
         if (c && s.units.some((u) => side.has(u.id) && near(u)) && !(e.control && s.units.some((u) => !side.has(u.id) && near(u)))) { when = s.time; break; }
       }
     } else if (e.kind === 'meet') {
-      const c = T.area(e.place)?.center;
+      const c = T.area(e.place)?.center ?? e.at;
       // формирования нет в снимке (агентная модель: на карте дивизии, армии — штабы) — хотя бы одна его дивизия (передовые
       // части замыкают кольцо, а не центр армии)
       const parent = new Map(run.final.formations.map((f) => [f.id, f.parent ?? null]));

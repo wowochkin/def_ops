@@ -328,6 +328,25 @@
       "note": "прежде — по выдержке поисковика (C); теперь — по разбору таблицы на сайте Института Дюпюи"
     },
     {
+      "path": "agents.combat.urban.outer",
+      "value": 3,
+      "unit": "км/сут",
+      "norm": [
+        2,
+        4
+      ],
+      "source": "LT_CONQ",
+      "place": "гл. 1",
+      "reliability": "B",
+      "paraphrase": "на окраинах Берлина — район за день, около 2–4 км в сутки (7 гв. тк, 55 гв. тбр: Лихтерфельде — Целендорф)",
+      "corridor": [
+        1.6,
+        4.8
+      ],
+      "inside_source": true,
+      "inside_corridor": true
+    },
+    {
       "path": "agents.combat.urban.citadel",
       "value": 0.25,
       "unit": "км/сут",

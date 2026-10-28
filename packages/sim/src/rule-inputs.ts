@@ -153,6 +153,7 @@ export const RULE_INPUTS: RuleInput[] = [
   agent('combat.defenderLossDay', 'Потери обороняющегося в сутки', 'доля/сут'),
   agent('combat.attackerLossMaxDay', 'Наибольшие потери наступающего в сутки', 'доля/сут'),
   agent('combat.defenderLossPenetrationDay', 'Потери обороняющегося при прорыве', 'доля/сут'),
+  agent('combat.urban.outer', 'Темп на окраинах города', 'км/сут'),
   agent('combat.urban.citadel', 'Темп в цитадели города', 'км/сут'),
   agent('combat.tankLossFactor', 'Потери танков к потерям людей', '×'),
   agent('combat.gunLossFactor', 'Потери орудий к потерям людей', '×'),
