@@ -3389,6 +3389,28 @@
       ]
     },
     {
+      "id": "commander-options",
+      "title": "Пороги вариантов фронта: поворот к объекту соперника и просвет для замыкания котла",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.options.turnKm",
+        "why": "допущение: пороги появления вариантов подбираются калибровкой (также options.encircleGapKm)"
+      },
+      "unit": "км",
+      "rules": [
+        "commanders.options.turnKm",
+        "commanders.options.encircleGapKm"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
       "id": "commander-weights",
       "title": "Веса слагаемых выбора варианта",
       "kb": "model:ход-как-считается",

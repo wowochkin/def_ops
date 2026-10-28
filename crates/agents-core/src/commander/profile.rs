@@ -41,6 +41,9 @@ pub struct Fog { pub strength_error: f64, pub report_delay_hours: u32 }
 /// Прибавки к оценке варианта: опередить соперника, потери, открытый фланг.
 #[derive(Clone, Debug)]
 pub struct Gains { pub rival: f64, pub losses: f64, pub flank: f64 }
+/// Пороги появления вариантов: удаление армии от объекта соперника для поворота, просвет для замыкания котла, км.
+#[derive(Clone, Debug)]
+pub struct Opts { pub turn_km: f64, pub encircle_gap_km: f64 }
 /// Состояние командующего: коэффициенты изменения уверенности и напряжения (в час), сдвиги черт, опорные величины.
 #[derive(Clone, Debug)]
 pub struct MoodRules {
@@ -73,6 +76,7 @@ pub struct CommanderRules {
     pub profiles: Vec<Profile>,
     pub fog: Fog,
     pub gains: Gains,
+    pub options: Opts,
     pub mood: MoodRules,
     pub weights: Weights,
     pub cycle: Cycle,
@@ -132,6 +136,7 @@ impl CommanderRules {
             profiles: out,
             fog: Fog { strength_error: n("fog.strengthError")?, report_delay_hours: hours("fog.reportDelayHours")? },
             gains: Gains { rival: n("gains.rival")?, losses: n("gains.losses")?, flank: n("gains.flank")? },
+            options: Opts { turn_km: n("options.turnKm")?, encircle_gap_km: n("options.encircleGapKm")? },
             mood: MoodRules {
                 start: Mood { confidence: n("mood.startConfidence")?, stress: n("mood.startStress")? },
                 success_gain: n("mood.successGain")?, setback_gain: n("mood.setbackGain")?, threat_gain: n("mood.threatGain")?,

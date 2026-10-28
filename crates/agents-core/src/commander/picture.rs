@@ -93,7 +93,7 @@ impl DistLog {
 }
 
 /// Штаб `h` подчинён `top` (или это он сам).
-fn under(sim: &Sim, mut h: u32, top: u32) -> bool {
+pub(super) fn under(sim: &Sim, mut h: u32, top: u32) -> bool {
     loop {
         if h == top { return true; }
         match sim.world.hqs[h as usize].parent { Some(p) => h = p, None => return false }
@@ -101,15 +101,19 @@ fn under(sim: &Sim, mut h: u32, top: u32) -> bool {
 }
 
 /// Живые дивизии штаба и его подчинённых.
-fn divisions_of(sim: &Sim, top: u32) -> Vec<usize> {
+pub(super) fn divisions_of(sim: &Sim, top: u32) -> Vec<usize> {
     (0..sim.world.divisions.len()).filter(|&i| { let d = &sim.world.divisions[i]; !d.state.out() && under(sim, d.hq, top) }).collect()
+}
+
+/// Место объекта профиля в километрах театра.
+pub(super) fn profile_objective_xy(sim: &Sim, p: &crate::commander::Profile) -> Option<XY> {
+    let c = &sim.rules.commanders;
+    Some(sim.theatre.proj.to_xy(c.objective_at(p.objective.as_deref()?)?))
 }
 
 /// Место цели командующего штаба в километрах театра.
 fn objective_xy(sim: &Sim, hq: u32) -> Option<XY> {
-    let c = &sim.rules.commanders;
-    let id = c.for_hq(&sim.world.hqs[hq as usize].id)?.objective.as_deref()?;
-    Some(sim.theatre.proj.to_xy(c.objective_at(id)?))
+    profile_objective_xy(sim, sim.rules.commanders.for_hq(&sim.world.hqs[hq as usize].id)?)
 }
 
 /// Расстояние ближайшей дивизии штаба до его цели.

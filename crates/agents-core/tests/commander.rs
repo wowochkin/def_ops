@@ -443,3 +443,152 @@ fn no_rival_zero() {
     let p = pic(1, vec![army(1, 0.0, 1.0)]); // соперника в сводке нет
     assert_eq!(current(&base, &p, g).get(Motive::Rival), 0.0);
 }
+
+/// Варианты советских фронтов: картина собирается руками, роли армий — в состоянии управления.
+mod options_su {
+    use super::*;
+    use agents_core::command::control::Role;
+    use agents_core::commander::options::{Choice, Kind};
+    use agents_core::commander::options_su::options_su;
+    use agents_core::commander::picture::{ArmyView, PocketView, Picture};
+    use agents_core::geo::XY;
+    use agents_core::world::Sim;
+
+    fn load() -> Sim {
+        let root = repo_root();
+        let (sim, _) = agents_core::scenario::load_with(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root, None, None).expect("сценарий");
+        sim
+    }
+    fn hq(sim: &Sim, id: &str) -> u32 { sim.world.hqs.iter().position(|h| h.id == id).expect(id) as u32 }
+    fn view(h: u32, advance_km: f64, broke: bool) -> ArmyView {
+        ArmyView { hq: h, advance_km, strength: 1.0, enemy_est: 1.0, enemy_true: 1.0, to_objective_km: Some(80.0), broke_through: broke }
+    }
+    fn pic(armies: Vec<ArmyView>) -> Picture {
+        Picture { tick: 10, armies, enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: Some(80.0) }
+    }
+    fn has(v: &[Choice], f: impl Fn(&Kind) -> bool) -> bool { v.iter().any(|c| f(&c.kind)) }
+    fn opts(sim: &Sim, front: &str, pic: &Picture) -> Vec<Choice> {
+        let h = hq(sim, front);
+        let p = sim.rules.commanders.for_hq(front).unwrap().clone();
+        options_su(sim, h, &p, pic)
+    }
+
+    /// Подвижная группа вводится только после пройденной глубины ввода.
+    #[test]
+    fn commit_mobile_only_after_depth() {
+        let mut sim = load();
+        let (rifle, tank) = (hq(&sim, "su_8gva"), hq(&sim, "su_1gta"));
+        sim.command.role_hq[rifle as usize] = Role::First;
+        sim.command.role_hq[tank as usize] = Role::Mobile;
+        let depth = sim.rules.doctrine_su.tank_commit_depth_km;
+        let shallow = opts(&sim, "su_1bf", &pic(vec![view(rifle, depth - 1.0, false), view(tank, 0.0, false)]));
+        assert!(!has(&shallow, |k| matches!(k, Kind::CommitMobile { .. })));
+        let deep = opts(&sim, "su_1bf", &pic(vec![view(rifle, depth + 1.0, false), view(tank, 0.0, false)]));
+        let c = deep.iter().find(|c| matches!(c.kind, Kind::CommitMobile { hq } if hq == tank)).expect("ввод");
+        assert!(has(&deep, |k| matches!(k, Kind::WaitMobile)));
+        // без прорыва неопределённость выше, чем с прорывом
+        let brk = opts(&sim, "su_1bf", &pic(vec![view(rifle, depth + 1.0, true), view(tank, 0.0, false)]));
+        assert!(!has(&brk, |k| matches!(k, Kind::WaitMobile)));
+        let cb = brk.iter().find(|c| matches!(c.kind, Kind::CommitMobile { .. })).unwrap();
+        assert!(c.uncertainty > cb.uncertainty);
+        for ch in deep.iter().chain(&brk) {
+            assert!((0.0..=1.0).contains(&ch.uncertainty) && (0.0..=1.0).contains(&ch.losses), "{}", ch.label);
+            assert!(ch.contrib.0.iter().all(|x| (-1.0..=1.0).contains(x)), "{}", ch.label);
+        }
+    }
+
+    /// Главный удар — по замыслу старшего, если он есть, иначе армии первого эшелона.
+    #[test]
+    fn main_blow_from_intent() {
+        let mut sim = load();
+        let (a, b, tank) = (hq(&sim, "su_8gva"), hq(&sim, "su_69a"), hq(&sim, "su_1gta"));
+        sim.command.role_hq[a as usize] = Role::First;
+        sim.command.role_hq[tank as usize] = Role::Mobile;
+        let depth = sim.rules.doctrine_su.tank_commit_depth_km;
+        // продвинулась только b, которая в роли First не стоит: без замысла главного удара ввода нет
+        let p = pic(vec![view(a, 0.0, false), view(b, depth + 1.0, false), view(tank, 0.0, false)]);
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitMobile { .. })));
+        use agents_core::command::directive::{Directive, Form, Target, Task};
+        let top = hq(&sim, "su_1bf") as usize;
+        let d = Directive { id: "т".into(), from: 0, to: Target::Hq(top as u32), form: Form::Order, task: Task::Attack, axis: vec![], immediate: None, subsequent: None,
+            boundaries: vec![], main_blow: vec![b], reserve: vec![], junction: None, hasty: false, ready: true, rule: None, issued: 0, note: String::new() };
+        sim.command.intent[top] = Some(d);
+        assert!(has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitMobile { .. })));
+    }
+
+    #[test]
+    fn shift_main_blow_when_other_army_runs_ahead() {
+        let mut sim = load();
+        let (a, b) = (hq(&sim, "su_8gva"), hq(&sim, "su_69a"));
+        sim.command.role_hq[a as usize] = Role::First;
+        let p = pic(vec![view(a, 20.0, false), view(b, 31.0, false)]);
+        assert!(opts(&sim, "su_1bf", &p).iter().any(|c| matches!(&c.kind, Kind::ShiftMainBlow { to } if to == &vec![b])));
+        let p = pic(vec![view(a, 20.0, false), view(b, 29.0, false)]);
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::ShiftMainBlow { .. })));
+    }
+
+    /// Поворот к объекту соперника — только когда есть соперник, его объект и своя армия ближе порога.
+    #[test]
+    fn turn_option_needs_rival_and_objective() {
+        let mut sim = load();
+        let tank = hq(&sim, "su_1gta");
+        sim.command.role_hq[tank as usize] = Role::Committed;
+        let p = pic(vec![view(tank, 10.0, true)]);
+        // 1УФ — соперник у Конева есть (Жуков), объект общий; по умолчанию армии далеко от объекта
+        sim.rules.commanders.options.turn_km = 0.0;
+        assert!(!has(&opts(&sim, "su_1uf", &p), |k| matches!(k, Kind::TurnToRival { .. })));
+        sim.rules.commanders.options.turn_km = 1.0e6;
+        let o = opts(&sim, "su_1uf", &p);
+        let t = o.iter().find(|c| matches!(c.kind, Kind::TurnToRival { .. })).expect("поворот");
+        assert!(t.contrib.get(Motive::Rival) > 0.0 && t.contrib.get(Motive::Task) < 0.0);
+    }
+
+    #[test]
+    fn no_rival_no_turn_option() {
+        let mut sim = load();
+        sim.rules.commanders.options.turn_km = 1.0e6;
+        let tank = hq(&sim, "su_1gta");
+        let p = pic(vec![view(tank, 10.0, true)]);
+        // у Рокоссовского соперника нет
+        assert!(sim.rules.commanders.for_hq("su_2bf").unwrap().rival.is_none());
+        assert!(!has(&opts(&sim, "su_2bf", &p), |k| matches!(k, Kind::TurnToRival { .. })));
+        // и соперник есть, но объекта у профиля нет
+        let mut prof = sim.rules.commanders.for_hq("su_1uf").unwrap().clone();
+        prof.objective = None;
+        assert!(!has(&options_su(&sim, hq(&sim, "su_1uf"), &prof, &p), |k| matches!(k, Kind::TurnToRival { .. })));
+    }
+
+    #[test]
+    fn encircle_needs_small_gap() {
+        let sim = load();
+        let (a, b) = (hq(&sim, "su_8gva"), hq(&sim, "su_69a"));
+        let gap = sim.rules.commanders.options.encircle_gap_km;
+        let mut p = pic(vec![view(a, 5.0, false)]);
+        p.pockets = vec![PocketView { center: XY::new(0.0, 0.0), enemy_est: 2.0, gap_km: gap + 1.0, by: vec![a, b] }];
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::Encircle { .. })));
+        p.pockets[0].gap_km = gap - 1.0;
+        let o = opts(&sim, "su_1bf", &p);
+        let e = o.iter().find(|c| matches!(c.kind, Kind::Encircle { pocket: 0 })).expect("замыкание");
+        assert!(e.contrib.get(Motive::Destroy) > 0.0);
+    }
+
+    #[test]
+    fn commit_second_needs_second_role() {
+        let mut sim = load();
+        let s = hq(&sim, "su_33a");
+        let p = pic(vec![view(s, 0.0, false)]);
+        assert!(!has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitSecond { .. })));
+        sim.command.role_hq[s as usize] = Role::Second;
+        assert!(has(&opts(&sim, "su_1bf", &p), |k| matches!(k, Kind::CommitSecond { hq } if *hq == s)));
+    }
+
+    #[test]
+    fn continue_always_present() {
+        let sim = load();
+        for f in ["su_1bf", "su_1uf", "su_2bf"] {
+            let o = opts(&sim, f, &pic(vec![]));
+            assert!(has(&o, |k| matches!(k, Kind::Continue)), "{f}");
+            assert!(!o.is_empty());
+        }
+    }
+}
