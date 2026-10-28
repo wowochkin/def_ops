@@ -90,24 +90,18 @@ pub fn imagine(sim: &Sim, c: &Commander, pic: &Picture, choice: &Choice, hours: 
     MindResult { hours, advance_km, losses, encircled: after.encircled - before.encircled }
 }
 
-/// Общее на час: копия мира после «продолжать» (строится при первом близком выборе часа) и сколько раз строилась.
+/// Общее на час: базовый проигрыш «продолжать» каждого командующего (строится при его первом близком выборе
+/// часа, с той же поправкой силы противника, что и у его вариантов) и сколько раз строился.
 #[derive(Default)]
-pub struct Hourly { pub fork: Option<Sim>, pub count: u32 }
+pub struct Hourly { pub base: Vec<(u32, MindResult)>, pub count: u32 }
 
-/// Базовый проигрыш «продолжать» на копии мира этого часа; копия общая для всех командующих часа.
-fn baseline(sim: &Sim, c: &Commander, shared: &mut Hourly, hours: u32) -> MindResult {
-    if shared.fork.is_none() {
-        let mut f = sim.fork();
-        for _ in 0..hours { f.step(); }
-        shared.fork = Some(f);
-        shared.count += 1;
-    }
-    let after = shared.fork.as_ref().expect("копия часа");
-    let own = divisions_of(sim, c.hq);
-    let (b, a) = (gauge(sim, c, &own), gauge(after, c, &own));
-    let advance_km = match (b.to_objective, a.to_objective) { (Some(x), Some(y)) => x - y, _ => 0.0 };
-    let losses = if b.own > 0.0 { ((b.own - a.own) / b.own).max(0.0) } else { 0.0 };
-    MindResult { hours, advance_km, losses, encircled: a.encircled - b.encircled }
+fn baseline(sim: &Sim, c: &Commander, pic: &Picture, shared: &mut Hourly, hours: u32) -> MindResult {
+    if let Some(x) = shared.base.iter().find(|x| x.0 == c.hq) { return x.1.clone(); }
+    let cont = Choice { kind: Kind::Continue, label: String::new(), contrib: Motives([0.0; 7]), uncertainty: 0.0, losses: 0.0, rule: "" };
+    let m = imagine(sim, c, pic, &cont, hours);
+    shared.base.push((c.hq, m.clone()));
+    shared.count += 1;
+    m
 }
 
 /// Вклад варианта, уточнённый проигрышем: измеренное (относительно «продолжать»), нормированное к −1…1,
@@ -132,14 +126,14 @@ pub fn wanted(sim: &Sim, c: &Commander, options: &[Scored]) -> bool {
 }
 
 /// Два лучших по пользе варианта (один при суженном обзоре) проигрываются «в уме», польза пересчитывается.
-/// `shared` — общая на час копия базового проигрыша.
+/// `shared` — базовые проигрыши часа по командующим.
 pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: &Traits, w: &Weights, hours: u32, shared: &mut Hourly, continuing: impl Fn(&Kind) -> bool) {
     if !wanted(sim, c, options) { return; }
     let n = if narrowed(&c.mood, &sim.rules.commanders.mood) { 1 } else { TOP };
     let mut order: Vec<usize> = (0..options.len()).collect();
     order.sort_by(|&a, &b| options[b].total.total_cmp(&options[a].total));
     order.truncate(n);
-    let base = baseline(sim, c, shared, hours);
+    let base = baseline(sim, c, pic, shared, hours);
     for i in order {
         let ch = options[i].choice.clone();
         // «продолжать» — сам базовый проигрыш; варианты без действия — его же, вклад прежний

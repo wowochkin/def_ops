@@ -1292,7 +1292,7 @@ mod mind {
         assert!(v.iter().all(|x| x.0 || !x.1), "проигрыш у армии или Ставки");
     }
 
-    /// Базовая копия строится раз в час, сколько бы командующих ни решало.
+    /// Базовый проигрыш строится раз в час на командующего, сколько бы решений он ни принял.
     #[test]
     fn baseline_once_per_hour() {
         let sim = run(Some(&json!({"commanders.lookaheadHours": 6, "commanders.mindMargin": 1.0})), 30);
@@ -1301,7 +1301,7 @@ mod mind {
             for d in c.decisions.iter().filter(|d| d.options.iter().any(|s| s.mind.is_some())) { ticks.entry(d.tick).or_default().insert(c.hq); }
         }
         assert!(ticks.values().any(|h| h.len() >= 2), "в одном часе решал один командующий");
-        assert_eq!(sim.commanders.baselines as usize, ticks.len());
+        assert_eq!(sim.commanders.baselines as usize, ticks.values().map(|h| h.len()).sum::<usize>());
     }
 
     /// Замер скорости: берлинский сценарий 96 ч, обе стороны под командующими, без «в уме» и с ним.
