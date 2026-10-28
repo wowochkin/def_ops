@@ -4,6 +4,7 @@
 
 use super::decide::{score, Commander, Decision, Scored};
 use super::motives::narrowed;
+use crate::model::Echelon;
 use super::options::{Choice, Kind};
 use super::picture::{dist_to_objective, divisions_of, Picture, RECON_X};
 use super::profile::{Motive, Motives, Traits, Weights};
@@ -77,12 +78,36 @@ pub fn imagine(sim: &Sim, c: &Commander, pic: &Picture, choice: &Choice, hours: 
         last: tick, snapshots: Vec::new(), decisions: vec![Decision { tick, trigger: String::new(), options: vec![scored], chosen: 0, why: String::new() }],
         picture: None, seen: c.seen.clone(), withdraw_at,
     };
+    let n0 = fork.command.requests.len();
     super::apply::apply(&mut fork, &temp, &choice.kind, tick);
+    // командующий проигрывает исход своего варианта: поднятые запросы на отход и прорыв считаются разрешёнными
+    for r in fork.command.requests[n0..].iter_mut() { r.answer = Some(true); r.answered_at = tick; }
+    super::apply::execute_permitted(&mut fork, tick);
     for _ in 0..hours { fork.step(); }
     let after = gauge(&fork, c, &own);
     let advance_km = match (before.to_objective, after.to_objective) { (Some(a), Some(b)) => a - b, _ => 0.0 };
     let losses = if before.own > 0.0 { ((before.own - after.own) / before.own).max(0.0) } else { 0.0 };
     MindResult { hours, advance_km, losses, encircled: after.encircled - before.encircled }
+}
+
+/// Общее на час: копия мира после «продолжать» (строится при первом близком выборе часа) и сколько раз строилась.
+#[derive(Default)]
+pub struct Hourly { pub fork: Option<Sim>, pub count: u32 }
+
+/// Базовый проигрыш «продолжать» на копии мира этого часа; копия общая для всех командующих часа.
+fn baseline(sim: &Sim, c: &Commander, shared: &mut Hourly, hours: u32) -> MindResult {
+    if shared.fork.is_none() {
+        let mut f = sim.fork();
+        for _ in 0..hours { f.step(); }
+        shared.fork = Some(f);
+        shared.count += 1;
+    }
+    let after = shared.fork.as_ref().expect("копия часа");
+    let own = divisions_of(sim, c.hq);
+    let (b, a) = (gauge(sim, c, &own), gauge(after, c, &own));
+    let advance_km = match (b.to_objective, a.to_objective) { (Some(x), Some(y)) => x - y, _ => 0.0 };
+    let losses = if b.own > 0.0 { ((b.own - a.own) / b.own).max(0.0) } else { 0.0 };
+    MindResult { hours, advance_km, losses, encircled: a.encircled - b.encircled }
 }
 
 /// Вклад варианта, уточнённый проигрышем: измеренное (относительно «продолжать»), нормированное к −1…1,
@@ -98,19 +123,30 @@ pub fn refine(contrib: &Motives, m: &MindResult, base: &MindResult) -> Motives {
     out
 }
 
-/// Три лучших по пользе варианта (один при суженном обзоре) проигрываются «в уме», пользу пересчитать.
-pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: &Traits, w: &Weights, hours: u32, continuing: impl Fn(&Kind) -> bool) {
+/// Проигрывание «в уме» ведут только фронты и группы армий, и только когда выбор близок.
+pub fn wanted(sim: &Sim, c: &Commander, options: &[Scored]) -> bool {
+    if sim.world.hqs[c.hq as usize].echelon != Echelon::Front || options.len() < 2 { return false; }
+    let mut v: Vec<f64> = options.iter().map(|s| s.total).collect();
+    v.sort_by(|a, b| b.total_cmp(a));
+    v[0] - v[1] < sim.rules.commanders.mind_margin
+}
+
+/// Два лучших по пользе варианта (один при суженном обзоре) проигрываются «в уме», польза пересчитывается.
+/// `shared` — общая на час копия базового проигрыша.
+pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: &Traits, w: &Weights, hours: u32, shared: &mut Hourly, continuing: impl Fn(&Kind) -> bool) {
+    if !wanted(sim, c, options) { return; }
     let n = if narrowed(&c.mood, &sim.rules.commanders.mood) { 1 } else { TOP };
     let mut order: Vec<usize> = (0..options.len()).collect();
     order.sort_by(|&a, &b| options[b].total.total_cmp(&options[a].total));
     order.truncate(n);
-    let blank = Choice { kind: Kind::Continue, label: String::new(), contrib: Motives([0.0; 7]), uncertainty: 0.0, losses: 0.0, rule: "" };
-    let base_choice = options.iter().find(|s| s.choice.kind == Kind::Continue).map_or(&blank, |s| &s.choice);
-    let base = imagine(sim, c, pic, base_choice, hours);
+    let base = baseline(sim, c, shared, hours);
     for i in order {
         let ch = options[i].choice.clone();
-        let m = if idle(&ch.kind) { base.clone() } else { imagine(sim, c, pic, &ch, hours) };
-        let refined = Choice { contrib: refine(&ch.contrib, &m, &base), ..ch };
+        // «продолжать» — сам базовый проигрыш; варианты без действия — его же, вклад прежний
+        let (refined, m) = if idle(&ch.kind) { (ch, base.clone()) } else {
+            let m = imagine(sim, c, pic, &ch, hours);
+            (Choice { contrib: refine(&ch.contrib, &m, &base), ..ch }, m)
+        };
         let mut s = score(&refined, &c.motives, t, w, continuing(&refined.kind));
         s.mind = Some(m);
         options[i] = s;

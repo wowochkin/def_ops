@@ -1264,7 +1264,7 @@ mod mind {
 
     #[test]
     fn mind_on_fills_top() {
-        let sim = run(Some(&json!({"commanders.lookaheadHours": 24})), 30);
+        let sim = run(Some(&json!({"commanders.lookaheadHours": 24, "commanders.mindMargin": 1.0})), 30);
         let mut seen = 0;
         for d in sim.commanders.list.iter().flat_map(|c| &c.decisions) {
             let k = d.options.iter().filter(|s| s.mind.is_some()).count();
@@ -1273,6 +1273,35 @@ mod mind {
             for m in d.options.iter().filter_map(|s| s.mind.as_ref()) { assert_eq!(m.hours, 24); }
         }
         assert!(seen > 0, "ни у одного решения нет проигрыша");
+    }
+
+    /// Проигрыш только на близких выборах и только у фронтов и групп армий.
+    #[test]
+    fn mind_only_on_close_calls() {
+        let mind = |sim: &Sim| -> Vec<(bool, bool)> {
+            sim.commanders.list.iter().flat_map(|c| {
+                let front = sim.world.hqs[c.hq as usize].echelon == agents_core::model::Echelon::Front;
+                c.decisions.iter().flat_map(|d| &d.options).map(move |s| (front, s.mind.is_some()))
+            }).collect()
+        };
+        let none = run(Some(&json!({"commanders.lookaheadHours": 24, "commanders.mindMargin": 0.0})), 30);
+        assert!(mind(&none).iter().all(|x| !x.1) && !mind(&none).is_empty());
+        let all = run(Some(&json!({"commanders.lookaheadHours": 24, "commanders.mindMargin": 1.0})), 30);
+        let v = mind(&all);
+        assert!(v.iter().any(|x| x.0 && x.1), "фронты без проигрыша");
+        assert!(v.iter().all(|x| x.0 || !x.1), "проигрыш у армии или Ставки");
+    }
+
+    /// Базовая копия строится раз в час, сколько бы командующих ни решало.
+    #[test]
+    fn baseline_once_per_hour() {
+        let sim = run(Some(&json!({"commanders.lookaheadHours": 6, "commanders.mindMargin": 1.0})), 30);
+        let mut ticks = std::collections::BTreeMap::<u32, std::collections::BTreeSet<u32>>::new();
+        for c in &sim.commanders.list {
+            for d in c.decisions.iter().filter(|d| d.options.iter().any(|s| s.mind.is_some())) { ticks.entry(d.tick).or_default().insert(c.hq); }
+        }
+        assert!(ticks.values().any(|h| h.len() >= 2), "в одном часе решал один командующий");
+        assert_eq!(sim.commanders.baselines as usize, ticks.len());
     }
 
     /// Замер скорости: берлинский сценарий 96 ч, обе стороны под командующими, без «в уме» и с ним.

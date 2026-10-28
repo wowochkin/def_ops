@@ -81,6 +81,8 @@ pub struct CommanderRules {
     pub weights: Weights,
     pub cycle: Cycle,
     pub lookahead_hours: u32,
+    /// Проигрыш «в уме» — когда польза двух лучших вариантов различается меньше этого.
+    pub mind_margin: f64,
     /// Объекты, к которым тянутся командующие: id и место (долгота, широта); в километры театра — в картине обстановки.
     pub objectives: Vec<(String, LngLat)>,
 }
@@ -147,6 +149,7 @@ impl CommanderRules {
             weights: Weights { uncertainty: n("weights.uncertainty")?, losses: n("weights.losses")?, persistence: n("weights.persistence")?, obedience: n("weights.obedience")? },
             cycle: Cycle { front: hours("cycleHours.front")?, army: hours("cycleHours.army")?, high: hours("cycleHours.high")? },
             lookahead_hours: hours("lookaheadHours")?,
+            mind_margin: n("mindMargin")?,
             objectives,
         })
     }

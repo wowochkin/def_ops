@@ -110,6 +110,8 @@ pub struct State {
     pub log: DistLog,
     /// Запросы, поднятые командующими, ждущие ответа или исполнения.
     pub raised: Vec<Raised>,
+    /// Сколько раз строилась общая на час копия базового проигрыша «в уме» (для проверки).
+    pub baselines: u32,
 }
 
 /// Включить командующих стороны: на каждый её штаб, у которого есть профиль; штаб без профиля решает по правилам штаба.
@@ -251,7 +253,7 @@ fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option<Str
 }
 
 /// Решение командующего: варианты, оценка, выбор, разбор, исполнение.
-fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String) {
+fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String, hourly: &mut super::mind::Hourly) {
     c.last = tick;
     let p = sim.rules.commanders.profiles[c.profile].clone();
     let Some(pic) = c.picture.as_ref() else { return };
@@ -266,7 +268,7 @@ fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String) {
     let mut options: Vec<Scored> = opts.iter().map(|ch| score(ch, &c.motives, &t, w, same_line(&ch.kind, c.intent.as_ref()))).collect();
     // «в уме»: лучшие варианты проигрываются на копии мира, польза пересчитывается
     let ahead = sim.rules.commanders.lookahead_hours;
-    if ahead > 0 { super::mind::look(sim, c, pic, &mut options, &t, w, ahead, |k| same_line(k, c.intent.as_ref())); }
+    if ahead > 0 { super::mind::look(sim, c, pic, &mut options, &t, w, ahead, hourly, |k| same_line(k, c.intent.as_ref())); }
     let chosen = pick(&options, c.intent.as_ref());
     let why = why(&options, chosen);
     let kind = options[chosen].choice.kind.clone();
@@ -283,7 +285,7 @@ fn decide(sim: &mut Sim, c: &mut Commander, tick: u32, trigger: String) {
 }
 
 /// Час командующего: состояние и мотивы по картине, решение по циклу или по перемене обстановки, снимок.
-fn hour(sim: &mut Sim, c: &mut Commander, tick: u32) {
+fn hour(sim: &mut Sim, c: &mut Commander, tick: u32, hourly: &mut super::mind::Hourly) {
     if !sim.commanders.enabled[side_idx(sim.world.hqs[c.hq as usize].side)] { return; }
     let pic = picture(sim, c.hq, &sim.commanders.log);
     let behind = task_behind(sim, c.hq, tick);
@@ -298,14 +300,14 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32) {
     let cycle = cycle_hours(sim, c.hq);
     let before = c.decisions.len();
     if agent && (trig.is_some() || tick >= c.last + cycle) {
-        decide(sim, c, tick, trig.unwrap_or_else(|| format!("цикл решения {cycle} ч")));
+        decide(sim, c, tick, trig.unwrap_or_else(|| format!("цикл решения {cycle} ч")), hourly);
         // верхняя инстанция отвечает на все ждущие запросы в этот же час — каждый ответ отдельным решением
         let side = sim.world.hqs[c.hq as usize].side;
         let wait = sim.rules.command.de.permission_hours as u32;
         let waiting = |sim: &Sim| sim.command.requests.iter().filter(|r| r.answer.is_none() && tick >= r.tick + wait && sim.world.hqs[r.hq as usize].side == side).count();
         let mut left = waiting(sim);
         while left > 0 && c.decisions.len() > before && matches!(c.intent, Some(Kind::Permit { .. } | Kind::Forbid { .. })) {
-            decide(sim, c, tick, format!("ещё запросы на отход: {left}"));
+            decide(sim, c, tick, format!("ещё запросы на отход: {left}"), hourly);
             let now = waiting(sim);
             if now >= left { break; }
             left = now;
@@ -324,7 +326,9 @@ pub fn cycle(sim: &mut Sim, tick: u32) {
     log.record(sim);
     sim.commanders.log = log;
     let mut list = std::mem::take(&mut sim.commanders.list);
-    for c in list.iter_mut() { hour(sim, c, tick); }
+    let mut hourly = super::mind::Hourly::default();
+    for c in list.iter_mut() { hour(sim, c, tick, &mut hourly); }
+    sim.commanders.baselines += hourly.count;
     sim.commanders.list = list;
     super::apply::execute_permitted(sim, tick);
 }

@@ -3451,6 +3451,27 @@
         "berlin-1945-tasks",
         "vistula-oder-1945"
       ]
+    },
+    {
+      "id": "commander-mind",
+      "title": "Проигрывание «в уме»: порог близкого выбора",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.mindMargin",
+        "why": "допущение: командующий проигрывает варианты вперёд, только когда польза двух лучших различается меньше порога; опоры в источниках нет"
+      },
+      "unit": "—",
+      "rules": [
+        "commanders.mindMargin"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [

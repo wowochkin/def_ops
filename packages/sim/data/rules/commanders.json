@@ -283,6 +283,15 @@
     "source": "допущение: замысел без заглядывания вперёд",
     "confidence": "assumption"
   },
+  "mindMargin": {
+    "value": 0.15,
+    "range": [
+      0,
+      1
+    ],
+    "source": "допущение: проигрыш «в уме» только когда разница пользы двух лучших вариантов меньше этого",
+    "confidence": "assumption"
+  },
   "objectives": {
     "berlin": {
       "name": "Берлин",

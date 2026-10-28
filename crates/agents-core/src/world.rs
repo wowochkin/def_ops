@@ -261,7 +261,7 @@ impl Sim {
             llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(su),
             on_progress: None, on_stream: None, journal: Vec::new(), historical: self.historical.clone(), command: self.command.clone(),
             documents: Vec::new(), history: None, staff: self.staff.clone(),
-            commanders: crate::commander::State { enabled: [false; 2], list: Vec::new(), log: Default::default(), raised: self.commanders.raised.clone() },
+            commanders: crate::commander::State { enabled: [false; 2], list: Vec::new(), log: Default::default(), raised: self.commanders.raised.clone(), baselines: 0 },
         }
     }
 
