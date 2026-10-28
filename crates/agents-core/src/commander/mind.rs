@@ -13,7 +13,7 @@ use crate::world::Sim;
 
 /// Сколько лучших по пользе вариантов проигрывается; при суженном обзоре — один (три стоили вдесятеро дороже счёта).
 const TOP: usize = 2;
-/// Доля проигрыша в уточнённом вкладе: вклад = (1 − доля)·прежний + доля·измеренный.
+/// Вес измеренного в поправке вклада: вклад' = вклад + доля·измеренное.
 const BLEND: f64 = 0.5;
 /// Разница продвижения с «продолжать», дающая вклад ±1, км на час проигрыша: 1 км/ч, то есть 24 км за сутки (допущение: предел темпа наступления).
 const ADVANCE_KM_PER_H: f64 = 1.0;
@@ -104,15 +104,15 @@ fn baseline(sim: &Sim, c: &Commander, pic: &Picture, shared: &mut Hourly, hours:
     m
 }
 
-/// Вклад варианта, уточнённый проигрышем: измеренное (относительно «продолжать»), нормированное к −1…1,
-/// смешивается с прежним вкладом. Задача и соперник — по продвижению, сохранение армий — по потерям, разгром — по охвату.
+/// Вклад варианта, уточнённый проигрышем: к прежнему вкладу прибавляется `BLEND`·измеренное (разница с «продолжать»,
+/// нормированная к −1…1; при равном исходе — 0, вклад прежний), итог в −1…1. Задача и соперник — по продвижению, сохранение армий — по потерям, разгром — по охвату.
 pub fn refine(contrib: &Motives, m: &MindResult, base: &MindResult) -> Motives {
     let adv = ((m.advance_km - base.advance_km) / (ADVANCE_KM_PER_H * m.hours.max(1) as f64)).clamp(-1.0, 1.0);
     let loss = ((base.losses - m.losses) / LOSSES_SCALE).clamp(-1.0, 1.0);
     let enc = ((m.encircled - base.encircled) / ENCIRCLED_SCALE).clamp(-1.0, 1.0);
     let mut out = *contrib;
     for (k, x) in [(Motive::Task, adv), (Motive::Rival, adv), (Motive::Preserve, loss), (Motive::Destroy, enc)] {
-        out.0[k as usize] = (1.0 - BLEND) * contrib.get(k) + BLEND * x;
+        out.0[k as usize] = (contrib.get(k) + BLEND * x).clamp(-1.0, 1.0);
     }
     out
 }
@@ -137,8 +137,7 @@ pub fn look(sim: &Sim, c: &Commander, pic: &Picture, options: &mut [Scored], t: 
     let base = baseline(sim, c, pic, shared, hours);
     for i in order {
         let ch = options[i].choice.clone();
-        // варианты без действия измеренного вклада не получают: их исход равен базовому, поправка была бы нулевой
-        // «продолжать» — сам базовый проигрыш; варианты без действия — его же, вклад прежний
+        // «продолжать» — сам базовый проигрыш; варианты без действия — его же (поправка нулевая), вклад прежний
         let (refined, m) = if idle(&ch.kind) { (ch, base.clone()) } else {
             let m = imagine(sim, c, pic, &ch, hours);
             (Choice { contrib: refine(&ch.contrib, &m, &base), ..ch }, m)

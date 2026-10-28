@@ -1280,7 +1280,7 @@ mod mind {
         let army = sim.world.hqs.iter().position(|h| h.side == Side::Su && h.echelon == agents_core::model::Echelon::Army).unwrap() as u32;
         let under = |mut h: u32| loop { if h == army { return true; } match sim.world.hqs[h as usize].parent { Some(p) => h = p, None => return false } };
         let mine: Vec<_> = sim.world.divisions.iter().filter(|d| !d.state.out() && under(d.hq)).map(|d| d.vars.pos).collect();
-        let recon = sim.rules.contact_km * 3.0;
+        let recon = sim.rules.contact_km * agents_core::commander::picture::RECON_X;
         let near = |d: &agents_core::model::Division| mine.iter().any(|p| p.dist(d.vars.pos) <= recon);
         let view = agents_core::commander::picture::ArmyView { hq: army, advance_km: 0.0, strength: 1.0, enemy_est: 0.5, enemy_true: 1.0, to_objective_km: None, broke_through: false };
         let pic = agents_core::commander::picture::Picture { tick: 0, armies: vec![view], enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: None };
@@ -1296,26 +1296,29 @@ mod mind {
         assert!(scaled > 0 && kept > 0, "{scaled} {kept}");
     }
 
-    /// Уточнение вклада: смесь 50/50, зажим −1…1, меняются только четыре мотива, знаки против базового.
+    /// Уточнение вклада: прибавка BLEND·измеренное, зажим −1…1, меняются только четыре мотива, знаки против базового.
     #[test]
     fn refine_blends_and_clamps() {
         use agents_core::commander::mind::refine;
         use agents_core::commander::MindResult;
         let c = Motives([0.2, 0.4, -0.2, 0.1, 0.0, 0.3, -0.5]);
         let base = MindResult { hours: 10, advance_km: 2.0, losses: 0.05, encircled: 0.0 };
-        // продвижение на 5 км лучше базового (шкала 1 км/ч × 10 ч), потери вдвое меньше (шкала 0,1), охват +0,05 (шкала 0,1)
+        // равен базовому — вклад прежний
+        assert_eq!(refine(&c, &base, &base).0, c.0);
+        // продвижение на 5 км лучше базового (шкала 1 км/ч × 10 ч = 0,5), потери на 0,05 меньше (шкала 0,1 = 0,5), охват +0,05 (шкала 0,1 = 0,5)
         let m = MindResult { hours: 10, advance_km: 7.0, losses: 0.0, encircled: 0.05 };
         let r = refine(&c, &m, &base);
-        assert!((r.0[0] - (0.5 * 0.2 + 0.5 * 0.5)).abs() < 1e-12 && (r.0[1] - (0.5 * 0.4 + 0.5 * 0.5)).abs() < 1e-12);
-        assert!((r.0[2] - (0.5 * -0.2 + 0.5 * 0.5)).abs() < 1e-12 && (r.0[4] - 0.5 * 0.5).abs() < 1e-12);
+        assert!((r.0[0] - (0.2 + 0.25)).abs() < 1e-12 && (r.0[1] - (0.4 + 0.25)).abs() < 1e-12);
+        assert!((r.0[2] - (-0.2 + 0.25)).abs() < 1e-12 && (r.0[4] - 0.25).abs() < 1e-12);
         for i in [3, 5, 6] { assert_eq!(r.0[i], c.0[i]); }
-        // хуже базового — минус; за пределом шкалы — зажим
+        // хуже базового — ниже; за пределом шкалы измеренное зажато, итог зажат в −1…1
         let bad = MindResult { hours: 10, advance_km: -100.0, losses: 0.9, encircled: -0.9 };
         let r = refine(&c, &bad, &base);
-        assert!((r.0[0] - (0.5 * 0.2 - 0.5)).abs() < 1e-12 && (r.0[2] - (0.5 * -0.2 - 0.5)).abs() < 1e-12 && (r.0[4] + 0.5).abs() < 1e-12);
-        // равен базовому — половина прежнего вклада
-        let r = refine(&c, &base, &base);
-        assert!((r.0[1] - 0.2).abs() < 1e-12 && r.0[4].abs() < 1e-12);
+        assert!((r.0[0] - (0.2 - 0.5)).abs() < 1e-12 && (r.0[2] - (-0.2 - 0.5)).abs() < 1e-12 && (r.0[4] + 0.5).abs() < 1e-12);
+        let hi = Motives([0.9, 0.9, 0.9, 0.0, 0.9, 0.0, 0.0]);
+        let best = MindResult { hours: 10, advance_km: 100.0, losses: 0.0, encircled: 0.9 };
+        let r = refine(&hi, &best, &base);
+        assert!(r.0.iter().all(|x| (-1.0..=1.0).contains(x)) && r.0[0] == 1.0 && r.0[4] == 1.0);
     }
 
     /// Проигранный вариант с действием получает вклад, отличный от прежнего, если исход отличается от базового.
@@ -1337,7 +1340,11 @@ mod mind {
             for o in opts.iter().filter(|o| !matches!(o.kind, Kind::Continue | Kind::WaitMobile | Kind::Hold | Kind::ShiftForces { .. })) {
                 let m = imagine(&sim, c, pic, o, 12);
                 if m == base { continue; }
-                assert_ne!(refine(&o.contrib, &m, &base).0, o.contrib.0, "{}", o.label);
+                let r = refine(&o.contrib, &m, &base);
+                // отличие исхода от базового меняет вклад, кроме случая зажима у границы
+                let moved = r.0 != o.contrib.0;
+                let at_edge = [0usize, 1, 2, 4].iter().any(|&i| o.contrib.0[i].abs() >= 1.0);
+                assert!(moved || at_edge || m.advance_km == base.advance_km && m.losses == base.losses && m.encircled == base.encircled, "{}", o.label);
                 checked += 1;
             }
         }
