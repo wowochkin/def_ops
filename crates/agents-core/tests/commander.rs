@@ -359,7 +359,8 @@ fn confidence_grows_on_success() {
     let m = &Rules::load(&data()).unwrap().commanders.mood;
     let prev = pic(0, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
     let now = pic(1, vec![army(1, 5.0, 1.0), army(2, 5.0, 1.0)]); // 5 км/ч — намного выше темпа
-    let s = Mood { confidence: 0.5, stress: 0.2 };
+    // от состояния на начало: возврат к нему не мешает знаку сигнала
+    let s = m.start;
     let next = mood_step(&s, &now, Some(&prev), 0.0, true, m);
     assert!(next.confidence > s.confidence, "{next:?}");
     let slow = pic(1, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
@@ -959,9 +960,12 @@ mod decide {
         let o = options_su(sim, hq(sim, "su_1bf"), &p, &pic);
         (pic, o)
     }
-    fn scored(sim: &Sim, o: &[Choice], t: &Traits) -> Vec<Scored> {
-        let p = sim.rules.commanders.for_hq("su_1bf").unwrap();
-        o.iter().map(|c| score(c, &p.motives, t, &sim.rules.commanders.weights, false)).collect()
+    /// Оценка вариантов с постоянными весами и мотивами (значения до калибровки): проверка механизма — черта меняет
+    /// выбор, — а не подобранных чисел, которые калибровка двигает.
+    fn scored(_sim: &Sim, o: &[Choice], t: &Traits) -> Vec<Scored> {
+        let w = agents_core::commander::Weights { uncertainty: 2.5, losses: 1.0, persistence: 1.0, obedience: 0.5 };
+        let m = Motives([0.8, 0.7, 0.3, 0.4, 0.7, 0.0, 0.0]);
+        o.iter().map(|c| score(c, &m, t, &w, false)).collect()
     }
     fn best(v: &[Scored]) -> &Kind { &v.iter().max_by(|a, b| a.total.total_cmp(&b.total)).unwrap().choice.kind }
     /// Решение о подвижной группе: ввести или ждать — лучший из этих двух вариантов.
@@ -1126,12 +1130,21 @@ mod decide {
         for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
         sim
     }
+    /// То же, но командующие включаются после `hours` часов: их собственные решения не опережают проверяемое
+    /// (при подобранном характере Жуков может ввести танковую армию уже в первые часы).
+    fn quiet(side: Side, hours: u32) -> Sim {
+        let mut sim = load(None);
+        let mut pending = agents_core::command::control::command_mode(&mut sim, "agents", side).expect("режим");
+        for _ in 0..hours { agents_core::command::control::feed(&mut sim, &mut pending, false); sim.step(); }
+        agents_core::commander::enable(&mut sim, side);
+        sim
+    }
     use agents_core::command::directive::{Target, Task};
     use agents_core::commander::apply::{apply, execute_permitted};
 
     #[test]
     fn apply_commit_mobile_sets_role_and_deep_task() {
-        let mut sim = started(Side::Su, 3);
+        let mut sim = quiet(Side::Su, 3);
         let (f, tank) = (hq(&sim, "su_1bf"), hq(&sim, "su_1gta"));
         assert_eq!(sim.command.role_hq[tank as usize], Role::Mobile);
         let k = Kind::CommitMobile { hq: tank };
@@ -1167,7 +1180,7 @@ mod decide {
 
     #[test]
     fn apply_shift_and_turn_issue_directives() {
-        let mut sim = started(Side::Su, 3);
+        let mut sim = quiet(Side::Su, 3);
         let (f, a, b) = (hq(&sim, "su_1bf"), hq(&sim, "su_69a"), hq(&sim, "su_1gta"));
         let tick = sim.world.tick;
         let k = Kind::ShiftMainBlow { to: vec![a] };
