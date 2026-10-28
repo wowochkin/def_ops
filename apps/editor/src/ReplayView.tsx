@@ -32,7 +32,7 @@ import { nearestFeature, OVER_MAP, shownFeatures, unitAt, unitPlace } from './ma
 import { agentHqCard, formationCard } from './formation-card';
 import { FormationPanel, useEsc } from './FormationCard';
 
-import { AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentVariant } from './sim/agent-scenarios';
+import { AGENT_COMMANDS, AGENT_SCENARIOS, agentVariants, DESKTOP, runAgents, type AgentCommand, type AgentVariant } from './sim/agent-scenarios';
 import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompile';
 import { kbStamp, type KbStamp } from './sim/kb-stamp';
 import { KbStampNote } from './KbStampNote';
@@ -43,6 +43,8 @@ import { calcDoneText, calcFailText, findLayer, inReplay, releaseReplay, replayA
 import { readAloud } from './voice/dictation';
 import { speakable } from './voice/speech';
 /** Ход игры на агентной модели, ч. */
+/** Режим командования агентной модели в «Переигровке» (запоминается). */
+const COMMAND_KEY = 'def_ops.agents.command';
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
 const AGENT_STEP_HOURS = 6;
@@ -207,6 +209,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
   const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
   const [variantId, setVariantId] = useState('');
+  // кто решает за советские штабы в агентной модели; по умолчанию — фронты по истории, ниже штабы-агенты
+  const [command, setCommandState] = useState<AgentCommand>(() => { try { const v = localStorage.getItem(COMMAND_KEY); return AGENT_COMMANDS.some((c) => c.id === v) ? v as AgentCommand : 'fronts'; } catch { return 'fronts'; } });
+  const setCommand = (c: AgentCommand) => { setCommandState(c); try { localStorage.setItem(COMMAND_KEY, c); } catch { /* */ } };
   useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);
   const agentOp = DESKTOP ? AGENT_SCENARIOS[scenario] : undefined;
   const useAgents = model === 'agents' && !!agentOp;
@@ -283,7 +288,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setBusy('расчёт агентной модели…'); setError(null);
     // вариант параметров выбран для операции на экране; другая операция (названа голосом) — базовые параметры
     const params = sc === scenario ? variants.find((v) => v.id === variantId)?.params : undefined;
-    Promise.all([coreEditsFor(sc).then((edits) => runAgents(sc, { seed, params, edits })), invoke<string>('read_text', { path: op.history })])
+    Promise.all([coreEditsFor(sc).then((edits) => runAgents(sc, { seed, params, edits, command })), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
         const history = JSON.parse(h) as AgentHistory;
@@ -510,6 +515,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <select value={variantId} onChange={(e) => setVariantId(e.target.value)} disabled={!!busy}>
               <option value="">базовые (agents-v0)</option>
               {variants.filter((v) => !v.scenario || v.scenario === scenario).map((v) => <option key={v.id} value={v.id}>{v.title}</option>)}
+            </select>
+          </label>}
+          {useAgents && <label title={AGENT_COMMANDS.find((c) => c.id === command)?.hint}>Советские штабы
+            <select value={command} onChange={(e) => setCommand(e.target.value as AgentCommand)} disabled={!!busy} data-hl="agents-command">
+              {AGENT_COMMANDS.map((c) => <option key={c.id} value={c.id} title={c.hint}>{c.title}</option>)}
             </select>
           </label>}
           {!useAgents && <label>Правила

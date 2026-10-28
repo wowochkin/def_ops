@@ -143,3 +143,58 @@ pub fn historical_for(sim: &mut Sim, side: crate::model::Side, only: Option<&str
     }
     Vec::new()
 }
+
+/// Прогон «фронты по истории»: верхняя инстанция и фронты стороны ведутся по приказам сценария (их собственные приказы
+/// дивизиям — резервам фронта — исполняются), армии и ниже — штабы-агенты; подавать — исторические распоряжения фронтов
+/// армиям: (час, директива), до начала операции — `ready`.
+pub fn front_historical(sim: &mut Sim, side: crate::model::Side) -> Vec<(u32, Directive)> {
+    use crate::model::Echelon;
+    for (k, h) in sim.world.hqs.iter().enumerate() {
+        if h.side != side { continue; }
+        sim.command.control[k] = if matches!(h.echelon, Echelon::HighCommand | Echelon::Front) { Control::Script } else { Control::Agent };
+    }
+    let start = sim.world.tick == 0;
+    let w = &sim.world;
+    sim.historical.iter().filter(|(_, d)| w.hqs[d.from as usize].side == side && w.hqs[d.from as usize].echelon == Echelon::Front)
+        .cloned().map(|(at, mut d)| { d.ready = at == 0 && start; (at, d) }).collect()
+}
+
+/// Распоряжение фронта без оси («армии — к такому-то району»): ось — от нынешнего места получателя к середине ближайшей
+/// задачи, в час подачи (иначе оно не сменило бы прежний замысел армии с осью).
+pub fn with_axis(sim: &Sim, mut d: Directive) -> Directive {
+    if d.axis.is_empty() {
+        if let Some(goal) = d.immediate.as_ref().and_then(|l| crate::command::agent::mid(&l.pts)) {
+            let from = crate::command::agent::place(sim, d.to);
+            if from.dist(goal) > 1.0 { d.axis = vec![from, goal]; }
+        }
+    }
+    d
+}
+
+/// Режим командования прогона стороны `side`: `script` — приказы сценария; `agents` — штабы-агенты под историческими
+/// директивами Ставки (верхняя инстанция — агент: отвечает на запросы отхода); `hybrid` — поддеревья получателей
+/// директив по приказам сценария; `fronts` — Ставка и фронты по истории, армии и ниже — штабы-агенты. Возвращает
+/// директивы к подаче по часам (`feed`).
+pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Result<Vec<(u32, Directive)>, String> {
+    match mode {
+        "script" => Ok(Vec::new()),
+        "agents" | "hybrid" => {
+            agents_side(sim, side);
+            for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == crate::model::Echelon::HighCommand { sim.command.control[k] = Control::Agent; } }
+            Ok(historical_for(sim, side, None, mode == "hybrid"))
+        }
+        "fronts" => Ok(front_historical(sim, side)),
+        x => Err(format!("режим командования: script | agents | hybrid | fronts, а не {x}")),
+    }
+}
+
+/// Подать директивы, срок которых наступил (до шага этого часа); в режиме `fronts` — с осью от места получателя.
+pub fn feed(sim: &mut Sim, pending: &mut Vec<(u32, Directive)>, fronts: bool) {
+    let now = sim.world.tick;
+    let (due, rest): (Vec<_>, Vec<_>) = std::mem::take(pending).into_iter().partition(|(at, _)| *at <= now);
+    *pending = rest;
+    for (_, d) in due {
+        let d = if fronts { with_axis(sim, d) } else { d };
+        crate::command::passing::issue(sim, d, now);
+    }
+}

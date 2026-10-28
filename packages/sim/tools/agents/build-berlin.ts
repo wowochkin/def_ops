@@ -29,7 +29,7 @@
  * Выход: packages/sim/data/scenarios/agents/berlin-1945.json и berlin-1945.history.json.
  */
 import { HIGH_COMMAND, type HqEchelon } from './hierarchy';
-import { scenarioDirectives } from './directives';
+import { frontDirectives as frontDirectivesOf, scenarioDirectives } from './directives';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -558,6 +558,27 @@ const hqList = [...hqs.values()].filter((h) => usedHq.has(h.id)).map((h) => ({
     : hqPos(h.id) ?? center(out.filter((o) => o.hq === h.id).map((o) => o.pos))),
   ...(h.note ? { note: h.note } : {}),
 }));
+// ---------- распоряжения фронтов армиям (прогон «фронты по истории», agents-run --below front) ----------
+const hqEch = new Map(hqList.map((h) => [h.id, h]));
+const frontDirectives = frontDirectivesOf(ts.orders, hqList, targetOf, START, END);
+// распоряжения 1 БФ армиям из выписок ЖБД фронта (ЦАМО), которых в сценарии нынешней модели на ту же дату нет:
+// 47 А 23.04 — удар на юго-запад, на Потсдам; 69 А 21–23.04 — на Фюрстенвальде и Бад-Заров, окружение; 61 А, 2 гв.
+// ТА, 5 УА, 3 А 25.04. «Ввести в прорыв» — задачи кавалерийских корпусов, не армии, — не берутся
+const tsamoOrders = rd<{ from: string; to: string; issued: string; deadline: string | null; task: string; lat: number; lon: number; target: string; source: string }[]>('docs/sources/berlin-1945-tsamo/orders.json');
+const armyId = (n: string): string | null => { const m = n.match(/^(\d+) (гв\. )?(А|УА|ТА)$/); return m ? `su_${m[1]}${m[2] ? 'g' : ''}${m[3] === 'А' ? (m[2] ? 'va' : 'a') : m[3] === 'УА' ? 'ua' : 'ta'}` : null; };
+const tsDay = new Set(ts.orders.map((o) => `${o.formation}|${o.issuedAt.slice(0, 10)}`));
+let tsamoN = 0;
+for (const o of tsamoOrders) {
+  const id = armyId(o.to);
+  if (o.from !== '1 БФ' || !id || hqEch.get(id)?.echelon !== 'army' || /ввести в прорыв/.test(o.task) || tsDay.has(`${id}|${o.issued.slice(0, 10)}`)) continue;
+  const at = o.issued.length > 10 ? o.issued : `${o.issued}T18:00`;
+  if (at >= END) continue;
+  frontDirectives.push({ id: `${id}@${at}:tsamo`, at, from: hqEch.get(id)!.parent!, to: [id], form: 'instruction', task: /оборон|удерж/.test(o.task) ? 'defend' : 'attack',
+    immediate: { line: [r4([o.lon, o.lat])], by: o.deadline ? `${o.deadline.slice(0, 10)}T23:00` : null }, note: `${o.task}: ${o.target.slice(0, 120)} (${o.source})` });
+  tsamoN++;
+}
+frontDirectives.sort((a, b) => a.at.localeCompare(b.at));
+console.log(`распоряжений фронтов армиям: ${frontDirectives.length} (из них по ЖБД 1 БФ — ${tsamoN})`);
 // развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
 const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);
 console.log(`развёрнуты к началу: ${deployedN}`);
@@ -567,7 +588,7 @@ const scenario = {
   theatre: 'packages/sim/data/theatres/oder-berlin-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:berlin-data',
-  hqs: hqList, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, directives: scenarioDirectives('docs/sources/berlin-1945-directives.json', new Set(hqList.map((h) => h.id)), START), fires, withdrawals, defenseZones: DEFENSE_ZONES, cityRings,
+  hqs: hqList, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, directives: scenarioDirectives('docs/sources/berlin-1945-directives.json', new Set(hqList.map((h) => h.id)), START), frontDirectives, fires, withdrawals, defenseZones: DEFENSE_ZONES, cityRings,
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });

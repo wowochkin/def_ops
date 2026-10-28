@@ -1,6 +1,7 @@
 //! Команды Tauri агентной модели — общие для приложения агентной модели (apps/agents) и настольного приложения
 //! платформы (apps/desktop):
-//! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные); источники решений
+//! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные); режим командования
+//!   советских штабов (command: script | fronts | agents); источники решений
 //!   штабов обеих сторон (приказы сценария, доктрина, языковая модель), ход решений модели — событиями staff-progress
 //!   и staff-stream;
 //! - read_text — файл данных (сценарий, история, театр) только для чтения;
@@ -91,7 +92,7 @@ pub mod commands {
     use super::*;
 
     #[tauri::command]
-    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>, edits: Option<serde_json::Value>, doctrine_text: Option<DoctrineIn>) -> Result<serde_json::Value, String> {
+    pub async fn run_scenario(app: tauri::AppHandle, scenario: String, seed: Option<u64>, de: Option<String>, su: Option<String>, llm: Option<LlmIn>, without_fires: Option<bool>, without_withdrawals: Option<bool>, params: Option<serde_json::Value>, edits: Option<serde_json::Value>, doctrine_text: Option<DoctrineIn>, command: Option<String>) -> Result<serde_json::Value, String> {
         // расчёт — в отдельном потоке, окно не замирает
         tauri::async_runtime::spawn_blocking(move || {
             let r = root();
@@ -115,8 +116,12 @@ pub mod commands {
             sim.on_progress = Some(Box::new(move |m| { let _ = app2.emit("staff-progress", m); }));
             let app3 = app.clone();
             sim.on_stream = Some(Box::new(move |v| { let _ = app3.emit("staff-stream", v); }));
+            // советские штабы по ступеням: script — приказы сценария, fronts — фронты по истории, ниже штабы-агенты,
+            // agents — штабы-агенты под директивами Ставки (command::control::command_mode)
+            let mode = command.unwrap_or_else(|| "script".into());
+            let pending = agents_core::command::control::command_mode(&mut sim, &mode, agents_core::model::Side::Su)?;
             let hours = meta.hours;
-            Ok(trace::run(&mut sim, hours, &meta))
+            Ok(trace::run_fed(&mut sim, hours, &meta, pending, mode == "fronts"))
         }).await.map_err(|e| e.to_string())?
     }
 

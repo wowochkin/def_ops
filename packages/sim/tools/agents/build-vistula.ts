@@ -24,7 +24,7 @@
  * Выход: packages/sim/data/scenarios/agents/vistula-oder-1945.json и vistula-oder-1945.history.json.
  */
 import { HIGH_COMMAND } from './hierarchy';
-import { scenarioDirectives } from './directives';
+import { frontDirectives, scenarioDirectives } from './directives';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -226,7 +226,7 @@ const scenario = {
   theatre: 'packages/sim/data/theatres/vistula-oder-1945.json',
   start: START, hours: HOURS, seed: 1,
   timeNote: 'время московское, как в сценарии нынешней модели; собрано npm run agents:vistula-data — советская сторона разложена из армий с допущениями (C)',
-  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, directives: scenarioDirectives('docs/sources/vistula-oder-1945-directives.json', new Set(hqOut.map((h) => h.id)), START), fires, withdrawals: [], defenseZones, cityRings: [],
+  hqs, divisions: out.map(({ notes, ...d }) => ({ ...d, note: notes.join('; ') })), orders, directives: scenarioDirectives('docs/sources/vistula-oder-1945-directives.json', new Set(hqOut.map((h) => h.id)), START), frontDirectives: frontDirectives(ts.orders, hqOut, targetOf, START, END), fires, withdrawals: [], defenseZones, cityRings: [],
 };
 const dir = resolve(ROOT, 'packages/sim/data/scenarios/agents');
 mkdirSync(dir, { recursive: true });

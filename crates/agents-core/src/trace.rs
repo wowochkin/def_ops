@@ -20,9 +20,12 @@ pub fn frame(sim: &Sim) -> Vec<Value> {
 }
 
 /// Прогон `hours` шагов с записью кадров; возвращает ход в формате trace.json.
-pub fn run(sim: &mut Sim, hours: u32, meta: &crate::scenario::Meta) -> Value {
+pub fn run(sim: &mut Sim, hours: u32, meta: &crate::scenario::Meta) -> Value { run_fed(sim, hours, meta, Vec::new(), false) }
+
+/// То же, с подачей директив по часам (`command::control::command_mode`); `fronts` — режим «фронты по истории».
+pub fn run_fed(sim: &mut Sim, hours: u32, meta: &crate::scenario::Meta, mut pending: Vec<(u32, crate::command::directive::Directive)>, fronts: bool) -> Value {
     let mut frames = vec![frame(sim)];
-    for _ in 0..hours { sim.step(); frames.push(frame(sim)); }
+    for _ in 0..hours { crate::command::control::feed(sim, &mut pending, fronts); sim.step(); frames.push(frame(sim)); }
     describe(sim, meta, frames)
 }
 

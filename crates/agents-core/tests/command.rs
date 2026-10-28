@@ -485,3 +485,21 @@ fn immediate_not_done_while_enemy_holds() {
     sim.step();
     assert_ne!(sim.world.divisions[i].order.as_ref().unwrap().target, sub, "рубеж не занят");
 }
+
+/// «Фронты по истории»: Ставка и фронты — по приказам сценария, армии и ниже — агенты; распоряжения фронтов армиям
+/// подаются по часам, с осью от места армии к цели — и становятся замыслом армии.
+#[test]
+fn fronts_mode_feeds_front_directives() {
+    let mut sim = load("berlin-1945");
+    let mut pending = agents_core::command::control::command_mode(&mut sim, "fronts", Side::Su).expect("режим");
+    assert!(pending.len() >= 100, "{}", pending.len());
+    assert!(pending.iter().all(|(_, d)| sim.world.hqs[d.from as usize].echelon == Echelon::Front));
+    let (f, a) = (hq(&sim, "su_1bf"), hq(&sim, "su_8gva"));
+    assert_eq!(sim.command.control[f as usize], Control::Script);
+    assert_eq!(sim.command.control[a as usize], Control::Agent);
+    for _ in 0..30 { agents_core::command::control::feed(&mut sim, &mut pending, true); sim.step(); }
+    let i = sim.command.intent[a as usize].as_ref().expect("замысел 8 гв. А");
+    assert_eq!(i.from, f);
+    assert_eq!(i.axis.len(), 2, "ось достроена");
+    assert!(agents_core::command::control::command_mode(&mut sim, "что-то", Side::Su).is_err());
+}

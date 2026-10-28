@@ -4896,6 +4896,308 @@
    "note": "9-й и 12-й армиям соединиться и наступать на Берлин"
   }
  ],
+ "frontDirectives": [
+  {
+   "id": "su_1gta@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_1gta"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.3807,
+      52.5318
+     ]
+    ],
+    "by": null
+   },
+   "note": "ввод в бой за 8 гв. А до прорыва обороны (LT_CONQ гл. 1) [su_1gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_2gta@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_2gta"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.2384,
+      52.5966
+     ]
+    ],
+    "by": null
+   },
+   "note": "ввод за 5 УА / 3 УА [su_2gta@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_3ua@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_3ua"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.1067,
+      52.6639
+     ]
+    ],
+    "by": null
+   },
+   "note": "главный удар с плацдарма [su_3ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_47a@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_47a"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.1366,
+      52.7168
+     ]
+    ],
+    "by": null
+   },
+   "note": "северный фас плацдарма [su_47a@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_5ua@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_5ua"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.2384,
+      52.5966
+     ]
+    ],
+    "by": null
+   },
+   "note": "главный удар по оси на Зелов [su_5ua@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_69a@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_69a"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.065,
+      52.358
+     ]
+    ],
+    "by": null
+   },
+   "note": "прикрыть южный фланг главного удара (LT_HALBE гл. 1) [su_69a@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_8gva@1945-04-15T18:00:attack",
+   "at": "1945-04-16T05:00",
+   "from": "su_1bf",
+   "to": [
+    "su_8gva"
+   ],
+   "form": "order",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.3807,
+      52.5318
+     ]
+    ],
+    "by": null
+   },
+   "note": "прорыв на Зееловских высотах [su_8gva@1945-04-15T18:00:attack]"
+  },
+  {
+   "id": "su_1gta@1945-04-17T18:00:attack",
+   "at": "1945-04-17T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_1gta"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.1405,
+      52.5037
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_1gta@1945-04-17T18:00:attack]"
+  },
+  {
+   "id": "su_8gva@1945-04-17T18:00:attack",
+   "at": "1945-04-17T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_8gva"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      14.1405,
+      52.5037
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_8gva@1945-04-17T18:00:attack]"
+  },
+  {
+   "id": "su_2gta@1945-04-18T18:00:attack",
+   "at": "1945-04-18T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_2gta"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.5881,
+      52.6787
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_2gta@1945-04-18T18:00:attack]"
+  },
+  {
+   "id": "su_3ua@1945-04-18T18:00:attack",
+   "at": "1945-04-18T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_3ua"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.5881,
+      52.6787
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_3ua@1945-04-18T18:00:attack]"
+  },
+  {
+   "id": "su_1gta@1945-04-19T18:00:attack",
+   "at": "1945-04-19T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_1gta"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.7543,
+      52.426
+     ]
+    ],
+    "by": null
+   },
+   "note": "лучшие бригады корпусов — в Берлин (LT_CONQ гл. 1) [su_1gta@1945-04-19T18:00:attack]"
+  },
+  {
+   "id": "su_47a@1945-04-19T18:00:attack",
+   "at": "1945-04-19T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_47a"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.5881,
+      52.6787
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_47a@1945-04-19T18:00:attack]"
+  },
+  {
+   "id": "su_5ua@1945-04-19T18:00:attack",
+   "at": "1945-04-19T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_5ua"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.9042,
+      52.5589
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_5ua@1945-04-19T18:00:attack]"
+  },
+  {
+   "id": "su_8gva@1945-04-19T18:00:attack",
+   "at": "1945-04-19T18:00",
+   "from": "su_1bf",
+   "to": [
+    "su_8gva"
+   ],
+   "form": "instruction",
+   "task": "attack",
+   "immediate": {
+    "line": [
+     [
+      13.7543,
+      52.426
+     ]
+    ],
+    "by": null
+   },
+   "note": "[su_8gva@1945-04-19T18:00:attack]"
+  }
+ ],
  "fires": [
   {
    "at": "1945-04-16T05:00",

@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts --side su|de] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
 //!       [--params '{"pocket.breakoutKeep": 0.05}' | --params файл.json — поправки параметров agents-v0.json (путь → значение)]
@@ -178,15 +178,12 @@ fn main() {
         }
         // --command agents|hybrid --side su|de: верхняя инстанция стороны подаёт исторические директивы, ниже — штабы-агенты
         // (в «гибриде» поддеревья получателей ведут приказы сценария)
-        let mut pending: Vec<(u32, agents_core::command::directive::Directive)> = Vec::new();
-        if let Some(c) = arg(&args, "command") {
-            let side = if arg(&args, "side").as_deref() == Some("de") { Side::De } else { Side::Su };
-            let hybrid = match c.as_str() { "agents" => false, "hybrid" => true, x => panic!("--command: agents | hybrid, а не {x}") };
-            agents_core::command::control::agents_side(&mut sim, side);
-            // в прогоне верхняя инстанция — агент: отвечает на запросы отхода по правилу («держать» через сутки)
-            for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == agents_core::model::Echelon::HighCommand { sim.command.control[k] = agents_core::command::control::Control::Agent; } }
-            pending = agents_core::command::control::historical_for(&mut sim, side, None, hybrid);
-        }
+        // --command agents | hybrid | fronts (фронты по истории, армии и ниже — агенты; прежнее --below front — то же)
+        let mut mode = arg(&args, "command").unwrap_or_else(|| "script".into());
+        if arg(&args, "below").as_deref() == Some("front") { mode = "fronts".into(); }
+        let side = if arg(&args, "side").as_deref() == Some("de") { Side::De } else { Side::Su };
+        let mut pending = agents_core::command::control::command_mode(&mut sim, &mode, side).unwrap_or_else(|e| panic!("--command: {e}"));
+        let below_front = mode == "fronts";
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();
         // кадры: по часу на дивизию
@@ -206,10 +203,7 @@ fn main() {
         pers.push(sim.world.divisions.iter().map(|d| d.vars.personnel).collect());
         if seed == seed0 { frames.push(frame(&sim)); }
         for _ in 0..meta.hours {
-            let now = sim.world.tick;
-            let (due, rest): (Vec<_>, Vec<_>) = std::mem::take(&mut pending).into_iter().partition(|(at, _)| *at <= now);
-            pending = rest;
-            for (_, d) in due { agents_core::command::passing::issue(&mut sim, d, now); }
+            agents_core::command::control::feed(&mut sim, &mut pending, below_front);
             sim.step();
             snaps.push(sim.world.divisions.iter().map(|d| d.vars.pos).collect());
             alive.push(sim.world.divisions.iter().map(|d| !d.state.out()).collect());

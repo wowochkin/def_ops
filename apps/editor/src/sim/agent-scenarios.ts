@@ -33,7 +33,15 @@ export function deleteAgentVariant(id: string) {
   window.dispatchEvent(new Event('def_ops.agents.variants'));
 }
 
-export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; edits?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean }
+export interface AgentRunOptions { seed: number; params?: Record<string, unknown>; edits?: Record<string, unknown>; de?: 'script' | 'doctrine'; su?: 'script' | 'doctrine'; withoutFires?: boolean; withoutWithdrawals?: boolean;
+  /** Советские штабы: приказы сценария (нет), фронты по истории и ниже штабы-агенты, штабы-агенты под директивами Ставки. */
+  command?: AgentCommand }
+export type AgentCommand = 'script' | 'fronts' | 'agents';
+export const AGENT_COMMANDS: { id: AgentCommand; title: string; hint: string }[] = [
+  { id: 'script', title: 'приказы сценария', hint: 'все штабы — по историческим приказам; дивизии ведёт ядро' },
+  { id: 'fronts', title: 'фронты по истории, ниже — штабы-агенты', hint: 'Ставка и фронты отдают армиям исторические распоряжения; армии, корпуса и дивизии решают сами по уставу' },
+  { id: 'agents', title: 'штабы-агенты', hint: 'от Ставки — только её директивы; фронты, армии, корпуса и дивизии решают сами' },
+];
 /**
  * Прогон сценария ядром: ход по часам. Доктрина из базы знаний (doctrineText) на начало сценария — для штабов на
  * модели; базы нет — без поля.
@@ -45,6 +53,7 @@ export const runAgents = async (scenario: string, o: AgentRunOptions) => {
     ...(o.edits && Object.keys(o.edits).length ? { edits: o.edits } : {}),
     ...(o.de && o.de !== 'script' ? { de: o.de } : {}), ...(o.su && o.su !== 'script' ? { su: o.su } : {}),
     ...(o.withoutFires ? { withoutFires: true } : {}), ...(o.withoutWithdrawals ? { withoutWithdrawals: true } : {}),
+    ...(o.command && o.command !== 'script' ? { command: o.command } : {}),
     ...(doctrineText ? { doctrineText } : {}),
   });
 };

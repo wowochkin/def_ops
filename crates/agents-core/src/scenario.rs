@@ -103,6 +103,9 @@ pub struct ScenarioIn {
     /// Исторические директивы верхних инстанций (command::directive).
     #[serde(default)]
     pub directives: Vec<crate::command::directive::DirectiveIn>,
+    /// Исторические распоряжения фронтов армиям (задачи армий по документам фронтов) — для прогона «фронты по истории».
+    #[serde(default, rename = "frontDirectives")]
+    pub front_directives: Vec<crate::command::directive::DirectiveIn>,
 }
 
 /// Обвод обороны города: многоугольник и уровень (1 — внешний, 2 — внутренний, 3 — центральный сектор).
@@ -335,7 +338,7 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
     {
         let hour = |t: &str| parse_hours(t).map(|h| (h - start).max(0) as u32);
         let xy = |p: crate::geo::LngLat| theatre.proj.to_xy(p);
-        for d in &s.directives { historical.extend(d.resolve(&hq_idx, &hour, &xy)?); }
+        for d in s.directives.iter().chain(&s.front_directives) { historical.extend(d.resolve(&hq_idx, &hour, &xy)?); }
         historical.sort_by_key(|x: &(u32, crate::command::directive::Directive)| x.0);
     }
     let mut sim = Sim::new(theatre, rules, s.seed, start, world, script);

@@ -48,3 +48,35 @@ export function scenarioDirectives(file: string, hqIds: Set<string>, start: stri
   }
   return out;
 }
+
+type LngLatT = [number, number];
+type Target = string | LngLatT | { formation: string } | null;
+/** Распоряжение фронта армии (поле сценария frontDirectives; прогон «фронты по истории», agents-run --below front). */
+export interface FrontDirective { id: string; at: string; from: string; to: string[]; form: string; task: string; immediate?: { line: LngLatT[]; by: string | null }; note: string }
+const FRONT_TASK: Record<string, string> = { attack: 'attack', counterattack: 'attack', breakout: 'attack', defend: 'defend', hold: 'defend', withdraw: 'withdraw', regroup: 'move', reserve: 'reserve' };
+
+/**
+ * Задачи армий в сценарии нынешней модели — распоряжения фронтов по документам (журналы фронтов, директивы,
+ * исследования): армии — к району или точке; «вместе с …» — к цели того соединения на тот час. Ось достраивает ядро в
+ * час подачи — от места армии к цели. До начала — подготовленный приказ (доведён к началу); в ходе операции — боевое
+ * распоряжение: армия действует в те же сутки (3 А: распоряжение 20.04 в 12.00 — «с рассветом 21.04 выступить»).
+ */
+export function frontDirectives(orders: { id: string; formation: string; task: string; target: Target; issuedAt: string; note?: string }[],
+  hqs: { id: string; side: string; echelon: string; parent: string | null }[], targetOf: (t: Target) => LngLatT | null, start: string, end: string): FrontDirective[] {
+  const hq = new Map(hqs.map((h) => [h.id, h]));
+  const r4 = (p: LngLatT): LngLatT => [+p[0].toFixed(4), +p[1].toFixed(4)];
+  const goalAt = (formation: string, t: string, seen = 0): LngLatT | null => {
+    const o = orders.filter((x) => x.formation === formation && x.issuedAt <= t && x.target).sort((a, b) => a.issuedAt.localeCompare(b.issuedAt)).pop();
+    if (!o) return null;
+    const g = o.target!;
+    return typeof g === 'object' && !Array.isArray(g) ? (seen < 3 ? goalAt(g.formation, t, seen + 1) : null) : targetOf(g);
+  };
+  return orders.filter((o) => {
+    const a = hq.get(o.formation), f = a?.parent ? hq.get(a.parent) : undefined;
+    return a?.side === 'su' && a.echelon === 'army' && f?.echelon === 'front' && o.issuedAt < end && FRONT_TASK[o.task];
+  }).map((o) => {
+    const g = o.target && typeof o.target === 'object' && !Array.isArray(o.target) ? goalAt(o.target.formation, o.issuedAt) : targetOf(o.target);
+    return { id: o.id, at: o.issuedAt < start ? start : o.issuedAt, from: hq.get(o.formation)!.parent!, to: [o.formation], form: o.issuedAt <= start ? 'order' : 'instruction', task: FRONT_TASK[o.task],
+      ...(g ? { immediate: { line: [r4(g)], by: null } } : {}), note: `${o.note ?? ''} [${o.id}]`.trim() };
+  }).sort((a, b) => a.at.localeCompare(b.at));
+}
