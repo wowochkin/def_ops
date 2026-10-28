@@ -189,7 +189,154 @@ mod picture {
         let r = p.rival.expect("соперник");
         assert_eq!(r.as_of, sim.world.tick - d);
         assert!(r.to_objective_km > 0.0);
-        // без соперника у профиля нет и сводки о нём
-        assert!(picture(&sim, hq(&sim, "su_2bf"), &log).rival.is_none() || sim.rules.commanders.for_hq("su_2bf").unwrap().rival.is_some());
+        // у Рокоссовского соперника нет — и сводки о нём нет
+        assert!(sim.rules.commanders.for_hq("su_2bf").unwrap().rival.is_none());
+        assert!(picture(&sim, hq(&sim, "su_2bf"), &log).rival.is_none());
+    }
+
+    #[test]
+    fn rival_none_before_delay() {
+        let mut sim = load(None);
+        let mut log = DistLog::default();
+        log.record(&sim);
+        assert!(sim.rules.commanders.fog.report_delay_hours > 0);
+        assert!(picture(&sim, hq(&sim, "su_1uf"), &log).rival.is_none());
+        run(&mut sim, 2, &mut log);
+        assert!(picture(&sim, hq(&sim, "su_1uf"), &log).rival.is_none());
+    }
+
+    /// Все дивизии, кроме названных армий, уносятся далеко: остаётся только расставленное руками.
+    const FAR: f64 = 800.0;
+    fn clear(sim: &mut Sim, keep: &[u32]) {
+        for i in 0..sim.world.divisions.len() {
+            let h = sim.world.divisions[i].hq;
+            let mut x = h;
+            let mut kept = keep.contains(&x);
+            while !kept { match sim.world.hqs[x as usize].parent { Some(p) => { x = p; kept = keep.contains(&x); } None => break } }
+            if !kept { sim.world.divisions[i].vars.pos = agents_core::geo::XY::new(FAR + i as f64 * 50.0, FAR); }
+        }
+    }
+    fn set_army(sim: &mut Sim, a: u32, at: agents_core::geo::XY) {
+        for d in sim.world.divisions.iter_mut() {
+            if d.state.out() { continue; }
+            let mut x = d.hq;
+            loop { if x == a { d.vars.pos = at; break; } match sim.world.hqs[x as usize].parent { Some(p) => x = p, None => break } }
+        }
+    }
+    /// Первая живая дивизия противника — для расстановки руками; остальные противники уносятся.
+    fn lone_enemy(sim: &mut Sim) -> usize {
+        let me = agents_core::model::Side::De;
+        let live: Vec<usize> = (0..sim.world.divisions.len()).filter(|&i| sim.world.divisions[i].side == me && !sim.world.divisions[i].state.out()).collect();
+        for &i in &live[1..] { sim.world.divisions[i].vars.pos = agents_core::geo::XY::new(FAR + i as f64 * 50.0, -FAR); }
+        live[0]
+    }
+    fn army_view(sim: &Sim, log: &DistLog, a: u32) -> agents_core::commander::picture::ArmyView {
+        picture(sim, hq(sim, "su_1bf"), log).armies.into_iter().find(|v| v.hq == a).expect("армия")
+    }
+
+    #[test]
+    fn advance_and_breakthrough() {
+        use agents_core::geo::XY;
+        let mut sim = load(None);
+        let a = hq(&sim, "su_8gva");
+        let (contact, depth) = (sim.rules.contact_km, sim.rules.doctrine_su.tank_commit_depth_km);
+        let e = lone_enemy(&mut sim);
+        clear(&mut sim, &[a]);
+        set_army(&mut sim, a, XY::new(0.0, 0.0));
+        sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
+        let mut log = DistLog::default();
+        log.record(&sim);
+        assert_eq!(army_view(&sim, &log, a).advance_km, 0.0);
+        assert!(!army_view(&sim, &log, a).broke_through);
+        // прошла глубину ввода подвижных групп, обороняющегося впереди нет
+        set_army(&mut sim, a, XY::new(depth + 10.0, 0.0));
+        let v = army_view(&sim, &log, a);
+        assert!((v.advance_km - (depth + 10.0)).abs() < 1e-6, "{}", v.advance_km);
+        assert!(v.broke_through);
+        // обороняющийся противник впереди в пределах соприкосновения — прорыва нет
+        sim.world.divisions[e].vars.pos = XY::new(depth + 10.0 + contact * 0.5, 0.0);
+        sim.world.divisions[e].state = agents_core::model::State::Defense(agents_core::model::DefenseSub::Prepared);
+        assert!(!army_view(&sim, &log, a).broke_through);
+        // продвинулась меньше — прорыва нет и без противника
+        sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
+        set_army(&mut sim, a, XY::new(depth - 5.0, 0.0));
+        assert!(!army_view(&sim, &log, a).broke_through);
+    }
+
+    #[test]
+    fn open_flank_detected() {
+        use agents_core::geo::XY;
+        let mut sim = load(None);
+        let a = hq(&sim, "su_8gva");
+        let b = hq(&sim, "su_5ua");
+        let contact = sim.rules.contact_km;
+        let e = lone_enemy(&mut sim);
+        clear(&mut sim, &[a, b]);
+        set_army(&mut sim, a, XY::new(0.0, 0.0));
+        set_army(&mut sim, b, XY::new(-FAR, -FAR));
+        sim.world.divisions[e].vars.pos = XY::new(-FAR, FAR);
+        let mut log = DistLog::default();
+        log.record(&sim);
+        set_army(&mut sim, a, XY::new(10.0, 0.0));
+        // противник сбоку от оси (ось — вдоль x), соседей рядом нет
+        sim.world.divisions[e].vars.pos = XY::new(10.0, contact * 1.5);
+        assert!(picture(&sim, hq(&sim, "su_1bf"), &log).open_flanks.contains(&a));
+        // дивизия соседней армии рядом с ним — фланг прикрыт
+        set_army(&mut sim, b, XY::new(10.0, contact * 1.5 + 1.0));
+        assert!(!picture(&sim, hq(&sim, "su_1bf"), &log).open_flanks.contains(&a));
+        // противник впереди — не фланг
+        set_army(&mut sim, b, XY::new(-FAR, -FAR));
+        sim.world.divisions[e].vars.pos = XY::new(10.0 + contact * 1.5, 0.0);
+        assert!(!picture(&sim, hq(&sim, "su_1bf"), &log).open_flanks.contains(&a));
+        // противник сбоку, но дальше разведки — не виден
+        sim.world.divisions[e].vars.pos = XY::new(10.0, contact * 3.0 + 5.0);
+        assert!(!picture(&sim, hq(&sim, "su_1bf"), &log).open_flanks.contains(&a));
+    }
+
+    #[test]
+    fn pocket_detected() {
+        use agents_core::geo::XY;
+        let mut sim = load(None);
+        let a = hq(&sim, "su_8gva");
+        let b = hq(&sim, "su_5ua");
+        let contact = sim.rules.contact_km;
+        let e = lone_enemy(&mut sim);
+        clear(&mut sim, &[a, b]);
+        let d = contact * 1.5;
+        set_army(&mut sim, a, XY::new(-d, 0.0));
+        set_army(&mut sim, b, XY::new(d, 0.0));
+        sim.world.divisions[e].vars.pos = XY::new(0.0, 0.0);
+        sim.world.divisions[e].cut_since = Some(0);
+        let log = DistLog::default();
+        let p = picture(&sim, hq(&sim, "su_1bf"), &log);
+        assert_eq!(p.pockets.len(), 1, "{:?}", p.pockets);
+        let k = &p.pockets[0];
+        assert!(k.enemy_est > 0.0);
+        assert_eq!(k.by.len(), 2);
+        assert!(k.by.contains(&a) && k.by.contains(&b));
+        assert!((k.gap_km - 2.0 * d).abs() < 1e-6 && k.gap_km < 20.0, "{}", k.gap_km);
+        // не отрезан от своих — котла нет
+        sim.world.divisions[e].cut_since = None;
+        assert!(picture(&sim, hq(&sim, "su_1bf"), &log).pockets.is_empty());
+    }
+
+    #[test]
+    fn fog_window() {
+        let mut sim = load(None);
+        let log = DistLog::default();
+        let h = hq(&sim, "su_1bf");
+        let ratios = |sim: &Sim| -> Vec<f64> {
+            picture(sim, h, &log).armies.iter().filter(|a| a.enemy_true > 0.0).map(|a| a.enemy_est / a.enemy_true).collect()
+        };
+        sim.world.tick = 12;
+        let base = ratios(&sim);
+        assert!(!base.is_empty());
+        sim.world.tick = 17;
+        assert_eq!(ratios(&sim), base, "одна сводка — одна ошибка");
+        sim.world.tick = 18;
+        assert_ne!(ratios(&sim), base, "другая сводка — другая ошибка");
+        sim.world.tick = 12;
+        sim.seed ^= 0x5555;
+        assert_ne!(ratios(&sim), base, "другое зерно — другая ошибка");
     }
 }

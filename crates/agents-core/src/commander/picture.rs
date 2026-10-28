@@ -60,24 +60,35 @@ pub struct Picture {
     pub to_objective_km: Option<f64>,
 }
 
-/// Расстояния до цели по часам, по штабам: (час, км). Ведёт вызывающий — картина мира не меняет.
+/// Ведомость, которую ведёт вызывающий (картина мира не меняет): по штабам расстояния до цели по часам
+/// `(час, км)` и исходный центр войск штаба — по живым дивизиям на первой записи; от него считаются
+/// продвижение армий и ось наступления.
 #[derive(Clone, Debug, Default)]
-pub struct DistLog(pub Vec<Vec<(u32, f64)>>);
+pub struct DistLog {
+    pub dist: Vec<Vec<(u32, f64)>>,
+    pub start: Vec<Option<XY>>,
+}
 
 impl DistLog {
     /// Запись на текущий час для каждого штаба, у профиля которого есть цель. Вызывать раз в час.
     pub fn record(&mut self, sim: &Sim) {
         let tick = sim.world.tick;
-        if self.0.len() < sim.world.hqs.len() { self.0.resize(sim.world.hqs.len(), Vec::new()); }
-        for h in 0..sim.world.hqs.len() as u32 {
+        let n = sim.world.hqs.len();
+        if self.dist.len() < n { self.dist.resize(n, Vec::new()); }
+        if self.start.len() < n { self.start.resize(n, None); }
+        for h in 0..n as u32 {
+            if self.start[h as usize].is_none() {
+                let ps: Vec<XY> = divisions_of(sim, h).into_iter().map(|i| sim.world.divisions[i].vars.pos).collect();
+                self.start[h as usize] = centroid(&ps);
+            }
             let Some(km) = dist_to_objective(sim, h) else { continue };
-            let v = &mut self.0[h as usize];
+            let v = &mut self.dist[h as usize];
             if v.last().is_none_or(|l| l.0 < tick) { v.push((tick, km)); }
         }
     }
     /// Последняя запись штаба не позже часа `hour`.
     fn at(&self, hq: u32, hour: u32) -> Option<(u32, f64)> {
-        self.0.get(hq as usize)?.iter().rev().find(|e| e.0 <= hour).copied()
+        self.dist.get(hq as usize)?.iter().rev().find(|e| e.0 <= hour).copied()
     }
 }
 
@@ -144,8 +155,8 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
         let mine = divisions_of(sim, a);
         let pos: Vec<XY> = mine.iter().map(|&i| w.divisions[i].vars.pos).collect();
         let Some(c) = centroid(&pos) else { continue };
-        let start = sim.command.start_hq[a as usize].unwrap_or(w.hqs[a as usize].pos);
-        let advance_km = c.dist(start);
+        let start = log.start.get(a as usize).copied().flatten();
+        let advance_km = start.map_or(0.0, |s| c.dist(s));
         let (mut s, mut s0) = (0.0, 0.0);
         for d in &w.divisions {
             if d.state == State::Pending || d.state == State::Merged || !under(sim, d.hq, a) { continue; }
@@ -157,7 +168,7 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
         let enemy_est = enemy_true * fog_mult(sim, a, tick);
         // ось наступления: смещение от исходного места; пока оно мало — на цель; иначе на противника в пределах разведки
         let toward_enemy = centroid(&in_sight.iter().map(|&e| w.divisions[e].vars.pos).collect::<Vec<_>>());
-        let axis = if advance_km >= AXIS_MIN_KM { unit(start, c) } else { objective.and_then(|o| unit(c, o)).or_else(|| toward_enemy.and_then(|e| unit(c, e))) };
+        let axis = if let (true, Some(s)) = (advance_km >= AXIS_MIN_KM, start) { unit(s, c) } else { objective.and_then(|o| unit(c, o)).or_else(|| toward_enemy.and_then(|e| unit(c, e))) };
         let ahead = |p: XY| axis.is_none_or(|u| (p.x - c.x) * u.x + (p.y - c.y) * u.y >= 0.0);
         let defended = in_sight.iter().any(|&e| {
             let ed = &w.divisions[e];
@@ -167,9 +178,10 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
         let to_objective_km = objective.and_then(|o| pos.iter().map(|p| p.dist(o)).min_by(f64::total_cmp));
         // открытый фланг: противник сбоку или сзади, и ни одна дивизия соседних армий его не прикрывает
         if let Some(u) = axis {
-            let covered = |p: XY| all_own.iter().any(|&i| !mine.contains(&i) && w.divisions[i].vars.pos.dist(p) <= contact);
+            let covered = |p: XY| (0..w.divisions.len()).any(|i| { let o = &w.divisions[i]; o.side == me.side && !o.state.out() && !mine.contains(&i) && o.vars.pos.dist(p) <= contact });
             let open = in_sight.iter().any(|&e| {
                 let p = w.divisions[e].vars.pos;
+                if pos.iter().map(|q| q.dist(p)).fold(f64::INFINITY, f64::min) > recon { return false; }
                 let d = c.dist(p);
                 d > 1e-9 && ((p.x - c.x) * u.x + (p.y - c.y) * u.y) / d < 0.5 && !covered(p)
             });
@@ -226,7 +238,7 @@ pub fn picture(sim: &Sim, hq: u32, log: &DistLog) -> Picture {
     // соперник — по сводке, отставшей на задержку сводок
     let rival = sim.rules.commanders.for_hq(&me.id).and_then(|p| p.rival.as_deref()).and_then(|rid| {
         let rp = sim.rules.commanders.profiles.iter().find(|p| p.id == rid)?;
-        let as_of = tick.saturating_sub(sim.rules.commanders.fog.report_delay_hours);
+        let as_of = tick.checked_sub(sim.rules.commanders.fog.report_delay_hours)?;
         let rh = (0..w.hqs.len() as u32).filter(|&h| rp.hqs.contains(&w.hqs[h as usize].id)).find(|&h| log.at(h, as_of).is_some())?;
         let (hour, km) = log.at(rh, as_of)?;
         Some(RivalView { hq: rh, to_objective_km: km, as_of: hour })
