@@ -3408,6 +3408,27 @@
         "berlin-1945-tasks",
         "vistula-oder-1945"
       ]
+    },
+    {
+      "id": "commander-mood",
+      "title": "Состояние командующего: рост и спад уверенности и напряжения, сдвиги черт",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.mood.successGain",
+        "why": "допущение: коэффициенты состояния (также setbackGain, threatGain, pressureGain, decay, riskShift, ambitionShift, rigidShift, narrowAt), ожидаемый темп expectedKmDay и обычные потери normalLossDay подбираются калибровкой; опоры в источниках нет"
+      },
+      "unit": "—",
+      "rules": [
+        "commanders.mood.successGain"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [

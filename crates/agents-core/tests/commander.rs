@@ -340,3 +340,106 @@ mod picture {
         assert_ne!(ratios(&sim), base, "другое зерно — другая ошибка");
     }
 }
+
+// ---- Мотивы и состояние по обстановке ----
+
+use agents_core::commander::motives::{current, effective, mood_step, Mood};
+use agents_core::commander::picture::{ArmyView, Picture, RivalView};
+use agents_core::commander::{Motives, Traits};
+
+fn army(hq: u32, advance_km: f64, strength: f64) -> ArmyView {
+    ArmyView { hq, advance_km, strength, enemy_est: 0.0, enemy_true: 0.0, to_objective_km: None, broke_through: false }
+}
+fn pic(tick: u32, armies: Vec<ArmyView>) -> Picture {
+    Picture { tick, armies, enemy_reserves: vec![], rival: None, open_flanks: vec![], pockets: vec![], to_objective_km: Some(100.0) }
+}
+
+#[test]
+fn confidence_grows_on_success() {
+    let m = &Rules::load(&data()).unwrap().commanders.mood;
+    let prev = pic(0, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
+    let now = pic(1, vec![army(1, 5.0, 1.0), army(2, 5.0, 1.0)]); // 5 км/ч — намного выше темпа
+    let s = Mood { confidence: 0.5, stress: 0.2 };
+    let next = mood_step(&s, &now, Some(&prev), 0.0, m);
+    assert!(next.confidence > s.confidence, "{next:?}");
+    let slow = pic(1, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
+    assert!(mood_step(&s, &slow, Some(&prev), 0.0, m).confidence < s.confidence);
+}
+
+#[test]
+fn stress_grows_on_threat() {
+    let m = &Rules::load(&data()).unwrap().commanders.mood;
+    let calm = pic(1, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
+    let mut threat = calm.clone();
+    threat.open_flanks = vec![1, 2];
+    let s = Mood { confidence: 0.5, stress: 0.2 };
+    assert!(mood_step(&s, &threat, None, 0.0, m).stress > mood_step(&s, &calm, None, 0.0, m).stress);
+    let weak = pic(1, vec![army(1, 0.0, 0.3), army(2, 0.0, 0.3)]);
+    assert!(mood_step(&s, &weak, None, 0.0, m).stress > mood_step(&s, &calm, None, 0.0, m).stress);
+    // отставание от срока задачи тоже давит
+    assert!(mood_step(&s, &calm, None, 0.8, m).stress > mood_step(&s, &calm, None, 0.0, m).stress);
+}
+
+#[test]
+fn mood_decays_to_start() {
+    let m = &Rules::load(&data()).unwrap().commanders.mood;
+    let calm = pic(1, vec![army(1, 0.0, 1.0)]);
+    let mut s = Mood { confidence: 0.95, stress: 0.9 };
+    let d0 = (s.confidence - m.start.confidence).abs() + (s.stress - m.start.stress).abs();
+    for _ in 0..24 { s = mood_step(&s, &calm, None, 0.0, m); }
+    let d1 = (s.confidence - m.start.confidence).abs() + (s.stress - m.start.stress).abs();
+    assert!(d1 < d0 * 0.5, "{d0} -> {d1}");
+    for v in [s.confidence, s.stress] { assert!((0.0..=1.0).contains(&v)); }
+}
+
+#[test]
+fn effective_rigid_vs_cautious() {
+    let m = &Rules::load(&data()).unwrap().commanders.mood;
+    let mood = Mood { confidence: 0.5, stress: 0.9 };
+    // [risk, persistence, ambition, lossTolerance, obedience]
+    let rigid = Traits([0.6, 0.7, 0.5, 0.5, 0.8]);
+    let e = effective(&rigid, &mood, m);
+    assert!(e.get(Trait::Persistence) > rigid.get(Trait::Persistence));
+    assert!(e.get(Trait::Risk) < rigid.get(Trait::Risk));
+    let cautious = Traits([0.4, 0.3, 0.5, 0.5, 0.4]);
+    let e = effective(&cautious, &mood, m);
+    assert!(e.get(Trait::LossTolerance) < cautious.get(Trait::LossTolerance));
+    assert_eq!(e.get(Trait::Persistence), cautious.get(Trait::Persistence));
+    // уверенность сдвигает риск и честолюбие, обрезка в [0, 1]
+    let bold = effective(&Traits([0.99, 0.5, 0.99, 0.5, 0.5]), &Mood { confidence: 1.0, stress: 0.0 }, m);
+    assert!(bold.get(Trait::Risk) <= 1.0 && bold.get(Trait::Ambition) <= 1.0);
+}
+
+#[test]
+fn rival_grows_when_rival_closer() {
+    let g = &Rules::load(&data()).unwrap().commanders.gains;
+    let base = Motives([0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0]);
+    let mut p = pic(1, vec![army(1, 0.0, 1.0)]);
+    p.rival = Some(RivalView { hq: 9, to_objective_km: 80.0, as_of: 0 }); // свой — 100 км, соперник ближе на 20
+    assert!(current(&base, &p, g).get(Motive::Rival) > base.get(Motive::Rival));
+    p.rival = Some(RivalView { hq: 9, to_objective_km: 120.0, as_of: 0 });
+    assert_eq!(current(&base, &p, g).get(Motive::Rival), base.get(Motive::Rival));
+}
+
+#[test]
+fn preserve_grows_with_losses() {
+    let g = &Rules::load(&data()).unwrap().commanders.gains;
+    let base = Motives([0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0]);
+    let whole = current(&base, &pic(1, vec![army(1, 0.0, 1.0)]), g);
+    assert_eq!(whole.get(Motive::Preserve), base.get(Motive::Preserve));
+    let hurt = current(&base, &pic(1, vec![army(1, 0.0, 0.5), army(2, 0.0, 0.7)]), g);
+    assert!(hurt.get(Motive::Preserve) > base.get(Motive::Preserve));
+    let mut open = pic(1, vec![army(1, 0.0, 1.0), army(2, 0.0, 1.0)]);
+    open.open_flanks = vec![1];
+    let o = current(&base, &open, g);
+    assert!((o.get(Motive::NoEncircle) - (base.get(Motive::NoEncircle) + g.flank * 0.5)).abs() < 1e-9);
+    assert_eq!(o.get(Motive::Task), base.get(Motive::Task));
+}
+
+#[test]
+fn no_rival_zero() {
+    let g = &Rules::load(&data()).unwrap().commanders.gains;
+    let base = Motives([0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0]);
+    let p = pic(1, vec![army(1, 0.0, 1.0)]); // соперника в сводке нет
+    assert_eq!(current(&base, &p, g).get(Motive::Rival), 0.0);
+}

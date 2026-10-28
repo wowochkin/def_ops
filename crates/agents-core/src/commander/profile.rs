@@ -2,6 +2,7 @@
 //! Числа в `commanders.json` — `{ value, range, source, confidence }`; поправки применяются до разбора,
 //! после разбора каждое число проверяется на попадание в свой `range`.
 
+use super::motives::Mood;
 use crate::geo::LngLat;
 use serde_json::Value;
 
@@ -40,6 +41,26 @@ pub struct Fog { pub strength_error: f64, pub report_delay_hours: u32 }
 /// Прибавки к оценке варианта: опередить соперника, потери, открытый фланг.
 #[derive(Clone, Debug)]
 pub struct Gains { pub rival: f64, pub losses: f64, pub flank: f64 }
+/// Состояние командующего: коэффициенты изменения уверенности и напряжения (в час), сдвиги черт, опорные величины.
+#[derive(Clone, Debug)]
+pub struct MoodRules {
+    pub start: Mood,
+    pub success_gain: f64,
+    pub setback_gain: f64,
+    pub threat_gain: f64,
+    pub pressure_gain: f64,
+    /// Доля возврата к `start` за час.
+    pub decay: f64,
+    pub risk_shift: f64,
+    pub ambition_shift: f64,
+    pub rigid_shift: f64,
+    /// Напряжение, выше которого обзор сужен.
+    pub narrow_at: f64,
+    /// Продвижение фронта в сутки «по плану», км.
+    pub expected_km_day: f64,
+    /// Доля силы, теряемая в сутки в порядке вещей.
+    pub normal_loss_day: f64,
+}
 /// Веса слагаемых выбора варианта.
 #[derive(Clone, Debug)]
 pub struct Weights { pub uncertainty: f64, pub losses: f64, pub persistence: f64, pub obedience: f64 }
@@ -52,6 +73,7 @@ pub struct CommanderRules {
     pub profiles: Vec<Profile>,
     pub fog: Fog,
     pub gains: Gains,
+    pub mood: MoodRules,
     pub weights: Weights,
     pub cycle: Cycle,
     pub lookahead_hours: u32,
@@ -110,6 +132,13 @@ impl CommanderRules {
             profiles: out,
             fog: Fog { strength_error: n("fog.strengthError")?, report_delay_hours: hours("fog.reportDelayHours")? },
             gains: Gains { rival: n("gains.rival")?, losses: n("gains.losses")?, flank: n("gains.flank")? },
+            mood: MoodRules {
+                start: Mood { confidence: n("mood.startConfidence")?, stress: n("mood.startStress")? },
+                success_gain: n("mood.successGain")?, setback_gain: n("mood.setbackGain")?, threat_gain: n("mood.threatGain")?,
+                pressure_gain: n("mood.pressureGain")?, decay: n("mood.decay")?, risk_shift: n("mood.riskShift")?,
+                ambition_shift: n("mood.ambitionShift")?, rigid_shift: n("mood.rigidShift")?, narrow_at: n("mood.narrowAt")?,
+                expected_km_day: n("mood.expectedKmDay")?, normal_loss_day: n("mood.normalLossDay")?,
+            },
             weights: Weights { uncertainty: n("weights.uncertainty")?, losses: n("weights.losses")?, persistence: n("weights.persistence")?, obedience: n("weights.obedience")? },
             cycle: Cycle { front: hours("cycleHours.front")?, army: hours("cycleHours.army")?, high: hours("cycleHours.high")? },
             lookahead_hours: hours("lookaheadHours")?,
