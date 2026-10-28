@@ -73,7 +73,10 @@ impl CommanderRules {
             for (i, k) in MOTIVES.iter().enumerate() { motives[i] = num(c, &at(&format!("motives.{k}")))?; }
             let text = |k: &str| p.get(k).and_then(Value::as_str).map(str::to_string);
             let hqs = p.get("hqs").and_then(Value::as_array).ok_or_else(|| format!("правила командующих: {} — нет hqs", at("")))?
-                .iter().filter_map(|h| h.as_str().map(str::to_string)).collect();
+                .iter().map(|h| h.as_str().map(str::to_string).ok_or_else(|| format!("правила командующих: {} — штаб не строка: {h}", at("hqs")))).collect::<Result<Vec<_>, _>>()?;
+            for h in &hqs {
+                if let Some(q) = out.iter().find(|q: &&Profile| q.hqs.contains(h)) { return Err(format!("правила командующих: штаб {h} в двух профилях: {} и {id}", q.id)); }
+            }
             out.push(Profile {
                 id: id.clone(),
                 name: text("name").ok_or_else(|| format!("правила командующих: {} — нет name", at("")))?,

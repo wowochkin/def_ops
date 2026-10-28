@@ -87,3 +87,33 @@ fn no_operation_hints() {
         if let Some(h) = hint(&t) { panic!("{f}: {h}"); }
     }
 }
+
+/// Достоверность — из набора high | medium | low | assumption.
+#[test]
+fn confidence_in_allowed_set() {
+    fn walk(v: &serde_json::Value, path: &str, n: &mut usize) {
+        match v {
+            serde_json::Value::Object(m) => for (k, x) in m {
+                if k == "confidence" { *n += 1; assert!(matches!(x.as_str(), Some("high" | "medium" | "low" | "assumption")), "{path}: {x}"); }
+                else { walk(x, &format!("{path}.{k}"), n); }
+            },
+            serde_json::Value::Array(a) => for x in a { walk(x, path, n); },
+            _ => {}
+        }
+    }
+    let t = std::fs::read_to_string(format!("{}/rules/commanders.json", data())).unwrap();
+    let mut n = 0;
+    walk(&serde_json::from_str(&t).unwrap(), "", &mut n);
+    assert!(n > 100, "{n}");
+}
+
+/// Штаб в двух профилях и штаб не строкой — ошибки загрузки.
+#[test]
+fn bad_hqs_rejected() {
+    let o = json!({"commanders.profiles.konev.hqs": ["su_1uf", "su_1bf"]});
+    let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
+    assert!(e.contains("su_1bf") && e.contains("zhukov") && e.contains("konev"), "{e}");
+    let o = json!({"commanders.profiles.konev.hqs": ["su_1uf", 5]});
+    let e = Rules::load_with(&data(), Some(&o)).unwrap_err();
+    assert!(e.contains("не строка"), "{e}");
+}
