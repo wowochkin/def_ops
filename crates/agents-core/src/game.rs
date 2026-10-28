@@ -16,10 +16,13 @@ use serde_json::Value;
 
 /// Режим игры: «как сейчас» (приказы игрока размножаются по дивизиям штаба), «агенты» (игрок — верхняя инстанция,
 /// ниже — штабы-агенты), «гибрид» (как «агенты», но исторические директивы, поданные без изменений, ведут приказы
-/// сценария).
+/// сценария), «командующие» (как «агенты», плюс командующие у штабов с профилем обеих сторон; место командующего
+/// игрок занимает командой `take` — тогда его штаб молчит).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Mode { Legacy, Agents, Hybrid }
+pub enum Mode { Legacy, Agents, Hybrid, Commanders }
+
+fn other_side(s: Side) -> Side { if s == Side::Su { Side::De } else { Side::Su } }
 
 /// Разграничительная линия директивы игрока: сосед (штаб, если назван) и ломаная.
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -225,6 +228,7 @@ impl Game {
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
             crate::command::control::agents_side(&mut sim, player);
+            if mode == Mode::Commanders { crate::commander::enable(&mut sim, player); }
             // противник под внешним управлением (штаб на модели): его приказы сценария и артподготовки сняты, как раньше
             let other = |hq: u32, sim: &Sim| { let s = sim.world.hqs[hq as usize].side; s != player && free.contains(&s) };
             let keep: Vec<bool> = sim.script.iter().map(|o| !other(o.hq, &sim)).collect();
@@ -235,7 +239,10 @@ impl Game {
             sim.fires.retain(|_| *k.next().unwrap());
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
-            return Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: false };
+            let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: false };
+            // командующие и у противника, если он не на модели вне ядра: его штабы — агенты, верхняя инстанция — Гитлер/Ставка
+            if mode == Mode::Commanders && !g.free.contains(&other_side(player)) { g.enemy_agents(); }
+            return g;
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
         let keep: Vec<bool> = sim.script.iter().map(|o| !mine(o.hq, &sim)).collect();
@@ -504,12 +511,16 @@ impl Game {
     /// по правилу; его приказы сценария при доставке пропускаются (штабы не на сценарии).
     pub fn enemy_agents(&mut self) {
         use crate::command::control::Control;
-        let enemy = if self.player == Side::Su { Side::De } else { Side::Su };
+        if self.enemy_agents { return; }
+        let enemy = other_side(self.player);
         crate::command::control::agents_side(&mut self.sim, enemy);
         for (k, h) in self.sim.world.hqs.iter().enumerate() { if h.side == enemy && h.echelon == crate::model::Echelon::HighCommand { self.sim.command.control[k] = Control::Agent; } }
         self.sim.sources[crate::staff::side_idx(enemy)] = crate::staff::Source::Script;
         let now = self.hour();
+        if self.mode == Mode::Commanders { crate::commander::enable(&mut self.sim, enemy); }
         for (at, mut d) in crate::command::control::historical_for(&mut self.sim, enemy, None, false) {
+            // немецкие командующие: директивы Гитлера после начала не подаются (он — агент, решает сам)
+            if self.mode == Mode::Commanders && enemy == Side::De && at > now { continue; }
             if at <= now { d.ready = true; crate::command::passing::issue(&mut self.sim, d, now); } else { self.pending.push((at, d)); }
         }
         self.enemy_agents = true;
@@ -588,7 +599,7 @@ impl Game {
         use crate::command::directive::Target;
         let w = &self.sim.world;
         let c = &self.sim.command;
-        let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid" };
+        let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid", Mode::Commanders => "commanders" };
         let mine = |h: usize| w.hqs[h].side == self.player;
         let hqs: Vec<Value> = (0..w.hqs.len()).filter(|&h| mine(h) && c.control.len() > h)
             .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] })).collect();

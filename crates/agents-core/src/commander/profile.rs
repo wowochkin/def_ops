@@ -8,11 +8,11 @@ use serde_json::Value;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Trait { Risk = 0, Persistence = 1, Ambition = 2, LossTolerance = 3, Obedience = 4 }
-const TRAITS: [(&str, Trait); 5] = [("risk", Trait::Risk), ("persistence", Trait::Persistence), ("ambition", Trait::Ambition), ("lossTolerance", Trait::LossTolerance), ("obedience", Trait::Obedience)];
+pub const TRAITS: [(&str, Trait); 5] = [("risk", Trait::Risk), ("persistence", Trait::Persistence), ("ambition", Trait::Ambition), ("lossTolerance", Trait::LossTolerance), ("obedience", Trait::Obedience)];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Motive { Task = 0, Rival = 1, Preserve = 2, NoEncircle = 3, Destroy = 4, Hold = 5, Save = 6 }
-const MOTIVES: [&str; 7] = ["task", "rival", "preserve", "noEncircle", "destroy", "hold", "save"];
+pub const MOTIVES: [&str; 7] = ["task", "rival", "preserve", "noEncircle", "destroy", "hold", "save"];
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Traits(pub [f64; 5]);
@@ -85,6 +85,8 @@ pub struct CommanderRules {
     pub mind_margin: f64,
     /// Объекты, к которым тянутся командующие: id и место (долгота, широта); в километры театра — в картине обстановки.
     pub objectives: Vec<(String, LngLat)>,
+    /// Узел `commanders` после поправок как есть: пределы и источники чисел для хода.
+    pub raw: Value,
 }
 
 impl CommanderRules {
@@ -151,6 +153,7 @@ impl CommanderRules {
             lookahead_hours: hours("lookaheadHours")?,
             mind_margin: n("mindMargin")?,
             objectives,
+            raw: c.clone(),
         })
     }
 }

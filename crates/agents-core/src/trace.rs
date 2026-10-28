@@ -45,7 +45,7 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
         "agent": if e.agent == u32::MAX { Value::Null } else { json!(w.divisions[e.agent as usize].id) },
         "text": e.text,
     })).collect();
-    json!({
+    let mut out = json!({
         "scenario": meta.id, "name": meta.name, "start": meta.start, "hours": meta.hours, "seed": sim.seed,
         "theatre": sim.theatre.id,
         "fields": FIELDS, "divisions": divisions, "hqs": hqs, "frames": frames, "journal": journal,
@@ -67,5 +67,8 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
             "kind": o.kind, "target": sim.theatre.proj.to_lnglat(o.target), "from": w.hqs[o.from as usize].id,
             "issued": o.issued, "arrives": o.arrives, "note": o.note,
         }))).collect::<Vec<_>>(),
-    })
+    });
+    // командующие — только если включены (ход без них прежний байт в байт)
+    if let Some(c) = crate::commander::trace::describe(sim) { out["commanders"] = c; }
+    out
 }

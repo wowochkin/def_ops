@@ -26,6 +26,26 @@ export interface AgentTrace {
   orders?: ({ kind: AgentOrderKind; target: LngLat; from: string; issued: number; arrives: number; note: string } | null)[];
   /** Документы штабов-агентов: директивы, приказы, распоряжения, извещения, донесения — с обоснованием. */
   documents?: { tick: number; time: string; hq: string; kind: 'directive' | 'order' | 'instruction' | 'notice' | 'report'; to: string[]; text: string; rule: string | null }[];
+  /** Командующие (режим `commanders`): характер, состояние по часам, решения со всеми вариантами и оценками. Нет — командующих нет. */
+  commanders?: AgentCommander[];
+}
+
+/** Число с пределами и источником (узел commanders.json). */
+export interface AgentTrait { value: number; range: [number, number]; source: string; confidence: string }
+export interface AgentCommanderOption {
+  kind: string; label: string; rule: string; target: LngLat | null; parts: Record<string, number>; penalty: number; bonus: number; total: number;
+  mind: { hours: number; advanceKm: number; losses: number; encircled: number } | null;
+}
+export interface AgentCommander {
+  hq: string; profile: string; name: string; side: 'su' | 'de';
+  traits: Record<'risk' | 'persistence' | 'ambition' | 'lossTolerance' | 'obedience', AgentTrait>;
+  baseMotives: Record<string, number>;
+  rival: string | null; objective: string | null;
+  snapshots: { tick: number; motives: Record<string, number>; mood: { confidence: number; stress: number }; intent: string | null;
+    picture: { armies: { hq: string; advanceKm: number; strength: number; enemyEst: number; enemyTrue: number; toObjectiveKm: number | null; brokeThrough: boolean }[];
+      rival: { hq: string; toObjectiveKm: number; asOf: number } | null; openFlanks: string[]; pockets: { center: LngLat; enemyEst: number; gapKm: number }[];
+      enemyReserves: { at: LngLat; strength: number }[]; toObjectiveKm: number | null } }[];
+  decisions: { tick: number; trigger: string; chosen: number; why: string; options: AgentCommanderOption[] }[];
 }
 
 export type AgentOrderKind = 'move' | 'attack' | 'defend' | 'hold' | 'withdraw';

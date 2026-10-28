@@ -10,6 +10,7 @@ pub mod options_de;
 pub mod options_su;
 pub mod picture;
 pub mod profile;
+pub mod trace;
 
 pub use profile::{CommanderRules, Cycle, Fog, Gains, MoodRules, Motive, Motives, Opts, Profile, Trait, Traits, Weights};
 pub use decide::{active, cycle, enable, Commander, Decision, Scored, Snapshot, State};

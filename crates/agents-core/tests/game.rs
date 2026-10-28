@@ -602,3 +602,19 @@ fn enemy_agents_take_historical_and_decide() {
     assert!(g.sim.documents.iter().filter(|d| g.sim.world.hqs[d.hq as usize].side == Side::De).count() > before, "немецкие штабы отдают документы");
     assert_eq!(g.trace()["game"]["enemyAgents"], true);
 }
+
+/// Игра в режиме «командующие»: командующие обеих сторон, место командующего занимает игрок командой `take`.
+#[test]
+fn commanders_game_seat() {
+    use agents_core::game::{Game, Mode};
+    use agents_core::model::Side;
+    let root = agents_core::repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий");
+    let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Commanders);
+    let hq = |g: &Game, id: &str| g.sim.world.hqs.iter().position(|h| h.id == id).unwrap() as u32;
+    let (f, n) = (hq(&g, "su_1bf"), hq(&g, "de_9a"));
+    assert!(agents_core::commander::active(&g.sim, f) && agents_core::commander::active(&g.sim, n));
+    g.command(&agents_core::game::CommandOp::Take { hq: "su_1bf".into() }).expect("занять место");
+    assert!(!agents_core::commander::active(&g.sim, f), "командующий молчит, когда место занято");
+    assert_eq!(serde_json::from_str::<Mode>("\"commanders\"").unwrap(), Mode::Commanders);
+}

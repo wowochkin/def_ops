@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '../src/data';
 import { contextFrom } from '../src/source';
-import { agentKindOf, agentsHistory, agentsStateAt, agentsToRun, postureOf, type AgentTrace } from '../src/agents';
+import { agentKindOf, agentsHistory, agentsStateAt, agentsToRun, postureOf, type AgentCommander, type AgentTrace } from '../src/agents';
 import { unitReports } from '../src/reports';
 import { checkEvents, compareWithHistory } from '../src/history';
 import { medianXY, runToDocument } from '../src/publish';
@@ -157,5 +157,36 @@ describe('агентная модель: события окружения и с
     const { ctx, run } = agentsToRun(base, cutTrace(), 6);
     const ev = checkEvents(ctx, run, { ...history, events: [{ id: 'x', title: 'веха', date: '1945-04-16', kind: 'reach', side: 'su', place: 'Нет_такого_места', radiusKm: 3, at: [14.4, 52.5] }] } as typeof history);
     expect(ev[0].simulated).toBe('1945-04-16');
+  });
+});
+
+describe('ход с командующими', () => {
+  const cmd: AgentCommander = {
+    hq: 'su_1bf', profile: 'zhukov', name: 'Жуков', side: 'su',
+    traits: { risk: { value: 0.7, range: [0, 1], source: 'допущение', confidence: 'assumption' }, persistence: { value: 0.7, range: [0, 1], source: 'допущение', confidence: 'assumption' }, ambition: { value: 0.8, range: [0, 1], source: 'допущение', confidence: 'assumption' }, lossTolerance: { value: 0.6, range: [0, 1], source: 'допущение', confidence: 'assumption' }, obedience: { value: 0.5, range: [0, 1], source: 'допущение', confidence: 'assumption' } },
+    baseMotives: { task: 0.8 }, rival: 'konev', objective: 'berlin',
+    snapshots: [{ tick: 0, motives: { task: 0.8 }, mood: { confidence: 0.5, stress: 0.2 }, intent: null, picture: { armies: [], rival: null, openFlanks: [], pockets: [], enemyReserves: [], toObjectiveKm: 90 } }],
+    decisions: [{ tick: 0, trigger: 'start', chosen: 0, why: 'проба', options: [{ kind: 'continue', label: 'идти по плану', rule: 'ПУ-43', target: null, parts: { task: 0.5 }, penalty: 0, bonus: 0, total: 0.5, mind: null }] }],
+  };
+  it('разбирается образец с командующими и без них (поле необязательно)', async () => {
+    const base = trace();
+    const without: AgentTrace = JSON.parse(JSON.stringify(base));
+    expect(without.commanders).toBeUndefined();
+    const withCmd: AgentTrace = { ...base, commanders: [cmd] };
+    const back = JSON.parse(JSON.stringify(withCmd)) as AgentTrace;
+    expect(back.commanders?.[0].decisions[0].options[0].kind).toBe('continue');
+    const { ctx } = await contextFrom(get, 'berlin-1945-tasks').then((r) => agentsToRun(r.ctx, back, 6));
+    expect(ctx).toBeTruthy();
+  });
+});
+
+describe('калибровщик: пространство командующих', () => {
+  it('строится из commanders.json по range', async () => {
+    const { commandersSpace } = await import('../tools/agents/commanders-space');
+    const sp = commandersSpace();
+    expect(sp['commanders.profiles.zhukov.traits.risk']).toEqual([0.3, 1]);
+    expect(Object.keys(sp).some((k) => k.startsWith('commanders.mood.'))).toBe(true);
+    expect(sp['commanders.fog.reportDelayHours']?.[2]).toBe('int');
+    expect(Object.keys(sp).every((k) => /^commanders\.(profiles\.[^.]+\.(traits|motives)|mood|gains|weights|options|fog)\./.test(k))).toBe(true);
   });
 });

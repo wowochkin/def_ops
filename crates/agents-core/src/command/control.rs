@@ -178,7 +178,8 @@ pub fn with_axis(sim: &Sim, mut d: Directive) -> Directive {
 /// Режим командования прогона стороны `side`: `script` — приказы сценария; `agents` — штабы-агенты под историческими
 /// директивами Ставки (верхняя инстанция — агент: отвечает на запросы отхода); `hybrid` — поддеревья получателей
 /// директив по приказам сценария; `fronts` — Ставка и фронты по истории, армии и ниже — штабы-агенты; `journals` — то же
-/// и задачи армий по журналам между распоряжениями фронта (подсказка: проверка армейских агентов и ядра). Возвращает
+/// и задачи армий по журналам между распоряжениями фронта (подсказка: проверка армейских агентов и ядра);
+/// `commanders` — как `agents` плюс командующие (`commander::enable`). Возвращает
 /// директивы к подаче по часам (`feed`).
 pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Result<Vec<(u32, Directive)>, String> {
     match mode {
@@ -189,7 +190,16 @@ pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Resu
             Ok(historical_for(sim, side, None, mode == "hybrid"))
         }
         "fronts" | "journals" => Ok(front_historical(sim, side, mode == "journals")),
-        x => Err(format!("режим командования: script | agents | hybrid | fronts | journals, а не {x}")),
+        // командующие: путь «агенты» плюс командующие у штабов с профилем; Гитлер — агент, его исторические
+        // директивы после начала не подаются (остаются только готовые к началу)
+        "commanders" => {
+            agents_side(sim, side);
+            for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == crate::model::Echelon::HighCommand { sim.command.control[k] = Control::Agent; } }
+            crate::commander::enable(sim, side);
+            let ds = historical_for(sim, side, None, false);
+            Ok(if side == crate::model::Side::De { ds.into_iter().filter(|(_, d)| d.ready).collect() } else { ds })
+        }
+        x => Err(format!("режим командования: script | agents | hybrid | fronts | journals | commanders, а не {x}")),
     }
 }
 

@@ -6,6 +6,7 @@
  *
  *   npx tsx packages/sim/tools/agents/calibrate.ts --samples 200 --seeds 1,2,3 --jobs 4 --out evals-out/calib/r1
  *   npx tsx packages/sim/tools/agents/calibrate.ts --around evals-out/calib/r1 --scale 0.15 --samples 100 --out evals-out/calib/r2
+ *   npx tsx packages/sim/tools/agents/calibrate.ts --mode commanders --samples 200 --out evals-out/calib/cmd1   (пространство — числа commanders.json с range)
  *   npx tsx packages/sim/tools/agents/calibrate.ts --refine evals-out/calib/r2 --top 8
  *
  * Пишет построчно <out>/samples.jsonl ({ params, total, positions, events, runs }) и <out>/refine.jsonl.
@@ -18,6 +19,7 @@ import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '
 import { contextFrom } from '../../src/source';
 import { agentsScore } from '../../src/agents-score';
 import type { AgentHistory, AgentTrace } from '../../src/agents';
+import { commandersSpace } from './commanders-space';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const args = process.argv.slice(2);
@@ -45,6 +47,7 @@ const SCEN: Record<string, { path: string; base: string }> = {
   'vistula-oder': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', base: 'vistula-oder-1945' },
 };
 const mode = opt('mode', 'fronts')!;
+const space = mode === 'commanders' ? commandersSpace() : SPACE;
 const jobs = +opt('jobs', '4')!;
 const BIN = resolve(ROOT, 'target/release/agents-run');
 
@@ -71,7 +74,7 @@ let tmpN = 0;
 /** Прогон ядра: сценарий, seed, поправки; ход — во временную папку, после сверки удаляется. */
 function run(sc: string, seed: number, params: Record<string, number>): Promise<string> {
   const out = `evals-out/calib/tmp/${process.pid}-${tmpN++}`;
-  const extra = mode === 'script' ? [] : ['--command', mode, '--side', 'su'];
+  const extra = mode === 'script' ? [] : mode === 'commanders' ? ['--command', mode] : ['--command', mode, '--side', 'su'];
   return new Promise((ok, fail) => {
     const p = spawn(BIN, ['--scenario', SCEN[sc].path, '--seed', String(seed), '--runs', '1', '--out', out, ...extra, ...(Object.keys(params).length ? ['--params', JSON.stringify(params)] : [])], { cwd: ROOT, stdio: 'ignore' });
     p.on('exit', (c) => (c === 0 ? ok(out) : fail(new Error(`agents-run: код ${c}`))));
@@ -94,7 +97,7 @@ async function evaluate(sc: string, seeds: number[], params: Record<string, numb
 
 /** Детерминированный генератор (mulberry32): тот же --rng — те же сочетания. */
 function rng(seed: number) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const sample = (r: () => number) => Object.fromEntries(Object.entries(SPACE).map(([k, [lo, hi, int]]) => {
+const sample = (r: () => number) => Object.fromEntries(Object.entries(space).map(([k, [lo, hi, int]]) => {
   const v = lo + (hi - lo) * r();
   return [k, int ? Math.round(v) : +v.toFixed(3)];
 }));
@@ -121,7 +124,7 @@ if (opt('refine')) {
   // --around <папка>: второй этап — вокруг лучшего сочетания той папки, сдвиг на ±scale диапазона параметра
   const around = opt('around') ? readFileSync(resolve(ROOT, opt('around')!, 'samples.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { params: Record<string, number>; total: number }).sort((a, b) => b.total - a.total)[0]?.params : undefined;
   const scale = +opt('scale', '0.15')!;
-  const near = (c: Record<string, number>) => Object.fromEntries(Object.entries(SPACE).map(([k, [lo, hi, int]]) => {
+  const near = (c: Record<string, number>) => Object.fromEntries(Object.entries(space).map(([k, [lo, hi, int]]) => {
     const base = c[k] ?? lo + (hi - lo) / 2;
     const v = Math.min(hi, Math.max(lo, base + (r() * 2 - 1) * scale * (hi - lo)));
     return [k, int ? Math.round(v) : +v.toFixed(3)];

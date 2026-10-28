@@ -1,7 +1,7 @@
 //! Команды Tauri агентной модели — общие для приложения агентной модели (apps/agents) и настольного приложения
 //! платформы (apps/desktop):
 //! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные); режим командования
-//!   советских штабов (command: script | fronts | journals | agents); источники решений
+//!   советских штабов (command: script | fronts | journals | agents | commanders); источники решений
 //!   штабов обеих сторон (приказы сценария, доктрина, языковая модель), ход решений модели — событиями staff-progress
 //!   и staff-stream;
 //! - read_text — файл данных (сценарий, история, театр) только для чтения;
@@ -119,7 +119,10 @@ pub mod commands {
             // советские штабы по ступеням: script — приказы сценария, fronts — фронты по истории, ниже штабы-агенты,
             // agents — штабы-агенты под директивами Ставки (command::control::command_mode)
             let mode = command.unwrap_or_else(|| "script".into());
-            let pending = agents_core::command::control::command_mode(&mut sim, &mode, agents_core::model::Side::Su)?;
+            // commanders — командующие у обеих сторон
+            let sides: &[agents_core::model::Side] = if mode == "commanders" { &[agents_core::model::Side::Su, agents_core::model::Side::De] } else { &[agents_core::model::Side::Su] };
+            let mut pending = Vec::new();
+            for &sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd)?); }
             let hours = meta.hours;
             Ok(trace::run_fed(&mut sim, hours, &meta, pending, mode == "fronts" || mode == "journals"))
         }).await.map_err(|e| e.to_string())?

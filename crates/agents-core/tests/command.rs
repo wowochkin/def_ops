@@ -514,3 +514,51 @@ fn fronts_mode_feeds_front_directives() {
     assert!(j.iter().any(|(_, d)| d.id.ends_with(":journal")));
     assert!(j.len() > pending.len());
 }
+
+/// Режим «командующие»: обе стороны, командующие у фронтов и групп армий; Ставка и Гитлер — агенты;
+/// исторические директивы — только советской Ставки (немецкие после начала не подаются).
+#[test]
+fn commanders_mode_enables_both_sides() {
+    use agents_core::command::control::Control;
+    use agents_core::model::Side;
+    let mut sim = load("berlin-1945");
+    let su = agents_core::command::control::command_mode(&mut sim, "commanders", Side::Su).expect("режим");
+    let de = agents_core::command::control::command_mode(&mut sim, "commanders", Side::De).expect("режим");
+    for id in ["su_1bf", "su_1uf", "su_2bf", "de_hc", "de_9a"] {
+        assert!(agents_core::commander::active(&sim, hq(&sim, id)), "{id}");
+    }
+    for id in ["su_stavka", "de_hc"] { assert_eq!(sim.command.control[hq(&sim, id) as usize], Control::Agent, "{id}"); }
+    let stavka = hq(&sim, "su_stavka");
+    assert!(!su.is_empty());
+    assert!(su.iter().all(|(_, d)| d.from == stavka));
+    assert!(de.iter().all(|(_, d)| d.ready), "немецкие директивы после начала не подаются");
+    assert!(agents_core::command::control::command_mode(&mut sim, "nope", Side::Su).unwrap_err().contains("commanders"));
+}
+
+/// Ход прогона несёт поле `commanders` с решениями; без командующих поля нет.
+#[test]
+fn trace_has_commanders() {
+    use agents_core::model::Side;
+    let root = repo_root();
+    let (mut sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    let mut pending = agents_core::command::control::command_mode(&mut sim, "commanders", Side::Su).unwrap();
+    pending.extend(agents_core::command::control::command_mode(&mut sim, "commanders", Side::De).unwrap());
+    let t = agents_core::trace::run_fed(&mut sim, 48, &meta, pending, false);
+    let cs = t["commanders"].as_array().expect("commanders");
+    assert!(!cs.is_empty());
+    let mut decisions = 0;
+    for c in cs {
+        assert!(c["traits"]["risk"]["range"].is_array() && c["traits"]["risk"]["source"].is_string());
+        assert!(c["baseMotives"]["task"].is_number());
+        for d in c["decisions"].as_array().unwrap() {
+            decisions += 1;
+            let n = d["options"].as_array().unwrap().len();
+            assert!((d["chosen"].as_u64().unwrap() as usize) < n);
+            assert!(d["options"][0]["kind"].is_string());
+        }
+        for s in c["snapshots"].as_array().unwrap() { assert!(s["picture"]["armies"].is_array()); }
+    }
+    assert!(decisions > 0);
+    let (mut plain, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{DATA_DIR}"), &root).expect("сценарий");
+    assert!(agents_core::trace::run(&mut plain, 2, &meta).get("commanders").is_none());
+}
