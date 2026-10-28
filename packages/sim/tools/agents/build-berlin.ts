@@ -29,7 +29,7 @@
  * Выход: packages/sim/data/scenarios/agents/berlin-1945.json и berlin-1945.history.json.
  */
 import { HIGH_COMMAND, type HqEchelon } from './hierarchy';
-import { frontDirectives as frontDirectivesOf, scenarioDirectives } from './directives';
+import { frontDirectives as frontDirectivesOf, journalDirectives, scenarioDirectives } from './directives';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -124,9 +124,10 @@ const ownStartAt = (id: string, near: LngLat | null): { at: LngLat; day1: boolea
   // с них операция начиналась бы «из завтра»
   const de = id.startsWith('de_');
   const ab = (p: CensusPos) => p.reliability === 'A' || p.reliability === 'B';
-  // у советских за 16.04 — только журналы (ЦАМО, «к исходу дня»): ошибка — не больше продвижения первого дня (2–6 км)
-  // против 15–40 км у оценки вдоль фронта
-  const day1 = (p: CensusPos) => ab(p) && (de || p.set === 'tsamo-div');
+  // у советских за 16.04 — нет: к исходу дня они уже вклинились в немецкую полосу, а немецкие дивизии стоят на своих
+  // позициях начала дня — советские с первого часа оказывались у них в тылу (169 и 712 пд, гарнизон Франкфурта
+  // «окружены» с 5–7-го часа)
+  const day1 = (p: CensusPos) => ab(p) && de;
   const ps = (census.get(id)?.positions ?? []).filter((p) => p.own && p.date >= '1945-04-10' && (p.date < '1945-04-16' || (p.date === '1945-04-16' && (p.time === 'start' || day1(p)))))
     // у советских — не дальше 30 км от штаба (иначе ошибка сопоставления); у немецких положение штаба само оценочное
     // (центр подчинённых), и документированное (A/B) место дивизии берётся до 150 км от него
@@ -262,10 +263,7 @@ for (const [hqId, divs] of byHq) {
     // положение
     let pos: LngLat | null = null;
     const sCorps = subAt(d, '1945-04-16').corps;
-    // своё место по журналу — раньше оценки по штабу корпуса
-    const doc = d.side === 'su' ? takeStart(d.id, hp) : null;
-    if (doc) { pos = doc; notes.push('положение: перепись, 10–16.04'); }
-    const cpos = !pos && d.side === 'su' && sCorps ? seelowCorpsStart.get(`${hqId}_${sCorps.replace(/^su_/, '')}`) : undefined;
+    const cpos = d.side === 'su' && sCorps ? seelowCorpsStart.get(`${hqId}_${sCorps.replace(/^su_/, '')}`) : undefined;
     if (cpos) {
       const same = divs.filter((x) => subAt(x, '1945-04-16').corps === sCorps);
       const j = same.indexOf(d);
@@ -606,6 +604,10 @@ for (const o of tsamoOrders) {
   tsamoN++;
 }
 frontDirectives.sort((a, b) => a.at.localeCompare(b.at));
+// режим «армии по журналам» — задачи армий между распоряжениями фронта по положениям главных сил в журналах
+const journalDirs = journalDirectives(tsHist.positions, hqList, frontDirectives, START, END);
+console.log(`задач армий по журналам (режим «армии по журналам»): ${journalDirs.length}`);
+frontDirectives.push(...journalDirs);
 console.log(`распоряжений фронтов армиям: ${frontDirectives.length} (из них по ЖБД 1 БФ — ${tsamoN})`);
 // развёрнуты к началу в исходном районе (soviet-fires.ts, markDeployed)
 const deployedN = markDeployed(out, orders as { at: unknown; to: string[]; kind: string }[]);

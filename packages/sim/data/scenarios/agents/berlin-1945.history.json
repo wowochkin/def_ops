@@ -972,6 +972,17 @@
   },
   {
    "formation": "su_260sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2262,
+    52.7347
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_260sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.1366,
@@ -1082,6 +1093,17 @@
   },
   {
    "formation": "su_260sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.19,
+    52.69
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_260sd",
    "time": "1945-04-25T20:00",
    "at": [
     12.86,
@@ -1112,6 +1134,17 @@
    "approxKm": 2,
    "set": "reichstag",
    "reliability": "A"
+  },
+  {
+   "formation": "su_328sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2088,
+    52.7247
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "B"
   },
   {
    "formation": "su_328sd",
@@ -1247,6 +1280,17 @@
   },
   {
    "formation": "su_328sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.17,
+    52.68
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_328sd",
    "time": "1945-04-24T20:00",
    "at": [
     12.84,
@@ -1265,6 +1309,17 @@
    ],
    "approxKm": 3,
    "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_60sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2501,
+    52.7312
+   ],
+   "approxKm": 3.2,
+   "set": "tsamo-div",
    "reliability": "A"
   },
   {
@@ -1378,6 +1433,17 @@
    "reliability": "B"
   },
   {
+   "formation": "su_60sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2,
+    52.64
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
    "formation": "su_76sd",
    "time": "1945-04-19T20:00",
    "at": [
@@ -1474,6 +1540,17 @@
    ],
    "approxKm": 2,
    "set": "reichstag",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_175sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2501,
+    52.7312
+   ],
+   "approxKm": 3.2,
+   "set": "tsamo-div",
    "reliability": "A"
   },
   {
@@ -1620,6 +1697,17 @@
    "reliability": "A"
   },
   {
+   "formation": "su_175sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2,
+    52.63
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
    "formation": "su_82sd",
    "time": "1945-04-19T20:00",
    "at": [
@@ -1753,6 +1841,17 @@
   },
   {
    "formation": "su_132sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3046,
+    52.7032
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_132sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.1589,
@@ -1803,6 +1902,28 @@
     52.5189
    ],
    "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_132sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.21,
+    52.62
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_143sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3046,
+    52.7032
+   ],
+   "approxKm": 2,
    "set": "tsamo-div",
    "reliability": "A"
   },
@@ -1917,6 +2038,28 @@
    "reliability": "A"
   },
   {
+   "formation": "su_143sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.23,
+    52.61
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_23gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3032,
+    52.6598
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
    "formation": "su_23gsd",
    "time": "1945-04-17T20:00",
    "at": [
@@ -1970,6 +2113,17 @@
    "approxKm": 3,
    "set": "tsamo-div",
    "reliability": "B"
+  },
+  {
+   "formation": "su_23gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.23,
+    52.58
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
   },
   {
    "formation": "su_23gsd",
@@ -2050,6 +2204,17 @@
   },
   {
    "formation": "su_33sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3786,
+    52.6751
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_33sd",
    "time": "1945-04-17T20:00",
    "at": [
     13.9283,
@@ -2080,6 +2245,17 @@
    "approxKm": 2,
    "set": "tsamo-div",
    "reliability": "B"
+  },
+  {
+   "formation": "su_33sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.23,
+    52.57
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
   },
   {
    "formation": "su_33sd",
@@ -2215,6 +2391,17 @@
   },
   {
    "formation": "su_150sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2844,
+    52.6806
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_150sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.1467,
@@ -2270,6 +2457,17 @@
   },
   {
    "formation": "su_150sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2,
+    52.6
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_150sd",
    "time": "1945-04-21T20:00",
    "at": [
     13.43,
@@ -2314,6 +2512,17 @@
   },
   {
    "formation": "su_171sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2868,
+    52.6585
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_171sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.1692,
@@ -2343,6 +2552,17 @@
    ],
    "approxKm": 2,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_171sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.22,
+    52.58
+   ],
+   "approxKm": 2,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -2655,6 +2875,17 @@
   },
   {
    "formation": "su_94gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2645,
+    52.6194
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_94gsd",
    "time": "1945-04-17T20:00",
    "at": [
     14.1399,
@@ -2706,6 +2937,17 @@
    ],
    "approxKm": 3,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_94gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2,
+    52.55
+   ],
+   "approxKm": 2,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -2963,6 +3205,17 @@
   },
   {
    "formation": "su_301sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3689,
+    52.5665
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_301sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.27,
@@ -3017,6 +3270,28 @@
    "reliability": "A"
   },
   {
+   "formation": "su_301sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.37,
+    52.52
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_60gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3246,
+    52.5836
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
    "formation": "su_60gsd",
    "time": "1945-04-18T20:00",
    "at": [
@@ -3058,6 +3333,39 @@
    ],
    "approxKm": 3,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_60gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.23,
+    52.53
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_295sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3395,
+    52.5774
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_295sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.33,
+    52.52
+   ],
+   "approxKm": 2,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -3150,6 +3458,17 @@
   },
   {
    "formation": "su_220tbr",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3689,
+    52.5665
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_220tbr",
    "time": "1945-04-18T20:00",
    "at": [
     14.1386,
@@ -3168,6 +3487,17 @@
    ],
    "approxKm": 2,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_220tbr",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.37,
+    52.52
+   ],
+   "approxKm": 3,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -3293,6 +3623,28 @@
   },
   {
    "formation": "su_47gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3883,
+    52.5569
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_47gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3883,
+    52.5569
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_47gsd",
    "time": "1945-04-17T20:00",
    "at": [
     14.3183,
@@ -3380,6 +3732,28 @@
    "reliability": "B"
   },
   {
+   "formation": "su_47gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.39,
+    52.53
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_57gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4036,
+    52.4049
+   ],
+   "approxKm": 14.2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
    "formation": "su_57gsd",
    "time": "1945-04-24T20:00",
    "at": [
@@ -3410,6 +3784,17 @@
    ],
    "approxKm": 3,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_57gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4,
+    52.53
+   ],
+   "approxKm": 1,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -3546,6 +3931,17 @@
   },
   {
    "formation": "su_79gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.406,
+    52.4952
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_79gsd",
    "time": "1945-04-17T20:00",
    "at": [
     14.4366,
@@ -3583,6 +3979,28 @@
    "at": [
     13.3827,
     52.4989
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_79gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.45,
+    52.47
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_88gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.406,
+    52.4952
    ],
    "approxKm": 2,
    "set": "tsamo-div",
@@ -3666,6 +4084,28 @@
    "reliability": "A"
   },
   {
+   "formation": "su_88gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.46,
+    52.46
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_27gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4201,
+    52.3995
+   ],
+   "approxKm": 13.5,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
    "formation": "su_27gsd",
    "time": "1945-04-18T20:00",
    "at": [
@@ -3732,6 +4172,17 @@
    "reliability": "A"
   },
   {
+   "formation": "su_27gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.41,
+    52.52
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
    "formation": "su_74gsd",
    "time": "1945-04-29T20:00",
    "at": [
@@ -3740,6 +4191,17 @@
    ],
    "approxKm": 0.3,
    "set": "reichstag",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_74gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4057,
+    52.517
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
    "reliability": "B"
   },
   {
@@ -3774,6 +4236,17 @@
    "approxKm": 2,
    "set": "tsamo-div",
    "reliability": "B"
+  },
+  {
+   "formation": "su_74gsd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.44,
+    52.49
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
   },
   {
    "formation": "su_82gsd",
@@ -3975,6 +4448,17 @@
   },
   {
    "formation": "su_4sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4902,
+    52.4572
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_4sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.5146,
@@ -4034,6 +4518,28 @@
    "at": [
     14.006,
     52.213
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_4sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.45,
+    52.43
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_41sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4698,
+    52.4218
    ],
    "approxKm": 2,
    "set": "tsamo-div",
@@ -4106,6 +4612,17 @@
    "reliability": "A"
   },
   {
+   "formation": "su_41sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.46,
+    52.39
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
    "formation": "su_134sd",
    "time": "1945-04-21T20:00",
    "at": [
@@ -4147,6 +4664,17 @@
    ],
    "approxKm": 2,
    "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_247sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4698,
+    52.4218
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
    "reliability": "A"
   },
   {
@@ -4199,6 +4727,28 @@
    "at": [
     13.8295,
     52.2184
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_247sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.45,
+    52.4
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_274sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4698,
+    52.4218
    ],
    "approxKm": 2,
    "set": "tsamo-div",
@@ -4293,6 +4843,17 @@
    "reliability": "A"
   },
   {
+   "formation": "su_274sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.44,
+    52.41
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
    "formation": "su_117sd",
    "time": "1945-04-20T20:00",
    "at": [
@@ -4382,6 +4943,17 @@
   },
   {
    "formation": "su_312sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3711,
+    52.4874
+   ],
+   "approxKm": 13.2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_312sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.3711,
@@ -4421,6 +4993,28 @@
     52.361
    ],
    "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_312sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.48,
+    52.38
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_370sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.3711,
+    52.4874
+   ],
+   "approxKm": 13.2,
    "set": "tsamo-div",
    "reliability": "A"
   },
@@ -4477,6 +5071,17 @@
    ],
    "approxKm": 2,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_370sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.48,
+    52.37
+   ],
+   "approxKm": 1,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -4646,6 +5251,17 @@
   },
   {
    "formation": "su_339sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4916,
+    52.2882
+   ],
+   "approxKm": 2,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_339sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.4738,
@@ -4707,6 +5323,28 @@
     52.1073
    ],
    "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_339sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.53,
+    52.28
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_383sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.4916,
+    52.2882
+   ],
+   "approxKm": 2,
    "set": "tsamo-div",
    "reliability": "A"
   },
@@ -4808,6 +5446,17 @@
    "approxKm": 3,
    "set": "tsamo-div",
    "reliability": "B"
+  },
+  {
+   "formation": "su_383sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.53,
+    52.3
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
   },
   {
    "formation": "su_64sd",
@@ -4998,6 +5647,17 @@
   },
   {
    "formation": "su_49sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.5768,
+    52.2536
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "B"
+  },
+  {
+   "formation": "su_49sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.4764,
@@ -5071,6 +5731,17 @@
    ],
    "approxKm": 2,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_49sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.52,
+    52.22
+   ],
+   "approxKm": 1,
+   "set": "research-su",
    "reliability": "A"
   },
   {
@@ -5185,6 +5856,17 @@
   },
   {
    "formation": "su_362sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.5543,
+    52.2156
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_362sd",
    "time": "1945-04-17T20:00",
    "at": [
     14.5429,
@@ -5292,6 +5974,17 @@
    "approxKm": 3,
    "set": "tsamo-div",
    "reliability": "B"
+  },
+  {
+   "formation": "su_362sd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.52,
+    52.19
+   ],
+   "approxKm": 1,
+   "set": "research-su",
+   "reliability": "A"
   },
   {
    "formation": "su_119ur",
@@ -8298,6 +8991,17 @@
   },
   {
    "formation": "su_pl1pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2445,
+    52.809
+   ],
+   "approxKm": 3,
+   "set": "conquest",
+   "reliability": "C"
+  },
+  {
+   "formation": "su_pl1pd",
    "time": "1945-04-18T20:00",
    "at": [
     14.06,
@@ -8306,6 +9010,28 @@
    "approxKm": 3,
    "set": "conquest",
    "reliability": "C"
+  },
+  {
+   "formation": "su_pl1pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2834,
+    52.7874
+   ],
+   "approxKm": 3.5,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl1pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2445,
+    52.809
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
   },
   {
    "formation": "su_pl1pd",
@@ -8374,6 +9100,28 @@
    "reliability": "A"
   },
   {
+   "formation": "su_pl1pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.12,
+    52.8
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl2pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.291,
+    52.7461
+   ],
+   "approxKm": 3,
+   "set": "conquest",
+   "reliability": "C"
+  },
+  {
    "formation": "su_pl2pd",
    "time": "1945-04-18T20:00",
    "at": [
@@ -8394,6 +9142,28 @@
    "approxKm": 3,
    "set": "conquest",
    "reliability": "C"
+  },
+  {
+   "formation": "su_pl2pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2834,
+    52.7874
+   ],
+   "approxKm": 3.5,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl2pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2444,
+    52.7756
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
   },
   {
    "formation": "su_pl2pd",
@@ -8473,6 +9243,28 @@
    "reliability": "B"
   },
   {
+   "formation": "su_pl2pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.1,
+    52.78
+   ],
+   "approxKm": 2,
+   "set": "research-su",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl3pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.26,
+    52.74
+   ],
+   "approxKm": 3,
+   "set": "conquest",
+   "reliability": "C"
+  },
+  {
    "formation": "su_pl3pd",
    "time": "1945-04-17T20:00",
    "at": [
@@ -8493,6 +9285,28 @@
    "approxKm": 3,
    "set": "conquest",
    "reliability": "C"
+  },
+  {
+   "formation": "su_pl3pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2834,
+    52.7874
+   ],
+   "approxKm": 3.5,
+   "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl3pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.2466,
+    52.7428
+   ],
+   "approxKm": 3,
+   "set": "tsamo-div",
+   "reliability": "A"
   },
   {
    "formation": "su_pl3pd",
@@ -8602,6 +9416,17 @@
    ],
    "approxKm": 3,
    "set": "tsamo-div",
+   "reliability": "A"
+  },
+  {
+   "formation": "su_pl3pd",
+   "time": "1945-04-16T20:00",
+   "at": [
+    14.06,
+    52.74
+   ],
+   "approxKm": 2,
+   "set": "research-su",
    "reliability": "A"
   },
   {

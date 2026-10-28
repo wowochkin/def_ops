@@ -1,7 +1,7 @@
 //! Команды Tauri агентной модели — общие для приложения агентной модели (apps/agents) и настольного приложения
 //! платформы (apps/desktop):
 //! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные); режим командования
-//!   советских штабов (command: script | fronts | agents); источники решений
+//!   советских штабов (command: script | fronts | journals | agents); источники решений
 //!   штабов обеих сторон (приказы сценария, доктрина, языковая модель), ход решений модели — событиями staff-progress
 //!   и staff-stream;
 //! - read_text — файл данных (сценарий, история, театр) только для чтения;
@@ -121,7 +121,7 @@ pub mod commands {
             let mode = command.unwrap_or_else(|| "script".into());
             let pending = agents_core::command::control::command_mode(&mut sim, &mode, agents_core::model::Side::Su)?;
             let hours = meta.hours;
-            Ok(trace::run_fed(&mut sim, hours, &meta, pending, mode == "fronts"))
+            Ok(trace::run_fed(&mut sim, hours, &meta, pending, mode == "fronts" || mode == "journals"))
         }).await.map_err(|e| e.to_string())?
     }
 

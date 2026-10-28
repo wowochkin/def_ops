@@ -80,3 +80,33 @@ export function frontDirectives(orders: { id: string; formation: string; task: s
       ...(g ? { immediate: { line: [r4(g)], by: null } } : {}), note: `${o.note ?? ''} [${o.id}]`.trim() };
   }).sort((a, b) => a.at.localeCompare(b.at));
 }
+
+/**
+ * Задачи армий по журналам (режим «армии по журналам», agents-run --command journals): между распоряжениями фронта —
+ * положение главных сил армии по журналу (ЖБД фронтов и армий, A/B) на исход дня становится задачей, отданной
+ * накануне вечером, если цель действующего распоряжения дальше 10 км от него. Это подсказка — куда армия вышла по
+ * документу, — а не решение штаба: режим проверяет армейских и корпусных агентов и ядро при известном ходе армий.
+ */
+export function journalDirectives(positions: { formation: string; time: string; at: LngLatT; reliability: string }[], hqs: { id: string; side: string; echelon: string; parent: string | null }[],
+  front: FrontDirective[], start: string, end: string): FrontDirective[] {
+  const hq = new Map(hqs.map((h) => [h.id, h]));
+  const KX = 111.32 * Math.cos((52.5 * Math.PI) / 180), KY = 110.57;
+  const km = (a: LngLatT, b: LngLatT) => Math.hypot((a[0] - b[0]) * KX, (a[1] - b[1]) * KY);
+  const r4 = (p: LngLatT): LngLatT => [+p[0].toFixed(4), +p[1].toFixed(4)];
+  const out: FrontDirective[] = [];
+  for (const a of hqs.filter((h) => h.side === 'su' && h.echelon === 'army' && h.parent && hq.get(h.parent)?.echelon === 'front')) {
+    const ps = positions.filter((p) => p.formation === a.id && (p.reliability === 'A' || p.reliability === 'B') && p.time > start && p.time < end).sort((x, y) => x.time.localeCompare(y.time));
+    const mine = front.filter((d) => d.to[0] === a.id);
+    for (const p of ps) {
+      const day = p.time.slice(0, 10);
+      const eve = new Date(Date.parse(`${day}T20:00:00Z`) - 24 * 3600e3).toISOString().slice(0, 16);
+      const at = eve < start ? start : eve;
+      const cur = [...mine, ...out.filter((d) => d.to[0] === a.id)].filter((d) => d.at <= at).sort((x, y) => x.at.localeCompare(y.at)).pop();
+      const goal = cur?.immediate?.line[0];
+      if (goal && km(goal, p.at) <= 10) continue;
+      out.push({ id: `${a.id}@${at}:journal`, at, from: a.parent!, to: [a.id], form: at <= start ? 'order' : 'instruction', task: 'attack',
+        immediate: { line: [r4(p.at)], by: `${day}T20:00` }, note: `по журналу: к исходу ${day.slice(8, 10)}.${day.slice(5, 7)} — главные силы в этом районе` });
+    }
+  }
+  return out;
+}

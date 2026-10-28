@@ -493,6 +493,7 @@ fn immediate_not_done_while_enemy_holds() {
 fn fronts_mode_feeds_front_directives() {
     let mut sim = load("berlin-1945");
     let mut pending = agents_core::command::control::command_mode(&mut sim, "fronts", Side::Su).expect("режим");
+    assert!(pending.iter().all(|(_, d)| !d.id.ends_with(":journal")), "задачи по журналам — только в режиме journals");
     assert!(pending.len() >= 100, "{}", pending.len());
     assert!(pending.iter().all(|(_, d)| sim.world.hqs[d.from as usize].echelon == Echelon::Front));
     let (f, a) = (hq(&sim, "su_1bf"), hq(&sim, "su_8gva"));
@@ -503,4 +504,9 @@ fn fronts_mode_feeds_front_directives() {
     assert_eq!(i.from, f);
     assert_eq!(i.axis.len(), 2, "ось достроена");
     assert!(agents_core::command::control::command_mode(&mut sim, "что-то", Side::Su).is_err());
+    // «армии по журналам» — те же распоряжения и задачи армий по журналам между ними
+    let mut sim = load("berlin-1945");
+    let j = agents_core::command::control::command_mode(&mut sim, "journals", Side::Su).expect("режим");
+    assert!(j.iter().any(|(_, d)| d.id.ends_with(":journal")));
+    assert!(j.len() > pending.len());
 }

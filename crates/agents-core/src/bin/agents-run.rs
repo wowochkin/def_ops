@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts --side su|de] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals --side su|de] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
 //!       [--params '{"pocket.breakoutKeep": 0.05}' | --params файл.json — поправки параметров agents-v0.json (путь → значение)]
@@ -183,7 +183,7 @@ fn main() {
         if arg(&args, "below").as_deref() == Some("front") { mode = "fronts".into(); }
         let side = if arg(&args, "side").as_deref() == Some("de") { Side::De } else { Side::Su };
         let mut pending = agents_core::command::control::command_mode(&mut sim, &mode, side).unwrap_or_else(|e| panic!("--command: {e}"));
-        let below_front = mode == "fronts";
+        let below_front = mode == "fronts" || mode == "journals";
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();
         // кадры: по часу на дивизию
