@@ -505,6 +505,8 @@ function pocketFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => 
     const sd = sideOf(side);
     const area = createFeature('area', 'atlas.encircled', { points: ring, layerId: 'sim-pockets' }, 1, sd) as AreaFeature;
     if (sd === 'own') area.style = { ...area.style, fill: '#f6d6d2', edge: area.style.edge.map((e) => ({ ...e, color: '#c0392b' })) };
+    // заливка — лёгким тоном: под котлом (Берлин, Хальбе) остаются читаемыми знаки, улицы и подписи; граница — зубцами
+    area.style = { ...area.style, fillOpacity: 0.22 };
     const pers = sn.units.filter((u) => ids.includes(u.id)).reduce((x, u) => x + u.personnel, 0);
     area.name = `Котёл: ${ids.map((id) => shortName(byId.get(id)!.name)).join(', ')} — ${pers.toLocaleString('ru')} чел.`;
     area.time = { from: sn.time, to };
@@ -649,7 +651,7 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
     const ring = T.cellKm >= 1 ? cityOutline(T, all[0].u!.at, T.cellKm * 11) : null;
     if (ring) {
       const a = createFeature('area', 'atlas.encircled', { points: ring, layerId: 'sim-fortress' }, 1, side) as AreaFeature;
-      a.style = { ...a.style, fill: side === 'own' ? '#f6d6d2' : '#d6e4f2', fillOpacity: 0.35,
+      a.style = { ...a.style, fill: side === 'own' ? '#f6d6d2' : '#d6e4f2', fillOpacity: 0.15,
         edge: a.style.edge.map((e) => ({ ...e, color: colour, width: 2.2, ...(e.ticks ? { ticks: { ...e.ticks, side: 1, length: 4, spacing: 6, width: 1.4 } } : {}) })) };
       a.name = `${f.name}: обвод по застройке${gone ? ` (пала ${dm(gone.sn.time)})` : ''}`;
       a.time = { from: all[0].sn.time, to: gone ? gone.sn.time : null };
@@ -1232,12 +1234,13 @@ function corpsOutlines(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       const c = medianXY(xy, xy.map(() => 1));
       const near = xy.filter((q) => Math.hypot(q[0] - c[0], q[1] - c[1]) <= farKm);
       if (!near.length) continue;
-      const side = sideOf(g.side), color = side === 'own' ? '#c0392b' : '#2c5f9e';
+      // контур — тонкий приглушённый пунктир (не спорит со знаками дивизий), подпись — мельче подписей армий
+      const side = sideOf(g.side), color = side === 'own' ? '#9a5a4e' : '#4f6f94';
       const ring = hull(near.flatMap((q) => [...Array(12)].map((_, k) => [q[0] + r * Math.cos((k * Math.PI) / 6), q[1] + r * Math.sin((k * Math.PI) / 6)] as [number, number])));
       // контур — у корпуса из двух соединений и больше; у одного — только подпись
       if (near.length > 1) {
         const area = createFeature('area', 'atlas.encircled', { points: ring.map((q) => T.proj.toLL(q)), layerId: 'sim-corps' }, 1, side) as AreaFeature;
-        area.style = { ...area.style, smooth: true, fill: null, fillOpacity: 0, hatch: null, cross: null, edge: [{ offset: 0, width: 1.6, color, opacity: 0.75, dash: [6, 4] }] };
+        area.style = { ...area.style, smooth: true, fill: null, fillOpacity: 0, hatch: null, cross: null, edge: [{ offset: 0, width: 1.1, color, opacity: 0.6, dash: [3, 3] }] };
         area.name = `${g.name}: ${near.length} ${near.length < 5 ? 'соединения' : 'соединений'}`;
         area.time = { from: sn.time, to };
         out.push(area);
@@ -1245,7 +1248,8 @@ function corpsOutlines(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       // подпись — над верхней точкой контура
       const top = ring.reduce((b, q) => (q[1] > b[1] ? q : b), ring[0]);
       const cx = near.reduce((x, q) => x + q[0], 0) / near.length;
-      const lb = createFeature('label', side === 'own' ? 'atlas.unit' : 'atlas.enemyUnit', { at: T.proj.toLL([cx, top[1] + 0.8]), text: shortName(g.name), layerId: 'sim-corps' }, 0.8 * labelK, side) as LabelFeature;
+      const lb = createFeature('label', side === 'own' ? 'atlas.unit' : 'atlas.enemyUnit', { at: T.proj.toLL([cx, top[1] + 0.8]), text: shortName(g.name), layerId: 'sim-corps' }, 0.62 * labelK, side) as LabelFeature;
+      lb.style = { ...lb.style, color, halo: { color: '#fdf8ec', width: 2.5 * labelK } };
       lb.name = g.name;
       lb.time = { from: sn.time, to };
       out.push(lb);
