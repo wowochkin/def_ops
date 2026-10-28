@@ -762,6 +762,10 @@ mod options_de {
         let o = opts(&sim, "de_9a", &p);
         let c = o.iter().find(|c| matches!(c.kind, Kind::Counterattack { from, .. } if from == a)).expect("контратака");
         assert!(c.contrib.get(Motive::Destroy) > 0.0 && c.contrib.get(Motive::Preserve) < 0.0);
+        // окружённый резерв не контратакует
+        sim.world.divisions[ds[1]].cut_since = Some(0);
+        assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Counterattack { .. })), "резерв окружён");
+        sim.world.divisions[ds[1]].cut_since = None;
         sim.world.divisions[ds[1]].vars.pos = XY::new(at.x - 100.0, at.y);
         assert!(!has(&opts(&sim, "de_9a", &p), |k| matches!(k, Kind::Counterattack { .. })), "резерв далеко");
     }
@@ -789,6 +793,27 @@ mod options_de {
         sim.world.engaged[busy] = true;
         let o = opts(&sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], vec![a]));
         assert!(!has(&o, |k| matches!(k, Kind::ShiftForces { from, .. } if *from == b)));
+    }
+
+    /// Перегруппировка: не с наступающей армии (боя на шаге не было), не с армии с открытым флангом, не в армию в кольце.
+    #[test]
+    fn shift_forces_source_and_destination_limits() {
+        let mut sim = load();
+        let (a, b) = (hq(&sim, "de_9a"), hq(&sim, "de_3pza"));
+        for d in &mut sim.world.divisions { if d.side != sim.world.hqs[a as usize].side { d.vars.pos = XY::new(1.0e5, 1.0e5); } }
+        for id in ["de_9a", "de_3pza"] { for i in divs(&sim, id) { sim.world.divisions[i].state = State::Reserve; } }
+        sim.world.engaged = vec![false; sim.world.divisions.len()];
+        let shift = |sim: &Sim, open: Vec<u32>| has(&opts(sim, "de_hgr_weichsel", &pic(vec![view(a), view(b)], open)), |k| matches!(k, Kind::ShiftForces { .. }));
+        assert!(shift(&sim, vec![a]), "основа");
+        // источник наступает, хотя боя на шаге не было
+        for i in divs(&sim, "de_3pza") { sim.world.divisions[i].state = State::Attack(agents_core::model::AttackSub::Assault); }
+        assert!(!shift(&sim, vec![a]));
+        for i in divs(&sim, "de_3pza") { sim.world.divisions[i].state = State::Reserve; }
+        // источник с открытым флангом
+        assert!(!shift(&sim, vec![a, b]));
+        // получатель в кольце
+        cut(&mut sim, "de_9a", 1.0);
+        assert!(!shift(&sim, vec![a]));
     }
 
     fn req(sim: &Sim, corps: &str, answer: Option<bool>) -> Request {
@@ -860,6 +885,7 @@ mod options_de {
         // резерв внутри цели и в постороннем соединении — вариантов нет
         let own = divs(&sim, "de_9a")[0];
         sim.world.divisions[own].state = State::Reserve;
+        sim.world.divisions[own].cut_since = None; // не окружён: исключает только условие «уже в целевой армии»
         let other = divs(&sim, "de_4pza")[0];
         sim.world.divisions[other].state = State::Reserve;
         assert!(!has(&high(&sim), |k| matches!(k, Kind::MoveReserve { .. })));
