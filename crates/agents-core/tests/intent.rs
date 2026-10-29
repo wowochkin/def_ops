@@ -77,7 +77,7 @@ fn task(kind: Goal, x: f64) -> Task { task_xy(kind, Some(XY::new(x, 0.0))) }
 
 fn task_xy(kind: Goal, goal: Option<XY>) -> Task {
     let d = agents_core::command::directive::Directive { id: "t".into(), from: 0, to: Target::Hq(0), form: Default::default(), task: Default::default(), axis: vec![], immediate: None, subsequent: None, boundaries: vec![], main_blow: vec![], reserve: vec![], junction: None, hasty: false, ready: false, rule: None, issued: 0, note: String::new() };
-    Task { at: 0, step: Step::Dir(d), goal, kind }
+    Task { at: 0, step: Step::Dir(d), goal, kind, issued: false }
 }
 
 fn foe(sim: &Sim) -> usize { (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side == Side::De && !sim.world.divisions[i].state.out()).expect("противник") }
@@ -228,4 +228,265 @@ fn track_fingerprint() {
     // правки «Редактора» (EditsIn) в файл сценария не входят — отпечаток считается по тексту файла
     let _ = agents_core::scenario::EditsIn::default();
     std::fs::remove_dir_all(&dir).ok();
+}
+
+// ---------- подача, уход и возврат ----------
+
+use agents_core::intent::{HqState, Status};
+
+/// Берлинская в режиме intent у обеих сторон (след эталона — не из файла: тесты задают его сами).
+fn intent_sim() -> Sim {
+    let mut sim = load();
+    for sd in [Side::Su, Side::De] {
+        assert!(agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap().is_empty(), "intent подаёт сам");
+    }
+    sim.intent.track = None;
+    sim
+}
+
+fn chain_of(sim: &Sim, owner: u32) -> usize { sim.intent.chains.iter().position(|c| c.owner == owner).expect("цепочка") }
+
+fn status(sim: &Sim, h: u32) -> &HqState { &sim.intent.hq[h as usize] }
+
+/// Документы штаба `from` штабу `to` по часам.
+fn docs(sim: &Sim, from: u32, to: &str) -> Vec<u32> {
+    sim.documents.iter().filter(|d| d.hq == from && d.to.iter().any(|t| t == to)).map(|d| d.tick).collect()
+}
+
+fn run_to(sim: &mut Sim, tick: u32) { while sim.world.tick < tick { sim.step(); } }
+
+/// Живые дивизии штаба с подчинёнными.
+fn under(sim: &Sim, h: u32) -> Vec<usize> {
+    let up = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match sim.world.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+    (0..sim.world.divisions.len()).filter(|&i| !sim.world.divisions[i].state.out() && up(sim.world.divisions[i].hq as usize)).collect()
+}
+
+fn center(sim: &Sim, h: u32) -> XY {
+    let ds = under(sim, h);
+    let n = ds.len() as f64;
+    XY::new(ds.iter().map(|&i| sim.world.divisions[i].vars.pos.x).sum::<f64>() / n, ds.iter().map(|&i| sim.world.divisions[i].vars.pos.y).sum::<f64>() / n)
+}
+
+fn shift(sim: &mut Sim, h: u32, dx: f64, dy: f64) {
+    for i in under(sim, h) { let p = &mut sim.world.divisions[i].vars.pos; p.x += dx; p.y += dy; }
+}
+
+/// След эталона: армия `h` стоит там, где она сейчас, все часы.
+fn still_track(sim: &Sim, hs: &[u32]) -> Track {
+    let mut armies = std::collections::BTreeMap::new();
+    for &h in hs { armies.insert(sim.world.hqs[h as usize].id.clone(), vec![Some(sim.theatre.proj.to_lnglat(center(sim, h))); 400]); }
+    Track { fingerprint: String::new(), hours: 399, armies }
+}
+
+/// Точка в `km` за целью задачи `a` по направлению от центра армии.
+fn beyond(sim: &Sim, h: u32, goal: XY, km: f64) -> XY {
+    let c = center(sim, h);
+    let (dx, dy) = (goal.x - c.x, goal.y - c.y);
+    let l = (dx * dx + dy * dy).sqrt().max(1e-6);
+    XY::new(goal.x + dx / l * km, goal.y + dy / l * km)
+}
+
+#[test]
+fn intent_enable_sets_history() {
+    let sim = intent_sim();
+    assert!(sim.intent.enabled == [true, true]);
+    assert_eq!(sim.intent.hq.len(), sim.world.hqs.len());
+    let a = hq(&sim, "su_8gva");
+    assert_eq!(status(&sim, a).status, Status::History);
+    assert_eq!(sim.command.control[a as usize], agents_core::command::control::Control::Agent);
+    assert_eq!(sim.command.control[hq(&sim, "su_1bf") as usize], agents_core::command::control::Control::Script);
+    assert_eq!(sim.command.control[hq(&sim, "de_9a") as usize], agents_core::command::control::Control::Script);
+    assert!(sim.commanders.enabled == [true, true]);
+}
+
+#[test]
+fn issue_by_hour() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(2);
+    sim.intent.chains[ci].tasks[1].at = 6;
+    run_to(&mut sim, 8);
+    let got = docs(&sim, f, "su_8gva");
+    assert_eq!(got, vec![sim.intent.chains[ci].tasks[0].at, 6], "подано в свой час");
+    assert_eq!(status(&sim, a).status, Status::History);
+    assert!(sim.intent.chains[ci].tasks.iter().all(|t| t.issued));
+}
+
+#[test]
+fn issue_on_done() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(2);
+    sim.intent.chains[ci].tasks[1].at = 500;
+    run_to(&mut sim, 1);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 15.0));
+    let c = center(&sim, a);
+    shift(&mut sim, a, g0.x - c.x, g0.y - c.y);
+    run_to(&mut sim, 2);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 1], "следующая подана по выполнению");
+    assert_eq!(status(&sim, a).status, Status::Shifted);
+}
+
+#[test]
+fn skip_senseless() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(3);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    sim.intent.chains[ci].tasks[1].at = 3;
+    sim.intent.chains[ci].tasks[2].at = 500;
+    let g2 = beyond(&sim, a, g0, 10.0);
+    sim.intent.chains[ci].tasks[2].goal = Some(g2);
+    run_to(&mut sim, 3);
+    // объект задачи 1 занят своими (дивизия другой армии)
+    let g1 = sim.intent.chains[ci].tasks[1].goal.expect("цель");
+    let mine = under(&sim, a);
+    let fr = (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side == Side::Su && !sim.world.divisions[i].state.out() && !mine.contains(&i)).unwrap();
+    sim.world.divisions[fr].vars.pos = g1;
+    run_to(&mut sim, 4);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 3], "задача 1 пропущена, взята задача 2");
+    let ch = &sim.intent.chains[ci];
+    assert!(!ch.tasks[1].issued && ch.tasks[2].issued && ch.next == 3);
+    assert_eq!(status(&sim, a).status, Status::Shifted);
+    assert_eq!(status(&sim, a).reason, Some(Reason::Taken));
+}
+
+#[test]
+fn leave_and_return() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    run_to(&mut sim, 1);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    shift(&mut sim, a, 0.0, -35.0);
+    run_to(&mut sim, 2);
+    let s = status(&sim, a);
+    assert_eq!(s.status, Status::Own);
+    assert!(matches!(s.reason, Some(Reason::Strayed { km }) if km > 30.0), "{:?}", s.reason);
+    assert!(intent::off_history(&sim, a));
+    shift(&mut sim, a, 0.0, 25.0);
+    run_to(&mut sim, 3);
+    assert_eq!(status(&sim, a).status, Status::History, "{:?}", status(&sim, a));
+    assert!(!intent::off_history(&sim, a));
+    let log: Vec<Status> = sim.intent.log.iter().filter(|e| e.1 == a).map(|e| e.2).collect();
+    assert_eq!(log, vec![Status::History, Status::Own, Status::History]);
+}
+
+#[test]
+fn german_leave_to_agent() {
+    use agents_core::command::control::Control;
+    let mut sim = intent_sim();
+    let a = hq(&sim, "de_9a");
+    run_to(&mut sim, 1);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    let mine = under(&sim, a);
+    let later = sim.script.iter().find(|o| o.to.iter().any(|d| mine.contains(&(*d as usize)))).expect("приказ сценария дивизиям 9 А").clone();
+    assert!(intent::gate(&sim, &later), "на истории приказ проходит");
+    shift(&mut sim, a, -35.0, 0.0);
+    run_to(&mut sim, 2);
+    assert_eq!(status(&sim, a).status, Status::Own);
+    assert_eq!(sim.command.control[a as usize], Control::Agent);
+    let subs: Vec<usize> = (0..sim.world.hqs.len()).filter(|&k| sim.world.hqs[k].parent == Some(a)).collect();
+    assert!(!subs.is_empty() && subs.iter().all(|&k| sim.command.control[k] == Control::Agent));
+    assert!(!intent::gate(&sim, &later), "ушла с истории — приказы сценария не проходят");
+    // вернулась на место (сдвиг назад целиком: направление армии от старта — её собственное движение) — снова по
+    // приказам сценария
+    shift(&mut sim, a, 35.0, 0.0);
+    run_to(&mut sim, 3);
+    assert_eq!(status(&sim, a).status, Status::History, "{:?}", status(&sim, a));
+    assert_eq!(sim.command.control[a as usize], Control::Script);
+    assert!(subs.iter().all(|&k| sim.command.control[k] == Control::Script));
+}
+
+#[test]
+fn takeover_mid_operation() {
+    let mut sim = load();
+    run_to(&mut sim, 72);
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
+    sim.intent.track = None;
+    let (bf, uf) = (hq(&sim, "su_1bf"), hq(&sim, "su_1uf"));
+    sim.command.control[bf as usize] = agents_core::command::control::Control::Player;
+    intent::take(&mut sim, bf);
+    // задачи до часа принятия — отданы
+    assert!(sim.intent.chains.iter().all(|c| c.tasks[..c.next].iter().all(|t| t.at < 72) && c.tasks[c.next..].iter().all(|t| t.at >= 72)));
+    run_to(&mut sim, 200);
+    let armies = |f: u32| -> Vec<u32> { (0..sim.world.hqs.len() as u32).filter(|&k| sim.world.hqs[k as usize].parent == Some(f) && sim.intent.chains.iter().any(|c| c.owner == k)).collect() };
+    for k in armies(bf) {
+        let s = status(&sim, k);
+        assert_eq!((s.status, s.reason.clone()), (Status::Own, Some(Reason::Player)), "{}", sim.world.hqs[k as usize].id);
+        assert!(intent::off_history(&sim, k));
+    }
+    assert!(sim.documents.iter().all(|d| d.hq != bf || d.tick < 72), "за игрока история не подаёт");
+    // 1 УФ продолжает цепочки — без повторной подачи прежних задач
+    let sent = sim.documents.iter().filter(|d| d.hq == uf && d.tick >= 72).count();
+    let issued: usize = armies(uf).iter().map(|&k| sim.intent.chains[chain_of(&sim, k)].tasks.iter().filter(|t| t.at >= 72 && t.issued).count()).sum();
+    assert!(sent > 0, "1 УФ не подал ни одной задачи");
+    assert_eq!(sent, issued);
+    assert!(armies(uf).iter().any(|&k| status(&sim, k).status != Status::Own));
+}
+
+#[test]
+fn army_without_track_no_leave() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    sim.intent.track = Some(still_track(&sim, &[]));
+    shift(&mut sim, a, 0.0, -50.0);
+    run_to(&mut sim, 6);
+    assert!(!matches!(status(&sim, a).reason, Some(Reason::Strayed { .. })));
+    assert_eq!(sim.world.tick, 6);
+}
+
+#[test]
+fn track_missing_journal() {
+    // сценарий без файла следа: запись в журнал, следа нет
+    let root = repo_root();
+    let (mut sim, _) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/seelow-1945.json"), &data(), &root).unwrap();
+    agents_core::command::control::command_mode(&mut sim, "intent", Side::Su).unwrap();
+    assert!(sim.intent.track.is_none());
+    assert!(sim.journal.iter().any(|e| e.text == "история как замысел: нет следа эталона"));
+}
+
+#[test]
+fn intent_no_intervention_digest() {
+    let run = || { let mut sim = intent_sim(); run_to(&mut sim, 48); sim.digest() };
+    assert_eq!(run(), run());
+}
+
+#[test]
+fn intent_trace_field() {
+    let root = repo_root();
+    let (mut sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &data(), &root).unwrap();
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
+    let t = agents_core::trace::run_fed(&mut sim, 3, &meta, Vec::new(), false);
+    let v = t["intent"].as_array().expect("поле intent");
+    let e = v.iter().find(|x| x["hq"] == "su_8gva").expect("su_8gva");
+    assert_eq!(e["changes"][0]["status"], "history");
+    assert!(e["changes"][0]["reason"].is_null());
+    let (mut sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &data(), &root).unwrap();
+    let p = agents_core::command::control::command_mode(&mut sim, "fronts", Side::Su).unwrap();
+    let t = agents_core::trace::run_fed(&mut sim, 1, &meta, p, true);
+    assert!(t.get("intent").is_none(), "без режима — без поля");
+}
+
+#[test]
+fn committed_tracks_match_scenarios() {
+    // след эталона рядом со сценарием собран по нынешним данным сценария (отпечаток входа)
+    let root = repo_root();
+    for s in ["berlin-1945", "vistula-oder-1945"] {
+        let t = track::load(&format!("{root}/packages/sim/data/scenarios/agents/{s}.json")).unwrap_or_else(|e| panic!("{s}: {e}"));
+        assert!(t.armies.len() > 10 && t.hours > 100, "{s}");
+    }
+    let mut sim = intent_sim_with_track();
+    assert!(sim.intent.track.is_some());
+    assert!(!sim.journal.iter().any(|e| e.text.starts_with("история как замысел")));
+    sim.step();
+}
+
+fn intent_sim_with_track() -> Sim {
+    let mut sim = load();
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
+    sim
 }

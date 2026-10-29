@@ -236,6 +236,8 @@ pub struct Meta {
     pub name: String,
     pub hours: u32,
     pub start: String,
+    /// Путь файла сценария (след эталона «истории как замысла» — рядом с ним).
+    pub path: String,
 }
 
 #[derive(Deserialize)]
@@ -333,7 +335,7 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
     let mut world = World { tick: 0, divisions, hqs, objects, in_transit: Vec::new(), control: Vec::new(), reach: [Vec::new(), Vec::new()], held: [Vec::new(), Vec::new()], engaged: Vec::new() };
     world.init_control(&theatre);
     let name = serde_json::from_str::<NameOnly>(&text).map(|n| n.name).unwrap_or_default();
-    let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone() };
+    let meta = Meta { id: s.id.clone(), name, hours: s.hours, start: s.start.clone(), path: path.to_string() };
     let mut historical = Vec::new();
     {
         let hour = |t: &str| parse_hours(t).map(|h| (h - start).max(0) as u32);
@@ -343,6 +345,7 @@ pub fn load_with(path: &str, data_dir: &str, root: &str, overrides: Option<&serd
     }
     let mut sim = Sim::new(theatre, rules, s.seed, start, world, script);
     sim.historical = historical;
+    sim.intent.scenario = Some(path.to_string());
     sim.fires = fires;
     sim.withdrawals = withdrawals;
     if let Some(e) = edits {

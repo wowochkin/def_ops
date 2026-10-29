@@ -170,6 +170,8 @@ pub struct Sim {
     pub staff: StaffFx,
     /// Командующие над верхними штабами (по умолчанию выключены).
     pub commanders: crate::commander::State,
+    /// «История как замысел» (режим intent; по умолчанию выключен).
+    pub intent: crate::intent::State,
 }
 
 /// Распоряжения штаба, которые ядро исполняет в расчёте (игра; их проверяет и ведёт штаб вне ядра).
@@ -235,7 +237,7 @@ struct Intent {
 
 impl Sim {
     pub fn new(theatre: Arc<Theatre>, rules: Rules, seed: u64, start_hour: i64, world: World, script: Vec<ScriptOrder>) -> Sim {
-        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), historical: Vec::new(), command: Default::default(), documents: Vec::new(), history: None, staff: StaffFx::default(), commanders: Default::default() };
+        let mut s = Sim { theatre, rules, seed, start_hour, world, script, fires: Vec::new(), withdrawals: Vec::new(), changes: Vec::new(), sources: [crate::staff::Source::Script; 2], rear_dir: std::sync::OnceLock::new(), doctrine_text: [None, None], llm: None, llm_log: std::sync::Mutex::new(Vec::new()), llm_par: std::sync::OnceLock::new(), llm_probe: std::sync::Mutex::new(None), su_staff: std::sync::Mutex::new(Default::default()), on_progress: None, on_stream: None, journal: Vec::new(), historical: Vec::new(), command: Default::default(), documents: Vec::new(), history: None, staff: StaffFx::default(), commanders: Default::default(), intent: Default::default() };
         s.command = crate::command::control::CommandState::new(s.world.hqs.len(), s.world.divisions.len());
         s.script.sort_by_key(|o| o.at);
         s
@@ -262,6 +264,8 @@ impl Sim {
             on_progress: None, on_stream: None, journal: Vec::new(), historical: self.historical.clone(), command: self.command.clone(),
             documents: Vec::new(), history: None, staff: self.staff.clone(),
             commanders: crate::commander::State { enabled: [false; 2], list: Vec::new(), log: Default::default(), raised: self.commanders.raised.clone(), baselines: 0 },
+            // «в уме» цепочки идут дальше, но без следа эталона (без ухода по расстоянию) и без записи смен
+            intent: crate::intent::State { enabled: self.intent.enabled, chains: self.intent.chains.clone(), hq: self.intent.hq.clone(), track: None, log: Vec::new(), scenario: None, queue: self.intent.queue.clone() },
         }
     }
 
@@ -330,6 +334,8 @@ impl Sim {
             let o = self.script.remove(0);
             // штаб ведут агент или игрок — его приказы сценария не действуют
             if self.command.control[o.hq as usize] != crate::command::control::Control::Script { continue; }
+            // «история как замысел»: приказ проходит к армиям на истории, у которых задача имеет смысл
+            let o = if self.intent.any() { match crate::intent::admit(self, o) { Some(o) => o, None => continue } } else { o };
             let side = next.hqs[o.hq as usize].side;
             match self.sources[crate::staff::side_idx(side)] {
                 crate::staff::Source::Script => due.push(o),
@@ -341,24 +347,11 @@ impl Sim {
         let (doc_orders, doc_journal) = self.doctrine_orders(&next, tick);
         due.extend(doc_orders);
         journal.extend(doc_journal);
-        for o in due {
-            let hq = &next.hqs[o.hq as usize];
-            let sr = self.rules.side(hq.side);
-            let delay = match hq.echelon { Echelon::HighCommand | Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
-            let follow_at = o.follow.as_deref().and_then(|f| self.place_of(&next, f));
-            for &d in &o.to {
-                let target = match follow_at {
-                    Some(c) => XY::new(c.x + o.offset.x, c.y + o.offset.y),
-                    None => o.target.unwrap_or(next.divisions[d as usize].vars.pos),
-                };
-                // приказы на начало сценария отданы накануне и уже дошли до дивизий (кроме атаки — у неё свой час «Ч»)
-                let arrives = if o.at == 0 && o.kind != OrderKind::Attack && self.rules.start_orders_delivered { 0 } else { o.at + delay.round() as u32 };
-                let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives, from: o.hq, note: o.note.clone() };
-                next.in_transit.push((d, order));
-            }
-        }
+        self.send_orders(&mut next, due);
         // командование по ступеням: директивы штабов-агентов и игрока (command/agent.rs)
         crate::command::agent::phase(self, &mut next, tick, &mut journal);
+        // «история как замысел»: немецкие приказы сценария, поданные раньше своего часа
+        if !self.intent.queue.is_empty() { let q = std::mem::take(&mut self.intent.queue); self.send_orders(&mut next, q); }
         let mut arrived = Vec::new();
         next.in_transit.retain(|(d, o)| if o.arrives <= tick { arrived.push((*d, o.clone())); false } else { true });
         for (d, o) in arrived {
@@ -1096,9 +1089,31 @@ impl Sim {
         self.changes = keep;
     }
 
+    /// Приказы сценария — в путь к дивизиям с задержкой штаба своего уровня.
+    fn send_orders(&self, next: &mut World, due: Vec<ScriptOrder>) {
+        for o in due {
+            let hq = &next.hqs[o.hq as usize];
+            let sr = self.rules.side(hq.side);
+            let delay = match hq.echelon { Echelon::HighCommand | Echelon::Front => sr.delay_army, Echelon::Army => sr.delay_corps, Echelon::Corps => sr.delay_division };
+            let follow_at = o.follow.as_deref().and_then(|f| self.place_of(next, f));
+            for &d in &o.to {
+                let target = match follow_at {
+                    Some(c) => XY::new(c.x + o.offset.x, c.y + o.offset.y),
+                    None => o.target.unwrap_or(next.divisions[d as usize].vars.pos),
+                };
+                // приказы на начало сценария отданы накануне и уже дошли до дивизий (кроме атаки — у неё свой час «Ч»)
+                let arrives = if o.at == 0 && o.kind != OrderKind::Attack && self.rules.start_orders_delivered { 0 } else { o.at + delay.round() as u32 };
+                let order = Order { kind: o.kind, target, forced: o.forced, issued: o.at, arrives, from: o.hq, note: o.note.clone() };
+                next.in_transit.push((d, order));
+            }
+        }
+    }
+
     fn apply_withdrawals(&self, w: &mut World, tick: u32, journal: &mut Vec<Event>) {
         for ev in self.withdrawals.iter().filter(|e| e.at == tick) {
             for &d in &ev.to {
+                // «история как замысел»: у армии задача отвода не подана — отвода нет
+                if self.intent.any() && !crate::intent::withdrawal_ok(self, ev, d) { continue; }
                 let div = &mut w.divisions[d as usize];
                 div.vars.positions = Some(ev.positions);
                 journal.push(Event { tick, agent: d, text: format!("войска отведены с первой позиции: на позициях {:.0} / {:.0} / {:.0} % — {}", ev.positions[0] * 100.0, ev.positions[1] * 100.0, ev.positions[2] * 100.0, ev.note) });

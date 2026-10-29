@@ -21,6 +21,8 @@ pub struct Task {
     /// Пункт или середина рубежа; нет — «на месте».
     pub goal: Option<XY>,
     pub kind: Goal,
+    /// Задача подана (диспетчером или, немецкий приказ сценария, пропуском `admit` в свой час); пропущенная — нет.
+    pub issued: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -47,7 +49,7 @@ fn order_kind(k: OrderKind) -> Goal {
 }
 
 /// Армия над штабом (он сам, если он армия или выше армии нет).
-fn army_of(sim: &Sim, hq: u32) -> u32 {
+pub(crate) fn army_of(sim: &Sim, hq: u32) -> u32 {
     let w = &sim.world;
     let mut k = hq as usize;
     for _ in 0..8 {
@@ -66,7 +68,7 @@ pub fn build(sim: &Sim, side: Side) -> Vec<Chain> {
     for (at, d) in &sim.historical {
         if d.id.ends_with(":journal") || w.hqs[d.from as usize].side != side { continue; }
         let Target::Hq(h) = d.to else { continue };
-        by.entry(h).or_default().push(Task { at: *at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task) });
+        by.entry(h).or_default().push(Task { at: *at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task), issued: false });
     }
     if side == Side::De {
         let owners = |to: &[u32], fallback: Option<u32>| -> Vec<u32> {
@@ -78,13 +80,13 @@ pub fn build(sim: &Sim, side: Side) -> Vec<Chain> {
         };
         for o in sim.script.iter().filter(|o| w.hqs[o.hq as usize].side == Side::De) {
             for ow in owners(&o.to, Some(o.hq)) {
-                by.entry(ow).or_default().push(Task { at: o.at, step: Step::Order(o.clone()), goal: o.target, kind: order_kind(o.kind) });
+                by.entry(ow).or_default().push(Task { at: o.at, step: Step::Order(o.clone()), goal: o.target, kind: order_kind(o.kind), issued: false });
             }
         }
         for wd in &sim.withdrawals {
             // у отвода нет пункта: только доли войск по позициям — цель «на месте»; без названных дивизий отвод пропускается
             for ow in owners(&wd.to, None) {
-                by.entry(ow).or_default().push(Task { at: wd.at, step: Step::Withdrawal(wd.clone()), goal: None, kind: Goal::Withdraw });
+                by.entry(ow).or_default().push(Task { at: wd.at, step: Step::Withdrawal(wd.clone()), goal: None, kind: Goal::Withdraw, issued: false });
             }
         }
     }

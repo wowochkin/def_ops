@@ -70,5 +70,7 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
     });
     // командующие — только если включены (ход без них прежний байт в байт)
     if let Some(c) = crate::commander::trace::describe(sim) { out["commanders"] = c; }
+    // история как замысел: по штабу смены состояния — только если режим включён
+    if let Some(v) = crate::intent::describe(sim) { out["intent"] = v; }
     out
 }

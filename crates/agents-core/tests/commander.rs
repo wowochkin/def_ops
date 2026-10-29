@@ -98,7 +98,7 @@ fn profile_hqs_exist_in_scenarios() {
     let mut rules = None;
     for e in std::fs::read_dir(&dir).unwrap() {
         let p = e.unwrap().path().to_string_lossy().into_owned();
-        if !p.ends_with(".json") || p.ends_with(".history.json") { continue; }
+        if !p.ends_with(".json") || p.ends_with(".history.json") || p.ends_with(".intent-track.json") { continue; }
         let (sim, _) = agents_core::scenario::load_with(&p, &data(), &root, None, None).expect(&p);
         ids.extend(sim.world.hqs.iter().map(|h| h.id.clone()));
         rules = Some(sim.rules.commanders.clone());

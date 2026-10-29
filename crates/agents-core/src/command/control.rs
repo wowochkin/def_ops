@@ -179,7 +179,8 @@ pub fn with_axis(sim: &Sim, mut d: Directive) -> Directive {
 /// директивами Ставки (верхняя инстанция — агент: отвечает на запросы отхода); `hybrid` — поддеревья получателей
 /// директив по приказам сценария; `fronts` — Ставка и фронты по истории, армии и ниже — штабы-агенты; `journals` — то же
 /// и задачи армий по журналам между распоряжениями фронта (подсказка: проверка армейских агентов и ядра);
-/// `commanders` — как `agents` плюс командующие (`commander::enable`). Возвращает
+/// `commanders` — как `agents` плюс командующие (`commander::enable`); `intent` — история как замысел (`intent::enable`,
+/// подаёт сам — список пуст). Возвращает
 /// директивы к подаче по часам (`feed`).
 pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Result<Vec<(u32, Directive)>, String> {
     match mode {
@@ -199,7 +200,16 @@ pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Resu
             let ds = historical_for(sim, side, None, false);
             Ok(if side == crate::model::Side::De { ds.into_iter().filter(|(_, d)| d.ready).collect() } else { ds })
         }
-        x => Err(format!("режим командования: script | agents | hybrid | fronts | journals | commanders, а не {x}")),
+        // история как замысел: советская сторона — как «фронты по истории» (Ставка и фронты по приказам сценария, армии
+        // и ниже — штабы-агенты), немецкие штабы — по приказам сценария; исторические директивы и приказы подаёт
+        // цепочками intent::step (по часу или выполнению, пока имеют смысл); командующие — у обеих сторон
+        "intent" => {
+            if side == crate::model::Side::Su { let _ = front_historical(sim, side, false); }
+            crate::commander::enable(sim, side);
+            crate::intent::enable(sim, side);
+            Ok(Vec::new())
+        }
+        x => Err(format!("режим командования: script | agents | hybrid | fronts | journals | commanders | intent, а не {x}")),
     }
 }
 
