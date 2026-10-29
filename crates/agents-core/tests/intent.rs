@@ -494,6 +494,7 @@ fn army_without_track_no_leave() {
     run_to(&mut sim, 6);
     assert!(!matches!(status(&sim, a).reason, Some(Reason::Strayed { .. })));
     assert_eq!(sim.world.tick, 6);
+    assert_ne!(status(&sim, a).status, Status::Own);
 }
 
 #[test]
@@ -587,4 +588,116 @@ fn unfit_off_track_held_then_issued() {
     run_to(&mut sim, 7);
     assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 6], "пришла в себя — задача подана");
     assert!(sim.intent.chains[ci].tasks[1].issued);
+}
+
+/// Получения приказа с этой пометкой дивизиями (журнал).
+fn received(sim: &Sim, note: &str, divs: &[u32]) -> usize {
+    sim.journal.iter().filter(|e| divs.contains(&e.agent) && e.text.starts_with("получен приказ") && e.text.ends_with(&format!(": {note}"))).count()
+}
+
+#[test]
+fn german_early_order_not_twice() {
+    use agents_core::intent::Step;
+    let mut sim = intent_sim();
+    let a = hq(&sim, "de_9a");
+    let mine: Vec<u32> = under(&sim, a).into_iter().map(|i| i as u32).collect();
+    // приказ сценария дивизиям 9 А с неповторяющейся пометкой, час — не раньше 6
+    let o = sim.script.iter().find(|o| o.at >= 6 && !o.note.is_empty() && o.to.iter().any(|d| mine.contains(d))
+        && sim.script.iter().filter(|x| x.note == o.note).count() == 1).expect("приказ").clone();
+    let divs: Vec<u32> = o.to.iter().copied().filter(|d| mine.contains(d)).collect();
+    run_to(&mut sim, o.at - 4);
+    // цепочка 9 А: выполненная задача A, за ней — этот приказ («держать» у своих — смысл есть)
+    let ci = chain_of(&sim, a);
+    let c = center(&sim, a);
+    let pos = sim.world.divisions[divs[0] as usize].vars.pos;
+    let mut done_a = sim.intent.chains[ci].tasks[0].clone();
+    let mut dummy = o.clone();
+    dummy.at = 0;
+    dummy.note = "задача A".into();
+    done_a.step = Step::Order(dummy);
+    done_a.at = 0;
+    done_a.goal = Some(c);
+    done_a.kind = Goal::Move;
+    done_a.issued = true;
+    let mut b = done_a.clone();
+    b.step = Step::Order(o.clone());
+    b.at = o.at;
+    b.goal = Some(pos);
+    b.kind = Goal::Defend;
+    b.issued = false;
+    sim.intent.chains[ci].tasks = vec![done_a, b];
+    sim.intent.chains[ci].next = 1;
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, o.at - 3);
+    assert!(sim.intent.chains[ci].tasks[1].issued, "подан раньше часа по выполнению: {:?}", status(&sim, a));
+    run_to(&mut sim, o.at + 30);
+    let got = received(&sim, &o.note, &divs);
+    assert!(got >= 1 && got <= divs.len(), "дивизии получили приказ {got} раз (дивизий {})", divs.len());
+    // в свой час приказ сценария до дивизий второй раз не дошёл: каждая получила его не больше раза
+    for &d in &divs { assert!(received(&sim, &o.note, &[d]) <= 1, "{} получила дважды", sim.world.divisions[d as usize].id); }
+    assert!(sim.world.in_transit.iter().all(|(_, x)| x.note != o.note), "в пути второго нет");
+}
+
+#[test]
+fn withdrawal_through_world() {
+    let ev = load().withdrawals.iter().min_by_key(|w| w.at).unwrap().clone();
+    assert_eq!(ev.at, 0);
+    // у следа — отвод применяется
+    let mut sim = intent_sim();
+    let a = hq(&sim, "de_9a");
+    let mine: Vec<u32> = under(&sim, a).into_iter().map(|i| i as u32).filter(|d| ev.to.contains(d)).collect();
+    assert!(!mine.is_empty());
+    run_to(&mut sim, 1);
+    assert!(mine.iter().all(|&d| sim.world.divisions[d as usize].vars.positions == Some(ev.positions)));
+    // отошла от следа и неспособна — отвод задержан, затем устарел: не применён, смена записана
+    let mut sim = intent_sim();
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    set_cohesion(&mut sim, a, 0.2);
+    let before: Vec<_> = mine.iter().map(|&d| sim.world.divisions[d as usize].vars.positions).collect();
+    run_to(&mut sim, 3);
+    let after: Vec<_> = mine.iter().map(|&d| sim.world.divisions[d as usize].vars.positions).collect();
+    assert_eq!(before, after, "отвод не применён");
+    let ci = chain_of(&sim, a);
+    let wi = sim.intent.chains[ci].tasks.iter().position(|t| matches!(&t.step, Step::Withdrawal(w) if w.at == ev.at)).unwrap();
+    assert!(!sim.intent.chains[ci].tasks[wi].issued && sim.intent.chains[ci].next > wi);
+    assert!(sim.intent.log.iter().any(|e| e.1 == a && e.0 > 0 && e.2 == Status::Shifted && e.3 == Some(Reason::Unfit)), "устаревшая задача записана");
+}
+
+#[test]
+fn stale_task_superseded() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(3);
+    sim.intent.chains[ci].tasks[1].at = 4;
+    sim.intent.chains[ci].tasks[2].at = 6;
+    run_to(&mut sim, 4);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 8.0));
+    sim.intent.chains[ci].tasks[2].goal = Some(beyond(&sim, a, g0, 12.0));
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    set_cohesion(&mut sim, a, 0.2);
+    run_to(&mut sim, 6);
+    assert_eq!(status(&sim, a).reason, Some(Reason::Unfit));
+    // пришла в себя в час задачи 2: задача 1 устарела, подана только задача 2
+    set_cohesion(&mut sim, a, 0.9);
+    run_to(&mut sim, 7);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 6]);
+    let ch = &sim.intent.chains[ci];
+    assert!(!ch.tasks[1].issued && ch.tasks[2].issued);
+    assert!(sim.intent.log.iter().any(|e| e.0 == 6 && e.1 == a && e.2 == Status::Shifted && e.3 == Some(Reason::Unfit)));
+}
+
+#[test]
+fn shifted_band_reason_strayed() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, 3);
+    let s = status(&sim, a);
+    assert_eq!(s.status, Status::Shifted);
+    assert!(matches!(s.reason, Some(Reason::Strayed { km }) if km > 15.0 && km <= 30.0), "{:?}", s.reason);
+    assert!(intent::reason_text(s.reason.as_ref().unwrap()).starts_with("армия в "));
+    // расстояние меняется каждый час — запись одна
+    assert_eq!(sim.intent.log.iter().filter(|e| e.1 == a && matches!(e.3, Some(Reason::Strayed { .. }))).count(), 1);
 }

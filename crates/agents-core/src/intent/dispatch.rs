@@ -61,6 +61,8 @@ impl State {
 fn set(sim: &mut Sim, h: u32, status: Status, reason: Option<Reason>, tick: u32) {
     let s = &mut sim.intent.hq[h as usize];
     if s.status == status && s.reason == reason { return; }
+    // «армия в N км»: расстояние меняется каждый час — смена записывается, только если сменилась причина
+    if s.status == status && matches!((&s.reason, &reason), (Some(Reason::Strayed { .. }), Some(Reason::Strayed { .. }))) { s.reason = reason; return; }
     *s = HqState { status, reason: reason.clone(), since: tick };
     sim.intent.log.push((tick, h, status, reason));
 }
@@ -165,7 +167,7 @@ pub fn step(sim: &mut Sim, tick: u32) {
     for ci in 0..sim.intent.chains.len() {
         let owner = sim.intent.chains[ci].owner;
         if player_over(sim, owner) { set(sim, owner, Status::Own, Some(Reason::Player), tick); continue; }
-        if sim.intent.pure { dispatch(sim, ci, tick, true); continue; }
+        if sim.intent.pure { dispatch(sim, ci, tick, true, None); continue; }
         let km = stray_km(sim, owner, tick);
         if sim.intent.hq[owner as usize].status == Status::Own {
             if km.is_some_and(|km| km < r.return_km) { try_return(sim, ci, tick); }
@@ -173,7 +175,7 @@ pub fn step(sim: &mut Sim, tick: u32) {
         }
         if let Some(km) = km.filter(|&km| km > r.leave_km) { leave(sim, owner, Reason::Strayed { km }, tick); continue; }
         let near = km.is_none_or(|km| km <= r.return_km);
-        dispatch(sim, ci, tick, near);
+        dispatch(sim, ci, tick, near, km);
     }
 }
 
@@ -187,14 +189,15 @@ fn try_return(sim: &mut Sim, ci: usize, tick: u32) {
     let owner = c.owner;
     sim.intent.chains[ci].next = k;
     back(sim, owner, tick);
-    dispatch(sim, ci, tick, true);
+    dispatch(sim, ci, tick, true, None);
 }
 
 /// Подать наступившие задачи цепочки. Армия у следа (`near`) идёт как чистая история: задачи в свой час, без подачи
 /// по выполнению и без пропусков; отошла от следа — подача по выполнению и пропуски, состояние
-/// «со сдвигом».
-fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
+/// «со сдвигом» (причина — пропуск или задержка этого часа, иначе «армия в N км»).
+fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool, km: Option<f64>) {
     let owner = sim.intent.chains[ci].owner;
+    supersede(sim, ci, tick, near);
     let mut skipped: Option<Reason> = None;
     let mut why: Option<Reason> = None;
     let mut shifted = false;
@@ -230,13 +233,42 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
         }
     }
     if shifted || !near {
-        // причина — последняя пропущенная задача этого хода; подача раньше часа прежнюю причину сдвига не меняет
-        let s = &sim.intent.hq[owner as usize];
-        let why = why.or_else(|| if s.status == Status::Shifted { s.reason.clone() } else { None });
+        let why = why.or_else(|| km.filter(|_| !near).map(|km| Reason::Strayed { km }));
         set(sim, owner, Status::Shifted, why, tick);
     } else {
         set(sim, owner, Status::History, None, tick);
     }
+}
+
+/// Час более поздней задачи цепочки настал — прежние неподанные (задержанные) задачи устарели: курсор за ними, смена
+/// «со сдвигом» с причиной устаревшей задачи записывается всегда (отвод, оставшийся за задержанной задачей, не пропадает
+/// молча). Иначе задержанная задача, поданная позже, перебила бы более позднюю.
+fn supersede(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
+    let c = &sim.intent.chains[ci];
+    let Some(h) = c.tasks[c.next.min(c.tasks.len())..].iter().map(|t| t.at).filter(|&at| at <= tick).max() else { return };
+    let owner = c.owner;
+    let mut k = c.next;
+    let mut last = None;
+    while k < c.tasks.len() && c.tasks[k].at < h {
+        if !c.tasks[k].issued {
+            let why = sense_now(sim, c, &c.tasks[k], near).err().or_else(|| sim.intent.hq[owner as usize].reason.clone());
+            last = Some(why);
+        }
+        k += 1;
+    }
+    sim.intent.chains[ci].next = k;
+    if let Some(why) = last {
+        let s = &mut sim.intent.hq[owner as usize];
+        *s = HqState { status: Status::Shifted, reason: why.clone(), since: tick };
+        sim.intent.log.push((tick, owner, Status::Shifted, why));
+    }
+}
+
+/// Задачу `ti` цепочки сменила более поздняя, чей час уже настал.
+fn superseded(sim: &Sim, ci: usize, ti: usize) -> bool {
+    let c = &sim.intent.chains[ci];
+    let at = c.tasks[ti].at;
+    c.tasks[ti + 1..].iter().any(|t| t.at > at && t.at <= sim.world.tick)
 }
 
 fn issue(sim: &mut Sim, ci: usize, i: usize, tick: u32) {
@@ -274,7 +306,7 @@ fn order_tasks(sim: &Sim, o: &ScriptOrder) -> Vec<(usize, usize)> {
 
 fn passes(sim: &Sim, ci: usize, ti: usize) -> bool {
     let c = &sim.intent.chains[ci];
-    !c.tasks[ti].issued && !off_history(sim, c.owner) && sense_now(sim, c, &c.tasks[ti], on_track(sim, c.owner)).is_ok()
+    !c.tasks[ti].issued && !superseded(sim, ci, ti) && !off_history(sim, c.owner) && sense_now(sim, c, &c.tasks[ti], on_track(sim, c.owner)).is_ok()
 }
 
 /// Немецкий приказ сценария проходит, только если его армия на истории и задача имеет смысл (иначе отбрасывается —
