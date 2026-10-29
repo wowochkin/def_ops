@@ -1,7 +1,7 @@
 //! Прогон сценария агентной модели и сверка с историей (docs/plans/agents.md, раздел 9).
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
-//!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10]
+//!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10] [--intent-track <след>.intent-track.json — записать след эталона]
 //!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals|commanders --side su|de|both] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
@@ -146,6 +146,24 @@ fn main() {
         let t = if p.trim_start().starts_with('{') { p } else { std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("--params {p}: {e}")) };
         serde_json::from_str(&t).unwrap_or_else(|e| panic!("--params: {e}"))
     });
+    // --intent-track <путь>: след эталона — прогон --runs seed…seed+N-1 с --command, среднее центров армий по часам
+    if let Some(out) = arg(&args, "intent-track") {
+        let mode = arg(&args, "command").unwrap_or_else(|| "intent".into());
+        let mut traces = Vec::new();
+        for seed in seed0..seed0 + runs {
+            let (mut sim, meta) = scenario::load_with(&scen_path, &format!("{root}/{DATA_DIR}"), &root, params.as_ref(), None).unwrap_or_else(|e| panic!("{e}"));
+            sim.seed = seed;
+            let mut pending = Vec::new();
+            for sd in [Side::Su, Side::De] { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd).unwrap_or_else(|e| panic!("--command: {e}"))); }
+            traces.push(agents_core::trace::run_fed(&mut sim, meta.hours, &meta, pending, mode == "fronts" || mode == "journals"));
+        }
+        let mut track = agents_core::intent::track::record(&traces);
+        track.fingerprint = agents_core::intent::track::fingerprint(&std::fs::read_to_string(&scen_path).expect("сценарий"));
+        let out_path = if out.starts_with('/') { out } else { format!("{root}/{out}") };
+        std::fs::write(&out_path, serde_json::to_string(&track).unwrap()).expect("след эталона");
+        println!("след эталона: {} армий, {} ч, {} прогонов → {out_path}", track.armies.len(), track.hours, runs);
+        return;
+    }
     for seed in seed0..seed0 + runs {
         let (mut sim, meta) = scenario::load_with(&scen_path, &format!("{root}/{DATA_DIR}"), &root, params.as_ref(), None).unwrap_or_else(|e| panic!("{e}"));
         sim.seed = seed;

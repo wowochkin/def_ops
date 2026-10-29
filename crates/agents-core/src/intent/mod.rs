@@ -4,6 +4,7 @@
 
 pub mod chain;
 pub mod sense;
+pub mod track;
 
 pub use chain::{build, Chain, Goal, Step, Task};
 pub use sense::{done, reason_text, sense, Reason};

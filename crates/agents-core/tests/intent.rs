@@ -169,3 +169,63 @@ fn done_on_reach() {
     assert!(intent::done(&sim, ch.owner, &task(Goal::Attack, 40.0)));
     assert!(!intent::done(&sim, ch.owner, &task(Goal::Defend, 40.0)));
 }
+
+// ---------- след эталона ----------
+
+use agents_core::intent::track::{self, Track};
+
+fn fake_trace(lng: [f64; 2], dead_second: bool) -> serde_json::Value {
+    let row = |x: f64, st: &str| json!([x, 52.0, st, 100, 0, 0, 1, 1, 0, 1, 0]);
+    json!({
+        "fields": ["lng", "lat", "state", "personnel", "tanks", "guns", "ammo", "fuel", "fatigue", "cohesion", "encircled"],
+        "divisions": [{"id": "d1", "hq": "c1"}, {"id": "d2", "hq": "c2"}],
+        "hqs": [{"id": "su_a", "parent": null, "echelon": "army"}, {"id": "c1", "parent": "su_a", "echelon": "corps"},
+                {"id": "c2", "parent": "c1", "echelon": "division"}],
+        "frames": [[row(lng[0], "резерв"), row(lng[0] + 2.0, "резерв")],
+                   [row(lng[1], "резерв"), row(lng[1] + 2.0, if dead_second { "небоеспособна" } else { "резерв" })]],
+    })
+}
+
+#[test]
+fn track_record_mean() {
+    let t = track::record(&[fake_trace([14.0, 15.0], true), fake_trace([16.0, 17.0], true)]);
+    assert_eq!(t.hours, 1);
+    // час 0: центр (x, x+2) = x+1; средняя по двум ходам (15 и 17) = 16; час 1: вторая дивизия выбыла, центр = x
+    assert_eq!(t.at("su_a", 0), Some([16.0, 52.0]));
+    assert_eq!(t.at("su_a", 1), Some([16.0, 52.0]));
+    let t = track::record(&[fake_trace([14.0, 15.0], true), fake_trace([16.0, 17.0], false)]);
+    assert_eq!(t.at("su_a", 1).unwrap()[0], (15.0 + 18.0) / 2.0);
+}
+
+#[test]
+fn track_at_missing() {
+    let t = track::record(&[fake_trace([14.0, 15.0], false)]);
+    assert_eq!(t.at("su_zz", 0), None);
+    assert_eq!(t.at("su_a", 5), None);
+    assert_eq!(t.at("c1", 0), None, "не армия — не в следе");
+}
+
+#[test]
+fn track_fingerprint() {
+    assert_eq!(track::fingerprint("abc").len(), 16);
+    assert_eq!(track::fingerprint("abc"), track::fingerprint("abc"));
+    assert_ne!(track::fingerprint("abc"), track::fingerprint("abd"));
+    let dir = std::env::temp_dir().join(format!("intent-track-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let scen = dir.join("s.json");
+    let scen_s = scen.to_str().unwrap();
+    assert_eq!(track::load(scen_s).unwrap_err(), "нет следа эталона");
+    std::fs::write(&scen, "{\"a\":1}").unwrap();
+    assert_eq!(track::load(scen_s).unwrap_err(), "нет следа эталона");
+    let mut t = track::record(&[fake_trace([14.0, 15.0], false)]);
+    t.fingerprint = track::fingerprint("{\"a\":1}");
+    std::fs::write(dir.join("s.intent-track.json"), serde_json::to_string(&t).unwrap()).unwrap();
+    let got: Track = track::load(scen_s).unwrap();
+    assert_eq!(got.at("su_a", 0), t.at("su_a", 0));
+    // чужой отпечаток — след устарел
+    std::fs::write(&scen, "{\"a\":2}").unwrap();
+    assert_eq!(track::load(scen_s).unwrap_err(), "след эталона устарел — уход по расстоянию выключен");
+    // правки «Редактора» (EditsIn) в файл сценария не входят — отпечаток считается по тексту файла
+    let _ = agents_core::scenario::EditsIn::default();
+    std::fs::remove_dir_all(&dir).ok();
+}
