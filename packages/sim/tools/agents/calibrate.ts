@@ -10,6 +10,7 @@
  *   npx tsx packages/sim/tools/agents/calibrate.ts --refine evals-out/calib/r2 --top 8
  *   npx tsx packages/sim/tools/agents/calibrate.ts --mode commanders --keys '^commanders\.(mood|gains)\.' …   (только ключи по выражению; прочие — как в файлах)
  *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode agents --seeds 1-20 [--scenario berlin] [--params '{…}'] [--keep evals-out/calib/m-agents] --out evals-out/calib/m
+ *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode fronts --scenario-file evals-out/exp/x.json …   (свой файл сценария, сверка с историей Берлинской)
  *   npx tsx packages/sim/tools/agents/calibrate.ts --measure --mode agents --side both …   (штабы-агенты обеих сторон, без командующих)
  *
  * Пишет построчно <out>/samples.jsonl ({ params, total, positions, events, meanKm, eventDays, runs }), <out>/refine.jsonl
@@ -51,6 +52,8 @@ const SCEN: Record<string, { path: string; base: string }> = {
   seelow: { path: 'packages/sim/data/scenarios/agents/seelow-1945.json', base: 'berlin-1945-tasks' },
   'vistula-oder': { path: 'packages/sim/data/scenarios/agents/vistula-oder-1945.json', base: 'vistula-oder-1945' },
 };
+// --scenario-file <путь>: свой файл сценария вместо стандартного (опыты с изменёнными распоряжениями); сверка — по истории --scenario
+if (opt('scenario-file')) SCEN[opt('scenario', 'berlin')!].path = opt('scenario-file')!;
 const mode = opt('mode', 'fronts')!;
 const keysRe = opt('keys') ? new RegExp(opt('keys')!) : null;
 const space = Object.fromEntries(Object.entries(mode === 'commanders' ? commandersSpace() : SPACE).filter(([k]) => !keysRe || keysRe.test(k)));
