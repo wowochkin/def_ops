@@ -11,7 +11,7 @@ pub mod track;
 pub use chain::{build, of_directive, Chain, Goal, Step, Task};
 pub use sense::{done, reason_text, sense, Reason};
 pub use intervene::intervene;
-pub use dispatch::{admit, describe, enable, gate, off_history, step, take, withdrawal_ok, HqState, State, Status};
+pub use dispatch::{admit, describe, enable, gate, off_history, player_over, step, take, withdrawal_ok, HqState, State, Status};
 
 use crate::geo::XY;
 use crate::model::Echelon;

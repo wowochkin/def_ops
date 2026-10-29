@@ -115,6 +115,9 @@ describe('разбор фраз', () => {
     // предупреждение — до вариантов
     expect(r2).toMatch(/^Принять командование с шестнадцатого апреля\? Незавершённая игра будет заменена\. Скажите: /);
     expect(r2).toMatch(/Противник — без штаба; модель сейчас не на связи\. Ход 3\. Жду ответа\.$/);
+    // в «истории как замысле» «без штаба» не предлагается
+    expect(takeoverRead({ day: 'шестнадцатого апреля', turn: 1, enemy: 'intent', down: false, saved: false, options: ['intent', 'llm'] }))
+      .toBe('Принять командование с шестнадцатого апреля? Скажите: «принимаю» или «штаб на модели», или «отмена». Противник — история как замысел. Ход 1. Жду ответа.');
     expect(TAKEOVER_REMIND).toMatch(/Жду ответа\.$/);
     for (const x of ['принимаю', 'без штаба', 'штаб на модели', 'отмена']) expect(takeoverIsAnswer(x)).toBe(true);
     expect(takeoverIsAnswer('открой карты')).toBe(false);
@@ -358,6 +361,9 @@ describe('вход в командование голосом', () => {
     const d = rep({ take: '1945-04-16T05:00' });
     expect(await act('replay.start', { enemy: 'passive' })).toMatch(/^Командование принято/);
     expect(d.begin).toHaveBeenCalledWith('passive', undefined);
+    // противник не назван — умолчание окна по режиму (не штаб на модели)
+    await act('replay.start', { mode: 'intent' });
+    expect(d.begin).toHaveBeenLastCalledWith(undefined, 'intent');
     offs.forEach((o) => o()); offs = [];
     const d2 = rep({ take: '1945-04-16T05:00', saved: { title: 'Берлинская операция' } });
     expect(await act('replay.start')).toMatch(/незавершённая игра/);

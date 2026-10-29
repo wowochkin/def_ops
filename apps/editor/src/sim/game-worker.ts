@@ -188,7 +188,8 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
     const takeover = (record?.takeover ?? s.takeover);
     setAgent(await agentsCall<AgentGameTrace>('game_start', {
       scenario: agents.path, seed: s.seed, takeover: hourAt(ctx.scenario.start, takeover), player: human, mode: agents.mode ?? 'legacy',
-      enemy: en === 'llm' ? 'llm' : en === 'agents' ? 'agents' : 'script', until: hourAt(ctx.scenario.start, end.defeat.deadline),
+      // противник как выбран (допустимость при режиме — game::enemy_for; «без штаба» — приказы сценария)
+      enemy: en === 'passive' ? 'script' : en, until: hourAt(ctx.scenario.start, end.defeat.deadline),
       // поправки сценария из базы знаний (дивизии) — те, с которыми игра началась
       edits: kb.core ?? undefined,
       // состояние дивизий при передаче по фактам базы (game::TakeoverIn)

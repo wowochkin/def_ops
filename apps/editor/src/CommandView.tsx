@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, ENEMY_TITLE, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -2088,8 +2088,12 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
   agents?: boolean;
   onStart: (enemy: EnemyMode, mode: GameMode) => void; onCancel: () => void;
 }) {
-  const [enemy, setEnemy] = useState<EnemyMode>(defaultEnemy(agents, llm.check.state === 'fail'));
   const [mode, setMode] = useState<GameMode>(savedGameMode);
+  const [enemy, setEnemy] = useState<EnemyMode>(() => defaultEnemy(agents, llm.check.state === 'fail', savedGameMode()));
+  // противник — только допустимый при режиме своей стороны: при смене режима недопустимый выбор сменяется умолчанием
+  const enemyOk = enemyOptions(agents, mode);
+  const modeRef = useRef(mode); modeRef.current = mode;
+  useEffect(() => { setEnemy((e) => fitEnemy(e, agents, mode, llm.check.state === 'fail')); }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
   useAction({
     id: 'command.gameMode', section: 'replay', title: 'Режим командования', describe: 'Режим игры на агентной модели: история как замысел (intent), как сейчас (legacy), штабы-агенты (agents), гибрид (hybrid), командующие (commanders).',
     params: { type: 'object', properties: { mode: { enum: ['intent', 'legacy', 'agents', 'hybrid', 'commanders'] } }, required: ['mode'] }, say: ['режим история как замысел', 'режим штабы-агенты', 'режим гибрид', 'режим командующие'],
@@ -2110,7 +2114,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
     // сначала вопрос и как отвечать, потом подробности: отвечают, едва услышав варианты
     get read() {
       const s = st.current;
-      return speakable(takeoverRead({ day: dayMonth(at), turn, enemy: s.enemy, down: s.down, saved: s.hasSaved }), { full: true });
+      return speakable(takeoverRead({ day: dayMonth(at), turn, enemy: s.enemy, down: s.down, saved: s.hasSaved, options: enemyOptions(agents, modeRef.current) }), { full: true });
     },
     remind: TAKEOVER_REMIND,
     how: '«принимаю» или «отмена»',
@@ -2122,7 +2126,8 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
     params: { type: 'object', properties: { mode: { enum: ['llm', 'passive', 'agents', 'intent'] } }, required: ['mode'] }, say: ['без штаба', 'противник история как замысел'], available: () => true,
     highlight: (p: { mode: EnemyMode }) => hl(`enemy-${p?.mode}`),
     run: async (p: { mode: EnemyMode }) => {
-      if (p?.mode !== 'llm' && p?.mode !== 'passive' && !((p?.mode === 'agents' || p?.mode === 'intent') && agents)) return agents ? 'Скажите: «история как замысел», «штаб на модели», «без штаба» или «штабы-агенты».' : 'Скажите: «штаб на модели» или «без штаба».';
+      const ok = enemyOptions(agents, modeRef.current);
+      if (!ok.includes(p?.mode)) return `При этом режиме противник — ${ok.map((e) => `«${ENEMY_TITLE[e].toLowerCase()}»`).join(' или ')}. Скажите одно из них.`;
       setEnemy(p.mode);
       if (p.mode === 'intent') return 'Противник — история как замысел: его штабы идут по историческому замыслу, пока обстановка позволяет. Скажите «принимаю».';
       if (p.mode === 'agents') return 'Противник — штабы-агенты по уставам. Скажите «принимаю».';
@@ -2148,13 +2153,13 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
             <button className="link" onClick={() => { onCancel(); openModelBasis(scenario); }} title="Моделирование → Операции: факты базы, из которых собраны входы модели">Основа модели</button></li>
         </ul>
         <div className="take-enemy">
-          {agents && <label className={enemy === 'intent' ? 'on' : ''} data-hl="enemy-intent"><input type="radio" data-action="command.enemyMode" checked={enemy === 'intent'} onChange={() => void act('command.enemyMode', { mode: 'intent' })} />
+          {enemyOk.includes('intent') && <label className={enemy === 'intent' ? 'on' : ''} data-hl="enemy-intent"><input type="radio" data-action="command.enemyMode" checked={enemy === 'intent'} onChange={() => void act('command.enemyMode', { mode: 'intent' })} />
             <span><b>История как замысел</b> — противник идёт по историческому замыслу, пока обстановка позволяет<small>без модели; в ходе игры не меняется</small></span></label>}
-          <label className={enemy === 'llm' ? 'on' : ''} data-hl="enemy-llm"><input type="radio" data-action="command.enemyMode" checked={enemy === 'llm'} onChange={() => void act('command.enemyMode', { mode: 'llm' })} />
-            <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «ИИ»)` : 'проверка связи…'}</small></span></label>
-          <label className={enemy === 'passive' ? 'on' : ''} data-hl="enemy-passive"><input type="radio" data-action="command.enemyMode" checked={enemy === 'passive'} onChange={() => void act('command.enemyMode', { mode: 'passive' })} />
-            <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>
-          {agents && <label className={enemy === 'agents' ? 'on' : ''} data-hl="enemy-agents"><input type="radio" data-action="command.enemyMode" checked={enemy === 'agents'} onChange={() => void act('command.enemyMode', { mode: 'agents' })} />
+          {enemyOk.includes('llm') && <label className={enemy === 'llm' ? 'on' : ''} data-hl="enemy-llm"><input type="radio" data-action="command.enemyMode" checked={enemy === 'llm'} onChange={() => void act('command.enemyMode', { mode: 'llm' })} />
+            <span><b>Штаб на модели</b> — LM Studio на этом компьютере<small className={`llm-st ${llm.check.state}`}>{llm.check.state === 'ok' ? `✓ на связи: ${llm.settings.model || llm.check.models[0]}` : llm.check.state === 'fail' ? `✗ ${llm.check.error} — запустите сервер в LM Studio (настройки — раздел «ИИ»)` : 'проверка связи…'}</small></span></label>}
+          {enemyOk.includes('passive') && <label className={enemy === 'passive' ? 'on' : ''} data-hl="enemy-passive"><input type="radio" data-action="command.enemyMode" checked={enemy === 'passive'} onChange={() => void act('command.enemyMode', { mode: 'passive' })} />
+            <span><b>Без штаба</b> — противник держится прежних приказов<small>для пробы без модели; переключить можно в ходе игры (вкладка «Посредник»)</small></span></label>}
+          {enemyOk.includes('agents') && <label className={enemy === 'agents' ? 'on' : ''} data-hl="enemy-agents"><input type="radio" data-action="command.enemyMode" checked={enemy === 'agents'} onChange={() => void act('command.enemyMode', { mode: 'agents' })} />
             <span><b>Штабы-агенты</b> — противник в той же логике ступеней: его верхняя инстанция подаёт исторические решения, ниже решают штабы по уставам<small>без модели; в ходе игры не меняется</small></span></label>}
         </div>
         {agents && <div className="take-enemy take-mode">

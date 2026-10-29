@@ -172,7 +172,7 @@ pub mod commands {
     static GAME: std::sync::Mutex<Option<agents_core::game::Game>> = std::sync::Mutex::new(None);
 
     /// Начать игру: прогон по сценарию до часа `takeover`, дальше стороной `player` командует игрок; противник —
-    /// по сценарию (script), по доктрине (doctrine) или штабом на модели вне ядра (llm — его приказы приходят в game_turn). Возвращает ход до передачи командования.
+    /// по сценарию (script), по доктрине (doctrine), штабы-агенты (agents), история как замысел (intent) или штаб на модели вне ядра (llm — его приказы приходят в game_turn); допустимые при режиме — `game::enemy_for`. Возвращает ход до передачи командования.
     #[tauri::command]
     pub async fn game_start(scenario: String, seed: Option<u64>, takeover: u32, player: Option<String>, enemy: Option<String>, until: Option<u32>, edits: Option<serde_json::Value>, takeover_state: Option<serde_json::Value>, mode: Option<agents_core::game::Mode>) -> Result<serde_json::Value, String> {
         tauri::async_runtime::spawn_blocking(move || {
@@ -188,16 +188,19 @@ pub mod commands {
             let player = if player.as_deref() == Some("de") { Side::De } else { Side::Su };
             let enemy_side = if player == Side::Su { Side::De } else { Side::Su };
             let other = agents_core::staff::side_idx(enemy_side);
-            sim.sources[other] = if enemy.as_deref() == Some("doctrine") { Source::Doctrine } else { Source::Script };
+            // режим: «как сейчас» (по умолчанию), «агенты», «гибрид», «командующие», «история как замысел»
+            let mode = mode.unwrap_or(agents_core::game::Mode::Legacy);
+            // противник, допустимый при режиме своей стороны (недопустимый — ошибка, не подмена молча)
+            let en = agents_core::game::enemy_for(mode, enemy.as_deref())?;
+            sim.sources[other] = if en == "doctrine" { Source::Doctrine } else { Source::Script };
             // llm — противником командует штаб на языковой модели вне ядра (игра редактора): его приказы — через game_turn
-            let free: Vec<Side> = if enemy.as_deref() == Some("llm") { vec![player, enemy_side] } else { vec![player] };
-            // режим: «как сейчас» (по умолчанию), «агенты» или «гибрид» (командование по ступеням)
-            let mut g = agents_core::game::Game::start_mode(sim, meta, takeover, player, &free, state.as_ref(), mode.unwrap_or(agents_core::game::Mode::Legacy));
+            let free: Vec<Side> = if en == "llm" { vec![player, enemy_side] } else { vec![player] };
+            let mut g = agents_core::game::Game::start_mode(sim, meta, takeover, player, &free, state.as_ref(), mode);
             // срок игры (до победы или поражения) может быть дальше конца сценария
             if let Some(u) = until { g.limit = g.limit.max(u); }
             // agents — противник: штабы-агенты, верхняя инстанция подаёт исторические решения
-            if enemy.as_deref() == Some("agents") { g.enemy_agents(); }
-            if enemy.as_deref() == Some("intent") { g.enemy_intent(); }
+            if en == "agents" { g.enemy_agents(); }
+            if en == "intent" { g.enemy_intent(); }
             let t = g.trace();
             *GAME.lock().map_err(|e| e.to_string())? = Some(g);
             Ok(t)

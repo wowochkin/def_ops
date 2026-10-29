@@ -49,13 +49,15 @@ fn main() {
                 if let Some(s) = a["seed"].as_u64() { sim.seed = s; }
                 let player = if a["player"] == "de" { Side::De } else { Side::Su };
                 let enemy = if player == Side::Su { Side::De } else { Side::Su };
-                sim.sources[agents_core::staff::side_idx(enemy)] = if a["enemy"] == "doctrine" { Source::Doctrine } else { Source::Script };
-                let free = if a["enemy"] == "llm" { vec![player, enemy] } else { vec![player] };
                 let mode: agents_core::game::Mode = opt("mode").map(serde_json::from_value).transpose().map_err(|e| format!("mode: {e}"))?.unwrap_or(agents_core::game::Mode::Legacy);
+                // противник, допустимый при режиме своей стороны (недопустимый — ошибка, не подмена)
+                let en = agents_core::game::enemy_for(mode, a["enemy"].as_str())?;
+                sim.sources[agents_core::staff::side_idx(enemy)] = if en == "doctrine" { Source::Doctrine } else { Source::Script };
+                let free = if en == "llm" { vec![player, enemy] } else { vec![player] };
                 let mut g = Game::start_mode(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref(), mode);
                 if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
-                if a["enemy"] == "agents" { g.enemy_agents(); }
-                if a["enemy"] == "intent" { g.enemy_intent(); }
+                if en == "agents" { g.enemy_agents(); }
+                if en == "intent" { g.enemy_intent(); }
                 let t = g.trace();
                 game = Some(g);
                 Ok(t)

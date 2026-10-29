@@ -17,6 +17,7 @@ import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
+import { defaultEnemy, fitEnemy } from './command-forms';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
 import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
@@ -456,11 +457,14 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withHidden(withLevel(doc, level), level, lvHidden), focus), labels) : null), [doc, level, focus, labels, lvHidden]);
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
   /** Начать игру с момента окна «Принять командование» (подтверждение замены незавершённой — до этого). */
-  const beginGame = (enemy: EnemyMode, mode: GameMode = savedGameMode()) => {
+  const beginGame = (enemy0: EnemyMode | undefined, mode: GameMode = savedGameMode()) => {
     if (!result || !take) return;
     setTake(null);
     // агентная модель: ход игры — AGENT_GAME_HOURS, считает ядро приложения
     const agents = result.engine === 'agents' && agentOp ? { path: agentOp.path, history: agentOp.history, turnHours: AGENT_GAME_HOURS, mode } : undefined;
+    // противник — допустимый при режиме (не назван — умолчание окна)
+    const down = llm.check.state === 'fail';
+    const enemy = enemy0 ? fitEnemy(enemy0, !!agents, mode, down) : defaultEnemy(!!agents, down, mode);
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
   };
   /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */

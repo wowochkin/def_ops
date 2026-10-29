@@ -669,6 +669,7 @@ fn intent_enemy_only() {
     let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий");
     let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Agents);
     assert_eq!(g.sim.intent.enabled, [false, false]);
+    assert!(g.take("su_stavka").is_err(), "в «агентах» верхняя инстанция и так у игрока");
     g.enemy_intent();
     assert_eq!(g.sim.intent.enabled, [false, true]);
 }
@@ -751,4 +752,55 @@ fn intent_enemy_legacy_ignored() {
     g.enemy_intent();
     assert_eq!(g.sim.intent.enabled, [false, false]);
     assert!(g.sim.journal.iter().any(|e| e.text.contains("история как замысел")));
+}
+
+/// История как замысел: директива штабу, которого игрок не взял, — взятие этого штаба (с поддеревом), диспетчер ему
+/// больше не подаёт; приказ — так же; верхнюю инстанцию можно взять.
+#[test]
+fn intent_directive_takes_hq() {
+    use agents_core::command::control::Control;
+    use agents_core::game::{CommandOp, Game, Mode, PlayerDirective};
+    use agents_core::command::directive::{Form, Task};
+    use agents_core::intent::{Reason, Status};
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
+    let hq = |g: &Game, id: &str| g.sim.world.hqs.iter().position(|h| h.id == id).unwrap();
+    let (uf, gta, bf) = (hq(&g, "su_1uf"), hq(&g, "su_3gta"), hq(&g, "su_1bf"));
+    g.directive(&PlayerDirective { to: "su_1uf".into(), task: Task::Attack, form: Form::Instruction, axis: vec![[14.6, 51.7], [14.2, 52.1]], immediate: Some(vec![[14.1, 52.0], [14.3, 52.2]]), ..Default::default() }).expect("директива");
+    assert!(g.sim.intent.led[uf] && agents_core::intent::player_over(&g.sim, uf as u32), "директива взяла штаб");
+    assert_eq!(g.sim.command.control[uf], Control::Agent, "решают его командующий и штаб");
+    let issued: Vec<usize> = g.sim.intent.chains.iter().filter(|c| c.owner as usize == gta).map(|c| c.tasks.iter().filter(|t| t.issued).count()).collect();
+    g.advance(24);
+    for k in [uf, gta] {
+        assert_eq!(g.sim.intent.hq[k].status, Status::Own);
+        assert_eq!(g.sim.intent.hq[k].reason, Some(Reason::Player), "{}", g.sim.world.hqs[k].id);
+    }
+    let after: Vec<usize> = g.sim.intent.chains.iter().filter(|c| c.owner as usize == gta).map(|c| c.tasks.iter().filter(|t| t.issued).count()).collect();
+    assert_eq!(issued, after, "диспетчер взятому поддереву не подаёт");
+    assert_eq!(g.sim.intent.hq[bf].status == Status::Own && g.sim.intent.hq[bf].reason == Some(Reason::Player), false, "соседний фронт не взят");
+    assert!(g.sim.journal.iter().any(|e| e.text.contains("взят под управление игрока")), "запись в журнале");
+    // приказ невзятой армии — тоже взятие
+    g.order(&PlayerOrder { hq: "su_8gva".into(), kind: OrderKind::Defend, target: None, note: String::new(), form: None }).expect("приказ");
+    assert!(agents_core::intent::player_over(&g.sim, hq(&g, "su_8gva") as u32));
+    // верхняя инстанция берётся
+    g.command(&CommandOp::Take { hq: "su_stavka".into() }).expect("взять Ставку");
+    assert!(g.sim.world.hqs.iter().enumerate().filter(|(_, h)| h.side == Side::Su).all(|(k, _)| agents_core::intent::off_history(&g.sim, k as u32)));
+}
+
+/// Противник по режиму своей стороны: допустимые сочетания проходят как есть, недопустимые — ошибка (не подмена молча);
+/// без выбора — умолчание режима.
+#[test]
+fn enemy_for_mode() {
+    use agents_core::game::{enemy_for, Mode};
+    assert_eq!(enemy_for(Mode::Intent, None), Ok("intent"));
+    assert_eq!(enemy_for(Mode::Intent, Some("llm")), Ok("llm"));
+    for e in ["script", "doctrine", "agents", "passive"] { assert!(enemy_for(Mode::Intent, Some(e)).is_err(), "intent + {e}"); }
+    assert_eq!(enemy_for(Mode::Commanders, None), Ok("agents"));
+    assert!(enemy_for(Mode::Commanders, Some("intent")).is_err());
+    assert!(enemy_for(Mode::Commanders, Some("script")).is_err());
+    assert!(enemy_for(Mode::Legacy, Some("intent")).is_err(), "«как сейчас» истории у противника нет");
+    assert_eq!(enemy_for(Mode::Legacy, None), Ok("script"));
+    for m in [Mode::Agents, Mode::Hybrid] {
+        for e in ["script", "doctrine", "llm", "agents", "intent"] { assert_eq!(enemy_for(m, Some(e)), Ok(e)); }
+    }
 }

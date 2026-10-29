@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, findHq, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -60,6 +60,36 @@ describe('очередь первого хода', () => {
     expect(initialCmds(view('hybrid', 1))).toEqual([{ op: 'historical', id: 'a' }, { op: 'historical', id: 'b' }]);
     expect(initialCmds(view('agents', 2))).toEqual([]);
     expect(initialCmds(view('legacy', 1))).toEqual([]);
+  });
+  it('история как замысел — историю ведёт диспетчер: в очереди только директивы получателям под игроком', () => {
+    expect(initialCmds(view('intent', 1))).toEqual([]);
+    const v = view('intent', 1) as { command: { hqs: Record<string, unknown>; historical: { to: string }[] } };
+    v.command.hqs = { su_1bf: { control: 'player', led: false, name: '', echelon: 'front', parent: 'su_stavka' }, su_8gva: { control: 'agent', led: false, name: '', echelon: 'army', parent: 'su_1bf' }, su_1uf: { control: 'script', led: false, name: '', echelon: 'front', parent: 'su_stavka' } };
+    v.command.historical[0].to = 'su_8gva';
+    v.command.historical[1].to = 'su_1uf';
+    expect(initialCmds(v as never)).toEqual([{ op: 'historical', id: 'a' }]);
+  });
+});
+
+describe('противник по режиму своей стороны', () => {
+  it('в окне — только допустимые варианты', () => {
+    expect(enemyOptions(false, 'intent')).toEqual(['llm', 'passive']);
+    expect(enemyOptions(true, 'intent')).toEqual(['intent', 'llm']);
+    expect(enemyOptions(true, 'commanders')).toEqual(['agents', 'llm']);
+    expect(enemyOptions(true, 'legacy')).toEqual(['llm', 'passive', 'agents']);
+    expect(enemyOptions(true, 'agents')).toEqual(['intent', 'llm', 'passive', 'agents']);
+    expect(enemyOptions(true, 'hybrid')).toEqual(['intent', 'llm', 'passive', 'agents']);
+  });
+  it('умолчание — допустимое; при смене режима недопустимый выбор сменяется умолчанием', () => {
+    expect(defaultEnemy(true, false, 'intent')).toBe('intent');
+    expect(defaultEnemy(true, false, 'commanders')).toBe('agents');
+    expect(defaultEnemy(true, false, 'legacy')).toBe('llm');
+    expect(defaultEnemy(true, true, 'legacy')).toBe('passive');
+    expect(fitEnemy('passive', true, 'intent', false)).toBe('intent');
+    expect(fitEnemy('llm', true, 'intent', false)).toBe('llm');
+    expect(fitEnemy('intent', true, 'legacy', false)).toBe('llm');
+    expect(fitEnemy('intent', true, 'commanders', false)).toBe('agents');
+    expect(fitEnemy('agents', true, 'agents', false)).toBe('agents');
   });
 });
 

@@ -346,7 +346,7 @@ export interface ReplayDeps {
   saved: { title: string } | null;
   /** Начать игру (без вопросов) и продолжить сохранённую. */
   /** mode — режим командования на агентной модели (нет — выбранный в окне и запомненный). */
-  begin(enemy: EnemyMode, mode?: GameMode): void;
+  begin(enemy: EnemyMode | undefined, mode?: GameMode): void;
   continueGame(): void;
   /** Остановить расчёт; удалить запись незавершённой игры. */
   stop(): void;
@@ -386,7 +386,8 @@ export function replayActions(get: () => ReplayDeps): Action[] {
   };
   const takeOpen = (): true | string => { const r = inReplay(); return r !== true ? r : get().take ? true : 'окно «Принять командование» не открыто. Скажите: «Штаб, прими командование»'; };
   const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive', 'agents', 'intent'] }, mode: { enum: ['intent', 'legacy', 'agents', 'hybrid', 'commanders'] } } };
-  const start = (p?: { enemy?: EnemyMode; mode?: GameMode }) => { get().begin(p?.enemy === 'passive' || p?.enemy === 'agents' || p?.enemy === 'intent' ? p.enemy : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
+  // противник не назван — умолчание окна (по режиму), а не штаб на модели
+  const start = (p?: { enemy?: EnemyMode; mode?: GameMode }) => { get().begin(p?.enemy && ENEMY_SAY[p.enemy] ? p.enemy : undefined, p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
   return [
     { section: 'replay', id: 'replay.calc', title: 'Рассчитать операцию', describe: 'Рассчитывает операцию (по названию; без названия — выбранную).',
       params: { type: 'object', properties: { operation: { type: 'string' } } }, say: ['штаб, рассчитай операцию', 'штаб, рассчитай берлинскую операцию'],
@@ -451,9 +452,12 @@ export function replayActions(get: () => ReplayDeps): Action[] {
  * Чтение окна «Принять командование» (до озвучки — speakable): вопрос, предупреждение, как отвечать, потом подробности;
  * в конце «Жду ответа.» (не слово-ответ). day — «16 апреля».
  */
-export function takeoverRead(o: { day: string; turn: number; enemy: EnemyMode; down: boolean; saved: boolean }): string {
+export function takeoverRead(o: { day: string; turn: number; enemy: EnemyMode; down: boolean; saved: boolean; options?: EnemyMode[] }): string {
+  // ответы о противнике — только допустимые при режиме (окно показывает только их)
+  const opts = o.options ?? ['llm', 'passive'];
+  const say = [...(opts.includes('passive') ? ['«без штаба»'] : []), ...(opts.includes('llm') ? ['«штаб на модели»'] : [])];
   return `Принять командование с ${o.day}? ${o.saved ? 'Незавершённая игра будет заменена. ' : ''}`
-    + 'Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена». '
+    + `Скажите: «принимаю»${say.length ? (say.length > 1 ? `, ${say.join(' или ')}` : ` или ${say[0]}`) : ''}, или «отмена». `
     + `Противник — ${o.enemy === 'llm' ? 'штаб на модели' : o.enemy === 'intent' ? 'история как замысел' : o.enemy === 'agents' ? 'штабы-агенты' : 'без штаба'}${o.down ? '; модель сейчас не на связи' : ''}. Ход ${o.turn}. Жду ответа.`;
 }
 /** Напоминание окна «Принять командование», если ответа нет. */

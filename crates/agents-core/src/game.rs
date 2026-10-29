@@ -22,6 +22,21 @@ use serde_json::Value;
 #[serde(rename_all = "lowercase")]
 pub enum Mode { Legacy, Agents, Hybrid, Commanders, Intent }
 
+/// Противник при режиме игры своей стороны: script — приказы сценария (без штаба), doctrine — по доктрине, llm — штаб на
+/// модели вне ядра, agents — штабы-агенты, intent — история как замысел. В «истории как замысле» противник — тоже
+/// история (или штаб на модели), у «командующих» — командующие и штабы-агенты (или штаб на модели); в «как сейчас»
+/// истории у противника нет. Недопустимое сочетание — ошибка, а не подмена молча; без выбора — умолчание режима.
+pub fn enemy_for(mode: Mode, enemy: Option<&str>) -> Result<&'static str, String> {
+    let ok: &[&'static str] = match mode {
+        Mode::Intent => &["intent", "llm"],
+        Mode::Commanders => &["agents", "llm"],
+        Mode::Legacy => &["script", "doctrine", "llm", "agents"],
+        Mode::Agents | Mode::Hybrid => &["script", "doctrine", "llm", "agents", "intent"],
+    };
+    let Some(e) = enemy else { return Ok(ok[0]) };
+    ok.iter().copied().find(|&x| x == e).ok_or_else(|| format!("противник «{e}» в этом режиме игры недопустим: {}", ok.join(", ")))
+}
+
 fn other_side(s: Side) -> Side { if s == Side::Su { Side::De } else { Side::Su } }
 
 /// Разграничительная линия директивы игрока: сосед (штаб, если назван) и ломаная.
@@ -428,6 +443,18 @@ impl Game {
             }
         };
         let tick = self.hour();
+        // история как замысел: директива штабу не под командованием игрока — он и его подчинённые с истории («под
+        // командованием игрока»), решают его командующий и штаб по директиве игрока; диспетчер им больше не подаёт
+        if let Target::Hq(h) = to {
+            if self.mode == Mode::Intent && !crate::intent::player_over(&self.sim, h) {
+                let n = self.sim.world.hqs.len();
+                self.sim.intent.led.resize(n, false);
+                self.sim.intent.led[h as usize] = true;
+                crate::intent::take(&mut self.sim, h);
+                let name = self.sim.world.hqs[h as usize].name.clone();
+                self.sim.journal.push(crate::world::Event { tick, agent: u32::MAX, text: format!("{name} взят под управление игрока: директива вместо истории, решают его командующий и штаб") });
+            }
+        }
         // «гибрид»: своя директива штабу, которого ведёт сценарий, — история кончилась: его поддерево решают агенты
         if let Target::Hq(h) = to {
             use crate::command::control::Control;
@@ -579,7 +606,8 @@ impl Game {
     pub fn take(&mut self, hq: &str) -> Result<(), String> {
         use crate::command::control::{Control, DocKind, Document};
         let h = self.sim.world.hqs.iter().position(|x| x.id == hq && x.side == self.player).ok_or_else(|| format!("нет штаба {hq} стороны игрока"))?;
-        if self.sim.world.hqs[h].echelon == crate::model::Echelon::HighCommand { return Err("верхняя инстанция и так у игрока".into()); }
+        // в истории как замысле верхняя инстанция — по истории, её можно взять; в прочих режимах она и так у игрока
+        if self.mode != Mode::Intent && self.sim.world.hqs[h].echelon == crate::model::Echelon::HighCommand { return Err("верхняя инстанция и так у игрока".into()); }
         self.sim.command.control[h] = Control::Player;
         // история как замысел: поддерево взятого штаба — «под командованием игрока»
         if self.sim.intent.enabled[crate::staff::side_idx(self.player)] { crate::intent::take(&mut self.sim, h as u32); }
@@ -594,6 +622,7 @@ impl Game {
         let tick = self.hour();
         if let Some(h) = self.sim.world.hqs.iter().position(|x| x.id == id && x.side == self.player) {
             self.sim.command.led_hq[h] = false;
+            if let Some(x) = self.sim.intent.led.get_mut(h) { *x = false; }
             // старший снова отдаст ему задачу в свой следующий цикл
             self.sim.command.sent.retain(|k, _| k.1 != crate::command::directive::Target::Hq(h as u32));
             if self.sim.command.control[h] == Control::Player && self.sim.world.hqs[h].echelon != crate::model::Echelon::HighCommand {

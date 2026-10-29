@@ -47,8 +47,31 @@ export function savedGameMode(): GameMode {
   try { const v = localStorage.getItem(MODE_KEY); return v === 'legacy' || v === 'agents' || v === 'hybrid' || v === 'commanders' || v === 'intent' ? v : 'intent'; } catch { return 'intent'; }
 }
 export function saveGameMode(m: GameMode) { try { localStorage.setItem(MODE_KEY, m); } catch { /* */ } }
-/** Противник по умолчанию: на агентной модели — «История как замысел»; иначе штаб на модели (нет связи — без штаба). */
-export function defaultEnemy(agents: boolean, llmDown: boolean): EnemyMode { return agents ? 'intent' : llmDown ? 'passive' : 'llm'; }
+/**
+ * Противник, допустимый при режиме своей стороны (ядро — game::enemy_for; недопустимое сочетание ядро отклоняет): в
+ * «истории как замысле» противник — тоже история или штаб на модели; у «командующих» — командующие и штабы-агенты или
+ * штаб на модели; в «как сейчас» истории у противника нет. Не агентная модель — штаб на модели или без штаба.
+ */
+export function enemyOptions(agents: boolean, mode: GameMode): EnemyMode[] {
+  if (!agents) return ['llm', 'passive'];
+  if (mode === 'intent') return ['intent', 'llm'];
+  if (mode === 'commanders') return ['agents', 'llm'];
+  if (mode === 'legacy') return ['llm', 'passive', 'agents'];
+  return ['intent', 'llm', 'passive', 'agents'];
+}
+/** Варианты противника — как в окне «Принять командование». */
+export const ENEMY_TITLE: Record<EnemyMode, string> = { intent: 'История как замысел', llm: 'Штаб на модели', passive: 'Без штаба', agents: 'Штабы-агенты' };
+/** Противник по умолчанию при режиме: «История как замысел», где она допустима; у «командующих» — штабы-агенты; иначе штаб на модели (нет связи — без штаба). */
+export function defaultEnemy(agents: boolean, llmDown: boolean, mode: GameMode = 'intent'): EnemyMode {
+  const ok = enemyOptions(agents, mode);
+  if (ok.includes('intent')) return 'intent';
+  if (ok.includes('agents') && !ok.includes('passive')) return 'agents';
+  return llmDown && ok.includes('passive') ? 'passive' : 'llm';
+}
+/** Выбор противника при режиме: допустимый остаётся, недопустимый — умолчание режима. */
+export function fitEnemy(e: EnemyMode, agents: boolean, mode: GameMode, llmDown: boolean): EnemyMode {
+  return enemyOptions(agents, mode).includes(e) ? e : defaultEnemy(agents, llmDown, mode);
+}
 
 const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.id);
 /**
@@ -76,12 +99,14 @@ export function findHq(hqs: Record<string, { name: string }>, q: string): string
 
 /**
  * Очередь команд на первый ход: в режиме «штабы-агенты» — исторические директивы, час которых уже наступил (при
- * передаче командования они уже действуют); в «гибриде» — все (подаются только до первого хода). Не первый ход — пусто.
+ * передаче командования они уже действуют); в «гибриде» — все (подаются только до первого хода); в «истории как
+ * замысле» историю ведёт ядро — только наступившие директивы получателям под игроком. Не первый ход — пусто.
  */
 export function initialCmds(v: TurnView): CommandOp[] {
   const c = v.command;
   if (!c || c.mode === 'legacy' || v.turn !== 1) return [];
-  return c.historical.filter((h) => !h.issued && (c.mode === 'hybrid' || h.due)).map((h) => ({ op: 'historical', id: h.id }));
+  const mine = (id: string) => { for (let x: string | null = id, n = 0; x && n < 8; x = c.hqs[x]?.parent ?? null, n++) if (c.hqs[x]?.control === 'player') return true; return false; };
+  return c.historical.filter((h) => !h.issued && (c.mode === 'hybrid' || h.due) && (c.mode !== 'intent' || mine(h.to))).map((h) => ({ op: 'historical', id: h.id }));
 }
 
 /** Пометка своего штаба или дивизии в докладах; «как сейчас» (и старые записи игры) — без пометок. */

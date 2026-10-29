@@ -57,6 +57,9 @@ pub struct State {
     pub actions: Vec<(u32, super::intervene::Action)>,
     /// Зоны изменённого замысла (`drop`).
     pub drops: Vec<super::intervene::DropZone>,
+    /// По штабам мира: штаб ведёт игрок своими директивами (как старший) — штаб и его подчинённые с истории, решают
+    /// его командующий и штаб по директиве игрока (игра, `Game::directive`).
+    pub led: Vec<bool>,
 }
 
 impl State {
@@ -78,12 +81,12 @@ pub(super) fn subtree(sim: &Sim, h: u32) -> Vec<usize> {
     (0..w.hqs.len()).filter(|&k| { let mut x = k; for _ in 0..8 { if x == h as usize { return true; } match w.hqs[x].parent { Some(p) => x = p as usize, None => return false } } false }).collect()
 }
 
-/// Штаб или кто-то над ним — под командованием игрока.
-fn player_over(sim: &Sim, h: u32) -> bool {
+/// Штаб или кто-то над ним — под командованием игрока (взят или ведётся директивами игрока).
+pub fn player_over(sim: &Sim, h: u32) -> bool {
     let w = &sim.world;
     let mut k = h as usize;
     for _ in 0..8 {
-        if sim.command.control.get(k) == Some(&Control::Player) { return true; }
+        if sim.command.control.get(k) == Some(&Control::Player) || sim.intent.led.get(k) == Some(&true) { return true; }
         match w.hqs[k].parent { Some(p) => k = p as usize, None => return false }
     }
     false
