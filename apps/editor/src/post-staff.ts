@@ -49,13 +49,16 @@ export function staffScope(v: TurnView, level: LevelId, issuer: string): StaffSc
   };
 }
 
+/** Все подвкладки видны (игра без пункта управления, нет обстановки). */
+export const ALL_SUBS: Record<OrdersSub, true> = { units: true, rear: true, bridges: true, reserves: true, bounds: true };
+
 /** Какие подвкладки «Приказов» видны на уровне: `true` — есть, строка — почему нет (для голоса). Игра без пункта — все. */
 export function ordersSubs(v: TurnView, scope: StaffScope | null): Record<OrdersSub, true | string> {
-  if (!scope) return { units: true, rear: true, bridges: true, reserves: true, bounds: true };
+  if (!scope) return ALL_SUBS;
   return {
     units: true,
-    rear: scope.bases === 'move' || scope.priority || 'тыл ведут фронт и армия (у танкового и механизированного корпуса — свой)',
-    bridges: scope.bridges === 'build' || scope.allotParks || 'переправы наводят фронт, армия и корпус',
+    rear: scope.bases === 'move' || scope.priority || 'тыл ведут штабы фронта и армии (у подвижного корпуса — свой)',
+    bridges: scope.bridges === 'build' || scope.allotParks || 'переправы наводят штабы с понтонными парками: фронт, армия, корпус',
     reserves: postReserves(v, scope.issuer).length > 0 || 'в подчинении нет резервов',
     bounds: scope.bounds === 'armies' || 'полосы этой ступени задаются в «Пункте управления» (директивой или приказом)',
   };

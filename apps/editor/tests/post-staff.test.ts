@@ -83,4 +83,14 @@ describe('распоряжения штаба по уровню пункта', (
     expect(at('front', 'f1').reserves).toMatch(/резерв/);
     expect(Object.values(ordersSubs(vr, null)).every((x) => x === true)).toBe(true);
   });
+  it('подвкладки: подвижный корпус — тыл есть; резервы в подчинении — вкладка есть; немецкий корпус — без советских слов', () => {
+    const w = { ...v, reserveGroups: [{ id: 'g1', front: 'f1', members: ['d1'] }],
+      command: { hqs: { ...v.command!.hqs, t9: { name: '9 тк', echelon: 'corps', parent: 'a1', side: 'su' } } } } as unknown as TurnView;
+    expect(ordersSubs(w, staffScope(w, 'corps', 't9')).rear).toBe(true);
+    expect(ordersSubs(w, staffScope(w, 'front', 'f1')).reserves).toBe(true);
+    const de = { ...w, terms: { top: 'OKH', topGen: 'OKH' } } as unknown as TurnView;
+    const s = ordersSubs(de, staffScope(de, 'corps', 'k1'));
+    for (const x of [s.rear, s.bounds]) expect(x).not.toMatch(/Ставк|советск/i);
+    expect(typeof s.rear).toBe('string');
+  });
 });

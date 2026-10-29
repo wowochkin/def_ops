@@ -29,7 +29,7 @@ import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { divisionsUnder, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
-import { mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
+import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type DraftScope } from './decision-drafts';
@@ -670,7 +670,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** Что штаб пункта ведёт во вкладке «Приказы» (тыл, переправы, полосы); нынешняя модель — null, всё как прежде. */
   const scopeNow = (): StaffScope | null => (view && staffsOn(view) && post.issuer ? staffScope(view, post.level, post.issuer) : null);
   /** Подвкладки «Приказов» с доступным на уровне действием (`true`) или причиной, почему их нет. */
-  const subsOk = view ? ordersSubs(view, scopeNow()) : ordersSubs({ reserveGroups: [] } as unknown as TurnView, null);
+  const subsOk = view ? ordersSubs(view, scopeNow()) : ALL_SUBS;
   // открытая подвкладка стала недоступной (сменили уровень) — назад в «Пункт управления»
   useEffect(() => { if (subsOk[sub] !== true) setSub('units'); }, [sub, subsOk.rear, subsOk.bridges, subsOk.reserves, subsOk.bounds]);
   /** Решение на экране: штаба пункта (ниже Ставки) или верхней инстанции. */
@@ -826,7 +826,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const staff = useRef<StaffDeps>(null!);
   const lastAdvice = [...adv].reverse().find((x) => x.result?.ok);
   staff.current = {
-    view, busy: view ? progress : null, setTab, setSub, goTo: (at) => goTo(at), select: setSel,
+    view, busy: view ? progress : null, setTab, setSub, subsOk, goTo: (at) => goTo(at), select: setSel,
     plan, planN, askPlan, stopAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); },
     openVariant: (i) => { setPlanOpen(i); setAdvOpen(true); setAdvMin(false); }, applyPlan,
     advisorText: advQ, setAdvisorText: setAdvQ,

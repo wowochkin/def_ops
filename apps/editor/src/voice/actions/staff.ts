@@ -45,6 +45,8 @@ export interface PlanState { id: number; time: string; count: number; variants: 
 export type Suggestion = AdviceView['suggestions'][number];
 export type OrdersSub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Полоса, намечаемая между двумя армиями: фронт, армии, точки линии. */
+/** Названия подвкладок «Приказов» (для ответа голосом). */
+export const SUB_TITLE: Record<OrdersSub, string> = { units: 'Пункт управления', rear: 'Тыл', bridges: 'Переправы', reserves: 'Резервы', bounds: 'Полосы' };
 export interface BoundsDraft { front: string; a: string; b: string; pts: LngLat[] }
 
 export interface StaffDeps {
@@ -53,6 +55,8 @@ export interface StaffDeps {
   busy: string | null;
   setTab(t: CmdTab): void;
   setSub(s: OrdersSub): void;
+  /** Какие подвкладки «Приказов» есть на этом уровне: true или причина, почему нет. */
+  subsOk?: Record<OrdersSub, true | string>;
   /** Показать место на карте. */
   goTo(at: LngLat): void;
   // советник
@@ -483,7 +487,12 @@ export function staffActions(get: () => StaffDeps): Action[] {
     return vs[i] ? { v: vs[i], i } : `Такого варианта нет: их ${numberWords(count)}.`;
   };
   const pick = async (n: unknown, only: boolean) => { const x = variant(n); return typeof x === 'string' ? x : get().applyPlan(x.i, only); };
-  const toOrders = (s: OrdersSub) => { get().setTab('orders'); get().setSub(s); };
+  /** Открыть подвкладку «Приказов»; её нет на этом уровне — не переключать, вернуть причину словами. */
+  const toOrders = (s: OrdersSub): string | undefined => {
+    const why = get().subsOk?.[s];
+    if (why && why !== true) return `«${SUB_TITLE[s]}» на этом уровне нет: ${why}.`;
+    get().setTab('orders'); get().setSub(s);
+  };
   /** Поле решения диктовкой; acc — название в примерах фраз («запиши в оценку: …»), gender — род названия. */
   const decisionField = (k: keyof HumanDecision, id: string, title: string, acc: string, gender: 'm' | 'f' | 'n' | 'pl', aliases: string[] = []) =>
     fieldActions(id, title, () => get().decision[k] ?? '', (s) => { get().setTab('decision'); get().setDecision({ [k]: s }); }, { section: 'replay', aliases, gender })
@@ -740,7 +749,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const pl = placeOf(String(p?.place ?? ''), v);
         if (!pl) return `Не нашёл пункта «${p?.place}».`;
         if ('say' in pl) return pl.say;
-        toOrders('rear');
+        { const hid = toOrders('rear'); if (hid) return hid; }
         const r = await get().addAct(`base:${b.found.id}`, { kind: 'base', side: v.human.id, base: b.found.id, to: pl.found.at, toName: pl.found.title, issuedAt: v.time }, `База «${b.found.name}»`, { from: b.found.at });
         if (r.ok) lit(hl(`act-base:${b.found.id}`), { at: pl.found.at });
         return actReply(`База «${short(b.found.name)}»`, r);
@@ -754,7 +763,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const ids: string[] = p?.ids ? [...p.ids] : [];
         for (const n of names) { const u = ownOf(n, v); if (!u) return `Не нашёл своего соединения «${n}».`; if ('say' in u) return u.say; if (!ids.includes(u.found.id)) ids.push(u.found.id); }
         if (!p?.ids && d.mergePriority) { const m = d.mergePriority(ids); ids.length = 0; ids.push(...m); }
-        toOrders('rear');
+        { const hid = toOrders('rear'); if (hid) return hid; }
         if (ids.length === v.priority.length && ids.every((x) => v.priority.includes(x))) { d.dropAct('priority'); lit(hl('prio')); return 'Приоритет подвоза — как был.'; }
         const r = await d.addAct('priority', { kind: 'priority', side: v.human.id, formations: ids, issuedAt: v.time }, 'Приоритет подвоза');
         if (r.ok) lit(hl('act-priority'), hl('prio'));
@@ -768,7 +777,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const id = hqs[p?.hq] ? p.hq : Object.keys(hqs).find((k) => norm(hqs[k].name).includes(norm(String(p?.hq ?? '')))) ?? '';
         if (!id) return `Не нашёл штаба «${p?.hq}».`;
         const n = Math.max(0, Math.round(Number(p?.n ?? 0)));
-        toOrders('bridges');
+        { const hid = toOrders('bridges'); if (hid) return hid; }
         const r = await get().addAct(`parks:${id}`, { kind: 'parks', side: v.human.id, hq: id, n, issuedAt: v.time }, `Понтонные парки — ${short(hqs[id].name)}`);
         if (r.ok) lit(hl('parks'));
         return actReply(`Понтонные парки — ${short(hqs[id].name)}`, r);
@@ -780,7 +789,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const pl = placeOf(String(p?.place ?? ''), v);
         if (!pl) return `Не нашёл пункта «${p?.place}».`;
         if ('say' in pl) return pl.say;
-        toOrders('bridges');
+        { const hid = toOrders('bridges'); if (hid) return hid; }
         const key = `bridge:${Date.now()}`;
         const r = await get().addAct(key, { kind: 'bridge', side: v.human.id, at: pl.found.at, issuedAt: v.time }, 'Переправа');
         if (r.ok) { get().goTo(r.at ?? pl.found.at); lit(hl(`act-${key}`), { at: r.at ?? pl.found.at }); }
@@ -796,7 +805,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const pl = placeOf(String(p?.place ?? ''), v);
         if (!pl) return `Не нашёл пункта «${p?.place}».`;
         if ('say' in pl) return pl.say;
-        toOrders('reserves');
+        { const hid = toOrders('reserves'); if (hid) return hid; }
         const free = g.found.members?.filter((m) => !get().acts.some((a) => a.key === `commit:${m.id}`));
         const r = await get().commit(free ? { ...g.found, members: free } : g.found, pl.found.at, pl.found.title);
         if (r.ok) lit(hl(`res-${g.found.id}`), { at: pl.found.at });
@@ -812,7 +821,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const keys = (g.found.members ?? [g.found]).map((m) => `commit:${m.id}`).filter((k) => d.acts.some((a) => a.key === k));
         if (!keys.length) return `Ввода нет в проекте: ${short(g.found.name)}.`;
         keys.forEach((k) => d.dropAct(k));
-        toOrders('reserves');
+        { const hid = toOrders('reserves'); if (hid) return hid; }
         lit(hl(`res-${g.found.id}`));
         return `Ввод отменён: ${short(g.found.name)}.`;
       } },
@@ -832,7 +841,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (a.group !== b.group) return `Линию проводят между армиями одного ${v.terms?.group === 'группа армий' ? 'объединения' : 'фронта'}, а ${short(a.name)} и ${short(b.name)} — в разных.`;
         const pts = proposeLine(v, a, b);
         get().setBounds({ front: a.group, a: a.id, b: b.id, pts });
-        toOrders('bounds');
+        { const hid = toOrders('bounds'); if (hid) return hid; }
         get().goTo(pts[1]);
         lit(hl('bounds-form'), { at: pts[1] });
         return `Линия между ${nameCase(short(a.name), 'ins')} и ${nameCase(short(b.name), 'ins')} намечена на карте. Включить — скажите «в распоряжение»; поправить — точками на карте.`;
@@ -843,7 +852,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if (!a || !b || a === b || pts.length < 2) return 'Линии ещё нет. Скажите, например: «предложи линию между восьмой гвардейской и пятой ударной».';
         const nm = (id: string) => short((v.armies ?? []).find((x) => x.id === id)?.name ?? id);
         const label = `Линия ${nm(a)} / ${nm(b)}`;
-        toOrders('bounds');
+        { const hid = toOrders('bounds'); if (hid) return hid; }
         const r = await d.addAct(`boundary:${[a, b].sort().join('|')}`, { kind: 'boundary', side: v.human.id, a, b, line: pts, issuedAt: v.time }, label, { at: pts[0] });
         if (r.ok) { d.setBounds({ front, a: '', b: '', pts: [] }); lit(hl(`act-boundary:${[a, b].sort().join('|')}`), { at: pts[0] }); }
         return actReply(label, r);
@@ -873,8 +882,9 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const label = (a: StaffAct) => { const x = a.label.replace(/\s*\([^)]*\)/g, ''); return x.charAt(0).toLowerCase() + x.slice(1); };
         if (!list.length) return 'Такого распоряжения в проекте нет.';
         if (list.length > 1) return `Какое отменить: ${list.slice(0, 3).map((a) => `«${label(a)}»`).join(', ')}? Назовите место или армии.`;
+        const hid = toOrders(SUB[p.kind]);
+        if (hid) return hid;
         d.dropAct(list[0].key);
-        toOrders(SUB[p.kind]);
         lit(hl(`sub-${SUB[p.kind]}`));
         return `Отменено: ${label(list[0])}.`;
       } },
