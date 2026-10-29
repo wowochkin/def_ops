@@ -261,7 +261,7 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
       <h4>Подчинённые — {local(DOC_TITLE[level], v).toLowerCase()}</h4>
       <div className="post-subs">
         {subs.length ? subs.map((x) => {
-          const m = controlMark(v.command?.hqs[x.id] ?? (v.command?.led.includes(x.id) ? { control: 'agent', led: true } : undefined));
+          const m = controlMark(v.command?.hqs[x.id] ?? (v.command?.led.includes(x.id) ? { control: 'agent', led: true } : undefined), v.command?.mode);
           return <ActButton key={x.id} className={`orow${x.id === post.sel ? ' on' : ''}`} action="command.dir.open" params={{ name: x.id }}>
             <span className="orow-n">{x.name}</span>
             <span className="orow-t">{queued(x.id) ? <b className="plan">отдан на этот ход</b> : post.dirs[`${level}:${x.id}`] ? <b className="plan">проект</b> : ''}{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>

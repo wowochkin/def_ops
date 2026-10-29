@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, ENEMY_TITLE, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, historyBackText, ENEMY_TITLE, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -2148,7 +2148,7 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
         <h3>Принять командование</h3>
         <p className="take-when"><b>{dayLong(at)}, {hhmm(at)}</b> · ход {turn} · ход — {turnHours === 24 ? 'сутки' : `${turnHours} ч`}</p>
         <ul className="take-list">
-          <li>Советской стороной с этого момента командуете вы. Конечной даты нет: игра идёт до победы (Знамя Победы над рейхстагом) или поражения — войска потеряли боеспособность или предельный срок вышел. Вернуть командование историческому плану нельзя.</li>
+          <li>Советской стороной с этого момента командуете вы. Конечной даты нет: игра идёт до победы (Знамя Победы над рейхстагом) или поражения — войска потеряли боеспособность или предельный срок вышел. {historyBackText(!!agents, mode)}</li>
           <li>{enemy === 'intent' ? <>Немецкой стороной с того же момента командуют штабы по истории как замыслу: идут по историческому замыслу, пока обстановка позволяет, а уйдя от него, решают сами по уставам.</>
             : enemy === 'agents' ? <>Немецкой стороной с того же момента командуют штабы-агенты по уставам: верхняя инстанция подаёт исторические решения в их часы, ниже штабы решают сами.</>
             : enemy === 'passive' ? <>Немецкая сторона с того же момента держится прежних приказов — без штаба (для пробы без модели).</>

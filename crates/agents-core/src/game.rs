@@ -682,7 +682,8 @@ impl Game {
         let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid", Mode::Commanders => "commanders", Mode::Intent => "intent" };
         let mine = |h: usize| w.hqs[h].side == self.player;
         let hqs: Vec<Value> = (0..w.hqs.len()).filter(|&h| mine(h) && c.control.len() > h)
-            .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] })).collect();
+            // ведомый: изъятый через голову или (история как замысел) взятый директивой игрока — у него есть «вернуть»
+            .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] || self.sim.intent.led.get(h) == Some(&true) })).collect();
         let led: Vec<&str> = (0..w.divisions.len()).filter(|&i| c.led_div.get(i).copied().unwrap_or(false) && w.divisions[i].side == self.player).map(|i| w.divisions[i].id.as_str()).collect();
         let requests: Vec<Value> = c.requests.iter().filter(|r| mine(r.hq as usize))
             .map(|r| serde_json::json!({ "hq": w.hqs[r.hq as usize].id, "division": w.divisions[r.division as usize].id, "tick": r.tick, "answer": r.answer })).collect();

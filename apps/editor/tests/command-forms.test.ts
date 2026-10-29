@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, liveEnemyOptions, modeReply, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, historyBackText, liveEnemyOptions, modeReply, releaseAction, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -95,6 +95,23 @@ describe('противник по режиму своей стороны', () =>
     expect(modeReply('intent', 'llm', 'llm')).toBe(`Режим — «История как замысел»: ${MODE_TITLE.intent.hint}.`);
     expect(modeReply('intent', 'passive', 'intent')).toBe(`Режим — «История как замысел»: ${MODE_TITLE.intent.hint}. Противник «без штаба» в этом режиме недопустим — противник: история как замысел.`);
     expect(modeReply('commanders', 'intent', fitEnemy('intent', true, 'commanders', false))).toMatch(/недопустим — противник: штабы-агенты\.$/);
+  });
+});
+
+describe('возврат штаба', () => {
+  it('«вернуть» — у взятого и ведомого; в «истории как замысле» (и взятого директивой) — «вернуть истории»', () => {
+    expect(releaseAction({ control: 'agent', led: false }, 'intent')).toBeNull();
+    expect(releaseAction({ control: 'agent', led: true }, 'intent')?.text).toBe('вернуть истории');
+    expect(releaseAction({ control: 'player', led: false }, 'intent')?.text).toBe('вернуть истории');
+    expect(releaseAction({ control: 'player', led: false }, 'agents')?.text).toBe('вернуть агенту');
+    expect(releaseAction({ control: 'agent', led: true }, 'hybrid')?.text).toBe('вернуть в замысел старшего');
+    expect(controlMark({ control: 'agent', led: true }, 'intent')?.text).toBe('ведёте директивами');
+    expect(controlMark({ control: 'agent', led: true }, 'agents')?.text).toBe('ведёт Ставка');
+  });
+  it('окно «Принять командование»: в «истории как замысле» штаб можно вернуть истории, в прочих режимах — нельзя', () => {
+    expect(historyBackText(true, 'intent')).toMatch(/можно вернуть истории/);
+    expect(historyBackText(true, 'agents')).toBe('Вернуть командование историческому плану нельзя.');
+    expect(historyBackText(false, 'intent')).toBe('Вернуть командование историческому плану нельзя.');
   });
 });
 

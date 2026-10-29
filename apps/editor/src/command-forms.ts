@@ -23,13 +23,31 @@ export function formTitle(side: 'su' | 'de' | string, echelon: string, form: For
   return overHead(echelon) ? `${head} — через голову${side === 'de' ? '' : ' (ПУ-39 ст. 93)'}` : head;
 }
 
-/** Пометка штаба или дивизии: взят игроком, ведёт Ставка (через голову), по сценарию («гибрид»); у агента — нет. */
-export function controlMark(c: { control: string; led: boolean } | undefined): { text: string; cls: string } | null {
+/** Пометка штаба или дивизии: взят игроком, ведёт Ставка (через голову; в «истории как замысле» — ведёт игрок
+ *  директивами), по сценарию («гибрид»); у агента — нет. */
+export function controlMark(c: { control: string; led: boolean } | undefined, mode?: string): { text: string; cls: string } | null {
   if (!c) return null;
   if (c.control === 'player') return { text: 'взят под управление', cls: 'ctl-player' };
-  if (c.led) return { text: 'ведёт Ставка', cls: 'ctl-led' };
+  if (c.led) return { text: mode === 'intent' ? 'ведёте директивами' : 'ведёт Ставка', cls: 'ctl-led' };
   if (c.control === 'script') return { text: 'по сценарию (гибрид)', cls: 'ctl-script' };
   return null;
+}
+
+/**
+ * Кнопка «вернуть» штаба во вкладке «Штабы»: взятый — агенту, изъятый через голову — в замысел старшего; в «истории как
+ * замысле» оба (и взятый директивой игрока) — истории: штаб с подчинёнными снова идёт по историческому замыслу.
+ */
+export function releaseAction(h: { control: string; led: boolean }, mode: string): { text: string; title: string } | null {
+  if (h.control !== 'player' && !h.led) return null;
+  if (mode === 'intent') return { text: 'вернуть истории', title: 'Штаб с подчинёнными снова пойдёт по историческому замыслу' };
+  return h.control === 'player' ? { text: 'вернуть агенту', title: 'Агент продолжит с текущего состояния' } : { text: 'вернуть в замысел старшего', title: 'Старший снова включит его в свой замысел' };
+}
+
+/** Окно «Принять командование»: можно ли вернуть командование истории — только в «истории как замысле» (штаб, не всю сторону). */
+export function historyBackText(agents: boolean, mode: GameMode): string {
+  return agents && mode === 'intent'
+    ? 'Взятый штаб можно вернуть истории (вкладка «Штабы», «вернуть истории»): он с подчинёнными снова пойдёт по историческому замыслу.'
+    : 'Вернуть командование историческому плану нельзя.';
 }
 
 /** Режимы игры на агентной модели. */
@@ -137,7 +155,7 @@ export function initialCmds(v: TurnView): CommandOp[] {
 export function markFor(v: TurnView, id: string): { text: string; cls: string } | null {
   const c = v.command;
   if (!c || c.mode === 'legacy') return null;
-  return controlMark(c.hqs[id] ?? (c.led.includes(id) ? { control: 'agent', led: true } : undefined));
+  return controlMark(c.hqs[id] ?? (c.led.includes(id) ? { control: 'agent', led: true } : undefined), c.mode);
 }
 
 /** «широта, долгота» в тексте документа ядра — ближайшим пунктом театра (дальше 1 км — с расстоянием до него). */

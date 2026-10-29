@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
-import { controlMark, findHq, MODE_TITLE, placeText, queueOp, type CommandOp } from './command-forms';
+import { controlMark, findHq, MODE_TITLE, placeText, queueOp, releaseAction, type CommandOp } from './command-forms';
 import { commandText } from './sim/agents-game';
 import type { LevelId } from './map-level-scale';
 
@@ -45,7 +45,7 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
     },
   });
   useAction({
-    id: 'command.release', section: 'replay', title: 'Вернуть штаб', describe: 'Возвращает взятый штаб агенту, а изъятый приказом через голову — в замысел старшего.',
+    id: 'command.release', section: 'replay', title: 'Вернуть штаб', describe: 'Возвращает взятый штаб агенту, а изъятый приказом через голову — в замысел старшего; в «истории как замысле» — истории (штаб с подчинёнными снова по историческому замыслу).',
     params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['штаб, верни армию агенту'], available: ready, highlight: () => hl('staffs'),
     run: async (p: { name: string }) => {
       const id = hqOf(p?.name) ?? (c?.led.includes(p?.name) ? p.name : null);
@@ -134,13 +134,13 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
       <section>
         <h4>Штабы</h4>
         {list.map(([id, h]) => {
-          const m = controlMark(h);
+          const m = controlMark(h, c.mode);
+          const back = releaseAction(h, c.mode);
           return <div key={id} className="staffs-row">
             <span><b>{h.name}</b> <small className="muted">{ECH_RU[h.echelon] ?? h.echelon}</small>{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
             <span>
               {h.control !== 'player' && !queued('take', id) && <ActButton className="link" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
-              {h.control === 'player' && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title="Агент продолжит с текущего состояния">вернуть агенту</ActButton>}
-              {h.led && h.control !== 'player' && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title="Старший снова включит его в свой замысел">вернуть в замысел старшего</ActButton>}
+              {back && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title={back.title}>{back.text}</ActButton>}
             </span>
           </div>;
         })}

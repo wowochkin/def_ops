@@ -874,3 +874,28 @@ fn intent_release_returns_to_history() {
     for &k in &armies { assert_ne!(g.sim.intent.hq[k].reason, Some(Reason::Player), "{}", g.sim.world.hqs[k].id); }
     assert!(!agents_core::intent::off_history(&g.sim, bf as u32));
 }
+
+/// История как замысел: штаб, взятый директивой игрока (не «взять»), в состоянии управления помечен ведомым (`led`) —
+/// во вкладке «Штабы» у него есть «вернуть»; возврат снимает пометку, и штаб с подчинёнными снова «по истории».
+#[test]
+fn intent_led_hq_exposed_and_released() {
+    use agents_core::command::control::Control;
+    use agents_core::command::directive::{Form, Task};
+    use agents_core::game::{CommandOp, Game, Mode, PlayerDirective};
+    use agents_core::intent::Status;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
+    let uf = g.sim.world.hqs.iter().position(|h| h.id == "su_1uf").unwrap();
+    let led = |g: &Game| g.trace()["command"]["hqs"].as_array().unwrap().iter().find(|h| h["id"] == "su_1uf").unwrap()["led"].clone();
+    assert_eq!(led(&g), false);
+    g.directive(&PlayerDirective { to: "su_1uf".into(), task: Task::Attack, form: Form::Instruction, axis: vec![[14.6, 51.7], [14.2, 52.1]], immediate: Some(vec![[14.1, 52.0], [14.3, 52.2]]), ..Default::default() }).expect("директива");
+    assert!(g.sim.intent.led[uf]);
+    assert_eq!(led(&g), true, "ведомый директивой — в состоянии управления");
+    g.advance(1);
+    g.command(&CommandOp::Release { id: "su_1uf".into() }).expect("вернуть");
+    assert!(!g.sim.intent.led[uf]);
+    assert_eq!(led(&g), false);
+    assert_eq!(g.sim.intent.hq[uf].status, Status::History);
+    assert_eq!(g.sim.command.control[uf], Control::Script, "фронт — снова по приказам сценария");
+    assert!(!agents_core::intent::off_history(&g.sim, uf as u32));
+}
