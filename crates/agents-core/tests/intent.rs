@@ -547,3 +547,44 @@ fn intent_sim_with_track() -> Sim {
     for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
     sim
 }
+
+fn set_cohesion(sim: &mut Sim, h: u32, v: f64) { for i in under(sim, h) { sim.world.divisions[i].vars.cohesion = v; } }
+
+#[test]
+fn unfit_on_track_issues() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(2);
+    sim.intent.chains[ci].tasks[1].at = 4;
+    run_to(&mut sim, 4);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    set_cohesion(&mut sim, a, 0.2);
+    assert_eq!(intent::sense(&sim, &sim.intent.chains[ci], &sim.intent.chains[ci].tasks[1]), Err(Reason::Unfit));
+    run_to(&mut sim, 5);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 4], "у следа неспособность задачу не задерживает");
+    assert_eq!(status(&sim, a).status, Status::History);
+}
+
+#[test]
+fn unfit_off_track_held_then_issued() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(2);
+    sim.intent.chains[ci].tasks[1].at = 4;
+    run_to(&mut sim, 4);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 10.0));
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    set_cohesion(&mut sim, a, 0.2);
+    run_to(&mut sim, 6);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0], "отошла от следа и неспособна — задача ждёт");
+    let ch = &sim.intent.chains[ci];
+    assert!(!ch.tasks[1].issued && ch.next == 1, "задача не пропущена");
+    assert_eq!((status(&sim, a).status, status(&sim, a).reason.clone()), (Status::Shifted, Some(Reason::Unfit)));
+    set_cohesion(&mut sim, a, 0.9);
+    run_to(&mut sim, 7);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 6], "пришла в себя — задача подана");
+    assert!(sim.intent.chains[ci].tasks[1].issued);
+}
