@@ -139,6 +139,8 @@ pub struct IntentRules {
     pub return_km: f64,
     /// Цель «наступать» не дальше стольких суточных переходов по территории противника.
     pub reach_days: f64,
+    /// Средняя слаженность живых дивизий армии не выше этого — армия не способна выполнять задачу.
+    pub unfit_cohesion: f64,
 }
 
 /// Окружение: data/rules/agents-v0.json, раздел pocket (pocket.rs).
@@ -462,7 +464,7 @@ impl Rules {
         Ok(Rules {
             command,
             commanders,
-            intent: IntentRules { leave_km: num(&ag, "intent.leaveKm")?, return_km: num(&ag, "intent.returnKm")?, reach_days: num(&ag, "intent.reachDays")? },
+            intent: IntentRules { leave_km: num(&ag, "intent.leaveKm")?, return_km: num(&ag, "intent.returnKm")?, reach_days: num(&ag, "intent.reachDays")?, unfit_cohesion: num(&ag, "intent.unfitCohesion")? },
             doctrine,
             doctrine_su,
             remnants,

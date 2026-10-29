@@ -3536,6 +3536,28 @@
         "berlin-1945-tasks",
         "vistula-oder-1945"
       ]
+    },
+    {
+      "id": "intent-unfit",
+      "title": "Армия не способна выполнять задачу: средняя слаженность дивизий не выше 0,25",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "intent.unfitCohesion",
+        "why": "порог — допущение: нужен разбор состояния армий, терявших управление; калибруется на Берлинской"
+      },
+      "unit": "доля",
+      "rules": [
+        "intent.unfitCohesion",
+        "routThreshold.cohesion"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [

@@ -4,11 +4,11 @@ use crate::command::agent::mid;
 use crate::command::directive::{Directive, Target, Task as DTask};
 use crate::geo::XY;
 use crate::model::{Echelon, OrderKind, Side};
-use crate::world::{ScriptOrder, Sim};
+use crate::world::{ScriptOrder, ScriptWithdraw, Sim};
 
-/// Шаг истории: директива (советская) или исторический приказ сценария (немецкий).
+/// Шаг истории: директива (Ставки, фронта, верхней инстанции немцев), исторический приказ или отвод сценария.
 #[derive(Clone, Debug)]
-pub enum Step { Dir(Directive), Order(ScriptOrder) }
+pub enum Step { Dir(Directive), Order(ScriptOrder), Withdrawal(ScriptWithdraw) }
 
 /// Вид задачи; «держать» и «сдерживать» — оборона.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -30,6 +30,8 @@ pub struct Chain {
     pub tasks: Vec<Task>,
     /// Следующая к подаче задача.
     pub next: usize,
+    /// Центр живых дивизий получателя при построении цепочки — точка отсчёта направления армии.
+    pub start: Option<XY>,
 }
 
 fn dir_goal(d: &Directive) -> Option<XY> {
@@ -56,29 +58,39 @@ fn army_of(sim: &Sim, hq: u32) -> u32 {
 }
 
 /// Цепочки стороны: по возрастанию номера штаба-получателя, задачи — по часу (при равном — как в сценарии).
+/// Директивы (Ставки и фронтов; у немцев — верхней инстанции) — получателю-штабу; немецкие приказы и отводы сценария —
+/// армии-владельцу получающих дивизий.
 pub fn build(sim: &Sim, side: Side) -> Vec<Chain> {
     let w = &sim.world;
     let mut by: std::collections::BTreeMap<u32, Vec<Task>> = Default::default();
-    match side {
-        Side::Su => {
-            for (at, d) in &sim.historical {
-                if d.id.ends_with(":journal") || w.hqs[d.from as usize].side != Side::Su { continue; }
-                let Target::Hq(h) = d.to else { continue };
-                by.entry(h).or_default().push(Task { at: *at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task) });
+    for (at, d) in &sim.historical {
+        if d.id.ends_with(":journal") || w.hqs[d.from as usize].side != side { continue; }
+        let Target::Hq(h) = d.to else { continue };
+        by.entry(h).or_default().push(Task { at: *at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task) });
+    }
+    if side == Side::De {
+        let owners = |to: &[u32], fallback: u32| -> Vec<u32> {
+            let mut v: Vec<u32> = to.iter().map(|&i| army_of(sim, w.divisions[i as usize].hq)).collect();
+            if v.is_empty() { v.push(army_of(sim, fallback)); }
+            v.sort_unstable();
+            v.dedup();
+            v
+        };
+        for o in sim.script.iter().filter(|o| w.hqs[o.hq as usize].side == Side::De) {
+            for ow in owners(&o.to, o.hq) {
+                by.entry(ow).or_default().push(Task { at: o.at, step: Step::Order(o.clone()), goal: o.target, kind: order_kind(o.kind) });
             }
         }
-        Side::De => {
-            for o in &sim.script {
-                if w.hqs[o.hq as usize].side != Side::De { continue; }
-                let mut owners: Vec<u32> = o.to.iter().map(|&i| army_of(sim, w.divisions[i as usize].hq)).collect();
-                if owners.is_empty() { owners.push(army_of(sim, o.hq)); }
-                owners.sort_unstable();
-                owners.dedup();
-                for ow in owners {
-                    by.entry(ow).or_default().push(Task { at: o.at, step: Step::Order(o.clone()), goal: o.target, kind: order_kind(o.kind) });
-                }
+        for wd in &sim.withdrawals {
+            // у отвода нет пункта: только доли войск по позициям — цель «на месте»
+            for ow in owners(&wd.to, 0) {
+                by.entry(ow).or_default().push(Task { at: wd.at, step: Step::Withdrawal(wd.clone()), goal: None, kind: Goal::Withdraw });
             }
         }
     }
-    by.into_iter().map(|(owner, mut tasks)| { tasks.sort_by_key(|t| t.at); Chain { owner, tasks, next: 0 } }).collect()
+    by.into_iter().map(|(owner, mut tasks)| {
+        tasks.sort_by_key(|t| t.at);
+        let start = mid(&super::sense::live(sim, owner).iter().map(|&i| w.divisions[i].vars.pos).collect::<Vec<_>>());
+        Chain { owner, tasks, next: 0, start }
+    }).collect()
 }
