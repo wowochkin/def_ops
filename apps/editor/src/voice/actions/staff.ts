@@ -820,8 +820,8 @@ export function staffActions(get: () => StaffDeps): Action[] {
         if ('say' in g) return g.say;
         const keys = (g.found.members ?? [g.found]).map((m) => `commit:${m.id}`).filter((k) => d.acts.some((a) => a.key === k));
         if (!keys.length) return `Ввода нет в проекте: ${short(g.found.name)}.`;
-        keys.forEach((k) => d.dropAct(k));
         { const hid = toOrders('reserves'); if (hid) return hid; }
+        keys.forEach((k) => d.dropAct(k));
         lit(hl(`res-${g.found.id}`));
         return `Ввод отменён: ${short(g.found.name)}.`;
       } },
@@ -839,9 +839,9 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const a = (A as { found: (typeof armies)[number] }).found, b = (B as { found: (typeof armies)[number] }).found;
         if (a.id === b.id) return 'Нужны две разные армии.';
         if (a.group !== b.group) return `Линию проводят между армиями одного ${v.terms?.group === 'группа армий' ? 'объединения' : 'фронта'}, а ${short(a.name)} и ${short(b.name)} — в разных.`;
+        { const hid = toOrders('bounds'); if (hid) return hid; }
         const pts = proposeLine(v, a, b);
         get().setBounds({ front: a.group, a: a.id, b: b.id, pts });
-        { const hid = toOrders('bounds'); if (hid) return hid; }
         get().goTo(pts[1]);
         lit(hl('bounds-form'), { at: pts[1] });
         return `Линия между ${nameCase(short(a.name), 'ins')} и ${nameCase(short(b.name), 'ins')} намечена на карте. Включить — скажите «в распоряжение»; поправить — точками на карте.`;

@@ -372,6 +372,17 @@ describe('распоряжения голосом', () => {
     expect(d.acts).toHaveLength(0);
     expect(d.setSub).not.toHaveBeenCalled();
   });
+  it('скрытая подвкладка: отмена ввода и намётка линии ничего не меняют', async () => {
+    const subsOk = { units: true, rear: true, bridges: true, reserves: 'в подчинении нет резервов', bounds: 'полосы — в «Пункте управления»' };
+    const d = staff({ subsOk } as Partial<StaffDeps>);
+    const disp = mk();
+    await disp.utterance('Штаб, предложи линию между восьмой гвардейской и пятой ударной', 1);
+    expect(said.at(-1)).toMatch(/«Полосы» на этом уровне нет/);
+    expect(d.setBounds).not.toHaveBeenCalled();
+    d.acts = [{ key: 'commit:x', action: { kind: 'commit', side: 'su', formation: 'x', at: [0, 0], issuedAt: '' }, label: 'Ввод', text: '' }];
+    await disp.utterance('Штаб, не вводи третью ударную', 2);
+    expect(d.dropAct).not.toHaveBeenCalled();
+  });
   it('переправа у места — проверка Worker; неисполнимое — текст проверки', async () => {
     let ok = true;
     const d = staff({}, () => (ok ? { ok: true, text: 'малая река; переправа будет готова ≈ 18.04 17:00' } : { ok: false, text: 'здесь нет реки — переправа не нужна' }));

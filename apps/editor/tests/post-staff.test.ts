@@ -91,6 +91,8 @@ describe('распоряжения штаба по уровню пункта', (
     const de = { ...w, terms: { top: 'OKH', topGen: 'OKH' } } as unknown as TurnView;
     const s = ordersSubs(de, staffScope(de, 'corps', 'k1'));
     for (const x of [s.rear, s.bounds]) expect(x).not.toMatch(/Ставк|советск/i);
+    const g = ordersSubs({ ...de, terms: { top: 'OKH', topGen: 'OKH', group: 'группа армий' } } as unknown as TurnView, staffScope(de, 'corps', 'k1'));
+    for (const x of [g.rear, g.bridges]) expect(String(x)).not.toMatch(/фронт/i);
     expect(typeof s.rear).toBe('string');
   });
 });
