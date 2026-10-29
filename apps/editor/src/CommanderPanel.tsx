@@ -98,7 +98,7 @@ function Picture({ s, tick, names }: { s: Snapshot | null; tick: number; names: 
             <td className="num">{fmtKm(a.advanceKm)}</td><td className="num">{fmtPct(a.strength)}</td>
             <td>{none ? 'противника нет' : `≈ ${fmtCount(a.enemyEst)} усл. ед.`}{off ? <small className="muted"> (на деле {fmtCount(a.enemyTrue)})</small> : <small className="muted"> (верно)</small>}</td></tr>;
         })}
-        {p.rival && <tr><td>соперник</td><td colSpan={3}>{nm(p.rival.hq)}: до объекта ≈ {fmtKm(p.rival.toObjectiveKm)} <small className="muted">(сводка Ставки, задержка {fmtHours(tick - p.rival.asOf)}</small></td></tr>}
+        {p.rival && <tr><td>соперник</td><td colSpan={3}>{nm(p.rival.hq)}: до объекта ≈ {fmtKm(p.rival.toObjectiveKm)} <small className="muted">(сводка Ставки, задержка {fmtHours(tick - p.rival.asOf)})</small></td></tr>}
       </tbody></table>
       <div className="muted small">«Своих» — боевая сила армии от исходной; «прошла» — продвижение от исходного положения. {p.openFlanks.length ? `Открытые фланги: ${p.openFlanks.map(nm).join(', ')}. ` : ''}{p.pockets.length ? `Окружённых группировок: ${p.pockets.length}. ` : ''}{p.enemyReserves.length ? `Резервов противника в глубине: ${p.enemyReserves.length}.` : ''}</div>
     </section>

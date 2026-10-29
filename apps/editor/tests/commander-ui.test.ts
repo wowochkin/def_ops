@@ -48,7 +48,7 @@ describe('отрисовка командующих', () => {
   });
   it('дробный час проигрывания: задержка сводки — целые часы, без дробей', () => {
     const html = renderToString(createElement(CommanderPanel, { trace: trace([zhukov]), c: zhukov, tick: 12.4, onTick: () => {}, names }));
-    expect(html).toContain('задержка 6 ч');
+    expect(html).toContain('задержка 6 ч)');
     expect(html).not.toMatch(/задержка \d+[.,]\d/);
     expect(html).toContain('<colgroup>'); // колонки картины закреплены
   });

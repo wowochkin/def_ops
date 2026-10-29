@@ -8,8 +8,6 @@ import type { IntelReport } from '@def-ops/sim';
 import { fmtCount, fmtFrac, fmtKm, fmtPct } from './num-format';
 import { ECHELON_RU, type FormationCardData } from './formation-card';
 
-const n0 = fmtCount;
-const pct = fmtPct;
 const when = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
 
 /** Закрыть по Esc (пока карточка открыта). */
@@ -61,8 +59,8 @@ export function FormationPanel({ c, onClose, onPick, actions, note, badge, tabs,
         <section>
           <h4>{c.hq ? `Силы — сумма ${c.members} действующих соединений` : 'Силы'}</h4>
           <table className="ag-vars"><tbody>
-            <tr><td>Люди</td><td className="num">{c.status === 'pending' ? '—' : n0(c.personnel)}</td><td className="muted">{c.initial.personnel ? `${pct(c.share.personnel)} от исходных ${n0(c.initial.personnel)}` : ''}</td></tr>
-            <tr><td>Танки и САУ</td><td className="num">{c.status === 'pending' ? '—' : n0(c.tanks)}</td><td className="muted">{c.initial.tanks ? `${pct(c.share.tanks)} от исходных ${n0(c.initial.tanks)}` : ''}</td></tr>
+            <tr><td>Люди</td><td className="num">{c.status === 'pending' ? '—' : fmtCount(c.personnel)}</td><td className="muted">{c.initial.personnel ? `${fmtPct(c.share.personnel)} от исходных ${fmtCount(c.initial.personnel)}` : ''}</td></tr>
+            <tr><td>Танки и САУ</td><td className="num">{c.status === 'pending' ? '—' : fmtCount(c.tanks)}</td><td className="muted">{c.initial.tanks ? `${fmtPct(c.share.tanks)} от исходных ${fmtCount(c.initial.tanks)}` : ''}</td></tr>
             <tr><td>Боеприпасы</td><td className="num">{c.ammo == null ? '—' : fmtFrac(c.ammo)}</td><td className="muted">бк{c.hq ? ', средние по людям' : ''}</td></tr>
             <tr><td>Отрезано</td><td className="num" colSpan={2} style={{ textAlign: 'left' }}>{c.status === 'active' ? cut : '—'}</td></tr>
           </tbody></table>
@@ -74,7 +72,7 @@ export function FormationPanel({ c, onClose, onPick, actions, note, badge, tabs,
             {c.children.map((k) => (
               <li key={k.id} className={k.out ? 'out' : ''} onClick={() => onPick(k.id, k.hq)} title="Карточка">
                 <span className="fc-kn">{k.name}<small>{ECHELON_RU[k.echelon] ?? k.echelon}</small></span>
-                <span className="fc-ks">{k.out ? k.state : `${n0(k.personnel)} чел.${k.tanks ? `, ${n0(k.tanks)} танков` : ''}`}<small>{k.out ? '' : k.state}</small></span>
+                <span className="fc-ks">{k.out ? k.state : `${fmtCount(k.personnel)} чел.${k.tanks ? `, ${fmtCount(k.tanks)} танков` : ''}`}<small>{k.out ? '' : k.state}</small></span>
               </li>
             ))}
           </ul>
