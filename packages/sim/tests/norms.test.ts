@@ -73,3 +73,19 @@ describe('нормативы из базы знаний (сид) для sim:norm
     }
   });
 });
+
+describe('числа отчёта нормативов', () => {
+  it('значение не теряет значащих цифр (0,25 — не «0,3»); измеренное — как раньше', async () => {
+    const { fmtNorm } = await import('../src/norms');
+    expect(fmtNorm(0.25)).toBe('0,25');
+    expect(fmtNorm(0.05)).toBe('0,05');
+    expect(fmtNorm(2)).toBe('2,0');
+    expect(fmtNorm(30)).toBe('30');
+    expect(fmtNorm(12.5)).toBe('12,5');
+    expect(fmtNorm(3.4567)).toBe('3,5');
+    expect(fmtNorm(41.6789)).toBe('42');
+    expect(fmtNorm(0.028)).toBe('0,028');
+    expect(fmtNorm(0.042371)).toBe('0,042');
+    expect(fmtNorm(11.28)).toBe('11,28');
+  });
+});

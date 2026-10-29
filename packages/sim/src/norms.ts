@@ -129,7 +129,18 @@ export function measureFrontage(ctx: SimContext, m: Extract<Norm['measure'], { k
   return ctx.scenario.formations.filter((f) => f.side === m.side && f.echelon === m.echelon).map((f) => (f.type ? P.unitTypes[f.type]?.frontageKm : undefined) ?? NaN).filter(Number.isFinite);
 }
 
-const fmt = (x: number) => (Math.abs(x) >= 10 ? x.toFixed(0) : x.toFixed(1)).replace('.', ',');
+/**
+ * Число отчёта не теряет значащих цифр значения: короткая запись (до четырёх значащих цифр) — целиком (0,25 — не «0,3»,
+ * 0,028 — не «0,0»), длинная (среднее прогонов) — до целых от 10, до десятых от 1, меньше 1 — две значащие цифры.
+ */
+const fmt = (x: number) => {
+  const a = Math.abs(x);
+  const lead = a > 0 ? Math.floor(Math.log10(a)) : 0;
+  const cap = Math.max(0, 3 - lead);
+  const k = Array.from({ length: cap + 1 }, (_, n) => n).find((n) => Math.abs(x * 10 ** n - Math.round(x * 10 ** n)) < 1e-6);
+  const d = k === undefined ? (a >= 10 ? 0 : a >= 1 ? 1 : 1 - lead) : a >= 10 ? k : Math.max(k, 1);
+  return x.toFixed(d).replace('.', ',');
+};
 
 /**
  * Оценить нормативы. ctxOf — контекст сценария (для правил — любой, по умолчанию Берлинской операции);
