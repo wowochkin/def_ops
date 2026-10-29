@@ -2078,7 +2078,7 @@ body.resizing { cursor: col-resize; user-select: none; }
 .cm-chart { position: absolute; left: 14px; bottom: 128px; z-index: 6; width: min(640px, calc(100% - 480px)); background: rgba(253,252,249,.96); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 6px; box-shadow: 0 4px 18px rgba(40,30,10,.12); }
 .map-dock { position: absolute; left: 14px; bottom: 92px; z-index: 6; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; max-height: calc(100% - 150px); overflow-y: auto; }
 .map-dock > .legend, .map-dock > .cm-chart { position: static; }
-.map-dock > .cm-chart { width: min(640px, calc(100vw - 900px)); }
+.map-dock > .cm-chart { width: clamp(380px, calc(100vw - 900px), 640px); }
 .cm-chart-h { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; width: 100%; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: inherit; font-family: inherit; }
 .cm-chart.closed { padding-bottom: 8px; } .cm-chart-h span { color: var(--muted); font-size: 11px; }
 .cm-chart svg { display: block; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 4px; margin-top: 4px; }

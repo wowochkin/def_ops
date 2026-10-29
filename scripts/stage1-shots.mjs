@@ -96,6 +96,18 @@ const parts = {
     }
     if (bad) return fail('dock', bad);
     ok('dock', '4 сочетания без пересечения');
+    // узкое окно: график не уже 380 px, легенда и график не пересекаются
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await setState('.map-dock > .legend', '.map-dock > .legend .lg-h', true);
+    await setState('.map-dock > .cm-chart', '[data-action="map.chart"]', true);
+    await page.waitForTimeout(300);
+    const nr = await rects();
+    const cw = nr.ch.r - nr.ch.l;
+    const ncross = nr.lg.l < nr.ch.r && nr.ch.l < nr.lg.r && nr.lg.t < nr.ch.b && nr.ch.t < nr.lg.b;
+    await shot('dock-narrow.jpg');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    if (cw < 379 || ncross) return fail('dock', `окно 1200: ширина графика ${Math.round(cw)}${ncross ? ', легенда и график пересекаются' : ''}`);
+    ok('dock', `окно 1200×900: график ${Math.round(cw)} px, без пересечения`);
     const speeds = () => page.locator('.player select option').allInnerTexts();
     const want_ = ['1 ч/с', '3 ч/с', '6 ч/с', '12 ч/с', '24 ч/с', '48 ч/с'];
     const inReplayList = await speeds();
