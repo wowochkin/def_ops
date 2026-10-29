@@ -179,7 +179,16 @@ pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32) {
         Kind::Counterattack { from, at } => to_reserve(sim, c, *from, Task::Attack, *at, tick, &mut to),
         Kind::MoveReserve { hq, to: at } => to_reserve(sim, c, *hq, Task::Move, *at, tick, &mut to),
         // армии вне истории — частная директива фронта: наступать к точке (ось — от места армии, как `with_axis`)
-        Kind::Assign { army, at, defend, .. } => to_army(sim, c, *army, if *defend { Task::Defend } else { Task::Attack }, *at, tick, &mut to),
+        Kind::Assign { army, at, defend: true, .. } => {
+            // оборона на месте (точка — у самой армии): ось — прежняя ось армии (фронт обороны), иначе директива без
+            // оси не сменила бы её замысел с осью (agent.rs)
+            let mut d = directive(sim, c, Target::Hq(*army), Task::Defend, *at, tick);
+            if d.axis.is_empty() { d.axis = sim.command.intent[*army as usize].as_ref().map(|i| i.axis.clone()).unwrap_or_default(); }
+            if *army != c.hq { sim.command.named_hq[*army as usize] = true; }
+            to.push(target_id(sim, d.to));
+            issue(sim, d, tick);
+        }
+        Kind::Assign { army, at, .. } => to_army(sim, c, *army, Task::Attack, *at, tick, &mut to),
         Kind::Relief { army, by, toward } => {
             if by != army { to_army(sim, c, *by, Task::Attack, *toward, tick, &mut to); }
         }

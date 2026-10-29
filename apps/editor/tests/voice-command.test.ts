@@ -129,6 +129,10 @@ describe('разбор фраз', () => {
     expect(takeoverParse('без штаба', { saved: false, enemy: 'llm' })).toEqual({ id: 'command.enemyMode', params: { mode: 'passive' } });
     expect(takeoverParse('штаб на модели', { saved: false, enemy: 'llm' })).toEqual({ id: 'command.enemyMode', params: { mode: 'llm' } });
     expect(takeoverParse('отмена', { saved: false, enemy: 'llm' })).toEqual({ id: 'replay.takeCommand.cancel' });
+    // «история как замысел»: без слова «противник» — режим своей стороны, с ним — противник
+    expect(takeoverParse('история как замысел', { saved: false, enemy: 'llm' })).toEqual({ id: 'command.gameMode', params: { mode: 'intent' } });
+    expect(takeoverParse('режим история как замысел', { saved: false, enemy: 'llm' })).toEqual({ id: 'command.gameMode', params: { mode: 'intent' } });
+    expect(takeoverParse('противник история как замысел', { saved: false, enemy: 'llm' })).toEqual({ id: 'command.enemyMode', params: { mode: 'intent' } });
     expect(takeoverParse('открой карты', { saved: false, enemy: 'llm' })).toBeNull();
   });
   it('что показать: место, соединение, «N км от …», переспрос', () => {
@@ -386,6 +390,21 @@ describe('вход в командование голосом', () => {
     expect(d2.begin).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
     expect(d2.begin).toHaveBeenCalledWith('llm', undefined);
+  });
+  it('противник, недопустимый при режиме, заменён — ответ называет того, кто в силе', async () => {
+    const d = rep({ take: '1945-04-16T05:00', begin: vi.fn(() => 'intent' as const) });
+    const r = await act('replay.start', { enemy: 'passive', mode: 'intent' });
+    expect(d.begin).toHaveBeenCalledWith('passive', 'intent');
+    expect(r).toBe('Командование принято. Противник «без штаба» в режиме «История как замысел» недопустим — противник: история как замысел. Готовлю обстановку — скажу, когда будет готова.');
+    // допустимый — без оговорки
+    offs.forEach((o) => o()); offs = [];
+    rep({ take: '1945-04-16T05:00', begin: vi.fn(() => 'llm' as const) });
+    expect(await act('replay.start', { enemy: 'llm', mode: 'intent' })).toBe('Командование принято. Готовлю обстановку — скажу, когда будет готова.');
+  });
+  it('«продолжи игру»: противник старой записи заменён — сообщение в ответе', async () => {
+    rep({ saved: { title: 'Берлинская операция, 16.04–2.05.1945' }, continueGame: vi.fn(() => 'Игра продолжена с противником «история как замысел».') });
+    await mk().utterance('Штаб, продолжи игру', 1);
+    expect(said.at(-1)).toBe('Продолжаю игру: Берлинская операция. Игра продолжена с противником «история как замысел».');
   });
   it('«продолжи игру» — только если есть незавершённая', async () => {
     rep();

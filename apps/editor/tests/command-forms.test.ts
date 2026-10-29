@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, liveEnemyOptions, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, liveEnemyOptions, modeReply, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -90,6 +90,11 @@ describe('противник по режиму своей стороны', () =>
     expect(fitEnemy('intent', true, 'legacy', false)).toBe('llm');
     expect(fitEnemy('intent', true, 'commanders', false)).toBe('agents');
     expect(fitEnemy('agents', true, 'agents', false)).toBe('agents');
+  });
+  it('ответ на выбор режима голосом называет противника, если он заменён', () => {
+    expect(modeReply('intent', 'llm', 'llm')).toBe(`Режим — «История как замысел»: ${MODE_TITLE.intent.hint}.`);
+    expect(modeReply('intent', 'passive', 'intent')).toBe(`Режим — «История как замысел»: ${MODE_TITLE.intent.hint}. Противник «без штаба» в этом режиме недопустим — противник: история как замысел.`);
+    expect(modeReply('commanders', 'intent', fitEnemy('intent', true, 'commanders', false))).toMatch(/недопустим — противник: штабы-агенты\.$/);
   });
 });
 

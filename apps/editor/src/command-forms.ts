@@ -73,6 +73,12 @@ export function fitEnemy(e: EnemyMode, agents: boolean, mode: GameMode, llmDown:
   return enemyOptions(agents, mode).includes(e) ? e : defaultEnemy(agents, llmDown, mode);
 }
 
+/** Ответ на выбор режима (голос): режим и, если прежний противник при нём недопустим и заменён, — кто противник теперь. */
+export function modeReply(mode: GameMode, before: EnemyMode, after: EnemyMode): string {
+  const base = `Режим — «${MODE_TITLE[mode].title}»: ${MODE_TITLE[mode].hint}.`;
+  return after === before ? base : `${base} Противник «${ENEMY_TITLE[before].toLowerCase()}» в этом режиме недопустим — противник: ${ENEMY_TITLE[after].toLowerCase()}.`;
+}
+
 /** Противник, которого можно сменить в ходе игры (Посредник, голос): допустимый при режиме штаб на модели или «без штаба». Штабы без модели выбираются при передаче командования. */
 export function liveEnemyOptions(agents: boolean, mode: GameMode): EnemyMode[] {
   return enemyOptions(agents, mode).filter((e) => e === 'llm' || e === 'passive');

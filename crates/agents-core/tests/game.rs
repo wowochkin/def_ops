@@ -814,3 +814,63 @@ fn enemy_for_error_names() {
     let e = enemy_for(Mode::Commanders, Some("script")).unwrap_err();
     assert!(e.contains("штабы-агенты") && !e.contains("agents"), "{e}");
 }
+
+/// Приказы сценария от штабов поддерева `h` (фронты, Ставка), отданные не раньше часа `from`: в пути и у дивизий.
+fn script_orders_from(sim: &agents_core::world::Sim, hs: &[u32], from: u32) -> usize {
+    let w = &sim.world;
+    w.in_transit.iter().map(|(_, o)| o).chain(w.divisions.iter().filter_map(|d| d.order.as_ref())).filter(|o| hs.contains(&o.from) && o.issued >= from).count()
+}
+
+/// История как замысел: взятая Ставка — её поддерево «под командованием игрока», и приказы сценария фронтов (и те, что
+/// не входят ни в одну цепочку) до дивизий больше не доходят.
+#[test]
+fn intent_take_stavka_stops_front_orders() {
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::intent::{Reason, Status};
+    use agents_core::model::Echelon;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
+    let w = &g.sim.world;
+    let tops: Vec<u32> = (0..w.hqs.len()).filter(|&k| w.hqs[k].side == Side::Su && matches!(w.hqs[k].echelon, Echelon::HighCommand | Echelon::Front)).map(|k| k as u32).collect();
+    assert!(g.sim.script.iter().any(|o| o.at >= 72 && o.at < 96 && tops.contains(&o.hq)), "в сценарии есть приказы фронтов на эти сутки");
+    g.command(&CommandOp::Take { hq: "su_stavka".into() }).expect("взять Ставку");
+    for &k in &tops { assert_eq!((g.sim.intent.hq[k as usize].status, g.sim.intent.hq[k as usize].reason.clone()), (Status::Own, Some(Reason::Player)), "{}", g.sim.world.hqs[k as usize].id); }
+    for _ in 0..24 {
+        g.advance(1);
+        assert_eq!(script_orders_from(&g.sim, &tops, 72), 0, "час {}: приказ сценария фронта дошёл", g.hour());
+    }
+}
+
+/// История как замысел: возвращённый штаб (release) — его поддерево без своей цепочки снова «по истории» (смена в
+/// журнале состояний), фронт — снова по приказам сценария; армии — по обычным правилам, не «под командованием игрока».
+#[test]
+fn intent_release_returns_to_history() {
+    use agents_core::command::control::Control;
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::intent::{Reason, Status};
+    use agents_core::model::Echelon;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
+    let bf = g.sim.world.hqs.iter().position(|h| h.id == "su_1bf").unwrap();
+    g.command(&CommandOp::Take { hq: "su_1bf".into() }).unwrap();
+    g.advance(2);
+    let w = &g.sim.world;
+    let under = |k: usize| { let mut x = k; for _ in 0..8 { if x == bf { return true; } match w.hqs[x].parent { Some(p) => x = p as usize, None => return false } } false };
+    let sub: Vec<usize> = (0..w.hqs.len()).filter(|&k| under(k)).collect();
+    let chained = |k: usize| g.sim.intent.chains.iter().any(|c| c.owner as usize == k);
+    let plain: Vec<usize> = sub.iter().copied().filter(|&k| !chained(k)).collect();
+    let armies: Vec<usize> = sub.iter().copied().filter(|&k| chained(k)).collect();
+    assert!(plain.iter().any(|&k| w.hqs[k].echelon == Echelon::Corps), "корпуса без цепочки");
+    assert!(!armies.is_empty());
+    for &k in &sub { assert_eq!(g.sim.intent.hq[k].reason, Some(Reason::Player), "{}", w.hqs[k].id); }
+    let t = g.hour();
+    g.command(&CommandOp::Release { id: "su_1bf".into() }).unwrap();
+    for &k in &plain {
+        assert_eq!(g.sim.intent.hq[k].status, Status::History, "{}", g.sim.world.hqs[k].id);
+        assert!(g.sim.intent.log.iter().any(|&(tt, h, s, _)| tt == t && h as usize == k && s == Status::History), "смена записана: {}", g.sim.world.hqs[k].id);
+    }
+    assert_eq!(g.sim.command.control[bf], Control::Script, "фронт — снова по приказам сценария");
+    g.advance(1);
+    for &k in &armies { assert_ne!(g.sim.intent.hq[k].reason, Some(Reason::Player), "{}", g.sim.world.hqs[k].id); }
+    assert!(!agents_core::intent::off_history(&g.sim, bf as u32));
+}

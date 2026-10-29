@@ -230,8 +230,6 @@ fn track_fingerprint() {
     assert_eq!(track::load(scen_s).unwrap_err(), "след эталона устарел — уход по расстоянию выключен");
     std::fs::write(&scen, "{\"a\":2}").unwrap();
     assert_eq!(track::load(scen_s).unwrap_err(), "след эталона устарел — уход по расстоянию выключен");
-    // правки «Редактора» (EditsIn) в файл сценария не входят — отпечаток считается по тексту файла
-    let _ = agents_core::scenario::EditsIn::default();
     std::fs::remove_dir_all(&dir).ok();
 }
 
@@ -595,20 +593,20 @@ fn received(sim: &Sim, note: &str, divs: &[u32]) -> usize {
     sim.journal.iter().filter(|e| divs.contains(&e.agent) && e.text.starts_with("получен приказ") && e.text.ends_with(&format!(": {note}"))).count()
 }
 
-#[test]
-fn german_early_order_not_twice() {
+/// Немецкий приказ сценария дивизиям 9 А (час не раньше 6) подаётся раньше часа по выполнению прежней задачи: к часу
+/// `o.at - 4` цепочка 9 А — выполненная задача A и этот приказ, армия отошла от следа. (приказ, его дивизии, цепочка)
+fn german_early(sim: &mut Sim) -> (agents_core::world::ScriptOrder, Vec<u32>, usize) {
     use agents_core::intent::Step;
-    let mut sim = intent_sim();
-    let a = hq(&sim, "de_9a");
-    let mine: Vec<u32> = under(&sim, a).into_iter().map(|i| i as u32).collect();
+    let a = hq(sim, "de_9a");
+    let mine: Vec<u32> = under(sim, a).into_iter().map(|i| i as u32).collect();
     // приказ сценария дивизиям 9 А с неповторяющейся пометкой, час — не раньше 6
     let o = sim.script.iter().find(|o| o.at >= 6 && !o.note.is_empty() && o.to.iter().any(|d| mine.contains(d))
         && sim.script.iter().filter(|x| x.note == o.note).count() == 1).expect("приказ").clone();
     let divs: Vec<u32> = o.to.iter().copied().filter(|d| mine.contains(d)).collect();
-    run_to(&mut sim, o.at - 4);
+    run_to(sim, o.at - 4);
     // цепочка 9 А: выполненная задача A, за ней — этот приказ («держать» у своих — смысл есть)
-    let ci = chain_of(&sim, a);
-    let c = center(&sim, a);
+    let ci = chain_of(sim, a);
+    let c = center(sim, a);
     let pos = sim.world.divisions[divs[0] as usize].vars.pos;
     let mut done_a = sim.intent.chains[ci].tasks[0].clone();
     let mut dummy = o.clone();
@@ -627,7 +625,15 @@ fn german_early_order_not_twice() {
     b.issued = false;
     sim.intent.chains[ci].tasks = vec![done_a, b];
     sim.intent.chains[ci].next = 1;
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(off_track(sim, a, 20.0));
+    (o, divs, ci)
+}
+
+#[test]
+fn german_early_order_not_twice() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "de_9a");
+    let (o, divs, ci) = german_early(&mut sim);
     run_to(&mut sim, o.at - 3);
     assert!(sim.intent.chains[ci].tasks[1].issued, "подан раньше часа по выполнению: {:?}", status(&sim, a));
     run_to(&mut sim, o.at + 30);
@@ -874,15 +880,19 @@ fn german_off_history_army_decides() {
     let mut sim = intent_sim();
     let (a, g) = (hq(&sim, "de_9a"), hq(&sim, "de_hgr_weichsel"));
     run_to(&mut sim, 1);
+    assert_eq!(sim.command.control[a as usize], Control::Script, "на истории — по приказам сценария");
+    assert!(commander(&sim, a).decisions.is_empty(), "на истории командующий не решает");
     sim.intent.track = Some(still_track(&sim, &[a]));
     shift(&mut sim, a, -35.0, 0.0);
     run_to(&mut sim, 2);
     assert_eq!(status(&sim, a).status, Status::Own);
     assert_eq!(sim.command.control[a as usize], Control::Agent);
+    let left = sim.intent.log.iter().filter(|e| e.1 == a && e.2 == Status::Own).map(|e| e.0).min().expect("уход записан");
     assert_eq!(sim.command.control[g as usize], Control::Script, "группа армий — по приказам сценария");
     run_to(&mut sim, 2 + 8);
     let c = commander(&sim, a);
     assert!(!c.decisions.is_empty(), "командующий 9 А решает сам");
+    assert!(c.decisions.iter().all(|d| d.tick >= left), "решения — после ухода с истории (час {left})");
     assert!(sim.documents.iter().any(|d| d.hq == a && d.tick >= 1), "документы 9 А");
     assert!(sim.commanders.list.iter().find(|c| c.hq == g).is_none_or(|c| c.decisions.is_empty()), "группа армий за неё не решает");
 }
@@ -1024,8 +1034,8 @@ fn chain_end_on_track_stays_history() {
 
 // ---------- задача армии вне истории — обязанность штаба фронта ----------
 
-/// Армия вне истории без задачи получает задачу за 1–2 ч независимо от решения командующего по фронту (в том же часе
-/// решение по фронту есть, «поставить задачу» в его вариантах нет); несколько таких армий в один час — все.
+/// Армия вне истории без задачи получает задачу за 1–2 ч независимо от решения командующего по фронту («поставить
+/// задачу» — решение штаба без других вариантов, не вариант в споре решений); несколько таких армий в один час — все.
 #[test]
 fn idle_off_history_armies_all_tasked() {
     let mut sim = intent_sim();
@@ -1050,7 +1060,10 @@ fn idle_off_history_armies_all_tasked() {
     assert_eq!(ta.iter().map(|x| x.0).min(), tb.iter().map(|x| x.0).min(), "в одном часе");
     // решения командующего по фронту — без «поставить задачу» среди вариантов
     let c = commander(&sim, f);
-    assert!(c.decisions.iter().filter(|d| d.options.len() > 1).all(|d| !d.options.iter().any(|o| matches!(o.choice.kind, Kind::Assign { .. }))));
+    // «поставить задачу» — решение штаба без спора: где оно есть, других вариантов нет (решения есть — проверка не пустая)
+    let tasking: Vec<_> = c.decisions.iter().filter(|d| d.options.iter().any(|o| matches!(o.choice.kind, Kind::Assign { .. }))).collect();
+    assert!(!tasking.is_empty(), "решения «поставить задачу» есть");
+    assert!(tasking.iter().all(|d| d.options.len() == 1), "{:?}", tasking.iter().map(|d| d.options.len()).collect::<Vec<_>>());
     assert!(sim.documents.iter().any(|d| d.hq == f && d.text.contains("задача армии вне истории")), "документ штаба");
 }
 
@@ -1128,4 +1141,128 @@ fn assign_stays_in_operation_area() {
     assert!(*defend && label.contains("нет задачи в полосе фронта — оборона"), "{label}");
     run_to(&mut sim, 8);
     assert_eq!(sim.command.intent[a as usize].as_ref().map(|d| d.task), Some(DTask::Defend), "оборона дошла");
+}
+
+// ---------- мелочи этапа ----------
+
+/// Армия вернулась к следу в час более поздней задачи: задержанная задача устаревает молча — у следа армия идёт как
+/// чистая история, короткой записи «со сдвигом» в этот час нет.
+#[test]
+fn supersede_on_track_silent() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(3);
+    sim.intent.chains[ci].tasks[1].at = 4;
+    sim.intent.chains[ci].tasks[2].at = 6;
+    run_to(&mut sim, 4);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 8.0));
+    sim.intent.chains[ci].tasks[2].goal = Some(beyond(&sim, a, g0, 12.0));
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    set_cohesion(&mut sim, a, 0.2);
+    run_to(&mut sim, 6);
+    assert_eq!(status(&sim, a).status, Status::Shifted);
+    assert!(!sim.intent.chains[ci].tasks[1].issued, "задача 1 задержана");
+    // в час задачи 2 армия снова у следа и в себе
+    set_cohesion(&mut sim, a, 0.9);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    run_to(&mut sim, 7);
+    let ch = &sim.intent.chains[ci];
+    assert!(!ch.tasks[1].issued && ch.tasks[2].issued, "задача 1 устарела, подана задача 2");
+    assert_eq!(status(&sim, a).status, Status::History);
+    let at6: Vec<_> = sim.intent.log.iter().filter(|e| e.0 == 6 && e.1 == a).map(|e| e.2).collect();
+    assert_eq!(at6, vec![Status::History], "в час 6 — одна смена «по истории»");
+}
+
+/// Немецкий приказ, поданный раньше своего часа (очередь диспетчера), проходит те же проверки, что приказ в свой час:
+/// штаб, отдающий его, — по приказам сценария, штабы стороны — по сценарию (не по доктрине).
+#[test]
+fn german_queue_checks_control_and_sources() {
+    use agents_core::command::control::Control;
+    // штабы стороны по доктрине — приказ сценария не идёт
+    let mut sim = intent_sim();
+    let (o, divs, ci) = german_early(&mut sim);
+    sim.sources[1] = agents_core::staff::Source::Doctrine;
+    run_to(&mut sim, o.at - 2);
+    assert!(sim.intent.chains[ci].tasks[1].issued, "подан диспетчером");
+    assert_eq!(received(&sim, &o.note, &divs), 0);
+    assert!(sim.world.in_transit.iter().all(|(_, x)| x.note != o.note), "в пути нет");
+    // отдающий штаб не по сценарию — тоже
+    let mut sim = intent_sim();
+    let (o, divs, ci) = german_early(&mut sim);
+    sim.command.control[o.hq as usize] = Control::Agent;
+    run_to(&mut sim, o.at - 2);
+    assert!(sim.intent.chains[ci].tasks[1].issued, "подан диспетчером");
+    assert_eq!(received(&sim, &o.note, &divs), 0);
+    assert!(sim.world.in_transit.iter().all(|(_, x)| x.note != o.note), "в пути нет");
+}
+
+/// Оборона при отсутствии задачи в районе операции — у населённого пункта не дальше 10 км от центра армии, иначе на месте.
+#[test]
+fn assign_defend_near_or_in_place() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    run_to(&mut sim, 1);
+    let ci = chain_of(&sim, a);
+    let n = sim.intent.chains[ci].next;
+    sim.intent.chains[ci].tasks.truncate(n);
+    // армия за 150 км восточнее, её ось — на восток: прочь от всех объектов плана фронта
+    shift(&mut sim, a, 150.0, 0.0);
+    let c = center(&sim, a);
+    if let Some(d) = sim.command.intent[a as usize].as_mut() { d.axis = vec![c, XY::new(c.x + 100.0, c.y)]; }
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, 3);
+    let ds: Vec<_> = commander(&sim, f).decisions.iter().filter_map(|d| match &d.options[d.chosen].choice.kind {
+        Kind::Assign { army, at, defend: true, .. } if *army == a => Some((*at, d.options[d.chosen].choice.label.clone())),
+        _ => None,
+    }).collect();
+    assert!(!ds.is_empty(), "оборона поставлена");
+    for (at, label) in &ds {
+        // армия за 2 ч сдвинулась мало: точка — у её центра (на месте) или у пункта в 10 км от него
+        assert!(at.dist(c) <= 12.0, "{label}: {:.1} км от армии", at.dist(c));
+    }
+}
+
+/// Режим `intent`: управление по ступеням — советские Ставка и фронты по приказам сценария, армии и ниже — агенты;
+/// немецкие штабы — по приказам сценария.
+#[test]
+fn intent_control_vector() {
+    use agents_core::command::control::Control;
+    use agents_core::model::Echelon;
+    let sim = intent_sim();
+    let w = &sim.world;
+    assert!(w.hqs.iter().any(|h| h.side == Side::Su && h.echelon == Echelon::HighCommand));
+    for (k, h) in w.hqs.iter().enumerate() {
+        let want = match (h.side, h.echelon) {
+            (Side::Su, Echelon::HighCommand | Echelon::Front) => Control::Script,
+            (Side::Su, _) => Control::Agent,
+            (Side::De, _) => Control::Script,
+        };
+        assert_eq!(sim.command.control[k], want, "{}", h.id);
+    }
+}
+
+/// Поддерево, взятое игроком, за сутки не получает исторических задач: диспетчер его цепочкам не подаёт.
+#[test]
+fn taken_subtree_no_history_24h() {
+    use agents_core::command::control::Control;
+    let mut sim = intent_sim();
+    let f = hq(&sim, "su_1bf");
+    run_to(&mut sim, 24);
+    sim.command.control[f as usize] = Control::Player;
+    intent::take(&mut sim, f);
+    let sub = subtree_of(&sim, f);
+    let mine: Vec<usize> = (0..sim.intent.chains.len()).filter(|&ci| sub.contains(&(sim.intent.chains[ci].owner as usize))).collect();
+    assert!(!mine.is_empty());
+    let issued = |sim: &Sim| mine.iter().map(|&ci| sim.intent.chains[ci].tasks.iter().filter(|t| t.issued).count()).collect::<Vec<_>>();
+    let before = issued(&sim);
+    // задачи на эти сутки у цепочек поддерева есть
+    assert!(mine.iter().any(|&ci| sim.intent.chains[ci].tasks.iter().any(|t| !t.issued && t.at >= 24 && t.at < 48)), "есть задачи на эти сутки");
+    let docs0 = sim.documents.len();
+    run_to(&mut sim, 48);
+    assert_eq!(issued(&sim), before, "цепочкам поддерева не подано");
+    let names: Vec<&str> = sub.iter().map(|&k| sim.world.hqs[k].id.as_str()).collect();
+    let hist = sim.documents[docs0..].iter().filter(|d| d.hq == f && d.to.iter().any(|t| names.contains(&t.as_str()))).count();
+    assert_eq!(hist, 0, "директив фронта армиям нет");
 }

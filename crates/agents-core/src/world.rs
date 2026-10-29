@@ -351,7 +351,13 @@ impl Sim {
         // командование по ступеням: директивы штабов-агентов и игрока (command/agent.rs)
         crate::command::agent::phase(self, &mut next, tick, &mut journal);
         // «история как замысел»: немецкие приказы сценария, поданные раньше своего часа
-        if !self.intent.queue.is_empty() { let q = std::mem::take(&mut self.intent.queue); self.send_orders(&mut next, q); }
+        // (те же проверки, что у приказа в свой час: отдающий штаб — по приказам сценария, штабы стороны — по сценарию)
+        if !self.intent.queue.is_empty() {
+            let q: Vec<ScriptOrder> = std::mem::take(&mut self.intent.queue).into_iter()
+                .filter(|o| self.command.control[o.hq as usize] == crate::command::control::Control::Script && self.sources[crate::staff::side_idx(next.hqs[o.hq as usize].side)] == crate::staff::Source::Script)
+                .collect();
+            self.send_orders(&mut next, q);
+        }
         let mut arrived = Vec::new();
         next.in_transit.retain(|(d, o)| if o.arrives <= tick { arrived.push((*d, o.clone())); false } else { true });
         for (d, o) in arrived {

@@ -640,11 +640,14 @@ impl Game {
             if let Some(x) = self.sim.intent.led.get_mut(h) { *x = false; }
             // старший снова отдаст ему задачу в свой следующий цикл
             self.sim.command.sent.retain(|k, _| k.1 != crate::command::directive::Target::Hq(h as u32));
-            if self.sim.command.control[h] == Control::Player && self.sim.world.hqs[h].echelon != crate::model::Echelon::HighCommand {
+            // в истории как замысле взятую верхнюю инстанцию можно и вернуть (в прочих режимах она всегда у игрока)
+            if self.sim.command.control[h] == Control::Player && (self.mode == Mode::Intent || self.sim.world.hqs[h].echelon != crate::model::Echelon::HighCommand) {
                 self.sim.command.control[h] = Control::Agent;
                 // замысел, пришедший, пока штаб был у игрока, остаётся новым (fresh)
                 self.sim.command.last_cycle[h] = tick;
             }
+            // история как замысел: поддерево снова «по истории», управление — как в режиме (фронты — по сценарию)
+            if self.sim.intent.enabled[crate::staff::side_idx(self.player)] { crate::intent::release(&mut self.sim, h as u32); }
             self.sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "штаб возвращён: решает агент по замыслу старшего".into(), rule: None });
             return Ok(());
         }

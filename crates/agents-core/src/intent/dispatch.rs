@@ -134,6 +134,25 @@ pub fn take(sim: &mut Sim, hq: u32) {
     for k in subtree(sim, hq) { set(sim, k as u32, Status::Own, Some(Reason::Player), tick); }
 }
 
+/// Возврат штаба `hq` игроком (игра, `Game::release`): штабы его поддерева, ушедшие с истории только из-за игрока, и
+/// не под командованием игрока через другой штаб — снова «по истории» (смена записывается); управление — как в режиме:
+/// у советской стороны Ставка и фронты — по приказам сценария, армии и ниже — агенты; у немецкой — по приказам
+/// сценария. Армии с цепочкой дальше идут по обычным правилам (уход по расстоянию, подача, возврат).
+pub fn release(sim: &mut Sim, hq: u32) {
+    use crate::model::Echelon;
+    let tick = sim.world.tick;
+    for k in subtree(sim, hq) {
+        if player_over(sim, k as u32) || sim.intent.hq.get(k).is_none_or(|s| s.reason != Some(Reason::Player)) { continue; }
+        set(sim, k as u32, Status::History, None, tick);
+        let h = &sim.world.hqs[k];
+        let to = if h.side == Side::De || matches!(h.echelon, Echelon::HighCommand | Echelon::Front) { Control::Script } else { Control::Agent };
+        if sim.command.control[k] != to {
+            sim.command.control[k] = to;
+            if to == Control::Agent { sim.command.last_cycle[k] = tick; }
+        }
+    }
+}
+
 /// Расстояние центра живых дивизий армии от следа эталона на этот час; нет следа, армии в нём или живых — None.
 fn stray_km(sim: &Sim, owner: u32, tick: u32) -> Option<f64> {
     let p = sim.intent.track.as_ref()?.at(&sim.world.hqs[owner as usize].id, tick)?;
@@ -253,9 +272,10 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool, km: Option<f64>) {
     }
 }
 
-/// Час более поздней задачи цепочки настал — прежние неподанные (задержанные) задачи устарели: курсор за ними, смена
-/// «со сдвигом» с причиной устаревшей задачи записывается всегда (отвод, оставшийся за задержанной задачей, не пропадает
-/// молча). Иначе задержанная задача, поданная позже, перебила бы более позднюю.
+/// Час более поздней задачи цепочки настал — прежние неподанные (задержанные) задачи устарели: курсор за ними. У армии,
+/// отошедшей от следа, смена «со сдвигом» с причиной устаревшей задачи записывается всегда (отвод, оставшийся за
+/// задержанной задачей, не пропадает молча); у армии у следа (`near`) — молча: она идёт как чистая история. Иначе
+/// задержанная задача, поданная позже, перебила бы более позднюю.
 fn supersede(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
     let c = &sim.intent.chains[ci];
     let Some(h) = c.tasks[c.next.min(c.tasks.len())..].iter().map(|t| t.at).filter(|&at| at <= tick).max() else { return };
@@ -270,6 +290,7 @@ fn supersede(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
         k += 1;
     }
     sim.intent.chains[ci].next = k;
+    if near { return; }
     if let Some(why) = last {
         let s = &mut sim.intent.hq[owner as usize];
         *s = HqState { status: Status::Shifted, reason: why.clone(), since: tick };
@@ -326,15 +347,23 @@ fn passes(sim: &Sim, ci: usize, ti: usize) -> bool {
 /// его заменяет цепочка или командующий). Приказ вне цепочек (сторона без режима) проходит.
 pub fn gate(sim: &Sim, o: &ScriptOrder) -> bool {
     if !sim.intent.enabled[side_idx(sim.world.hqs[o.hq as usize].side)] { return true; }
+    if player_over(sim, o.hq) { return false; }
     let hits = order_tasks(sim, o);
     hits.is_empty() || hits.iter().any(|&(ci, ti)| passes(sim, ci, ti))
 }
 
 /// Приказ сценария в свой час (шаг 0 мира): проходит к дивизиям армий, у которых он проходит `gate`; задача отмечается
-/// поданной. None — не проходит никому.
+/// поданной. None — не проходит никому. Штаб, отдающий приказ, под командованием игрока (взят или ведётся директивами
+/// игрока — и через старшего, например взятую Ставку) — приказ не проходит, даже если он не входит ни в одну цепочку;
+/// дивизиям под командованием игрока он тоже не доходит.
 pub fn admit(sim: &mut Sim, mut o: ScriptOrder) -> Option<ScriptOrder> {
     if !sim.intent.enabled[side_idx(sim.world.hqs[o.hq as usize].side)] { return Some(o); }
+    if player_over(sim, o.hq) { return None; }
     let hits = order_tasks(sim, &o);
+    if !o.to.is_empty() {
+        o.to.retain(|&d| !player_over(sim, sim.world.divisions[d as usize].hq));
+        if o.to.is_empty() { return None; }
+    }
     if hits.is_empty() { return Some(o); }
     let mut owners = Vec::new();
     for (ci, ti) in hits {

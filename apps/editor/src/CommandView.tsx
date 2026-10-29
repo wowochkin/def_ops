@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, ENEMY_TITLE, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, ENEMY_TITLE, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -2106,7 +2106,9 @@ export function TakeoverDialog({ at, turnHours, start, scenarioName, scenario, k
       if (!MODE_TITLE[p?.mode]) return 'Скажите: «история как замысел», «как сейчас», «штабы-агенты», «гибрид» или «командующие».';
       setMode(p.mode);
       saveGameMode(p.mode);
-      return `Режим — «${MODE_TITLE[p.mode].title}»: ${MODE_TITLE[p.mode].hint}.`;
+      // противник, недопустимый при новом режиме, сменится умолчанием (эффект выше) — ответ называет того, кто в силе
+      const before = st.current.enemy;
+      return modeReply(p.mode, before, fitEnemy(before, agents, p.mode, llm.check.state === 'fail'));
     },
   });
   const turn = Math.round((toMs(at) - toMs(start)) / (turnHours * 3600_000)) + 1;

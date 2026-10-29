@@ -466,6 +466,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     const down = llm.check.state === 'fail';
     const enemy = enemy0 ? fitEnemy(enemy0, !!agents, mode, down) : defaultEnemy(!!agents, down, mode);
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
+    return enemy;
   };
   /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */
   const startGame = async (enemy: EnemyMode, mode: GameMode) => {
@@ -483,6 +484,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       // противник старой записи может не подходить режиму игры (ядро такой отклонит): берём умолчание режима и говорим об этом
       const r = resumeEnemy(saved.enemy, !!saved.record.agents, saved.record.agents?.mode ?? 'legacy', llm.check.state === 'fail');
       setGame({ start: null, saved: r.note ? { ...saved, enemy: r.enemy } : saved, enemy: r.enemy, note: r.note });
+      return r.note;
     },
     stop, discardSaved: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); },
   };
