@@ -133,7 +133,7 @@ function drivers(cur: Snapshot, prev: Snapshot | null): string[] {
  */
 export function answer(c: AgentCommander, tick: number, question: string, names: Record<string, string> = {}, trace?: AgentTrace): string {
   const q = question.toLowerCase().replace(/ё/g, 'е');
-  if (/истори/.test(q)) return intentAnswer(c, tick, names, trace);
+  if (/не как в истории|по истории|с истории/.test(q)) return intentAnswer(c, tick, names, trace);
   const nm = (id: string) => names[id] ?? id;
   const v = viewAt(c, tick);
   const has = (re: RegExp) => re.test(q);
@@ -190,6 +190,12 @@ export function answer(c: AgentCommander, tick: number, question: string, names:
   return NO_ANSWER;
 }
 
+/** Час операции tick — «дд.мм чч:мм» от начала start (местное время сценария, как в остальном интерфейсе). */
+const timeAt = (start: string, tick: number) => {
+  const t = new Date(Date.parse(`${start.slice(0, 16)}Z`) + tick * 3600_000).toISOString();
+  return `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
+};
+
 /** Ответ «почему не как в истории?»: состояние штаба командующего и его армий на час, с причиной и часом ухода. */
 function intentAnswer(c: AgentCommander, tick: number, names: Record<string, string>, trace?: AgentTrace): string {
   if (!trace?.intent) return NO_INTENT;
@@ -197,7 +203,7 @@ function intentAnswer(c: AgentCommander, tick: number, names: Record<string, str
   const own = intentAt(trace, c.hq, tick);
   const armies = trace.hqs.filter((h) => h.parent === c.hq && h.echelon === 'army').map((h) => h.id);
   const left = armies.map((id) => ({ id, s: intentAt(trace, id, tick) })).filter((x) => x.s && x.s.status !== 'history');
-  const say = (s: NonNullable<typeof own>) => `${s.status === 'own' ? 'решает сам' : 'идёт по истории со сдвигом'}${s.reason ? ` (${s.reason})` : ''} с часа ${s.since}`;
+  const say = (s: NonNullable<typeof own>) => `${s.status === 'own' ? 'решает сам' : 'идёт по истории со сдвигом'}${s.reason ? ` (${s.reason})` : ''} с ${timeAt(trace.start, s.since)}`;
   const head = !own ? 'По моему штабу данных о замысле нет.' : own.status === 'history' ? 'Мой штаб идёт по истории.' : `Мой штаб ${say(own)}.`;
   const tail = left.length ? ` Армии не по истории: ${left.map((x) => `${nm(x.id)} — ${say(x.s!)}`).join('; ')}.` : armies.length ? ' Армии идут по истории.' : '';
   return head + tail;

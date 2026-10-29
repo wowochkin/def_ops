@@ -19,7 +19,8 @@ pub fn reason_text(r: &Reason) -> String {
         Reason::OwnLost => "рубеж потерян".into(),
         Reason::RetreatCut => "путь отхода перерезан".into(),
         Reason::Unfit => "армия не способна выполнять".into(),
-        Reason::Strayed { km } => format!("армия в {} км от исторического места", km.round() as i64),
+        // вверх: со сдвигом (дальше returnKm) никогда не «15 км», при уходе (дальше leaveKm) — не «30 км»
+        Reason::Strayed { km } => format!("армия в {} км от исторического места", km.ceil() as i64),
         Reason::ChainEnd => "цепочка кончилась".into(),
         Reason::Player => "под командованием игрока".into(),
         Reason::Intervention(s) => format!("вмешательство: {s}"),

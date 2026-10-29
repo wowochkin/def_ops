@@ -197,8 +197,12 @@ describe('answer: история как замысел', () => {
   it('перечисляет армии со сдвигом и «сам», с причинами и часом', () => {
     const a = answer(zhukov, 12, 'почему не как в истории?', names, intentTrace());
     expect(a).toContain('по истории');
-    expect(a).toContain('8 гв. А'); expect(a).toContain('сутки задержки'); expect(a).toContain('с часа 5');
-    expect(a).toContain('1 гв. ТА'); expect(a).toContain('ушла дальше 30 км'); expect(a).toContain('с часа 8');
+    expect(a).toContain('8 гв. А'); expect(a).toContain('сутки задержки'); expect(a).toContain('с 16.04 10:00');
+    expect(a).toContain('1 гв. ТА'); expect(a).toContain('ушла дальше 30 км'); expect(a).toContain('с 16.04 13:00');
+  });
+  it('«история» в другом смысле — не вопрос о замысле', () => {
+    expect(answer(zhukov, 12, 'расскажи историю своего решения', names, intentTrace())).not.toContain('по истории');
+    expect(answer(zhukov, 12, 'почему армия ушла с истории?', names, intentTrace())).toContain('8 гв. А');
   });
   it('на час до ухода армии не названы', () => {
     const a = answer(zhukov, 3, 'почему не как в истории?', names, intentTrace());

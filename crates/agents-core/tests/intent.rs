@@ -130,7 +130,7 @@ fn reason_texts() {
     let all = [
         (Reason::Taken, "объект уже взят"), (Reason::Behind, "объект позади армии"), (Reason::TooFar, "объект дальше двух переходов"),
         (Reason::OwnLost, "рубеж потерян"), (Reason::RetreatCut, "путь отхода перерезан"), (Reason::Unfit, "армия не способна выполнять"),
-        (Reason::Strayed { km: 41.6 }, "армия в 42 км от исторического места"), (Reason::ChainEnd, "цепочка кончилась"), (Reason::Player, "под командованием игрока"),
+        (Reason::Strayed { km: 41.6 }, "армия в 42 км от исторического места"), (Reason::Strayed { km: 15.2 }, "армия в 16 км от исторического места"), (Reason::ChainEnd, "цепочка кончилась"), (Reason::Player, "под командованием игрока"),
     ];
     for (r, t) in all { assert_eq!(intent::reason_text(&r), t); }
 }
