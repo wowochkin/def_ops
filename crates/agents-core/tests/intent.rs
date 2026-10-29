@@ -51,7 +51,7 @@ fn chains_built() {
     let steps: Vec<&Step> = de.iter().flat_map(|c| &c.tasks).map(|t| &t.step).collect();
     assert!(steps.iter().any(|s| matches!(s, Step::Order(_))));
     assert!(steps.iter().any(|s| matches!(s, Step::Dir(d) if d.from == hc)), "нет директив de_hc");
-    let n_dir = sim.historical.iter().filter(|(_, d)| sim.world.hqs[d.from as usize].side == Side::De && matches!(d.to, Target::Hq(_))).count();
+    let n_dir = sim.historical.iter().filter(|(_, d)| !d.id.ends_with(":journal") && sim.world.hqs[d.from as usize].side == Side::De && matches!(d.to, Target::Hq(_))).count();
     assert_eq!(steps.iter().filter(|s| matches!(s, Step::Dir(_))).count(), n_dir);
     assert!(!sim.withdrawals.is_empty());
     let day16 = sim.withdrawals.iter().map(|w| w.at).min().unwrap();

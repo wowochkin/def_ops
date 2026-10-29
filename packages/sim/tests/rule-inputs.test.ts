@@ -39,7 +39,7 @@ describe('перечень входов правил и пересчёт кор�
     const ctx = loadContext('berlin-1945-tasks', 'ww2-berlin-cal');
     const prof = { su: ctx.profiles['rkka-1945'], de: ctx.profiles['wehrmacht-1945'] };
     // commanders.* — допущения характера командующих (commanders.json), intent.* — пороги режима «История как замысел»: не входы перечня правил
-    const meta = /^(strength|corridor|outcome|plausible|commanders|intent)\./;
+    const meta = /^(strength|corridor|outcome|plausible|commanders|intent|agents\.intent)\./;
     for (const n of loadNorms().norms) {
       const m = n.measure;
       if (m.kind !== 'param' && m.kind !== 'assumption') continue;

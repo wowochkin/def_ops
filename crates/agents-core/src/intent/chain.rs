@@ -69,21 +69,21 @@ pub fn build(sim: &Sim, side: Side) -> Vec<Chain> {
         by.entry(h).or_default().push(Task { at: *at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task) });
     }
     if side == Side::De {
-        let owners = |to: &[u32], fallback: u32| -> Vec<u32> {
+        let owners = |to: &[u32], fallback: Option<u32>| -> Vec<u32> {
             let mut v: Vec<u32> = to.iter().map(|&i| army_of(sim, w.divisions[i as usize].hq)).collect();
-            if v.is_empty() { v.push(army_of(sim, fallback)); }
+            if v.is_empty() { v.extend(fallback.map(|h| army_of(sim, h))); }
             v.sort_unstable();
             v.dedup();
             v
         };
         for o in sim.script.iter().filter(|o| w.hqs[o.hq as usize].side == Side::De) {
-            for ow in owners(&o.to, o.hq) {
+            for ow in owners(&o.to, Some(o.hq)) {
                 by.entry(ow).or_default().push(Task { at: o.at, step: Step::Order(o.clone()), goal: o.target, kind: order_kind(o.kind) });
             }
         }
         for wd in &sim.withdrawals {
-            // у отвода нет пункта: только доли войск по позициям — цель «на месте»
-            for ow in owners(&wd.to, 0) {
+            // у отвода нет пункта: только доли войск по позициям — цель «на месте»; без названных дивизий отвод пропускается
+            for ow in owners(&wd.to, None) {
                 by.entry(ow).or_default().push(Task { at: wd.at, step: Step::Withdrawal(wd.clone()), goal: None, kind: Goal::Withdraw });
             }
         }

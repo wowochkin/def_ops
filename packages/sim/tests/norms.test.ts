@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadAgents, loadContext, loadNorms, loadRules } from '../src/data';
-import { evaluateNorms } from '../src/norms';
+import { evaluateNorms, measureParam } from '../src/norms';
 import { CALIB_SPACE } from '../src/calibrate';
 import { RULE_INPUTS, ruleInput } from '../src/rule-inputs';
 import { seedBasis, seedNormTable, seedOutcomeNorms } from '../tools/run/kb-seed';
@@ -54,6 +54,22 @@ describe('нормативы из базы знаний (сид) для sim:norm
       expect(p.corridor, n.id).toBeDefined();
       const r = res.find((x) => x.norm.id === n.id)!;
       expect(r.mean, n.id).toBe(inp!.read(ctx.rules, ctx.profiles, agents));
+    }
+  });
+
+  it('выражения нормативов-допущений читаются: нет неизвестных; пороги режима «История как замысел» — числа', () => {
+    const ctx = loadContext('berlin-1945-tasks', 'ww2-berlin-cal');
+    const agents = loadAgents();
+    for (const n of loadNorms().norms) {
+      const m = n.measure;
+      if (m.kind !== 'param' && m.kind !== 'assumption') continue;
+      if (/^(strength|corridor|outcome|plausible)\./.test(m.expr)) continue;
+      expect(() => measureParam(ctx, m.expr, agents), n.id).not.toThrow();
+    }
+    const want: Record<string, number> = { 'intent-leave': 30, 'intent-return': 15, 'intent-reach': 2, 'intent-unfit': 0.25 };
+    for (const [id, v] of Object.entries(want)) {
+      const n = loadNorms().norms.find((x) => x.id === id)!;
+      expect(measureParam(ctx, (n.measure as { expr: string }).expr, agents), id).toBe(v);
     }
   });
 });

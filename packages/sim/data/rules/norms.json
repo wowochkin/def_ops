@@ -3482,7 +3482,7 @@
       "historical": "—",
       "measure": {
         "kind": "assumption",
-        "expr": "intent.leaveKm",
+        "expr": "agents.intent.leaveKm",
         "why": "порог — допущение: нужен разбор, на сколько армии в действительности отклонялись от замысла Ставки без смены задачи; калибруется на Берлинской"
       },
       "unit": "км",
@@ -3503,7 +3503,7 @@
       "historical": "—",
       "measure": {
         "kind": "assumption",
-        "expr": "intent.returnKm",
+        "expr": "agents.intent.returnKm",
         "why": "порог — допущение (гистерезис к порогу ухода)"
       },
       "unit": "км",
@@ -3524,7 +3524,7 @@
       "historical": "—",
       "measure": {
         "kind": "assumption",
-        "expr": "intent.reachDays",
+        "expr": "agents.intent.reachDays",
         "why": "число переходов — допущение; суточный темп по территории противника — march.enemyTerritoryKmDay"
       },
       "unit": "сут",
@@ -3546,7 +3546,7 @@
       "historical": "—",
       "measure": {
         "kind": "assumption",
-        "expr": "intent.unfitCohesion",
+        "expr": "agents.intent.unfitCohesion",
         "why": "порог — допущение: нужен разбор состояния армий, терявших управление; калибруется на Берлинской"
       },
       "unit": "доля",
