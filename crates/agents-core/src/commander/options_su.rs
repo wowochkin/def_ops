@@ -16,7 +16,8 @@
 //!   чем у пункта по местности.
 //!
 //! В «истории как замысле» фронт идёт по приказам сценария, и командующий решает только за армии вне истории:
-//! варианты строятся по картине с одними этими армиями, без переноса главного удара (это замысел самого фронта).
+//! варианты строятся по картине с одними этими армиями, без переноса главного удара (это замысел самого фронта);
+//! армии нужна задача — «продолжать по плану» из вариантов убирается.
 
 use super::options::{Choice, Kind};
 use super::picture::{divisions_of, profile_objective_xy, ArmyView, Picture};
@@ -129,9 +130,12 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     let mut view = pic.clone();
     view.armies.retain(|a| off.contains(&a.hq));
     let mut out = plan_options(sim, hq, p, &view, true);
+    let n = out.len();
     for &a in &off {
         if needs_task(sim, a) { out.extend(assign(sim, p, a)); }
     }
+    // армии нужна задача — «продолжать по плану» не вариант: решает постановка задачи или иное действие
+    if out.len() > n { out.retain(|ch| ch.kind != Kind::Continue); }
     out
 }
 

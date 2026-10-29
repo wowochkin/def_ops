@@ -806,3 +806,83 @@ fn no_idle_army() {
     let gap = ticks.windows(2).map(|w| w[1] - w[0]).max().unwrap();
     assert!(gap <= 24, "промежуток без задачи {gap} ч: {ticks:?}");
 }
+
+#[test]
+fn no_idle_army_96h() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    stray(&mut sim, a);
+    run_to(&mut sim, 98);
+    let mut ticks = vec![2];
+    ticks.extend(docs(&sim, f, "su_8gva").into_iter().filter(|&t| t >= 2));
+    ticks.push(98);
+    let gap = ticks.windows(2).map(|w| w[1] - w[0]).max().unwrap();
+    assert!(gap <= 24, "промежуток без задачи {gap} ч: {ticks:?}");
+}
+
+/// Армия вне истории с директивой командующего (задача поставлена и дошла).
+fn strayed_with_task(sim: &mut Sim, a: u32) {
+    stray(sim, a);
+    while !sim.command.intent[a as usize].as_ref().is_some_and(|d| d.id.starts_with("командующий:")) && sim.world.tick < 60 { sim.step(); }
+    assert!(sim.command.intent[a as usize].as_ref().unwrap().id.starts_with("командующий:"), "задача командующего не дошла");
+}
+
+fn goal_of(sim: &Sim, a: u32) -> XY { intent::of_directive(0, sim.command.intent[a as usize].as_ref().unwrap()).goal.expect("цель") }
+
+#[test]
+fn needs_task_branches() {
+    use agents_core::commander::options_su::needs_task;
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    strayed_with_task(&mut sim, a);
+    assert!(!needs_task(&sim, a), "задача действует");
+    // выполнена: армия у цели
+    let g = goal_of(&sim, a);
+    let mut done = sim.fork();
+    let c = center(&done, a);
+    shift(&mut done, a, g.x - c.x, g.y - c.y);
+    assert!(needs_task(&done, a), "выполнена");
+    // без смысла: объект занят своими (дивизия другой армии), армия на месте
+    let mine = under(&sim, a);
+    let fr = friend(&sim, &mine);
+    sim.world.divisions[fr].vars.pos = g;
+    assert!(needs_task(&sim, a), "объект взят — без смысла");
+    sim.command.intent[a as usize] = None;
+    assert!(needs_task(&sim, a), "задачи нет");
+}
+
+#[test]
+fn assign_promptly_when_done() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    strayed_with_task(&mut sim, a);
+    let g = goal_of(&sim, a);
+    let c = center(&sim, a);
+    shift(&mut sim, a, g.x - c.x, g.y - c.y);
+    let t0 = sim.world.tick;
+    run_to(&mut sim, t0 + 2);
+    assert_eq!(status(&sim, a).status, Status::Own);
+    let d = commander(&sim, f).decisions.iter().find(|d| d.tick >= t0).expect("решение в тот же час");
+    assert!(d.trigger.contains("армия без задачи"), "{}", d.trigger);
+    assert!(matches!(d.options[d.chosen].choice.kind, Kind::Assign { army, .. } if army == a), "{}", d.options[d.chosen].choice.label);
+    assert!(!d.options.iter().any(|o| o.choice.kind == Kind::Continue), "«продолжать» не в меню");
+}
+
+#[test]
+fn german_off_history_army_decides() {
+    use agents_core::command::control::Control;
+    let mut sim = intent_sim();
+    let (a, g) = (hq(&sim, "de_9a"), hq(&sim, "de_hgr_weichsel"));
+    run_to(&mut sim, 1);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    shift(&mut sim, a, -35.0, 0.0);
+    run_to(&mut sim, 2);
+    assert_eq!(status(&sim, a).status, Status::Own);
+    assert_eq!(sim.command.control[a as usize], Control::Agent);
+    assert_eq!(sim.command.control[g as usize], Control::Script, "группа армий — по приказам сценария");
+    run_to(&mut sim, 2 + 8);
+    let c = commander(&sim, a);
+    assert!(!c.decisions.is_empty(), "командующий 9 А решает сам");
+    assert!(sim.documents.iter().any(|d| d.hq == a && d.tick >= 1), "документы 9 А");
+    assert!(sim.commanders.list.iter().find(|c| c.hq == g).is_none_or(|c| c.decisions.is_empty()), "группа армий за неё не решает");
+}
