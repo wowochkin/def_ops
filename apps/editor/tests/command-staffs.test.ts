@@ -11,6 +11,17 @@ const view = (mode: string) => ({ turn: 2, terms: { topGen: 'Ставки' }, pl
 } }) as never;
 
 describe('вкладка «Штабы»', () => {
+  it('штаб, ведомый директивами (intent): в одной рамке две кнопки — «взять» и «вернуть истории»', () => {
+    const v = view('intent') as { command: { hqs: Record<string, unknown> } };
+    v.command.hqs.a2 = { ...hq('33 А', 'army', 'f1'), led: true };
+    const html = renderToString(createElement(Staffs, { v: v as never, cmds: [], issuer: null }));
+    expect(html).toContain('ведёте директивами');
+    const spans = [...html.matchAll(/<span class="staffs-acts">(.*?)<\/span>/g)].map((m) => m[1]);
+    const two = spans.filter((x) => (x.match(/<button/g) ?? []).length === 2);
+    expect(two).toHaveLength(1);
+    const btns = [...two[0].matchAll(/<button[^>]*class="(staffs-btn[^"]*)"[^>]*>([^<]+)<\/button>/g)].map((m) => m[2]);
+    expect(btns).toEqual(['взять', 'вернуть истории']);
+  });
   it('«взять» и «вернуть» — отдельные кнопки в рамке с промежутком', () => {
     const html = renderToString(createElement(Staffs, { v: view('intent'), cmds: [], issuer: null }));
     expect(html).toMatch(/<span class="staffs-acts">(<button[^>]*class="staffs-btn[^"]*"[^>]*>[^<]+<\/button>){1,2}<\/span>/);

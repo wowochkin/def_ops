@@ -162,30 +162,25 @@ const parts = {
     await page.locator('.modal.take button.primary').click();
     await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
     await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
-    const posted = await page.evaluate(() => window.__act('command.post', { name: 'su_8gva' }));
-    if (!/8-я гвардейская/.test(String(posted))) return fail('staffs', `пункт не выбран: ${posted}`);
+    // штаб, ведомый директивами: директива Ставки 2-му Белорусскому фронту уходит в ядро с ходом, после хода у фронта «ведёте директивами»
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    await at('command.post', { level: 'stavka' });
+    const opened = await at('command.dir.open', { name: '2-й Белорусский фронт' });
+    if (!/2-й Белорусский/.test(opened)) return fail('staffs', `документ не открыт: ${opened}`);
+    await at('command.dir.edit', { task: 'attack' });
+    await at('command.dir.set', { point: [13.4, 52.5] });
+    const given = await at('command.dir.give', {});
+    if (!/Уйдёт с ходом/.test(given)) return fail('staffs', `директива не отдана: ${given}`);
+    await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+    for (const k of ['assessment', 'intent', 'report']) await page.locator(`[data-hl="field-${k}"] textarea`).fill('Проверка вкладки «Штабы».');
+    const turned = await at('command.turn', {});
+    if (/не готово|Не указана/.test(turned)) return fail('staffs', `ход не начат: ${turned}`);
+    await page.locator('text=/ход 2/').first().waitFor({ timeout: 900000 });
+    await page.waitForTimeout(1500);
+    const posted = await at('command.post', { name: 'su_8gva' });
+    if (!/8-я гвардейская/.test(posted)) return fail('staffs', `пункт не выбран: ${posted}`);
     await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
     await page.locator('.staffs-acts').first().waitFor();
-    // две кнопки в строке бывают у штаба, ведомого директивами: «взять» и «вернуть истории»; если такого нет, кнопки на время проверки дублируются
-    const gap = await page.evaluate(() => {
-      let cloned = null;
-      let row = [...document.querySelectorAll('.staffs-acts')].find((e) => e.querySelectorAll('button').length >= 2);
-      if (!row) {
-        row = document.querySelector('.staffs-acts');
-        if (!row || !row.querySelector('button')) return null;
-        cloned = row.appendChild(row.querySelector('button').cloneNode(true));
-      }
-      const bs = [...row.querySelectorAll('button')];
-      const [a, b] = bs.map((e) => e.getBoundingClientRect());
-      const border = getComputedStyle(bs[0]).borderTopWidth;
-      cloned?.remove();
-      return border === '0px' ? -1 : Math.round((b.left - a.right) * 10) / 10;
-    });
-    if (gap === null) return fail('staffs', 'нет строки штаба с кнопками');
-    if (gap < 4) return fail('staffs', `промежуток между кнопками ${gap} px (-1: нет рамки)`);
-    ok('staffs', `кнопки раздельны (промежуток ${gap} px)`);
-    const staffText = () => page.locator('.cmd-sec.staffs').innerText();
-    const own = await staffText();
     const rows = await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().locator('.staffs-row b').allInnerTexts();
     if (/Украинск/.test(rows.join('|'))) return fail('staffs', `в списке чужой фронт: ${rows}`);
     const docsOpts = await page.locator('select[data-action="command.docs.hq"] option').allInnerTexts();
@@ -202,12 +197,32 @@ const parts = {
     const rows2 = await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().locator('.staffs-row b').allInnerTexts();
     if (rows2.length <= rows.length || !rows2.some((t) => /Украинск/.test(t))) return fail('staffs', `после «показать все» штабов ${rows2.length} (было ${rows.length})`);
     ok('staffs', `показать все (штабов: ${rows2.length})`);
-    void own;
+    // строка штаба, ведомого директивами, — в списке «все»
+    const gap = await page.evaluate(() => {
+      let cloned = null;
+      let warn = false;
+      let row = [...document.querySelectorAll('.staffs-acts')].find((e) => e.querySelectorAll('button').length >= 2);
+      if (!row) {
+        row = document.querySelector('.staffs-acts');
+        warn = true;
+        if (!row || !row.querySelector('button')) return null;
+        cloned = row.appendChild(row.querySelector('button').cloneNode(true));
+      }
+      const bs = [...row.querySelectorAll('button')];
+      const [a, b] = bs.map((e) => e.getBoundingClientRect());
+      const border = getComputedStyle(bs[0]).borderTopWidth;
+      cloned?.remove();
+      return { warn, gap: border === '0px' ? -1 : Math.round((b.left - a.right) * 10) / 10 };
+    });
+    if (gap === null) return fail('staffs', 'нет строки штаба с кнопками');
+    if (gap.warn) console.log('WARN staffs: нет строки с двумя кнопками, проверка на клонированной кнопке');
+    if (gap.gap < 4) return fail('staffs', `промежуток между кнопками ${gap.gap} px (-1: нет рамки)`);
+    ok('staffs', `кнопки раздельны (промежуток ${gap.gap} px)`);
   },
 };
 
 try {
-  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split("\n").slice(0, 3).join(" ")));
+  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split('\n').slice(0, 3).join(' ')));
   for (const n of ONLY ?? []) if (!parts[n] && !['dock', 'zones', 'staffs', 'orders', 'fly', 'umpire', 'bounds', 'manning'].includes(n)) fail(n, 'неизвестная часть');
 } finally {
   await browser.close();

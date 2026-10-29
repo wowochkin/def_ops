@@ -3,7 +3,7 @@
  * запросы на отход, штабы стороны с пометками управления (взять, вернуть агенту, вернуть в замысел старшего) и
  * журнал документов штабов-агентов. Команды копятся в очереди хода и уходят в ядро вместе с ходом.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
@@ -88,6 +88,11 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
   // «только своё»: пункт есть и это не верхняя инстанция
   const scopable = !!issuer && c.hqs[issuer]?.echelon !== 'high_command';
   const scoped = scopable && !all;
+  // область сменилась — выбор штаба в журнале сбрасывается
+  useEffect(() => { setHq(''); }, [scoped, issuer]);
+  const scopedHqs = (): Set<string> | null => (scoped ? subtreeHqs(v, issuer!) : null);
+  const base = scoped ? postDocs(v, issuer!) : c.documents;
+  const docAuthors = new Set([...Object.keys(c.hqs).filter((id) => staffListed(c.hqs[id].echelon, c.mode) && (!scoped || scopedHqs()!.has(id))), ...base.map((d) => d.hq)]);
   useAction({
     id: 'command.staffs.all', section: 'replay', title: 'Штабы: все или только свои', describe: 'Вкладка «Штабы» на пункте управления: on — показать все штабы стороны и их документы, off — только поддерево пункта и адресованные ему директивы.',
     params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, покажи все штабы', 'штаб, только мои штабы'], available: () => (scopable ? true : 'нужен пункт управления ниже верхней инстанции'),
@@ -99,6 +104,7 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
     run: async (p: { hq?: string }) => {
       const id = p?.hq ? findHq(c.hqs, p.hq) : '';
       if (id === null) return 'Такого штаба стороны нет.';
+      if (id && !docAuthors.has(id)) return 'Этот штаб вне пункта: скажите «покажи все штабы».';
       setHq(id);
       return id ? `Документы: ${c.hqs[id].name}.` : 'Документы всех штабов.';
     },
@@ -114,7 +120,6 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
   // верхняя инстанция — в списке только в «истории как замысле»: там её можно взять и вернуть
   const sub = scoped ? subtreeHqs(v, issuer!) : null;
   const list = Object.entries(c.hqs).filter(([id, h]) => staffListed(h.echelon, c.mode) && (!sub || sub.has(id)));
-  const base = scoped ? postDocs(v, issuer!) : c.documents;
   const docs = (hq ? base.filter((d) => d.hq === hq) : base).slice().reverse();
   return (
     <div className="cmd-sec staffs" data-hl="staffs">
@@ -164,7 +169,7 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
       <section>
         <h4>Документы штабов</h4>
         <label className="small">Штаб <select value={hq} data-action="command.docs.hq" onChange={(e) => void act('command.docs.hq', { hq: e.target.value })}>
-          <option value="">все</option>{list.map(([id, h]) => <option key={id} value={id}>{h.name}</option>)}</select></label>
+          <option value="">все</option>{[...docAuthors].filter((id) => c.hqs[id]).map((id) => <option key={id} value={id}>{c.hqs[id].name}</option>)}</select></label>
         <div className="staffs-docs">{docs.length ? docs.map((d, k) => <div key={k} className={`doc doc-${d.kind}`}>
           <b>{d.time}</b> {d.hqName} · <i>{KIND_RU[d.kind] ?? d.kind}</i>: {placeText(d.text, v.places)}{d.rule && <small className="muted"> ({d.rule})</small>}
         </div>) : <span className="muted">документов нет</span>}</div>
