@@ -73,7 +73,7 @@ if (process.argv.includes('--check')) {
     // прогон «история как замысел»: поле intent в ходе, по штабам со сменами статуса
     const ti = await core.call('run_scenario', { scenario: path, seed: 1, command: 'intent' });
     if (!Array.isArray(ti.intent) || !ti.intent.length || !ti.intent.every((h) => h.hq && Array.isArray(h.changes) && h.changes.length)) throw new Error('нет поля intent в ходе');
-    // игра в режиме intent: штаб игрока берётся командой take
+    // игра в режиме intent: штаб игрока берётся командой take (enemy: 'llm' пропущен — нужна модель)
     const g0 = await core.call('game_start', { scenario: path, seed: 1, takeover: 6, player: 'su', enemy: 'intent', mode: 'intent' });
     if (g0.command.mode !== 'intent' || !g0.game.enemyAgents) throw new Error(`режим игры ${g0.command.mode}`);
     const g1 = await core.call('game_turn', { orders: [], hours: 1, command: [{ op: 'take', hq: 'su_1bf' }] });

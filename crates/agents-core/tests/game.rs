@@ -629,7 +629,6 @@ fn intent_game_take() {
     let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Intent);
     let hq = |g: &Game, id: &str| g.sim.world.hqs.iter().position(|h| h.id == id).unwrap();
     assert_eq!(g.sim.intent.enabled, [true, true], "история как замысел у обеих сторон");
-    assert!(agents_core::commander::active(&g.sim, hq(&g, "su_1bf") as u32) && agents_core::commander::active(&g.sim, hq(&g, "de_9a") as u32));
     let (bf, uf, a9) = (hq(&g, "su_1bf"), hq(&g, "su_1uf"), hq(&g, "de_9a"));
     assert!(g.sim.intent.chains.iter().any(|c| c.owner as usize == uf), "цепочки за фронт под игроком");
     g.command(&CommandOp::Take { hq: "su_1bf".into() }).expect("взять штаб");
@@ -672,4 +671,56 @@ fn intent_enemy_only() {
     assert_eq!(g.sim.intent.enabled, [false, false]);
     g.enemy_intent();
     assert_eq!(g.sim.intent.enabled, [false, true]);
+}
+
+fn berlin() -> (agents_core::world::Sim, agents_core::scenario::Meta) {
+    let root = agents_core::repo_root();
+    agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий")
+}
+
+/// Игра `Mode::Intent` без действий игрока подаёт те же документы, что прогон в `command_mode("intent")` с того же часа.
+#[test]
+fn intent_game_matches_run() {
+    use agents_core::game::{Game, Mode};
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Intent);
+    g.advance(24);
+    let (mut sim, _) = berlin();
+    while sim.world.tick < 6 { sim.step(); }
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
+    while sim.world.tick < 30 { sim.step(); }
+    for id in ["su_1uf", "su_1bf"] {
+        let docs = |s: &agents_core::world::Sim| {
+            let h = s.world.hqs.iter().position(|x| x.id == id).unwrap() as u32;
+            s.documents.iter().filter(|d| d.hq == h && d.tick >= 6).map(|d| format!("{}|{:?}|{:?}|{}", d.tick, d.kind, d.to, d.text)).collect::<Vec<_>>()
+        };
+        let (a, b) = (docs(&g.sim), docs(&sim));
+        assert_eq!(a.len(), b.len(), "{id}: число документов");
+        assert_eq!(a, b, "{id}");
+    }
+}
+
+/// Игра с передачей на часе 72: задачи цепочек до этого часа считаются поданными, `next` — за ними.
+#[test]
+fn intent_game_takeover_issued() {
+    use agents_core::game::{Game, Mode};
+    let (sim, meta) = berlin();
+    let g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
+    assert!(!g.sim.intent.chains.is_empty());
+    for c in &g.sim.intent.chains {
+        let early = c.tasks.iter().filter(|t| t.at < 72).count();
+        assert!(c.tasks.iter().filter(|t| t.at < 72).all(|t| t.issued));
+        assert!(c.next >= early, "next за ранними задачами");
+    }
+}
+
+/// Противник «intent» в игре «как сейчас» игнорируется.
+#[test]
+fn intent_enemy_legacy_ignored() {
+    use agents_core::game::Game;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_free(sim, meta, 6, Side::Su, &[Side::Su], None);
+    g.enemy_intent();
+    assert_eq!(g.sim.intent.enabled, [false, false]);
+    assert!(g.sim.journal.iter().any(|e| e.text.contains("история как замысел")));
 }

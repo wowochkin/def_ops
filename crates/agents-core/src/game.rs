@@ -227,10 +227,14 @@ impl Game {
         }
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
-            crate::command::control::agents_side(&mut sim, player);
-            if matches!(mode, Mode::Commanders | Mode::Intent) { crate::commander::enable(&mut sim, player); }
-            // история как замысел: цепочки стороны игрока; взятый штаб с поддеревом уходит с истории (take)
-            if mode == Mode::Intent { crate::intent::enable(&mut sim, player); }
+            if mode == Mode::Intent {
+                // история как замысел: управление ровно как в прогоне (фронты и Ставка по сценарию, армии — агенты),
+                // командующие и цепочки; взятый игроком штаб с поддеревом уходит с истории (take)
+                let _ = crate::command::control::command_mode(&mut sim, "intent", player);
+            } else {
+                crate::command::control::agents_side(&mut sim, player);
+                if mode == Mode::Commanders { crate::commander::enable(&mut sim, player); }
+            }
             // противник под внешним управлением (штаб на модели): его приказы сценария и артподготовки сняты, как раньше
             let other = |hq: u32, sim: &Sim| { let s = sim.world.hqs[hq as usize].side; s != player && free.contains(&s) };
             let keep: Vec<bool> = sim.script.iter().map(|o| !other(o.hq, &sim)).collect();
@@ -533,14 +537,16 @@ impl Game {
     /// Противник — на истории как замысле: штабы — агенты, верхняя инстанция — агент, командующие и цепочки его армий
     /// (исторические директивы подаёт `intent::step`, не игра); его приказы сценария при доставке пропускаются.
     pub fn enemy_intent(&mut self) {
-        use crate::command::control::Control;
         if self.enemy_agents { return; }
+        if self.mode == Mode::Legacy {
+            let tick = self.hour();
+            self.sim.journal.push(crate::world::Event { tick, agent: u32::MAX, text: "история как замысел у противника — не в режиме «как сейчас»: пропущено".into() });
+            return;
+        }
         let enemy = other_side(self.player);
-        crate::command::control::agents_side(&mut self.sim, enemy);
-        for (k, h) in self.sim.world.hqs.iter().enumerate() { if h.side == enemy && h.echelon == crate::model::Echelon::HighCommand { self.sim.command.control[k] = Control::Agent; } }
+        // управление ровно как в прогоне: command_mode("intent") — командующие, цепочки, штабы по сценарию и армии-агенты
+        let _ = crate::command::control::command_mode(&mut self.sim, "intent", enemy);
         self.sim.sources[crate::staff::side_idx(enemy)] = crate::staff::Source::Script;
-        crate::commander::enable(&mut self.sim, enemy);
-        crate::intent::enable(&mut self.sim, enemy);
         self.enemy_agents = true;
     }
 
