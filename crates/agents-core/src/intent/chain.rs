@@ -44,6 +44,12 @@ fn dir_kind(t: DTask) -> Goal {
     match t { DTask::Attack => Goal::Attack, DTask::Move => Goal::Move, DTask::Withdraw => Goal::Withdraw, DTask::Defend | DTask::Delay | DTask::Reserve => Goal::Defend }
 }
 
+/// Задача из директивы (цель и вид — как у задачи цепочки): по ней судят о смысле и выполнении задачи, которую армия
+/// держит.
+pub fn of_directive(at: u32, d: &Directive) -> Task {
+    Task { at, step: Step::Dir(d.clone()), goal: dir_goal(d), kind: dir_kind(d.task), issued: true }
+}
+
 fn order_kind(k: OrderKind) -> Goal {
     match k { OrderKind::Attack => Goal::Attack, OrderKind::Move => Goal::Move, OrderKind::Withdraw => Goal::Withdraw, OrderKind::Defend | OrderKind::Hold => Goal::Defend }
 }

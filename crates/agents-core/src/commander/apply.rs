@@ -152,7 +152,9 @@ pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32) {
         Kind::TurnToRival { hq, at } => to_army(sim, c, *hq, Task::Attack, *at, tick, &mut to),
         Kind::Encircle { pocket } => {
             if let Some(p) = c.picture.as_ref().and_then(|pic| pic.pockets.get(*pocket)).cloned() {
-                let own: Vec<u32> = c.picture.as_ref().map(|pic| pic.armies.iter().map(|a| a.hq).filter(|h| p.by.contains(h)).collect()).unwrap_or_default();
+                // в «истории как замысле» — только армии вне истории (прочие идут по своим цепочкам)
+                let mine = |h: u32| !super::decide::for_strayed(sim, c.hq) || crate::intent::off_history(sim, h);
+                let own: Vec<u32> = c.picture.as_ref().map(|pic| pic.armies.iter().map(|a| a.hq).filter(|&h| p.by.contains(&h) && mine(h)).collect()).unwrap_or_default();
                 for a in own { to_army(sim, c, a, Task::Attack, p.center, tick, &mut to); }
             }
         }
@@ -176,6 +178,8 @@ pub fn apply(sim: &mut Sim, c: &Commander, k: &Kind, tick: u32) {
         }
         Kind::Counterattack { from, at } => to_reserve(sim, c, *from, Task::Attack, *at, tick, &mut to),
         Kind::MoveReserve { hq, to: at } => to_reserve(sim, c, *hq, Task::Move, *at, tick, &mut to),
+        // армии вне истории — частная директива фронта: наступать к точке (ось — от места армии, как `with_axis`)
+        Kind::Assign { army, at, .. } => to_army(sim, c, *army, Task::Attack, *at, tick, &mut to),
         Kind::Relief { army, by, toward } => {
             if by != army { to_army(sim, c, *by, Task::Attack, *toward, tick, &mut to); }
         }

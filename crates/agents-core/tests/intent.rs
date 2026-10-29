@@ -701,3 +701,108 @@ fn shifted_band_reason_strayed() {
     // расстояние меняется каждый час — запись одна
     assert_eq!(sim.intent.log.iter().filter(|e| e.1 == a && matches!(e.3, Some(Reason::Strayed { .. }))).count(), 1);
 }
+
+// ---------- командующие за армии вне истории ----------
+
+use agents_core::commander::options::Kind;
+use agents_core::commander::Commander;
+
+fn commander(sim: &Sim, h: u32) -> &Commander { sim.commanders.list.iter().find(|c| c.hq == h).expect("командующий") }
+
+/// Армию `a` увели с истории в час 1: след эталона на месте, армия — в 35 км к югу.
+fn stray(sim: &mut Sim, a: u32) {
+    run_to(sim, 1);
+    sim.intent.track = Some(still_track(sim, &[a]));
+    shift(sim, a, 0.0, -35.0);
+    run_to(sim, 2);
+    assert_eq!(status(sim, a).status, Status::Own);
+}
+
+/// Выбранные решения «поставить задачу» армии `a`: (час, точка, из плана).
+fn assigns(sim: &Sim, f: u32, a: u32) -> Vec<(u32, XY, bool)> {
+    commander(sim, f).decisions.iter().filter_map(|d| match &d.options[d.chosen].choice.kind {
+        Kind::Assign { army, at, from_plan } if *army == a => Some((d.tick, *at, *from_plan)),
+        _ => None,
+    }).collect()
+}
+
+/// Точка в `km` от центра армии к цели фронта (объект профиля командующего).
+fn toward_objective(sim: &Sim, f: u32, a: u32, km: f64) -> XY {
+    let r = &sim.rules.commanders;
+    let p = r.for_hq(&sim.world.hqs[f as usize].id).expect("профиль");
+    let o = sim.theatre.proj.to_xy(r.objective_at(p.objective.as_deref().expect("объект")).expect("объект"));
+    let c = center(sim, a);
+    let l = c.dist(o).max(1e-6);
+    XY::new(c.x + (o.x - c.x) / l * km, c.y + (o.y - c.y) / l * km)
+}
+
+#[test]
+fn commander_silent_on_history() {
+    let mut sim = intent_sim();
+    let f = hq(&sim, "su_1bf");
+    run_to(&mut sim, 48);
+    assert!(commander(&sim, f).decisions.is_empty(), "все армии на истории — Жуков не решает: {:?}", commander(&sim, f).decisions.iter().map(|d| d.trigger.clone()).collect::<Vec<_>>());
+}
+
+#[test]
+fn assign_from_plan() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    stray(&mut sim, a);
+    sim.command.intent[a as usize] = None;
+    // объект плана впереди, у противника
+    let p = toward_objective(&sim, f, a, 12.0);
+    let ci = chain_of(&sim, a);
+    let mut t = sim.intent.chains[ci].tasks[0].clone();
+    (t.at, t.goal, t.kind, t.issued) = (9999, Some(p), Goal::Attack, false);
+    sim.intent.chains[ci].tasks.push(t.clone());
+    run_to(&mut sim, 26);
+    let got = assigns(&sim, f, a);
+    assert!(!got.is_empty(), "решения: {:?}", commander(&sim, f).decisions.iter().map(|d| d.options[d.chosen].choice.label.clone()).collect::<Vec<_>>());
+    let (tick, at, from_plan) = got[0];
+    assert!(from_plan, "объект из плана: {at:?}");
+    assert!(intent::plan_objectives(&sim, f).iter().any(|q| q.dist(at) < 1e-6));
+    assert!(docs(&sim, f, "su_8gva").iter().any(|&d| d >= tick), "директива армии подана");
+    // диспетчер задачу командующего не перебивает: у армии вне истории цепочка стоит
+    let ci = chain_of(&sim, a);
+    t.at = sim.world.tick + 1;
+    t.goal = Some(toward_objective(&sim, f, a, 5.0));
+    sim.intent.chains[ci].tasks.push(t);
+    let end = sim.world.tick + 6;
+    run_to(&mut sim, end);
+    let d = sim.command.intent[a as usize].as_ref().expect("задача армии");
+    assert!(d.id.starts_with("командующий:"), "{}", d.id);
+    assert!(!sim.intent.chains[ci].tasks.last().unwrap().issued);
+}
+
+#[test]
+fn assign_terrain_fallback() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    stray(&mut sim, a);
+    sim.command.intent[a as usize] = None;
+    for c in sim.intent.chains.iter_mut() { for t in c.tasks.iter_mut() { t.goal = None; } }
+    assert!(intent::plan_objectives(&sim, f).is_empty());
+    run_to(&mut sim, 26);
+    let got = assigns(&sim, f, a);
+    assert!(!got.is_empty());
+    let (_, at, from_plan) = got[0];
+    assert!(!from_plan);
+    let pr = &sim.theatre.proj;
+    let centre = |ring: &[[f64; 2]]| { let n = ring.len() as f64; let v: Vec<XY> = ring.iter().map(|q| pr.to_xy(*q)).collect(); XY::new(v.iter().map(|q| q.x).sum::<f64>() / n, v.iter().map(|q| q.y).sum::<f64>() / n) };
+    let named = sim.theatre.areas.iter().any(|ar| centre(&ar.ring).dist(at) < 1e-6) || sim.theatre.bridges.iter().any(|b| b.pos.dist(at) < 1e-6);
+    assert!(named, "точка — населённый пункт или мост: {at:?}");
+}
+
+#[test]
+fn no_idle_army() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    stray(&mut sim, a);
+    run_to(&mut sim, 50);
+    let mut ticks = vec![2];
+    ticks.extend(docs(&sim, f, "su_8gva").into_iter().filter(|&t| t >= 2));
+    ticks.push(50);
+    let gap = ticks.windows(2).map(|w| w[1] - w[0]).max().unwrap();
+    assert!(gap <= 24, "промежуток без задачи {gap} ч: {ticks:?}");
+}

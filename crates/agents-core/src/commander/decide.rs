@@ -145,10 +145,21 @@ pub fn enable(sim: &mut Sim, side: Side) {
 
 /// У штаба действующий командующий: сторона включена, профиль есть, штаб ведёт агент (не игрок). Тогда штаб не
 /// вводит подвижные группы сам, а верхняя инстанция отвечает на запросы своим решением, а не прежним «держать».
+///
+/// В «истории как замысле» советский фронт идёт по приказам сценария, а его командующий решает только за армии вне
+/// истории (`for_strayed`).
 pub fn active(sim: &Sim, hq: u32) -> bool {
-    sim.command.control.get(hq as usize) == Some(&Control::Agent)
+    (sim.command.control.get(hq as usize) == Some(&Control::Agent) || for_strayed(sim, hq))
         && sim.commanders.enabled[side_idx(sim.world.hqs[hq as usize].side)]
         && sim.commanders.list.iter().any(|c| c.hq == hq)
+}
+
+/// Командующий советского фронта по приказам сценария при включённом `intent` стороны: решает за подчинённые армии
+/// вне истории (варианты — только для них; таких нет — решения нет).
+pub fn for_strayed(sim: &Sim, hq: u32) -> bool {
+    let h = &sim.world.hqs[hq as usize];
+    h.side == Side::Su && h.echelon == Echelon::Front && sim.intent.enabled[side_idx(h.side)]
+        && sim.command.control.get(hq as usize) == Some(&Control::Script)
 }
 
 /// Польза варианта (см. начало модуля). `t` — черты с поправкой на состояние; `continuing` — вариант повторяет
@@ -372,8 +383,8 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32, hourly: &mut super::mind::H
     c.motives = current(&sim.rules.commanders.profiles[c.profile].motives, &pic, &sim.rules.commanders.gains);
     let trig = trigger(sim, c, &pic, tick);
     c.picture = Some(pic);
-    // игрок или приказы сценария на месте штаба — командующий не решает
-    let agent = sim.command.control.get(c.hq as usize) == Some(&Control::Agent);
+    // игрок или приказы сценария на месте штаба — командующий не решает (кроме армий вне истории в `intent`)
+    let agent = sim.command.control.get(c.hq as usize) == Some(&Control::Agent) || for_strayed(sim, c.hq);
     let cycle = cycle_hours(sim, c.hq);
     let before = c.decisions.len();
     if agent && (trig.is_some() || tick >= c.last + cycle) {

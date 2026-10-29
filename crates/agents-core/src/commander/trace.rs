@@ -35,6 +35,7 @@ fn kind(k: &Kind) -> (&'static str, Option<XY>) {
         Kind::Forbid { .. } => ("forbid", None),
         Kind::Relief { toward, .. } => ("relief", Some(*toward)),
         Kind::MoveReserve { to, .. } => ("moveReserve", Some(*to)),
+        Kind::Assign { at, .. } => ("assign", Some(*at)),
     }
 }
 
@@ -43,14 +44,18 @@ fn option(sim: &Sim, o: &Scored) -> Value {
     // деблокирование: выручаемая армия и армия, которая выручает (получатель директивы)
     let (army, by) = match &o.choice.kind {
         Kind::Relief { army, by, .. } => (Some(sim.world.hqs[*army as usize].id.clone()), Some(sim.world.hqs[*by as usize].id.clone())),
+        Kind::Assign { army, .. } => (Some(sim.world.hqs[*army as usize].id.clone()), None),
         _ => (None, None),
     };
-    json!({
+    let mut v = json!({
         "kind": name, "label": o.choice.label, "rule": o.choice.rule, "army": army, "by": by,
         "target": at.map(|p| sim.theatre.proj.to_lnglat(p)),
         "parts": motives(&o.parts), "penalty": r3(o.penalty), "bonus": r3(o.bonus), "total": r3(o.total),
         "mind": o.mind.as_ref().map(|m| json!({ "hours": m.hours, "advanceKm": r3(m.advance_km), "losses": r3(m.losses), "encircled": r3(m.encircled) })),
-    })
+    });
+    // задача армии вне истории: объект плана или пункт по местности
+    if let Kind::Assign { from_plan, .. } = &o.choice.kind { v["fromPlan"] = json!(from_plan); }
+    v
 }
 
 /// Поле `commanders` хода; `None` — командующих нет.

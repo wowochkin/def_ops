@@ -11,13 +11,21 @@
 //! - TurnToRival: соперник +, задача − (уход от направления задачи старшего к объекту соперника; без замысла не появляется).
 //! - Encircle: уничтожение +, задача +.
 //! - CommitSecond: задача +, сохранение −.
+//! - Assign («история как замысел»: армия вне истории без задачи, с выполненной или потерявшей смысл): задача +,
+//!   соперник + (если объект ближе армии к объекту соперника), сохранение − (мало); U меньше у объекта плана фронта,
+//!   чем у пункта по местности.
+//!
+//! В «истории как замысле» фронт идёт по приказам сценария, и командующий решает только за армии вне истории:
+//! варианты строятся по картине с одними этими армиями, без переноса главного удара (это замысел самого фронта).
 
 use super::options::{Choice, Kind};
 use super::picture::{divisions_of, profile_objective_xy, ArmyView, Picture};
 use super::profile::{Motive, Motives, Profile};
-use crate::command::control::Role;
+use crate::command::agent::place;
+use crate::command::control::{Control, Role};
 use crate::command::directive::Target;
 use crate::geo::XY;
+use crate::intent::{self, Chain, Reason};
 use crate::world::Sim;
 
 /// Во сколько раз продвижение армии вне главного удара должно превышать продвижение главного удара для переноса удара.
@@ -79,6 +87,21 @@ const SECOND_TASK: f64 = 0.4;
 const SECOND_PRESERVE: f64 = -0.15;
 const SECOND_UNC: f64 = 0.3;
 const SECOND_LOSS: f64 = 0.35;
+// Assign
+/// Вклад постановки задачи армии вне истории в задачу, соперничество (объект ближе к объекту соперника) и сохранение сил.
+const ASSIGN_TASK: f64 = 0.4;
+const ASSIGN_RIVAL: f64 = 0.3;
+const ASSIGN_PRESERVE: f64 = -0.1;
+/// Неопределённость: объект плана фронта — известный замысел; пункт по местности — догадка.
+const ASSIGN_UNC_PLAN: f64 = 0.2;
+const ASSIGN_UNC_GROUND: f64 = 0.35;
+const ASSIGN_LOSS: f64 = 0.2;
+/// Объект плана впереди армии: угол к её оси не больше 60° (косинус).
+const AHEAD_COS: f64 = 0.5;
+/// Пункт по местности: населённый пункт или мост не дальше стольких км от точки суточного перехода по оси (допущение).
+const GROUND_KM: f64 = 10.0;
+const RULE_ASSIGN_PLAN: &str = "ПУ-43: задача армии — в замысле операции фронта; ближайший объект плана в полосе армии";
+const RULE_ASSIGN_GROUND: &str = "ПУ-43: ближайшая задача армии — на глубину суточного перехода по оси наступления";
 
 fn contrib(parts: &[(Motive, f64)]) -> Motives {
     let mut m = [0.0; 7];
@@ -100,6 +123,98 @@ fn task_goal(sim: &Sim, hq: u32) -> Option<XY> {
 }
 
 pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice> {
+    if !crate::commander::decide::for_strayed(sim, hq) { return plan_options(sim, hq, p, pic, false); }
+    let off = strayed(sim, pic);
+    if off.is_empty() { return Vec::new(); }
+    let mut view = pic.clone();
+    view.armies.retain(|a| off.contains(&a.hq));
+    let mut out = plan_options(sim, hq, p, &view, true);
+    for &a in &off {
+        if needs_task(sim, a) { out.extend(assign(sim, p, a)); }
+    }
+    out
+}
+
+/// Армии картины вне истории, за которые решает командующий (армию игрока ведёт игрок).
+pub fn strayed(sim: &Sim, pic: &Picture) -> Vec<u32> {
+    pic.armies.iter().map(|a| a.hq).filter(|&a| intent::off_history(sim, a) && sim.command.control.get(a as usize) != Some(&Control::Player)).collect()
+}
+
+/// Армии нужна задача (директивы ей в пути нет): её нет, она выполнена (армия у цели в пределах соприкосновения) или потеряла смысл; неспособная
+/// армия новой задачи не получает.
+pub fn needs_task(sim: &Sim, army: u32) -> bool {
+    // директива армии в пути — задача уже поставлена
+    if sim.command.in_transit.iter().any(|(_, d)| d.to == Target::Hq(army)) { return false; }
+    let Some(d) = sim.command.intent.get(army as usize).and_then(Option::as_ref) else { return true };
+    let t = intent::of_directive(d.issued, d);
+    if intent::done(sim, army, &t) { return true; }
+    let chain = Chain { owner: army, tasks: Vec::new(), next: 0, start: None };
+    !matches!(intent::sense(sim, &chain, &t), Ok(()) | Err(Reason::Unfit))
+}
+
+/// Ось армии: ось её задачи; нет — к объекту фронта; нет и его — к ближайшему противнику.
+fn army_axis(sim: &Sim, p: &Profile, army: u32, c: XY) -> Option<XY> {
+    if let Some(d) = sim.command.intent.get(army as usize).and_then(Option::as_ref) {
+        if let (Some(a), Some(b)) = (d.axis.first(), d.axis.last()) { if a.dist(*b) > 1e-6 { return Some(XY::new(b.x - a.x, b.y - a.y)); } }
+    }
+    let side = sim.world.hqs[army as usize].side;
+    let to = profile_objective_xy(sim, p).filter(|o| o.dist(c) > 1e-6).or_else(|| {
+        sim.world.divisions.iter().filter(|d| d.side != side && !d.state.out()).map(|d| d.vars.pos).min_by(|a, b| a.dist(c).total_cmp(&b.dist(c)))
+    })?;
+    Some(XY::new(to.x - c.x, to.y - c.y))
+}
+
+/// Вариант «поставить задачу» армии вне истории (спецификация, раздел 2.2): ближайший объект плана фронта впереди в
+/// полосе армии (к оси не больше 60°), ещё у противника (своих в пределах соприкосновения нет), не дальше `reachDays`
+/// суточных переходов; нет такого — ближайший населённый пункт (центр кольца) или мост у точки суточного перехода по
+/// оси (не дальше `GROUND_KM`), нет и их — сама точка.
+fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
+    let w = &sim.world;
+    let r = &sim.rules;
+    let ds = divisions_of(sim, army);
+    if ds.is_empty() { return None; }
+    let c = place(sim, Target::Hq(army));
+    let ax = army_axis(sim, p, army, c)?;
+    let al = (ax.x * ax.x + ax.y * ax.y).sqrt();
+    if al < 1e-9 { return None; }
+    let rate = ds.iter().map(|&i| r.enemy_territory_km_day[w.divisions[i].params.mobility as usize]).sum::<f64>() / ds.len() as f64;
+    let side = w.hqs[army as usize].side;
+    let ours = |g: XY| w.divisions.iter().any(|d| d.side == side && !d.state.out() && d.vars.pos.dist(g) <= r.contact_km);
+    let front = w.hqs[army as usize].parent.unwrap_or(army);
+    let plan = intent::plan_objectives(sim, front).into_iter().filter(|&g| {
+        let d = c.dist(g);
+        d > r.contact_km && d <= r.intent.reach_days * rate && ((g.x - c.x) * ax.x + (g.y - c.y) * ax.y) / (d * al) >= AHEAD_COS && !ours(g)
+    }).min_by(|a, b| c.dist(*a).total_cmp(&c.dist(*b)));
+    let (at, from_plan, what) = match plan {
+        Some(g) => (g, true, "объект плана фронта".to_string()),
+        None => {
+            let q = XY::new(c.x + ax.x / al * rate, c.y + ax.y / al * rate);
+            let pr = &sim.theatre.proj;
+            let areas = sim.theatre.areas.iter().filter(|a| !a.ring.is_empty()).map(|a| {
+                let v: Vec<XY> = a.ring.iter().map(|x| pr.to_xy(*x)).collect();
+                let n = v.len() as f64;
+                (XY::new(v.iter().map(|x| x.x).sum::<f64>() / n, v.iter().map(|x| x.y).sum::<f64>() / n), a.name.clone())
+            });
+            let bridges = sim.theatre.bridges.iter().map(|b| (b.pos, b.name.clone()));
+            match areas.chain(bridges).filter(|x| x.0.dist(q) <= GROUND_KM).min_by(|a, b| a.0.dist(q).total_cmp(&b.0.dist(q))) {
+                Some((at, n)) => (at, false, n),
+                None => (q, false, "рубеж суточного перехода".to_string()),
+            }
+        }
+    };
+    let rival = p.rival.as_deref().and_then(|id| sim.rules.commanders.profiles.iter().find(|q| q.id == id)).and_then(|rp| profile_objective_xy(sim, rp))
+        .map_or(0.0, |o| if at.dist(o) < c.dist(o) { ASSIGN_RIVAL } else { 0.0 });
+    Some(Choice {
+        kind: Kind::Assign { army, at, from_plan }, label: format!("Поставить {} задачу: {what}", name(sim, army)),
+        contrib: contrib(&[(Motive::Task, ASSIGN_TASK), (Motive::Rival, rival), (Motive::Preserve, ASSIGN_PRESERVE)]),
+        uncertainty: if from_plan { ASSIGN_UNC_PLAN } else { ASSIGN_UNC_GROUND }, losses: ASSIGN_LOSS,
+        rule: if from_plan { RULE_ASSIGN_PLAN } else { RULE_ASSIGN_GROUND },
+    })
+}
+
+/// Варианты по картине `pic`; `strayed` — «история как замысел»: в картине только армии вне истории, без переноса
+/// главного удара, котлы — только те, что замыкают эти армии.
+fn plan_options(sim: &Sim, hq: u32, p: &Profile, pic: &Picture, strayed: bool) -> Vec<Choice> {
     let mut out = vec![Choice {
         kind: Kind::Continue, label: "Продолжать по плану".into(), contrib: contrib(&[(Motive::Task, CONT_TASK)]),
         uncertainty: CONT_UNC, losses: CONT_LOSS, rule: "ПУ-43: выполнять задачу, поставленную старшим начальником",
@@ -142,7 +257,7 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     }
 
     // главный удар переносится на армии, вырвавшиеся вперёд
-    if !main.is_empty() {
+    if !strayed && !main.is_empty() {
         let to: Vec<u32> = pic.armies.iter().filter(|a| !tank(a) && !main.iter().any(|m| m.hq == a.hq) && a.advance_km > main_adv * SHIFT_RATIO && a.advance_km - main_adv >= SHIFT_MIN_LEAD_KM).map(|a| a.hq).collect();
         if !to.is_empty() {
             out.push(Choice {
@@ -177,6 +292,7 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
 
     // котлы с малым просветом
     for (i, k) in pic.pockets.iter().enumerate() {
+        if strayed && !k.by.iter().any(|h| pic.armies.iter().any(|a| a.hq == *h)) { continue; }
         if k.gap_km < sim.rules.commanders.options.encircle_gap_km {
             out.push(Choice {
                 kind: Kind::Encircle { pocket: i }, label: format!("Замкнуть кольцо окружения: котёл № {}", i + 1),

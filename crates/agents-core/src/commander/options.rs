@@ -39,6 +39,8 @@ pub enum Kind {
     Relief { army: u32, by: u32, toward: XY },
     /// Переместить резерв `hq` в точку `to`.
     MoveReserve { hq: u32, to: XY },
+    /// Поставить армии вне истории задачу: точка `at` — объект плана фронта (`from_plan`) или пункт по местности.
+    Assign { army: u32, at: XY, from_plan: bool },
 }
 
 /// Вариант, оцениваемый командующим.
