@@ -1,5 +1,6 @@
 // «Переигровка» и «Командование» голосом: доклады без модели, разбор фраз, действия с поддельным состоянием
 // (раздел в фоне, игры нет, расчёта нет), «покажи Зелов», «доложи о восьмой гвардейской», вход в командование.
+import { getAction } from '../src/voice/registry';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { places as simPlaces, Theatre, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
@@ -152,7 +153,7 @@ const reg = (list: Action[]) => offs.push(...list.map(register));
 function cmd(over: Partial<CommandDeps> = {}) {
   const d: CommandDeps = {
     view: view(), engine: { getView: () => ({ center: [14, 52], zoom: 7, bearing: 0 }), setView: vi.fn() },
-    setTab: vi.fn(), showUnit: vi.fn(), showEnemy: vi.fn(), enemy: 'llm', setEnemy: vi.fn(), reveal: false, setReveal: vi.fn(), exit: vi.fn(), ...over,
+    setTab: vi.fn(), showUnit: vi.fn(), showEnemy: vi.fn(), enemy: 'llm', enemyChoices: ['llm', 'passive'], setEnemy: vi.fn(), reveal: false, setReveal: vi.fn(), exit: vi.fn(), ...over,
   };
   reg(commandActions(() => d));
   return d;
@@ -166,6 +167,17 @@ beforeEach(() => {
 afterEach(() => { offs.forEach((o) => o()); setSpeaker(null); stopReading(); });
 
 describe('командование голосом', () => {
+  it('«противник без штаба» в «истории как замысле» отклонён: назван допустимый список', async () => {
+    const d = cmd({ enemyChoices: ['llm'] });
+    const r = await getAction('command.enemyMode')!.run({ mode: 'passive' });
+    expect(d.setEnemy).not.toHaveBeenCalled();
+    expect(r).toBe('В этом режиме игры противник — только штаб на модели.');
+  });
+  it('«противник без штаба» там, где допустим, ставится', async () => {
+    const d = cmd();
+    await getAction('command.enemyMode')!.run({ mode: 'passive' });
+    expect(d.setEnemy).toHaveBeenCalledWith('passive');
+  });
   it('«Штаб, покажи Зелов» — вид карты на Зелов', async () => {
     const d = cmd();
     expect(await mk().utterance('Штаб, покажи Зелов', 1)).toBe('done');

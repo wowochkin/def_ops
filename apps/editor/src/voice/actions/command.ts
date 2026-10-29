@@ -13,6 +13,7 @@
  * [за семнадцатое]», «оперативный уровень», «покажи / скрой реки», «участок Зееловские высоты», «весь театр»,
  * «приблизь», «отдали», «легенда», «покажи всех» / «верни туман войны», «выйди из игры», «заверши и удали игру».
  */
+import { enemyNames } from '../../command-forms';
 import { findLegendItem, shownLegend } from '../../map-legend';
 import type { LngLat } from '@def-ops/core';
 import type { MapEngine } from '../../engine/types';
@@ -194,7 +195,7 @@ export interface CommandDeps {
   showUnit(id: string): void;
   /** Противник: карточка разведки. */
   showEnemy(id: string): void;
-  enemy: EnemyMode; setEnemy(m: EnemyMode): void;
+  enemy: EnemyMode; /** Противники, которых можно сменить в ходе игры при её режиме. */ enemyChoices: EnemyMode[]; setEnemy(m: EnemyMode): void;
   reveal: boolean; setReveal(on: boolean): void;
   exit(discard: boolean): void;
 }
@@ -312,7 +313,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
     { ...base, id: 'command.enemyMode', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба (держится прежних приказов).',
       params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['штаб, противник без штаба'],
       available: inReplay, highlight: () => [hl('enemy-mode'), hl('tab-umpire')],
-      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents' || p.mode === 'intent') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents' || get().enemy === 'intent') return 'Противник — штабы без модели: это выбирается при передаче командования, в ходе игры не меняется.'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
+      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents' || p.mode === 'intent') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents' || get().enemy === 'intent') return 'Противник — штабы без модели: это выбирается при передаче командования, в ходе игры не меняется.'; if (!get().enemyChoices.includes(p.mode)) return `В этом режиме игры противник — только ${enemyNames(get().enemyChoices)}.`; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
     { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
       available: inReplay,
       run: async () => { more = null; get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },

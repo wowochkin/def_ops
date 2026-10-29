@@ -804,3 +804,13 @@ fn enemy_for_mode() {
         for e in ["script", "doctrine", "llm", "agents", "intent"] { assert_eq!(enemy_for(m, Some(e)), Ok(e)); }
     }
 }
+
+#[test]
+fn enemy_for_error_names() {
+    use agents_core::game::{enemy_for, Mode};
+    let e = enemy_for(Mode::Intent, Some("script")).unwrap_err();
+    assert!(e.contains("«без штаба»") && e.contains("история как замысел") && e.contains("штаб на модели"), "{e}");
+    assert!(!e.contains("script") && !e.contains("intent") && !e.contains("llm"), "{e}");
+    let e = enemy_for(Mode::Commanders, Some("script")).unwrap_err();
+    assert!(e.contains("штабы-агенты") && !e.contains("agents"), "{e}");
+}

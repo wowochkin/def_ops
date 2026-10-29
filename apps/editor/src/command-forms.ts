@@ -73,6 +73,24 @@ export function fitEnemy(e: EnemyMode, agents: boolean, mode: GameMode, llmDown:
   return enemyOptions(agents, mode).includes(e) ? e : defaultEnemy(agents, llmDown, mode);
 }
 
+/** Противник, которого можно сменить в ходе игры (Посредник, голос): допустимый при режиме штаб на модели или «без штаба». Штабы без модели выбираются при передаче командования. */
+export function liveEnemyOptions(agents: boolean, mode: GameMode): EnemyMode[] {
+  return enemyOptions(agents, mode).filter((e) => e === 'llm' || e === 'passive');
+}
+/** Названия противников через запятую — для ответов и сообщений. */
+export function enemyNames(list: EnemyMode[]): string {
+  return list.map((e) => ENEMY_TITLE[e].toLowerCase()).join(', ');
+}
+/**
+ * Противник при продолжении сохранённой игры: допустимый при режиме остаётся; недопустимый (старая запись) заменяется
+ * умолчанием режима, и в `note` — русское сообщение, что взято вместо него и почему.
+ */
+export function resumeEnemy(stored: EnemyMode, agents: boolean, mode: GameMode, llmDown: boolean): { enemy: EnemyMode; note?: string } {
+  const enemy = fitEnemy(stored, agents, mode, llmDown);
+  if (enemy === stored) return { enemy };
+  return { enemy, note: `В сохранённой игре противник «${ENEMY_TITLE[stored].toLowerCase()}», но в режиме «${MODE_TITLE[mode].title}» он недопустим (допустимы: ${enemyNames(enemyOptions(agents, mode))}). Игра продолжена с противником «${ENEMY_TITLE[enemy].toLowerCase()}».` };
+}
+
 const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.id);
 /**
  * Команда в очередь хода: повтор не добавляется; «взять» и «вернуть» одного штаба в одном ходе гасят друг друга;

@@ -76,7 +76,7 @@ const mk = (model?: ConstructorParameters<typeof Dispatcher>[0]['model']) => new
 function cmd(v: TurnView) {
   const d: CommandDeps = {
     view: v, engine: { getView: () => ({ center: [14, 52], zoom: 7, bearing: 0 }), setView: vi.fn() },
-    setTab: vi.fn(), showUnit: vi.fn(), showEnemy: vi.fn(), enemy: 'llm', setEnemy: vi.fn(), reveal: false, setReveal: vi.fn(), exit: vi.fn(),
+    setTab: vi.fn(), showUnit: vi.fn(), showEnemy: vi.fn(), enemy: 'llm', enemyChoices: ['llm', 'passive'], setEnemy: vi.fn(), reveal: false, setReveal: vi.fn(), exit: vi.fn(),
   };
   reg(commandActions(() => d));
 }

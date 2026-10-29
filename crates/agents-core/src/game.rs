@@ -34,7 +34,22 @@ pub fn enemy_for(mode: Mode, enemy: Option<&str>) -> Result<&'static str, String
         Mode::Agents | Mode::Hybrid => &["script", "doctrine", "llm", "agents", "intent"],
     };
     let Some(e) = enemy else { return Ok(ok[0]) };
-    ok.iter().copied().find(|&x| x == e).ok_or_else(|| format!("противник «{e}» в этом режиме игры недопустим: {}", ok.join(", ")))
+    ok.iter().copied().find(|&x| x == e).ok_or_else(|| {
+        let names: Vec<&str> = ok.iter().map(|&x| enemy_title(x)).collect();
+        format!("противник «{}» в этом режиме игры недопустим; допустимы: {}", enemy_title(e), names.join(", "))
+    })
+}
+
+/// Название противника — как в окне «Принять командование» (id ядра → русское имя; неизвестный остаётся как есть).
+fn enemy_title(id: &str) -> &str {
+    match id {
+        "script" => "без штаба",
+        "llm" => "штаб на модели",
+        "agents" => "штабы-агенты",
+        "intent" => "история как замысел",
+        "doctrine" => "по доктрине",
+        other => other,
+    }
 }
 
 fn other_side(s: Side) -> Side { if s == Side::Su { Side::De } else { Side::Su } }

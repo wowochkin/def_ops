@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, ENEMY_TITLE, type CommandOp } from './command-forms';
+import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, ENEMY_TITLE, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -123,8 +123,8 @@ const TOGGLES = [
   { key: 'zones', title: 'Зоны влияния', match: () => false },
 ];
 
-export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOpenInEditor }: {
-  bm: Basemaps; llm: Llm; start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode;
+export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit, onOpenInEditor }: {
+  bm: Basemaps; llm: Llm; start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode; /** Сообщение при входе (например, замена недопустимого противника при продолжении). */ note?: string;
   onExit: (opts: { discard: boolean }) => void; onOpenInEditor: (d: MapDocument) => void;
 }) {
   const [view, setView] = useState<TurnView | null>(null);
@@ -138,6 +138,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   const [blocked, setBlocked] = useState<string | null>(null);
   const [record, setRecord] = useState<GameRecord | null>(saved?.record ?? null);
   const [enemy, setEnemy] = useState<EnemyMode>(saved?.enemy ?? enemy0);
+  // противники, которых допускает режим игры (ядро — game::enemy_for): в ходе игры сменить можно только их
+  const gameSpec = record?.agents ?? start?.agents;
+  const enemyChoices = liveEnemyOptions(!!gameSpec, gameSpec?.mode ?? 'legacy');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [tab, setTab] = useState<Tab>('reports');
   const [sel, setSel] = useState<string | null>(null);
@@ -156,7 +159,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
   const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>) => void) | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(note ?? null);
   useEffect(() => { noticeSink = setNotice; return () => { if (noticeSink === setNotice) noticeSink = null; }; }, []);
   const checks = useRef(new Map<number, (r: ActionCheck) => void>());
   const checkId = useRef(0);
@@ -811,7 +814,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
   // голос и кнопки: вкладки, доклады, карта, туман войны, выход — одни действия реестра
   const voice = useRef<CommandDeps>(null!);
   voice.current = {
-    view, engine: eng, setTab, showUnit, showEnemy: (id) => setIntelSel(id), enemy, setEnemy,
+    view, engine: eng, setTab, showUnit, showEnemy: (id) => setIntelSel(id), enemy, enemyChoices, setEnemy,
     reveal, setReveal: (on) => { setReveal(on); send({ kind: 'reveal', on }); }, exit: (discard) => onExit({ discard }),
   };
   useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
@@ -935,7 +938,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, onExit, onOp
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}
             {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => tap('command.reveal', { on })}
-              enemy={enemy} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
+              enemy={enemy} choices={enemyChoices} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
           </>}
         </div>
         {view && !view.over && <div className="cmd-foot" data-tour="cmd-foot" data-hl="foot">
@@ -1958,9 +1961,9 @@ function Journal({ v }: { v: TurnView }) {
   );
 }
 
-function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, enemy, setEnemy, llm, part }: {
+function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, enemy, choices, setEnemy, llm, part }: {
   record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; phase: string; reveal: boolean; setReveal: (b: boolean) => void;
-  enemy: EnemyMode; setEnemy: (e: EnemyMode) => void; llm: Llm; part: 'enemy' | 'umpire';
+  enemy: EnemyMode; choices: EnemyMode[]; setEnemy: (e: EnemyMode) => void; llm: Llm; part: 'enemy' | 'umpire';
 }) {
   const [open, setOpen] = useState<string | null>(null);
   // решение штаба противника за ход — раскрыть (голосом прочитать последнее — «как действовал противник»)
@@ -1976,9 +1979,10 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
       <div className="umpire-cfg">
         <label>Противник
           {enemy === 'agents' || enemy === 'intent' ? <b> — {enemy === 'intent' ? 'штабы по истории как замыслу' : 'штабы-агенты по уставам'} (выбрано при передаче командования)</b>
+            : choices.length < 2 ? <b> — {ENEMY_TITLE[choices[0] ?? enemy].toLowerCase()} (в этом режиме игры другого нет)</b>
             : <select value={enemy} data-action="command.enemyMode" data-hl="enemy-mode" onChange={(e) => setEnemy(e.target.value as EnemyMode)}>
-            <option value="llm">штаб на модели (LM Studio)</option>
-            <option value="passive">без штаба — держится прежних приказов</option>
+            {choices.includes('llm') && <option value="llm">штаб на модели (LM Studio)</option>}
+            {choices.includes('passive') && <option value="passive">без штаба — держится прежних приказов</option>}
           </select>}
         </label>
       </div>

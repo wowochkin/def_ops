@@ -17,7 +17,7 @@ import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
 import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
-import { defaultEnemy, fitEnemy } from './command-forms';
+import { defaultEnemy, fitEnemy, resumeEnemy } from './command-forms';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
 import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
@@ -202,7 +202,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   useEffect(() => { const load = () => void listReplays().then(setReplays); load(); return onDataChange(load); }, []);
-  const [game, setGame] = useState<{ start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode } | null>(null);
+  const [game, setGame] = useState<{ start: GameStart | null; saved: SavedGame | null; enemy: EnemyMode; note?: string } | null>(null);
   const [take, setTake] = useState<string | null>(null);
   const [focus, setFocus] = useState<Sector | null>(null);
   const [eng, setEng] = useState<MapEngine | null>(null);
@@ -478,12 +478,17 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     catalog: CATALOG, scenario, busy, game: !!game, calc: (id) => { setScenario(id); run(id); },
     result, time, takeAt: (t) => turnStart(t, result!.start, result!.end, result!.turnHours), setTime,
     openTake: setTake, closeTake: () => setTake(null), take, saved,
-    begin: beginGame, continueGame: () => { if (saved) setGame({ start: null, saved, enemy: saved.enemy }); },
+    begin: beginGame, continueGame: () => {
+      if (!saved) return;
+      // противник старой записи может не подходить режиму игры (ядро такой отклонит): берём умолчание режима и говорим об этом
+      const r = resumeEnemy(saved.enemy, !!saved.record.agents, saved.record.agents?.mode ?? 'legacy', llm.check.state === 'fail');
+      setGame({ start: null, saved: r.note ? { ...saved, enemy: r.enemy } : saved, enemy: r.enemy, note: r.note });
+    },
     stop, discardSaved: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); },
   };
   useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
   if (game) {
-    return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} onOpenInEditor={onOpenInEditor}
+    return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} note={game.note} onOpenInEditor={onOpenInEditor}
       onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
   }
   const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;

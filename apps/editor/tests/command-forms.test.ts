@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, liveEnemyOptions, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -117,5 +117,25 @@ describe('директива пункта управления в очереди
   it('новая директива тому же получателю заменяет прежнюю', () => {
     const d = (task: string) => ({ op: 'directive' as const, directive: { to: 'su_8gva', task, form: 'order' } });
     expect(queueOp(queueOp([], d('attack')), d('defend'))).toEqual([d('defend')]);
+  });
+});
+
+describe('противник в ходе игры', () => {
+  it('сменить можно только допустимое при режиме: «история как замысел» — без «без штаба»', () => {
+    expect(liveEnemyOptions(true, 'intent')).toEqual(['llm']);
+    expect(liveEnemyOptions(true, 'commanders')).toEqual(['llm']);
+    expect(liveEnemyOptions(true, 'legacy')).toEqual(['llm', 'passive']);
+    expect(liveEnemyOptions(true, 'hybrid')).toEqual(['llm', 'passive']);
+    expect(liveEnemyOptions(false, 'intent')).toEqual(['llm', 'passive']);
+  });
+  it('продолжение: допустимый противник остаётся без сообщения', () => {
+    expect(resumeEnemy('llm', true, 'intent', false)).toEqual({ enemy: 'llm' });
+  });
+  it('продолжение: «без штаба» в «истории как замысле» — умолчание режима и сообщение по-русски', () => {
+    const r = resumeEnemy('passive', true, 'intent', false);
+    expect(r.enemy).toBe('intent');
+    expect(r.note).toContain('без штаба');
+    expect(r.note).toContain('история как замысел');
+    expect(r.note).not.toMatch(/passive|script/);
   });
 });
