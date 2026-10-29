@@ -26,16 +26,23 @@ const still = (n: number) => Array.from({ length: n }, () => [row(14), row(15), 
 const doc = (tick: number, to: string, kind = 'instruction') => ({ tick, time: '', hq: 'f', kind, to: [to], text: '', rule: null });
 
 describe('признаки правдоподобия', () => {
-  it('idleMaxHours: наибольший промежуток между документами армии после часа вмешательства; выбывшие не считаются', () => {
-    const documents = [doc(0, 'a'), doc(12, 'a'), doc(30, 'a'), doc(5, 'b'), doc(20, 'b', 'notice'), doc(38, 'b')];
-    const t = make(still(41), { documents });
-    // a: 10→12→30→40: 18; b: 10→38→40: 28 (извещение не задача)
-    expect(idleMaxHours(t as never, 10)).toEqual({ hours: 28, army: 'b' });
-    const dead = still(41); dead[40][1] = row(15, 52, OUT);
-    expect(idleMaxHours(make(dead, { documents }) as never, 10)).toEqual({ hours: 18, army: 'a' });
-    // армия без единого документа: в общем счёте — весь отрезок, среди армий с задачами — не считается
-    expect(idleMaxHours(make(still(41), { documents: documents.filter((d) => d.to[0] === 'a') }) as never, 10)).toEqual({ hours: 30, army: 'b' });
-    expect(idleMaxHours(make(still(41), { documents: documents.filter((d) => d.to[0] === 'a') }) as never, 10, true)).toEqual({ hours: 18, army: 'a' });
+  it('idleMaxHours: только часы армии вне истории без действующей задачи (нет директивы, цель достигнута); оборона — задача', () => {
+    // a: с истории в 10 ч; задача наступать к 14,5 (армия у 14 — не достигнута) с 12 ч, в 20 ч армия у цели, в 30 ч — «оборонять»
+    const fr = still(41).map((f, h) => [row(h >= 20 ? 14.5 : 14), f[1], f[2]]);
+    const at = (tick: number, text: string) => ({ ...doc(tick, 'a'), text });
+    const documents = [at(12, 'наступать; ближайшая задача — рубеж у 52.00, 14.50'), at(30, 'оборонять; ближайшая задача — рубеж у 52.00, 14.50'), doc(15, 'b', 'notice')];
+    const intent = [
+      { hq: 'a', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 10, status: 'own', reason: 'x' }] },
+      { hq: 'b', changes: [{ tick: 0, status: 'history', reason: null }] },
+    ];
+    // a: 10–11 без задачи (2 ч), 12–19 задача, 20–29 цель достигнута (10 ч), с 30 — оборона; b на истории — не в счёт
+    expect(idleMaxHours(make(fr, { documents, intent }) as never, 0, 4)).toEqual({ hours: 10, army: 'a' });
+    // b вне истории без единого документа с 35 ч — 6 ч (35–40)
+    const intent2 = [intent[0], { hq: 'b', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 35, status: 'shifted', reason: 'y' }] }];
+    expect(idleMaxHours(make(fr, { documents, intent: intent2 }) as never, 25, 4)).toEqual({ hours: 6, army: 'b' });
+    // выбывшая к концу армия — не в счёт
+    const dead = fr.map((f, h) => (h === 40 ? [row(14.5, 52, OUT), f[1], f[2]] : f));
+    expect(idleMaxHours(make(dead, { documents, intent }) as never, 0, 4)).toEqual({ hours: 0, army: null });
   });
   it('frontAdvance: смещение центра фронта и к Берлину', () => {
     const fr = still(3); fr[2] = [row(14.5), row(15.5), row(14.5)];

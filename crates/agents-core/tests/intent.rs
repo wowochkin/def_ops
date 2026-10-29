@@ -986,3 +986,38 @@ fn intervene_errors() {
     assert!(intent::intervene(&mut sim, &json!({ "actions": [{ "fly": {} }] })).is_err());
     assert!(intent::intervene(&mut sim, &json!({ "actions": [{ "permit": { "army": "su_8gva", "at": 1 } }] })).is_err(), "разрешение — немецкой армии");
 }
+
+/// Цепочка кончилась у армии, отошедшей от следа (дальше returnKm, не дальше leaveKm), — «сам» (цепочка кончилась),
+/// и командующий фронта ставит ей задачу за 1–2 ч (последняя задача выполнена: армия у её цели; невыполненную
+/// командующий оставляет в силе).
+#[test]
+fn chain_end_off_track_hands_over() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    run_to(&mut sim, 1);
+    let ci = chain_of(&sim, a);
+    let n = sim.intent.chains[ci].next;
+    sim.intent.chains[ci].tasks.truncate(n);
+    let g = sim.intent.chains[ci].tasks[n - 1].goal.expect("цель");
+    let c = center(&sim, a);
+    shift(&mut sim, a, g.x - c.x, g.y - c.y);
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, 2);
+    assert_eq!((status(&sim, a).status, status(&sim, a).reason.clone()), (Status::Own, Some(Reason::ChainEnd)));
+    run_to(&mut sim, 3);
+    assert!(assigns(&sim, f, a).iter().any(|&(t, _, _)| t <= 3), "командующий ставит задачу");
+}
+
+/// Цепочка кончилась у армии у следа — чистая история: остаётся «по истории», без приказов.
+#[test]
+fn chain_end_on_track_stays_history() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    run_to(&mut sim, 1);
+    let ci = chain_of(&sim, a);
+    let n = sim.intent.chains[ci].next;
+    sim.intent.chains[ci].tasks.truncate(n);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    run_to(&mut sim, 3);
+    assert_eq!(status(&sim, a).status, Status::History);
+}

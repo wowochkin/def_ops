@@ -2,8 +2,8 @@
  * Мерило 2 «Истории как замысла» (docs/superpowers/specs/2026-10-29-history-intent-design.md, раздел 4): прогоны
  * Берлинской в режиме `intent` без вмешательства и с каждым заготовленным вмешательством
  * (packages/sim/data/scenarios/agents/berlin-1945.interventions.json) и признаки правдоподобия по ходу:
- *   idleMaxHours — наибольший промежуток без нового документа (директивы, приказа, распоряжения) у советской армии
- *     после часа вмешательства (выбывшие к концу армии не считаются);
+ *   idleMaxHours — наибольшее число часов подряд после часа вмешательства, когда советская армия вне истории и без
+ *     действующей задачи (задачи нет или её цель достигнута; оборона — задача);
  *   frontAdvanceKm — смещение центра советского фронта за операцию (и к Берлину);
  *   berlin — «взят» (советские дивизии в кольце «Цитадели»), «окружён» (все немецкие дивизии в городском обводе
  *     отрезаны) или «нет» — на конец срока;
@@ -60,18 +60,42 @@ function center(t: AgentTrace, h: number, divs: number[]): LngLat | null {
 }
 const armies = (t: AgentTrace, side?: string) => t.hqs.filter((h) => h.echelon === 'army' && (!side || h.side === side));
 
-/** Наибольший промежуток (ч) без нового документа-задачи у советской армии на отрезке [t0, конец]; армии без живых
- * дивизий к концу — не в счёт; `tasked` — только армии, получившие за прогон хоть один документ-задачу. */
-export function idleMaxHours(t: AgentTrace, t0: number, tasked = false): { hours: number; army: string | null } {
+/** Задача оборонительная («оборонять», «сдерживать», «в резерв») — действует, пока не сменена. */
+const DEFEND = /^(оборонять|сдерживать|в резерв)/;
+/** Цель документа: ближайшая задача («рубеж у ШИРОТА, ДОЛГОТА»), нет — последующая; нет и её — null. */
+const goalOf = (text: string): LngLat | null => { const m = /у (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)/.exec(text); return m ? [+m[2], +m[1]] : null; };
+
+/** Статус армии по часам из поля `intent` хода: вне истории («сам», «со сдвигом») — true. */
+function offHistory(t: AgentTrace, army: string, hours: number): boolean[] {
+  const ch = [...(t.intent?.find((x) => x.hq === army)?.changes ?? [])].sort((a, b) => a.tick - b.tick);
+  const out: boolean[] = [];
+  let k = 0, off = false;
+  for (let h = 0; h <= hours; h++) { while (k < ch.length && ch[k].tick <= h) off = ch[k++].status !== 'history'; out.push(off); }
+  return out;
+}
+
+/** Наибольшее число часов подряд на отрезке [t0, конец], когда советская армия вне истории («сам», «со сдвигом») и без
+ * действующей задачи: документа-задачи (директива, приказ, распоряжение) ей нет или цель последнего достигнута (центр
+ * армии ближе `contactKm`, как intent::done); оборонительная задача — действующая; документ без рубежа — действующий.
+ * Армии на истории не в счёт (ритм задаёт история), как и армии без живых дивизий к концу. */
+export function idleMaxHours(t: AgentTrace, t0: number, contactKm: number): { hours: number; army: string | null } {
   const end = t.frames.length - 1;
   let best = { hours: 0, army: null as string | null };
   for (const a of armies(t, 'su')) {
-    if (!center(t, end, divisionsOf(t, a.id))) continue;
-    const mine = (t.documents ?? []).filter((d) => d.to.includes(a.id) && d.kind !== 'notice' && d.kind !== 'report');
-    if (tasked && !mine.length) continue;
-    const ticks = mine.filter((d) => d.tick >= t0 && d.tick <= end).map((d) => d.tick).sort((x, y) => x - y);
-    const pts = [t0, ...ticks, end];
-    for (let k = 1; k < pts.length; k++) if (pts[k] - pts[k - 1] > best.hours) best = { hours: pts[k] - pts[k - 1], army: a.id };
+    const ds = divisionsOf(t, a.id);
+    if (!center(t, end, ds)) continue;
+    const off = offHistory(t, a.id, end);
+    const docs = (t.documents ?? []).filter((d) => d.to.includes(a.id) && d.kind !== 'notice' && d.kind !== 'report').sort((x, y) => x.tick - y.tick);
+    let run = 0, k = 0, cur: (typeof docs)[number] | null = null;
+    for (let h = 0; h <= end; h++) {
+      while (k < docs.length && docs[k].tick <= h) cur = docs[k++];
+      if (h < t0 || !off[h]) { run = 0; continue; }
+      const g = cur && !DEFEND.test(cur.text) ? goalOf(cur.text) : null;
+      const c = center(t, h, ds);
+      const idle = !cur || (g != null && c != null && km(c, g) <= contactKm);
+      run = idle ? run + 1 : 0;
+      if (run > best.hours) best = { hours: run, army: a.id };
+    }
   }
   return best;
 }
@@ -138,7 +162,7 @@ export function reasonsShare(t: AgentTrace): number {
 
 // ---------- командная строка ----------
 interface Case { id: string; name: string; actions: Record<string, Record<string, unknown>>[] }
-interface Signs { idle: number; idleArmy: string | null; idleTasked: number; idleTaskedArmy: string | null; berlinHour: number | null; fronts: Record<string, { km: number; towardKm: number }>; berlin: string; untouched: number | null; affected: number | null; reasons: number }
+interface Signs { idle: number; idleArmy: string | null; berlinHour: number | null; fronts: Record<string, { km: number; towardKm: number }>; berlin: string; untouched: number | null; affected: number | null; reasons: number }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
@@ -152,6 +176,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const rings = [...scen.cityRings].sort((a, b) => a.level - b.level);
   const [cityRing, centerRing] = [rings[0].ring, rings[rings.length - 1].ring];
   const cases = rd<{ cases: Case[] }>(FILE).cases;
+  const contactKm = rd<{ contactKm: { value: number } }>('packages/sim/data/rules/agents-v0.json').contactKm.value;
   const startH = Date.parse(`${scen.start}:00Z`) / 3600e3;
   const hourOf = (v: unknown) => (typeof v === 'number' ? v : Date.parse(`${v}:00Z`) / 3600e3 - startH);
   const t0Of = (c: Case) => Math.min(...c.actions.map((a) => { const v = Object.values(a)[0]; return 'from' in v ? hourOf(v.from) : 'after' in v ? hourOf(v.after) : 'at' in v ? hourOf(v.at) : 0; }));
@@ -165,9 +190,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const signs = (t: AgentTrace, base: AgentTrace, c?: Case): Signs => {
     const t0 = c ? t0Of(c) : 0;
     const hit = c ? affectedArmies(t, c.actions) : new Set<string>();
-    const idle = idleMaxHours(t, t0), tasked = idleMaxHours(t, t0, true);
+    const idle = idleMaxHours(t, t0, contactKm);
     return {
-      idle: idle.hours, idleArmy: idle.army, idleTasked: tasked.hours, idleTaskedArmy: tasked.army, berlinHour: berlinHour(t, centerRing), fronts: Object.fromEntries(frontAdvance(t).map((f) => [f.front, { km: f.km, towardKm: f.towardKm }])),
+      idle: idle.hours, idleArmy: idle.army, berlinHour: berlinHour(t, centerRing), fronts: Object.fromEntries(frontAdvance(t).map((f) => [f.front, { km: f.km, towardKm: f.towardKm }])),
       berlin: berlinState(t, centerRing, cityRing), untouched: c ? untouchedKm(t, base, t0, hit) : 0, affected: c ? untouchedKm(t, base, t0, new Set(), 48, hit) : null, reasons: reasonsShare(t),
     };
   };
@@ -188,12 +213,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const s = all.get(c.id)!;
     const b = ['взят', 'окружён', 'нет'].map((k) => `${k} ${s.filter((x) => x.berlin === k).length}`).join(' / ');
     const day = (h: number | null) => (h == null ? '—' : new Date((startH + h) * 3600e3).toISOString().slice(5, 13).replace('T', ' ').replace(/^(\d\d)-(\d\d)/, '$2.$1') + ':00');
-    return `| ${c.name} (\`${c.id}\`) | ${f1(mean(s.map((x) => x.idle)))} (${top(s.map((x) => x.idleArmy))}) | ${f1(mean(s.map((x) => x.idleTasked)))} (${top(s.map((x) => x.idleTaskedArmy))}) | ${fronts.map((f) => `${f1(mean(s.map((x) => x.fronts[f]?.km ?? null)))} / ${f1(mean(s.map((x) => x.fronts[f]?.towardKm ?? null)))}`).join(' | ')} | ${b}; в «Цитадели» ≈ ${day(mean(s.map((x) => x.berlinHour)))} | ${f1(mean(s.map((x) => x.untouched)))} | ${f1(mean(s.map((x) => x.affected)))} | ${(mean(s.map((x) => x.reasons)) ?? 0).toFixed(3).replace('.', ',')} |`;
+    return `| ${c.name} (\`${c.id}\`) | ${f1(mean(s.map((x) => x.idle)))} (${Math.max(...s.map((x) => x.idle))}; ${top(s.map((x) => x.idleArmy)) || '—'}) | ${fronts.map((f) => `${f1(mean(s.map((x) => x.fronts[f]?.km ?? null)))} / ${f1(mean(s.map((x) => x.fronts[f]?.towardKm ?? null)))}`).join(' | ')} | ${b}; в «Цитадели» ≈ ${day(mean(s.map((x) => x.berlinHour)))} | ${f1(mean(s.map((x) => x.untouched)))} | ${f1(mean(s.map((x) => x.affected)))} | ${(mean(s.map((x) => x.reasons)) ?? 0).toFixed(3).replace('.', ',')} |`;
   });
   const md = ['# Мерило 2: вмешательства и признаки правдоподобия', '',
     `Берлинская операция, режим \`intent\`, seed ${opt('seeds', '1-10')}; средние по seed. Час вмешательства t0 — час первого действия случая (удержание — начало, изменение замысла — «после», разрешение — его час, снятие — 0).`, '',
-    '| Случай | idleMaxHours, ч (чаще всего у) | то же, армии с задачами | 1 БФ: км / к Берлину | 1 УФ: км / к Берлину | 2 БФ: км / к Берлину | Берлин | untouchedKm48 | affectedKm48 | reasons |',
-    '|---|---|---|---|---|---|---|---|---|---|', ...rows, '',
+    '| Случай | idleMaxHours, ч (макс по seed; чаще всего у) | 1 БФ: км / к Берлину | 1 УФ: км / к Берлину | 2 БФ: км / к Берлину | Берлин | untouchedKm48 | affectedKm48 | reasons |',
+    '|---|---|---|---|---|---|---|---|---|', ...rows, '',
+    'idleMaxHours — часы подряд, когда армия вне истории («сам», «со сдвигом») без действующей задачи: документа-задачи нет или центр армии у цели последнего ближе contactKm (оборона — задача); армии на истории не в счёт.', '',
     'Ожидалось: idleMaxHours ≤ 24; продвижение фронтов > 0; Берлин взят или окружён; reasons = 1; untouchedKm48 меньше affectedKm48.', ''].join('\n');
   const out = opt('out', 'evals-out/reports/interventions.md')!;
   mkdirSync(dirname(resolve(ROOT, out)), { recursive: true });

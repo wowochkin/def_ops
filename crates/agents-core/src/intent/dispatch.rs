@@ -4,7 +4,8 @@
 //! (не дальше `intent.returnKm`) или без следа идёт как чистая история: все задачи в свой час. Отошла от следа (дальше `returnKm`, не дальше `leaveKm`) — «со сдвигом»: задача подаётся по
 //! наступившему первым (свой час или выполнение предыдущей поданной); без смысла в свой час пропускается, и сразу
 //! берётся следующая, если у неё смысл есть уже сейчас (история «догоняет» армию), нет — она ждёт своего часа.
-//! Задача неспособной армии не пропускается, а ждёт её восстановления. Пропущена последняя задача — цепочка кончилась. Армия дальше `intent.leaveKm` от следа эталона на этот час уходит с истории, ближе `intent.returnKm` при
+//! Задача неспособной армии не пропускается, а ждёт её восстановления. Пропущена последняя задача или задачи кончились у
+//! армии, отошедшей от следа, — цепочка кончилась (армия «сама», решает командующий). Армия дальше `intent.leaveKm` от следа эталона на этот час уходит с истории, ближе `intent.returnKm` при
 //! задаче со смыслом на этот час — возвращается. Штаб игрока со всеми подчинёнными — всегда «сам».
 //!
 //! Подача: советская директива — `passing::issue` (с осью от места получателя, как в «фронтах по истории»), если
@@ -204,11 +205,14 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool, km: Option<f64>) {
     let mut skipped: Option<Reason> = None;
     let mut why: Option<Reason> = None;
     let mut shifted = false;
+    let mut issued_now = false;
     loop {
         let c = &sim.intent.chains[ci];
         let i = c.next;
         if i >= c.tasks.len() {
-            if skipped.is_some() { leave(sim, owner, Reason::ChainEnd, tick); return; }
+            // цепочка кончилась пропуском или (в час без новой задачи) у армии, отошедшей от следа, — решает
+            // командующий; у следа — чистая история (новых задач нет, как в истории)
+            if skipped.is_some() || (!near && !issued_now) { leave(sim, owner, Reason::ChainEnd, tick); return; }
             break;
         }
         let t = &c.tasks[i];
@@ -229,6 +233,7 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool, km: Option<f64>) {
             Err(r) => { sim.intent.chains[ci].next += 1; why = Some(r.clone()); skipped = Some(r); shifted = true; }
             Ok(()) => {
                 issue(sim, ci, i, tick);
+                issued_now = true;
                 sim.intent.chains[ci].next += 1;
                 if !by_hour || catch_up { shifted = true; }
                 skipped = None;
