@@ -52,6 +52,11 @@ describe('отрисовка командующих', () => {
     expect(html).not.toMatch(/задержка \d+[.,]\d/);
     expect(html).toContain('<colgroup>'); // колонки картины закреплены
   });
+  it('график: заголовок со свёрткой ▾, кнопка через действие map.chart', () => {
+    const html = renderToString(createElement(RivalryChart, { trace: trace([zhukov]), tick: 6, current: 'su_1bf' }));
+    expect(html).toMatch(/data-action="map\.chart"[^>]*>(<[^>]+>)*Состязание за/);
+    expect(html).toContain('▾');
+  });
   it('график: пусто — ничего; полный ход — оси, номера и список решений, цель из хода', () => {
     expect(renderToString(createElement(RivalryChart, { trace: trace(), tick: 0 }))).toBe('');
     const withMark = { ...zhukov, decisions: [{ ...zhukov.decisions[0], options: [opt('commitMobile', 'Ввести ТА', 0.9)] }] };

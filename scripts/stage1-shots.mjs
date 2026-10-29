@@ -72,6 +72,43 @@ const parts = {
     await shot('commander-after.jpg');
     ok('commander', 'ширины колонок неизменны за 12 ч');
   },
+  /** Колонка у левого края: легенда и график состязания не пересекаются при любых сочетаниях; скорости 1…48 ч/с. */
+  async dock() {
+    await replayAgents();
+    await page.evaluate(() => window.__replayCard('su_1bf'));
+    await page.locator('.ag-tabs button', { hasText: 'Командующий' }).click();
+    await page.locator('.map-dock > .cm-chart').waitFor();
+    const isOpen = (sel) => page.evaluate((q) => { const e = document.querySelector(q); return !!e && !e.classList.contains('closed'); }, sel);
+    const setState = async (sel, btnSel, want) => { if ((await isOpen(sel)) !== want) { await page.locator(btnSel).click(); await page.waitForTimeout(200); } };
+    const rects = () => page.evaluate(() => {
+      const r = (q) => { const b = document.querySelector(q).getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+      return { lg: r('.map-dock > .legend'), ch: r('.map-dock > .cm-chart'), map: r('.rp-map') };
+    });
+    let bad = '';
+    for (const lg of [true, false]) for (const ch of [true, false]) {
+      await setState('.map-dock > .legend', '.map-dock > .legend .lg-h', lg);
+      await setState('.map-dock > .cm-chart', '[data-action="map.chart"]', ch);
+      const { lg: a, ch: c, map } = await rects();
+      const cross = a.l < c.r && c.l < a.r && a.t < c.b && c.t < a.b;
+      const inside = (x) => x.l >= map.l - 1 && x.r <= map.r + 1 && x.t >= map.t - 1 && x.b <= map.b + 1;
+      if (cross || !inside(a) || !inside(c)) bad += ` легенда ${lg ? 'раскрыта' : 'свёрнута'}, график ${ch ? 'раскрыт' : 'свёрнут'}: ${cross ? 'пересекаются' : 'вне карты'};`;
+      await shot(`dock-${lg ? 'open' : 'closed'}-${ch ? 'open' : 'closed'}.jpg`);
+    }
+    if (bad) return fail('dock', bad);
+    ok('dock', '4 сочетания без пересечения');
+    const speeds = () => page.locator('.player select option').allInnerTexts();
+    const want_ = ['1 ч/с', '3 ч/с', '6 ч/с', '12 ч/с', '24 ч/с', '48 ч/с'];
+    const inReplayList = await speeds();
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-passive"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.player select option').first().waitFor({ state: 'attached', timeout: 600000 });
+    const inGame = await speeds();
+    if (inReplayList.join() !== want_.join() || inGame.join() !== want_.join()) return fail('dock', `скорости: переигровка ${inReplayList}; игра ${inGame}`);
+    ok('dock', 'скорости 1,3,6,12,24,48 в переигровке и в игре');
+  },
 };
 
 try {

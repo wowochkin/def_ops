@@ -36,6 +36,7 @@ import { FormationPanel, useEsc } from './FormationCard';
 import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
 import { RivalryChart } from './RivalryChart';
+import { PLAYER_SPEEDS } from './replay-dock';
 import { commanderOf } from './commander-view';
 
 import { AGENT_COMMANDS, AGENT_SCENARIOS, agentVariants, DEFAULT_AGENT_COMMAND, DESKTOP, runAgents, type AgentCommand, type AgentVariant } from './sim/agent-scenarios';
@@ -593,15 +594,17 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
           {commanderOpen && eng && <CommanderOverlay engine={eng} trace={agentRun!.trace} c={commander!} tick={agentHour} names={hqNames} />}
-          {commanderOpen && <RivalryChart trace={agentRun!.trace} tick={agentHour} current={commander!.hq} />}
           {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)} onTab={setCardTab} badge={agentRun ? intentBadge(intentAt(agentRun.trace, card.id, agentHour)) : null}
             tabs={commander && agentRun ? [{ id: 'commander', label: 'Командующий', body: <CommanderPanel trace={agentRun.trace} c={commander} tick={agentHour} onTick={agentToHour} names={hqNames} /> }] : undefined}
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
             actions={agentRun ? <button onClick={showDivisions} title="Уровень корпуса с приближением к штабу">Показать дивизии</button> : undefined} />}
           {!agentSel && !card && <div className="ag-hint">{agentRun ? 'Щёлкните по дивизии — карточка агента и разговор с ним; по штабу — его карточка' : 'Щёлкните по знаку соединения — его карточка'}</div>}
+          <div className="map-dock">
+          {commanderOpen && <RivalryChart trace={agentRun!.trace} tick={agentHour} current={commander!.hq} />}
           <Legend level={level} doc={doc} time={time} hidden={lvHidden} setHidden={(id, h) => setLegendHidden(level, id, h)}
             on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
+          </div>
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}
             events={result?.events ?? []} onEvent={goEvent} />}
           </div>
@@ -743,7 +746,7 @@ export function Player({ start, end, time, setTime, events, onEvent, mark }: { s
         <button className="pl-play" title={playing ? 'Пауза (пробел)' : 'Воспроизвести (пробел)'} onClick={() => { if (!playing && cur >= t1) setTime(start); setPlaying(!playing); }}>{playing ? '❚❚' : '▶'}</button>
         <button className="ic" title="Вперёд на сутки" onClick={() => step(24)}>⏭</button>
         <select value={speed} onChange={(e) => setSpeed(+e.target.value)} title="Скорость: часов операции в секунду">
-          {[3, 6, 12, 24, 48].map((v) => <option key={v} value={v}>{v} ч/с</option>)}
+          {PLAYER_SPEEDS.map((v) => <option key={v} value={v}>{v} ч/с</option>)}
         </select>
       </div>
       <div className="pl-track">

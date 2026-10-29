@@ -3,10 +3,14 @@
  * ближе. Вертикали — решения командующих (у немцев — «держать / отходить» 9-й армии и деблокирование 12-й), у каждой
  * номер, расшифровка — списком под графиком; сплошная линия — выбранный час. Ось — километры и даты.
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { AgentTrace } from '@def-ops/sim';
 import { addHours } from '@def-ops/sim';
 import { OBJECTIVE_AT, rivalrySeries } from './commander-view';
+import { ActButton, useAction } from './voice/registry';
+import { btn } from './voice/highlight';
+import { inReplay } from './voice/actions/command';
+import { CHART_KEY, readOpen } from './replay-dock';
 
 const COLORS = ['#b3261e', '#d97706', '#0f766e', '#2563eb'];
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
@@ -19,6 +23,14 @@ function niceStep(max: number): number {
 
 export function RivalryChart({ trace, tick, current }: { trace: AgentTrace; tick: number; current?: string }) {
   const series = useMemo(() => rivalrySeries(trace), [trace]);
+  const [open, setOpenState] = useState(() => { try { return readOpen(CHART_KEY, true, localStorage); } catch { return true; } });
+  const setOpen = (v: boolean) => { setOpenState(v); try { localStorage.setItem(CHART_KEY, v ? 'open' : 'closed'); } catch { /* */ } };
+  useAction({
+    id: 'map.chart', section: 'replay', title: 'График состязания', describe: 'Сворачивает или раскрывает график состязания за объект в левой колонке карты.',
+    params: { type: 'object', properties: { open: { type: 'boolean' } } }, say: ['штаб, сверни график', 'штаб, покажи график'],
+    available: inReplay, highlight: () => btn('map.chart'),
+    run: async (p?: { open?: boolean }) => { const want = typeof p?.open === 'boolean' ? p.open : !open; setOpen(want); return want ? 'График раскрыт.' : 'График свёрнут.'; },
+  });
   if (!series.length) return null;
   const objective = trace.commanders?.find((c) => c.side === 'su' && c.objective)?.objective;
   const goal = (objective && OBJECTIVE_AT[objective]?.name) || 'объект';
@@ -36,8 +48,9 @@ export function RivalryChart({ trace, tick, current }: { trace: AgentTrace; tick
   const marks = series.flatMap((s, si) => s.marks.map((m) => ({ ...m, s, si }))).sort((a, b) => a.tick - b.tick).map((m, i) => ({ ...m, n: i + 1 }));
   const showNum = marks.length <= 24;
   return (
-    <div className="cm-chart">
-      <div className="cm-chart-h"><b>Состязание за {goal} — как видит каждый командующий</b><span>{dm(trace.start)}–{dm(addHours(trace.start, last))}</span></div>
+    <div className={`cm-chart${open ? '' : ' closed'}`}>
+      <ActButton className="cm-chart-h" action="map.chart" params={{ open: !open }}><b>Состязание за {goal} — как видит каждый командующий {open ? '▾' : '▸'}</b><span>{dm(trace.start)}–{dm(addHours(trace.start, last))}</span></ActButton>
+      {open && <>
       <div className="cm-legend">{soviet.map((s, i) => <span key={s.hq}><i style={{ background: COLORS[i % COLORS.length] }} />{first(s.name)}</span>)}
         {series.some((s) => !s.points.length) && <span><i style={{ background: '#6b7280' }} />решения 9-й армии, деблокирование 12-й</span>}</div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%">
@@ -56,6 +69,7 @@ export function RivalryChart({ trace, tick, current }: { trace: AgentTrace; tick
       <ol className="cm-marks">{marks.map((m) => <li key={`${m.s.hq}-${m.tick}-${m.label}`} className={m.tick <= tick ? '' : 'future'}>
         {showNum && <b style={{ color: m.s.points.length ? COLORS[m.si % COLORS.length] : '#6b7280' }}>{m.n}</b>} {dm(addHours(trace.start, m.tick))} {first(m.s.name)}: {m.label}</li>)}</ol>
       <div className="cm-chart-f">Расстояние до {goal === 'объект' ? 'объекта' : `центра ${goal === 'Берлин' ? 'Берлина' : goal}`}, км (сверху вниз — ближе); вертикали — решения командующих.</div>
+      </>}
     </div>
   );
 }
