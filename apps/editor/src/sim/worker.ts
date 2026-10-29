@@ -3,7 +3,7 @@
  * модулями сборки (packages/sim/data), прогон и сравнение с историей — тем же кодом,
  * что и в npm run sim:history. Сервер не нужен.
  */
-import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, snapshotZones, summarize, summaryToDocument, type DataKind, type History, type RunResult, type SimContext } from '@def-ops/sim';
+import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, snapshotZones, summarize, summaryToDocument, type DataKind, type History, type RunResult, type ZoneGrid, type SimContext } from '@def-ops/sim';
 import type { SimRequest, SimResponse, SimResult } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
@@ -18,6 +18,9 @@ const post = (m: SimResponse) => (self as unknown as Worker).postMessage(m);
  * Зоны влияния для карты «Переигровки»: снимки через сутки от начала (ближайший не раньше) и последний; сторона —
  * советская. Ошибка расчёта — зон нет (карта без них).
  */
+/** Значения зоны −100…100 — в Int8Array: в пять раз меньше при передаче и сохранении. */
+const packZone = (z: ZoneGrid): ZoneGrid => ({ ...z, v: Int8Array.from(z.v) });
+
 function zonesOf(ctx: SimContext, run: RunResult): SimResult['zones'] {
   try {
     const sn = run.snapshots;
@@ -33,7 +36,7 @@ function zonesOf(ctx: SimContext, run: RunResult): SimResult['zones'] {
     }
     const last = sn[sn.length - 1];
     if (!picked.includes(last)) picked.push(last);
-    return { side, frames: picked.map((s) => ({ time: s.time, grid: snapshotZones(ctx, s, side) })) };
+    return { side, frames: picked.map((s) => ({ time: s.time, grid: packZone(snapshotZones(ctx, s, side)) })) };
   } catch { return undefined; }
 }
 

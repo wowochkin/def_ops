@@ -21,11 +21,12 @@ const CURVE = 0.6;
 /** Пиксели картинки (RGBA), строка за строкой с севера — как сетка. */
 export function zoneRgba(z: ZoneGrid, alpha = ZONE_ALPHA, enemy = ZONE_ALPHA_ENEMY): Uint8ClampedArray {
   const px = new Uint8ClampedArray(z.cols * z.rows * 4);
-  z.v.forEach((x, i) => {
-    if (!x) return;
+  for (let i = 0; i < z.v.length; i++) {
+    const x = z.v[i];
+    if (!x) continue;
     const c = x > 0 ? ZONE_OWN : ZONE_ENEMY;
     px.set([c[0], c[1], c[2], Math.round(255 * (x > 0 ? alpha : enemy) * Math.min(1, Math.abs(x) / 100) ** CURVE)], i * 4);
-  });
+  }
   return px;
 }
 
@@ -72,4 +73,9 @@ export function zonesAt(frames: { time: string; grid: ZoneGrid }[], time: string
   if (k < 0) { const l = frames[frames.length - 1]; return { prev: null, cur: l.grid, from: l.time, to: l.time }; }
   if (k === 0) return { prev: null, cur: frames[0].grid, from: frames[0].time, to: frames[0].time };
   return { prev: frames[k - 1].grid, cur: frames[k].grid, from: frames[k - 1].time, to: frames[k].time };
+}
+
+/** Ключ набора наложений: кадры (from/to), стороны, ссылки на картинки и прозрачность — смена любого перерисовывает карту. */
+export function zonesKey(at: { from: string; to: string } | null, sides: { own: boolean; enemy: boolean }, ov: ImageOverlay[]): string {
+  return `${at?.from ?? ''}|${at?.to ?? ''}|${+sides.own}${+sides.enemy}|${ov.map((o) => `${o.id}:${o.opacity}:${o.url.length}:${o.url.slice(-24)}`).join(',')}`;
 }

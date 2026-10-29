@@ -2,7 +2,7 @@
 // знаков сторон; прозрачно), смена зон за ход — плавно по времени карты.
 import { describe, expect, it } from 'vitest';
 import type { ZoneGrid } from '@def-ops/sim';
-import { ZONE_ALPHA, ZONE_ALPHA_ENEMY, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba, zonesAt } from '../src/zones-overlay';
+import { ZONE_ALPHA, ZONE_ALPHA_ENEMY, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba, zonesAt, zonesKey } from '../src/zones-overlay';
 
 const grid = (v: number[]): ZoneGrid => ({ bbox: [14, 52, 15, 53], cols: v.length, rows: 1, v });
 
@@ -61,5 +61,23 @@ describe('зоны переигровки по времени', () => {
     expect(zonesAt(frames, '1945-04-16T17:00')).toEqual({ prev: g(1), cur: g(2), from: '1945-04-16T05:00', to: '1945-04-17T05:00' });
     expect(zonesAt(frames, '1945-04-18T05:00')).toEqual({ prev: null, cur: g(2), from: '1945-04-17T05:00', to: '1945-04-17T05:00' });
     expect(zonesAt([], '1945-04-16T05:00').cur).toBeNull();
+  });
+});
+
+describe('ключ наложений зон переигровки', () => {
+  const g = (k: number): ZoneGrid => ({ bbox: [14, 52, 15, 53], cols: 1, rows: 1, v: [k] });
+  const frames = ['1945-04-16T05:00', '1945-04-17T05:00', '1945-04-18T05:00'].map((time, k) => ({ time, grid: g(k + 1) }));
+  const sides = { own: true, enemy: true };
+  const at = (t: string) => {
+    const z = zonesAt(frames, t);
+    const url = (x: ZoneGrid | null) => (x ? `data:image/png;base64,${x.v[0]}` : null);
+    const ov = zoneOverlays({ cur: z.cur, prev: z.prev, urls: { cur: url(z.cur), prev: url(z.prev) }, from: z.from, to: z.to, time: t, on: true });
+    return { ov, key: zonesKey(z, sides, ov) };
+  };
+  it('шаг на сутки меняет картинку и ключ', () => {
+    const a = at('1945-04-17T05:00'), b = at('1945-04-18T05:00');
+    expect(a.ov[0].url).not.toBe(b.ov[0].url);
+    expect(a.key).not.toBe(b.key);
+    expect(zonesKey(zonesAt(frames, '1945-04-17T05:00'), { own: true, enemy: false }, a.ov)).not.toBe(a.key);
   });
 });

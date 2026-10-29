@@ -133,8 +133,14 @@ const parts = {
     await page.keyboard.press('Escape');
     const legend = await page.locator('.legend').innerText();
     if (!/зона влияния советских войск/.test(legend) || !/зона влияния немецких войск/.test(legend)) return fail('zones', `в легенде нет строк зон: ${legend.replace(/\n/g, ' | ')}`);
-    const imgs = await page.evaluate(() => (window.__replayEngine ? 1 : 0));
-    void imgs;
+    const z4 = await page.evaluate(() => window.__replayZones?.());
+    if (!(z4?.neg > 0)) return fail('zones', `в текущем кадре нет клеток противника (отрицательных): ${z4?.neg}`);
+    await page.locator('.player .ic[title="Вперёд на сутки"]').click();
+    await page.waitForTimeout(300);
+    const z5 = await page.evaluate(() => window.__replayZones?.());
+    if (z5.key === z4.key) return fail('zones', 'при шаге на сутки наложение зон не сменилось');
+    await page.locator('.player .ic[title="Назад на сутки"]').click();
+    await page.waitForTimeout(300);
     await shot('replay-zones.jpg');
     ok('zones', 'слой и легенда');
     await page.locator('.lyr-menu > .pop-btn').click();

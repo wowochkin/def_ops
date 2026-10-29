@@ -41,7 +41,7 @@ export interface ZoneGrid {
   cols: number;
   rows: number;
   /** Строки сверху вниз (с севера), в строке — с запада; −100..100. */
-  v: number[];
+  v: number[] | Int8Array;
 }
 
 /** Наибольшее значение клетки. */

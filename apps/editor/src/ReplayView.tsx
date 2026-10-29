@@ -11,7 +11,7 @@ import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
 import { LEGACY_LEVEL_KEY, legacyLevel, LEVEL_KEY, levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
 import { withLevel } from './map-levels';
-import { zoneOverlays, zonesAt, zoneUrl } from './zones-overlay';
+import { zoneOverlays, zonesAt, zonesKey, zoneUrl } from './zones-overlay';
 import { findLegendItem, legendFor, legendText, presentItems, shownLegend, withHidden, type LegendItem } from './map-legend';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
@@ -401,6 +401,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (!import.meta.env.DEV) return;
     (window as unknown as { __replayCard?: (id: string | null) => void }).__replayCard = (id) => { setCardSel(id); setAgentSel(null); };
   }, []);
+  // крючок разработки: сколько клеток противника (отрицательных) в текущем кадре зон и ключ наложений
+  const zoneProbe = useRef<() => { neg: number; key: string }>(() => ({ neg: 0, key: '' }));
+  zoneProbe.current = () => ({ neg: zAt?.cur ? Array.prototype.filter.call(zAt.cur.v, (x: number) => x < 0).length : 0, key: zKey });
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __replayZones?: () => { neg: number; key: string } }).__replayZones = () => zoneProbe.current();
+  }, []);
   const closeCards = useCallback(() => { setCardSel(null); setAgentSel(null); }, []);
   useEsc(!!(cardSel || agentSel), closeCards);
   /** Карточка выбранного соединения или штаба на момент проигрывания. */
@@ -477,7 +484,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     [zAt?.cur, zAt?.prev, zSides.own, zSides.enemy]); // eslint-disable-line react-hooks/exhaustive-deps
   const zShown = !!zFrames && zonesOn && (zSides.own || zSides.enemy);
   const zOv = zAt && time ? zoneOverlays({ cur: zAt.cur, prev: zAt.prev, urls: zUrls, from: zAt.from, to: zAt.to, time, on: zShown }) : [];
-  const zKey = zOv.map((o) => `${o.id}:${o.opacity}`).join(',');
+  const zKey = zonesKey(zAt, zSides, zOv);
   /** Зоны влияния — не знаки карты: в легенде, когда они на карте. */
   const zAlways = useMemo(() => new Set(zFrames && zonesOn && time ? ['zones-su', 'zones-de'] : []), [zFrames, zonesOn, !!time]); // eslint-disable-line react-hooks/exhaustive-deps
   const mapDoc = useMemo(() => {
