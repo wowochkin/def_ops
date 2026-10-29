@@ -29,6 +29,8 @@ export interface ScreenDeps {
   setTab(t: CmdTab): void;
   /** Подвкладка «Приказов» (выбор точки на карте при этом снимается). */
   setSub(s: OrdersSub): void;
+  /** Какие подвкладки «Приказов» есть на этом уровне: true или причина, почему нет. */
+  subsOk?: Record<OrdersSub, true | string>;
   /** Закрыть карточку противника на карте (разведданные). */
   closeCard(): void;
   /** Выбранное объединение (доклад, приказ); null — снять выбор. */
@@ -124,7 +126,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       } },
     { ...base, id: 'command.orders.sub', highlight: (p: { sub: OrdersSub }) => hl(`sub-${p?.sub}`), title: 'Подвкладка приказов', describe: 'Открывает во вкладке «Приказы»: войска, тыл, переправы, резервы, полосы.',
       params: { type: 'object', properties: { sub: { enum: Object.keys(SUB_TITLE) } }, required: ['sub'] }, say: ['штаб, открой тыл', 'штаб, открой резервы'],
-      run: async (p: { sub: OrdersSub }) => { if (!SUB_TITLE[p?.sub]) return 'Такой подвкладки нет.'; get().setTab('orders'); get().setSub(p.sub); return `Приказы: «${SUB_TITLE[p.sub]}».`; } },
+      run: async (p: { sub: OrdersSub }) => { if (!SUB_TITLE[p?.sub]) return 'Такой подвкладки нет.'; const why = get().subsOk?.[p.sub]; if (why && why !== true) return `«${SUB_TITLE[p.sub]}» на этом уровне нет: ${why}.`; get().setTab('orders'); get().setSub(p.sub); return `Приказы: «${SUB_TITLE[p.sub]}».`; } },
     // ---- советник: окно, беседа, варианты
     { ...base, id: 'command.advisor.show', highlight: (p: { mode: string }) => (p?.mode === 'close' ? null : p?.mode === 'min' ? hl('adv-tab') : [hl('advisor'), hl('adv-tab')]), title: 'Окно советника', describe: 'Окно советника: показать, свернуть к краю карты, скрыть (беседа сохраняется).',
       params: { type: 'object', properties: { mode: { enum: ['open', 'min', 'close', 'toggle'] } }, required: ['mode'] }, say: ['штаб, покажи советника', 'штаб, скрой советника'],

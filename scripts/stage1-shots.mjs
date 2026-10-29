@@ -219,6 +219,52 @@ const parts = {
     if (gap.gap < 4) return fail('staffs', `промежуток между кнопками ${gap.gap} px (-1: нет рамки)`);
     ok('staffs', `кнопки раздельны (промежуток ${gap.gap} px)`);
   },
+  /** «Приказы»: подвкладки по уровню совпадают с таблицей доступности (ordersSubs); скрытая открытая подвкладка → «Пункт управления». */
+  async orders() {
+    await page.goto(`${URL_}/#replay`);
+    await page.evaluate(() => localStorage.setItem('def_ops.command.mode', 'intent'));
+    await replayAgents();
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    const TITLE = { units: 'Пункт управления', rear: 'Тыл', bridges: 'Переправы', reserves: 'Резервы', bounds: 'Полосы' };
+    const corps = await page.evaluate(() => Object.entries(window.__cmdView.command.hqs).find(([, h]) => h.echelon === 'corps')?.[0]);
+    if (!corps) return fail('orders', 'нет корпуса: ' + await page.evaluate(() => JSON.stringify(Object.values(window.__cmdView.command.hqs).slice(0, 12).map((h) => [h.name, h.echelon, h.side]))));
+    const levels = [['stavka', null, 'orders-stavka.jpg'], ['front', null, 'orders-front.jpg'], ['corps', corps, 'orders-corps.jpg']];
+    let bad = 0;
+    for (const [level, name, file] of levels) {
+      await at('command.post', name ? { level, name } : { level });
+      await page.locator('.cmd-tabs button', { hasText: 'Приказы' }).click();
+      await page.waitForTimeout(500);
+      const got = (await page.locator('.subtabs button').allInnerTexts()).map((t) => t.replace(/\s*·.*$/, '').trim());
+      const want_ = await page.evaluate(async ([lv]) => {
+        const m = await import('/src/post-staff.ts');
+        const v = window.__cmdView;
+        const issuer = document.querySelector('select[data-action="command.post"]')?.value;
+        const iss = issuer && v.command.hqs[issuer] ? issuer : Object.keys(v.command.hqs).find((id) => v.command.hqs[id].echelon === { stavka: 'high_command', front: 'front', corps: 'corps' }[lv]);
+        return m.ordersSubs(v, m.staffScope(v, lv, iss));
+      }, [level]);
+      const exp = Object.entries(want_).filter(([, x]) => x === true).map(([k]) => TITLE[k]);
+      if (got.join('|') !== exp.join('|')) { bad++; fail('orders', `${level}: вкладки [${got}] ≠ таблица [${exp}]`); }
+      if (level !== 'stavka') await shot(file);
+    }
+    if (!bad) ok('orders', 'подвкладки совпадают с таблицей на 3 уровнях');
+    // открытая подвкладка скрывается при смене уровня
+    await at('command.post', { level: 'front' });
+    await page.locator('.cmd-tabs button', { hasText: 'Приказы' }).click();
+    await page.locator('.subtabs button', { hasText: 'Тыл' }).click();
+    await at('command.post', { level: 'corps', name: corps });
+    await page.waitForTimeout(500);
+    const on = (await page.locator('.subtabs button.on').allInnerTexts()).map((t) => t.replace(/\s*·.*$/, '').trim());
+    if (on.join('|') !== 'Пункт управления') return fail('orders', `после смены уровня открыто: [${on}]`);
+    const said = await at('command.orders.sub', { sub: 'rear' });
+    if (!/на этом уровне нет/.test(said)) return fail('orders', `голос не объяснил: ${said}`);
+    ok('orders', 'скрытая подвкладка → Пункт управления');
+  },
 };
 
 try {

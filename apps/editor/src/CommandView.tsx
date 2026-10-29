@@ -29,7 +29,7 @@ import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { divisionsUnder, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
-import { mergePriority, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
+import { mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type DraftScope } from './decision-drafts';
@@ -669,6 +669,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   };
   /** Что штаб пункта ведёт во вкладке «Приказы» (тыл, переправы, полосы); нынешняя модель — null, всё как прежде. */
   const scopeNow = (): StaffScope | null => (view && staffsOn(view) && post.issuer ? staffScope(view, post.level, post.issuer) : null);
+  /** Подвкладки «Приказов» с доступным на уровне действием (`true`) или причиной, почему их нет. */
+  const subsOk = view ? ordersSubs(view, scopeNow()) : ordersSubs({ reserveGroups: [] } as unknown as TurnView, null);
+  // открытая подвкладка стала недоступной (сменили уровень) — назад в «Пункт управления»
+  useEffect(() => { if (subsOk[sub] !== true) setSub('units'); }, [sub, subsOk.rear, subsOk.bridges, subsOk.reserves, subsOk.bounds]);
   /** Решение на экране: штаба пункта (ниже Ставки) или верхней инстанции. */
   const curDecision = (): HumanDecision => (lowPost() ? postDecisions[post.issuer!] ?? EMPTY : decision);
   const setCur = (p: Partial<HumanDecision>) => {
@@ -854,7 +858,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const screen = useRef<ScreenDeps>(null!);
   screen.current = {
     view, busy: view ? progress : null, setTab, setSub: (x) => { setSub(x); setPickMode(null); }, closeCard: closeIntel, select: setSel, sel, goTo: (at, z) => goTo(at, z !== false),
-    drafts, setDraft: staff.current.setDraft,
+    drafts, setDraft: staff.current.setDraft, subsOk,
     advisor: { open: advOpen, min: advMin }, setAdvisor: (o, mn) => { setAdvOpen(o); setAdvMin(mn); if (!mn) setAdvSeen(adv.length); },
     clearAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); }, talk: adv.length,
     setPlanN, plan, planOpen, setPlanOpen, takeSuggestion,
@@ -921,7 +925,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             {tab === 'orders' && <>
               <div className="seg subtabs">
                 {([['units', staffsOn(view) ? 'Пункт управления' : 'Войска', staffsOn(view) ? cmds.filter((c) => c.op === 'directive').length : draftList.length], ['rear', 'Тыл', acts.filter((a) => a.action.kind === 'base' || a.action.kind === 'priority').length], ['bridges', 'Переправы', acts.filter((a) => a.action.kind === 'bridge').length], ['reserves', 'Резервы', acts.filter((a) => a.action.kind === 'commit').length], ['bounds', 'Полосы', acts.filter((a) => a.action.kind === 'boundary').length]] as [Sub, string, number][])
-.map(([k, t, n]) => (
+.filter(([k]) => subsOk[k] === true).map(([k, t, n]) => (
                   <ActButton key={k} className={sub === k ? 'on' : ''} action="command.orders.sub" params={{ sub: k }} data-hl={`sub-${k}`}>{t}{n ? ` · ${n}` : ''}</ActButton>))}
               </div>
               {sub === 'units' && (staffsOn(view) ? <CommandPost v={view} post={post} cmds={cmds} /> : <Orders v={fv!} drafts={drafts} sel={sel} pick={pick} setPick={setPick} blank={blankDraft} />)}

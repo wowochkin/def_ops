@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { TurnView } from '../src/sim/game-protocol';
+import type { LevelId } from '../src/map-level-scale';
 import type { StaffAction } from '@def-ops/sim';
-import { mergePriority, postBases, postBridges, postSupply, priorityLimit, staffDeny, staffScope } from '../src/post-staff';
+import { mergePriority, ordersSubs, postBases, postBridges, postSupply, priorityLimit, staffDeny, staffScope } from '../src/post-staff';
 
 // Ставка → фронт f1 → армии a1, a2 → корпус k1 (a1) → дивизии d1 (k1), d2 (a2); база b1 у d1, b2 у d2, b3 далеко
 const div = (id: string, parent: string, at: [number, number], o: object = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: 'у X', posture: 'наступает', task: null, target: null,
@@ -66,5 +67,20 @@ describe('распоряжения штаба по уровню пункта', (
     expect(staffDeny(v, staffScope(v, 'army', 'a1'), line)).toContain('штаб фронта');
     expect(staffDeny(v, staffScope(v, 'front', 'f1'), line)).toBeNull();
     expect(staffDeny(v, staffScope(v, 'corps', 'k1'), { kind: 'priority', side: 'su', formations: [], issuedAt: '' })).toContain('приоритет');
+  });
+  it('подвкладки «Приказов» по уровню: только с доступным действием, причина — словами', () => {
+    const vr = { ...v, reserveGroups: [] } as TurnView;
+    const at = (level: LevelId, issuer: string) => ordersSubs(vr, staffScope(vr, level, issuer));
+    expect(at('front', 'f1')).toMatchObject({ units: true, rear: true, bridges: true, bounds: true });
+    expect(at('stavka', 'top')).toMatchObject({ rear: true, bridges: true });
+    const corps = at('corps', 'k1');
+    expect(corps.units).toBe(true);
+    expect(typeof corps.rear).toBe('string');
+    expect(typeof corps.bounds).toBe('string');
+    expect(corps.bridges).toBe(true);
+    expect(typeof at('stavka', 'top').bounds).toBe('string');
+    expect(typeof at('front', 'f1').reserves).toBe('string');
+    expect(at('front', 'f1').reserves).toMatch(/резерв/);
+    expect(Object.values(ordersSubs(vr, null)).every((x) => x === true)).toBe(true);
   });
 });

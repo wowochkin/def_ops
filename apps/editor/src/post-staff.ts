@@ -8,7 +8,8 @@ import type { LngLat } from '@def-ops/core';
 import type { BaseView, BridgeView, TurnView } from './sim/game-protocol';
 import type { LevelId } from './map-level-scale';
 import { recipients } from './command-post';
-import { divisionsUnder, postReports } from './post-views';
+import { divisionsUnder, postReports, postReserves } from './post-views';
+import type { OrdersSub } from './voice/actions/staff';
 
 export interface StaffScope {
   level: LevelId;
@@ -45,6 +46,18 @@ export function staffScope(v: TurnView, level: LevelId, issuer: string): StaffSc
     bridges: level === 'stavka' ? 'view' : 'build',
     allotParks: level === 'stavka' || level === 'front' || level === 'army',
     bounds: level === 'stavka' ? 'fronts' : level === 'front' ? 'armies' : 'own',
+  };
+}
+
+/** Какие подвкладки «Приказов» видны на уровне: `true` — есть, строка — почему нет (для голоса). Игра без пункта — все. */
+export function ordersSubs(v: TurnView, scope: StaffScope | null): Record<OrdersSub, true | string> {
+  if (!scope) return { units: true, rear: true, bridges: true, reserves: true, bounds: true };
+  return {
+    units: true,
+    rear: scope.bases === 'move' || scope.priority || 'тыл ведут фронт и армия (у танкового и механизированного корпуса — свой)',
+    bridges: scope.bridges === 'build' || scope.allotParks || 'переправы наводят фронт, армия и корпус',
+    reserves: postReserves(v, scope.issuer).length > 0 || 'в подчинении нет резервов',
+    bounds: scope.bounds === 'armies' || 'полосы этой ступени задаются в «Пункте управления» (директивой или приказом)',
   };
 }
 
