@@ -54,7 +54,10 @@ fn option(sim: &Sim, o: &Scored) -> Value {
         "mind": o.mind.as_ref().map(|m| json!({ "hours": m.hours, "advanceKm": r3(m.advance_km), "losses": r3(m.losses), "encircled": r3(m.encircled) })),
     });
     // задача армии вне истории: объект плана или пункт по местности
-    if let Kind::Assign { from_plan, .. } = &o.choice.kind { v["fromPlan"] = json!(from_plan); }
+    if let Kind::Assign { from_plan, defend, .. } = &o.choice.kind {
+        v["fromPlan"] = json!(from_plan);
+        if *defend { v["defend"] = json!(true); }
+    }
     v
 }
 

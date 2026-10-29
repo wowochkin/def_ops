@@ -721,7 +721,7 @@ fn stray(sim: &mut Sim, a: u32) {
 /// Выбранные решения «поставить задачу» армии `a`: (час, точка, из плана).
 fn assigns(sim: &Sim, f: u32, a: u32) -> Vec<(u32, XY, bool)> {
     commander(sim, f).decisions.iter().filter_map(|d| match &d.options[d.chosen].choice.kind {
-        Kind::Assign { army, at, from_plan } if *army == a => Some((d.tick, *at, *from_plan)),
+        Kind::Assign { army, at, from_plan, .. } if *army == a => Some((d.tick, *at, *from_plan)),
         _ => None,
     }).collect()
 }
@@ -1094,4 +1094,38 @@ fn release_clears_hold_intent() {
     assert!(sim.command.intent[a as usize].as_ref().is_some_and(|d| d.id.starts_with("вмешательство:держать")));
     run_to(&mut sim, 4);
     assert!(!sim.command.intent[a as usize].as_ref().is_some_and(|d| d.id.starts_with("вмешательство:держать")), "держать — снято");
+}
+
+/// Запасная задача по местности — только в районе операции фронта (не дальше leaveKm от объекта плана); такой точки
+/// нет — «занять оборону» у ближайшего населённого пункта.
+#[test]
+fn assign_stays_in_operation_area() {
+    use agents_core::command::directive::Task as DTask;
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    run_to(&mut sim, 1);
+    let ci = chain_of(&sim, a);
+    let n = sim.intent.chains[ci].next;
+    sim.intent.chains[ci].tasks.truncate(n);
+    // армия за 150 км восточнее, её ось — на восток: прочь от всех объектов плана фронта
+    shift(&mut sim, a, 150.0, 0.0);
+    let c = center(&sim, a);
+    if let Some(d) = sim.command.intent[a as usize].as_mut() { d.axis = vec![c, XY::new(c.x + 100.0, c.y)]; }
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, 3);
+    assert_eq!(status(&sim, a).status, Status::Own);
+    let plan = intent::plan_objectives(&sim, f);
+    let leave = sim.rules.intent.leave_km;
+    let ds: Vec<_> = commander(&sim, f).decisions.iter().filter_map(|d| match &d.options[d.chosen].choice.kind {
+        Kind::Assign { army, at, defend, .. } if *army == a => Some((*at, *defend, d.options[d.chosen].choice.label.clone())),
+        _ => None,
+    }).collect();
+    assert!(!ds.is_empty(), "задача поставлена");
+    for (at, defend, label) in &ds {
+        assert!(*defend || plan.iter().any(|g| g.dist(*at) <= leave), "цель вне района операции: {label}");
+    }
+    let (_, defend, label) = &ds[0];
+    assert!(*defend && label.contains("нет задачи в полосе фронта — оборона"), "{label}");
+    run_to(&mut sim, 8);
+    assert_eq!(sim.command.intent[a as usize].as_ref().map(|d| d.task), Some(DTask::Defend), "оборона дошла");
 }

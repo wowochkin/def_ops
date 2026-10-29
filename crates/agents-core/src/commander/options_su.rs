@@ -102,6 +102,7 @@ const AHEAD_COS: f64 = 0.5;
 /// Пункт по местности: населённый пункт или мост не дальше стольких км от точки суточного перехода по оси (допущение).
 const GROUND_KM: f64 = 10.0;
 const RULE_ASSIGN_PLAN: &str = "ПУ-43: задача армии — в замысле операции фронта; ближайший объект плана в полосе армии";
+const RULE_ASSIGN_DEFEND: &str = "ПУ-43: армия без задачи в полосе фронта — оборона занятого рубежа до новой задачи";
 const RULE_ASSIGN_GROUND: &str = "ПУ-43: ближайшая задача армии — на глубину суточного перехода по оси наступления";
 
 fn contrib(parts: &[(Motive, f64)]) -> Motives {
@@ -165,7 +166,9 @@ fn army_axis(sim: &Sim, p: &Profile, army: u32, c: XY) -> Option<XY> {
 /// Вариант «поставить задачу» армии вне истории (спецификация, раздел 2.2): ближайший объект плана фронта впереди в
 /// полосе армии (к оси не больше 60°), ещё у противника (своих в пределах соприкосновения нет), не дальше `reachDays`
 /// суточных переходов; нет такого — ближайший населённый пункт (центр кольца) или мост у точки суточного перехода по
-/// оси (не дальше `GROUND_KM`), нет и их — сама точка.
+/// оси (не дальше `GROUND_KM`), нет и их — сама точка. Пункт по местности — только в районе операции фронта: не
+/// дальше `intent.leaveKm` от объекта плана (вне зон изменённого замысла) и впереди армии, к ближайшему противнику;
+/// такого нет — «занять оборону» у ближайшего населённого пункта.
 pub fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
     let w = &sim.world;
     let r = &sim.rules;
@@ -183,32 +186,43 @@ pub fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
         let d = c.dist(g);
         d > r.contact_km && d <= r.intent.reach_days * rate && ((g.x - c.x) * ax.x + (g.y - c.y) * ax.y) / (d * al) >= AHEAD_COS && !ours(g) && !intent::intervene::banned(sim, army, g)
     }).min_by(|a, b| c.dist(*a).total_cmp(&c.dist(*b)));
-    let (at, from_plan, what) = match plan {
-        Some(g) => (g, true, "объект плана фронта".to_string()),
+    // район операции фронта: не дальше leaveKm от объекта его плана (вне зон изменённого замысла армии) и впереди
+    // армии — к ближайшему противнику
+    let objectives: Vec<XY> = intent::plan_objectives(sim, front).into_iter().filter(|&g| !intent::intervene::banned(sim, army, g)).collect();
+    let enemy = w.divisions.iter().filter(|d| d.side != side && !d.state.out()).map(|d| d.vars.pos).min_by(|a, b| a.dist(c).total_cmp(&b.dist(c)));
+    let admissible = |g: XY| !intent::intervene::banned(sim, army, g) && objectives.iter().any(|o| o.dist(g) <= r.intent.leave_km)
+        && enemy.is_some_and(|e| (g.x - c.x) * (e.x - c.x) + (g.y - c.y) * (e.y - c.y) > 0.0);
+    let pr = &sim.theatre.proj;
+    let areas: Vec<(XY, String)> = sim.theatre.areas.iter().filter(|a| !a.ring.is_empty()).map(|a| {
+        let v: Vec<XY> = a.ring.iter().map(|x| pr.to_xy(*x)).collect();
+        let n = v.len() as f64;
+        (XY::new(v.iter().map(|x| x.x).sum::<f64>() / n, v.iter().map(|x| x.y).sum::<f64>() / n), a.name.clone())
+    }).collect();
+    let (at, from_plan, defend, what) = match plan {
+        Some(g) => (g, true, false, "объект плана фронта".to_string()),
         None => {
             let q = XY::new(c.x + ax.x / al * rate, c.y + ax.y / al * rate);
-            let pr = &sim.theatre.proj;
-            let areas = sim.theatre.areas.iter().filter(|a| !a.ring.is_empty()).map(|a| {
-                let v: Vec<XY> = a.ring.iter().map(|x| pr.to_xy(*x)).collect();
-                let n = v.len() as f64;
-                (XY::new(v.iter().map(|x| x.x).sum::<f64>() / n, v.iter().map(|x| x.y).sum::<f64>() / n), a.name.clone())
-            });
             let bridges = sim.theatre.bridges.iter().map(|b| (b.pos, b.name.clone()));
-            match areas.chain(bridges).filter(|x| x.0.dist(q) <= GROUND_KM && !intent::intervene::banned(sim, army, x.0)).min_by(|a, b| a.0.dist(q).total_cmp(&b.0.dist(q))) {
-                Some((at, n)) => (at, false, n),
-                // зона изменённого замысла — задачи туда нет
-                None if intent::intervene::banned(sim, army, q) => return None,
-                None => (q, false, "рубеж суточного перехода".to_string()),
+            let ground = areas.iter().cloned().chain(bridges).filter(|x| x.0.dist(q) <= GROUND_KM && admissible(x.0)).min_by(|a, b| a.0.dist(q).total_cmp(&b.0.dist(q)));
+            match ground {
+                Some((at, n)) => (at, false, false, n),
+                None if admissible(q) => (q, false, false, "рубеж суточного перехода".to_string()),
+                // в районе операции задачи нет — оборона у ближайшего населённого пункта (нет их — на месте)
+                None => {
+                    let (at, n) = areas.iter().filter(|x| !intent::intervene::banned(sim, army, x.0)).min_by(|a, b| a.0.dist(c).total_cmp(&b.0.dist(c))).cloned()
+                        .unwrap_or((c, "на месте".to_string()));
+                    (at, false, true, format!("нет задачи в полосе фронта — оборона ({n})"))
+                }
             }
         }
     };
     let rival = p.rival.as_deref().and_then(|id| sim.rules.commanders.profiles.iter().find(|q| q.id == id)).and_then(|rp| profile_objective_xy(sim, rp))
         .map_or(0.0, |o| if at.dist(o) < c.dist(o) { ASSIGN_RIVAL } else { 0.0 });
     Some(Choice {
-        kind: Kind::Assign { army, at, from_plan }, label: format!("Поставить {} задачу: {what}", name(sim, army)),
+        kind: Kind::Assign { army, at, from_plan, defend }, label: format!("Поставить {} задачу: {what}", name(sim, army)),
         contrib: contrib(&[(Motive::Task, ASSIGN_TASK), (Motive::Rival, rival), (Motive::Preserve, ASSIGN_PRESERVE)]),
         uncertainty: if from_plan { ASSIGN_UNC_PLAN } else { ASSIGN_UNC_GROUND }, losses: ASSIGN_LOSS,
-        rule: if from_plan { RULE_ASSIGN_PLAN } else { RULE_ASSIGN_GROUND },
+        rule: if from_plan { RULE_ASSIGN_PLAN } else if defend { RULE_ASSIGN_DEFEND } else { RULE_ASSIGN_GROUND },
     })
 }
 
