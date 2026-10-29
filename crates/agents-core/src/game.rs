@@ -208,6 +208,16 @@ impl Game {
     /// остаются (приказы штабов-агентов и игрока при доставке пропускаются), резервы вводятся по сценарию.
     pub fn start_mode(mut sim: Sim, meta: Meta, takeover: u32, player: Side, free: &[Side], takeover_state: Option<&TakeoverIn>, mode: Mode) -> Game {
         let takeover = takeover.min(meta.hours);
+        // история как замысел: та же переигровка, что прогон `--command intent`, с часа 0 — управление ровно как в
+        // прогоне (фронты и Ставка по сценарию, армии — агенты, командующие и цепочки) у стороны игрока и у противника,
+        // если он не на модели вне ядра; к часу передачи у армий действующие распоряжения, игрок берёт штаб на этом часе
+        if mode == Mode::Intent {
+            for sd in [Side::Su, Side::De] {
+                if sd != player && free.contains(&sd) { continue; }
+                let _ = crate::command::control::command_mode(&mut sim, "intent", sd);
+                if sd != player { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
+            }
+        }
         let mut frames = vec![trace::frame(&sim)];
         for _ in 0..takeover { sim.step(); frames.push(trace::frame(&sim)); }
         if let Some(st) = takeover_state {
@@ -228,9 +238,7 @@ impl Game {
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
             if mode == Mode::Intent {
-                // история как замысел: управление ровно как в прогоне (фронты и Ставка по сценарию, армии — агенты),
-                // командующие и цепочки; взятый игроком штаб с поддеревом уходит с истории (take)
-                let _ = crate::command::control::command_mode(&mut sim, "intent", player);
+                // история как замысел включена до прокрутки (выше); взятый игроком штаб с поддеревом уходит с истории (take)
             } else {
                 crate::command::control::agents_side(&mut sim, player);
                 if mode == Mode::Commanders { crate::commander::enable(&mut sim, player); }
@@ -245,11 +253,10 @@ impl Game {
             sim.fires.retain(|_| *k.next().unwrap());
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
-            let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: false };
+            let enemy_intent = mode == Mode::Intent && !free.contains(&other_side(player));
+            let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: enemy_intent };
             // командующие и у противника, если он не на модели вне ядра: его штабы — агенты, верхняя инстанция — Гитлер/Ставка
             if mode == Mode::Commanders && !g.free.contains(&other_side(player)) { g.enemy_agents(); }
-            // история как замысел и у противника: цепочки его армий и командующие
-            if mode == Mode::Intent && !g.free.contains(&other_side(player)) { g.enemy_intent(); }
             return g;
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);

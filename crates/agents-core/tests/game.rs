@@ -678,39 +678,67 @@ fn berlin() -> (agents_core::world::Sim, agents_core::scenario::Meta) {
     agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий")
 }
 
-/// Игра `Mode::Intent` без действий игрока подаёт те же документы, что прогон в `command_mode("intent")` с того же часа.
+/// Прогон «история как замысел» с часа 0 до часа `t` (как `agents-run --command intent`).
+fn intent_run(t: u32) -> agents_core::world::Sim {
+    let (mut sim, _) = berlin();
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
+    while sim.world.tick < t { sim.step(); }
+    sim
+}
+
+/// Игра `Mode::Intent` — та же переигровка, что прогон `command_mode("intent")` с часа 0: до часа передачи и без
+/// действий игрока после него те же документы фронтов и то же место дивизий.
 #[test]
 fn intent_game_matches_run() {
     use agents_core::game::{Game, Mode};
     let (sim, meta) = berlin();
-    let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Intent);
+    let mut g = Game::start_mode(sim, meta, 48, Side::Su, &[Side::Su], None, Mode::Intent);
     g.advance(24);
-    let (mut sim, _) = berlin();
-    while sim.world.tick < 6 { sim.step(); }
-    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).unwrap(); }
-    while sim.world.tick < 30 { sim.step(); }
+    let run = intent_run(72);
     for id in ["su_1uf", "su_1bf"] {
         let docs = |s: &agents_core::world::Sim| {
             let h = s.world.hqs.iter().position(|x| x.id == id).unwrap() as u32;
-            s.documents.iter().filter(|d| d.hq == h && d.tick >= 6).map(|d| format!("{}|{:?}|{:?}|{}", d.tick, d.kind, d.to, d.text)).collect::<Vec<_>>()
+            s.documents.iter().filter(|d| d.hq == h).map(|d| format!("{}|{:?}|{:?}|{}", d.tick, d.kind, d.to, d.text)).collect::<Vec<_>>()
         };
-        let (a, b) = (docs(&g.sim), docs(&sim));
+        let (a, b) = (docs(&g.sim), docs(&run));
         assert_eq!(a.len(), b.len(), "{id}: число документов");
         assert_eq!(a, b, "{id}");
     }
+    for (x, y) in g.sim.world.divisions.iter().zip(&run.world.divisions) { assert!(x.vars.pos.dist(y.vars.pos) < 1e-9, "{}: место", x.id); }
 }
 
-/// Игра с передачей на часе 72: задачи цепочек до этого часа считаются поданными, `next` — за ними.
+/// Принятие командования посреди операции (час 168, взят 1 БФ): армии не под игроком с действующими распоряжениями,
+/// как в прогоне; соседи на истории без задачи — не дольше суток.
 #[test]
-fn intent_game_takeover_issued() {
-    use agents_core::game::{Game, Mode};
+fn intent_game_takeover_keeps_directives() {
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::model::Echelon;
     let (sim, meta) = berlin();
-    let g = Game::start_mode(sim, meta, 72, Side::Su, &[Side::Su], None, Mode::Intent);
-    assert!(!g.sim.intent.chains.is_empty());
-    for c in &g.sim.intent.chains {
-        let early = c.tasks.iter().filter(|t| t.at < 72).count();
-        assert!(c.tasks.iter().filter(|t| t.at < 72).all(|t| t.issued));
-        assert!(c.next >= early, "next за ранними задачами");
+    let mut g = Game::start_mode(sim, meta, 168, Side::Su, &[Side::Su], None, Mode::Intent);
+    g.command(&CommandOp::Take { hq: "su_1bf".into() }).unwrap();
+    let run = intent_run(168);
+    let armies: Vec<usize> = g.sim.world.hqs.iter().enumerate().filter(|(_, h)| h.side == Side::Su && h.echelon == Echelon::Army).map(|(k, _)| k).collect();
+    let none = |s: &agents_core::world::Sim| armies.iter().filter(|&&k| s.command.intent.get(k).and_then(|x| x.as_ref()).is_none()).count();
+    assert!(none(&g.sim) <= none(&run), "армий без распоряжения: игра {} прогон {}", none(&g.sim), none(&run));
+    // дольше всего подряд без распоряжения за 48 ч — у армий на истории не под игроком (в прогоне — тот же счёт)
+    type Idle = std::collections::BTreeMap<usize, (u32, u32)>;
+    let count = |s: &agents_core::world::Sim, idle: &mut Idle| {
+        for &k in &armies {
+            if agents_core::intent::off_history(s, k as u32) { continue; }
+            let e = idle.entry(k).or_default();
+            if s.command.intent.get(k).and_then(|x| x.as_ref()).is_none() { e.0 += 1; e.1 = e.1.max(e.0); } else { e.0 = 0; }
+        }
+    };
+    let (mut game, mut base, mut run) = (Idle::new(), Idle::new(), run);
+    for _ in 0..48 {
+        g.advance(1);
+        count(&g.sim, &mut game);
+        run.step();
+        count(&run, &mut base);
+    }
+    for (k, &(_, m)) in &game {
+        let r = base.get(k).map_or(0, |x| x.1);
+        assert!(m <= r.max(24), "{}: без задачи {m} ч подряд (прогон {r} ч)", g.sim.world.hqs[*k].id);
     }
 }
 
