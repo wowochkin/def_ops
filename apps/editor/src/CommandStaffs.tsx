@@ -157,7 +157,7 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
           const m = controlMark(h, c.mode);
           const back = releaseAction(h, c.mode);
           return <div key={id} className="staffs-row">
-            <span><b>{h.name}</b> <small className="muted">{ECH_RU[h.echelon] ?? h.echelon}</small>{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
+            <span><ActButton className="link staffs-go" action="map.hq" params={{ name: id }} title="Показать штаб на карте"><b>{h.name}</b></ActButton> <small className="muted">{ECH_RU[h.echelon] ?? h.echelon}</small>{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
             <span className="staffs-acts">
               {h.control !== 'player' && !queued('take', id) && <ActButton className="staffs-btn" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
               {back && !queued('release', id) && <ActButton className="staffs-btn back" action="command.release" params={{ name: id }} title={back.title}>{back.text}</ActButton>}

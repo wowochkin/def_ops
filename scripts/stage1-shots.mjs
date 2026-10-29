@@ -265,6 +265,61 @@ const parts = {
     if (!/на этом уровне нет/.test(said)) return fail('orders', `голос не объяснил: ${said}`);
     ok('orders', 'скрытая подвкладка → Пункт управления');
   },
+  /** Карта переезжает к штабу: из списка пункта, из «Штабов» и при открытии карточки штаба в «Переигровке». */
+  async fly() {
+    await page.goto(`${URL_}/#replay`);
+    await page.evaluate(() => localStorage.setItem('def_ops.command.mode', 'intent'));
+    await replayAgents();
+    // «Переигровка»: карточка фронта — масштаб ступени (1:500 000)
+    const denom = () => page.evaluate(() => {
+      const v = window.__replayEngine?.getView?.() ?? window.__cmdEngine.getView();
+      return Math.round(40075016.686 * Math.cos((v.center[1] * Math.PI) / 180) / (512 * 2 ** v.zoom * 0.00028));
+    });
+    const c0 = await page.evaluate(() => window.__replayEngine.getView().center);
+    await page.evaluate(() => window.__replayCard('su_1bf'));
+    await page.waitForTimeout(2000);
+    const dr = await denom();
+    const c1 = await page.evaluate(() => window.__replayEngine.getView().center);
+    await shot('fly-replay-front.jpg');
+    if (Math.abs(dr / 500000 - 1) > 0.05) fail('fly', `карточка фронта в переигровке: масштаб 1:${dr}`);
+    else if (c0[0] === c1[0] && c0[1] === c1[1]) fail('fly', 'карточка фронта в переигровке: центр не сменился');
+    else ok('fly', `карточка фронта в переигровке (1:${dr})`);
+    await page.evaluate(() => window.__replayCard(null));
+    // игра
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    const state = (id) => page.evaluate(async (hq) => {
+      const m = await import('/src/post-views.ts');
+      const v = window.__cmdView, e = window.__cmdEngine.getView();
+      const c = m.hqCenter(v, hq);
+      const R = 6371, rad = Math.PI / 180;
+      const km = c ? Math.hypot((e.center[0] - c[0]) * rad * R * Math.cos(c[1] * rad), (e.center[1] - c[1]) * rad * R) : null;
+      return { km, center: e.center, denom: Math.round(40075016.686 * Math.cos(e.center[1] * rad) / (512 * 2 ** e.zoom * 0.00028)) };
+    }, id);
+    await at('command.post', { level: 'stavka' });
+    await page.waitForTimeout(1500);
+    const before = await state('su_8gva');
+    await at('command.post', { name: 'su_8gva' });
+    await page.waitForTimeout(1800);
+    const a = await state('su_8gva');
+    await shot('fly-army.jpg');
+    if (a.km === null || a.km > 15) fail('fly', `пункт → 8 гв. А: центр в ${a.km?.toFixed(1)} км от войск`);
+    else if (Math.abs(a.denom / 200000 - 1) > 0.1) fail('fly', `пункт → 8 гв. А: масштаб 1:${a.denom}`);
+    else ok('fly', `пункт → 8 гв. А (${a.km.toFixed(1)} км от войск, 1:${a.denom}; было ${before.km?.toFixed(0)} км)`);
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
+    await at('command.staffs.all', { on: true });
+    await page.locator('.staffs-go', { hasText: '5-я ударная армия' }).first().click();
+    await page.waitForTimeout(1800);
+    const id5 = await page.evaluate(() => Object.entries(window.__cmdView.command.hqs).find(([, h]) => /5-я ударная/.test(h.name))?.[0]);
+    const b = await state(id5);
+    if (b.km === null || b.km > 15 || (b.center[0] === a.center[0] && b.center[1] === a.center[1])) fail('fly', `«Штабы» → 5 уд. А: ${b.km?.toFixed(1)} км, центр ${b.center}`);
+    else ok('fly', `«Штабы» → 5 уд. А (${b.km.toFixed(1)} км от войск, 1:${b.denom})`);
+  },
 };
 
 try {

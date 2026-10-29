@@ -2,7 +2,8 @@
  * Показать место на карте там, где его видно: центр карты смещается к свободной части, если край карты закрыт
  * панелью голоса, легендой или окном советника (они лежат поверх карты). «Покажи Зелов» не ставит Зелов под панель.
  */
-import type { LngLat } from '@def-ops/core';
+import { zoomForScale, type LngLat } from '@def-ops/core';
+import { levelDefaultScale, type LevelId } from '../map-level-scale';
 import type { MapEngine } from './types';
 
 export type Rect = { left: number; top: number; width: number; height: number };
@@ -49,4 +50,24 @@ export function showAt(en: Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick
   // место сейчас в центре; новый центр — точка, что на (dx, dy) от него в обратную сторону
   const c = en.project(at);
   en.setView({ center: en.unproject([c[0] - dx, c[1] - dy]) });
+}
+
+/**
+ * Перевезти карту к штабу: масштаб ступени (`levelDefaultScale`), место at — в свободной части карты. Есть плавный
+ * переход (`flyTo`) — плавно, нет — прыжком. Сдвиг в пикселях переводится в градусы на целевом масштабе (проекция
+ * Меркатора, плитка 512), поэтому движку не нужно сперва приезжать.
+ */
+export function flyToHq(en: Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick<MapEngine, 'flyTo' | 'getContainer'>>, at: LngLat, level: LevelId): void {
+  const zoom = zoomForScale(at[1], levelDefaultScale(level));
+  let center: LngLat = at;
+  if (typeof document !== 'undefined' && en.getContainer) {
+    const box = en.getContainer().getBoundingClientRect();
+    const covers = [...document.querySelectorAll(COVERS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+    const { dx, dy } = freeOffset({ left: box.left, top: box.top, width: box.width, height: box.height }, covers);
+    if (dx || dy) {
+      const deg = 360 / (512 * 2 ** zoom); // градусов долготы на пиксель; широты — на cos(широты) меньше
+      center = [at[0] - dx * deg, at[1] + dy * deg * Math.cos((at[1] * Math.PI) / 180)];
+    }
+  }
+  if (en.flyTo) en.flyTo({ center, zoom }); else en.setView({ center, zoom });
 }

@@ -36,7 +36,7 @@ export interface PostState {
 const dm = (t?: string) => (t ? `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}` : '');
 
 /** Состояние пункта и голосовые действия (на всё время игры). */
-export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: LevelId) => void, cmds: CommandOp[], setCmds: (f: (q: CommandOp[]) => CommandOp[]) => void, busy: boolean, on: boolean, openTab: () => void = () => {}): PostState {
+export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: LevelId) => void, cmds: CommandOp[], setCmds: (f: (q: CommandOp[]) => CommandOp[]) => void, busy: boolean, on: boolean, openTab: () => void = () => {}, onHq?: (id: string) => void): PostState {
   const [chosen, setChosen] = useState<Partial<Record<LevelId, string>>>({});
   const [sel, setSel] = useState<string | null>(null);
   const [dirs, setDirs] = useState<Record<string, DirDraft>>({});
@@ -71,6 +71,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
         setChosen((c) => ({ ...c, [lv]: id! }));
       }
       setLevel(lv); setSel(null); setPick(null); openTab();
+      if (id) onHq?.(id);
       return `Пункт управления: ${POST_TITLE[lv]}${id ? ` — ${name(id)}` : ''}. Уровень карты — «${LEVEL_RU[lv]}».`;
     },
   });

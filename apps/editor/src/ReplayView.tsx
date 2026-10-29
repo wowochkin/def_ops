@@ -9,7 +9,7 @@ import { documentAt, formatScale, migrateDocument, zoomForScale, type LngLat, ty
 import type { CatalogEntry, SimRequest, SimResponse, SimResult } from './sim/protocol';
 import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
-import { LEGACY_LEVEL_KEY, legacyLevel, LEVEL_KEY, levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
+import { LEGACY_LEVEL_KEY, legacyLevel, ECHELON_LEVEL, LEVEL_KEY, levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
 import { withLevel } from './map-levels';
 import { zoneOverlays, zonesAt, zonesKey, zoneUrl } from './zones-overlay';
 import { findLegendItem, legendFor, legendText, presentItems, shownLegend, withHidden, type LegendItem } from './map-legend';
@@ -38,7 +38,8 @@ import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
 import { RivalryChart } from './RivalryChart';
 import { PLAYER_SPEEDS } from './replay-dock';
-import { commanderOf } from './commander-view';
+import { commanderOf, hqCentroid } from './commander-view';
+import { flyToHq } from './engine/free-center';
 
 import { AGENT_COMMANDS, AGENT_SCENARIOS, agentVariants, DEFAULT_AGENT_COMMAND, DESKTOP, runAgents, type AgentCommand, type AgentVariant } from './sim/agent-scenarios';
 import { coreEditsFor, KB_WAIT, kbSettled, takeoverNow } from './sim/kb-recompile';
@@ -437,6 +438,20 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return null;
   }, [agentRun, agentSel, cardSel, doc, time, agentHour, level]);
   /** Штаб агентной модели: уровень корпуса с приближением к нему — щёлкать по его дивизиям. */
+  // открыта карточка штаба (не дивизии): карта плавно переезжает к его войскам на масштабе его ступени;
+  // час проигрывания в зависимостях нет — при проигрывании карта не едет
+  const flyNow = useRef({ at: null as LngLat | null, hour: 0 });
+  flyNow.current = { at: agentSelAt, hour: agentHour };
+  useEffect(() => {
+    if (!cardSel || !eng || !agentRun) return;
+    const ech = agentRun.trace.hqs.find((h) => h.id === cardSel)?.echelon;
+    const lv = ech && ech !== 'division' ? ECHELON_LEVEL[ech] : undefined;
+    if (!lv) return;
+    const at = hqCentroid(agentRun.trace, cardSel, flyNow.current.hour) ?? flyNow.current.at;
+    if (!at) return;
+    setLevel(lv);
+    flyToHq(eng, at, lv);
+  }, [cardSel, eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const showDivisions = () => {
     if (!eng || !card) return;
     const at = agentSelAt;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { postDocs, subtreeHqs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
+import { hqCenter, postDocs, subtreeHqs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
 
 const u = (id: string, parent: string, at: [number, number], personnel = 8000, extra = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: '', posture: 'обороняется', task: 'оборонять', target: null, orderSource: null, personnel, tanks: 10, guns: 100, strength: 0.8, ammo: 1, fuel: 1, fatigue: 0.2, cutOff: false, movedKm: 0, combats: [], pending: [], ...extra });
 const hq = (name: string, echelon: string, parent: string | null) => ({ control: 'agent', led: false, name, echelon, parent });
@@ -86,5 +86,11 @@ describe('журнал боевых действий пункта', () => {
   });
   it('Ставка — все события стороны', () => {
     expect(postJournal(w, 's', [])[0].events).toHaveLength(2);
+  });
+  it('центр войск штаба — по численности; без действующих дивизий — null', () => {
+    const c = hqCenter(v as never, 'k1')!; // d1 (14.5, 52.6) и d2 (14.52, 52.58), по 8000
+    expect(c[0]).toBeCloseTo(14.51, 5);
+    expect(c[1]).toBeCloseTo(52.59, 5);
+    expect(hqCenter(v as never, 'нет')).toBeNull();
   });
 });

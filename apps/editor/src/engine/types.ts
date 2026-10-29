@@ -59,6 +59,8 @@ export interface MapEngine {
   unproject(p: Vec2): LngLat;
   getView(): ViewState;
   setView(v: Partial<ViewState>): void;
+  /** Плавный переезд к виду за ms миллисекунд (по умолчанию 900); нет — вызывающий прыгает через setView. */
+  flyTo?(v: Partial<ViewState>, ms?: number): void;
   size(): { width: number; height: number };
   getContainer(): HTMLElement;
   setPaper(color: string): void;

@@ -28,7 +28,7 @@ import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
-import { divisionsUnder, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
+import { divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, historyBackText, ENEMY_TITLE, type CommandOp } from './command-forms';
+import { findHq, formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, historyBackText, ENEMY_TITLE, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -67,7 +67,8 @@ import {
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
-import { showAt } from './engine/free-center';
+import { flyToHq, showAt } from './engine/free-center';
+import { ECHELON_LEVEL } from './map-level-scale';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -202,7 +203,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** Пункт управления по уровню карты (агентная модель); ссылка — для обработчика щелчка по карте. */
   // смена уровня из пункта управления — как переключателем: с масштабом уровня
   const levelTo = (l: MapLevel) => { void act('map.level', { level: l }); };
-  const post = usePost(view, level, levelTo, cmds, setCmds, !!progress, staffsOn(view), () => { setTab('orders'); setSub('units'); });
+  const post = usePost(view, level, levelTo, cmds, setCmds, !!progress, staffsOn(view), () => { setTab('orders'); setSub('units'); }, (id) => tap('map.hq', { name: id }));
   const postRef = useRef<PostState | null>(null);
   postRef.current = post;
   /** Пункт управления для советника (агентная модель, режимы командования по ступеням). */
@@ -466,6 +467,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
   /** Показать доклад своего объединения: выбрать его; если открыта не «Доклады» и не «Приказы → Войска» — открыть «Доклады». */
   const showUnit = (id: string) => {
+    // карточка штаба (не дивизии): карта переезжает к его войскам
+    const ech = view?.command?.hqs[id]?.echelon ?? view?.own.find((u) => u.id === id)?.echelon;
+    if (ech && ech !== 'division' && staffsOn(view)) tap('map.hq', { name: id });
     setSel(id); setIntelSel(null);
     const tb = liveTab.current;
     if (tb.tab === 'orders' && tb.sub !== 'units') setSub('units');
@@ -563,6 +567,24 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     const z = en.getView().zoom;
     showAt(en, at, zoomIn ? Math.max(z, 9) : z);
   };
+  useAction({
+    id: 'map.hq', section: 'replay', title: 'Показать штаб на карте', describe: 'Карта плавно переезжает к войскам штаба (фронта, армии, корпуса) на масштабе его ступени; уровень карты переключается вместе с ним. Только в игре.',
+    params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['штаб, покажи восьмую гвардейскую армию на карте'],
+    available: () => (view?.command ? true : 'штабы на карте — в игре на агентной модели'), highlight: () => hl('post-bar'),
+    run: async (p: { name: string }) => {
+      const hqs = view!.command!.hqs;
+      const id = findHq(hqs, String(p?.name ?? ''));
+      if (!id) return 'Такого штаба нет.';
+      const en = engine.current;
+      const at = hqCenter(view!, id);
+      const text = at ? '' : `${hqs[id].name}: у штаба нет войск на карте`;
+      if (!at) { setNotice(text); return text; }
+      const lv = ECHELON_LEVEL[hqs[id].echelon] ?? level;
+      setLevel(lv);
+      if (en) flyToHq(en, at, lv);
+      return `Карта: ${hqs[id].name}.`;
+    },
+  });
   const draftList = Object.values(drafts);
   /** Ход — на расчёт (проверки готовности — в действии command.turn). */
   const sendTurn = () => {

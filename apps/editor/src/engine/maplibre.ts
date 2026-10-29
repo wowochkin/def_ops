@@ -114,6 +114,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
     unproject(p) { const ll = map.unproject(p as [number, number]); return [ll.lng, ll.lat]; },
     getView() { const c = map.getCenter(); return { center: [c.lng, c.lat], zoom: map.getZoom(), bearing: map.getBearing() }; },
     setView(v) { map.jumpTo({ center: v.center as [number, number] | undefined, zoom: v.zoom, bearing: v.bearing }); },
+    flyTo(v, ms) { map.flyTo({ center: v.center as [number, number] | undefined, zoom: v.zoom, bearing: v.bearing, duration: ms ?? 900, essential: true }); },
     size() { const c = map.getContainer(); return { width: c.clientWidth, height: c.clientHeight }; },
     getContainer: () => map.getContainer(),
     setPaper(c) { if (c !== paper) { paper = c; restyle(); } },

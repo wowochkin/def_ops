@@ -24,6 +24,14 @@ export function divisionsUnder(v: TurnView, hq: string): UnitReport[] {
   return v.own.filter((u) => u.echelon === 'division' && u.status === 'active' && ancestry(v, u.id).includes(hq));
 }
 
+/** Центр войск штаба: среднее положение его действующих дивизий по численности; дивизий нет — null. */
+export function hqCenter(v: TurnView, hq: string): LngLat | null {
+  const l = divisionsUnder(v, hq);
+  if (!l.length) return null;
+  const P = l.reduce((s, u) => s + u.personnel, 0) || 1;
+  return [l.reduce((s, u) => s + u.at[0] * u.personnel, 0) / P, l.reduce((s, u) => s + u.at[1] * u.personnel, 0) / P];
+}
+
 /** Сводный доклад штаба по его дивизиям (у фронтов своего доклада нет): по численности, как у армий и корпусов. */
 function aggregate(id: string, name: string, echelon: string, parent: string | null, l: UnitReport[]): UnitReport | null {
   if (!l.length) return null;
