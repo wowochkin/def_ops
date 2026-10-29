@@ -2,7 +2,7 @@
 //!
 //!   cargo run --release --bin agents-run -- --scenario packages/sim/data/scenarios/agents/seelow-1945.json
 //!       [--history <сценарий>.history.json] [--out evals-out/agents/seelow] [--runs 5] [--tolerance 10] [--intent-track <след>.intent-track.json — записать след эталона]
-//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals|commanders|intent --side su|de|both] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
+//!       [--compare evals-out/demo/berlin-1945-tasks/deviations.json] [--without-fires] [--without-withdrawals] [--command agents|hybrid|fronts|journals|commanders|intent --side su|de|both] [--intervene <вмешательства>.json --case <id>] [--de doctrine|llm] [--su doctrine|llm] [--llm-url http://localhost:1234/v1 --llm-model <id>]
 //!       [--llm-reasoning default|off|low|medium|high] [--llm-max-tokens N (0 — без потолка)] [--llm-parallel auto|N]
 //!       [--llm-sync] [--llm-by-army] [--llm-probe — только замер параллельных запросов]
 //!       [--params '{"pocket.breakoutKeep": 0.05}' | --params файл.json — поправки параметров agents-v0.json (путь → значение)]
@@ -209,6 +209,14 @@ fn main() {
         let sides: Vec<Side> = if both { vec![Side::Su, Side::De] } else { vec![side] };
         let mut pending = Vec::new();
         for sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd).unwrap_or_else(|e| panic!("--command: {e}"))); }
+        // --intervene <файл> --case <id>: вмешательство (мерило 2) — до первого шага
+        if let Some(f) = arg(&args, "intervene") {
+            let path = if f.starts_with('/') { f.clone() } else { format!("{root}/{f}") };
+            let all: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"))).expect("вмешательства");
+            let id = arg(&args, "case").expect("--case");
+            let case = all["cases"].as_array().and_then(|v| v.iter().find(|c| c["id"] == id.as_str())).unwrap_or_else(|| panic!("нет случая {id}"));
+            agents_core::intent::intervene(&mut sim, case).unwrap_or_else(|e| panic!("{e}"));
+        }
         let below_front = mode == "fronts" || mode == "journals";
         let start = parse_hours(&meta.start).expect("start");
         let n = sim.world.divisions.len();

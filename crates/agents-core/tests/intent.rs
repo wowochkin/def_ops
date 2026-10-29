@@ -900,3 +900,89 @@ fn intent_mode_both_sides() {
     let army = sim.world.hqs.iter().position(|h| h.side == Side::Su && h.echelon == agents_core::model::Echelon::Army).expect("армия");
     assert_eq!(sim.command.control[army], Control::Agent);
 }
+
+// ---------- вмешательства (мерило 2) ----------
+
+fn subtree_of(sim: &Sim, h: u32) -> Vec<usize> {
+    (0..sim.world.hqs.len()).filter(|&k| { let mut x = k; for _ in 0..8 { if x == h as usize { return true; } match sim.world.hqs[x].parent { Some(p) => x = p as usize, None => return false } } false }).collect()
+}
+
+/// `hold`: поддерево штаба с `from` — у игрока («оборонять на месте» его армиям), через `hours` — снова как было.
+#[test]
+fn intervene_hold() {
+    use agents_core::command::control::Control;
+    let mut sim = intent_sim();
+    let f = hq(&sim, "su_1bf");
+    let a = hq(&sim, "su_8gva");
+    let sub = subtree_of(&sim, f);
+    let before: Vec<Control> = sub.iter().map(|&k| sim.command.control[k]).collect();
+    intent::intervene(&mut sim, &json!({ "id": "t", "actions": [{ "hold": { "hq": "su_1bf", "from": 2, "hours": 3 } }] })).expect("вмешательство");
+    run_to(&mut sim, 3);
+    assert!(sub.iter().all(|&k| sim.command.control[k] == Control::Player), "поддерево у игрока");
+    assert_eq!((status(&sim, a).status, status(&sim, a).reason.clone()), (Status::Own, Some(Reason::Player)));
+    assert!(sim.documents.iter().any(|d| d.hq == f && d.tick == 2 && d.to.iter().any(|t| t == "su_8gva") && d.text.starts_with("оборонять")), "оборонять на месте");
+    run_to(&mut sim, 6);
+    let after: Vec<Control> = sub.iter().map(|&k| sim.command.control[k]).collect();
+    assert_eq!(after, before, "управление — как до вмешательства");
+    assert_ne!(status(&sim, a).reason, Some(Reason::Player), "снова по обычным правилам");
+    assert!(sim.intent.log.iter().any(|&(t, h, s, _)| t == 5 && h == a && s == Status::History), "в час возврата — на истории");
+}
+
+/// `remove`: дивизии штаба выведены с начала (не введены в операцию), штаб — «сам» с причиной.
+#[test]
+fn intervene_remove() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_1gta");
+    let ds = under(&sim, a);
+    assert!(!ds.is_empty());
+    intent::intervene(&mut sim, &json!({ "id": "t", "actions": [{ "remove": { "hq": "su_1gta" } }] })).expect("вмешательство");
+    run_to(&mut sim, 5);
+    assert!(ds.iter().all(|&i| sim.world.divisions[i].state == agents_core::model::State::Pending), "выведены");
+    assert!(under(&sim, a).is_empty());
+    assert_eq!(status(&sim, a).status, Status::Own);
+    assert!(matches!(status(&sim, a).reason, Some(Reason::Intervention(_))));
+    assert!(sim.journal.iter().any(|e| e.text.contains("выведена")), "запись в журнале");
+}
+
+/// `drop`: задачи получателя после часа с целью у точки — не существуют; прочие остаются.
+#[test]
+fn intervene_drop() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_3gta");
+    let ci = chain_of(&sim, a);
+    let berlin = sim.theatre.proj.to_xy([13.40, 52.52]);
+    let after = (agents_core::time::parse_hours("1945-04-20T00:00").unwrap() - sim.start_hour) as u32;
+    let hit = |t: &Task| t.at >= after && t.goal.is_some_and(|g| g.dist(berlin) <= 25.0);
+    let n = sim.intent.chains[ci].tasks.len();
+    let k = sim.intent.chains[ci].tasks.iter().filter(|t| hit(t)).count();
+    assert!(k > 0, "у 3 гв. ТА есть задачи на Берлин");
+    intent::intervene(&mut sim, &json!({ "id": "t", "actions": [{ "drop": { "to": "su_3gta", "after": "1945-04-20T00:00", "near": [13.40, 52.52], "km": 25 } }] })).expect("вмешательство");
+    let c = &sim.intent.chains[ci];
+    assert_eq!(c.tasks.len(), n - k);
+    assert!(!c.tasks.iter().any(hit));
+}
+
+/// `permit`: немецкая армия в свой час получает разрешение на отход — приказы отхода дивизиям, армия с истории.
+#[test]
+fn intervene_permit() {
+    use agents_core::command::directive::Task as DTask;
+    let mut sim = intent_sim();
+    let a = hq(&sim, "de_9a");
+    intent::intervene(&mut sim, &json!({ "id": "t", "actions": [{ "permit": { "army": "de_9a", "at": 3 } }] })).expect("вмешательство");
+    run_to(&mut sim, 3);
+    assert_ne!(status(&sim, a).status, Status::Own, "до часа — по истории");
+    run_to(&mut sim, 4);
+    assert_eq!(status(&sim, a).status, Status::Own);
+    assert!(matches!(status(&sim, a).reason, Some(Reason::Intervention(_))));
+    let ds = under(&sim, a);
+    let w = ds.iter().filter(|&&i| sim.command.div_task[i].as_ref().is_some_and(|d| d.task == DTask::Withdraw) || sim.command.in_transit.iter().any(|(_, d)| d.to == Target::Division(i as u32) && d.task == DTask::Withdraw)).count();
+    assert_eq!(w, ds.len(), "отход — всем дивизиям армии");
+}
+
+#[test]
+fn intervene_errors() {
+    let mut sim = intent_sim();
+    assert!(intent::intervene(&mut sim, &json!({ "actions": [{ "remove": { "hq": "su_нет" } }] })).is_err());
+    assert!(intent::intervene(&mut sim, &json!({ "actions": [{ "fly": {} }] })).is_err());
+    assert!(intent::intervene(&mut sim, &json!({ "actions": [{ "permit": { "army": "su_8gva", "at": 1 } }] })).is_err(), "разрешение — немецкой армии");
+}

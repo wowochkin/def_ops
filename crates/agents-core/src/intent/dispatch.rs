@@ -52,13 +52,15 @@ pub struct State {
     pub queue: Vec<ScriptOrder>,
     /// Чистая история (запись следа эталона): все задачи — в свой час, без условий смысла, ухода и возврата.
     pub pure: bool,
+    /// Действия вмешательства, ждущие своего часа (intervene.rs).
+    pub actions: Vec<(u32, super::intervene::Action)>,
 }
 
 impl State {
     pub fn any(&self) -> bool { self.enabled.iter().any(|&e| e) }
 }
 
-fn set(sim: &mut Sim, h: u32, status: Status, reason: Option<Reason>, tick: u32) {
+pub(super) fn set(sim: &mut Sim, h: u32, status: Status, reason: Option<Reason>, tick: u32) {
     let s = &mut sim.intent.hq[h as usize];
     if s.status == status && s.reason == reason { return; }
     // «армия в N км»: расстояние меняется каждый час — смена записывается, только если сменилась причина
@@ -68,7 +70,7 @@ fn set(sim: &mut Sim, h: u32, status: Status, reason: Option<Reason>, tick: u32)
 }
 
 /// Штаб `h` и все его подчинённые.
-fn subtree(sim: &Sim, h: u32) -> Vec<usize> {
+pub(super) fn subtree(sim: &Sim, h: u32) -> Vec<usize> {
     let w = &sim.world;
     (0..w.hqs.len()).filter(|&k| { let mut x = k; for _ in 0..8 { if x == h as usize { return true; } match w.hqs[x].parent { Some(p) => x = p as usize, None => return false } } false }).collect()
 }
@@ -145,7 +147,7 @@ fn sense_now(sim: &Sim, c: &Chain, t: &super::chain::Task, on_track: bool) -> Re
     sense(sim, c, t)
 }
 
-fn leave(sim: &mut Sim, owner: u32, reason: Reason, tick: u32) {
+pub(super) fn leave(sim: &mut Sim, owner: u32, reason: Reason, tick: u32) {
     set(sim, owner, Status::Own, Some(reason), tick);
     // немецкая армия — штабам-агентам (и командующим)
     if sim.world.hqs[owner as usize].side == Side::De {
@@ -163,6 +165,7 @@ fn back(sim: &mut Sim, owner: u32, tick: u32) {
 /// Шаг диспетчера (фаза командования, до решений командующих и штабов).
 pub fn step(sim: &mut Sim, tick: u32) {
     if !sim.intent.any() { return; }
+    if !sim.intent.actions.is_empty() { super::intervene::due(sim, tick); }
     let r = sim.rules.intent.clone();
     for ci in 0..sim.intent.chains.len() {
         let owner = sim.intent.chains[ci].owner;

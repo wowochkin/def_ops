@@ -8,7 +8,8 @@ use crate::world::Sim;
 
 /// Почему задача не подана (или цепочка прекращена).
 #[derive(Clone, Debug, PartialEq)]
-pub enum Reason { Taken, Behind, TooFar, OwnLost, RetreatCut, Unfit, Strayed { km: f64 }, ChainEnd, Player }
+pub enum Reason { Taken, Behind, TooFar, OwnLost, RetreatCut, Unfit, Strayed { km: f64 }, ChainEnd, Player, /// Вмешательство (мерило 2): что изменено.
+    Intervention(String) }
 
 pub fn reason_text(r: &Reason) -> String {
     match r {
@@ -21,6 +22,7 @@ pub fn reason_text(r: &Reason) -> String {
         Reason::Strayed { km } => format!("армия в {} км от исторического места", km.round() as i64),
         Reason::ChainEnd => "цепочка кончилась".into(),
         Reason::Player => "под командованием игрока".into(),
+        Reason::Intervention(s) => format!("вмешательство: {s}"),
     }
 }
 

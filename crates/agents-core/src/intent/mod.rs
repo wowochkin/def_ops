@@ -4,11 +4,13 @@
 
 pub mod chain;
 pub mod dispatch;
+pub mod intervene;
 pub mod sense;
 pub mod track;
 
 pub use chain::{build, of_directive, Chain, Goal, Step, Task};
 pub use sense::{done, reason_text, sense, Reason};
+pub use intervene::intervene;
 pub use dispatch::{admit, describe, enable, gate, off_history, step, take, withdrawal_ok, HqState, State, Status};
 
 use crate::geo::XY;

@@ -25,7 +25,7 @@ export interface AgentScenarioFile {
   divisions: { id: string; name: string; side: string; hq: string; personnel?: number; tanks?: number; guns?: number; enterAt?: string | null }[];
 }
 // след эталона «истории как замысла» (*.intent-track.json) — не сценарий
-const agentFiles = import.meta.glob(['../../../../packages/sim/data/scenarios/agents/*.json', '!../../../../packages/sim/data/scenarios/agents/*.intent-track.json'], { import: 'default' });
+const agentFiles = import.meta.glob(['../../../../packages/sim/data/scenarios/agents/*.json', '!../../../../packages/sim/data/scenarios/agents/*.intent-track.json', '!../../../../packages/sim/data/scenarios/agents/*.interventions.json'], { import: 'default' });
 
 /** Агентный сценарий операции (дивизии и штабы); нет — undefined. */
 export async function agentScenario(opId: string): Promise<AgentScenarioFile | undefined> {
