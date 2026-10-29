@@ -5,10 +5,11 @@
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import type { IntelReport } from '@def-ops/sim';
+import { fmtCount, fmtFrac, fmtKm, fmtPct } from './num-format';
 import { ECHELON_RU, type FormationCardData } from './formation-card';
 
-const n0 = (x: number) => Math.round(x).toLocaleString('ru-RU');
-const pct = (x: number | null) => (x == null ? '—' : `${Math.round(x * 100)} %`);
+const n0 = fmtCount;
+const pct = fmtPct;
 const when = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
 
 /** Закрыть по Esc (пока карточка открыта). */
@@ -62,7 +63,7 @@ export function FormationPanel({ c, onClose, onPick, actions, note, badge, tabs,
           <table className="ag-vars"><tbody>
             <tr><td>Люди</td><td className="num">{c.status === 'pending' ? '—' : n0(c.personnel)}</td><td className="muted">{c.initial.personnel ? `${pct(c.share.personnel)} от исходных ${n0(c.initial.personnel)}` : ''}</td></tr>
             <tr><td>Танки и САУ</td><td className="num">{c.status === 'pending' ? '—' : n0(c.tanks)}</td><td className="muted">{c.initial.tanks ? `${pct(c.share.tanks)} от исходных ${n0(c.initial.tanks)}` : ''}</td></tr>
-            <tr><td>Боеприпасы</td><td className="num">{c.ammo == null ? '—' : c.ammo.toFixed(2).replace('.', ',')}</td><td className="muted">бк{c.hq ? ', средние по людям' : ''}</td></tr>
+            <tr><td>Боеприпасы</td><td className="num">{c.ammo == null ? '—' : fmtFrac(c.ammo)}</td><td className="muted">бк{c.hq ? ', средние по людям' : ''}</td></tr>
             <tr><td>Отрезано</td><td className="num" colSpan={2} style={{ textAlign: 'left' }}>{c.status === 'active' ? cut : '—'}</td></tr>
           </tbody></table>
         </section>
@@ -97,7 +98,7 @@ export function IntelPanel({ e, time, first, onClose, actions }: { e: IntelRepor
           <table className="ag-vars"><tbody>
             <tr><td>Силы (оценка)</td><td>{e.estimate}</td></tr>
             <tr><td>Где</td><td>{e.place}</td></tr>
-            {e.nearest && <tr><td>Ближе всех</td><td>{e.nearest.name} — {e.nearest.km.toFixed(e.nearest.km < 10 ? 1 : 0).replace('.', ',')} км</td></tr>}
+            {e.nearest && <tr><td>Ближе всех</td><td>{e.nearest.name} — {fmtKm(e.nearest.km)}</td></tr>}
             <tr><td>Обнаружен</td><td>{e.fresh ? 'впервые — за прошедший ход' : first ? 'к принятию командования' : 'был в разведсводке и раньше'}</td></tr>
           </tbody></table>
           <div className="muted small">Силы — оценка разведки, округлённо; намерения противника неизвестны.</div>

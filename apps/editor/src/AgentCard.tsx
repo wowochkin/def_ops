@@ -11,6 +11,7 @@ import { LlmClient } from '@def-ops/staff-service/llm';
 import type { LlmSettings } from './sim/game-protocol';
 import type { MapEngine } from './engine/types';
 import { agentGroup } from './formation-card';
+import { fmtCount, fmtFrac, fmtKm } from './num-format';
 
 export interface AgentRun { trace: AgentTrace; history: AgentHistory }
 type Row = [number, number, string, number, number, number, number, number, number, number, number];
@@ -55,13 +56,13 @@ export function AgentMark({ engine, at }: { engine: MapEngine; at: LngLat }) {
 const group = agentGroup;
 
 const VARS: { idx: number; label: string; fmt: (v: number) => string }[] = [
-  { idx: 3, label: 'Люди', fmt: (v) => Math.round(v).toLocaleString('ru-RU') },
+  { idx: 3, label: 'Люди', fmt: fmtCount },
   { idx: 4, label: 'Танки и САУ', fmt: (v) => String(Math.round(v)) },
   { idx: 5, label: 'Орудия и миномёты', fmt: (v) => String(Math.round(v)) },
-  { idx: 6, label: 'Боекомплекты', fmt: (v) => v.toFixed(2) },
-  { idx: 7, label: 'Заправки', fmt: (v) => v.toFixed(2) },
-  { idx: 8, label: 'Усталость', fmt: (v) => v.toFixed(2) },
-  { idx: 9, label: 'Организованность', fmt: (v) => v.toFixed(2) },
+  { idx: 6, label: 'Боекомплекты', fmt: fmtFrac },
+  { idx: 7, label: 'Заправки', fmt: fmtFrac },
+  { idx: 8, label: 'Усталость', fmt: fmtFrac },
+  { idx: 9, label: 'Организованность', fmt: fmtFrac },
 ];
 
 /** Машина состояний агента: группы и подсостояния. */
@@ -157,7 +158,7 @@ function Card({ run, i, hour, onHour }: { run: AgentRun; i: number; hour: number
         <table className="ag-docs"><tbody>
           {docs.map((p, k) => (
             <tr key={k} className={p.h <= hour ? '' : 'future'} onClick={() => onHour(p.h)} title="Показать этот час">
-              <td>{label(t.start, p.h)}</td><td>{p.set ?? p.source ?? ''} ({p.reliability ?? '—'})</td><td className="num">{p.dist.toFixed(1)} км</td>
+              <td>{label(t.start, p.h)}</td><td>{p.set ?? p.source ?? ''} ({p.reliability ?? '—'})</td><td className="num">{fmtKm(p.dist)}</td>
             </tr>
           ))}
         </tbody></table>

@@ -100,6 +100,8 @@ export async function act(id: string, p?: unknown, o: ActOpts = {}): Promise<str
   return r;
 }
 
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __act: typeof act }).__act = act;
+
 /**
  * Разбор фраз с параметрами без модели («покажи Зелов», «доложи о восьмой гвардейской»): модуль раздела регистрирует
  * разборщик; реплика (без обращения, нормализованная) и открытый раздел → действие с параметрами или готовый ответ say

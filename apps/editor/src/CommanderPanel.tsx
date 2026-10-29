@@ -8,14 +8,13 @@ import { useEffect, useRef, useState } from 'react';
 import type { AgentCommander, AgentTrace } from '@def-ops/sim';
 import { addHours } from '@def-ops/sim';
 import { intentAt, intentBadge } from './intent-view';
+import { fmtCount, fmtFrac, fmtHours, fmtKm, fmtPct } from './num-format';
 import { act, register } from './voice/registry';
 import { commanderAction, releaseCommander } from './voice/actions/staff';
 import {
   answer, chosenOf, decisionRibbon, MOTIVE_COLOR, MOTIVE_RU, moodWords, SUGGESTIONS, TRAIT_RU, viewAt, type Decision, type Snapshot,
 } from './commander-view';
 
-const n2 = (x: number) => x.toFixed(2).replace('.', ',');
-const n0 = (x: number) => (Math.round(x) || 0).toLocaleString('ru-RU');
 const sign = (x: number) => `${x >= 0 ? '+' : '−'}${Math.abs(x).toFixed(Math.abs(x) < 10 ? 1 : 0).replace('.', ',')}`;
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
 const when = (t: string) => `${dm(t)} ${t.slice(11, 16)}`;
@@ -39,8 +38,8 @@ function Traits({ c }: { c: AgentCommander }) {
       <div className="cm-rows">
         {TRAIT_RU.map(([k, label]) => {
           const t = c.traits[k];
-          return <div key={k} className="cm-row" title={`${t.source} — ${CONF_RU[t.confidence] ?? t.confidence}; пределы ${n2(t.range[0])}–${n2(t.range[1])}`}>
-            <span>{label}</span><Bar v={t.value} range={t.range} color="var(--accent, #8c2a22)" /><em>{n2(t.value)}</em></div>;
+          return <div key={k} className="cm-row" title={`${t.source} — ${CONF_RU[t.confidence] ?? t.confidence}; пределы ${fmtFrac(t.range[0])}–${fmtFrac(t.range[1])}`}>
+            <span>{label}</span><Bar v={t.value} range={t.range} color="var(--accent, #8c2a22)" /><em>{fmtFrac(t.value)}</em></div>;
         })}
       </div>
     </section>
@@ -57,10 +56,10 @@ function Motives({ c, s }: { c: AgentCommander; s: Snapshot | null }) {
         {keys.map((k) => {
           const b = c.baseMotives[k] ?? 0, now = s?.motives[k];
           return <div key={k} className="cm-row"><span>{MOTIVE_RU[k]}</span>
-            <span className="cm-bar" title={`на начало ${n2(b)}${now != null ? `, сейчас ${n2(now)}` : ''}`}>
+            <span className="cm-bar" title={`на начало ${fmtFrac(b)}${now != null ? `, сейчас ${fmtFrac(now)}` : ''}`}>
               <i style={{ width: `${(b / max) * 100}%`, background: MOTIVE_COLOR[k] }} />
               {now != null && <u style={{ left: `${(now / max) * 100}%` }} />}
-            </span><em>{b === now || now == null ? n2(b) : `${n2(b)} → ${n2(now)}`}</em></div>;
+            </span><em>{b === now || now == null ? fmtFrac(b) : `${fmtFrac(b)} → ${fmtFrac(now)}`}</em></div>;
         })}
       </div>
     </section>
@@ -91,15 +90,15 @@ function Picture({ s, tick, names }: { s: Snapshot | null; tick: number; names: 
   return (
     <section>
       <h4>Картина обстановки — что он знает (серым — как было на самом деле)</h4>
-      <table className="ag-vars cm-pic"><thead><tr><th>армия</th><th className="num" title="пройдено от исходного положения">прошла</th><th className="num" title="боевая сила армии в долях исходной">своих</th><th title="оценка разведки командующего, усл. ед. боевой силы">противник перед ней, усл. ед.</th></tr></thead><tbody>
+      <table className="ag-vars cm-pic"><colgroup><col style={{ width: '38%' }} /><col style={{ width: '70px' }} /><col style={{ width: '56px' }} /><col /></colgroup><thead><tr><th>армия</th><th className="num" title="пройдено от исходного положения">прошла</th><th className="num" title="боевая сила армии в долях исходной">своих</th><th title="оценка разведки командующего, усл. ед. боевой силы">противник перед ней, усл. ед.</th></tr></thead><tbody>
         {p.armies.map((a) => {
           const none = a.enemyEst < 0.5;
           const off = none ? a.enemyTrue >= 0.5 : Math.abs(a.enemyEst - a.enemyTrue) > Math.max(1, 0.15 * a.enemyTrue);
           return <tr key={a.hq}><td>{nm(a.hq)}{a.brokeThrough ? <small title="прорвала главную полосу"> ⚑</small> : null}</td>
-            <td className="num">{n0(a.advanceKm)} км</td><td className="num">{Math.round(a.strength * 100)} %</td>
-            <td>{none ? 'противника нет' : `≈ ${n0(a.enemyEst)} усл. ед.`}{off ? <small className="muted"> (на деле {n0(a.enemyTrue)})</small> : <small className="muted"> (верно)</small>}</td></tr>;
+            <td className="num">{fmtKm(a.advanceKm)}</td><td className="num">{fmtPct(a.strength)}</td>
+            <td>{none ? 'противника нет' : `≈ ${fmtCount(a.enemyEst)} усл. ед.`}{off ? <small className="muted"> (на деле {fmtCount(a.enemyTrue)})</small> : <small className="muted"> (верно)</small>}</td></tr>;
         })}
-        {p.rival && <tr><td>соперник</td><td colSpan={3}>{nm(p.rival.hq)}: до объекта ≈ {n0(p.rival.toObjectiveKm)} км <small className="muted">(сводка Ставки, задержка {Math.max(0, tick - p.rival.asOf)} ч)</small></td></tr>}
+        {p.rival && <tr><td>соперник</td><td colSpan={3}>{nm(p.rival.hq)}: до объекта ≈ {fmtKm(p.rival.toObjectiveKm)} <small className="muted">(сводка Ставки, задержка {fmtHours(tick - p.rival.asOf)}</small></td></tr>}
       </tbody></table>
       <div className="muted small">«Своих» — боевая сила армии от исходной; «прошла» — продвижение от исходного положения. {p.openFlanks.length ? `Открытые фланги: ${p.openFlanks.map(nm).join(', ')}. ` : ''}{p.pockets.length ? `Окружённых группировок: ${p.pockets.length}. ` : ''}{p.enemyReserves.length ? `Резервов противника в глубине: ${p.enemyReserves.length}.` : ''}</div>
     </section>
@@ -117,8 +116,8 @@ function Options({ d }: { d: Decision }) {
           <tr key={i} className={i === d.chosen ? 'chosen' : ''} title={o.rule}>
             <td>{i === d.chosen && <b className="ok">✓ </b>}{o.label}</td>
             <td><span className="cm-stack">{Object.entries(o.parts).filter(([, v]) => v !== 0).map(([k, v]) =>
-              <i key={k} className={v < 0 ? 'neg' : ''} style={{ width: `${(Math.abs(v) / max) * 100}%`, background: MOTIVE_COLOR[k] }} title={`${MOTIVE_RU[k] ?? k}: ${v < 0 ? '−' : ''}${n2(Math.abs(v))}`} />)}</span></td>
-            <td className="num">{n2(o.total)}</td>
+              <i key={k} className={v < 0 ? 'neg' : ''} style={{ width: `${(Math.abs(v) / max) * 100}%`, background: MOTIVE_COLOR[k] }} title={`${MOTIVE_RU[k] ?? k}: ${v < 0 ? '−' : ''}${fmtFrac(Math.abs(v))}`} />)}</span></td>
+            <td className="num">{fmtFrac(o.total)}</td>
             <td className="num">{o.mind ? `${sign(o.mind.advanceKm)} км` : '—'}</td>
           </tr>
         ))}
@@ -178,7 +177,7 @@ export function CommanderPanel({ trace, c, tick, onTick, names }: { trace: Agent
       {trace.intent && <section className="cm-now"><b>История как замысел:</b> {intentBadge(intentAt(trace, c.hq, tick)) ?? 'нет данных на этот час'}</section>}
       <Traits c={c} />
       <Motives c={c} s={v.snapshot} />
-      {v.snapshot && <section className="cm-now"><b>Настроение:</b> {moodWords(v.snapshot.mood)} <span className="muted">(уверенность {n2(v.snapshot.mood.confidence)}, напряжение {n2(v.snapshot.mood.stress)})</span></section>}
+      {v.snapshot && <section className="cm-now"><b>Настроение:</b> {moodWords(v.snapshot.mood)} <span className="muted">(уверенность {fmtFrac(v.snapshot.mood.confidence)}, напряжение {fmtFrac(v.snapshot.mood.stress)})</span></section>}
       <Mood c={c} tick={tick} />
       <Picture s={v.snapshot} tick={tick} names={names} />
       <section>

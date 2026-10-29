@@ -2049,6 +2049,8 @@ body.resizing { cursor: col-resize; user-select: none; }
 .cm-now { background: var(--acc-bg); border-radius: 6px; padding: 5px 8px; }
 .cm-pic th { text-align: left; font-weight: 400; color: var(--muted); font-size: 11px; padding: 0 4px 2px 0; } .cm-pic th.num { text-align: right; }
 .cm-pic td { padding: 3px 4px 3px 0; vertical-align: top; border-top: 1px solid var(--line); }
+.cm-pic { table-layout: fixed; width: 100%; }
+.ag-panel, .cm-tab { font-variant-numeric: tabular-nums; }
 .cm-pic small.muted, .cm-tab .muted { color: var(--muted); }
 .cm-ribbon { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
 .cm-ribbon button { border-radius: 12px; padding: 2px 9px; background: var(--acc-bg); border-color: transparent; font-size: 11px; text-align: left; }

@@ -46,6 +46,12 @@ describe('отрисовка командующих', () => {
     const empty = { ...zhukov, snapshots: [], decisions: [] };
     expect(renderToString(createElement(CommanderPanel, { trace: t, c: empty, tick: 3, onTick: () => {}, names }))).toContain('Разговор');
   });
+  it('дробный час проигрывания: задержка сводки — целые часы, без дробей', () => {
+    const html = renderToString(createElement(CommanderPanel, { trace: trace([zhukov]), c: zhukov, tick: 12.4, onTick: () => {}, names }));
+    expect(html).toContain('задержка 6 ч');
+    expect(html).not.toMatch(/задержка \d+[.,]\d/);
+    expect(html).toContain('<colgroup>'); // колонки картины закреплены
+  });
   it('график: пусто — ничего; полный ход — оси, номера и список решений, цель из хода', () => {
     expect(renderToString(createElement(RivalryChart, { trace: trace(), tick: 0 }))).toBe('');
     const withMark = { ...zhukov, decisions: [{ ...zhukov.decisions[0], options: [opt('commitMobile', 'Ввести ТА', 0.9)] }] };

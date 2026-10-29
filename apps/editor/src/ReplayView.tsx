@@ -388,6 +388,11 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return () => host.removeEventListener('click', click);
   }, [eng, agentRun]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setCardSel(null); }, [result]);
+  // крючок разработки: открыть карточку штаба из скриптов проверки (scripts/stage1-shots.mjs)
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __replayCard?: (id: string | null) => void }).__replayCard = (id) => { setCardSel(id); setAgentSel(null); };
+  }, []);
   const closeCards = useCallback(() => { setCardSel(null); setAgentSel(null); }, []);
   useEsc(!!(cardSel || agentSel), closeCards);
   /** Карточка выбранного соединения или штаба на момент проигрывания. */
