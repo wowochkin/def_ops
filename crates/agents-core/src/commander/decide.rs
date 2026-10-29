@@ -8,10 +8,12 @@
 //!
 //! Перемены обстановки, по которым командующий решает вне цикла: армия впервые прорвала оборону; открылся новый
 //! фланг; появился котёл противника; отрезаны свои дивизии (их стало больше); пришла новая директива старшего;
-//! в «истории как замысле» — армии вне истории нужна задача (`options_su::needs_task`);
 //! у верхней инстанции — запрос на отход дождался срока ответа (`permissionHours`, как прежний ответ «держать»);
 //! на все дождавшиеся запросы она отвечает в том же часе, каждый ответ — отдельным решением, и лишь потом решает
 //! прочее (резерв, деблокирование). Повторное решение с той же целью директив заново не отдаёт.
+//!
+//! В «истории как замысле» задача армии вне истории, которой она нужна (`options_su::needs_task`), — обязанность
+//! штаба фронта, а не вариант в споре: каждый час, до решения командующего и независимо от него (`staff`).
 
 use super::motives::{current, effective, mood_step, Mood};
 use super::options::{Choice, Kind};
@@ -52,8 +54,9 @@ pub struct Seen {
     pub requests: Vec<(u32, u32, u32)>,
     /// Армии, прорвавшие оборону: (штаб, последний час с прорывом) — повод «прорвала оборону» один раз на армию.
     pub broke: Vec<(u32, u32)>,
-    /// Армии вне истории, которым нужна задача, — повод «армия без задачи» уже был (до тех пор, пока задача нужна).
-    pub idle: Vec<u32>,
+    /// Задачи, поставленные штабом армиям вне истории: (армия, час, точка) — та же точка той же армии в пределах цикла
+    /// не ставится снова.
+    pub tasked: Vec<(u32, u32, crate::geo::XY)>,
 }
 
 /// Запрос на отход (или прорыв), поднятый командующим за дивизию: исполняется только по разрешению верхней инстанции.
@@ -302,12 +305,6 @@ pub fn trigger(sim: &Sim, c: &mut Commander, pic: &Picture, tick: u32) -> Option
             c.seen.intent = Some(key);
         }
     }
-    if for_strayed(sim, c.hq) {
-        // армия вне истории без задачи (нет, выполнена, без смысла) — повод один раз, пока задача ей нужна
-        let idle: Vec<u32> = super::options_su::strayed(sim, pic).into_iter().filter(|&a| super::options_su::needs_task(sim, a)).collect();
-        for &a in &idle { if !c.seen.idle.contains(&a) { why.push(format!("армия без задачи: {}", name(a))); } }
-        c.seen.idle = idle;
-    }
     if sim.world.hqs[c.hq as usize].echelon == Echelon::HighCommand {
         // повод — только запрос, впервые дождавшийся срока ответа (а не каждый час, пока он ждёт)
         let wait = sim.rules.command.de.permission_hours as u32;
@@ -392,10 +389,11 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32, hourly: &mut super::mind::H
     c.motives = current(&sim.rules.commanders.profiles[c.profile].motives, &pic, &sim.rules.commanders.gains);
     let trig = trigger(sim, c, &pic, tick);
     c.picture = Some(pic);
+    let before = c.decisions.len();
+    if for_strayed(sim, c.hq) { staff(sim, c, tick); }
     // игрок или приказы сценария на месте штаба — командующий не решает (кроме армий вне истории в `intent`)
     let agent = sim.command.control.get(c.hq as usize) == Some(&Control::Agent) || for_strayed(sim, c.hq);
     let cycle = cycle_hours(sim, c.hq);
-    let before = c.decisions.len();
     if agent && (trig.is_some() || tick >= c.last + cycle) {
         let reason = trig.clone().unwrap_or_else(|| format!("цикл решения {cycle} ч"));
         if sim.world.hqs[c.hq as usize].echelon == Echelon::HighCommand {
@@ -423,6 +421,29 @@ fn hour(sim: &mut Sim, c: &mut Commander, tick: u32, hourly: &mut super::mind::H
     if c.decisions.len() > before || tick.is_multiple_of(SNAPSHOT_HOURS) {
         let picture = c.picture.clone().expect("картина часа");
         c.snapshots.push(Snapshot { tick, motives: c.motives, mood: c.mood, picture, intent: c.intent_label.clone() });
+    }
+}
+
+/// Штаб фронта ставит задачу каждой армии вне истории, которой она нужна: лучший вариант «поставить задачу» —
+/// отдельным решением с документом «задача армии вне истории», замысел командующего не меняется.
+fn staff(sim: &mut Sim, c: &mut Commander, tick: u32) {
+    let Some(pic) = c.picture.clone() else { return };
+    let p = sim.rules.commanders.profiles[c.profile].clone();
+    let cycle = cycle_hours(sim, c.hq);
+    c.seen.tasked.retain(|x| tick < x.1 + cycle.max(1));
+    for a in super::options_su::strayed(sim, &pic) {
+        if !super::options_su::needs_task(sim, a) { continue; }
+        let Some(ch) = super::options_su::assign(sim, &p, a) else { continue };
+        let Kind::Assign { at, .. } = ch.kind else { continue };
+        if c.seen.tasked.iter().any(|x| x.0 == a && x.2.dist(at) <= 1.0) { continue; }
+        c.seen.tasked.push((a, tick, at));
+        let t = effective(&p.traits, &c.mood, &sim.rules.commanders.mood);
+        let options = vec![score(&ch, &c.motives, &t, &sim.rules.commanders.weights, false)];
+        let why = format!("задача армии вне истории — обязанность штаба фронта. {}", why(&options, 0));
+        let name = sim.world.hqs[a as usize].name.clone();
+        let kind = ch.kind.clone();
+        c.decisions.push(Decision { tick, trigger: format!("армия без задачи: {name}"), options, chosen: 0, why });
+        super::apply::apply(sim, c, &kind, tick);
     }
 }
 

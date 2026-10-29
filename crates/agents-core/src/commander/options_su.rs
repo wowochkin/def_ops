@@ -13,11 +13,11 @@
 //! - CommitSecond: задача +, сохранение −.
 //! - Assign («история как замысел»: армия вне истории без задачи, с выполненной или потерявшей смысл): задача +,
 //!   соперник + (если объект ближе армии к объекту соперника), сохранение − (мало); U меньше у объекта плана фронта,
-//!   чем у пункта по местности.
+//!   чем у пункта по местности. Не вариант в споре решений: штаб фронта ставит её каждый час (decide.rs, `staff`);
+//!   объекты в зоне изменённого замысла (`drop`) не берутся.
 //!
 //! В «истории как замысле» фронт идёт по приказам сценария, и командующий решает только за армии вне истории:
-//! варианты строятся по картине с одними этими армиями, без переноса главного удара (это замысел самого фронта);
-//! армии нужна задача — «продолжать по плану» из вариантов убирается.
+//! варианты строятся по картине с одними этими армиями, без переноса главного удара (это замысел самого фронта).
 
 use super::options::{Choice, Kind};
 use super::picture::{divisions_of, profile_objective_xy, ArmyView, Picture};
@@ -129,14 +129,8 @@ pub fn options_su(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice>
     if off.is_empty() { return Vec::new(); }
     let mut view = pic.clone();
     view.armies.retain(|a| off.contains(&a.hq));
-    let mut out = plan_options(sim, hq, p, &view, true);
-    let n = out.len();
-    for &a in &off {
-        if needs_task(sim, a) { out.extend(assign(sim, p, a)); }
-    }
-    // армии нужна задача — «продолжать по плану» не вариант: решает постановка задачи или иное действие
-    if out.len() > n { out.retain(|ch| ch.kind != Kind::Continue); }
-    out
+    // задачу армии без задачи ставит штаб фронта каждый час (decide.rs, `staff`) — среди вариантов её нет
+    plan_options(sim, hq, p, &view, true)
 }
 
 /// Армии картины вне истории, за которые решает командующий (армию игрока ведёт игрок).
@@ -172,7 +166,7 @@ fn army_axis(sim: &Sim, p: &Profile, army: u32, c: XY) -> Option<XY> {
 /// полосе армии (к оси не больше 60°), ещё у противника (своих в пределах соприкосновения нет), не дальше `reachDays`
 /// суточных переходов; нет такого — ближайший населённый пункт (центр кольца) или мост у точки суточного перехода по
 /// оси (не дальше `GROUND_KM`), нет и их — сама точка.
-fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
+pub fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
     let w = &sim.world;
     let r = &sim.rules;
     let ds = divisions_of(sim, army);
@@ -187,7 +181,7 @@ fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
     let front = w.hqs[army as usize].parent.unwrap_or(army);
     let plan = intent::plan_objectives(sim, front).into_iter().filter(|&g| {
         let d = c.dist(g);
-        d > r.contact_km && d <= r.intent.reach_days * rate && ((g.x - c.x) * ax.x + (g.y - c.y) * ax.y) / (d * al) >= AHEAD_COS && !ours(g)
+        d > r.contact_km && d <= r.intent.reach_days * rate && ((g.x - c.x) * ax.x + (g.y - c.y) * ax.y) / (d * al) >= AHEAD_COS && !ours(g) && !intent::intervene::banned(sim, army, g)
     }).min_by(|a, b| c.dist(*a).total_cmp(&c.dist(*b)));
     let (at, from_plan, what) = match plan {
         Some(g) => (g, true, "объект плана фронта".to_string()),
@@ -200,8 +194,10 @@ fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
                 (XY::new(v.iter().map(|x| x.x).sum::<f64>() / n, v.iter().map(|x| x.y).sum::<f64>() / n), a.name.clone())
             });
             let bridges = sim.theatre.bridges.iter().map(|b| (b.pos, b.name.clone()));
-            match areas.chain(bridges).filter(|x| x.0.dist(q) <= GROUND_KM).min_by(|a, b| a.0.dist(q).total_cmp(&b.0.dist(q))) {
+            match areas.chain(bridges).filter(|x| x.0.dist(q) <= GROUND_KM && !intent::intervene::banned(sim, army, x.0)).min_by(|a, b| a.0.dist(q).total_cmp(&b.0.dist(q))) {
                 Some((at, n)) => (at, false, n),
+                // зона изменённого замысла — задачи туда нет
+                None if intent::intervene::banned(sim, army, q) => return None,
                 None => (q, false, "рубеж суточного перехода".to_string()),
             }
         }

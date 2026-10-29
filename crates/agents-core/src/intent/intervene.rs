@@ -17,6 +17,16 @@ use serde_json::Value;
 /// умолчанию).
 pub const PERMIT_REAR_KM: f64 = 20.0;
 
+/// Зона изменённого замысла (`drop`): после часа `after` армии `army` задач с целью ближе `km` к `at` нет — ни из
+/// истории, ни от командующего.
+#[derive(Clone, Debug)]
+pub struct DropZone { pub army: u32, pub after: u32, pub at: XY, pub km: f64 }
+
+/// Точка `g` — в зоне изменённого замысла армии на нынешний час.
+pub fn banned(sim: &Sim, army: u32, g: XY) -> bool {
+    sim.intent.drops.iter().any(|z| z.army == army && sim.world.tick >= z.after && g.dist(z.at) <= z.km)
+}
+
 /// Действие вмешательства, ждущее своего часа.
 #[derive(Clone, Debug)]
 pub enum Action {
@@ -75,6 +85,7 @@ pub fn intervene(sim: &mut Sim, case: &Value) -> Result<(), String> {
                 let before = c.tasks[..c.next].iter().filter(|t| hit(t)).count();
                 c.tasks.retain(|t| !hit(t));
                 c.next -= before;
+                sim.intent.drops.push(DropZone { army: to, after, at: p, km });
             }
             "permit" => {
                 let army = hq_of(sim, v, "army")?;
@@ -123,6 +134,8 @@ fn hold(sim: &mut Sim, hq: u32, hours: u32, tick: u32) {
     let armies: Vec<usize> = sub.iter().copied().filter(|&k| sim.world.hqs[k].echelon == Echelon::Army).collect();
     for k in armies {
         let d = defend(hq, Target::Hq(k as u32), place(sim, Target::Hq(k as u32)), &rule, "на месте");
+        // замысел армии — сразу: директива без оси иначе не сменила бы замысел с осью (agent.rs)
+        sim.command.intent[k] = Some(Directive { issued: tick, ..d.clone() });
         crate::command::passing::issue(sim, d, tick);
     }
     for i in live(sim, hq) {
@@ -142,6 +155,10 @@ fn release(sim: &mut Sim, hq: u32, saved: Vec<(usize, Control)>, tick: u32) {
         if c == Control::Agent { sim.command.last_cycle[k] = tick; }
     }
     sim.command.sent.retain(|key, _| !matches!(key.1, Target::Hq(h) if sub.contains(&(h as usize))));
+    // «оборонять на месте» снято: армии, ушедшей с истории, нужна задача
+    for &k in &sub {
+        if sim.command.intent[k].as_ref().is_some_and(|d| d.id.starts_with("вмешательство:держать")) { sim.command.intent[k] = None; }
+    }
     for &k in &sub { set(sim, k as u32, Status::History, None, tick); }
     for c in sim.intent.chains.iter_mut().filter(|c| sub.contains(&(c.owner as usize))) {
         if c.tasks[c.next.min(c.tasks.len())..].iter().any(|t| t.at <= tick) { continue; }

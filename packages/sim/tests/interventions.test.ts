@@ -26,7 +26,7 @@ const still = (n: number) => Array.from({ length: n }, () => [row(14), row(15), 
 const doc = (tick: number, to: string, kind = 'instruction') => ({ tick, time: '', hq: 'f', kind, to: [to], text: '', rule: null });
 
 describe('признаки правдоподобия', () => {
-  it('idleMaxHours: только часы армии вне истории без действующей задачи (нет директивы, цель достигнута); оборона — задача', () => {
+  it('idleMaxHours: только часы армии «сам» (или под «самим» старшим) без действующей задачи (нет директивы, цель достигнута); оборона — задача', () => {
     // a: с истории в 10 ч; задача наступать к 14,5 (армия у 14 — не достигнута) с 12 ч, в 20 ч армия у цели, в 30 ч — «оборонять»
     const fr = still(41).map((f, h) => [row(h >= 20 ? 14.5 : 14), f[1], f[2]]);
     const at = (tick: number, text: string) => ({ ...doc(tick, 'a'), text });
@@ -37,9 +37,14 @@ describe('признаки правдоподобия', () => {
     ];
     // a: 10–11 без задачи (2 ч), 12–19 задача, 20–29 цель достигнута (10 ч), с 30 — оборона; b на истории — не в счёт
     expect(idleMaxHours(make(fr, { documents, intent }) as never, 0, 4)).toEqual({ hours: 10, army: 'a' });
-    // b вне истории без единого документа с 35 ч — 6 ч (35–40)
-    const intent2 = [intent[0], { hq: 'b', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 35, status: 'shifted', reason: 'y' }] }];
-    expect(idleMaxHours(make(fr, { documents, intent: intent2 }) as never, 25, 4)).toEqual({ hours: 6, army: 'b' });
+    // b «со сдвигом» (ведёт цепочка, ждёт часа задачи) — не в счёт: у a с 25 ч — 5 ч (25–29)
+    const b = (status: string) => [intent[0], { hq: 'b', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 35, status, reason: 'y' }] }];
+    expect(idleMaxHours(make(fr, { documents, intent: b('shifted') }) as never, 25, 4)).toEqual({ hours: 5, army: 'a' });
+    // b «сам» без единого документа с 35 ч — 6 ч (35–40)
+    expect(idleMaxHours(make(fr, { documents, intent: b('own') }) as never, 25, 4)).toEqual({ hours: 6, army: 'b' });
+    // «сам» старший (фронт) — армия вне истории, как off_history
+    const front = [{ hq: 'f', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 35, status: 'own', reason: 'z' }] }, intent[0], { hq: 'b', changes: [{ tick: 0, status: 'history', reason: null }] }];
+    expect(idleMaxHours(make(fr, { documents, intent: front }) as never, 25, 4)).toEqual({ hours: 6, army: 'b' });
     // выбывшая к концу армия — не в счёт
     const dead = fr.map((f, h) => (h === 40 ? [row(14.5, 52, OUT), f[1], f[2]] : f));
     expect(idleMaxHours(make(dead, { documents, intent }) as never, 0, 4)).toEqual({ hours: 0, army: null });

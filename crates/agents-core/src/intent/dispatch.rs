@@ -55,6 +55,8 @@ pub struct State {
     pub pure: bool,
     /// Действия вмешательства, ждущие своего часа (intervene.rs).
     pub actions: Vec<(u32, super::intervene::Action)>,
+    /// Зоны изменённого замысла (`drop`).
+    pub drops: Vec<super::intervene::DropZone>,
 }
 
 impl State {

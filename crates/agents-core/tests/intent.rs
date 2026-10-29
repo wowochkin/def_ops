@@ -1021,3 +1021,77 @@ fn chain_end_on_track_stays_history() {
     run_to(&mut sim, 3);
     assert_eq!(status(&sim, a).status, Status::History);
 }
+
+// ---------- задача армии вне истории — обязанность штаба фронта ----------
+
+/// Армия вне истории без задачи получает задачу за 1–2 ч независимо от решения командующего по фронту (в том же часе
+/// решение по фронту есть, «поставить задачу» в его вариантах нет); несколько таких армий в один час — все.
+#[test]
+fn idle_off_history_armies_all_tasked() {
+    let mut sim = intent_sim();
+    let f = hq(&sim, "su_1bf");
+    let (a, b) = (hq(&sim, "su_8gva"), hq(&sim, "su_5ua"));
+    run_to(&mut sim, 1);
+    for h in [a, b] {
+        let ci = chain_of(&sim, h);
+        let n = sim.intent.chains[ci].next;
+        sim.intent.chains[ci].tasks.truncate(n);
+        let g = sim.intent.chains[ci].tasks[n - 1].goal.expect("цель");
+        let c = center(&sim, h);
+        shift(&mut sim, h, g.x - c.x, g.y - c.y);
+    }
+    let mut t = off_track(&mut sim, a, 20.0);
+    t.armies.extend(off_track(&mut sim, b, 20.0).armies);
+    sim.intent.track = Some(t);
+    run_to(&mut sim, 3);
+    assert_eq!((status(&sim, a).status, status(&sim, b).status), (Status::Own, Status::Own));
+    let (ta, tb) = (assigns(&sim, f, a), assigns(&sim, f, b));
+    assert!(ta.iter().any(|x| x.0 <= 3) && tb.iter().any(|x| x.0 <= 3), "обе армии с задачей: {ta:?} {tb:?}");
+    assert_eq!(ta.iter().map(|x| x.0).min(), tb.iter().map(|x| x.0).min(), "в одном часе");
+    // решения командующего по фронту — без «поставить задачу» среди вариантов
+    let c = commander(&sim, f);
+    assert!(c.decisions.iter().filter(|d| d.options.len() > 1).all(|d| !d.options.iter().any(|o| matches!(o.choice.kind, Kind::Assign { .. }))));
+    assert!(sim.documents.iter().any(|d| d.hq == f && d.text.contains("задача армии вне истории")), "документ штаба");
+}
+
+/// Зона изменённого замысла (`drop`): командующий не ставит армии задачу в ней.
+#[test]
+fn drop_zone_excluded_from_assign() {
+    // армия у цели последней задачи, цепочка кончилась, след в 20 км
+    let prepare = |zone: Option<(XY, f64)>| {
+        let mut sim = intent_sim();
+        let a = hq(&sim, "su_8gva");
+        run_to(&mut sim, 1);
+        let ci = chain_of(&sim, a);
+        let n = sim.intent.chains[ci].next;
+        sim.intent.chains[ci].tasks.truncate(n);
+        let g = sim.intent.chains[ci].tasks[n - 1].goal.expect("цель");
+        let c = center(&sim, a);
+        shift(&mut sim, a, g.x - c.x, g.y - c.y);
+        if let Some((at, km)) = zone {
+            let ll = sim.theatre.proj.to_lnglat(at);
+            intent::intervene(&mut sim, &json!({ "actions": [{ "drop": { "to": "su_8gva", "after": 0, "near": ll, "km": km } }] })).expect("вмешательство");
+        }
+        sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+        run_to(&mut sim, 3);
+        sim
+    };
+    let free = prepare(None);
+    let (a, f) = (hq(&free, "su_8gva"), hq(&free, "su_1bf"));
+    let (_, at, _) = *assigns(&free, f, a).first().expect("задача без зоны");
+    let sim = prepare(Some((at, 15.0)));
+    assert!(!sim.intent.drops.is_empty(), "зона хранится");
+    assert!(assigns(&sim, f, a).iter().all(|x| x.1.dist(at) > 15.0), "задача вне зоны");
+}
+
+/// Конец удержания: распоряжение «оборонять на месте» снято — армии, ушедшей с истории, нужна задача.
+#[test]
+fn release_clears_hold_intent() {
+    let mut sim = intent_sim();
+    let a = hq(&sim, "su_8gva");
+    intent::intervene(&mut sim, &json!({ "actions": [{ "hold": { "hq": "su_1bf", "from": 1, "hours": 2 } }] })).expect("вмешательство");
+    run_to(&mut sim, 2);
+    assert!(sim.command.intent[a as usize].as_ref().is_some_and(|d| d.id.starts_with("вмешательство:держать")));
+    run_to(&mut sim, 4);
+    assert!(!sim.command.intent[a as usize].as_ref().is_some_and(|d| d.id.starts_with("вмешательство:держать")), "держать — снято");
+}
