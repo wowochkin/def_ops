@@ -151,10 +151,63 @@ const parts = {
     if (await page.locator('.lyr-row', { hasText: 'Зоны влияния сторон' }).locator('input').isChecked()) return fail('zones', 'после перезагрузки флажок снова включён');
     ok('zones', 'выбор помнится');
   },
+  /** «Штабы»: кнопки раздельны; на пункте 8 гв. А — только её поддерево и директивы фронта; «показать все» открывает остальные. */
+  async staffs() {
+    await page.goto(`${URL_}/#replay`);
+    await page.evaluate(() => localStorage.setItem('def_ops.command.mode', 'intent'));
+    await replayAgents();
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const posted = await page.evaluate(() => window.__act('command.post', { name: 'su_8gva' }));
+    if (!/8-я гвардейская/.test(String(posted))) return fail('staffs', `пункт не выбран: ${posted}`);
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
+    await page.locator('.staffs-acts').first().waitFor();
+    // две кнопки в строке бывают у штаба, ведомого директивами: «взять» и «вернуть истории»; если такого нет, кнопки на время проверки дублируются
+    const gap = await page.evaluate(() => {
+      let cloned = null;
+      let row = [...document.querySelectorAll('.staffs-acts')].find((e) => e.querySelectorAll('button').length >= 2);
+      if (!row) {
+        row = document.querySelector('.staffs-acts');
+        if (!row || !row.querySelector('button')) return null;
+        cloned = row.appendChild(row.querySelector('button').cloneNode(true));
+      }
+      const bs = [...row.querySelectorAll('button')];
+      const [a, b] = bs.map((e) => e.getBoundingClientRect());
+      const border = getComputedStyle(bs[0]).borderTopWidth;
+      cloned?.remove();
+      return border === '0px' ? -1 : Math.round((b.left - a.right) * 10) / 10;
+    });
+    if (gap === null) return fail('staffs', 'нет строки штаба с кнопками');
+    if (gap < 4) return fail('staffs', `промежуток между кнопками ${gap} px (-1: нет рамки)`);
+    ok('staffs', `кнопки раздельны (промежуток ${gap} px)`);
+    const staffText = () => page.locator('.cmd-sec.staffs').innerText();
+    const own = await staffText();
+    const rows = await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().locator('.staffs-row b').allInnerTexts();
+    if (/Украинск/.test(rows.join('|'))) return fail('staffs', `в списке чужой фронт: ${rows}`);
+    const docsOpts = await page.locator('select[data-action="command.docs.hq"] option').allInnerTexts();
+    if (docsOpts.some((t) => /Украинск/.test(t))) return fail('staffs', `в выборе документов чужой фронт: ${docsOpts}`);
+    const docs = await page.locator('.staffs-docs .doc').allInnerTexts();
+    const bad = docs.filter((t) => !/8|гв\.|ск|Белорус|фронт|Ставк/i.test(t));
+    if (bad.length) return fail('staffs', `в журнале чужие документы: ${bad.slice(0, 2).join(' / ')}`);
+    await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().scrollIntoViewIfNeeded();
+    await page.locator('.cmd-sec.staffs h4', { hasText: /^Штабы$/ }).evaluate((e) => e.scrollIntoView({ block: 'start' }));
+    await shot('command-staffs.jpg');
+    ok('staffs', `только поддерево 8 гв. А (штабов: ${rows.length}, документов: ${docs.length})`);
+    await page.locator('[data-action="command.staffs.all"]').first().click();
+    await page.waitForTimeout(300);
+    const rows2 = await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().locator('.staffs-row b').allInnerTexts();
+    if (rows2.length <= rows.length || !rows2.some((t) => /Украинск/.test(t))) return fail('staffs', `после «показать все» штабов ${rows2.length} (было ${rows.length})`);
+    ok('staffs', `показать все (штабов: ${rows2.length})`);
+    void own;
+  },
 };
 
 try {
-  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split('\n')[0]));
+  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split("\n").slice(0, 3).join(" ")));
   for (const n of ONLY ?? []) if (!parts[n] && !['dock', 'zones', 'staffs', 'orders', 'fly', 'umpire', 'bounds', 'manning'].includes(n)) fail(n, 'неизвестная часть');
 } finally {
   await browser.close();

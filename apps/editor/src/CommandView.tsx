@@ -933,7 +933,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
               {sub === 'reserves' && <Reserves v={staffsOn(view) && post.issuer ? { ...view, reserveGroups: postReserves(view, post.issuer) } : view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
                 scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
-            {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} />}
+            {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}

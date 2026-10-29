@@ -82,10 +82,24 @@ export function postIntel(v: TurnView, level: LevelId, issuer: string): IntelGro
     .sort((a, b) => (a.nearestKm ?? 1e9) - (b.nearestKm ?? 1e9));
 }
 
-/** Документы штаба пункта и его подчинённых штабов. */
+/** Штаб и все штабы под ним (по подчинённости штабов, глубина до 8). */
+export function subtreeHqs(v: TurnView, issuer: string): Set<string> {
+  const hqs = v.command?.hqs ?? {};
+  const out = new Set([issuer]);
+  for (let n = 0; n < 8; n++) {
+    let grew = false;
+    for (const [id, h] of Object.entries(hqs)) if (h.parent && out.has(h.parent) && !out.has(id)) { out.add(id); grew = true; }
+    if (!grew) break;
+  }
+  return out;
+}
+
+/** Документы пункта: штаба и штабов под ним, а также документы старших, адресованные в это поддерево (штабам или дивизиям). */
 export function postDocs(v: TurnView, issuer: string): NonNullable<TurnView['command']>['documents'] {
-  const subs = new Set([issuer, ...recipients(v, issuer).map((x) => x.id)]);
-  return (v.command?.documents ?? []).filter((d) => subs.has(d.hq));
+  const subs = subtreeHqs(v, issuer);
+  const seniors = new Set(ancestry(v, issuer));
+  const targets = new Set([...subs, ...divisionsUnder(v, issuer).map((u) => u.id)]);
+  return (v.command?.documents ?? []).filter((d) => subs.has(d.hq) || (seniors.has(d.hq) && d.to.some((t) => targets.has(t))));
 }
 
 /** Резервы пункта: у Ставки — все, у фронта — его, ниже — где соединения резерва в подчинении штаба. */

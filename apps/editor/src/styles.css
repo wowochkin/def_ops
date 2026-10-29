@@ -2090,3 +2090,7 @@ body.resizing { cursor: col-resize; user-select: none; }
 .cm-marks { margin: 4px 0 0; padding: 0; list-style: none; columns: 2; column-gap: 14px; font-size: 10.5px; line-height: 1.35; max-height: 62px; overflow: hidden; }
 .cm-marks li { break-inside: avoid; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cm-marks li.future { opacity: .5; }
 .cm-chart-f { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+.staffs-acts { display: inline-flex; gap: 6px; }
+.staffs-btn { border: 1px solid var(--line); border-radius: 6px; padding: 1px 8px; background: #fff; font-size: 11.5px; cursor: pointer; }
+.staffs-btn.back { color: #7a5a1a; }

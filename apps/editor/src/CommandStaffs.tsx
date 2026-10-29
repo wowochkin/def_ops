@@ -10,6 +10,7 @@ import { hl } from './voice/highlight';
 import { controlMark, findHq, MODE_TITLE, placeText, queueOp, releaseAction, staffListed, type CommandOp } from './command-forms';
 import { commandText } from './sim/agents-game';
 import type { LevelId } from './map-level-scale';
+import { postDocs, subtreeHqs } from './post-views';
 
 /** Уровень карты взятого штаба: его подчинённые — крупно. */
 const LEVEL_OF: Record<string, LevelId> = { front: 'front', army: 'army', corps: 'corps' };
@@ -80,9 +81,18 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
   });
 }
 
-export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
+export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; issuer: string | null }) {
   const c = v.command!;
   const [hq, setHq] = useState<string>('');
+  const [all, setAll] = useState(false);
+  // «только своё»: пункт есть и это не верхняя инстанция
+  const scopable = !!issuer && c.hqs[issuer]?.echelon !== 'high_command';
+  const scoped = scopable && !all;
+  useAction({
+    id: 'command.staffs.all', section: 'replay', title: 'Штабы: все или только свои', describe: 'Вкладка «Штабы» на пункте управления: on — показать все штабы стороны и их документы, off — только поддерево пункта и адресованные ему директивы.',
+    params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, покажи все штабы', 'штаб, только мои штабы'], available: () => (scopable ? true : 'нужен пункт управления ниже верхней инстанции'),
+    run: async (p: { on: boolean }) => { setAll(!!p?.on); return p?.on ? 'Показаны все штабы.' : 'Только штабы пункта.'; },
+  });
   useAction({
     id: 'command.docs.hq', section: 'replay', title: 'Документы штаба', describe: 'Журнал документов во вкладке «Штабы»: только выбранный штаб (hq; пусто — все).',
     params: { type: 'object', properties: { hq: { type: 'string' } } }, say: ['штаб, покажи документы восьмой гвардейской армии'], available: () => true,
@@ -102,8 +112,10 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
     return [...m.entries()];
   }, [open]);
   // верхняя инстанция — в списке только в «истории как замысле»: там её можно взять и вернуть
-  const list = Object.entries(c.hqs).filter(([, h]) => staffListed(h.echelon, c.mode));
-  const docs = (hq ? c.documents.filter((d) => d.hq === hq) : c.documents).slice().reverse();
+  const sub = scoped ? subtreeHqs(v, issuer!) : null;
+  const list = Object.entries(c.hqs).filter(([id, h]) => staffListed(h.echelon, c.mode) && (!sub || sub.has(id)));
+  const base = scoped ? postDocs(v, issuer!) : c.documents;
+  const docs = (hq ? base.filter((d) => d.hq === hq) : base).slice().reverse();
   return (
     <div className="cmd-sec staffs" data-hl="staffs">
       <div className="staffs-mode"><b>{MODE_TITLE[c.mode].title}</b> — {MODE_TITLE[c.mode].hint}</div>
@@ -134,14 +146,16 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
       </section>}
       <section>
         <h4>Штабы</h4>
+        {issuer && scopable && <div className="small"><ActButton className="link" action="command.staffs.all" params={{ on: !all }}>{all ? 'только мои' : 'показать все'}</ActButton>{' '}
+          <small className="muted">{all ? 'все штабы стороны' : 'штабы пункта и их документы'}</small></div>}
         {list.map(([id, h]) => {
           const m = controlMark(h, c.mode);
           const back = releaseAction(h, c.mode);
           return <div key={id} className="staffs-row">
             <span><b>{h.name}</b> <small className="muted">{ECH_RU[h.echelon] ?? h.echelon}</small>{m && <small className={`ctl-mark ${m.cls}`}>{m.text}</small>}</span>
-            <span>
-              {h.control !== 'player' && !queued('take', id) && <ActButton className="link" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
-              {back && !queued('release', id) && <ActButton className="link" action="command.release" params={{ name: id }} title={back.title}>{back.text}</ActButton>}
+            <span className="staffs-acts">
+              {h.control !== 'player' && !queued('take', id) && <ActButton className="staffs-btn" action="command.take" params={{ name: id }} title="Встать на место командующего: штаб больше не решает сам">взять</ActButton>}
+              {back && !queued('release', id) && <ActButton className="staffs-btn back" action="command.release" params={{ name: id }} title={back.title}>{back.text}</ActButton>}
             </span>
           </div>;
         })}

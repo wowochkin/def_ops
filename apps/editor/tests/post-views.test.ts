@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { postDocs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
+import { postDocs, subtreeHqs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
 
 const u = (id: string, parent: string, at: [number, number], personnel = 8000, extra = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: '', posture: 'обороняется', task: 'оборонять', target: null, orderSource: null, personnel, tanks: 10, guns: 100, strength: 0.8, ammo: 1, fuel: 1, fatigue: 0.2, cutOff: false, movedKm: 0, combats: [], pending: [], ...extra });
 const hq = (name: string, echelon: string, parent: string | null) => ({ control: 'agent', led: false, name, echelon, parent });
@@ -44,6 +44,16 @@ describe('вкладки по уровню пункта управления', (
   });
   it('документы — штаба и его подчинённых', () => {
     expect(postDocs(v, 'a1').map((d) => d.hq)).toEqual(['k1', 'a1']);
+  });
+  it('документы пункта: поддерево и директивы старших в поддерево; чужие — нет', () => {
+    const vv = { ...(v as object), command: { ...(v as any).command, documents: [
+      { time: '17.04 05:00', hq: 'f1', hqName: 'фронт', kind: 'directive', to: ['a1'], text: 'армии', rule: null },
+      { time: '17.04 05:00', hq: 'f1', hqName: 'фронт', kind: 'directive', to: ['a2'], text: 'соседу', rule: null },
+      { time: '17.04 06:00', hq: 'k1', hqName: 'корпус', kind: 'order', to: ['d1'], text: 'дивизии', rule: null },
+      { time: '17.04 06:00', hq: 'a2', hqName: '33 А', kind: 'order', to: [], text: 'чужое', rule: null },
+    ] } } as never;
+    expect(postDocs(vv, 'a1').map((d) => d.text)).toEqual(['армии', 'дивизии']);
+    expect([...subtreeHqs(vv, 'a1')].sort()).toEqual(['a1', 'k1']);
   });
 });
 
