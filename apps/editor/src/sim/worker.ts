@@ -3,8 +3,8 @@
  * модулями сборки (packages/sim/data), прогон и сравнение с историей — тем же кодом,
  * что и в npm run sim:history. Сервер не нужен.
  */
-import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, summarize, summaryToDocument, type DataKind, type History, type SimContext } from '@def-ops/sim';
-import type { SimRequest, SimResponse } from './protocol';
+import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, snapshotZones, summarize, summaryToDocument, type DataKind, type History, type RunResult, type SimContext } from '@def-ops/sim';
+import type { SimRequest, SimResponse, SimResult } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
 import { kbStamp, withKbStamp, type KbStamp } from './kb-stamp';
@@ -13,6 +13,29 @@ import { kbStamp, withKbStamp, type KbStamp } from './kb-stamp';
 const get = (kind: DataKind, file: string) => getData(kind, file);
 
 const post = (m: SimResponse) => (self as unknown as Worker).postMessage(m);
+
+/**
+ * Зоны влияния для карты «Переигровки»: снимки через сутки от начала (ближайший не раньше) и последний; сторона —
+ * советская. Ошибка расчёта — зон нет (карта без них).
+ */
+function zonesOf(ctx: SimContext, run: RunResult): SimResult['zones'] {
+  try {
+    const sn = run.snapshots;
+    if (!sn.length) return undefined;
+    const side = (ctx.scenario.sides.find((x) => x.id === 'su') ?? ctx.scenario.sides[0]).id;
+    const t0 = Date.parse(`${ctx.scenario.start}Z`);
+    const picked: typeof sn = [];
+    for (let k = 0; ; k++) {
+      const at = t0 + k * 86400000;
+      const s = sn.find((x) => Date.parse(`${x.time}Z`) >= at);
+      if (!s) break;
+      if (!picked.includes(s)) picked.push(s);
+    }
+    const last = sn[sn.length - 1];
+    if (!picked.includes(last)) picked.push(last);
+    return { side, frames: picked.map((s) => ({ time: s.time, grid: snapshotZones(ctx, s, side) })) };
+  } catch { return undefined; }
+}
 
 self.onmessage = async (e: MessageEvent<SimRequest>) => {
   const q = e.data;
@@ -26,6 +49,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
       onRun: (k, n) => post({ kind: 'progress', text: n > 1 ? `прогон ${k} из ${n}…` : 'расчёт…' }),
     });
     post({ kind: 'progress', text: 'карта…' });
+    const zones = zonesOf(ctx, a.run);
     const doc = runToDocument(ctx, a.run, history, { name: `Переигровка: ${ctx.scenario.name} (правила ${ctx.rules.id}, seed ${q.seed})` });
     const summary = summaryToDocument(ctx, a.run, history, { base: doc, name: `Сводная карта: ${ctx.scenario.name.split(':')[0]} (правила ${ctx.rules.id}, seed ${q.seed})` });
     const all = a.eventsBySeed.flatMap((x) => x.days);
@@ -43,7 +67,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
           return { title: x.title, historical: x.historical, simulated: first?.simulated ?? null, days: x.days, at: first?.at ?? null, place, marker: !!ev?.marker };
         }),
         eventsHit: all.filter((d) => d != null && Math.abs(d) <= 2).length, eventsTotal: all.length,
-        report: withKbStamp(reportMarkdown(ctx, a), kb), doc, summary, units: replayUnits(ctx, a.run), kb,
+        report: withKbStamp(reportMarkdown(ctx, a), kb), doc, summary, units: replayUnits(ctx, a.run), kb, ...(zones ? { zones } : {}),
       },
     });
   } catch (err) {
@@ -64,6 +88,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
   const s = summarize(compareWithHistory(ctx, run, history), q.toleranceKm);
   const events = checkEvents(ctx, run, history);
   post({ kind: 'progress', text: 'карта…' });
+  const zones = zonesOf(ctx, run);
   const name = `${A.title} — агентная модель (seed ${q.seed})`;
   const doc = runToDocument(ctx, run, history, { name: `Переигровка: ${name}`, frontCombine: 'max' });
   const summary = summaryToDocument(ctx, run, history, { base: doc, name: `Сводная карта: ${name}` });
@@ -88,7 +113,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
         return { title: e.title, historical: e.historical, simulated: e.simulated, days: [e.days], at: e.at, place, marker: !!h?.marker };
       }),
       eventsHit: events.filter((e) => e.days != null && Math.abs(e.days) <= 2).length, eventsTotal: events.length,
-      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb,
+      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb, ...(zones ? { zones } : {}),
     },
   });
 }

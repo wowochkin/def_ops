@@ -59,3 +59,17 @@ export function zoneOverlays(o: { cur: ZoneGrid | null; prev: ZoneGrid | null; u
   if (f > 0) out.push({ ...full, opacity: f });
   return out;
 }
+
+/**
+ * Зоны «Переигровки» на время time: кадры — снимки через сутки и последний. Между кадрами k и k+1 — переход от k (prev)
+ * к k+1 (cur); до первого кадра — первый кадр; после последнего —
+ * только последний (prev — нет, from = to = его время); кадров нет — cur: null.
+ */
+export function zonesAt(frames: { time: string; grid: ZoneGrid }[], time: string): { prev: ZoneGrid | null; cur: ZoneGrid | null; from: string; to: string } {
+  if (!frames.length) return { prev: null, cur: null, from: time, to: time };
+  const t = ms(time);
+  const k = frames.findIndex((x) => ms(x.time) > t);
+  if (k < 0) { const l = frames[frames.length - 1]; return { prev: null, cur: l.grid, from: l.time, to: l.time }; }
+  if (k === 0) return { prev: null, cur: frames[0].grid, from: frames[0].time, to: frames[0].time };
+  return { prev: frames[k - 1].grid, cur: frames[k].grid, from: frames[k - 1].time, to: frames[k].time };
+}

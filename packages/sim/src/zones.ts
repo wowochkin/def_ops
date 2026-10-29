@@ -13,6 +13,7 @@ import type { LngLat } from '@def-ops/core';
 import { dist } from './geo';
 import { detected, detectKm } from './reports';
 import { onMap, type SimContext } from './step';
+import type { Snapshot } from './history';
 import type { Theatre } from './theatre';
 import type { SimState } from './types';
 
@@ -190,5 +191,25 @@ export function sideZones(ctx: SimContext, state: SimState, side: string, o: { r
     ...(state.territory && enemySide ? { territory: { owner: state.territory, own: sides.indexOf(side), enemy: sides.indexOf(enemySide) } } : {}),
     recon: o.reveal ? Infinity : detectKm(ctx),
     contested: [...(o.contested ?? []), ...own.filter((f) => f.cutOff).map((f) => f.position)],
+  });
+}
+
+/**
+ * Зоны влияния для стороны side по снимку переигровки: свои — живые соединения стороны, противник — все остальные
+ * живые (туман войны снят: переигровку смотрит сторонний наблюдатель), территория — из снимка; спорные места —
+ * отрезанные соединения стороны.
+ */
+export function snapshotZones(ctx: SimContext, sn: Snapshot, side: string): ZoneGrid {
+  const live = sn.units.filter((u) => !u.destroyed);
+  const own = live.filter((u) => ctx.scenario.formations.find((f) => f.id === u.id)?.side === side);
+  const foe = live.filter((u) => !own.includes(u));
+  const sides = ctx.scenario.sides.map((x) => x.id);
+  const enemySide = sides.find((x) => x !== side);
+  return influenceZones(ctx.theatre, {
+    own: own.map((u) => ({ at: u.at, w: weight(u.personnel) })),
+    enemy: foe.map((u) => ({ at: u.at, w: weight(u.personnel) })),
+    ...(sn.territory && enemySide ? { territory: { owner: sn.territory, own: sides.indexOf(side), enemy: sides.indexOf(enemySide) } } : {}),
+    recon: Infinity,
+    contested: own.filter((u) => u.cutOff).map((u) => u.at),
   });
 }

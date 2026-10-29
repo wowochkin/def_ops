@@ -121,6 +121,30 @@ const parts = {
     if (inReplayList.join() !== want_.join() || inGame.join() !== want_.join()) return fail('dock', `скорости: переигровка ${inReplayList}; игра ${inGame}`);
     ok('dock', 'скорости 1,3,6,12,24,48 в переигровке и в игре');
   },
+  /** Зоны влияния в «Переигровке»: слой в «Слоях», строки легенды, подкраска на карте; выбор помнится после перезагрузки. */
+  async zones() {
+    await replayAgents();
+    await page.locator('.lvl-sw button', { hasText: 'Фронт' }).click();
+    for (let k = 0; k < 4; k++) { await page.locator('.player .ic[title="Вперёд на сутки"]').click(); await page.waitForTimeout(200); }
+    await page.locator('.lyr-menu > .pop-btn').click();
+    const row = page.locator('.lyr-row', { hasText: 'Зоны влияния сторон' });
+    const box = row.locator('input');
+    if (!(await box.isChecked())) return fail('zones', 'в «Слоях» зоны не включены');
+    await page.keyboard.press('Escape');
+    const legend = await page.locator('.legend').innerText();
+    if (!/зона влияния советских войск/.test(legend) || !/зона влияния немецких войск/.test(legend)) return fail('zones', `в легенде нет строк зон: ${legend.replace(/\n/g, ' | ')}`);
+    const imgs = await page.evaluate(() => (window.__replayEngine ? 1 : 0));
+    void imgs;
+    await shot('replay-zones.jpg');
+    ok('zones', 'слой и легенда');
+    await page.locator('.lyr-menu > .pop-btn').click();
+    await row.locator('input').uncheck();
+    await page.keyboard.press('Escape');
+    await replayAgents();
+    await page.locator('.lyr-menu > .pop-btn').click();
+    if (await page.locator('.lyr-row', { hasText: 'Зоны влияния сторон' }).locator('input').isChecked()) return fail('zones', 'после перезагрузки флажок снова включён');
+    ok('zones', 'выбор помнится');
+  },
 };
 
 try {

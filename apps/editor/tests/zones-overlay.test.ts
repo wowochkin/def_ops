@@ -2,7 +2,7 @@
 // знаков сторон; прозрачно), смена зон за ход — плавно по времени карты.
 import { describe, expect, it } from 'vitest';
 import type { ZoneGrid } from '@def-ops/sim';
-import { ZONE_ALPHA, ZONE_ALPHA_ENEMY, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba } from '../src/zones-overlay';
+import { ZONE_ALPHA, ZONE_ALPHA_ENEMY, ZONE_ENEMY, ZONE_OWN, zoneOverlays, zoneRgba, zonesAt } from '../src/zones-overlay';
 
 const grid = (v: number[]): ZoneGrid => ({ bbox: [14, 52, 15, 53], cols: v.length, rows: 1, v });
 
@@ -51,5 +51,15 @@ describe('зоны на карте по времени', () => {
   it('первый ход (начала нет) — зоны на конец хода, пока время карты не раньше него', () => {
     expect(zoneOverlays({ cur, prev: null, urls: { cur: 'data:cur', prev: null }, from: '1945-04-16T05:00', to: '1945-04-17T05:00', time: '1945-04-17T05:00', on: true })).toHaveLength(1);
     expect(zoneOverlays({ cur, prev: null, urls: { cur: 'data:cur', prev: null }, from: '1945-04-16T05:00', to: '1945-04-17T05:00', time: '1945-04-16T06:00', on: true })).toEqual([]);
+  });
+});
+
+describe('зоны переигровки по времени', () => {
+  const g = (k: number): ZoneGrid => ({ bbox: [14, 52, 15, 53], cols: 1, rows: 1, v: [k] });
+  const frames = [{ time: '1945-04-16T05:00', grid: g(1) }, { time: '1945-04-17T05:00', grid: g(2) }];
+  it('между кадрами — переход от прежнего к следующему; после последнего — последний; кадров нет — ничего', () => {
+    expect(zonesAt(frames, '1945-04-16T17:00')).toEqual({ prev: g(1), cur: g(2), from: '1945-04-16T05:00', to: '1945-04-17T05:00' });
+    expect(zonesAt(frames, '1945-04-18T05:00')).toEqual({ prev: null, cur: g(2), from: '1945-04-17T05:00', to: '1945-04-17T05:00' });
+    expect(zonesAt([], '1945-04-16T05:00').cur).toBeNull();
   });
 });

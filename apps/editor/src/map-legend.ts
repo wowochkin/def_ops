@@ -20,6 +20,8 @@ export interface LegendItem {
 
   /** Только на экране командования (замысел, тыл, реки, зоны влияния). */
   command?: boolean;
+  /** Только на экране «Переигровки» (на экране командования — свои строки). */
+  replay?: boolean;
 }
 
 const ALL: LevelId[] = ['stavka', 'front', 'army', 'corps', 'division'];
@@ -78,13 +80,16 @@ export const LEGEND_ITEMS: LegendItem[] = [
   { id: 'rivers', key: 'rivers', cls: 'lg-river', text: 'реки (для переправ)', levels: ['army', 'corps', 'division'], command: true, match: (f) => f.layerId === 'rivers' },
   { id: 'zones-own', key: 'zones', cls: 'lg-zone-own', text: 'зона влияния своих войск', levels: ALL, command: true, match: () => false },
   { id: 'zones-enemy', key: 'zones', cls: 'lg-zone-enemy', text: 'зона влияния противника (по разведке)', levels: ALL, command: true, match: () => false },
+  // «Переигровка»: стороны не «свои» и «противник», а по названиям
+  { id: 'zones-su', key: 'zones', cls: 'lg-zone-own', text: 'зона влияния советских войск', levels: ALL, replay: true, match: () => false },
+  { id: 'zones-de', key: 'zones', cls: 'lg-zone-enemy', text: 'зона влияния немецких войск', levels: ALL, replay: true, match: () => false },
 ];
 
 export const legendText = (it: LegendItem, level: LevelId): string => (typeof it.text === 'string' ? it.text : it.text[level] ?? Object.values(it.text)[0] ?? it.id);
 
 /** Элементы легенды уровня: на экране переигровки — без элементов командования. */
 export function legendFor(level: LevelId, o: { command?: boolean } = {}): LegendItem[] {
-  return LEGEND_ITEMS.filter((it) => it.levels.includes(level) && (o.command || !it.command));
+  return LEGEND_ITEMS.filter((it) => it.levels.includes(level) && (o.command ? !it.replay : !it.command));
 }
 
 /** Элемент по названию или id (голос: «скрой отходы»): точное совпадение, иначе — по началу слов. */

@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext } from '../src/data';
 import type { LngLat } from '@def-ops/core';
-import { influenceZones, intelReport, onMap, playTurn, sideZones, startGame, turnBattles, zoneAt } from '../src';
+import { influenceZones, intelReport, onMap, playTurn, sideZones, snapshotZones, startGame, turnBattles, zoneAt } from '../src';
 
 const ctx = loadContext('berlin-1945-tasks');
 const T = ctx.theatre;
@@ -110,4 +110,17 @@ describe('зоны стороны по состоянию игры', () => {
     const b = turnBattles(ctx, g.state, 'su', g.prev!)[0];
     expect(Math.abs(zoneAt(sideZones(ctx, g.state, 'su', { contested: [b.at] }), b.at))).toBeLessThan(0.1);
   }, 120000);
+
+  it('зоны по снимку переигровки: свои и противник без тумана войны', () => {
+    const g = startGame(ctx, 1, '1945-04-17T05:00', 'su');
+    const live = g.state.formations.filter((f) => onMap(f, g.state.time));
+    const own = live.find((f) => f.side === 'su')!, foe = live.find((f) => f.side === 'de')!;
+    const sn = { time: ctx.scenario.start, turn: 0, units: [
+      { id: own.id, at: own.position, personnel: 8000, tanks: 0, posture: 'attack', destroyed: false },
+      { id: foe.id, at: foe.position, personnel: 8000, tanks: 0, posture: 'defend', destroyed: false },
+    ] };
+    const z = snapshotZones(ctx, sn, 'su');
+    expect(zoneAt(z, own.position)).toBeGreaterThan(0);
+    expect(zoneAt(z, foe.position)).toBeLessThan(0); // противник виден без разведки
+  });
 });

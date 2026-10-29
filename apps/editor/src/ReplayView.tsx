@@ -11,6 +11,7 @@ import { MapView } from './MapView';
 import { useViewScale } from './ScaleRange';
 import { LEGACY_LEVEL_KEY, legacyLevel, LEVEL_KEY, levelDefaultScale, levelScaleLabel, migrateLevel, scaleInLevel, type LevelId } from './map-level-scale';
 import { withLevel } from './map-levels';
+import { zoneOverlays, zonesAt, zoneUrl } from './zones-overlay';
 import { findLegendItem, legendFor, legendText, presentItems, shownLegend, withHidden, type LegendItem } from './map-legend';
 import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
@@ -51,6 +52,8 @@ import { readAloud } from './voice/dictation';
 import { speakable } from './voice/speech';
 /** Ход игры на агентной модели, ч. */
 /** Режим командования агентной модели в «Переигровке» (запоминается). */
+/** Зоны влияния на карте «Переигровки»: 'on' | 'off' (по умолчанию показаны). */
+const ZONES_KEY = 'def_ops.replay.zones';
 const COMMAND_KEY = 'def_ops.agents.command';
 const AGENT_GAME_HOURS = 12;
 /** Шаг снимков агентной модели на карте, ч (расчёт — по часам). */
@@ -99,7 +102,9 @@ export function useMapLevel(): [MapLevel, (l: MapLevel) => void] {
  * Слои карты одним меню: подписи и слои-переключатели (исторические положения, фронт, бои…) — флажками.
  * Над картой остаются только масштаб, «Слои», «Участки» и «Подложка»: панель помещается в строку на любом экране.
  */
-export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: boolean; toggleLabels: () => void; items: { key: string; title: string; on: boolean; toggle: () => void }[]; setAll: (on: boolean) => void }) {
+/** Строка меню «Слои»; unavailable — причина, по которой слой недоступен (флажок снят и не нажимается). */
+export interface LayerRow { key: string; title: string; on: boolean; toggle: () => void; unavailable?: string }
+export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: boolean; toggleLabels: () => void; items: LayerRow[]; setAll: (on: boolean) => void }) {
   useAction({
     id: 'map.layer', section: 'replay', title: 'Слой карты', describe: 'Показывает или скрывает слой карты (реки, фронт, бои, тыл, полосы, подписи…).',
     params: { type: 'object', properties: { layer: { type: 'string' }, on: { type: 'boolean' } }, required: ['layer'] }, say: ['штаб, покажи реки', 'штаб, скрой подписи'],
@@ -109,6 +114,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
       const key = keys.includes(p?.layer) ? p.layer : findLayer(String(p?.layer ?? ''), keys);
       if (!key) return `Такого слоя на этой карте нет. Есть: ${items.map((x) => `«${x.title}»`).join(', ')}, «Подписи знаков».`;
       const it = key === 'labels' ? { title: 'Подписи знаков', on: labels, toggle: toggleLabels } : items.find((x) => x.key === key)!;
+      if ('unavailable' in it && it.unavailable) return `${it.title}: ${it.unavailable}.`;
       const on = p.on ?? !it.on;
       if (on !== it.on) it.toggle();
       note(hl(`layer-${key}`), '.lyr-menu > .pop-btn', `.legend [data-layer="${key}"]`);
@@ -116,6 +122,7 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
     },
   });
   const n = items.filter((x) => x.on).length + (labels ? 1 : 0);
+  const usable = items.filter((x) => !x.unavailable).length + 1;
   useAction({
     id: 'map.layers.all', section: 'replay', title: 'Все слои карты', describe: 'Показывает все слои и подписи (on) или скрывает их — остаются войска и подложка.',
     params: { type: 'object', properties: { on: { type: 'boolean' } }, required: ['on'] }, say: ['штаб, покажи все слои', 'штаб, скрой все слои'], available: inReplay,
@@ -125,11 +132,11 @@ export function LayersMenu({ labels, toggleLabels, items, setAll }: { labels: bo
     <Popover label={<>Слои <small className="lyr-n">{n}</small></>} title="Что показать на карте" align="right" className="lyr-menu">
       <div className="pop-title">Показать на карте</div>
       <div className="lyr-all">
-        <ActButton disabled={n === items.length + 1} action="map.layers.all" params={{ on: true }} title="Включить все слои и подписи">Показать все</ActButton>
+        <ActButton disabled={n === usable} action="map.layers.all" params={{ on: true }} title="Включить все слои и подписи">Показать все</ActButton>
         <ActButton disabled={n === 0} action="map.layers.all" params={{ on: false }} title="Выключить все слои и подписи — остаются войска и подложка">Скрыть все</ActButton>
       </div>
       <label className="lyr-row" title="Выключено — подписи только при наведении на знак"><input type="checkbox" data-action="map.layer" checked={labels} onChange={() => void act('map.layer', { layer: 'labels', on: !labels })} /> Подписи знаков</label>
-      {items.map((x) => <label key={x.key} className="lyr-row"><input type="checkbox" data-action="map.layer" checked={x.on} onChange={() => void act('map.layer', { layer: x.key, on: !x.on })} /> {x.title}</label>)}
+      {items.map((x) => <label key={x.key} className="lyr-row" title={x.unavailable}><input type="checkbox" data-action="map.layer" checked={x.on} disabled={!!x.unavailable} onChange={() => void act('map.layer', { layer: x.key, on: !x.on })} /> {x.title}</label>)}
     </Popover>
   );
 }
@@ -439,7 +446,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return { ...d, layers: d.layers.map((l) => (t.match(l.id) ? { ...l, visible: !on } : l)) };
   });
   /** Все слои-переключатели сразу (войска и подложка остаются). */
-  const setAll = (on: boolean) => { if (on) clearLegend(); setDoc((d) => d && { ...d, layers: d.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) }); };
+  const setAll = (on: boolean) => { if (on) clearLegend(); if (result?.zones && on !== zonesOn) toggleZones(); setDoc((d) => d && { ...d, layers: d.layers.map((l) => (TOGGLES.some((t) => t.match(l.id)) ? { ...l, visible: on } : l)) }); };
   /** К событию: время — момент события в расчёте, карта — к месту. */
   const goEvent = (e: SimResult['events'][number]) => {
     if (e.at) setTime(e.at);
@@ -460,7 +467,24 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
 
   // документ для карты — тот же объект, пока не изменились документ, уровень, участок и подписи
   // (иначе каждый кадр проигрывания давал бы новые знаки и перерисовку всей карты)
-  const mapDoc = useMemo(() => (doc ? withoutLabels(withFocus(withHidden(withLevel(doc, level), level, lvHidden), focus), labels) : null), [doc, level, focus, labels, lvHidden]);
+  // зоны влияния сторон — картинкой под знаками; кадры — раз в сутки, между ними плавный переход (zonesAt)
+  const [zonesOn, setZonesOn] = useState<boolean>(() => { try { return localStorage.getItem(ZONES_KEY) !== 'off'; } catch { return true; } });
+  const toggleZones = () => setZonesOn((x) => { try { localStorage.setItem(ZONES_KEY, x ? 'off' : 'on'); } catch { /* */ } return !x; });
+  const zFrames = result?.zones?.frames;
+  const zSides = { own: !lvHidden.has('zones-su'), enemy: !lvHidden.has('zones-de') };
+  const zAt = useMemo(() => (zFrames && time ? zonesAt(zFrames, time) : null), [zFrames, time]);
+  const zUrls = useMemo(() => ({ cur: zAt?.cur ? zoneUrl(zAt.cur, zSides) : null, prev: zAt?.prev ? zoneUrl(zAt.prev, zSides) : null }),
+    [zAt?.cur, zAt?.prev, zSides.own, zSides.enemy]); // eslint-disable-line react-hooks/exhaustive-deps
+  const zShown = !!zFrames && zonesOn && (zSides.own || zSides.enemy);
+  const zOv = zAt && time ? zoneOverlays({ cur: zAt.cur, prev: zAt.prev, urls: zUrls, from: zAt.from, to: zAt.to, time, on: zShown }) : [];
+  const zKey = zOv.map((o) => `${o.id}:${o.opacity}`).join(',');
+  /** Зоны влияния — не знаки карты: в легенде, когда они на карте. */
+  const zAlways = useMemo(() => new Set(zFrames && zonesOn && time ? ['zones-su', 'zones-de'] : []), [zFrames, zonesOn, !!time]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mapDoc = useMemo(() => {
+    if (!doc) return null;
+    const d = withoutLabels(withFocus(withHidden(withLevel(doc, level), level, lvHidden), focus), labels);
+    return zOv.length ? { ...d, overlays: [...d.overlays, ...zOv] } : d;
+  }, [doc, level, focus, labels, lvHidden, zKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const zones = useMemo(() => ({ local: 'Europe/Berlin', localFixed: true, input: 'msk' as const, setInput: () => {} }), []);
   /** Начать игру с момента окна «Принять командование» (подтверждение замены незавершённой — до этого). */
   const beginGame = (enemy0: EnemyMode | undefined, mode: GameMode = savedGameMode()) => {
@@ -580,7 +604,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {/* voice-entry: конец */}
           <div className="rp-tools" data-tour="replay-tools">
             <LevelSwitch level={level} setLevel={setLevel} engine={eng} />
-            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'division' || t.key !== 'combat').map((t) => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) }))} setAll={setAll} />
+            <LayersMenu labels={labels} toggleLabels={toggleLabels} items={TOGGLES.filter((t) => level === 'division' || t.key !== 'combat').map((t): LayerRow => ({ key: t.key, title: LAYER_TITLE[t.key] ?? t.title, on: layerOn(t), toggle: () => toggle(t) })).concat([{ key: 'zones', title: LAYER_TITLE.zones, on: !!result?.zones && zonesOn, toggle: toggleZones, unavailable: result?.zones ? undefined : 'в этом сохранении зон нет — рассчитайте заново' }])} setAll={setAll} />
             {result && <SectorPicker scenario={result.scenario} engine={eng} bm={bm} focus={focus} setFocus={setFocus} opYear={+result.start.slice(0, 4)} onNotice={setNotice} />}
             <Popover label="Подложка" align="right"><BasemapControls bm={bm} dateNote={result ? `начала операции, ${dmy(result.start)}` : null} /></Popover>
           </div>
@@ -602,7 +626,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           <div className="map-dock">
           {commanderOpen && <RivalryChart trace={agentRun!.trace} tick={agentHour} current={commander!.hq} />}
           <Legend level={level} doc={doc} time={time} hidden={lvHidden} setHidden={(id, h) => setLegendHidden(level, id, h)}
-            on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : true; }}
+            on={(k) => { const t = TOGGLES.find((x) => x.key === k); return t ? layerOn(t) : k === 'zones' ? zonesOn : true; }} always={zAlways}
             sig={doc.layers.map((l) => (l.visible ? 1 : 0)).join('')} />
           </div>
           {doc.timeline && time && <Player start={doc.timeline.start ?? time} end={doc.timeline.end ?? time} time={time} setTime={setTime}

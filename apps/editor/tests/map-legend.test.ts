@@ -21,7 +21,7 @@ describe('легенда по уровням', () => {
     expect(ids('corps')).not.toContain('combat');
     expect(ids('corps')).toContain('corps');
     expect(ids('division')).not.toContain('corps');
-    expect(legendFor('corps').length).toBeLessThanOrEqual(15);
+    expect(legendFor('corps').filter((x) => !x.replay).length).toBeLessThanOrEqual(15);
     expect(legendFor('front', { command: true }).some((x) => x.id === 'rivers')).toBe(false);
   });
   it('в легенде — только то, что есть на карте в этот час', () => {
@@ -36,6 +36,12 @@ describe('легенда по уровням', () => {
   it('элементы командования — только на экране командования', () => {
     expect(legendFor('front').some((x) => x.id === 'zones-own')).toBe(false);
     expect(legendFor('front', { command: true }).some((x) => x.id === 'zones-own')).toBe(true);
+  });
+  it('зоны влияния: в переигровке — стороны по названиям, в командовании — свои и противник', () => {
+    expect(legendFor('front').map((x) => x.id)).toEqual(expect.arrayContaining(['zones-su', 'zones-de']));
+    expect(legendFor('front').map((x) => x.id)).not.toContain('zones-own');
+    expect(legendFor('front', { command: true }).map((x) => x.id)).toEqual(expect.arrayContaining(['zones-own', 'zones-enemy']));
+    expect(legendFor('front', { command: true }).map((x) => x.id)).not.toContain('zones-su');
   });
   it('id элементов не повторяются, подпись есть на каждом уровне элемента', () => {
     expect(new Set(LEGEND_ITEMS.map((x) => x.id)).size).toBe(LEGEND_ITEMS.length);
