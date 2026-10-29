@@ -899,3 +899,22 @@ fn intent_led_hq_exposed_and_released() {
     assert_eq!(g.sim.command.control[uf], Control::Script, "фронт — снова по приказам сценария");
     assert!(!agents_core::intent::off_history(&g.sim, uf as u32));
 }
+
+/// История как замысел: взятую Ставку можно вернуть — она и фронты снова по приказам сценария и «по истории».
+#[test]
+fn intent_stavka_take_and_release() {
+    use agents_core::command::control::Control;
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::intent::Status;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 24, Side::Su, &[Side::Su], None, Mode::Intent);
+    let (st, bf) = (g.sim.world.hqs.iter().position(|h| h.id == "su_stavka").unwrap(), g.sim.world.hqs.iter().position(|h| h.id == "su_1bf").unwrap());
+    g.command(&CommandOp::Take { hq: "su_stavka".into() }).expect("взять");
+    assert_eq!(g.sim.command.control[st], Control::Player);
+    g.advance(1);
+    g.command(&CommandOp::Release { id: "su_stavka".into() }).expect("вернуть");
+    for k in [st, bf] {
+        assert_eq!(g.sim.command.control[k], Control::Script, "{}", g.sim.world.hqs[k].id);
+        assert_eq!(g.sim.intent.hq[k].status, Status::History, "{}", g.sim.world.hqs[k].id);
+    }
+}

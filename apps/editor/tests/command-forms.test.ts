@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, historyBackText, liveEnemyOptions, modeReply, releaseAction, resumeEnemy, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, historyBackText, liveEnemyOptions, modeReply, releaseAction, resumeEnemy, staffListed, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -107,6 +107,11 @@ describe('возврат штаба', () => {
     expect(releaseAction({ control: 'agent', led: true }, 'hybrid')?.text).toBe('вернуть в замысел старшего');
     expect(controlMark({ control: 'agent', led: true }, 'intent')?.text).toBe('ведёте директивами');
     expect(controlMark({ control: 'agent', led: true }, 'agents')?.text).toBe('ведёт Ставка');
+  });
+  it('верхняя инстанция во вкладке «Штабы» — только в «истории как замысле»', () => {
+    expect(staffListed('high_command', 'intent')).toBe(true);
+    for (const m of ['agents', 'hybrid', 'commanders', 'legacy']) expect(staffListed('high_command', m)).toBe(false);
+    expect(staffListed('front', 'agents')).toBe(true);
   });
   it('окно «Принять командование»: в «истории как замысле» штаб можно вернуть истории, в прочих режимах — нельзя', () => {
     expect(historyBackText(true, 'intent')).toMatch(/можно вернуть истории/);

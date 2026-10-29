@@ -43,6 +43,12 @@ export function releaseAction(h: { control: string; led: boolean }, mode: string
   return h.control === 'player' ? { text: 'вернуть агенту', title: 'Агент продолжит с текущего состояния' } : { text: 'вернуть в замысел старшего', title: 'Старший снова включит его в свой замысел' };
 }
 
+/** Штаб можно взять и вернуть во вкладке «Штабы»: верхняя инстанция — только в «истории как замысле» (в прочих режимах
+ *  она и так у игрока). */
+export function staffListed(echelon: string, mode: string): boolean {
+  return echelon !== 'high_command' || mode === 'intent';
+}
+
 /** Окно «Принять командование»: можно ли вернуть командование истории — только в «истории как замысле» (штаб, не всю сторону). */
 export function historyBackText(agents: boolean, mode: GameMode): string {
   return agents && mode === 'intent'

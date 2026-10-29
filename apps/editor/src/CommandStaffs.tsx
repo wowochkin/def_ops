@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
-import { controlMark, findHq, MODE_TITLE, placeText, queueOp, releaseAction, type CommandOp } from './command-forms';
+import { controlMark, findHq, MODE_TITLE, placeText, queueOp, releaseAction, staffListed, type CommandOp } from './command-forms';
 import { commandText } from './sim/agents-game';
 import type { LevelId } from './map-level-scale';
 
@@ -35,7 +35,7 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
     params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['штаб, возьми восьмую гвардейскую армию'], available: ready, highlight: () => hl('staffs'),
     run: async (p: { name: string }) => {
       const id = hqOf(p?.name);
-      if (!id || c!.hqs[id].echelon === 'high_command') return 'Такого штаба стороны нет.';
+      if (!id || !staffListed(c!.hqs[id].echelon, c!.mode)) return 'Такого штаба стороны нет.';
       // «гибрид»: взятый штаб сходит со сценария
       if (c!.hqs[id].control === 'player' && !cmds.some((x) => x.op === 'release' && x.id === id)) return `${nameOf(id)} уже под вашим управлением.`;
       // взятый штаб — карта на его уровне (смотреть другие можно свободно)
@@ -101,7 +101,8 @@ export function Staffs({ v, cmds }: { v: TurnView; cmds: CommandOp[] }) {
     for (const r of open) m.set(r.hq, [...(m.get(r.hq) ?? []), r]);
     return [...m.entries()];
   }, [open]);
-  const list = Object.entries(c.hqs).filter(([, h]) => h.echelon !== 'high_command');
+  // верхняя инстанция — в списке только в «истории как замысле»: там её можно взять и вернуть
+  const list = Object.entries(c.hqs).filter(([, h]) => staffListed(h.echelon, c.mode));
   const docs = (hq ? c.documents.filter((d) => d.hq === hq) : c.documents).slice().reverse();
   return (
     <div className="cmd-sec staffs" data-hl="staffs">
