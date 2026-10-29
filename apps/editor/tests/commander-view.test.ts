@@ -184,3 +184,28 @@ describe('hqCentroid', () => {
     expect(hqCentroid(t, 'de_x', 0)).toBeNull();
   });
 });
+
+describe('answer: история как замысел', () => {
+  const intentTrace = (): AgentTrace => ({ ...trace([zhukov]), hqs: [
+    { id: 'su_1bf', name: '1-й Белорусский фронт', echelon: 'front', side: 'su', parent: null },
+    { id: 'su_8gva', name: '8 гв. А', echelon: 'army', side: 'su', parent: 'su_1bf' },
+    { id: 'su_1gta', name: '1 гв. ТА', echelon: 'army', side: 'su', parent: 'su_1bf' }] as AgentTrace['hqs'],
+    intent: [{ hq: 'su_1bf', changes: [{ tick: 0, status: 'history', reason: null }] },
+      { hq: 'su_8gva', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 5, status: 'shifted', reason: 'сутки задержки' }] },
+      { hq: 'su_1gta', changes: [{ tick: 0, status: 'history', reason: null }, { tick: 8, status: 'own', reason: 'ушла дальше 30 км' }] }] });
+  it('SUGGESTIONS содержит «почему не как в истории?»', () => { expect(SUGGESTIONS).toContain('почему не как в истории?'); });
+  it('перечисляет армии со сдвигом и «сам», с причинами и часом', () => {
+    const a = answer(zhukov, 12, 'почему не как в истории?', names, intentTrace());
+    expect(a).toContain('по истории');
+    expect(a).toContain('8 гв. А'); expect(a).toContain('сутки задержки'); expect(a).toContain('с часа 5');
+    expect(a).toContain('1 гв. ТА'); expect(a).toContain('ушла дальше 30 км'); expect(a).toContain('с часа 8');
+  });
+  it('на час до ухода армии не названы', () => {
+    const a = answer(zhukov, 3, 'почему не как в истории?', names, intentTrace());
+    expect(a).not.toContain('сутки задержки'); expect(a).not.toContain('ушла дальше');
+  });
+  it('нет intent в ходе — «в этом прогоне история как замысел не использовалась»', () => {
+    expect(answer(zhukov, 12, 'почему не как в истории?', names, trace([zhukov]))).toBe('в этом прогоне история как замысел не использовалась');
+    expect(answer(zhukov, 12, 'почему не как в истории?', names)).toBe('в этом прогоне история как замысел не использовалась');
+  });
+});

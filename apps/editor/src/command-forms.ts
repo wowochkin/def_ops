@@ -3,7 +3,7 @@
  * ступени получателя и форме, пометки управления штабов, режимы игры. Без React — проверяется в node.
  */
 import type { CommandOp, GameMode } from '@def-ops/sim';
-import type { TurnView } from './sim/game-protocol';
+import type { EnemyMode, TurnView } from './sim/game-protocol';
 
 export type { CommandOp };
 
@@ -41,6 +41,14 @@ export const MODE_TITLE: Record<GameMode, { title: string; hint: string }> = {
   intent: { title: 'История как замысел', hint: 'обе стороны идут по замыслу истории, пока обстановка позволяет; взятый вами штаб с подчинёнными уходит с истории' },
 };
 
+const MODE_KEY = 'def_ops.command.mode';
+/** Режим игры, выбранный в окне передачи командования раньше; нет выбора — «История как замысел». */
+export function savedGameMode(): GameMode {
+  try { const v = localStorage.getItem(MODE_KEY); return v === 'legacy' || v === 'agents' || v === 'hybrid' || v === 'commanders' || v === 'intent' ? v : 'intent'; } catch { return 'intent'; }
+}
+export function saveGameMode(m: GameMode) { try { localStorage.setItem(MODE_KEY, m); } catch { /* */ } }
+/** Противник по умолчанию: на агентной модели — «История как замысел»; иначе штаб на модели (нет связи — без штаба). */
+export function defaultEnemy(agents: boolean, llmDown: boolean): EnemyMode { return agents ? 'intent' : llmDown ? 'passive' : 'llm'; }
 
 const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.id);
 /**

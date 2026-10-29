@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AgentCommander, AgentTrace } from '@def-ops/sim';
 import { addHours } from '@def-ops/sim';
+import { intentAt, intentBadge } from './intent-view';
 import { act, register } from './voice/registry';
 import { commanderAction, releaseCommander } from './voice/actions/staff';
 import {
@@ -128,19 +129,19 @@ function Options({ d }: { d: Decision }) {
 }
 
 /** Разговор: вопрос, подсказки; ответ — из разбора на выбранный час (answer). */
-function Chat({ c, tick, names, start }: { c: AgentCommander; tick: number; names: Record<string, string>; start: string }) {
+function Chat({ c, tick, names, start, trace }: { c: AgentCommander; tick: number; names: Record<string, string>; start: string; trace: AgentTrace }) {
   const [msgs, setMsgs] = useState<{ q: string; a: string; tick: number }[]>([]);
   const [text, setText] = useState('');
   const end = useRef<HTMLDivElement>(null);
-  const now = useRef({ c, tick, names });
-  now.current = { c, tick, names };
+  const now = useRef({ c, tick, names, trace });
+  now.current = { c, tick, names, trace };
   // голос: «спроси командующего …» и то же, что кнопки подсказок (act → действие реестра)
   useEffect(() => {
     const get = () => ({
       name: now.current.c.name,
       ask: (q: string) => {
-        const { c: cc, tick: tt, names: nn } = now.current;
-        const a = answer(cc, tt, q, nn);
+        const { c: cc, tick: tt, names: nn, trace: tr } = now.current;
+        const a = answer(cc, tt, q, nn, tr);
         setMsgs((m) => [...m, { q, a, tick: tt }]);
         return a;
       },
@@ -174,6 +175,7 @@ export function CommanderPanel({ trace, c, tick, onTick, names }: { trace: Agent
   return (
     <div className="ag-body cm-tab">
       <section className="cm-head"><b>{c.name}</b> <span className="muted">{names[c.hq] ?? c.hq} · {when(addHours(trace.start, tick))} МСК</span></section>
+      {trace.intent && <section className="cm-now"><b>История как замысел:</b> {intentBadge(intentAt(trace, c.hq, tick)) ?? 'нет данных на этот час'}</section>}
       <Traits c={c} />
       <Motives c={c} s={v.snapshot} />
       {v.snapshot && <section className="cm-now"><b>Настроение:</b> {moodWords(v.snapshot.mood)} <span className="muted">(уверенность {n2(v.snapshot.mood.confidence)}, напряжение {n2(v.snapshot.mood.stress)})</span></section>}
@@ -187,7 +189,7 @@ export function CommanderPanel({ trace, c, tick, onTick, names }: { trace: Agent
         {d && <Options d={d} />}
       </section>
       {d && o && <section className="cm-why"><b>Почему:</b> {d.why} <span className="muted">Правило: {o.rule}. Повод: {d.trigger}.</span></section>}
-      <Chat c={c} tick={tick} names={names} start={trace.start} />
+      <Chat c={c} tick={tick} names={names} start={trace.start} trace={trace} />
     </div>
   );
 }

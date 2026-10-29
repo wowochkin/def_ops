@@ -24,7 +24,9 @@ export function useEsc(on: boolean, close: () => void) {
 /** Вкладка карточки (рядом со «Сводкой»): тело строится заново при каждой перерисовке — следует за часом. */
 export interface PanelTab { id: string; label: string; body: ReactNode }
 
-export function FormationPanel({ c, onClose, onPick, actions, note, tabs, onTab }: { c: FormationCardData; onClose: () => void; onPick: (id: string, hq: boolean) => void; actions?: ReactNode; note?: string;
+export function FormationPanel({ c, onClose, onPick, actions, note, badge, tabs, onTab }: { c: FormationCardData; onClose: () => void; onPick: (id: string, hq: boolean) => void; actions?: ReactNode; note?: string;
+  /** «История как замысел»: состояние штаба на час («по истории», «сам: …»); нет — без бейджа. */
+  badge?: string | null;
   /** Дополнительные вкладки; без них карточка — одна «Сводка». */
   tabs?: PanelTab[];
   /** Открытая вкладка изменилась (null — «Сводка»). */
@@ -52,6 +54,7 @@ export function FormationPanel({ c, onClose, onPick, actions, note, tabs, onTab 
           <div className={`ag-state ${c.status === 'destroyed' ? 'destroyed' : c.status === 'pending' ? '' : c.posture === 'наступает' ? 'attack' : c.posture === 'обороняется' ? 'defense' : c.posture === 'отходит' ? 'withdraw' : 'march'}`}>
             {c.status === 'pending' ? 'ещё не введено в сражение' : c.status === 'destroyed' ? (c.hq ? 'все соединения уничтожены' : 'уничтожено') : c.posture}
           </div>
+          {badge && <div className={`ag-state ${badge.startsWith('сам') ? 'withdraw' : badge.includes('сдвиг') ? 'deploy' : 'march'}`} data-hl="intent-badge" style={{ marginLeft: 6 }}>{badge}</div>}
           {c.status === 'active' && c.cutOff.n > 0 && <div className="ag-pocket">{c.hq ? `Отрезаны от снабжения: ${cut}` : 'Отрезано от снабжения: подвоза нет'}</div>}
         </section>
         <section>

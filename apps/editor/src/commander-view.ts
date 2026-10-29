@@ -6,6 +6,7 @@
  */
 import type { AgentCommander, AgentTrace } from '@def-ops/sim';
 import { agentGroup } from './formation-card';
+import { intentAt, NO_INTENT } from './intent-view';
 
 export type Snapshot = AgentCommander['snapshots'][number];
 export type Decision = AgentCommander['decisions'][number];
@@ -23,7 +24,7 @@ export const MOTIVE_COLOR: Record<string, string> = {
   task: '#b3261e', rival: '#d97706', preserve: '#0f766e', noEncircle: '#2563eb', destroy: '#7c3aed', hold: '#6b7280', save: '#be185d',
 };
 
-export const SUGGESTIONS = ['почему так решил?', 'что знал о противнике?', 'что думал о соседе?', 'почему не выбрал другой вариант?', 'чего хочешь сейчас?', 'как оцениваешь положение?'];
+export const SUGGESTIONS = ['почему так решил?', 'что знал о противнике?', 'что думал о соседе?', 'почему не выбрал другой вариант?', 'чего хочешь сейчас?', 'как оцениваешь положение?', 'почему не как в истории?'];
 export const NO_DECISIONS = 'Я ещё не принимал решений к этому часу.';
 export const NO_ANSWER = 'Об этом мне нечего сказать: спросите о решении, противнике, соседе или моих целях.';
 
@@ -130,8 +131,9 @@ function drivers(cur: Snapshot, prev: Snapshot | null): string[] {
  * не выбрал», «почему», «противник / знал», «сосед / соперник», «хочешь / сейчас / цели», «положение / оцениваешь /
  * настроение». Оценка противника против истины не раскрывается.
  */
-export function answer(c: AgentCommander, tick: number, question: string, names: Record<string, string> = {}): string {
+export function answer(c: AgentCommander, tick: number, question: string, names: Record<string, string> = {}, trace?: AgentTrace): string {
   const q = question.toLowerCase().replace(/ё/g, 'е');
+  if (/истори/.test(q)) return intentAnswer(c, tick, names, trace);
   const nm = (id: string) => names[id] ?? id;
   const v = viewAt(c, tick);
   const has = (re: RegExp) => re.test(q);
@@ -186,6 +188,19 @@ export function answer(c: AgentCommander, tick: number, question: string, names:
     return `Сейчас для меня главное: ${t.join('; ')}.${s.intent ? ` Замысел: ${s.intent}.` : ''}`;
   }
   return NO_ANSWER;
+}
+
+/** Ответ «почему не как в истории?»: состояние штаба командующего и его армий на час, с причиной и часом ухода. */
+function intentAnswer(c: AgentCommander, tick: number, names: Record<string, string>, trace?: AgentTrace): string {
+  if (!trace?.intent) return NO_INTENT;
+  const nm = (id: string) => names[id] ?? trace.hqs.find((h) => h.id === id)?.name ?? id;
+  const own = intentAt(trace, c.hq, tick);
+  const armies = trace.hqs.filter((h) => h.parent === c.hq && h.echelon === 'army').map((h) => h.id);
+  const left = armies.map((id) => ({ id, s: intentAt(trace, id, tick) })).filter((x) => x.s && x.s.status !== 'history');
+  const say = (s: NonNullable<typeof own>) => `${s.status === 'own' ? 'решает сам' : 'идёт по истории со сдвигом'}${s.reason ? ` (${s.reason})` : ''} с часа ${s.since}`;
+  const head = !own ? 'По моему штабу данных о замысле нет.' : own.status === 'history' ? 'Мой штаб идёт по истории.' : `Мой штаб ${say(own)}.`;
+  const tail = left.length ? ` Армии не по истории: ${left.map((x) => `${nm(x.id)} — ${say(x.s!)}`).join('; ')}.` : armies.length ? ' Армии идут по истории.' : '';
+  return head + tail;
 }
 
 /** Объекты командующих на карте (profile.objective). */

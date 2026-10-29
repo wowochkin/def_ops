@@ -47,10 +47,21 @@ describe('состояние управления в игре на агентн�
 });
 
 describe('режим «Командующие» в переигровке', () => {
-  it('commanders — вариант «Советские штабы»; по умолчанию — «фронты по истории»', async () => {
+  it('commanders — вариант «Советские штабы»; по умолчанию — «История как замысел»', async () => {
     const { AGENT_COMMANDS, DEFAULT_AGENT_COMMAND } = await import('../src/sim/agent-scenarios');
     expect(AGENT_COMMANDS.map((c) => c.id)).toContain('commanders');
     expect(AGENT_COMMANDS.find((c) => c.id === 'commanders')?.title).toBe('Командующие');
-    expect(DEFAULT_AGENT_COMMAND).toBe('fronts');
+    expect(DEFAULT_AGENT_COMMAND).toBe('intent');
+    expect(AGENT_COMMANDS[0]).toMatchObject({ id: 'intent', title: 'История как замысел' });
+  });
+});
+
+describe('умолчания «История как замысел»', () => {
+  it('режим игры и противник по умолчанию — intent', async () => {
+    const { savedGameMode, defaultEnemy } = await import('../src/command-forms');
+    expect(savedGameMode()).toBe('intent');
+    expect(defaultEnemy(true, false)).toBe('intent');
+    expect(defaultEnemy(false, false)).toBe('llm');
+    expect(defaultEnemy(false, true)).toBe('passive');
   });
 });

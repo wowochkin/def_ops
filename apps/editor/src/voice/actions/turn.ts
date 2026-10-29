@@ -196,6 +196,7 @@ export function turnActions(get: () => TurnDeps): Action[] {
         const d = get();
         d.setTab('umpire'); d.setUmpirePart('enemy');
         if (d.enemy === 'passive') return 'Противник без штаба: держится прежних приказов, решений не принимает.';
+        if (d.enemy === 'intent') return 'Противником командуют штабы по истории как замыслу: решения — в журнале документов.';
         if (d.enemy === 'agents') return 'Противником командуют штабы-агенты по уставам: их решения — в журнале документов (вкладка «Штабы» показывает только свои).';
         const t = d.aiTurns[0];
         if (!t) return 'Решений штаба противника ещё нет — они появятся после первого хода.';

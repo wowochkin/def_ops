@@ -17,6 +17,7 @@ import { findLegendItem, shownLegend } from '../../map-legend';
 import type { LngLat } from '@def-ops/core';
 import type { MapEngine } from '../../engine/types';
 import { showAt } from '../../engine/free-center';
+import type { GameMode } from '@def-ops/sim';
 import type { EnemyMode, TurnView } from '../../sim/game-protocol';
 import { pickByName } from '../answers';
 import { readAloud } from '../dictation';
@@ -311,7 +312,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
     { ...base, id: 'command.enemyMode', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба (держится прежних приказов).',
       params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['штаб, противник без штаба'],
       available: inReplay, highlight: () => [hl('enemy-mode'), hl('tab-umpire')],
-      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents') return 'Противник — штабы-агенты: это выбирается при передаче командования, в ходе игры не меняется.'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
+      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents' || p.mode === 'intent') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents' || get().enemy === 'intent') return 'Противник — штабы без модели: это выбирается при передаче командования, в ходе игры не меняется.'; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
     { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
       available: inReplay,
       run: async () => { more = null; get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },
@@ -345,7 +346,7 @@ export interface ReplayDeps {
   saved: { title: string } | null;
   /** Начать игру (без вопросов) и продолжить сохранённую. */
   /** mode — режим командования на агентной модели (нет — выбранный в окне и запомненный). */
-  begin(enemy: EnemyMode, mode?: 'legacy' | 'agents' | 'hybrid' | 'commanders'): void;
+  begin(enemy: EnemyMode, mode?: GameMode): void;
   continueGame(): void;
   /** Остановить расчёт; удалить запись незавершённой игры. */
   stop(): void;
@@ -384,8 +385,8 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
   };
   const takeOpen = (): true | string => { const r = inReplay(); return r !== true ? r : get().take ? true : 'окно «Принять командование» не открыто. Скажите: «Штаб, прими командование»'; };
-  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive', 'agents'] }, mode: { enum: ['legacy', 'agents', 'hybrid', 'commanders'] } } };
-  const start = (p?: { enemy?: EnemyMode; mode?: 'legacy' | 'agents' | 'hybrid' | 'commanders' }) => { get().begin(p?.enemy === 'passive' || p?.enemy === 'agents' ? p.enemy : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
+  const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive', 'agents', 'intent'] }, mode: { enum: ['intent', 'legacy', 'agents', 'hybrid', 'commanders'] } } };
+  const start = (p?: { enemy?: EnemyMode; mode?: GameMode }) => { get().begin(p?.enemy === 'passive' || p?.enemy === 'agents' || p?.enemy === 'intent' ? p.enemy : 'llm', p?.mode); return 'Командование принято. Готовлю обстановку — скажу, когда будет готова.'; };
   return [
     { section: 'replay', id: 'replay.calc', title: 'Рассчитать операцию', describe: 'Рассчитывает операцию (по названию; без названия — выбранную).',
       params: { type: 'object', properties: { operation: { type: 'string' } } }, say: ['штаб, рассчитай операцию', 'штаб, рассчитай берлинскую операцию'],
@@ -453,7 +454,7 @@ export function replayActions(get: () => ReplayDeps): Action[] {
 export function takeoverRead(o: { day: string; turn: number; enemy: EnemyMode; down: boolean; saved: boolean }): string {
   return `Принять командование с ${o.day}? ${o.saved ? 'Незавершённая игра будет заменена. ' : ''}`
     + 'Скажите: «принимаю», «без штаба» или «штаб на модели», или «отмена». '
-    + `Противник — ${o.enemy === 'llm' ? 'штаб на модели' : 'без штаба'}${o.down ? '; модель сейчас не на связи' : ''}. Ход ${o.turn}. Жду ответа.`;
+    + `Противник — ${o.enemy === 'llm' ? 'штаб на модели' : o.enemy === 'intent' ? 'история как замысел' : o.enemy === 'agents' ? 'штабы-агенты' : 'без штаба'}${o.down ? '; модель сейчас не на связи' : ''}. Ход ${o.turn}. Жду ответа.`;
 }
 /** Напоминание окна «Принять командование», если ответа нет. */
 export const TAKEOVER_REMIND = 'Принимаете командование? Скажите «принимаю» или «отмена». Жду ответа.';
@@ -466,6 +467,8 @@ export function takeoverParse(rest: string, o: { saved: boolean; enemy: EnemyMod
     return { id: o.saved ? 'replay.startOver' : 'replay.start', params: { enemy: o.enemy } };
   if (/^(?:противник )?без (?:штаба|модели)$/.test(t)) return { id: 'command.enemyMode', params: { mode: 'passive' } };
   if (/^(?:противник )?(?:штаб на модели|на модели|с моделью|с штабом|со штабом|модель)$/.test(t)) return { id: 'command.enemyMode', params: { mode: 'llm' } };
+  if (/^противник история как замысел$/.test(t)) return { id: 'command.enemyMode', params: { mode: 'intent' } };
+  if (/^(?:режим )?история как замысел$/.test(t)) return { id: 'command.gameMode', params: { mode: 'intent' } };
   if (/^(?:отмена|отмени|нет|закрой|закрыть|не надо|отставить|не принимаю)$/.test(t)) return { id: 'replay.takeCommand.cancel' };
   return null;
 }

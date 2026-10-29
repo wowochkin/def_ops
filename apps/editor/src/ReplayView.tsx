@@ -30,6 +30,7 @@ import { addHours, type AgentHistory, type GameMode } from '@def-ops/sim';
 import { AgentMark, AgentPanel, divisionNear, hourOf, posAt, type AgentRun } from './AgentCard';
 import { nearestFeature, OVER_MAP, shownFeatures, unitAt, unitPlace } from './map-pick';
 import { agentHqCard, formationCard } from './formation-card';
+import { intentAt, intentBadge } from './intent-view';
 import { FormationPanel, useEsc } from './FormationCard';
 import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
@@ -213,7 +214,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // параметры агентной модели: базовые (agents-v0.json) или сохранённый вариант (калибровка в «Моделировании»)
   const [variants, setVariants] = useState<AgentVariant[]>(agentVariants);
   const [variantId, setVariantId] = useState('');
-  // кто решает за советские штабы в агентной модели; по умолчанию — фронты по истории (DEFAULT_AGENT_COMMAND)
+  // кто решает за советские штабы в агентной модели; по умолчанию — «История как замысел» (DEFAULT_AGENT_COMMAND)
   const [command, setCommandState] = useState<AgentCommand>(() => { try { const v = localStorage.getItem(COMMAND_KEY); return AGENT_COMMANDS.some((c) => c.id === v) ? v as AgentCommand : DEFAULT_AGENT_COMMAND; } catch { return DEFAULT_AGENT_COMMAND; } });
   const setCommand = (c: AgentCommand) => { setCommandState(c); try { localStorage.setItem(COMMAND_KEY, c); } catch { /* */ } };
   useEffect(() => { const f = () => setVariants(agentVariants()); window.addEventListener('def_ops.agents.variants', f); return () => window.removeEventListener('def_ops.agents.variants', f); }, []);
@@ -577,7 +578,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
           {commanderOpen && eng && <CommanderOverlay engine={eng} trace={agentRun!.trace} c={commander!} tick={agentHour} names={hqNames} />}
           {commanderOpen && <RivalryChart trace={agentRun!.trace} tick={agentHour} current={commander!.hq} />}
-          {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)} onTab={setCardTab}
+          {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)} onTab={setCardTab} badge={agentRun ? intentBadge(intentAt(agentRun.trace, card.id, agentHour)) : null}
             tabs={commander && agentRun ? [{ id: 'commander', label: 'Командующий', body: <CommanderPanel trace={agentRun.trace} c={commander} tick={agentHour} onTick={agentToHour} names={hqNames} /> }] : undefined}
             onPick={(id) => { if (agentRun?.trace.divisions.some((x) => x.id === id)) { setAgentSel(id); setCardSel(null); } else setCardSel(id); }}
             actions={agentRun ? <button onClick={showDivisions} title="Уровень корпуса с приближением к штабу">Показать дивизии</button> : undefined} />}
