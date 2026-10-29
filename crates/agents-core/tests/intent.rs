@@ -223,6 +223,11 @@ fn track_fingerprint() {
     let got: Track = track::load(scen_s).unwrap();
     assert_eq!(got.at("su_a", 0), t.at("su_a", 0));
     // чужой отпечаток — след устарел
+    // след, записанный по другим правилам, — тоже устарел
+    let mut t2 = t.clone();
+    t2.rules = "other".into();
+    std::fs::write(dir.join("s.intent-track.json"), serde_json::to_string(&t2).unwrap()).unwrap();
+    assert_eq!(track::load(scen_s).unwrap_err(), "след эталона устарел — уход по расстоянию выключен");
     std::fs::write(&scen, "{\"a\":2}").unwrap();
     assert_eq!(track::load(scen_s).unwrap_err(), "след эталона устарел — уход по расстоянию выключен");
     // правки «Редактора» (EditsIn) в файл сценария не входят — отпечаток считается по тексту файла
@@ -275,7 +280,15 @@ fn shift(sim: &mut Sim, h: u32, dx: f64, dy: f64) {
 fn still_track(sim: &Sim, hs: &[u32]) -> Track {
     let mut armies = std::collections::BTreeMap::new();
     for &h in hs { armies.insert(sim.world.hqs[h as usize].id.clone(), vec![Some(sim.theatre.proj.to_lnglat(center(sim, h))); 400]); }
-    Track { fingerprint: String::new(), hours: 399, armies }
+    Track { fingerprint: String::new(), rules: track::RULES.into(), hours: 399, armies }
+}
+
+/// След армии `h` в `km` к северу (+y) от её нынешнего места: армия «отошла от следа» (returnKm < km ≤ leaveKm).
+fn off_track(sim: &mut Sim, h: u32, km: f64) -> Track {
+    shift(sim, h, 0.0, km);
+    let t = still_track(sim, &[h]);
+    shift(sim, h, 0.0, -km);
+    t
 }
 
 /// Точка в `km` за целью задачи `a` по направлению от центра армии.
@@ -314,20 +327,63 @@ fn issue_by_hour() {
 }
 
 #[test]
-fn issue_on_done() {
+fn off_track_rules_apply() {
+    let mut sim = intent_sim();
+    let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
+    let ci = chain_of(&sim, a);
+    sim.intent.chains[ci].tasks.truncate(4);
+    run_to(&mut sim, 1);
+    let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
+    // армия на объекте задачи 0, след — в 20 км: подача по выполнению
+    sim.intent.chains[ci].tasks[1].at = 500;
+    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 15.0));
+    let c = center(&sim, a);
+    shift(&mut sim, a, g0.x - c.x, g0.y - c.y);
+    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    run_to(&mut sim, 2);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 1], "следующая подана по выполнению");
+    assert_eq!(status(&sim, a).status, Status::Shifted);
+    // объект задачи 2 занят своими — в свой час пропущена, взята задача 3
+    let g2 = sim.intent.chains[ci].tasks[1].goal.unwrap();
+    sim.intent.chains[ci].tasks[2].at = 3;
+    sim.intent.chains[ci].tasks[2].goal = Some(g2);
+    sim.intent.chains[ci].tasks[3].at = 600;
+    sim.intent.chains[ci].tasks[3].goal = Some(beyond(&sim, a, g2, 10.0));
+    run_to(&mut sim, 3);
+    let mine = under(&sim, a);
+    let fr = (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side == Side::Su && !sim.world.divisions[i].state.out() && !mine.contains(&i)).unwrap();
+    sim.world.divisions[fr].vars.pos = g2;
+    run_to(&mut sim, 4);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 1, 3], "задача 2 пропущена, задача 3 подана сразу");
+    assert!(!sim.intent.chains[ci].tasks[2].issued && sim.intent.chains[ci].tasks[3].issued);
+    assert_eq!((status(&sim, a).status, status(&sim, a).reason.clone()), (Status::Shifted, Some(Reason::Taken)));
+}
+
+#[test]
+fn on_track_pure_history() {
     let mut sim = intent_sim();
     let (a, f) = (hq(&sim, "su_8gva"), hq(&sim, "su_1bf"));
     let ci = chain_of(&sim, a);
     sim.intent.chains[ci].tasks.truncate(2);
-    sim.intent.chains[ci].tasks[1].at = 500;
     run_to(&mut sim, 1);
+    // армия на объекте задачи 0 и след там же: по выполнению не подаётся
     let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
-    sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 15.0));
     let c = center(&sim, a);
     shift(&mut sim, a, g0.x - c.x, g0.y - c.y);
-    run_to(&mut sim, 2);
-    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 1], "следующая подана по выполнению");
-    assert_eq!(status(&sim, a).status, Status::Shifted);
+    sim.intent.track = Some(still_track(&sim, &[a]));
+    let g1 = beyond(&sim, a, g0, 15.0);
+    sim.intent.chains[ci].tasks[1].at = 5;
+    sim.intent.chains[ci].tasks[1].goal = Some(g1);
+    run_to(&mut sim, 5);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0], "у следа — без подачи по выполнению");
+    // объект задачи 1 занят своими — у следа всё равно подаётся в свой час
+    let mine = under(&sim, a);
+    let fr = (0..sim.world.divisions.len()).find(|&i| sim.world.divisions[i].side == Side::Su && !sim.world.divisions[i].state.out() && !mine.contains(&i)).unwrap();
+    sim.world.divisions[fr].vars.pos = g1;
+    assert_eq!(intent::sense(&sim, &sim.intent.chains[ci], &sim.intent.chains[ci].tasks[1]), Err(Reason::Taken));
+    run_to(&mut sim, 6);
+    assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 5]);
+    assert_eq!(status(&sim, a).status, Status::History);
 }
 
 #[test]
@@ -341,6 +397,7 @@ fn skip_senseless() {
     sim.intent.chains[ci].tasks[2].at = 500;
     let g2 = beyond(&sim, a, g0, 10.0);
     sim.intent.chains[ci].tasks[2].goal = Some(g2);
+    sim.intent.track = Some(off_track(&mut sim, a, 22.0));
     run_to(&mut sim, 3);
     // объект задачи 1 занят своими (дивизия другой армии)
     let g1 = sim.intent.chains[ci].tasks[1].goal.expect("цель");

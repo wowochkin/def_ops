@@ -146,7 +146,7 @@ fn main() {
         let t = if p.trim_start().starts_with('{') { p } else { std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("--params {p}: {e}")) };
         serde_json::from_str(&t).unwrap_or_else(|e| panic!("--params: {e}"))
     });
-    // --intent-track <путь>: след эталона — прогон --runs seed…seed+N-1 с --command, среднее центров армий по часам
+    // --intent-track <путь>: след эталона — прогон --runs seed…seed+N-1 с --command в чистой истории, среднее центров армий по часам
     if let Some(out) = arg(&args, "intent-track") {
         let mode = arg(&args, "command").unwrap_or_else(|| "intent".into());
         let mut traces = Vec::new();
@@ -155,6 +155,8 @@ fn main() {
             sim.seed = seed;
             let mut pending = Vec::new();
             for sd in [Side::Su, Side::De] { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd).unwrap_or_else(|e| panic!("--command: {e}"))); }
+            // след — чистая история (intent::track::RULES): не зависит от правил приспособления
+            sim.intent.pure = true;
             traces.push(agents_core::trace::run_fed(&mut sim, meta.hours, &meta, pending, mode == "fronts" || mode == "journals"));
         }
         let mut track = agents_core::intent::track::record(&traces);

@@ -10,10 +10,17 @@ use std::collections::BTreeMap;
 #[serde(rename_all = "camelCase")]
 pub struct Track {
     pub fingerprint: String,
+    /// Правила, по которым записан след (`RULES`): другой — след устарел.
+    #[serde(default)]
+    pub rules: String,
     pub hours: u32,
     /// id штаба армии → центр её живых дивизий по часам (None — живых нет).
     pub armies: BTreeMap<String, Vec<Option<LngLat>>>,
 }
+
+/// Правила записи следа: чистая история (все задачи в свой час, без условий смысла и ухода) — след не зависит от правил
+/// приспособления диспетчера.
+pub const RULES: &str = "pure-history-v1";
 
 /// FNV-1a 64 от текста → 16 hex-знаков.
 pub fn fingerprint(scenario_text: &str) -> String {
@@ -81,7 +88,7 @@ pub fn record(traces: &[Value]) -> Track {
             *slot = (!pts.is_empty()).then(|| [pts.iter().map(|p| p[0]).sum::<f64>() / pts.len() as f64, pts.iter().map(|p| p[1]).sum::<f64>() / pts.len() as f64]);
         }
     }
-    Track { fingerprint: String::new(), hours: hours.saturating_sub(1) as u32, armies }
+    Track { fingerprint: String::new(), rules: RULES.to_string(), hours: hours.saturating_sub(1) as u32, armies }
 }
 
 /// След рядом со сценарием; Err — нет файла или отпечаток чужой (запись в журнал — на вызывающем, у кого есть Sim).
@@ -89,7 +96,7 @@ pub fn load(scenario_path: &str) -> Result<Track, String> {
     let text = std::fs::read_to_string(track_path(scenario_path)).map_err(|_| "нет следа эталона".to_string())?;
     let t: Track = serde_json::from_str(&text).map_err(|_| "нет следа эталона".to_string())?;
     let scen = std::fs::read_to_string(scenario_path).map_err(|_| "нет следа эталона".to_string())?;
-    if t.fingerprint != fingerprint(&scen) { return Err("след эталона устарел — уход по расстоянию выключен".into()); }
+    if t.fingerprint != fingerprint(&scen) || t.rules != RULES { return Err("след эталона устарел — уход по расстоянию выключен".into()); }
     Ok(t)
 }
 

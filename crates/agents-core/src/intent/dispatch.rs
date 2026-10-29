@@ -1,8 +1,11 @@
 //! Подача цепочек, уход с истории и возврат (спецификация, разделы 1.3–1.6 и 2.4–2.6).
 //!
-//! Задача подаётся по наступившему первым: её исторический час или выполнение предыдущей поданной. Задача без смысла
-//! в свой час пропускается, и сразу берётся следующая, если у неё смысл есть уже сейчас (история «догоняет» армию);
-//! нет — она ждёт своего часа. Пропущена последняя задача — цепочка кончилась. Армия дальше `intent.leaveKm` от следа эталона на этот час уходит с истории, ближе `intent.returnKm` при
+//! Правила приспособления действуют только там, где армия разошлась с историей; судья — след эталона. Армия у следа
+//! (не дальше `intent.returnKm`) или без следа идёт как чистая история: задачи в свой час, пропуск — только у
+//! неспособной армии. Отошла от следа (дальше `returnKm`, не дальше `leaveKm`) — «со сдвигом»: задача подаётся по
+//! наступившему первым (свой час или выполнение предыдущей поданной); без смысла в свой час пропускается, и сразу
+//! берётся следующая, если у неё смысл есть уже сейчас (история «догоняет» армию), нет — она ждёт своего часа.
+//! Пропущена последняя задача — цепочка кончилась. Армия дальше `intent.leaveKm` от следа эталона на этот час уходит с истории, ближе `intent.returnKm` при
 //! задаче со смыслом на этот час — возвращается. Штаб игрока со всеми подчинёнными — всегда «сам».
 //!
 //! Подача: советская директива — `passing::issue` (с осью от места получателя, как в «фронтах по истории»), если
@@ -48,6 +51,8 @@ pub struct State {
     pub scenario: Option<String>,
     /// Немецкие приказы сценария, поданные диспетчером не в свой час: в этом же шаге — в путь к дивизиям.
     pub queue: Vec<ScriptOrder>,
+    /// Чистая история (запись следа эталона): все задачи — в свой час, без условий смысла, ухода и возврата.
+    pub pure: bool,
 }
 
 impl State {
@@ -127,6 +132,22 @@ fn stray_km(sim: &Sim, owner: u32, tick: u32) -> Option<f64> {
     Some(c.dist(sim.theatre.proj.to_xy(p)))
 }
 
+/// Армия у следа эталона (не дальше `returnKm`) или следа для неё нет — правила приспособления не действуют.
+fn on_track(sim: &Sim, owner: u32) -> bool {
+    sim.intent.pure || stray_km(sim, owner, sim.world.tick).is_none_or(|km| km <= sim.rules.intent.return_km)
+}
+
+/// Смысл задачи для подачи: в чистой истории — всегда; армия у следа — только способность (`Unfit`); отошла от следа —
+/// все условия.
+fn sense_now(sim: &Sim, c: &Chain, t: &super::chain::Task, on_track: bool) -> Result<(), Reason> {
+    if sim.intent.pure { return Ok(()); }
+    match sense(sim, c, t) {
+        Err(Reason::Unfit) => Err(Reason::Unfit),
+        Err(_) if on_track => Ok(()),
+        x => x,
+    }
+}
+
 fn leave(sim: &mut Sim, owner: u32, reason: Reason, tick: u32) {
     set(sim, owner, Status::Own, Some(reason), tick);
     // немецкая армия — штабам-агентам (и командующим)
@@ -149,13 +170,15 @@ pub fn step(sim: &mut Sim, tick: u32) {
     for ci in 0..sim.intent.chains.len() {
         let owner = sim.intent.chains[ci].owner;
         if player_over(sim, owner) { set(sim, owner, Status::Own, Some(Reason::Player), tick); continue; }
+        if sim.intent.pure { dispatch(sim, ci, tick, true); continue; }
         let km = stray_km(sim, owner, tick);
         if sim.intent.hq[owner as usize].status == Status::Own {
             if km.is_some_and(|km| km < r.return_km) { try_return(sim, ci, tick); }
             continue;
         }
         if let Some(km) = km.filter(|&km| km > r.leave_km) { leave(sim, owner, Reason::Strayed { km }, tick); continue; }
-        dispatch(sim, ci, tick);
+        let near = km.is_none_or(|km| km <= r.return_km);
+        dispatch(sim, ci, tick, near);
     }
 }
 
@@ -165,20 +188,21 @@ fn try_return(sim: &mut Sim, ci: usize, tick: u32) {
     let c = &sim.intent.chains[ci];
     if c.next >= c.tasks.len() { return; }
     let k = (c.next..c.tasks.len()).take_while(|&j| c.tasks[j].at <= tick).last().unwrap_or(c.next);
-    if sense(sim, c, &c.tasks[k]).is_err() { return; }
+    if sense_now(sim, c, &c.tasks[k], true).is_err() { return; }
     let owner = c.owner;
     sim.intent.chains[ci].next = k;
     back(sim, owner, tick);
-    dispatch(sim, ci, tick);
+    dispatch(sim, ci, tick, true);
 }
 
-/// Подать наступившие задачи цепочки.
-fn dispatch(sim: &mut Sim, ci: usize, tick: u32) {
+/// Подать наступившие задачи цепочки. Армия у следа (`near`) идёт как чистая история: задачи в свой час, без подачи
+/// по выполнению и без пропусков, кроме неспособной армии; отошла от следа — подача по выполнению и пропуски, состояние
+/// «со сдвигом».
+fn dispatch(sim: &mut Sim, ci: usize, tick: u32, near: bool) {
     let owner = sim.intent.chains[ci].owner;
     let mut skipped: Option<Reason> = None;
     let mut why: Option<Reason> = None;
     let mut shifted = false;
-    let mut on_hour = false;
     loop {
         let c = &sim.intent.chains[ci];
         let i = c.next;
@@ -188,14 +212,14 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32) {
         }
         let t = &c.tasks[i];
         // немецкий приказ, пропущенный в свой час в шаге 0 (`admit`)
-        if t.issued { sim.intent.chains[ci].next += 1; on_hour = true; continue; }
+        if t.issued { sim.intent.chains[ci].next += 1; continue; }
         let by_hour = t.at <= tick;
-        let prev_done = (0..i).rev().find(|&j| c.tasks[j].issued).is_some_and(|j| done(sim, owner, &c.tasks[j]));
-        let catch_up = skipped.is_some();
+        let prev_done = !near && (0..i).rev().find(|&j| c.tasks[j].issued).is_some_and(|j| done(sim, owner, &c.tasks[j]));
+        let catch_up = !near && skipped.is_some();
         if !(by_hour || prev_done || catch_up) { break; }
         // отвод с позиций — только в свой час
         if matches!(t.step, Step::Withdrawal(_)) && !by_hour { break; }
-        match sense(sim, c, t) {
+        match sense_now(sim, c, t, near) {
             // задача не в свой час (по выполнению или вдогонку) без смысла сейчас — ждёт своего часа: смысл будущей
             // задачи меряют по обстановке её часа (иначе «дальше двух переходов» отбросило бы всю цепочку)
             Err(_) if !by_hour => break,
@@ -203,17 +227,17 @@ fn dispatch(sim: &mut Sim, ci: usize, tick: u32) {
             Ok(()) => {
                 issue(sim, ci, i, tick);
                 sim.intent.chains[ci].next += 1;
-                if by_hour && !catch_up { on_hour = true; } else { shifted = true; }
+                if !by_hour || catch_up { shifted = true; }
                 skipped = None;
             }
         }
     }
-    if shifted {
+    if shifted || !near {
         // причина — последняя пропущенная задача этого хода; подача раньше часа прежнюю причину сдвига не меняет
         let s = &sim.intent.hq[owner as usize];
         let why = why.or_else(|| if s.status == Status::Shifted { s.reason.clone() } else { None });
         set(sim, owner, Status::Shifted, why, tick);
-    } else if on_hour {
+    } else {
         set(sim, owner, Status::History, None, tick);
     }
 }
@@ -253,7 +277,7 @@ fn order_tasks(sim: &Sim, o: &ScriptOrder) -> Vec<(usize, usize)> {
 
 fn passes(sim: &Sim, ci: usize, ti: usize) -> bool {
     let c = &sim.intent.chains[ci];
-    !c.tasks[ti].issued && !off_history(sim, c.owner) && sense(sim, c, &c.tasks[ti]).is_ok()
+    !c.tasks[ti].issued && !off_history(sim, c.owner) && sense_now(sim, c, &c.tasks[ti], on_track(sim, c.owner)).is_ok()
 }
 
 /// Немецкий приказ сценария проходит, только если его армия на истории и задача имеет смысл (иначе отбрасывается —

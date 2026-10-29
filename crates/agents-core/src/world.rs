@@ -265,7 +265,7 @@ impl Sim {
             documents: Vec::new(), history: None, staff: self.staff.clone(),
             commanders: crate::commander::State { enabled: [false; 2], list: Vec::new(), log: Default::default(), raised: self.commanders.raised.clone(), baselines: 0 },
             // «в уме» цепочки идут дальше, но без следа эталона (без ухода по расстоянию) и без записи смен
-            intent: crate::intent::State { enabled: self.intent.enabled, chains: self.intent.chains.clone(), hq: self.intent.hq.clone(), track: None, log: Vec::new(), scenario: None, queue: self.intent.queue.clone() },
+            intent: crate::intent::State { enabled: self.intent.enabled, chains: self.intent.chains.clone(), hq: self.intent.hq.clone(), track: None, log: Vec::new(), scenario: None, queue: self.intent.queue.clone(), pure: self.intent.pure },
         }
     }
 
