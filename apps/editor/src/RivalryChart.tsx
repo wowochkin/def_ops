@@ -39,7 +39,7 @@ export function RivalryChart({ trace, tick, current }: { trace: AgentTrace; tick
     <div className="cm-chart">
       <div className="cm-chart-h"><b>Состязание за {goal} — как видит каждый командующий</b><span>{dm(trace.start)}–{dm(addHours(trace.start, last))}</span></div>
       <div className="cm-legend">{soviet.map((s, i) => <span key={s.hq}><i style={{ background: COLORS[i % COLORS.length] }} />{first(s.name)}</span>)}
-        {series.some((s) => !s.points.length) && <span><i style={{ background: '#6b7280' }} />решения 9-й и 12-й армий</span>}</div>
+        {series.some((s) => !s.points.length) && <span><i style={{ background: '#6b7280' }} />решения 9-й армии, деблокирование 12-й</span>}</div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%">
         {ticks.map((k) => <g key={k}><line className="grid" x1={L} x2={W - R} y1={y(k)} y2={y(k)} /><text className="ax" x={L - 4} y={y(k) + 3} textAnchor="end">{k}</text></g>)}
         {days.map((h) => <g key={h}><line className="grid v" x1={x(h)} x2={x(h)} y1={T} y2={H - B} /><text className="ax" x={x(h)} y={H - 5} textAnchor={h === 0 ? 'start' : x(h) > W - 30 ? 'end' : 'middle'}>{dm(addHours(trace.start, h))}</text></g>)}

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import type { LngLat } from '@def-ops/core';
 import type { AgentCommander, AgentTrace } from '@def-ops/sim';
 import type { MapEngine } from './engine/types';
-import { chosenOf, hqCentroid, OBJECTIVE_AT, viewAt } from './commander-view';
+import { hqCentroid, intentOf, OBJECTIVE_AT, viewAt } from './commander-view';
 
 type Pt = [number, number];
 const short = (s: string, n = 34) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
@@ -44,7 +44,8 @@ export function CommanderOverlay({ engine, trace, c, tick, names }: { engine: Ma
   const v = viewAt(c, tick);
   const from = hqCentroid(trace, c.hq, tick);
   const obj = c.objective ? OBJECTIVE_AT[c.objective] : undefined;
-  const d = v.decision, o = d ? chosenOf(d) : null;
+  // сплошная стрелка — действующий замысел; пунктир — варианты «в уме» последнего решения
+  const d = v.decision, o = intentOf(v.decisions);
   const goal = (x: { target: LngLat | null } | null): LngLat | null => x?.target ?? obj?.at ?? null;
   const rival = v.snapshot?.picture.rival;
   const rivalFrom = rival ? hqCentroid(trace, rival.hq, rival.asOf) : null;

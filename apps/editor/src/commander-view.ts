@@ -43,6 +43,14 @@ export function viewAt(c: AgentCommander, tick: number): { snapshot: Snapshot | 
 /** Выбранный и лучший из прочих вариантов решения. */
 export const chosenOf = (d: Decision) => d.options[d.chosen];
 
+/** Действующий замысел к часу: выбранный вариант последнего решения, кроме «продолжать по плану» — оно замысел не
+ * сбрасывает (так же в ядре); решений нет — null, были только «продолжать» — последнее из них. */
+export function intentOf(decisions: Decision[]): Decision['options'][number] | null {
+  for (let i = decisions.length - 1; i >= 0; i--) { const o = chosenOf(decisions[i]); if (o && o.kind !== 'continue') return o; }
+  const last = decisions[decisions.length - 1];
+  return last ? chosenOf(last) ?? null : null;
+}
+
 const n2 = (x: number) => x.toFixed(2).replace('.', ',');
 const n1 = (x: number) => x.toFixed(1).replace('.', ',');
 const km0 = (x: number) => Math.round(x).toLocaleString('ru-RU');

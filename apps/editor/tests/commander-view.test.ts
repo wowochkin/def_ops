@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentCommander, AgentCommanderOption, AgentTrace } from '@def-ops/sim';
-import { answer, commanderOf, decisionRibbon, hqCentroid, MOTIVE_RU, rivalrySeries, SUGGESTIONS, TRAIT_RU, viewAt, moodWords } from '../src/commander-view';
+import { answer, commanderOf, decisionRibbon, hqCentroid, intentOf, MOTIVE_RU, rivalrySeries, SUGGESTIONS, TRAIT_RU, viewAt, moodWords } from '../src/commander-view';
 
 const parts = (o: Partial<Record<string, number>>) => ({ task: 0, rival: 0, preserve: 0, noEncircle: 0, destroy: 0, hold: 0, save: 0, ...o });
 const opt = (kind: string, label: string, total: number, p: Partial<Record<string, number>> = {}, mind: AgentCommanderOption['mind'] = null): AgentCommanderOption =>
@@ -67,6 +67,16 @@ describe('viewAt', () => {
     expect(v.decisions).toEqual([]);
     expect(v.snapshot?.tick).toBe(0);
     expect(viewAt({ ...zhukov, snapshots: [] }, 3).snapshot).toBeNull();
+  });
+});
+
+describe('intentOf', () => {
+  it('действующий замысел — последнее решение, кроме «продолжать по плану» (оно замысел не сбрасывает)', () => {
+    const d = (tick: number, kind: string, label: string) => ({ tick, trigger: 'цикл', chosen: 0, why: '', options: [opt(kind, label, 0.1)] });
+    expect(intentOf([])).toBeNull();
+    expect(intentOf([d(1, 'continue', 'Продолжать по плану')])?.label).toBe('Продолжать по плану');
+    expect(intentOf([d(1, 'encircle', 'Замкнуть кольцо'), d(2, 'continue', 'Продолжать по плану')])?.label).toBe('Замкнуть кольцо');
+    expect(intentOf([d(1, 'encircle', 'Замкнуть кольцо'), d(2, 'turnToRival', 'Повернуть')])?.label).toBe('Повернуть');
   });
 });
 
