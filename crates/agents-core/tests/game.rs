@@ -618,3 +618,58 @@ fn commanders_game_seat() {
     assert!(!agents_core::commander::active(&g.sim, f), "командующий молчит, когда место занято");
     assert_eq!(serde_json::from_str::<Mode>("\"commanders\"").unwrap(), Mode::Commanders);
 }
+
+/// Игра в режиме «история как замысел»: обе стороны на цепочках, игрок берёт штаб — поддерево «под командованием игрока».
+#[test]
+fn intent_game_take() {
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::intent::Status;
+    let root = agents_core::repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий");
+    let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Intent);
+    let hq = |g: &Game, id: &str| g.sim.world.hqs.iter().position(|h| h.id == id).unwrap();
+    assert_eq!(g.sim.intent.enabled, [true, true], "история как замысел у обеих сторон");
+    assert!(agents_core::commander::active(&g.sim, hq(&g, "su_1bf") as u32) && agents_core::commander::active(&g.sim, hq(&g, "de_9a") as u32));
+    let (bf, uf, a9) = (hq(&g, "su_1bf"), hq(&g, "su_1uf"), hq(&g, "de_9a"));
+    assert!(g.sim.intent.chains.iter().any(|c| c.owner as usize == uf), "цепочки за фронт под игроком");
+    g.command(&CommandOp::Take { hq: "su_1bf".into() }).expect("взять штаб");
+    assert_eq!(g.sim.intent.hq[bf].status, Status::Own);
+    assert_eq!(g.sim.intent.hq[uf].status, Status::History, "соседний фронт на истории");
+    assert_eq!(g.sim.intent.hq[a9].status, Status::History);
+    assert!(g.sim.world.hqs.iter().enumerate().filter(|(k, _)| agents_core::intent::off_history(&g.sim, *k as u32)).any(|(k, _)| k == bf));
+    g.advance(6);
+    assert_eq!(g.trace()["game"]["hour"], 12);
+    assert!(g.trace()["intent"].is_array(), "в ходе поле intent");
+    assert_eq!(serde_json::from_str::<Mode>("\"intent\"").unwrap(), Mode::Intent);
+    assert_eq!(g.trace()["command"]["mode"], "intent");
+}
+
+/// Игрок за немцев (Review Focus 5): взял 9-ю армию — она снята с истории, советская сторона идёт по цепочкам.
+#[test]
+fn intent_game_player_de() {
+    use agents_core::game::{CommandOp, Game, Mode};
+    use agents_core::intent::Status;
+    let root = agents_core::repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий");
+    let mut g = Game::start_mode(sim, meta, 6, Side::De, &[Side::De], None, Mode::Intent);
+    let hq = |g: &Game, id: &str| g.sim.world.hqs.iter().position(|h| h.id == id).unwrap();
+    assert_eq!(g.sim.intent.enabled, [true, true]);
+    g.command(&CommandOp::Take { hq: "de_9a".into() }).expect("взять штаб");
+    assert_eq!(g.sim.intent.hq[hq(&g, "de_9a")].status, Status::Own);
+    assert_eq!(g.sim.intent.hq[hq(&g, "su_1bf")].status, Status::History);
+    assert!(g.sim.intent.chains.iter().any(|c| g.sim.world.hqs[c.owner as usize].side == Side::Su));
+    g.advance(6);
+    assert_eq!(g.sim.intent.hq[hq(&g, "su_1bf")].status, Status::History, "советская сторона на истории");
+}
+
+/// Противник «intent» при своём режиме игры: история включается только у стороны противника.
+#[test]
+fn intent_enemy_only() {
+    use agents_core::game::{Game, Mode};
+    let root = agents_core::repo_root();
+    let (sim, meta) = agents_core::scenario::load(&format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json"), &format!("{root}/{}", agents_core::DATA_DIR), &root).expect("сценарий");
+    let mut g = Game::start_mode(sim, meta, 6, Side::Su, &[Side::Su], None, Mode::Agents);
+    assert_eq!(g.sim.intent.enabled, [false, false]);
+    g.enemy_intent();
+    assert_eq!(g.sim.intent.enabled, [false, true]);
+}

@@ -212,7 +212,7 @@ let live: (() => CommandDeps) | null = null;
 export function releaseCommand(get: () => CommandDeps): void { if (live === get) { live = null; more = null; } }
 
 const NAME = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
-const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов', agents: 'штабы-агенты по уставам' };
+const ENEMY_SAY: Record<EnemyMode, string> = { llm: 'штаб на модели', passive: 'без штаба — держится прежних приказов', agents: 'штабы-агенты по уставам', intent: 'штабы по истории как замыслу' };
 
 export function commandActions(get: () => CommandDeps): Action[] {
   more = null; // новая игра

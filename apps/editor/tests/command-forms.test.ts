@@ -25,7 +25,7 @@ describe('формы приказа по ступеням', () => {
     expect(controlMark(undefined)).toBeNull();
   });
   it('режимы игры названы', () => {
-    expect(Object.keys(MODE_TITLE)).toEqual(['legacy', 'agents', 'commanders', 'hybrid']);
+    expect(Object.keys(MODE_TITLE)).toEqual(['legacy', 'agents', 'commanders', 'hybrid', 'intent']);
     expect(MODE_TITLE.hybrid.title).toBe('Гибрид');
   });
 });

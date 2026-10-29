@@ -28,6 +28,8 @@ export interface AgentTrace {
   documents?: { tick: number; time: string; hq: string; kind: 'directive' | 'order' | 'instruction' | 'notice' | 'report'; to: string[]; text: string; rule: string | null }[];
   /** Командующие (режим `commanders`): характер, состояние по часам, решения со всеми вариантами и оценками. Нет — командующих нет. */
   commanders?: AgentCommander[];
+  /** История как замысел (режим `intent`): по штабу — смены статуса «по истории / сдвинут / сам» с причиной. Нет — режима нет. */
+  intent?: { hq: string; changes: { tick: number; status: 'history' | 'shifted' | 'own'; reason: string | null }[] }[];
 }
 
 /** Число с пределами и источником (узел commanders.json). */

@@ -33,9 +33,9 @@ fn main() {
                 sim.sources[0] = if a["su"] == "doctrine" { Source::Doctrine } else { Source::Script };
                 if a["withoutFires"] == true { sim.fires.clear(); }
                 if a["withoutWithdrawals"] == true { sim.withdrawals.clear(); }
-                // советские штабы по ступеням (как у приложения): script / fronts / journals / agents; commanders — командующие у обеих сторон
+                // советские штабы по ступеням (как у приложения): script / fronts / journals / agents; commanders, intent — у обеих сторон
                 let mode = a["command"].as_str().unwrap_or("script").to_string();
-                let sides: &[Side] = if mode == "commanders" { &[Side::Su, Side::De] } else { &[Side::Su] };
+                let sides: &[Side] = if matches!(mode.as_str(), "commanders" | "intent") { &[Side::Su, Side::De] } else { &[Side::Su] };
                 let mut pending = Vec::new();
                 for &sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd)?); }
                 let hours = meta.hours;
@@ -55,6 +55,7 @@ fn main() {
                 let mut g = Game::start_mode(sim, meta, a["takeover"].as_u64().unwrap_or(0) as u32, player, &free, state.as_ref(), mode);
                 if let Some(u) = a["until"].as_u64() { g.limit = g.limit.max(u as u32); }
                 if a["enemy"] == "agents" { g.enemy_agents(); }
+                if a["enemy"] == "intent" { g.enemy_intent(); }
                 let t = g.trace();
                 game = Some(g);
                 Ok(t)

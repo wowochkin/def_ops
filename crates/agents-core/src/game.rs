@@ -20,7 +20,7 @@ use serde_json::Value;
 /// игрок занимает командой `take` — тогда его штаб молчит).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Mode { Legacy, Agents, Hybrid, Commanders }
+pub enum Mode { Legacy, Agents, Hybrid, Commanders, Intent }
 
 fn other_side(s: Side) -> Side { if s == Side::Su { Side::De } else { Side::Su } }
 
@@ -228,7 +228,9 @@ impl Game {
         // штабы-агенты: игрок — верхняя инстанция своей стороны, ниже — агенты; приказы сценария стороны остаются
         if mode != Mode::Legacy {
             crate::command::control::agents_side(&mut sim, player);
-            if mode == Mode::Commanders { crate::commander::enable(&mut sim, player); }
+            if matches!(mode, Mode::Commanders | Mode::Intent) { crate::commander::enable(&mut sim, player); }
+            // история как замысел: цепочки стороны игрока; взятый штаб с поддеревом уходит с истории (take)
+            if mode == Mode::Intent { crate::intent::enable(&mut sim, player); }
             // противник под внешним управлением (штаб на модели): его приказы сценария и артподготовки сняты, как раньше
             let other = |hq: u32, sim: &Sim| { let s = sim.world.hqs[hq as usize].side; s != player && free.contains(&s) };
             let keep: Vec<bool> = sim.script.iter().map(|o| !other(o.hq, &sim)).collect();
@@ -242,6 +244,8 @@ impl Game {
             let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: false };
             // командующие и у противника, если он не на модели вне ядра: его штабы — агенты, верхняя инстанция — Гитлер/Ставка
             if mode == Mode::Commanders && !g.free.contains(&other_side(player)) { g.enemy_agents(); }
+            // история как замысел и у противника: цепочки его армий и командующие
+            if mode == Mode::Intent && !g.free.contains(&other_side(player)) { g.enemy_intent(); }
             return g;
         }
         let mine = |hq: u32, sim: &Sim| free.contains(&sim.world.hqs[hq as usize].side);
@@ -526,6 +530,20 @@ impl Game {
         self.enemy_agents = true;
     }
 
+    /// Противник — на истории как замысле: штабы — агенты, верхняя инстанция — агент, командующие и цепочки его армий
+    /// (исторические директивы подаёт `intent::step`, не игра); его приказы сценария при доставке пропускаются.
+    pub fn enemy_intent(&mut self) {
+        use crate::command::control::Control;
+        if self.enemy_agents { return; }
+        let enemy = other_side(self.player);
+        crate::command::control::agents_side(&mut self.sim, enemy);
+        for (k, h) in self.sim.world.hqs.iter().enumerate() { if h.side == enemy && h.echelon == crate::model::Echelon::HighCommand { self.sim.command.control[k] = Control::Agent; } }
+        self.sim.sources[crate::staff::side_idx(enemy)] = crate::staff::Source::Script;
+        crate::commander::enable(&mut self.sim, enemy);
+        crate::intent::enable(&mut self.sim, enemy);
+        self.enemy_agents = true;
+    }
+
     /// Команда управления на ход.
     pub fn command(&mut self, c: &CommandOp) -> Result<(), String> {
         if self.mode == Mode::Legacy { return Err("команды управления — в режимах «агенты» и «гибрид»".into()); }
@@ -550,6 +568,8 @@ impl Game {
         let h = self.sim.world.hqs.iter().position(|x| x.id == hq && x.side == self.player).ok_or_else(|| format!("нет штаба {hq} стороны игрока"))?;
         if self.sim.world.hqs[h].echelon == crate::model::Echelon::HighCommand { return Err("верхняя инстанция и так у игрока".into()); }
         self.sim.command.control[h] = Control::Player;
+        // история как замысел: поддерево взятого штаба — «под командованием игрока»
+        if self.sim.intent.enabled[crate::staff::side_idx(self.player)] { crate::intent::take(&mut self.sim, h as u32); }
         let tick = self.hour();
         self.sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Notice, to: Vec::new(), text: "штаб взят под управление игрока".into(), rule: None });
         Ok(())
@@ -599,7 +619,7 @@ impl Game {
         use crate::command::directive::Target;
         let w = &self.sim.world;
         let c = &self.sim.command;
-        let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid", Mode::Commanders => "commanders" };
+        let mode = match self.mode { Mode::Legacy => "legacy", Mode::Agents => "agents", Mode::Hybrid => "hybrid", Mode::Commanders => "commanders", Mode::Intent => "intent" };
         let mine = |h: usize| w.hqs[h].side == self.player;
         let hqs: Vec<Value> = (0..w.hqs.len()).filter(|&h| mine(h) && c.control.len() > h)
             .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] })).collect();

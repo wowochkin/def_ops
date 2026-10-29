@@ -49,7 +49,7 @@ export interface LlmSettings {
 
 /** Противник: штаб на модели или «без штаба» — держится прежних приказов (для пробы без LM Studio). */
 /** agents — противник: штабы-агенты по уставам, его верхняя инстанция подаёт исторические решения (агентная модель). */
-export type EnemyMode = 'llm' | 'passive' | 'agents';
+export type EnemyMode = 'llm' | 'passive' | 'agents' | 'intent';
 
 export interface GameStart {
   scenario: string;

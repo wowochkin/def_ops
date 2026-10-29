@@ -1,7 +1,7 @@
 //! Команды Tauri агентной модели — общие для приложения агентной модели (apps/agents) и настольного приложения
 //! платформы (apps/desktop):
 //! - run_scenario — прогон сценария с записью хода по часам (кадры, журнал, штабы, исходные данные); режим командования
-//!   советских штабов (command: script | fronts | journals | agents | commanders); источники решений
+//!   советских штабов (command: script | fronts | journals | agents | commanders | intent); источники решений
 //!   штабов обеих сторон (приказы сценария, доктрина, языковая модель), ход решений модели — событиями staff-progress
 //!   и staff-stream;
 //! - read_text — файл данных (сценарий, история, театр) только для чтения;
@@ -119,8 +119,8 @@ pub mod commands {
             // советские штабы по ступеням: script — приказы сценария, fronts — фронты по истории, ниже штабы-агенты,
             // agents — штабы-агенты под директивами Ставки (command::control::command_mode)
             let mode = command.unwrap_or_else(|| "script".into());
-            // commanders — командующие у обеих сторон
-            let sides: &[agents_core::model::Side] = if mode == "commanders" { &[agents_core::model::Side::Su, agents_core::model::Side::De] } else { &[agents_core::model::Side::Su] };
+            // commanders, intent — у обеих сторон
+            let sides: &[agents_core::model::Side] = if matches!(mode.as_str(), "commanders" | "intent") { &[agents_core::model::Side::Su, agents_core::model::Side::De] } else { &[agents_core::model::Side::Su] };
             let mut pending = Vec::new();
             for &sd in sides { pending.extend(agents_core::command::control::command_mode(&mut sim, &mode, sd)?); }
             let hours = meta.hours;
@@ -197,6 +197,7 @@ pub mod commands {
             if let Some(u) = until { g.limit = g.limit.max(u); }
             // agents — противник: штабы-агенты, верхняя инстанция подаёт исторические решения
             if enemy.as_deref() == Some("agents") { g.enemy_agents(); }
+            if enemy.as_deref() == Some("intent") { g.enemy_intent(); }
             let t = g.trace();
             *GAME.lock().map_err(|e| e.to_string())? = Some(g);
             Ok(t)

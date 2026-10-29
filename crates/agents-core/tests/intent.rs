@@ -886,3 +886,17 @@ fn german_off_history_army_decides() {
     assert!(sim.documents.iter().any(|d| d.hq == a && d.tick >= 1), "документы 9 А");
     assert!(sim.commanders.list.iter().find(|c| c.hq == g).is_none_or(|c| c.decisions.is_empty()), "группа армий за неё не решает");
 }
+
+/// Режим `intent` у обеих сторон: советские фронты по сценарию, армии — агенты, немецкие штабы по сценарию.
+#[test]
+fn intent_mode_both_sides() {
+    use agents_core::command::control::Control;
+    let mut sim = load();
+    for sd in [Side::Su, Side::De] { agents_core::command::control::command_mode(&mut sim, "intent", sd).expect("режим"); }
+    assert_eq!(sim.intent.enabled, [true, true]);
+    let c = |id: &str| sim.command.control[hq(&sim, id) as usize];
+    assert_eq!((c("su_1bf"), c("su_1uf")), (Control::Script, Control::Script));
+    assert_eq!(c("de_9a"), Control::Script);
+    let army = sim.world.hqs.iter().position(|h| h.side == Side::Su && h.echelon == agents_core::model::Echelon::Army).expect("армия");
+    assert_eq!(sim.command.control[army], Control::Agent);
+}

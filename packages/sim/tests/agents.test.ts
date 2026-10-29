@@ -160,6 +160,17 @@ describe('агентная модель: события окружения и с
   });
 });
 
+describe('ход с историей как замыслом', () => {
+  it('разбирается образец с полем intent и без него', () => {
+    const base = trace();
+    expect(base.intent).toBeUndefined();
+    const withIntent: AgentTrace = { ...base, intent: [{ hq: 'su_1bf', changes: [{ tick: 6, status: 'history', reason: null }, { tick: 30, status: 'own', reason: 'под командованием игрока' }] }] };
+    const back = JSON.parse(JSON.stringify(withIntent)) as AgentTrace;
+    expect(back.intent?.[0].changes[1].status).toBe('own');
+    expect(JSON.parse(JSON.stringify(base)).intent).toBeUndefined();
+  });
+});
+
 describe('ход с командующими', () => {
   const cmd: AgentCommander = {
     hq: 'su_1bf', profile: 'zhukov', name: 'Жуков', side: 'su',
