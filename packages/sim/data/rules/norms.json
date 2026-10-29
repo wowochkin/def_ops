@@ -3472,6 +3472,70 @@
         "berlin-1945-tasks",
         "vistula-oder-1945"
       ]
+    },
+    {
+      "id": "intent-leave",
+      "title": "Уход армии с истории: дальше 30 км от исторического места",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "intent.leaveKm",
+        "why": "порог — допущение: нужен разбор, на сколько армии в действительности отклонялись от замысла Ставки без смены задачи; калибруется на Берлинской"
+      },
+      "unit": "км",
+      "rules": [
+        "intent.leaveKm"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "intent-return",
+      "title": "Возврат армии в историю: ближе 15 км к историческому месту",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "intent.returnKm",
+        "why": "порог — допущение (гистерезис к порогу ухода)"
+      },
+      "unit": "км",
+      "rules": [
+        "intent.returnKm"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
+    },
+    {
+      "id": "intent-reach",
+      "title": "Достижимость цели «наступать»: не дальше двух суточных переходов",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "intent.reachDays",
+        "why": "число переходов — допущение; суточный темп по территории противника — march.enemyTerritoryKmDay"
+      },
+      "unit": "сут",
+      "rules": [
+        "intent.reachDays",
+        "march.enemyTerritoryKmDay"
+      ],
+      "operations": [
+        "berlin-1945-tasks",
+        "vistula-oder-1945"
+      ]
     }
   ],
   "findings": [

@@ -130,6 +130,17 @@ pub struct Doctrine {
     pub penetration_depth_km: f64,
 }
 
+/// Режим «История как замысел»: data/rules/agents-v0.json, раздел intent (intent/).
+#[derive(Clone, Debug)]
+pub struct IntentRules {
+    /// Армия дальше этого от исторического места ушла с истории, км.
+    pub leave_km: f64,
+    /// Армия ближе этого к историческому месту вернулась в историю, км.
+    pub return_km: f64,
+    /// Цель «наступать» не дальше стольких суточных переходов по территории противника.
+    pub reach_days: f64,
+}
+
 /// Окружение: data/rules/agents-v0.json, раздел pocket (pocket.rs).
 #[derive(Clone, Debug)]
 pub struct Pocket {
@@ -223,6 +234,7 @@ pub struct Rules {
     pub command: Command,
     /// Командующие: профили характера и мотивов, туман, коэффициенты (data/rules/commanders.json).
     pub commanders: CommanderRules,
+    pub intent: IntentRules,
     pub doctrine: Doctrine,
     pub doctrine_su: DoctrineSu,
     pub remnants: Remnants,
@@ -450,6 +462,7 @@ impl Rules {
         Ok(Rules {
             command,
             commanders,
+            intent: IntentRules { leave_km: num(&ag, "intent.leaveKm")?, return_km: num(&ag, "intent.returnKm")?, reach_days: num(&ag, "intent.reachDays")? },
             doctrine,
             doctrine_su,
             remnants,
