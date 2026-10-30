@@ -3,7 +3,7 @@
  * правилам (turnEvents, те же, что в игре). Переигровку смотрит посредник: видно всё, причины противника тоже;
  * позиция — советская сторона. Считается в фоновом потоке переигровки вместе с итогами.
  */
-import { commandTerms, turnEvents, type AgentHistory, type AgentTrace, type CommandTerms, type History, type SimContext, type TurnDebrief } from '@def-ops/sim';
+import { commandTerms, turnEvents, type AgentHistory, type AgentTrace, type CommandTerms, type History, type OperationSummary, type SimContext, type TurnDebrief } from '@def-ops/sim';
 
 export interface ReplayDebriefs { terms: CommandTerms; turns: TurnDebrief[] }
 
@@ -25,4 +25,16 @@ export function replayDebriefAt(d: ReplayDebriefs | undefined, time: string | nu
   const ms = Date.parse(`${time.slice(0, 16)}Z`);
   const i = d.turns.findIndex((x) => Date.parse(`${x.time}Z`) >= ms);
   return i < 0 ? d.turns.length - 1 : i;
+}
+
+/**
+ * Ответ «только сводка» (сохранённая переигровка, без вмешательства): сводка — всегда; разбор хода (withDebriefs) —
+ * если посчитался, ошибка разбора — в debriefsError, сводку она не отнимает.
+ */
+export function summaryReply(summary: () => OperationSummary, debriefs: () => ReplayDebriefs, withDebriefs: boolean):
+  { kind: 'summary'; summary: OperationSummary; debriefs?: ReplayDebriefs; debriefsError?: string } {
+  const s = summary();
+  if (!withDebriefs) return { kind: 'summary', summary: s };
+  try { return { kind: 'summary', summary: s, debriefs: debriefs() }; }
+  catch (e) { console.warn('разбор хода не посчитан:', e); return { kind: 'summary', summary: s, debriefsError: String((e as Error)?.message ?? e) }; }
 }

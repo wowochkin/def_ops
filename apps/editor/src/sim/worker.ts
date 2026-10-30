@@ -8,7 +8,7 @@ import type { SimRequest, SimResponse, SimResult } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
 import { kbStamp, withKbStamp, type KbStamp } from './kb-stamp';
-import { replayDebriefs } from './replay-debrief';
+import { replayDebriefs, summaryReply } from './replay-debrief';
 
 // встроенные данные и свои (правила, загруженные операции)
 const get = (kind: DataKind, file: string) => getData(kind, file);
@@ -48,8 +48,9 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
     // отметка сборки из базы — по тем же правкам операции, что и данные (окно дождалось сборки до запуска)
     const [{ ctx, history }, kb] = await Promise.all([contextFrom(get, q.scenario, q.rules), kbStamp(q.scenario)]);
     if (q.agents && q.summaryOnly) {
-      const summary = operationSummary(ctx, q.agents.trace, q.agents.history, history);
-      return post({ kind: 'summary', summary, ...(q.debriefs ? { debriefs: replayDebriefs(ctx, q.agents.trace, q.agents.history, history) } : {}) });
+      const A = q.agents;
+      // разбор хода упал — сводка всё равно уходит (без разбора)
+      return post(summaryReply(() => operationSummary(ctx, A.trace, A.history, history), () => replayDebriefs(ctx, A.trace, A.history, history), !!q.debriefs));
     }
     if (q.agents) return agents(q, ctx, history, kb);
     const a = analyze(ctx, history, {

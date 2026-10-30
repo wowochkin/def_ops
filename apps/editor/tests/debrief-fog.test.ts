@@ -53,3 +53,18 @@ describe('туман разбора хода — id хода ядра', () => {
     expect(replayDebriefAt(undefined, '1945-04-20T06:00')).toBe(-1);
   });
 });
+
+describe('сводка сохранённой переигровки: разбор хода упал — сводка остаётся', () => {
+  it('summary survives debrief failure', async () => {
+    const { summaryReply } = await import('../src/sim/replay-debrief');
+    const summary = { over: true } as never;
+    const ok = summaryReply(() => summary, () => { throw new Error('сломано'); }, true);
+    expect(ok.kind).toBe('summary');
+    expect(ok.summary).toBe(summary);
+    expect(ok.debriefs).toBeUndefined();
+    expect(ok.debriefsError).toContain('сломано');
+    const d = { terms: {} as never, turns: [] };
+    expect(summaryReply(() => summary, () => d, true).debriefs).toBe(d);
+    expect(summaryReply(() => summary, () => d, false).debriefs).toBeUndefined();
+  });
+});

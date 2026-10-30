@@ -15,6 +15,8 @@ const FILES: { file: string; part?: [string, string] }[] = [
   { file: 'CommandPost.tsx' },
   { file: 'TurnRibbon.tsx' },
   { file: 'ResultsTab.tsx' },
+  { file: 'TurnDebrief.tsx' },
+  { file: 'DebriefOverlay.tsx' },
   { file: 'ReviewView.tsx' },
   { file: 'ReplayView.tsx', part: ['{/* voice-entry: начало */}', '{/* voice-entry: конец */}'] },
   { file: 'voice/VoicePanel.tsx' },

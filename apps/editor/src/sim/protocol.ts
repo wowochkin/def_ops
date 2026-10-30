@@ -47,7 +47,7 @@ export interface SimResult {
 export type SimResponse =
   | { kind: 'progress'; text: string }
   | { kind: 'done'; result: SimResult }
-  | { kind: 'summary'; summary: OperationSummary; debriefs?: ReplayDebriefs }
+  | { kind: 'summary'; summary: OperationSummary; debriefs?: ReplayDebriefs; /** Разбор хода не посчитан: почему (сводка есть). */ debriefsError?: string }
   | { kind: 'error'; message: string };
 
 export interface CatalogEntry { id: string; title: string; detail: string; toleranceKm: number; rules: { id: string; title: string }[] }
