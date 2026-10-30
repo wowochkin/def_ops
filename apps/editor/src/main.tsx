@@ -1,12 +1,22 @@
 import { createRoot } from 'react-dom/client';
 import '../demo/fonts';
 import './styles.css';
-import { Shell } from './Shell';
-import { watchKb } from './sim/kb-recompile';
+import { settingsStore } from './expo/settings';
+import { chooseRoot, expoWindowIndex } from './expo/routing';
 
-createRoot(document.getElementById('root')!).render(<Shell />);
-// поправки операций собираются из базы знаний: при запуске и после каждого её изменения
-watchKb();
+const root = createRoot(document.getElementById('root')!);
+async function mount(full = false) {
+  const settings = await settingsStore().load();
+  if (!full && chooseRoot(location.search, settings) !== 'shell') {
+    const { ExpoRoot } = await import('./expo/ExpoRoot');
+    root.render(<ExpoRoot index={expoWindowIndex(location.search) ?? 0} onExit={() => { void mount(true); }} />);
+  } else {
+    const [{ Shell }, { watchKb }] = await Promise.all([import('./Shell'), import('./sim/kb-recompile')]);
+    root.render(<Shell />);
+    watchKb();
+  }
+}
+void mount();
 // Backspace вне поля ввода в окне приложения (WebKit) листает историю назад — со страницы редактора на страницу запуска.
 // Свои действия редактора по Backspace (удалить знак, точку) срабатывают раньше — на всплытии до окна; здесь только
 // запрет перехода по истории.

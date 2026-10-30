@@ -1,3 +1,4 @@
+import { ExpoSetup } from './expo/ExpoSetup';
 /**
  * Начальная страница («Начало»): первый раздел при запуске. Что это за приложение, кнопка экскурсии «О приложении»
  * (то же действие, что «Штаб, расскажи о приложении»), переходы по разделам с короткими пояснениями, состояние
@@ -99,6 +100,7 @@ export function StartView({ llm }: { llm: Llm }) {
             </div>
           </div>
         </section>
+        <ExpoSetup />
         <h3 className="start-h">Разделы</h3>
         <div className="start-grid" data-tour="start-sections">
           {WHAT.map((w, i) => (

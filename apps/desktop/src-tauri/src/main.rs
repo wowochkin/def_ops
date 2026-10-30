@@ -24,6 +24,7 @@ use std::sync::Mutex;
 use tauri::{Manager, RunEvent};
 
 mod expo;
+mod expo_storage;
 
 /// Процесс сервисов: остановить при выходе.
 struct Services(Mutex<Option<Child>>);
@@ -116,7 +117,8 @@ fn main() {
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
             agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release, agents_tauri::commands::game_permit, agents_tauri::commands::game_rewind, agents_tauri::commands::game_variants,
             expo_settings_read, expo_settings_write,
-            expo::expo_monitors, expo::expo_open, expo::expo_close_all, expo::expo_set_guard
+            expo::expo_monitors, expo::expo_open, expo::expo_close_all, expo::expo_set_guard,
+            expo_storage::expo_log, expo_storage::expo_stats_add, expo_storage::expo_stats_today
         ])
         .setup(|app| {
             let handle = app.handle().clone();

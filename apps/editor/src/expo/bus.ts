@@ -11,6 +11,8 @@ import type { DirectorEvent, DirectorState } from './director';
 export type BusMsg =
   | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3 }
   | { k: 'input'; ev: DirectorEvent }
+  | { k: 'health'; states: import('./health').ProbeStates; note: string | null }
+  | { k: 'identify'; until: number; names: string[] }
   | { k: 'hello'; window: number }
   | { k: 'beat'; window: number; at: number };
 

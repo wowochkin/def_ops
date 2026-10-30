@@ -12,7 +12,7 @@ const src = resolve(process.argv[2] || 'docs/system.md');
 const out = resolve(process.argv[3] || 'docs/system.pdf');
 const md = readFileSync(src, 'utf8');
 const title = /^#\s+(.+)$/m.exec(md)?.[1] ?? 'Документ';
-const body = execFileSync('pandoc', ['--from', 'gfm', '--to', 'html5'], { input: md, encoding: 'utf8' });
+const body = execFileSync('pandoc', ['--from', 'gfm', '--to', 'html5'], { input: md, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 const css = `
 @page { size: A4; margin: 18mm 17mm 18mm 19mm; }
 html { font-family: 'PT Serif', 'Liberation Serif', 'DejaVu Serif', Georgia, serif; font-size: 10.5pt; line-height: 1.45; color: #1d1d1b; }

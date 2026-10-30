@@ -1,5 +1,5 @@
 /** Запуск голосового сервиса вместе с приложением: решение о запуске и пауза перед перезапуском. */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -48,7 +48,10 @@ describe('startVoice', () => {
   it('нет папки голосового сервиса — состояние unsupported, процесс не запускается', async () => {
     const d = mkdtempSync(join(tmpdir(), 'voice-none-'));
     try {
-      await startVoice({ repo: d, data: d, voiceDir: join(d, 'нет') });
+      // Сценарий проверяет отсутствие сервиса; реальный сервис разработчика не должен менять результат.
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('порт недоступен'));
+      try { await startVoice({ repo: d, data: d, voiceDir: join(d, 'нет') }); }
+      finally { fetchMock.mockRestore(); }
       expect(JSON.parse(readFileSync(join(d, 'voice/state.json'), 'utf8')).state).toBe('unsupported');
     } finally { rmSync(d, { recursive: true, force: true }); }
   });

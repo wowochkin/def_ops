@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-stats-today"
+description = "Enables the expo_stats_today command without any pre-configured scope."
+commands.allow = ["expo_stats_today"]
+
+[[permission]]
+identifier = "deny-expo-stats-today"
+description = "Denies the expo_stats_today command without any pre-configured scope."
+commands.deny = ["expo_stats_today"]

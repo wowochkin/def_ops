@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-stats-add"
+description = "Enables the expo_stats_add command without any pre-configured scope."
+commands.allow = ["expo_stats_add"]
+
+[[permission]]
+identifier = "deny-expo-stats-add"
+description = "Denies the expo_stats_add command without any pre-configured scope."
+commands.deny = ["expo_stats_add"]
