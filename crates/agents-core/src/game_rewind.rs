@@ -68,11 +68,14 @@ impl Game {
         t
     }
 
-    /// Отпечаток игры (FNV-1a, как `Sim::digest`): мир, кадры, документы, командование, «история как замысел»,
-    /// командующие, поданные и ждущие директивы игрока, резервы.
+    /// Отпечаток игры (FNV-1a, как `Sim::digest`): мир, кадры, документы, командование (с директивами в пути и
+    /// замыслами штабов), распоряжения штаба, советские штабы по доктрине, «история как замысел», командующие,
+    /// поданные и ждущие директивы игрока, резервы.
     pub fn state_digest(&self) -> u64 {
         let mut h = 0xcbf2_9ce4_8422_2325u64;
         let mut eat = |x: u64| { h ^= x; h = h.wrapping_mul(0x0100_0000_01b3); };
+        // строка — байты и разделитель (соседние строки не сливаются)
+        fn bytes(eat: &mut impl FnMut(u64), t: &str) { for b in t.bytes() { eat(b as u64); } eat(0x1ff); }
         let s = &self.sim;
         eat(s.digest());
         eat(self.frames.len() as u64);
@@ -83,6 +86,19 @@ impl Game {
         for &x in &c.led_div { eat(x as u64); }
         for r in &c.requests { eat(r.tick as u64); eat(match r.answer { None => 0, Some(false) => 1, Some(true) => 2 }); }
         eat(c.sent.len() as u64);
+        eat(s.historical.len() as u64);
+        eat(c.in_transit.len() as u64);
+        for (at, d) in &c.in_transit { eat(*at as u64); bytes(&mut eat, &d.id); }
+        for x in &c.intent { match x { Some(d) => bytes(&mut eat, &d.id), None => eat(0) } }
+        eat(s.staff.supply.len() as u64);
+        eat(s.staff.pontoons.len() as u64);
+        {
+            let su = s.su_staff.lock().unwrap_or_else(|e| e.into_inner());
+            eat(su.plan.iter().filter(|p| p.is_some()).count() as u64);
+            for &e in &su.ech { eat(e as u8 as u64); }
+            for &x in &su.since { eat(x as u64); }
+            eat(su.replaced.iter().filter(|&&r| r).count() as u64);
+        }
         let i = &s.intent;
         for x in &i.hq { eat(x.status as u8 as u64); eat(x.since as u64); }
         for ch in &i.chains { for t in &ch.tasks { eat(t.issued as u64); } }
@@ -90,18 +106,27 @@ impl Game {
         eat(i.log.len() as u64);
         eat(i.queue.len() as u64);
         eat(i.actions.len() as u64);
+        eat(i.drops.len() as u64);
+        for &e in &i.enabled { eat(e as u64); }
         for k in &s.commanders.list {
             eat(k.mood.confidence.to_bits());
             eat(k.mood.stress.to_bits());
             eat(k.intent_label.as_ref().map_or(0, |l| l.len() as u64));
             eat(k.decisions.len() as u64);
             eat(k.last as u64);
+            match &k.intent { Some(x) => bytes(&mut eat, &format!("{x:?}")), None => eat(0) }
+            eat(k.withdraw_at.len() as u64);
+            eat(k.seen.intent.is_some() as u64);
+            eat(k.seen.cut as u64);
+            eat(k.seen.requests.len() as u64);
+            eat(k.seen.broke.len() as u64);
+            eat(k.seen.tasked.len() as u64);
         }
         eat(s.commanders.raised.len() as u64);
-        for (at, d) in &self.pending { eat(*at as u64); for b in d.id.bytes() { eat(b as u64); } }
+        for (at, d) in &self.pending { eat(*at as u64); bytes(&mut eat, &d.id); }
         let mut issued: Vec<&String> = self.issued.iter().collect();
         issued.sort();
-        for id in issued { for b in id.bytes() { eat(b as u64); } eat(0xff); }
+        for id in issued { bytes(&mut eat, id); }
         for (&k, &v) in &self.reserves { eat(k as u64); eat(v as u64); }
         h
     }

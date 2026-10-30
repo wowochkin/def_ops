@@ -72,6 +72,27 @@ fn snapshot_is_lossless() {
 }
 
 #[test]
+fn snapshot_is_lossless_intent() {
+    let mut g = game("berlin-1945", 6, Mode::Intent, None);
+    g.play_turn(TurnIn { hours: 4, ..Default::default() });
+    let mut s = g.sim.snapshot();
+    assert!(!s.intent.chains.is_empty());
+    assert!(s.intent.any());
+    let dbg = |x: &agents_core::world::Sim| format!("{:?}|{:?}|{:?}|{:?}|{:?}", x.intent.chains, x.intent.hq, x.intent.queue, x.intent.led, x.intent.actions);
+    assert_eq!(dbg(&s), dbg(&g.sim));
+    let (a, b) = (s.intent.track.as_ref().expect("след эталона"), g.sim.intent.track.as_ref().expect("след эталона"));
+    assert!(std::sync::Arc::ptr_eq(a, b));
+    assert_eq!(s.documents.len(), g.sim.documents.len());
+    assert_eq!(s.journal.len(), g.sim.journal.len());
+    for _ in 0..4 {
+        s.step();
+        g.sim.step();
+        assert_eq!(s.digest(), g.sim.digest());
+    }
+    assert_eq!(dbg(&s), dbg(&g.sim));
+}
+
+#[test]
 fn trace_has_turn_and_digest() {
     let mut g = game("seelow-1945", 24, Mode::Agents, None);
     assert_eq!(g.trace()["game"]["turn"], 0);
