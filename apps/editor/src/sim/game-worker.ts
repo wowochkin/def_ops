@@ -32,6 +32,7 @@ import { postPrompt } from '../command-post';
 import { agentEvents, agentGame, bridgesOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
+import { commonPrefix, expectedDigest, restartAi, rewindCheck } from './game-rewind';
 import { topForces } from './review-forces';
 
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -80,6 +81,11 @@ let agentHuman = '';
 /** Действия противника на агентной модели за всю игру (журнал посредника), последние ENEMY_LOG. */
 let enemyLogAll: EnemyEntry[] = [];
 const ENEMY_LOG = 400;
+
+/** Состояние потока на начало хода — для возврата к нему: stash[k] — начало хода k + 1 (stash.length = сыграно + 1). */
+interface TurnStash { g: GameState; agentStaff: AgentStaff; agentDropped: string[]; journal: number; outcome: GameOutcome | null; enemyLog: EnemyEntry[] }
+let stash: TurnStash[] = [];
+const stashNow = (): TurnStash => ({ g, agentStaff: structuredClone(agentStaff), agentDropped: [...agentDropped], journal: journal.length, outcome, enemyLog: enemyLogAll });
 
 /** Вызов команды ядра через основное окно (у фонового потока нет доступа к командам приложения). */
 let callId = 0;
@@ -151,6 +157,8 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'retry-ai') { aiWait.drop(); startAi(); if (queued) await advance(); }
     else if (m.kind === 'skip-ai') { skipAi = true; if (queued) await advance(); }
     else if (m.kind === 'umpire-done') releaseAi();
+    else if (m.kind === 'rewind') await rewindReq(m.turn);
+    else if (m.kind === 'switch') await switchReq(m.turns);
     else if (m.kind === 'llm-hold') modelQueue.hold(m.on);
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'plan') void planReq(m);
@@ -222,9 +230,11 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [], ...(agents ? { agents } : {}), kb };
   journal = [];
   enemyLogAll = [];
+  stash = [stashNow()];
   // отпечаток на начале игры: в записи есть — сверить, нет (старая запись) — дописать
-  const start0 = digestMismatch(rec.startDigest, turnDigest(), 0);
-  rec.startDigest = turnDigest();
+  const d0 = turnDigest();
+  const start0 = digestMismatch(rec.startDigest, d0, 0);
+  rec.startDigest = d0;
   await replayTurns(rec.turns, start0);
   postView();
   post({ kind: 'record', record: rec });
@@ -255,9 +265,11 @@ async function replayTurns(turns: GameTurn[], first: string | null = null): Prom
       g = r;
       journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined, ((t.stavka ?? []) as (StavkaResult & { side: string })[]).filter((x) => x.side === rec.human)));
     }
-    mismatch ??= digestMismatch(t.digest, turnDigest(), k + 1);
-    t.digest = turnDigest();
+    const d = turnDigest();
+    mismatch ??= digestMismatch(t.digest, d, k + 1);
+    t.digest = d;
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
+    stash.push(stashNow());
   }
   if (mismatch) post({ kind: 'notice', text: mismatch });
 }
@@ -586,10 +598,83 @@ async function advance() {
     rec.turns[rec.turns.length - 1].digest = turnDigest();
     if (kbFallback) journal[journal.length - 1].events.push(KB_FALLBACK_NOTE);
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
+    stash.push(stashNow());
     queued = null;
     postView();
     post({ kind: 'record', record: rec });
     holdAi(); // штаб противника — после доклада посредника (umpire-done) или через UMPIRE_HOLD_MS
+  } finally {
+    busy = false;
+  }
+}
+
+/* ───────────── возврат к ходу, ветви ───────────── */
+
+/**
+ * Вернуть игру к началу хода keep + 1 (оставить keep сыгранных ходов): агентная модель — возврат ядра (game_rewind),
+ * нынешняя — сохранённое состояние; штаб игрока, журнал, исход — на то же начало хода. Снятые ходы — в ответ.
+ * Отпечаток мира после возврата сверяется с записанным.
+ */
+async function rewindTo(keep: number): Promise<GameTurn[]> {
+  const s = stash[keep];
+  if (!s) throw new Error(`нет состояния на начало хода ${keep + 1}`);
+  agentStaff = structuredClone(s.agentStaff);
+  agentDropped = [...s.agentDropped];
+  if (agents) setAgent(await agentsCall<AgentGameTrace>('game_rewind', { keep }));
+  else g = s.g;
+  outcome = s.outcome;
+  journal.length = s.journal;
+  enemyLogAll = s.enemyLog;
+  stash.length = keep + 1;
+  const want = expectedDigest(rec, keep);
+  const tail = rec.turns.splice(keep);
+  const bad = digestMismatch(want, turnDigest(), keep);
+  if (bad) post({ kind: 'notice', text: bad });
+  return tail;
+}
+
+/** Снять с хода то, что готовилось к прежней обстановке: ждущие приказы, «ход без приказов противника», запрос штаба противника. */
+function dropPending() {
+  aiWait.drop();
+  ai?.abort.abort();
+  ai = null;
+  queued = null;
+  skipAi = false;
+}
+
+/** «Вернуться к ходу N»: пока ход считается — отказ; иначе ходы N… снимаются, штаб противника спрашивается заново на ходу N. */
+async function rewindReq(turn: number) {
+  const why = rewindCheck({ busy, played: rec?.turns.length ?? 0, turn });
+  if (why || !rec) { post({ kind: 'rewind-refused', text: why ?? 'игра не начата' }); return; }
+  busy = true;
+  try {
+    dropPending();
+    const tail = await rewindTo(turn - 1);
+    postView();
+    post({ kind: 'rewound', turn, at: g.state.time, tail });
+    post({ kind: 'record', record: rec });
+    restartAi({ drop: aiWait.drop, start: startAi });
+  } finally {
+    busy = false;
+  }
+}
+
+/** Переход на ветвь: общая с нынешней линией часть остаётся, дальше — ходы ветви повтором записи (модель не зовётся). */
+async function switchReq(turns: GameTurn[]) {
+  if (busy) { post({ kind: 'rewind-refused', text: rewindCheck({ busy, played: 0, turn: 1 })! }); return; }
+  if (!rec) { post({ kind: 'rewind-refused', text: 'игра не начата' }); return; }
+  busy = true;
+  try {
+    dropPending();
+    const p = commonPrefix(rec.turns, turns);
+    await rewindTo(p);
+    const add = turns.slice(p);
+    rec.turns.push(...add);
+    await replayTurns(add);
+    postView();
+    post({ kind: 'switched', turns: rec.turns.length });
+    post({ kind: 'record', record: rec });
+    restartAi({ drop: aiWait.drop, start: startAi });
   } finally {
     busy = false;
   }

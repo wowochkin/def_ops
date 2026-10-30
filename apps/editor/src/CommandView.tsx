@@ -319,7 +319,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         // в ответ — доктрина, с которой ход считан (в запись игры)
         const given = m.cmd === 'game_turn' && 'doctrineText' in m.args;
         void Promise.all([import('@tauri-apps/api/core'), m.cmd !== 'game_turn' ? undefined : given ? (m.args.doctrineText as { su?: string; de?: string } | null) ?? undefined : import('./sim/kb-doctrine').then((d) => d.agentDoctrineText(m.moment))])
-          .then(([{ invoke }, doctrineText]) => invoke(m.cmd, { ...m.args, doctrineText }).then((result) => ({ result, doctrineText })))
+          .then(([{ invoke }, doctrineText]) => invoke(m.cmd, m.cmd === 'game_turn' ? { ...m.args, doctrineText } : m.args).then((result) => ({ result, doctrineText })))
           .then(({ result, doctrineText }) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result, ...(m.cmd === 'game_turn' ? { doctrineText: doctrineText ?? null } : {}) } satisfies GameRequest))
           .catch((err) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
       } else if (m.kind === 'kbRef') {

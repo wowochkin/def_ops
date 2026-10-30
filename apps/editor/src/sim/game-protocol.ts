@@ -1,6 +1,6 @@
 import type { CommandTerms } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
-import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
+import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, GameTurn, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
 import type { CommandView, EnemyEntry } from './agents-game';
@@ -74,6 +74,10 @@ export type GameRequest =
   | { kind: 'skip-ai' }
   /** Доклад посредника голосом закончен (или снят): штаб противника может занимать модель. */
   | { kind: 'umpire-done' }
+  /** Вернуться к началу хода turn (с 1): ходы turn… снимаются с линии (в ответ — rewound с ними), штаб противника — заново. */
+  | { kind: 'rewind'; turn: number }
+  /** Перейти на другую линию игры (ветвь): turns — её ходы целиком; общая с нынешней часть не пересчитывается. */
+  | { kind: 'switch'; turns: GameTurn[] }
   /** Голос ждёт модель или спрашивает её (on): новые запросы к модели ждут, пока он не отпустит; начатый доходит. */
   | { kind: 'llm-hold'; on: boolean }
   /** Вопрос советнику: категория, вопрос, проект решения словами, предыдущие вопросы и ответы. */
@@ -232,6 +236,12 @@ export type GameResponse =
   | { kind: 'error'; message: string }
   /** Сообщение игроку, игра продолжается (например, запись разошлась с расчётом). */
   | { kind: 'notice'; text: string }
+  /** Возврат сделан: игра на начале хода turn (время игры at), tail — снятые ходы turn… (приходит до record). */
+  | { kind: 'rewound'; turn: number; at: string; tail: GameTurn[] }
+  /** Переход на ветвь сделан: в линии turns сыгранных ходов. */
+  | { kind: 'switched'; turns: number }
+  /** Возврат не начат (идёт расчёт хода, такого хода нет): почему — словами. */
+  | { kind: 'rewind-refused'; text: string }
   /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно; moment — время игры (доктрина штабов на момент хода). */
   | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown>; moment?: string }
   /** Справка по роли (и доктрина) из базы знаний окна — со слоем пользователя, закреплениями, смысловым поиском. */

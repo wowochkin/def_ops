@@ -55,12 +55,12 @@ export interface GameRecord {
   turns: GameTurn[];
   /** Игра на агентной модели (дивизии, ядро crates/agents-core): её сценарий, история и длина хода. */
   agents?: AgentGameSpec;
+  /** Отпечаток мира на начало хода 1 (после передачи командования); в старых записях нет. */
+  startDigest?: string;
   /**
    * Данные из базы знаний на момент начала игры (редактор): собранные поправки нынешней модели, поправки ядра,
    * состояние при передаче командования. Восстановление игры идёт на них, а не на нынешней базе.
    */
-  /** Отпечаток мира на начало хода 1 (после передачи командования); в старых записях нет. */
-  startDigest?: string;
   kb?: { compiled: unknown; core: unknown; takeoverState?: TakeoverState };
 }
 
@@ -184,8 +184,9 @@ export function replayGame(ctx: SimContext, rec: GameRecord): GameState {
  */
 export function stateDigest(s: SimState): string {
   const M = (1n << 64n) - 1n;
+  const enc = new TextEncoder();
   let h = 0xcbf29ce484222325n;
-  const eat = (x: string) => { for (const c of new TextEncoder().encode(x + '\u0001')) h = ((h ^ BigInt(c)) * 0x100000001b3n) & M; };
+  const eat = (x: string) => { for (const c of enc.encode(x + '\u0001')) h = ((h ^ BigInt(c)) * 0x100000001b3n) & M; };
   eat(s.time);
   for (const f of s.formations) eat(`${f.id}|${f.personnel}|${f.tanks}|${f.guns}|${f.position[0]},${f.position[1]}|${f.destroyed ? 1 : 0}`);
   return h.toString(16).padStart(16, '0');
@@ -194,5 +195,5 @@ export function stateDigest(s: SimState): string {
 /** Сверка записанного отпечатка с расчётным: нет записанного (старая запись) — null; разошлись — сообщение. turn 0 — начало игры. */
 export function digestMismatch(want: string | undefined, got: string, turn: number): string | null {
   if (want === undefined || want === got) return null;
-  return `Запись игры разошлась с расчётом ${turn === 0 ? 'на начале игры' : `на ходу ${turn}`}: дальше игра идёт по расчёту.`;
+  return `Запись игры разошлась с расчётом ${turn === 0 ? 'на начале игры' : `на ходу ${turn}`}: дальше игра идёт по расчёту, положение может отличаться от сыгранного.`;
 }
