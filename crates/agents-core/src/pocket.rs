@@ -124,6 +124,8 @@ impl Sim {
                         // вырвавшиеся бросают тяжёлое вооружение (9 А вышла к 12 А без техники, LT_HALBE)
                         let breakout = d.side == Side::De && d.order.as_ref().is_some_and(|o| o.kind == OrderKind::Attack);
                         if breakout {
+                            d.vars.lost[1] += d.vars.tanks * (1.0 - p.breakout_keep);
+                            d.vars.lost[2] += d.vars.guns * (1.0 - p.breakout_keep);
                             d.vars.tanks *= p.breakout_keep;
                             d.vars.guns *= p.breakout_keep;
                         }
@@ -148,6 +150,11 @@ impl Sim {
                             d.state.label(), State::Destroyed.label(), h, d.vars.ammo, d.vars.personnel) });
                         d.state = State::Destroyed;
                         d.state_since = tick;
+                        // капитуляция: оставшиеся — выбывшие, люди из них — пленные
+                        d.vars.lost[0] += d.vars.personnel;
+                        d.vars.lost[1] += d.vars.tanks;
+                        d.vars.lost[2] += d.vars.guns;
+                        d.vars.captured += d.vars.personnel;
                     }
                 }
             }

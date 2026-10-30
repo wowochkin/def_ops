@@ -6,8 +6,10 @@ use crate::time::format_hours;
 use serde_json::{json, Value};
 
 /// Поля кадра дивизии — в этом порядке.
-/// encircled — сколько часов дивизия в окружении (0 — не окружена; pocket.rs).
-pub const FIELDS: [&str; 11] = ["lng", "lat", "state", "personnel", "tanks", "guns", "ammo", "fuel", "fatigue", "cohesion", "encircled"];
+/// encircled — сколько часов дивизия в окружении (0 — не окружена; pocket.rs). lost, lostTanks, lostGuns — выбывшие
+/// нарастающим итогом, captured — из них пленные, reinforced — люди пополнений по датам (model.rs, Vars).
+pub const FIELDS: [&str; 16] = ["lng", "lat", "state", "personnel", "tanks", "guns", "ammo", "fuel", "fatigue", "cohesion", "encircled",
+    "lost", "lostTanks", "lostGuns", "captured", "reinforced"];
 
 /// Кадр: по строке на дивизию.
 pub fn frame(sim: &Sim) -> Vec<Value> {
@@ -15,7 +17,8 @@ pub fn frame(sim: &Sim) -> Vec<Value> {
         let p = sim.theatre.proj.to_lnglat(d.vars.pos);
         let r2 = |x: f64| (x * 100.0).round() / 100.0;
         json!([(p[0] * 1e4).round() / 1e4, (p[1] * 1e4).round() / 1e4, d.state.label(), d.vars.personnel.round(), d.vars.tanks.round(), d.vars.guns.round(),
-               r2(d.vars.ammo), r2(d.vars.fuel), r2(d.vars.fatigue), r2(d.vars.cohesion), if sim.encircled(d, sim.world.tick) { d.cut_since.map_or(0, |s| sim.world.tick.saturating_sub(s)) } else { 0 }])
+               r2(d.vars.ammo), r2(d.vars.fuel), r2(d.vars.fatigue), r2(d.vars.cohesion), if sim.encircled(d, sim.world.tick) { d.cut_since.map_or(0, |s| sim.world.tick.saturating_sub(s)) } else { 0 },
+               d.vars.lost[0].round(), d.vars.lost[1].round(), d.vars.lost[2].round(), d.vars.captured.round(), d.vars.reinforced[0].round()])
     }).collect()
 }
 

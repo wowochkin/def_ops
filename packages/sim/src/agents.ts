@@ -207,6 +207,8 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
 export function agentsStateAt(ctx: SimContext, t: AgentTrace, h: number): SimState {
   const F = (k: string) => t.fields.indexOf(k);
   const [iLng, iLat, iState, iPers, iTanks, iGuns, iAmmo, iFuel, iFat, iEnc] = ['lng', 'lat', 'state', 'personnel', 'tanks', 'guns', 'ammo', 'fuel', 'fatigue', 'encircled'].map(F);
+  // выбывшие нарастающим итогом — в ходе ядра с полями потерь; у старого хода их нет
+  const [iLost, iLostT, iLostG] = ['lost', 'lostTanks', 'lostGuns'].map(F);
   const hh = Math.max(0, Math.min(t.frames.length - 1, Math.round(h)));
   const time = (x: number) => addHours(t.start, x);
   const row = t.frames[hh], init = t.frames[0];
@@ -237,6 +239,7 @@ export function agentsStateAt(ctx: SimContext, t: AgentTrace, h: number): SimSta
       posture: p && p !== 'destroyed' ? p : 'defend',
       destroyed: p === 'destroyed' || st.startsWith('сведена'), enterAt,
       ...((r[iEnc] as number) > 0 ? { cutOff: true, cutHours: r[iEnc] as number } : {}),
+      ...(iLost >= 0 ? { losses: { personnel: r[iLost] as number, tanks: iLostT >= 0 ? r[iLostT] as number : 0, guns: iLostG >= 0 ? r[iLostG] as number : 0 } } : {}),
     } as Formation;
   });
   return { scenario: ctx.scenario.id, time: time(hh), turn: hh, formations, pending: [], rngState: 0, seed: t.seed, journal: [] };

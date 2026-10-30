@@ -134,6 +134,18 @@ describe('агентная модель в «Переигровке»', () => {
     expect(agentKindOf('regroup')).toBe('move');
   });
 
+  it('agentsStateAt carries losses: выбывшие из кадра хода, у старого хода без полей потерь — нет', async () => {
+    const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
+    const old = trace();
+    // кадр с полями потерь: lost, lostTanks, lostGuns, captured, reinforced; у su_x к 3-му часу выбыло 500 человек
+    const t: AgentTrace = { ...old, fields: [...old.fields, 'lost', 'lostTanks', 'lostGuns', 'captured', 'reinforced'],
+      frames: old.frames.map((row, h) => row.map((r, k) => [...r, k === 0 && h >= 3 ? 500 : 0, k === 0 && h >= 3 ? 2 : 0, 0, 0, 0])) };
+    const { ctx } = agentsToRun(base, t, 3);
+    expect(agentsStateAt(ctx, t, 3).formations[0].losses).toEqual({ personnel: 500, tanks: 2, guns: 0 });
+    expect(agentsStateAt(ctx, t, 2).formations[0].losses).toEqual({ personnel: 0, tanks: 0, guns: 0 });
+    expect(agentsStateAt(ctx, old, 3).formations[0].losses).toBeUndefined();
+  });
+
   it('ось танковой армии: медиана не тянется за отставшим, после перестановки армии — заново', async () => {
     // два корпуса вместе, третий меньше и отстал на 30 км: медиана — у двух, среднее отстаёт
     const m = medianXY([[0, 0], [0.5, 0], [30, 0]], [15000, 15000, 8000]);

@@ -947,6 +947,10 @@ impl Sim {
             d.note = if d.note.is_empty() { format!("сведена в «{into}»") } else { format!("{}; сведена в «{into}»", d.note) };
             d.state = State::Merged;
             d.state_since = tick;
+            // не принятое соседом — отставшие и брошенная техника, выбывшие сведённой; принятое — передача, не потеря
+            d.vars.lost[0] += d.vars.personnel - p;
+            d.vars.lost[1] += d.vars.tanks - t;
+            d.vars.lost[2] += d.vars.guns - g;
             d.vars.personnel = 0.0;
             d.vars.tanks = 0.0;
             d.vars.guns = 0.0;
@@ -979,6 +983,10 @@ impl Sim {
                 journal.push(Event { tick, agent: i as u32, text: format!("{} → {}: численность меньше {} человек — дивизия рассеяна", d.state.label(), State::Destroyed.label(), r.destroyed_personnel) });
                 d.state = State::Destroyed;
                 d.state_since = tick;
+                // оставшиеся рассеяны — выбывшие; переменные не обнуляются (отпечаток прежний)
+                d.vars.lost[0] += d.vars.personnel;
+                d.vars.lost[1] += d.vars.tanks;
+                d.vars.lost[2] += d.vars.guns;
             }
         }
         self.apply_remnants(w, journal);
@@ -1072,6 +1080,9 @@ impl Sim {
                     d.vars.personnel += p;
                     d.vars.tanks += t;
                     d.vars.guns += g;
+                    d.vars.reinforced[0] += p;
+                    d.vars.reinforced[1] += t;
+                    d.vars.reinforced[2] += g;
                     d.vars.personnel0 += p;
                     d.vars.strength0 += (p / 1000.0 * wp + t * wt + g * wg) * d.params.quality;
                     let mut text = format!("пополнение +{p:.0} чел.");
@@ -1209,8 +1220,11 @@ impl Sim {
 fn att_power_people(w: &World, atts: &[u32]) -> f64 { atts.iter().map(|&a| w.divisions[a as usize].vars.personnel).sum() }
 
 pub(crate) fn lose(d: &mut Division, frac: f64, cohesion_factor: f64, c: &crate::rules::Combat) {
+    let was = [d.vars.personnel, d.vars.tanks, d.vars.guns];
     d.vars.personnel *= 1.0 - frac;
     d.vars.tanks *= 1.0 - (frac * c.tank_loss_factor).min(1.0);
     d.vars.guns *= 1.0 - (frac * c.gun_loss_factor).min(1.0);
+    let now = [d.vars.personnel, d.vars.tanks, d.vars.guns];
+    for k in 0..3 { d.vars.lost[k] += was[k] - now[k]; }
     d.vars.cohesion = (d.vars.cohesion - frac * cohesion_factor).max(0.0);
 }

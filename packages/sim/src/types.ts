@@ -454,6 +454,8 @@ export interface Formation {
   route: LngLat[] | null;
   /** Задача своего приказа выполнена, соединение идёт к цели вышестоящего (rules.followParentKm) — до нового приказа. */
   followsParent?: boolean;
+  /** Выбывшие нарастающим итогом (убитые, раненые, пленные, рассеянные) — из хода агентной модели с полями потерь. */
+  losses?: { personnel: number; tanks: number; guns: number };
   /** Уничтожено или распалось. */
   destroyed: boolean;
   /** С какого момента на театре (null — с начала). */
