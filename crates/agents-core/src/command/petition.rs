@@ -25,16 +25,17 @@ pub struct Petition { pub tick: u32, pub from: u32, pub neighbour: u32, pub line
 pub enum Verdict { Accept { share: f64 }, Reject(String) }
 
 /// Правило рассмотрения: главный удар соседа отнят, если какая-либо его точка `main` по другую сторону новой линии,
-/// чем `neighbour_ref` (точка заведомо в полосе соседа); иначе доля — ширина новой полосы соседа к прежней, меньше
+/// чем `neighbour_ref` (точка заведомо в полосе соседа); иначе доля — ширина новой полосы соседа к прежней, не больше
 /// `min_share` — отказ.
 pub fn judge(main: &[XY], neighbour_ref: XY, line: &[XY], old: &Band, new: &Band, min_share: f64) -> Verdict {
     let r = side_of(line, neighbour_ref);
     if main.iter().any(|&p| side_of(line, p) * r < 0.0) { return Verdict::Reject("главный удар соседа оказался бы в нашей полосе".into()); }
     let w = width_km(old);
     let share = if w > 1e-6 { width_km(new) / w } else { 1.0 };
-    if share < min_share {
-        let n = (share * 100.0).round().min((min_share * 100.0).ceil() - 1.0).max(0.0);
-        let less = if (min_share - 0.5).abs() < 1e-9 { "меньше половины".to_string() } else { format!("меньше {:.0} %", min_share * 100.0) };
+    // «не отнимает полосу шире половины прежней»: ровно половина — уже отказ
+    if share <= min_share {
+        let n = (share * 100.0).round().min((min_share * 100.0).round()).max(0.0);
+        let less = if (min_share - 0.5).abs() < 1e-9 { "не больше половины".to_string() } else { format!("не больше {:.0} %", min_share * 100.0) };
         return Verdict::Reject(format!("полоса соседа сузилась бы до {n:.0} % прежней — {less}"));
     }
     Verdict::Accept { share }
@@ -60,11 +61,28 @@ fn plan_of(sim: &Sim, n: u32, tick: u32) -> Directive {
     d
 }
 
-/// Полоса соседа `n` по его замыслу и её граница, ближайшая к штабу `from` (слева — `true`).
+/// Направление на противника от центра войск штаба `n`: к центру десяти ближайших живых дивизий противника.
+fn facing(sim: &Sim, n: u32) -> Option<(XY, XY)> {
+    let c = place(sim, Target::Hq(n));
+    let side = sim.world.hqs[n as usize].side;
+    let mut e: Vec<XY> = sim.world.divisions.iter().filter(|d| d.side != side && !d.state.out()).map(|d| d.vars.pos).collect();
+    e.sort_by(|a, b| a.dist(c).total_cmp(&b.dist(c)));
+    e.truncate(10);
+    let m = mid(&e)?;
+    (m.dist(c) > 1e-6).then(|| (c, XY::new((m.x - c.x) / m.dist(c), (m.y - c.y) / m.dist(c))))
+}
+
+/// Полоса соседа `n` по его замыслу и её граница, ближайшая к штабу `from` (слева — `true`). Оси в замысле нет (немецкие
+/// группы армий: приказ «держать» без оси) — полоса для рассмотрения строится по оси от центра его войск к противнику
+/// (а не на запад по умолчанию); сам замысел соседа от этого не меняется.
 fn band_of_neighbour(sim: &Sim, from: u32, n: u32, tick: u32) -> (Directive, Band, bool) {
     let d = plan_of(sim, n, tick);
     let subs = subs_of(sim, n);
-    let band = frame(sim, n, &d, &subs).band;
+    let mut g = d.clone();
+    if g.axis.len() < 2 && g.immediate.is_none() {
+        if let Some((c, dir)) = facing(sim, n) { g.axis = vec![c, XY::new(c.x + 30.0 * dir.x, c.y + 30.0 * dir.y)]; }
+    }
+    let band = frame(sim, n, &g, &subs).band;
     let p = place(sim, Target::Hq(from));
     let left = line_dist(&band.left, p) <= line_dist(&band.right, p);
     (d, band, left)
@@ -115,7 +133,8 @@ pub fn submit(sim: &mut Sim, from: u32, neighbour: u32, line: Vec<XY>, note: Str
     let new = if left { Band { left: line.clone(), right: old.right.clone() } } else { Band { left: old.left.clone(), right: line.clone() } };
     let far = mid(if left { &old.right } else { &old.left }).unwrap_or_else(|| place(sim, Target::Hq(neighbour)));
     let mut main: Vec<XY> = d.main_blow.iter().map(|&m| place(sim, Target::Hq(m))).collect();
-    if main.is_empty() { main.extend(d.axis.first().copied()); }
+    // главный удар не назван: начало оси замысла, а без оси — центр войск соседа (там его главные силы)
+    if main.is_empty() { main.push(d.axis.first().copied().unwrap_or_else(|| place(sim, Target::Hq(neighbour)))); }
     let verdict = judge(&main, far, &line, &old, &new, sim.rules.command.petition_min_share);
     let (accepted, why, doc) = match verdict {
         Verdict::Accept { share } => {
@@ -195,7 +214,18 @@ mod tests {
         let old = Band { left: h(10.0), right: h(-10.0) };
         let new = Band { left: h(-2.0), right: h(-10.0) };
         match judge(&[XY::new(15.0, -5.0)], XY::new(15.0, -5.0), &h(-2.0), &old, &new, 0.5) {
-            Verdict::Reject(w) => assert!(w.contains("40 %") && w.contains("меньше половины"), "{w}"),
+            Verdict::Reject(w) => assert!(w.contains("40 %") && w.contains("не больше половины"), "{w}"),
+            v => panic!("{v:?}"),
+        }
+    }
+
+    #[test]
+    fn judge_rejects_exact_half() {
+        // «полосу шире половины прежней» не отнимать: ровно половина — отказ
+        let old = Band { left: h(10.0), right: h(-10.0) };
+        let new = Band { left: h(0.0), right: h(-10.0) };
+        match judge(&[XY::new(15.0, -5.0)], XY::new(15.0, -5.0), &h(0.0), &old, &new, 0.5) {
+            Verdict::Reject(w) => assert!(w.contains("50 %") && w.contains("не больше половины"), "{w}"),
             v => panic!("{v:?}"),
         }
     }

@@ -1038,11 +1038,32 @@ fn petition_needs_taken_front() {
 
 #[test]
 fn petition_player_de() {
+    use agents_core::command::control::DocKind;
+    use agents_core::command::{agent::place, directive::Target};
     let mut g = petition_game(Side::De, "de_hgr_weichsel");
-    let line = petition_line(&g, "de_hgr_weichsel", "de_hgr_mitte", 2.0);
-    let ok = g.petition("de_hgr_weichsel", "de_hgr_mitte", &line, "").expect("ходатайство в ОКХ");
     let hc = hix(&g, "de_hc") as u32;
-    let kind = if ok { agents_core::command::control::DocKind::Directive } else { agents_core::command::control::DocKind::Notice };
-    assert!(g.sim.documents.iter().any(|d| d.hq == hc && d.kind == kind && d.text.starts_with("Ходатайство")), "ответ — от ОКХ");
+    // малый сдвиг — принято, ответ от ОКХ
+    let line = petition_line(&g, "de_hgr_weichsel", "de_hgr_mitte", 2.0);
+    assert_eq!(g.petition("de_hgr_weichsel", "de_hgr_mitte", &line, ""), Ok(true));
+    assert!(g.sim.documents.iter().any(|d| d.hq == hc && d.kind == DocKind::Directive && d.text.starts_with("Ходатайство")), "ответ — директива ОКХ");
+    // линия за центром войск соседа (главный удар без названной оси — центр его войск) — отказ
+    let mut g = petition_game(Side::De, "de_hgr_weichsel");
+    let (f, n) = (hix(&g, "de_hgr_weichsel") as u32, hix(&g, "de_hgr_mitte") as u32);
+    let b = agents_core::command::petition::boundary(&g.sim, f, n, g.hour());
+    let m = agents_core::command::agent::mid(&b).unwrap();
+    let c = place(&g.sim, Target::Hq(n));
+    let km = m.dist(c) + 1.0;
+    let line = petition_line(&g, "de_hgr_weichsel", "de_hgr_mitte", km);
+    assert_eq!(g.petition("de_hgr_weichsel", "de_hgr_mitte", &line, ""), Ok(false));
+    assert!(g.sim.command.petitions[0].why.contains("главный удар"), "{}", g.sim.command.petitions[0].why);
+    assert!(g.sim.documents.iter().any(|d| d.hq == hc && d.kind == DocKind::Notice && d.text.contains("отклонено")), "отказ — от ОКХ");
     assert_eq!(g.trace()["command"]["petitions"].as_array().map(|a| a.len()), Some(1));
+}
+
+#[test]
+fn petition_refused_when_player_is_top_de() {
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 0, Side::De, &[Side::De], None, Mode::Agents);
+    let e = g.petition("de_hgr_weichsel", "de_hgr_mitte", &[[14.0, 52.0], [14.5, 52.0]], "").unwrap_err();
+    assert!(e.contains("ОКХ ведёте вы сами") && e.contains("группам армий"), "{e}");
 }

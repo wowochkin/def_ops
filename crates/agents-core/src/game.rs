@@ -638,13 +638,15 @@ impl Game {
         let w = &self.sim.world;
         let c = &self.sim.command;
         let top = w.hqs.iter().position(|h| h.side == self.player && h.echelon == Echelon::HighCommand).ok_or("у стороны нет верхней инстанции")?;
-        if c.control[top] == Control::Player { return Err("Ставку ведёте вы сами — ходатайствовать некому: линию задайте директивой фронтам".into()); }
+        // слова стороны: верхняя инстанция и фронты (у немецкой — ОКХ и группы армий)
+        let (top_acc, top_gen, fronts_dat, front_nom) = match self.player { Side::Su => ("Ставку", "той же Ставки", "фронтам", "соседний фронт"), Side::De => ("ОКХ", "того же ОКХ", "группам армий", "соседняя группа армий") };
+        if c.control[top] == Control::Player { return Err(format!("{top_acc} ведёте вы сами — ходатайствовать некому: линию задайте директивой {fronts_dat}")); }
         let f = w.hqs.iter().position(|h| h.id == from && h.side == self.player).ok_or_else(|| format!("нет штаба {from} стороны игрока"))?;
         if c.control[f] != Control::Player { return Err(format!("{} не под управлением игрока — сначала взять", w.hqs[f].name)); }
         let n = w.hqs.iter().position(|h| h.id == neighbour);
         let front = |k: usize| w.hqs[k].side == self.player && w.hqs[k].echelon == Echelon::Front && w.hqs[k].parent == Some(top as u32);
         let ok = n.is_some_and(|n| n != f && front(f) && front(n) && !crate::command::agent::subs_of(&self.sim, n as u32).is_empty());
-        if !ok { return Err(format!("{} — не соседний фронт той же Ставки", n.map_or(neighbour.to_string(), |n| w.hqs[n].name.clone()))); }
+        if !ok { return Err(format!("{} — не {front_nom} {top_gen}", n.map_or(neighbour.to_string(), |n| w.hqs[n].name.clone()))); }
         if line.len() < 2 { return Err("в линии меньше двух точек".into()); }
         let xy = line.iter().map(|&p| self.sim.theatre.proj.to_xy(p)).collect();
         let tick = self.hour();
