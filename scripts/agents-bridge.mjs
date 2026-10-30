@@ -3,7 +3,7 @@
 // ({"cmd", "args"} → {"ok"} | {"error"}). Те же команды, что у приложения (crates/agents-tauri).
 //
 //   import { attachAgentsBridge } from './agents-bridge.mjs'; await attachAgentsBridge(page);
-//   node scripts/agents-bridge.mjs --check   — игра Берлинской через мост: «гибрид», поданные директивы, ход
+//   node scripts/agents-bridge.mjs --check   — игра Берлинской через мост: «гибрид», поданные директивы, ход, возврат к ходу 1
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { existsSync } from 'node:fs';
@@ -67,6 +67,10 @@ if (process.argv.includes('--check')) {
     if (t1.game.commandErrors.length) throw new Error(t1.game.commandErrors.join('; '));
     if (!t1.command.historical.every((h) => h.issued)) throw new Error('не все директивы поданы');
     if (t1.game.hour !== 12) throw new Error(`час ${t1.game.hour}`);
+    // возврат к ходу 1: снимок хода 0 — тот же час и тот же отпечаток игры, что в начале
+    const tr = await core.call('game_rewind', { keep: 0 });
+    if (tr.game.hour !== 0 || tr.game.turn !== 0) throw new Error(`после возврата час ${tr.game.hour}, ход ${tr.game.turn}`);
+    if (tr.game.digest !== t0.game.digest) throw new Error(`отпечаток после возврата ${tr.game.digest}, в начале ${t0.game.digest}`);
     // прогон с командующими: поле commanders в ходе, у обеих сторон
     const tc = await core.call('run_scenario', { scenario: path, seed: 1, command: 'commanders' });
     if (!Array.isArray(tc.commanders) || !tc.commanders.some((c) => c.side === 'su') || !tc.commanders.some((c) => c.side === 'de')) throw new Error('нет командующих в ходе');

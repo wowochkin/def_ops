@@ -225,25 +225,41 @@ pub mod commands {
     #[tauri::command]
     pub fn game_stop() { if let Ok(mut g) = GAME.lock() { *g = None; } }
 
-    /// Командование по ступеням: директива игрока, историческая директива, взять штаб, вернуть.
+    /// Командование по ступеням между ходами: директива игрока, историческая директива, взять штаб, разрешить отход,
+    /// вернуть. Команда исполняется сразу и уходит в журнал следующего хода (повтор при возврате к ходу).
+    fn between(c: agents_core::game::CommandOp) -> Result<(), String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.between_op(c)
+    }
     #[tauri::command]
     pub fn game_directive(directive: agents_core::game::PlayerDirective) -> Result<(), String> {
-        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.directive(&directive)
+        between(agents_core::game::CommandOp::Directive { directive })
     }
     #[tauri::command]
     pub fn game_historical(id: String) -> Result<(), String> {
-        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.issue_historical(&id)
+        between(agents_core::game::CommandOp::Historical { id })
     }
     #[tauri::command]
     pub fn game_take(hq: String) -> Result<(), String> {
-        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.take(&hq)
+        between(agents_core::game::CommandOp::Take { hq })
     }
     #[tauri::command]
     pub fn game_permit(hq: String, yes: bool) -> Result<(), String> {
-        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.permit(&hq, yes)
+        between(agents_core::game::CommandOp::Permit { hq, yes })
     }
     #[tauri::command]
     pub fn game_release(id: String) -> Result<(), String> {
-        GAME.lock().map_err(|e| e.to_string())?.as_mut().ok_or("игра не начата")?.release(&id)
+        between(agents_core::game::CommandOp::Release { id })
+    }
+
+    /// Возврат к ходу `keep + 1` (оставить `keep` сыгранных ходов): ближайший снимок и досчёт повтором журнала. Под тем
+    /// же замком, что и ход: пока ход считается, возврат ждёт его конца. Возвращает ход с начала сценария.
+    #[tauri::command]
+    pub async fn game_rewind(keep: usize) -> Result<serde_json::Value, String> {
+        tauri::async_runtime::spawn_blocking(move || {
+            let mut lock = GAME.lock().map_err(|e| e.to_string())?;
+            let g = lock.as_mut().ok_or("игра не начата")?;
+            g.rewind(keep)?;
+            Ok(g.trace())
+        }).await.map_err(|e| e.to_string())?
     }
 }

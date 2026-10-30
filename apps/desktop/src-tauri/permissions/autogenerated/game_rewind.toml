@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-rewind"
+description = "Enables the game_rewind command without any pre-configured scope."
+commands.allow = ["game_rewind"]
+
+[[permission]]
+identifier = "deny-game-rewind"
+description = "Denies the game_rewind command without any pre-configured scope."
+commands.deny = ["game_rewind"]

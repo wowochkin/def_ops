@@ -1,14 +1,19 @@
-//! Игра на агентной модели без окна приложения — для проверок: команды run_scenario / game_start / game_turn / game_stop / read_text
+//! Игра на агентной модели без окна приложения — для проверок: команды run_scenario / game_start / game_turn / game_rewind / game_stop / read_text
 //! строками JSON на входе ({"cmd": …, "args": {…}}), ответ — строкой JSON на выходе ({"ok": …} или {"error": …}).
 //! Те же команды, что у настольного приложения (crates/agents-tauri).
 
-use agents_core::game::{Game, TakeoverIn};
+use agents_core::game::{CommandOp, Game, TakeoverIn};
 use agents_core::scenario::EditsIn;
 use agents_core::model::Side;
 use agents_core::staff::Source;
 use agents_core::{repo_root, scenario, DATA_DIR};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
+
+/// Команда управления между ходами (`Game::between_op`).
+fn between(game: &mut Option<Game>, c: CommandOp) -> Result<Value, String> {
+    game.as_mut().ok_or("игра не начата")?.between_op(c).map(|_| Value::Null)
+}
 
 fn main() {
     let root = std::env::var("DEFOPS_ROOT").unwrap_or_else(|_| repo_root());
@@ -72,14 +77,22 @@ fn main() {
                 Ok(g.turn_trace(&r))
             }
             "game_stop" => { game = None; Ok(Value::Null) }
+            // команды управления между ходами — в журнал следующего хода (повтор при возврате к ходу)
             "game_directive" => {
                 let d: agents_core::game::PlayerDirective = serde_json::from_value(a["directive"].clone()).map_err(|e| e.to_string())?;
-                game.as_mut().ok_or("игра не начата")?.directive(&d).map(|_| Value::Null)
+                between(&mut game, CommandOp::Directive { directive: d })
             }
-            "game_historical" => game.as_mut().ok_or("игра не начата")?.issue_historical(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
-            "game_take" => game.as_mut().ok_or("игра не начата")?.take(a["hq"].as_str().unwrap_or("")).map(|_| Value::Null),
-            "game_permit" => game.as_mut().ok_or("игра не начата")?.permit(a["hq"].as_str().unwrap_or(""), a["yes"].as_bool().unwrap_or(false)).map(|_| Value::Null),
-            "game_release" => game.as_mut().ok_or("игра не начата")?.release(a["id"].as_str().unwrap_or("")).map(|_| Value::Null),
+            "game_historical" => between(&mut game, CommandOp::Historical { id: a["id"].as_str().unwrap_or("").into() }),
+            "game_take" => between(&mut game, CommandOp::Take { hq: a["hq"].as_str().unwrap_or("").into() }),
+            "game_permit" => between(&mut game, CommandOp::Permit { hq: a["hq"].as_str().unwrap_or("").into(), yes: a["yes"].as_bool().unwrap_or(false) }),
+            "game_release" => between(&mut game, CommandOp::Release { id: a["id"].as_str().unwrap_or("").into() }),
+            // возврат к ходу keep + 1 (оставить keep сыгранных ходов); команды идут по очереди — после хода, не во время
+            "game_rewind" => {
+                let g = game.as_mut().ok_or("игра не начата")?;
+                let keep = a["keep"].as_u64().ok_or("game_rewind: нет keep")? as usize;
+                g.rewind(keep)?;
+                Ok(g.trace())
+            }
             c => Err(format!("нет команды {c}")),
         })();
         let _ = writeln!(out, "{}", match r { Ok(v) => json!({ "ok": v }), Err(e) => json!({ "error": e }) });

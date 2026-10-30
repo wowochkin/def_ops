@@ -26,6 +26,7 @@
     "allow-game-take",
     "allow-game-release",
     "allow-game-permit",
+    "allow-game-rewind",
     "allow-game-stop"
   ]
 }

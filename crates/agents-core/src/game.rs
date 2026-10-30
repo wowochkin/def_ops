@@ -14,7 +14,7 @@ use crate::world::{ScriptOrder, Sectors, Sim};
 use std::collections::BTreeMap;
 use serde_json::Value;
 
-pub use crate::game_rewind::{TurnIn, TurnResult};
+pub use crate::game_rewind::{GameSnap, TurnIn, TurnResult, MAX_SNAPS, SNAP_EVERY};
 
 /// Режим игры: «как сейчас» (приказы игрока размножаются по дивизиям штаба), «агенты» (игрок — верхняя инстанция,
 /// ниже — штабы-агенты), «гибрид» (как «агенты», но исторические директивы, поданные без изменений, ведут приказы
@@ -141,6 +141,10 @@ pub struct Game {
     pub enemy_agents: bool,
     /// Сыгранные ходы по порядку (`play_turn`): повтор с того же начала даёт тот же мир.
     pub log: Vec<TurnIn>,
+    /// Снимки игры каждые `SNAP_EVERY` ходов (с хода 0): возврат к ходу — ближайший снимок и досчёт повтором журнала.
+    pub snaps: Vec<GameSnap>,
+    /// Команды, поданные между ходами (`between_op`): уйдут в `TurnIn::between` следующего хода.
+    pub between: Vec<CommandOp>,
 }
 
 /// Место и час (шаг) для распоряжения.
@@ -290,7 +294,7 @@ impl Game {
             for &sd in free { sim.sources[crate::staff::side_idx(sd)] = crate::staff::Source::Script; }
             let limit = meta.hours;
             let enemy_intent = mode == Mode::Intent && !free.contains(&other_side(player));
-            let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: enemy_intent, log: Vec::new() };
+            let mut g = Game { mode, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves: BTreeMap::new(), enemy_agents: enemy_intent, log: Vec::new(), snaps: Vec::new(), between: Vec::new() };
             // командующие и у противника, если он не на модели вне ядра: его штабы — агенты, верхняя инстанция — Гитлер/Ставка
             if mode == Mode::Commanders && !g.free.contains(&other_side(player)) { g.enemy_agents(); }
             return g;
@@ -313,7 +317,7 @@ impl Game {
             }
         }
         let limit = meta.hours;
-        Game { mode: Mode::Legacy, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves, enemy_agents: false, log: Vec::new() }
+        Game { mode: Mode::Legacy, issued: Default::default(), pending: Vec::new(), sim, meta, frames, player, free: free.to_vec(), takeover, limit, reserves, enemy_agents: false, log: Vec::new(), snaps: Vec::new(), between: Vec::new() }
     }
 
     /// Час прогона (сколько шагов сделано).
@@ -608,6 +612,11 @@ impl Game {
     /// Команда управления на ход.
     pub fn command(&mut self, c: &CommandOp) -> Result<(), String> {
         if self.mode == Mode::Legacy { return Err("команды управления — в режимах «агенты» и «гибрид»".into()); }
+        self.run_op(c)
+    }
+
+    /// Исполнить команду управления (без проверки режима — как отдельные команды окна между ходами).
+    pub(crate) fn run_op(&mut self, c: &CommandOp) -> Result<(), String> {
         match c {
             CommandOp::Take { hq } => self.take(hq),
             CommandOp::Release { id } => self.release(id),
