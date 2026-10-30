@@ -33,6 +33,11 @@ export function majorRivers(v: TurnView): { name: string; line: LngLat[] }[] {
 
 /** Пометка варианта, составленного правилом, без языковой модели. */
 export const RULES_MARK = 'по правилам, без модели';
+/** Подпись у кнопки «Варианты советника»: что даст запрос — советник на связи (llmOk), правила ядра действуют (rulesOk). */
+export function planHint(llmOk: boolean, rulesOk: boolean): string {
+  if (llmOk) return rulesOk ? 'советник (ИИ) и правила: задачи всем подчинённым, полосы, ось, резервы, тыл, переправы' : 'советник (ИИ): решение и приказы тем, чья задача меняется';
+  return rulesOk ? 'советник не на связи — варианты по правилам (варианты командующих)' : 'советник не на связи; варианты по правилам — в игре на агентной модели';
+}
 
 const pts = (x: unknown): LngLat[] => (Array.isArray(x) ? x.filter((p): p is LngLat => Array.isArray(p) && p.length >= 2) : []);
 const plain = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();

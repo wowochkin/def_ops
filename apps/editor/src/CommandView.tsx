@@ -33,7 +33,7 @@ import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, 
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { petitionAnswer, petitionMarks, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
 import { DIR_TASK_RU, dirTaskOf, issuers, postContext, postProjectCount, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
-import { completeVariant, dirDraftOf, fromCore, planFallback, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
+import { completeVariant, dirDraftOf, fromCore, planFallback, planHint, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
 import { withNote } from './post-notes';
 import { objectiveMark, shortName } from './post-objects';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
@@ -2029,8 +2029,7 @@ function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, rulesOk, ai, b
             : <StaffButton className="primary" action="command.variants" params={{ count: planN }} disabled={!llmOk && !rulesOk}
               title={!llmOk && !rulesOk ? 'Советник не на связи; варианты по правилам — в игре на агентной модели' : ''}>Варианты советника</StaffButton>}
         </div>
-        <span>{llmOk ? 'советник (ИИ) и правила: задачи всем подчинённым, полосы, ось, резервы, тыл, переправы'
-          : rulesOk ? 'советник не на связи — варианты по правилам (варианты командующих)' : 'советник не на связи; варианты по правилам — в игре на агентной модели'}</span></div>
+        <span>{planHint(llmOk, rulesOk)}</span></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Решение составлено при открытии хода по обстановке (без модели): оценка обстановки и донесение — заново, замысел, замысел противника и риски — с прошлого хода (не было — по обстановке). Поля с пометкой «составлено по обстановке — проверьте» прочитайте и поправьте; лист у поля — составить заново. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}

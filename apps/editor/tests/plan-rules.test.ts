@@ -5,7 +5,7 @@ import type { LngLat } from '@def-ops/core';
 import type { PlanVariantView, TurnView } from '../src/sim/game-protocol';
 import type { DraftScope } from '../src/decision-drafts';
 import { staffScope } from '../src/post-staff';
-import { completeVariant, dirDraftOf, fromCore, historyLoss, majorRivers, planFallback, riverFeature, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
+import { completeVariant, dirDraftOf, planHint, fromCore, historyLoss, majorRivers, planFallback, riverFeature, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const rep = (id: string, name: string, echelon: string, parent: string, at: LngLat, x: object = {}) => ({
@@ -162,5 +162,14 @@ describe('реки для переправ — из слоя карты', () => 
     // @ts-expect-error — реки идут слоем карты, а не полем вида (каждый ход — десятки килобайт)
     const r: TurnView['rivers'] = undefined;
     expect(r).toBeUndefined();
+  });
+});
+
+describe('подпись у кнопки «Варианты советника»', () => {
+  it('полный вариант с правилами — только где правила действуют; на нынешней модели — приказы тем, чья задача меняется', () => {
+    expect(planHint(true, true)).toBe('советник (ИИ) и правила: задачи всем подчинённым, полосы, ось, резервы, тыл, переправы');
+    expect(planHint(true, false)).toBe('советник (ИИ): решение и приказы тем, чья задача меняется');
+    expect(planHint(false, true)).toBe('советник не на связи — варианты по правилам (варианты командующих)');
+    expect(planHint(false, false)).toBe('советник не на связи; варианты по правилам — в игре на агентной модели');
   });
 });
