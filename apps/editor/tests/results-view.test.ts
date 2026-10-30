@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { HistoricalLoss, LossSeries, OperationSummary } from '@def-ops/sim';
 import type { EventResult, SideTotals } from '@def-ops/sim';
 import type { SimResult } from '../src/sim/protocol';
-import { compareRows, histPerDay, lossesNote, otherEvents, recomputedReplay, resultsEmpty, sidePerDay, summaryNeeded, TABLE_NOTE } from '../src/results-view';
+import { compareRows, histPerDay, lossesNote, otherEvents, recomputedReplay, resultsEmpty, writeBackReplay, sidePerDay, summaryNeeded, TABLE_NOTE } from '../src/results-view';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { ResultsTab } from '../src/ResultsTab';
@@ -190,5 +190,23 @@ describe('сохранённая переигровка: итоги пересч
     const html = renderToString(createElement(ResultsTab, { summary: s, baseline: { state: 'error', text: 'ядро не ответило' }, side: 'su', part: 'compare', parts: ['losses', 'compare'] }));
     expect(html.replace(/<!-- -->/g, '')).toContain('не посчитана: ядро не ответило');
     expect(html).toContain('data-action="results.baseline.retry"');
+  });
+});
+
+describe('writeBackReplay', () => {
+  const data = { id: 'r1' };
+  const run = async (exists: boolean, current: boolean) => {
+    const put: unknown[] = [];
+    const ok = await writeBackReplay(data, { exists: async () => exists, current: () => current, put: async (d) => { put.push(d); } });
+    return { ok, put };
+  };
+  it('сохранение на месте и расчёт свежий — пересчитанное записывается', async () => {
+    expect(await run(true, true)).toEqual({ ok: true, put: [data] });
+  });
+  it('сохранение удалено, пока шёл пересчёт, — данные не записываются (без сироты)', async () => {
+    expect(await run(false, true)).toEqual({ ok: false, put: [] });
+  });
+  it('открыта уже другая переигровка — не записываются', async () => {
+    expect(await run(true, false)).toEqual({ ok: false, put: [] });
   });
 });

@@ -93,6 +93,8 @@ export interface SavedReplay {
 }
 export interface SavedReplayData { id: string; result: SimResult; agents?: { trace: AgentTrace; history: AgentHistory } }
 export const listReplays = async () => (await all<SavedReplay>('replays')).sort((a, b) => b.created.localeCompare(a.created));
+/** Сведения о сохранении ещё есть (не удалено). */
+export const hasReplay = async (id: string) => (await one<SavedReplay>('replays', id)) !== undefined;
 export const getReplay = (id: string) => one<SavedReplayData>('replay_data', id);
 export async function saveReplay(meta: SavedReplay, data: SavedReplayData) {
   await write('replay_data', (o) => o.put(data));

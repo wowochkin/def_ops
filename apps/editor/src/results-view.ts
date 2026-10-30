@@ -275,6 +275,16 @@ export function recomputedReplay<D extends { result: SimResult }>(d: D, x: { sum
   return { ...d, result: { ...d.result, operation: x.summary, ...(x.debriefs ? { debriefs: x.debriefs } : {}) } };
 }
 
+/**
+ * Пересчитанные итоги — обратно в сохранение, только если оно ещё есть (не удалено, пока шёл пересчёт: иначе осталась бы
+ * запись расчёта без сведений в списке) и открыта всё та же переигровка. true — записано.
+ */
+export async function writeBackReplay<D extends { id: string }>(d: D, io: { exists: (id: string) => Promise<boolean>; current: () => boolean; put: (d: D) => Promise<unknown> }): Promise<boolean> {
+  if (!io.current() || !(await io.exists(d.id)) || !io.current()) return false;
+  await io.put(d);
+  return true;
+}
+
 /** Агентный расчёт без сводки операции или со сводкой до сравнения (без событий) — сводку пересчитать из хода. */
 export function summaryNeeded(r: SimResult): boolean {
   return r.engine === 'agents' && (!r.operation || !Array.isArray(r.operation.events) || !r.debriefs);

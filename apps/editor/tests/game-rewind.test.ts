@@ -116,6 +116,15 @@ describe('applyBranch', () => {
     expect(L.turns.map((t) => (t.human as unknown as { text?: string } | undefined)?.text)).toEqual(['ветви', 'ветви', undefined]);
     expect(L.stash).toHaveLength(4);
   });
+  it('общие ходы без доктрины в ветви — доктрина прежней линии сохраняется', async () => {
+    const { L, ops } = line();
+    const doc = { su: 'наступать', de: 'обороняться' };
+    await applyBranch(L.turns, [{ ...turn('t1'), doctrine: doc }, turn('t2')], ops);
+    const branch = [turn('t1'), turn('t2'), turn('t3', undefined, 'b')]; // старая ветвь — без доктрины и отпечатков
+    expect((await applyBranch(L.turns, branch, ops)).ok).toBe(true);
+    expect(L.turns.map((t) => t.doctrine)).toEqual([doc, undefined, undefined]);
+    expect(L.turns[0].digest).toBeDefined();
+  });
   it('окончание игры — дальше ходы ветви не считаются', async () => {
     const { L, ops } = line();
     let n = 0;

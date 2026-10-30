@@ -130,7 +130,11 @@ export async function applyBranch(cur: GameTurn[], turns: GameTurn[], ops: Branc
   try {
     await playAll(turns.slice(p), ops);
     // общие ходы совпали по отпечатку (или входу), но решение, доклад посредника и прочее — ветви: линия — это ветвь
-    for (let k = 0; k < p && k < cur.length; k++) cur[k] = { ...turns[k], ...(turns[k].digest === undefined && cur[k].digest !== undefined ? { digest: cur[k].digest } : {}) };
+    for (let k = 0; k < p && k < cur.length; k++) {
+      // ветвь из старого сохранения — без отпечатка и доктрины: их берём у прежней линии (по доктрине идёт агентный пересчёт)
+      const keep = { ...(turns[k].digest === undefined && cur[k].digest !== undefined ? { digest: cur[k].digest } : {}), ...(turns[k].doctrine === undefined && cur[k].doctrine !== undefined ? { doctrine: cur[k].doctrine } : {}) };
+      cur[k] = { ...turns[k], ...keep };
+    }
     return { ok: true };
   } catch (e) {
     const why = errText(e);

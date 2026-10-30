@@ -23,7 +23,7 @@ import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnSt
 import { defaultEnemy, fitEnemy, resumeEnemy } from './command-forms';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
-import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, putReplayData, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
+import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, hasReplay, listReplays, onDataChange, putReplayData, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 import { useCoverage } from './modeling/Coverage';
@@ -49,7 +49,7 @@ import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import type { TourMapControl } from './voice/tour';
 import { debriefFor } from '@def-ops/sim';
 import { baselineSummary, recomputeInWorker, rememberBaseline } from './sim/baseline';
-import { recomputedReplay, resultsEmpty, summaryNeeded, type BaselineState, type ResultsPart } from './results-view';
+import { recomputedReplay, resultsEmpty, summaryNeeded, writeBackReplay, type BaselineState, type ResultsPart } from './results-view';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 import { PLAYER_SPEEDS } from './replay-dock';
 import { commanderOf, hqCentroid } from './commander-view';
@@ -396,7 +396,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       setRecomputing(true);
       void recomputeInWorker(r.result.scenario, r.result.seed, r.agents.trace, r.agents.history)
         .then((x) => {
-          void putReplayData(recomputedReplay(r, x)).catch((e) => console.warn('пересчитанные итоги не записаны в сохранение:', e));
+          void writeBackReplay(recomputedReplay(r, x), { exists: hasReplay, current: () => token === runId.current, put: putReplayData }).catch((e) => console.warn('пересчитанные итоги не записаны в сохранение:', e));
           if (token === runId.current) setResult((y) => (y ? recomputedReplay({ result: y }, x).result : y));
         })
         .catch((e) => console.warn('итоги сохранённой переигровки не посчитаны:', e))

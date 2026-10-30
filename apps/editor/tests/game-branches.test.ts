@@ -112,6 +112,17 @@ describe('checkoutBranch', () => {
     const b = c.game.branches!.find((x) => x.id === 'B')!;
     expect(b).toMatchObject({ from: 3, at: at(3) }); // с ветвью A она расходится уже с хода 3
   });
+  it('checkout: устаревший from выбранной ветви — ход расхождения считается заново', async () => {
+    const st = fakeStore();
+    const a = await forkBranch(st, game(seven), 3, at(3), seven.slice(2), NOW);
+    // в старом сохранении у ветви A записано from 6, хотя с текущей линией она расходится с хода 3
+    const staleA = { ...a.branches![0], from: 6, at: at(6) };
+    const lineB = [...seven.slice(0, 4), turn(5, 'b'), turn(6, 'b')];
+    const withB: SavedGame = { ...a, branches: [staleA, { id: 'B', name: 'ветвь B', from: 5, at: at(5), created: '2026-10-30T11:00:00.000Z', count: 6, turns: lineB }] };
+    const cur: SavedGame = { ...withB, record: { ...withB.record, turns: [...seven.slice(0, 2), turn(3, 'c')] } };
+    const c = await checkoutBranch(st, cur, staleA.id, NOW);
+    expect(c.game.branches!.find((x) => x.id === 'B')).toMatchObject({ from: 3, at: at(3) });
+  });
 });
 
 describe('forkBranch: from и повторы', () => {

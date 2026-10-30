@@ -186,7 +186,7 @@ export async function checkoutBranch(store: BranchStore, s0: SavedGame, id: stri
     old = { id: newId(branches.map((x) => x.id), now), name: s.line ?? MAIN_LINE, from: cp + 1, at, created: b.created, count: cur.length };
     await putTurns(store, keyOf(s, old.id), cur);
   }
-  const rest = branches.flatMap((x) => (x.id === id ? (old ? [old] : []) : [divergeBy(x, b.from, b.at)]));
+  const rest = branches.flatMap((x) => (x.id === id ? (old ? [old] : []) : [divergeBy(x, cp + 1, at)]));
   const record = { ...s.record, turns: chosen };
   const { branches: _b, ...base } = s;
   const game: SavedGame = { ...base, record, line: b.name, turn: turnOf(record), ...(rest.length ? { branches: rest } : {}) };
