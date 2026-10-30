@@ -123,19 +123,50 @@ describe('режиссёр сеанса', () => {
   });
 
   it('idle returns to attract', () => {
-    const r = toChoose().send({ t: 'choose', card: 1 }).wait(DURATIONS.scroll);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
-    r.send({ t: 'touch' });
+    // Таймер выключен, оболочка не ответила на aiPick: бездействие считается от отметки выбора ИИ.
+    const off = cfgWith({ timer: { on: false, seconds: 30 } });
+    const r = toChoose(off).send({ t: 'choose', card: 1 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
     const mark = r.effects.length;
     const session = r.state.session;
-    r.wait(89_750);
+    r.wait(60_000 + 89_750);
     expect(r.phase.kind).toBe('turn');
+    expect(r.since(mark)).toContainEqual({ e: 'aiPick', n: 2 });
     r.wait(250);
     expect(r.phase.kind).toBe('attract');
     expect(r.since(mark)).toContainEqual({ e: 'newSession' });
     expect(r.state.session).toBe(session + 1);
     r.wait(200_000);
     expect(r.phase.kind).toBe('attract');
+  });
+
+  it('passive viewer not kicked', () => {
+    const off = cfgWith({ timer: { on: false, seconds: 30 } });
+    const r = run(off).send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const mark = r.effects.length;
+    r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', offered: true });
+    expect(says(r.since(mark), 'offer-decide')).toBe(true);
+    expect(r.since(mark)).toContainEqual({ e: 'aiPick', n: 1 });
+    expect(r.since(mark).some((e) => e.e === 'newSession')).toBe(false);
+    r.send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
+  });
+
+  it('timer on: passive viewer gets delays, not idle', () => {
+    const r = run().send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const mark = r.effects.length;
+    r.wait(DURATIONS.briefing + DURATIONS.explain + 30_000);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
+    expect(r.since(mark).some((e) => e.e === 'newSession')).toBe(false);
+  });
+
+  it('idle in welcome returns', () => {
+    const r = run().send({ t: 'ready' }, { t: 'touch' }).wait(89_750);
+    expect(r.phase.kind).toBe('welcome');
+    r.wait(250);
+    expect(r.phase.kind).toBe('attract');
+    expect(r.effects).toContainEqual({ e: 'newSession' });
   });
 
   it('double choose ignored', () => {

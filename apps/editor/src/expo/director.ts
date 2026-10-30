@@ -123,16 +123,32 @@ function fresh(s: DirectorState, fx: Effect[]): DirectorState {
 /** Фаза после прокрутки перелома n. */
 const afterScroll = (n: TurnN): Phase => (n < 3 ? turnPhase((n + 1) as TurnN) : { kind: 'result' });
 
+/**
+ * С какого момента считается бездействие: только в фазах, где режиссёр ждёт посетителя (welcome, выбор, итог), —
+ * от последнего ввода или от входа в фазу, что позже. Бриф, пояснение и прокрутка идут сами и бездействие не копят.
+ * Таймер выключен: в выборе — не раньше выбора ИИ (оболочка ответит на aiPick событием choose).
+ */
+function idleStart(s: DirectorState, cfg: ExpoSettings): number | null {
+  const p = s.phase;
+  const waiting = p.kind === 'welcome' || p.kind === 'result' || (p.kind === 'turn' && p.step === 'choose');
+  if (!waiting) return null;
+  let from = Math.max(s.lastInput, s.phaseStart);
+  if (p.kind === 'turn' && !cfg.timer.on) from = Math.max(from, s.phaseStart + AI_PICK_AFTER);
+  return from;
+}
+
 type Due = { at: number; apply: (s: DirectorState) => DirectorState };
 
 /** Ближайшее по времени событие часов (без учёта того, наступило ли оно). */
 function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: number, aiFired: { v: boolean }): Due | null {
   const cands: Due[] = [];
   const p = s.phase;
-  if (p.kind !== 'startup' && p.kind !== 'attract') {
-    cands.push({ at: s.lastInput + cfg.idleSeconds * 1000, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, x.lastInput + cfg.idleSeconds * 1000, cfg, fx) });
-  }
   const t0 = s.phaseStart;
+  const idleFrom = idleStart(s, cfg);
+  if (idleFrom !== null) {
+    const at = idleFrom + cfg.idleSeconds * 1000;
+    cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
+  }
   if (p.kind === 'briefing') cands.push({ at: t0 + DURATIONS.briefing, apply: (x) => enter(x, turnPhase(1), t0 + DURATIONS.briefing, cfg, fx) });
   if (p.kind === 'result') {
     const at = t0 + cfg.resultSeconds * 1000;
