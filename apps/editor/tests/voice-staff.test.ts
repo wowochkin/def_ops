@@ -902,3 +902,28 @@ describe('пункт ниже Ставки: проект — по решению
     expect(parseStaff('выбираю второй', 'replay')).toMatchObject({ id: 'command.variant.pick' });
   });
 });
+
+describe('ходатайство голосом', () => {
+  const NB = { show: true, who: 'rules' as const, why: 'Рассматривает Ставка на этом ходу по правилу.', neighbours: [{ id: 'su_1uf', name: '1-й Украинский фронт' }, { id: 'su_2bf', name: '2-й Белорусский фронт' }] };
+  it('фразы: сосед, пункт в линию, очистить', () => {
+    staff({ petition: NB } as never);
+    expect(parseStaff('ходатайство о линии с первым украинским фронтом', 'replay')).toMatchObject({ id: 'decision.petition.neighbour', params: { name: 'первым украинским фронтом' } });
+    expect(parseStaff('добавь в ходатайство Котбус', 'replay')).toEqual({ id: 'decision.petition.point', params: { place: 'Котбус' } });
+    expect(parseStaff('очисти ходатайство', 'replay')).toEqual({ id: 'decision.petition.clear' });
+  });
+  it('сосед по названию, пункты — точки в конец линии, очистить', async () => {
+    const d = staff({ petition: NB } as never);
+    expect(await act('decision.petition.neighbour', { name: 'первым украинским фронтом' })).toMatch(/1-й Украинский фронт/);
+    expect(d.decision.petition).toEqual({ neighbour: 'su_1uf', line: [], note: '' });
+    expect(await act('decision.petition.point', { place: 'Котбус' })).toMatch(/Котбус/);
+    expect(await act('decision.petition.point', { place: 'Зелов (' })).toMatch(/точек — две/);
+    expect(d.decision.petition!.line).toEqual([P.find((p) => p.title.startsWith('Котбус'))!.at, zelov.at]);
+    expect(await act('decision.petition.clear')).toMatch(/очищено/);
+    expect(d.decision.petition).toBeUndefined();
+  });
+  it('где не действует — недоступно с пояснением', () => {
+    staff({ petition: { show: false, why: 'Ставку ведёте вы сами: линию задайте директивой.', neighbours: [] } } as never);
+    expect(getAction('decision.petition.neighbour')!.available()).toBe('Ставку ведёте вы сами: линию задайте директивой.');
+    expect(getAction('decision.petition.point')!.available()).toMatch(/^Ставку ведёте/);
+  });
+});

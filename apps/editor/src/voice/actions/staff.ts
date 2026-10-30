@@ -22,6 +22,7 @@ import type { AdviceView, HumanDecision, Place, PlanVariantView, TurnView } from
 import { ordinalIndex, pickByName } from '../answers';
 import { speakAnswersOn, setSpeakAnswers } from '../advisor-voice';
 import { fieldActions, rawTail, readAloud } from '../dictation';
+import type { PetitionState } from '../../petition';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { act, getAction, onTurnDone, registerParser, retract, speak, voiceRecent, voiceTurn, type Action, type PhraseHit } from '../registry';
 import { short } from '../report';
@@ -97,6 +98,8 @@ export interface StaffDeps {
   auto?: readonly string[];
   /** Прошлое решение того же штаба (пункт ниже Ставки — его, а не Ставки); нет поля — прошлое решение верхней инстанции. */
   prevDecision?: HumanDecision | null;
+  /** Ходатайство о разграничительной линии в пункте управления: где действует, кто рассматривает, соседи (petition.ts). */
+  petition?: PetitionState;
   /** Пункт управления: приоритет подвоза — его часть списка стороны (названные подчинённые вместо прежних его); нет — весь список. */
   mergePriority?(ids: string[]): string[];
   // приказы
@@ -200,7 +203,7 @@ export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]
   const d = p.decision, auto = p.auto ?? [];
   const own = (k: 'enemyIntent' | 'intent' | 'risks') => !auto.includes(k) && !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
   const put = (k: 'assessment' | 'report') => !auto.includes(k) && !!d[k].trim();
-  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || put('assessment') || put('report') || !!d.request?.trim()
+  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || put('assessment') || put('report') || !!d.request?.trim() || !!(d.petition && (d.petition.line.length || d.petition.note.trim()))
     || own('enemyIntent') || own('intent') || own('risks');
 }
 
@@ -478,6 +481,8 @@ export function staffActions(get: () => StaffDeps): Action[] {
     return r;
   };
   const planBusy = () => !!get().plan && !get().plan!.done;
+  /** Ходатайство: действует ли на этом пункте (нет — пояснение, почему поле скрыто). */
+  const petAv = (): true | string => { const r = ready(); if (r !== true) return r; const s = get().petition; return !s ? 'ходатайство здесь не подаётся' : s.show ? true : s.why; };
   const planHas = (): true | string => {
     const r = ready(); if (r !== true) return r;
     const p = get().plan;
@@ -503,7 +508,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     get().setTab('orders'); get().setSub(s);
   };
   /** Поле решения диктовкой; acc — название в примерах фраз («запиши в оценку: …»), gender — род названия. */
-  const decisionField = (k: keyof HumanDecision, id: string, title: string, acc: string, gender: 'm' | 'f' | 'n' | 'pl', aliases: string[] = []) =>
+  const decisionField = (k: FieldKey, id: string, title: string, acc: string, gender: 'm' | 'f' | 'n' | 'pl', aliases: string[] = []) =>
     fieldActions(id, title, () => get().decision[k] ?? '', (s) => { get().setTab('decision'); get().setDecision({ [k]: s }); }, { section: 'replay', aliases, gender })
       .map((a) => ({ ...a, available: ready, say: a.say?.map((x) => x.replace(title.toLowerCase(), acc)), highlight: () => hl(`field-${k}`) }));
 
@@ -647,7 +652,35 @@ export function staffActions(get: () => StaffDeps): Action[] {
     ...decisionField('intent', 'decision.intent', 'Замысел', 'замысел', 'm', ['решение']),
     ...decisionField('risks', 'decision.risks', 'Риски', 'риски', 'pl'),
     ...decisionField('report', 'decision.report', 'Донесение', 'донесение', 'n', ['боевое донесение']),
-    ...decisionField('request', 'decision.request', 'Ходатайство', 'ходатайство', 'n'),
+    // ---- ходатайство о разграничительной линии: сосед, линия по пунктам, очистить (линия мышью — щелчками по карте)
+    { ...base, id: 'decision.petition.neighbour', title: 'Ходатайство: сосед', describe: 'Начинает ходатайство о разграничительной линии с соседним фронтом (name — его название).',
+      params: { type: 'object', properties: { name: TEXT }, required: ['name'] }, say: ['штаб, ходатайство о линии с первым украинским фронтом'], available: petAv, highlight: () => hl('field-request'),
+      run: async (p: { name: string }) => {
+        const nb = get().petition?.neighbours ?? [];
+        if (!nb.length) return 'Соседних фронтов с войсками нет — линию просить не с кем.';
+        const r = nb.find((x) => x.id === p?.name) ? { unit: nb.find((x) => x.id === p.name) } : findUnit(String(p?.name ?? ''), nb);
+        if (!r.unit) return `Сосед — ${nb.map((x) => short(x.name)).join(' или ')}?`;
+        const cur = get().decision.petition;
+        get().setTab('decision');
+        get().setDecision({ petition: { neighbour: r.unit.id, line: cur?.line ?? [], note: cur?.note ?? '' } });
+        return `Ходатайство о линии с соседом: ${short(r.unit.name)}. Теперь пункты линии: «добавь в ходатайство …» или щелчками по карте.`;
+      } },
+    { ...base, id: 'decision.petition.point', title: 'Ходатайство: пункт линии', describe: 'Добавляет пункт (place — название) точкой в конец линии ходатайства.',
+      params: { type: 'object', properties: { place: TEXT }, required: ['place'] }, say: ['штаб, добавь в ходатайство Котбус'], available: petAv, highlight: () => hl('field-request'),
+      run: async (p: { place: string }) => {
+        const pl = placeOf(String(p?.place ?? ''), view());
+        if (!pl) return `Не нашёл пункта «${p?.place}».`;
+        if ('say' in pl) return pl.say;
+        const cur = get().decision.petition ?? { neighbour: '', line: [], note: '' };
+        const line = [...cur.line, pl.found.at];
+        get().setTab('decision');
+        get().setDecision({ petition: { ...cur, line } });
+        const n = line.length;
+        return `В линию ходатайства — ${short(pl.found.title)}; точек — ${n === 1 ? 'одна' : numberWords(n, 'f')}.${n < 2 ? ' Нужна ещё хотя бы одна.' : ''}${cur.neighbour ? '' : ' Назовите соседа: «ходатайство о линии с …».'}`;
+      } },
+    { ...base, id: 'decision.petition.clear', title: 'Очистить ходатайство', describe: 'Убирает ходатайство о разграничительной линии из решения.',
+      say: ['штаб, очисти ходатайство'], available: petAv, highlight: () => hl('field-request'),
+      run: async () => { get().setDecision({ petition: undefined }); return 'Ходатайство очищено — подаваться не будет.'; } },
     { ...base, id: 'decision.fromLast', title: 'Взять с прошлого хода', describe: 'Берёт поле решения с прошлого хода (без поля — все пустые поля).',
       params: { type: 'object', properties: { field: { enum: [...FIELD_KEYS] } } }, say: ['штаб, возьми с прошлого хода'], highlight: noted,
       run: async (p?: { field?: FieldKey }) => {
@@ -957,6 +990,10 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
     if (own) return own;
     return m[1].split(' ').length >= 2 ? hit('command.advisor.ask', { text: m[1] }) : null;
   }
+  // ходатайство о разграничительной линии: «ходатайство о линии с …», «добавь в ходатайство …», «очисти ходатайство»
+  if ((m = /^(?:(?:подай|подать|составь|начни|пиши|напиши) )?ходатайств\p{L}* (?:о|об|по) (?:разграничительн\p{L}* )?лини\p{L}* (?:с|со) (.+)$/u.exec(t))) return hit('decision.petition.neighbour', { name: m[1] });
+  if ((m = /^(?:добавь|добавить|включи|внеси|поставь)(?: в)? (?:ходатайств\p{L}*|линию ходатайства)(?: пункт)? (.+)$/iu.exec(raw.trim().replace(/[.!]+$/, '')))) return hit('decision.petition.point', { place: m[1] });
+  if (/^(?:очисти|очистить|убери|сними|отмени|удали)(?: мое| моё)? ходатайств\p{L}*$/u.test(t)) return hit('decision.petition.clear');
   // советник: варианты — готовые показать («покажи варианты», «варианты»), новые — только «дай / подготовь / предложи»
   if (/^(?:(?:покажи|прочитай|зачитай|какие|назови|перечисли)(?: мне)? )?варианты(?: решения)?(?: от советника)?$/.test(t)) return hit('command.variants.list');
   if ((m = /^(?:дай|дайте|предложи|предложите|подготовь|подготовьте|составь|нужны|хочу)(?: мне| нам)? (?:(\S+) )?вариант\p{L}*(?: решения)?(?: на ход)?(?: от советника)?$/u.exec(t))) {

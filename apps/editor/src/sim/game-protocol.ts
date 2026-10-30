@@ -5,6 +5,7 @@ import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
 import type { CommandView, EnemyEntry } from './agents-game';
 import type { PostContext } from '../command-post';
+import type { PetitionDraft } from '../petition';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
 
@@ -112,8 +113,10 @@ export interface HumanDecision {
   report: string;
   /** Риски решения. */
   risks: string;
-  /** Ходатайство в Ставку (о разграничительных линиях): модель-Ставка рассматривает его на этом ходу. */
+  /** Ходатайство в Ставку (о разграничительных линиях) текстом — для модели-Ставки нынешней модели (из petition при отправке хода). */
   request?: string;
+  /** Ходатайство о разграничительной линии с соседним фронтом: сосед, линия, обоснование (petition.ts). */
+  petition?: PetitionDraft;
 }
 
 export interface BaseView { id: string; name: string; at: LngLat; state: 'active' | 'moving' | 'idle'; activeFrom: string | null }

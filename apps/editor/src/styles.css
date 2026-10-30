@@ -2189,3 +2189,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 
 /* поле решения составлено по обстановке при открытии хода и ещё не правлено */
 .dfield .dauto { display: block; margin: 0 0 1px; font-size: 10.5px; font-weight: 400; color: #9a6a12; font-style: italic; }
+.dfield.pet .pet-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: 400; }
+.dfield.pet .pet-row select { max-width: 240px; }
+.pet-ans { font-weight: 600; } .pet-ans.ok { color: #2f6b3b; } .pet-ans.no { color: var(--danger); }

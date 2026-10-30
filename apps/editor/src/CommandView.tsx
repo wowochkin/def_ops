@@ -31,6 +31,7 @@ import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
+import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
 import { DIR_TASK_RU, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
 
@@ -118,7 +119,7 @@ type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 
 type Sub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 type Act = StaffAct;
-type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string; members?: { id: string; name: string }[] };
+type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'petition' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string; members?: { id: string; name: string }[] };
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
 /** Решение нового хода: оценка и донесение — заново; замысел, замысел противника и риски — от прошлого решения, для правки. */
@@ -179,6 +180,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [cmds, setCmds] = useState<CommandOp[]>([]);
   /** Линия армий, указываемая на карте: точки по щелчкам. */
   const [linePts, setLinePts] = useState<LngLat[]>([]);
+  /** Добавить точку в линию ходатайства открытого пункта (щелчок по карте; обработчик карты — один на сценарий). */
+  const petPoint = useRef<(at: LngLat) => void>(() => undefined);
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
   /** Решения штабов ступеней ниже Ставки (пункт управления): по штабу. */
   const [postDecisions, setPostDecisions] = useState<Record<string, HumanDecision>>({});
@@ -614,6 +617,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       // пункт управления: точки оси, рубежей, разграничительных линий
       if (postRef.current?.pick && postRef.current.pick !== 'mainBlow') { postRef.current.addPoint(e.lngLat); return; }
       if (pm?.kind === 'line') { setLinePts((l) => [...l, e.lngLat]); return; }
+      if (pm?.kind === 'petition') { petPoint.current(e.lngLat); return; }
       if (pm && pm.kind !== 'order') { void pickAction(pm, e.lngLat, null); return; }
       if (!pm || !live.current.sel) {
         // щелчок по знаку: своё объединение (дивизия на агентной модели) — выбрать и показать его доклад;
@@ -778,9 +782,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
       f.name = 'Разграничительная линия (указывается)'; f.time = { from: view.time, to: null }; plan.push(f as never);
     }
+    // ходатайство открытого пункта: линия с соседом — пунктиром разграничительной линии; одна точка — знаком
+    const pet = (lowPost() ? postDecisions[post.issuer!] : decision)?.petition;
+    if (pet?.line.length) {
+      const nb = view.command?.hqs[pet.neighbour]?.name ?? view.groups.find((g) => g.id === pet.neighbour)?.name ?? 'соседом';
+      const f = pet.line.length > 1 ? createFeature('line', 'rkka.boundaryArmy', { points: pet.line, layerId: 'plan' }, 1, 'own') : createFeature('symbol', 'std.unitOval', { at: pet.line[0], layerId: 'plan' }, 0.5, 'own');
+      f.name = `Ходатайство: линия с ${nb}`; f.time = { from: view.time, to: null }; plan.push(f as never);
+    }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
-  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.level]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.level, post.issuer, decision.petition, postDecisions]); // eslint-disable-line react-hooks/exhaustive-deps
   // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
   // стороны зон — по легенде уровня
   const zSides = { own: !lvHidden.has('zones-own'), enemy: !lvHidden.has('zones-enemy') };
@@ -841,7 +852,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     // командование по ступеням: приказы — документами пункта управления (проекты старого вида не уходят)
     const orders: Order[] = (staffsOn(view) ? [] : draftList).map((d) => ({ id: `human@${view.time}:${d.formation}`, formation: d.formation, task: d.task, target: d.target, issuedAt: view.time, source: 'human', note: d.note || undefined, ...(d.form && staffsOn(view) ? { form: d.form } : {}) }));
     setProgress('отправка приказов…');
-    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision, ...(Object.keys(postDecisions).length ? { posts: postDecisions } : {}), ...(cmds.length ? { command: staffsOn(view) ? resolveFrom(view, cmds) : cmds } : {}) });
+    // ходатайства: агентная модель — команда ядру от каждого взятого фронта, где оно действует; нынешняя — текст модели-Ставке
+    const pets = view.command ? Object.entries(postDecisions).flatMap(([id, d]) => {
+      const op = petitionState(view, id, petOpts, cmds).show ? petitionOp(id, d.petition) : null;
+      return op ? [op] : [];
+    }) : [];
+    const command = [...(cmds.length ? (staffsOn(view) ? resolveFrom(view, cmds) : cmds) : []), ...pets];
+    const p = decision.petition;
+    const request = !view.command && petNow?.show && p ? (p.neighbour && p.line.length ? petitionText(p, (id) => view.groups.find((g) => g.id === id)?.name ?? id, view.places) : p.note.trim()) : '';
+    send({ kind: 'turn', orders, actions: acts.map((a) => a.action), decision: { ...decision, request }, ...(Object.keys(postDecisions).length ? { posts: postDecisions } : {}), ...(command.length ? { command } : {}) });
   };
   /** Противник — цель удара выбранного объединения (никто не выбран — вкладка «Приказы»: выбрать объединение). */
   const targetEnemy = (id: string) => {
@@ -953,6 +972,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     if (lowPost()) { const id = post.issuer!; setPostDecisions((m) => ({ ...m, [id]: { ...(m[id] ?? EMPTY), ...p } })); } else setDecision((d) => ({ ...d, ...p }));
     unAuto(lowPost() ? post.issuer! : '', Object.keys(p)); // правка руками (голосом) — уже не «составлено по обстановке»
   };
+  /** Ходатайство на открытом пункте: действует ли, кто рассматривает, соседи. */
+  const petOpts = { stavkaLlm: llm.settings.stavka !== false, llmOk: llm.check.state === 'ok', enemy, umpire: !!llm.settings.umpire };
+  const petNow: PetitionState | null = view ? petitionState(view, staffsOn(view) ? post.issuer : null, petOpts, cmds) : null;
+  /** Точка линии ходатайства щелчком по карте — в конец линии решения открытого пункта. */
+  petPoint.current = (at: LngLat) => { const cur = curDecision().petition ?? { neighbour: '', line: [], note: '' }; setCur({ petition: { ...cur, line: [...cur.line, at] } }); };
   /** Обстановка для черновиков решения: штаб пункта — его подчинённые, противник в его полосе, его документы на ход. */
   const scopeFor = (v: TurnView, issuer: string | null, lvl: MapLevel): DraftScope => {
     if (staffsOn(v) && issuer) {
@@ -1150,7 +1174,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
     decision: view ? curDecision() : decision, setDecision: setCur, auto: autoFields[view && lowPost() ? post.issuer! : ''] ?? [],
     prevDecision: view && lowPost() ? lastPost(post.issuer!) : view?.lastDecision ?? null,
-    composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView,
+    composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView, petition: petNow ?? undefined,
     mergePriority: (() => { const sc = scopeNow(); if (!sc || !view) return undefined; const pool = priorityPool(view, sc); const pa = acts.find((a) => a.action.kind === 'priority')?.action; const cur = pa?.kind === 'priority' ? pa.formations : view.priority; return (ids: string[]) => mergePriority(cur, pool, ids); })(),
     drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
     acts, addAct: addActCheck, dropAct,
@@ -1242,9 +1266,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             {tab === 'intel' && staffsOn(view) && post.issuer && <PostIntel v={view} level={post.level} issuer={post.issuer} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'intel' && !staffsOn(view) && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'decision' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command'
-              ? <Decision v={view} d={decision} auto={autoFields[''] ?? []} set={setCur} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              ? <Decision v={view} d={decision} auto={autoFields[''] ?? []} set={setCur} pet={petNow} issuer={null} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
                 ai={aiFields[''] ?? {}} batch={batchView && batchView.issuer === null ? batchView : null} otherBusy={!!batchView && batchView.issuer !== null} />
-              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} auto={autoFields[post.issuer] ?? []} set={setCur} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} auto={autoFields[post.issuer] ?? []} set={setCur} pet={petNow} issuer={post.issuer} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
                 ai={aiFields[post.issuer] ?? {}} batch={batchView && batchView.issuer === post.issuer ? batchView : null} otherBusy={!!batchView && batchView.issuer !== post.issuer} />)}
             {tab === 'orders' && <>
               <div className="seg subtabs">
@@ -1314,6 +1338,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
           {!pickMode && !post.pick && <MapHover engine={eng} doc={pickDoc} time={time} />}
           {pickMode && <div className="pick-hint">{pickMode.kind === 'order' ? `Щёлкните по карте — цель приказа для «${short(unit(sel)?.name ?? '')}»`
             : pickMode.kind === 'line' ? `Щёлкайте по карте — точки разграничительной линии (${linePts.length}); закончить — «Готово» во вкладке «Полосы»`
+            : pickMode.kind === 'petition' ? `Щёлкайте по карте — точки линии ходатайства (${curDecision().petition?.line.length ?? 0}); закончить — «Готово» во вкладке «Решение»`
             : pickMode.kind === 'bridge' ? 'Щёлкните по реке — место переправы' : pickMode.kind === 'base' ? `Щёлкните по карте — новое место базы «${pickMode.name}»` : `Щёлкните по карте — район сосредоточения: ${short(pickMode.name)}`}
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
@@ -1786,7 +1811,7 @@ function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, foc
 function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
   plan: PlanState; stale: boolean; open: number | null; accept: (v: PlanVariantView, i: number) => void; drafted: (f: string) => boolean; hasAct: (key: string) => boolean;
 }) {
-  const D: [keyof HumanDecision, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
+  const D: [Exclude<keyof HumanDecision, 'petition'>, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
   return (
     <div className="adv-msg plan" data-hl="plan">
       <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
@@ -1832,8 +1857,8 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
 const IcDraft = () => <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></svg>;
 const IcSpark = () => <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>;
 
-function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, otherBusy }: { v: TurnView; d: HumanDecision; auto: DraftField[]; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean;
-  ai: Partial<Record<DraftField, AiFieldState>>; batch: AiBatch | null; otherBusy: boolean }) {
+function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, otherBusy, pet, issuer, petPick, setPetPick }: { v: TurnView; d: HumanDecision; auto: DraftField[]; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean;
+  ai: Partial<Record<DraftField, AiFieldState>>; batch: AiBatch | null; otherBusy: boolean; pet: PetitionState | null; issuer: string | null; petPick: boolean; setPetPick: (b: boolean) => void }) {
   const last = v.lastDecision;
   const filled = DRAFT_FIELDS.some((k) => d[k].trim());
   const all = () => {
@@ -1856,7 +1881,7 @@ function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, oth
       <button className="ic-btn ai" data-action="decision.compose" disabled={!llmOk || !!batch} title={llmOk ? 'Написать советником (ИИ) — за этот штаб, текст печатается в поле' : 'Советник не на связи — языковая модель не отвечает'} aria-label="Написать советником" onClick={compose(k, true)}><IcSpark /></button>
     </>}
   </em>;
-  const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request' | 'report'>; label: string; hint: string; rows: number; req?: boolean }) => (
+  const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request' | 'report' | 'petition'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`} data-hl={`field-${k}`}>
       <span>{label}{req && <i> обязательно</i>}<Gen k={k} />{last?.[k] && last[k] !== d[k] && <button className="link" data-action="decision.fromLast" title={last[k]} onClick={(e) => { e.preventDefault(); tap('decision.fromLast', { field: k }); }}>взять с прошлого хода</button>}</span>
       <Auto k={k} />
@@ -1892,11 +1917,40 @@ function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, oth
         <Auto k="report" />
         <textarea className={aiCls('report').trim()} rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
       </label>
-      <label className="dfield" data-hl="field-request">
-        <span>Ходатайство {v.terms?.topTo ?? 'в Ставку'} о разграничительных линиях</span>
-        <textarea rows={2} value={d.request ?? ''} placeholder="Например: прошу продлить линию с соседом до … — его войска вышли в нашу полосу. Пусто — не ходатайствовать." onChange={(e) => set({ request: e.target.value })} />
-        <small className="muted">Рассматривает модель высшего командования ({v.terms?.top ?? 'Ставка'}) на этом ходу; ответ и новая линия — в донесениях следующего хода и в «Журнале».</small>
-      </label>
+      <Petition v={v} d={d} set={set} pet={pet} issuer={issuer} picking={petPick} setPicking={setPetPick} />
+    </div>
+  );
+}
+
+/** Ходатайство о разграничительной линии: где действует — сосед, линия (на карте или по пунктам), обоснование, последний ответ; где нет — пояснение. */
+function Petition({ v, d, set, pet, issuer, picking, setPicking }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; pet: PetitionState | null; issuer: string | null; picking: boolean; setPicking: (b: boolean) => void }) {
+  const [open, setOpen] = useState(false);
+  const title = `Ходатайство ${v.terms?.topTo ?? 'в Ставку'} о разграничительной линии`;
+  if (!pet) return null;
+  if (!pet.show) return <div className="dfield" data-hl="field-request"><span>{title}</span><p className="note">{pet.why}</p></div>;
+  const p = d.petition ?? { neighbour: '', line: [], note: '' };
+  const nb = pet.neighbours;
+  const ans = issuer ? petitionAnswer(v, issuer) : null;
+  const from: LngLat = p.line.at(-1) ?? v.own.find((u) => u.status !== 'destroyed')?.at ?? v.places[0]?.at ?? [14, 52];
+  const n = p.line.length;
+  return (
+    <div className="dfield pet" data-hl="field-request">
+      <span>{title}</span>
+      <div className="pet-row">
+        <label>С соседом <select value={p.neighbour} data-action="decision.petition.neighbour" onChange={(e) => tap('decision.petition.neighbour', { name: e.target.value })}>
+          <option value="" disabled>— выберите —</option>{nb.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+        {nb.length === 0 && <small className="muted">соседних фронтов с войсками нет</small>}
+      </div>
+      <div className="pet-row">
+        <span className="muted">Линия: {n === 0 ? 'точек нет' : `точек — ${n}`}{n === 1 ? ' (нужна ещё)' : ''}</span>
+        <button className={picking ? 'on' : ''} onClick={() => setPicking(!picking)}>{picking ? 'Готово' : 'На карте'}</button>
+        <button className={open ? 'on' : ''} onClick={() => setOpen(!open)}>Пункт…</button>
+        {(n > 0 || p.neighbour || p.note) && <StaffButton className="link" action="decision.petition.clear">очистить</StaffButton>}
+      </div>
+      {open && <PlacePicker v={v} from={from} mapOn={picking} onMap={() => setPicking(!picking)} onPick={(x) => tap('decision.petition.point', { place: x.id })} />}
+      <textarea rows={2} value={p.note} placeholder="Обоснование: например, войска соседа вышли в нашу полосу у …" onChange={(e) => set({ petition: { ...p, note: e.target.value } })} />
+      <small className="muted">{pet.why}</small>
+      {ans && <small className={`pet-ans ${ans.accepted ? 'ok' : 'no'}`}>Ответ {v.terms?.topGen ?? 'Ставки'} {ans.time}: {ans.accepted ? ans.text : `отклонено: ${ans.text}`}</small>}
     </div>
   );
 }

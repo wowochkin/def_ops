@@ -587,7 +587,8 @@ async function advance() {
     const stavka: (StavkaResult & { side: string })[] = [];
     if (llm.stavka !== false && (enemy === 'llm' || (llm.umpire && !agents))) {
       for (const side of [rec.human, rec.ai]) {
-        const need = stavkaNeed(ctx, g, side, side === rec.human ? queued.decision?.request ?? '' : '');
+        // ходатайство игрока — модели-Ставке только на нынешней модели; на агентной его рассматривает ядро (команда petition)
+        const need = stavkaNeed(ctx, g, side, side === rec.human && !agents ? queued.decision?.request ?? '' : '');
         if (!need) continue;
         const top = commandTerms(ctx, side).top;
         post({ kind: 'progress', text: `${top} — разграничительные линии…` });
