@@ -2162,8 +2162,13 @@ await check('в игре «составь заново оценку обстан
   await step('пункт линии ходатайства не добавлен', said4(/Котбус/));
   const pet = (await page4.locator('[data-hl="field-request"]').innerText()).replace(/\s+/g, ' ');
   if (!/точ\S* — 1|1 точ/.test(pet)) throw new Error(`в линии ходатайства не одна точка: ${pet.slice(0, 200)}`);
+  // варианты прошлой линии сняты (возврат к ходу выше) — нужен новый доклад о вариантах, а не прежний в ленте
+  const plansSaid = () => page4.evaluate(() => window.__said.filter((m) => m.type === 'say' && /Советник предложил два варианта/.test(String(m.text))).length);
+  const plans0 = await plansSaid();
+  await quiet();
   await hands4(['штаб, дай два варианта']);
-  await step(`варианты не готовы (запросов: ${LM4.plans})`, said4('Советник предложил два варианта'), 90000);
+  await page4.waitForFunction((n) => window.__said.filter((m) => m.type === 'say' && /Советник предложил два варианта/.test(String(m.text))).length > n, plans0, { timeout: 90000 })
+    .catch(async () => { throw new Error(`варианты не готовы (запросов: ${LM4.plans}); штаб говорил: ${await says()}`); });
   // проект не пуст (поле решения, ходатайство) — штаб переспрашивает о замене
   await hands4(['штаб, принимаю первый и поправлю']);
   await step('штаб не переспросил о замене проекта', said4(/Заменить проект вариантом/));
