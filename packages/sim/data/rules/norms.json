@@ -1789,6 +1789,35 @@
       ]
     },
     {
+      "id": "commander-variants",
+      "title": "Варианты решения для игрока: общие варианты «продолжать», «перейти к обороне», «перенести главный удар» и командующий без профиля",
+      "kb": "model:ход-как-считается",
+      "source": "",
+      "reliability": "",
+      "historical": "—",
+      "measure": {
+        "kind": "assumption",
+        "expr": "commanders.variants.continue.task",
+        "why": "допущение без опоры: вклад общих вариантов в мотивы, их неопределённость и потери, черты командующего штабом без профиля (середина шкалы); числа «продолжать» и «перенести удар» — как у вариантов фронта (options_su); в расчёт хода не входят — только варианты по правилам в пункте управления"
+      },
+      "unit": "—",
+      "rules": [
+        "commanders.variants.neutralTrait",
+        "commanders.variants.continue.task",
+        "commanders.variants.continue.uncertainty",
+        "commanders.variants.continue.losses",
+        "commanders.variants.hold.hold",
+        "commanders.variants.hold.preserve",
+        "commanders.variants.hold.task",
+        "commanders.variants.hold.uncertainty",
+        "commanders.variants.hold.losses",
+        "commanders.variants.shift.task",
+        "commanders.variants.shift.preserve",
+        "commanders.variants.shift.uncertainty",
+        "commanders.variants.shift.losses"
+      ]
+    },
+    {
       "id": "commander-zhukov-risk",
       "title": "Характер командующего: Жуков Г. К. — риск",
       "kb": "model:ход-как-считается",

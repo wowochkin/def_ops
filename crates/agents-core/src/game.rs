@@ -653,6 +653,35 @@ impl Game {
         Ok(crate::command::petition::submit(&mut self.sim, f as u32, n.unwrap() as u32, xy, note.to_string(), tick))
     }
 
+    /// Варианты решения по правилам для штаба `hq` своей стороны (`commander/variants.rs`): до `n` (1…3) вариантов
+    /// командующего, у каждого — задачи, полосы и оси всем действующим подчинённым. Мир не меняется.
+    pub fn variants(&self, hq: &str, n: usize) -> Result<Value, String> {
+        use crate::command::directive::Target;
+        let w = &self.sim.world;
+        let h = w.hqs.iter().position(|x| x.id == hq && x.side == self.player).ok_or_else(|| format!("нет штаба {hq} стороны игрока"))? as u32;
+        if self.mode == Mode::Legacy { return Err("варианты по правилам — в режимах агентной модели".into()); }
+        let proj = &self.sim.theatre.proj;
+        let pts = |ps: &[crate::geo::XY]| Value::from(ps.iter().map(|&p| { let q = proj.to_lnglat(p); serde_json::json!([q[0], q[1]]) }).collect::<Vec<_>>());
+        let id = |t: Target| crate::command::passing::target_id(&self.sim, t);
+        let task = |t: crate::command::directive::Task| serde_json::to_value(t).unwrap_or(Value::Null);
+        let role = |r: crate::command::control::Role| { use crate::command::control::Role::*; match r { Unset => Value::Null, First => "first".into(), Second => "second".into(), Mobile => "mobile".into(), Committed => "committed".into() } };
+        let out: Vec<Value> = crate::commander::variants::variants(&self.sim, h, n).into_iter().map(|v| {
+            let orders: Vec<Value> = v.orders.iter().zip(&v.roles).map(|(o, &r)| serde_json::json!({
+                "to": id(o.to), "task": task(o.task), "form": serde_json::to_value(o.form).unwrap_or(Value::Null), "axis": pts(&o.axis),
+                "immediate": o.immediate.as_ref().map(|l| pts(&l.pts)), "subsequent": o.subsequent.as_ref().map(|l| pts(&l.pts)),
+                "right": pts(&o.boundaries[1].1), "left": pts(&o.boundaries[0].1),
+                "commit": v.commit.contains(&o.to), "echelon": role(r), "note": o.note, "rule": o.rule,
+            })).collect();
+            serde_json::json!({
+                "kind": v.kind, "label": v.label, "rule": v.rule, "score": v.score, "axis": pts(&v.intent.axis),
+                "mainBlow": v.intent.main_blow.iter().map(|&k| self.sim.world.hqs[k as usize].id.clone()).collect::<Vec<_>>(),
+                "reserve": v.intent.reserve.iter().map(|&k| self.sim.world.hqs[k as usize].id.clone()).collect::<Vec<_>>(),
+                "orders": orders,
+            })
+        }).collect();
+        Ok(Value::from(out))
+    }
+
     /// Команда управления из JSON: неразборчивая — ошибка этой команды, а не всего хода.
     pub fn command_json(&mut self, v: &Value) -> Result<(), String> {
         let c: CommandOp = serde_json::from_value(v.clone()).map_err(|e| format!("команда {v}: {e}"))?;

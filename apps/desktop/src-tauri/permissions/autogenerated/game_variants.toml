@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-variants"
+description = "Enables the game_variants command without any pre-configured scope."
+commands.allow = ["game_variants"]
+
+[[permission]]
+identifier = "deny-game-variants"
+description = "Denies the game_variants command without any pre-configured scope."
+commands.deny = ["game_variants"]

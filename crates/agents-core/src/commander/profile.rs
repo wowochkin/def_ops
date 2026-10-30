@@ -67,6 +67,13 @@ pub struct MoodRules {
 /// Веса слагаемых выбора варианта.
 #[derive(Clone, Debug)]
 pub struct Weights { pub uncertainty: f64, pub losses: f64, pub persistence: f64, pub obedience: f64 }
+/// Общий вариант для игрока: вклад в мотивы «задача старшего», «удержать рубеж», «сохранить армии», неопределённость, потери.
+#[derive(Clone, Debug)]
+pub struct Common { pub task: f64, pub hold: f64, pub preserve: f64, pub uncertainty: f64, pub losses: f64 }
+/// Варианты решения для игрока (`commander/variants.rs`): черта командующего без профиля, общие варианты
+/// «продолжать», «перейти к обороне», «перенести главный удар».
+#[derive(Clone, Debug)]
+pub struct VariantRules { pub neutral_trait: f64, pub cont: Common, pub hold: Common, pub shift: Common }
 /// Цикл решения командующего, ч: фронт, армия, высшее командование.
 #[derive(Clone, Debug)]
 pub struct Cycle { pub front: u32, pub army: u32, pub high: u32 }
@@ -87,8 +94,17 @@ pub struct CommanderRules {
     pub objectives: Vec<(String, LngLat)>,
     /// Штабы, чьи резервы — резерв верхней инстанции (ОКВ): их дивизии она перебрасывает к угрожаемой армии.
     pub okw_reserve_hqs: Vec<String>,
+    /// Варианты решения для игрока.
+    pub variants: VariantRules,
     /// Узел `commanders` после поправок как есть: пределы и источники чисел для хода.
     pub raw: Value,
+}
+
+impl Profile {
+    /// Командующий штабом без профиля: мотивы равны (по 1/7), черты — `t` (середина шкалы).
+    pub fn neutral(id: &str, t: f64) -> Profile {
+        Profile { id: id.to_string(), name: id.to_string(), hqs: vec![id.to_string()], traits: Traits([t; 5]), motives: Motives([1.0 / 7.0; 7]), rival: None, objective: None }
+    }
 }
 
 impl CommanderRules {
@@ -155,6 +171,14 @@ impl CommanderRules {
             lookahead_hours: hours("lookaheadHours")?,
             mind_margin: n("mindMargin")?,
             objectives,
+            variants: {
+                let common = |k: &str, hold: bool| -> Result<Common, String> {
+                    let at = |f: &str| n(&format!("variants.{k}.{f}"));
+                    let opt = |f: &str| if c.get("variants").and_then(|v| v.get(k)).and_then(|v| v.get(f)).is_some() { at(f) } else { Ok(0.0) };
+                    Ok(Common { task: at("task")?, hold: if hold { at("hold")? } else { 0.0 }, preserve: opt("preserve")?, uncertainty: at("uncertainty")?, losses: at("losses")? })
+                };
+                VariantRules { neutral_trait: n("variants.neutralTrait")?, cont: common("continue", false)?, hold: common("hold", true)?, shift: common("shift", false)? }
+            },
             okw_reserve_hqs: c.get("okwReserve").and_then(|o| o.get("hqs")).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()).unwrap_or_default(),
             raw: c.clone(),
         })

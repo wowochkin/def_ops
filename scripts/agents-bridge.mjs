@@ -83,6 +83,9 @@ if (process.argv.includes('--check')) {
     const g1 = await core.call('game_turn', { orders: [], hours: 1, command: [{ op: 'take', hq: 'su_1bf' }] });
     if (g1.game.commandErrors.length) throw new Error(g1.game.commandErrors.join('; '));
     if (!g1.intent?.some((h) => h.hq === 'su_1bf' && h.changes.some((c) => c.status === 'own'))) throw new Error('взятый штаб не снят с истории');
+    // варианты по правилам: всем действующим подчинённым, «продолжать» есть всегда
+    const vs = await core.call('game_variants', { hq: 'su_1bf', n: 3 });
+    if (!Array.isArray(vs) || !vs.length || !vs.some((v) => v.kind === 'continue') || !vs.every((v) => v.orders.length && v.orders.every((o) => o.right.length >= 2 && o.left.length >= 2))) throw new Error('варианты по правилам неполны');
     console.log('ok');
   } finally { core.stop(); }
 }

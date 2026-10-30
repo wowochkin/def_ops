@@ -246,6 +246,12 @@ pub mod commands {
     pub fn game_permit(hq: String, yes: bool) -> Result<(), String> {
         between(agents_core::game::CommandOp::Permit { hq, yes })
     }
+    /// Варианты решения по правилам для штаба `hq` стороны игрока (до `n`, 1…3): задачи, полосы и оси всем
+    /// действующим подчинённым. Мир не меняется, в журнал хода не идёт.
+    #[tauri::command]
+    pub fn game_variants(hq: String, n: usize) -> Result<serde_json::Value, String> {
+        GAME.lock().map_err(|e| e.to_string())?.as_ref().ok_or("игра не начата")?.variants(&hq, n)
+    }
     #[tauri::command]
     pub fn game_release(id: String) -> Result<(), String> {
         between(agents_core::game::CommandOp::Release { id })

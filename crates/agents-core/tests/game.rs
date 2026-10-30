@@ -1067,3 +1067,105 @@ fn petition_refused_when_player_is_top_de() {
     let e = g.petition("de_hgr_weichsel", "de_hgr_mitte", &[[14.0, 52.0], [14.5, 52.0]], "").unwrap_err();
     assert!(e.contains("ОКХ ведёте вы сами") && e.contains("группам армий"), "{e}");
 }
+
+// ---------- этап 4: варианты решения по правилам (варианты командующих) ----------
+
+/// Получатели приказов варианта.
+fn variant_to(v: &serde_json::Value) -> std::collections::BTreeSet<String> {
+    v["orders"].as_array().expect("приказы").iter().map(|o| o["to"].as_str().expect("to").to_string()).collect()
+}
+/// Действующие подчинённые штаба — id.
+fn active_ids(g: &Game, hq: &str) -> std::collections::BTreeSet<String> {
+    let (hqs, divs) = agents_core::command::control::active_subs(&g.sim, hix(g, hq) as u32);
+    hqs.iter().map(|&h| g.sim.world.hqs[h as usize].id.clone()).chain(divs.iter().map(|&i| g.sim.world.divisions[i as usize].id.clone())).collect()
+}
+
+/// Варианты фронта: 2–3 различных вида, у каждого — приказ каждому действующему подчинённому с осью и полосой;
+/// «продолжать» есть всегда.
+#[test]
+fn variants_cover_all_subs() {
+    let g = petition_game(Side::Su, "su_1bf");
+    let v = g.variants("su_1bf", 3).expect("варианты");
+    let v = v.as_array().expect("список");
+    assert!((2..=3).contains(&v.len()), "{}", v.len());
+    let kinds: std::collections::BTreeSet<&str> = v.iter().map(|x| x["kind"].as_str().unwrap()).collect();
+    assert_eq!(kinds.len(), v.len(), "виды различны");
+    assert!(kinds.contains("continue"), "{kinds:?}");
+    let subs = active_ids(&g, "su_1bf");
+    assert!(!subs.is_empty());
+    for x in v {
+        assert_eq!(variant_to(x), subs, "{}", x["kind"]);
+        assert!(x["label"].as_str().is_some_and(|s| !s.is_empty()) && x["rule"].as_str().is_some() && x["score"].is_number());
+        for o in x["orders"].as_array().unwrap() {
+            assert!(o["right"].as_array().unwrap().len() >= 2 && o["left"].as_array().unwrap().len() >= 2, "{} {}", x["kind"], o["to"]);
+            assert_eq!(o["axis"].as_array().unwrap().len(), 2, "{} {}", x["kind"], o["to"]);
+            assert!(o["task"].is_string() && o["form"].is_string() && o["commit"].is_boolean());
+        }
+    }
+}
+
+/// Варианты мира не меняют.
+#[test]
+fn variants_read_only() {
+    let g = petition_game(Side::Su, "su_1bf");
+    let before = g.sim.digest();
+    g.variants("su_1bf", 3).expect("варианты");
+    assert_eq!(g.sim.digest(), before);
+}
+
+/// Выбывшему подчинённому вариантов и приказов нет (Review Focus 3).
+#[test]
+fn variants_destroyed_sub_absent() {
+    let mut g = petition_game(Side::Su, "su_1bf");
+    let a = hix(&g, "su_3ua") as u32;
+    let under = |sim: &agents_core::world::Sim, mut k: u32| { for _ in 0..8 { if k == a { return true; } match sim.world.hqs[k as usize].parent { Some(p) => k = p, None => return false } } false };
+    let ds: Vec<usize> = (0..g.sim.world.divisions.len()).filter(|&i| under(&g.sim, g.sim.world.divisions[i].hq)).collect();
+    assert!(!ds.is_empty());
+    for i in ds { g.sim.world.divisions[i].state = agents_core::model::State::Destroyed; }
+    let v = g.variants("su_1bf", 3).expect("варианты");
+    for x in v.as_array().unwrap() { assert!(!variant_to(x).contains("su_3ua"), "{}", x["kind"]); }
+}
+
+/// Варианты армии — приказы её корпусам.
+#[test]
+fn variants_army_level() {
+    let g = petition_game(Side::Su, "su_1bf");
+    let v = g.variants("su_8gva", 2).expect("варианты");
+    let v = v.as_array().unwrap();
+    assert!(v.len() >= 2, "{}", v.len());
+    let subs = active_ids(&g, "su_8gva");
+    for x in v { assert_eq!(variant_to(x), subs); }
+}
+
+/// Верхняя инстанция в режиме штабов-агентов: приказы фронтам стороны.
+#[test]
+fn variants_agents_mode_top() {
+    let g = seelow_game(Mode::Agents, 0);
+    let v = g.variants("su_stavka", 1).expect("варианты");
+    let v = v.as_array().unwrap();
+    assert_eq!(v.len(), 1);
+    let subs = active_ids(&g, "su_stavka");
+    assert!(subs.contains("su_1bf"));
+    assert_eq!(variant_to(&v[0]), subs);
+}
+
+/// Игрок за немецкую сторону: варианты группы армий — приказы её армиям (Review Focus 5).
+#[test]
+fn variants_de() {
+    let g = petition_game(Side::De, "de_hgr_weichsel");
+    let v = g.variants("de_hgr_weichsel", 3).expect("варианты");
+    let v = v.as_array().unwrap();
+    assert!(!v.is_empty());
+    let subs = active_ids(&g, "de_hgr_weichsel");
+    assert!(!subs.is_empty());
+    for x in v { assert_eq!(variant_to(x), subs, "{}", x["kind"]); }
+}
+
+/// Чужой или несуществующий штаб — ошибка.
+#[test]
+fn variants_bad_hq() {
+    let g = petition_game(Side::Su, "su_1bf");
+    let e = g.variants("de_9a", 1).unwrap_err();
+    assert!(e.contains("нет штаба"), "{e}");
+    assert!(g.variants("нет_такого", 1).unwrap_err().contains("нет штаба"));
+}

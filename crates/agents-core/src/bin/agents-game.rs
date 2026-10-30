@@ -85,6 +85,11 @@ fn main() {
             "game_historical" => between(&mut game, CommandOp::Historical { id: a["id"].as_str().unwrap_or("").into() }),
             "game_take" => between(&mut game, CommandOp::Take { hq: a["hq"].as_str().unwrap_or("").into() }),
             "game_permit" => between(&mut game, CommandOp::Permit { hq: a["hq"].as_str().unwrap_or("").into(), yes: a["yes"].as_bool().unwrap_or(false) }),
+            // варианты решения по правилам для штаба игрока: чтение, мир не меняется, в журнал хода не идёт
+            "game_variants" => {
+                let g = game.as_ref().ok_or("игра не начата")?;
+                g.variants(a["hq"].as_str().unwrap_or(""), a["n"].as_u64().unwrap_or(3) as usize)
+            }
             "game_release" => between(&mut game, CommandOp::Release { id: a["id"].as_str().unwrap_or("").into() }),
             // возврат к ходу keep + 1 (оставить keep сыгранных ходов); команды идут по очереди — после хода, не во время
             "game_rewind" => {
