@@ -12,6 +12,8 @@
 //! Агентная модель (дивизии) считается в самом приложении — команды crates/agents-tauri (run_scenario и др.), их
 //! вызывает «Переигровка» редактора. Данные модели (packages/sim/data): в разработке — из репозитория, в собранном
 //! приложении — из ресурсов (data/).
+//!
+//! Выставочный стенд (expo.rs): окна видов на мониторах, их охрана от закрытия и выхода, опрос мониторов.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -20,6 +22,8 @@ use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use tauri::{Manager, RunEvent};
+
+mod expo;
 
 /// Процесс сервисов: остановить при выходе.
 struct Services(Mutex<Option<Child>>);
@@ -92,6 +96,8 @@ fn main() {
     tauri::Builder::default()
         .manage(Services(Mutex::new(None)))
         .manage(Ready(Mutex::new(None)))
+        .manage(expo::Expo::default())
+        .on_window_event(expo::on_window_event)
         .on_page_load(|webview, payload| {
             // страница запуска — из ресурсов приложения (tauri://localhost, на Windows — http://tauri.localhost)
             let u = payload.url();
@@ -105,7 +111,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
             agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release, agents_tauri::commands::game_permit, agents_tauri::commands::game_rewind, agents_tauri::commands::game_variants,
-            expo_settings_read, expo_settings_write
+            expo_settings_read, expo_settings_write,
+            expo::expo_monitors, expo::expo_open, expo::expo_close_all, expo::expo_set_guard
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -142,6 +149,7 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("приложение не собралось")
         .run(|app, ev| {
+            expo::on_run_event(app, &ev);
             if let RunEvent::Exit = ev {
                 if let Some(mut c) = app.state::<Services>().0.lock().unwrap().take() {
                     drop(c.stdin.take()); // закрыть вход — запускатель остановит сервисы

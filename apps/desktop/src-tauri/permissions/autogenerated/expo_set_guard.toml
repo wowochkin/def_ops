@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-set-guard"
+description = "Enables the expo_set_guard command without any pre-configured scope."
+commands.allow = ["expo_set_guard"]
+
+[[permission]]
+identifier = "deny-expo-set-guard"
+description = "Denies the expo_set_guard command without any pre-configured scope."
+commands.deny = ["expo_set_guard"]

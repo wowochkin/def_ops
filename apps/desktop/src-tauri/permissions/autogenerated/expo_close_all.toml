@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-close-all"
+description = "Enables the expo_close_all command without any pre-configured scope."
+commands.allow = ["expo_close_all"]
+
+[[permission]]
+identifier = "deny-expo-close-all"
+description = "Denies the expo_close_all command without any pre-configured scope."
+commands.deny = ["expo_close_all"]

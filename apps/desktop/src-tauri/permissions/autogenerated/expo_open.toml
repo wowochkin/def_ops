@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-open"
+description = "Enables the expo_open command without any pre-configured scope."
+commands.allow = ["expo_open"]
+
+[[permission]]
+identifier = "deny-expo-open"
+description = "Denies the expo_open command without any pre-configured scope."
+commands.deny = ["expo_open"]
