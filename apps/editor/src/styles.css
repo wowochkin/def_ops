@@ -530,7 +530,8 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .ai-chip.thinking i { background: #d4a52c; animation: pulse 1.2s ease-in-out infinite; }
 .ai-chip.done i { background: #4c9a5a; } .ai-chip.error i { background: var(--danger); } .ai-chip.error { color: var(--danger); }
 @keyframes pulse { 50% { opacity: .3; } }
-.cmd-tabs { display: flex; padding: 0 10px; border-bottom: 1px solid var(--line); gap: 2px; overflow-x: auto; scrollbar-width: none; }
+/* вкладки не прокручиваются вбок: не поместились — переносятся второй строкой (все видны и достижимы щелчком) */
+.cmd-tabs { display: flex; flex-wrap: wrap; padding: 0 10px; border-bottom: 1px solid var(--line); column-gap: 2px; }
 .cmd-tabs button { border: 0; background: none; border-radius: 0; padding: 9px 6px 8px; font-size: 12.5px; color: #6f6b62; border-bottom: 2px solid transparent; white-space: nowrap; }
 .cmd-tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 .cmd-tabs button:last-child { margin-left: auto; color: #8c8577; }
@@ -824,7 +825,6 @@ button.tr-turn:disabled { opacity: .55; cursor: default; }
   .replay.cmd .adv-nav { max-height: 55%; }
   .replay.cmd .legend, .replay.cmd .map-dock { display: none; }
   .replay.cmd .player { grid-template-columns: 1fr; gap: 6px; padding: 8px 10px; left: 8px; right: 8px; bottom: 8px; }
-  .cmd-tabs { overflow-x: auto; }
 }
 @media (max-width: 760px) {
   .replay:not(.cmd) { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }

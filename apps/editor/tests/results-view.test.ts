@@ -116,6 +116,15 @@ describe('итоги: сравнение с историей и без вмеш�
     expect(find(rows, 'divisions').baseline).toEqual({ kind: 'num', value: 3, unit: '' });
   });
 
+  it('tempo over the same days in a 1-day game', () => {
+    // игра — первые сутки (70 → 64), история — на всю операцию (70 → 60 → 40): темп истории — за те же сутки (10), не 15
+    const g1: OperationSummary = { ...game, upTo: 24, over: false, distance: { days: ['1945-04-16', '1945-04-17', '1945-04-18'], rows: [{ hq: 'su_1bf', name: '1-й Белорусский фронт', game: [70, 64, null], history: [70, 60, 40] }] } };
+    const t = find(compareRows(g1, null, 'su'), 'tempo-su_1bf');
+    expect(t.game).toEqual({ kind: 'num', value: 6, unit: 'км/сут' });
+    expect(t.history).toEqual({ kind: 'num', value: 10, unit: 'км/сут' });
+    expect(t.vsHistory).toEqual({ tone: 'worse', text: 'на 40 % меньше' });
+  });
+
   it('compare rows for de', () => {
     const rows = compareRows(game, null, 'de');
     // советское событие раньше — для немцев хуже; не случилось — лучше; немецкое раньше — лучше

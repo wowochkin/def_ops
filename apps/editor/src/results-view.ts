@@ -217,8 +217,10 @@ export function compareRows(game: OperationSummary, full: OperationSummary | nul
   for (const f of game.distance?.rows ?? []) {
     const bf = baseline?.distance?.rows.find((x) => x.hq === f.hq);
     const t = (v: (number | null)[] | undefined, upTo: number): Cell => { const x = v && tempoOf(v, upTo); return x == null ? { kind: 'none', why: 'нет данных' } : num(x, 'км/сут'); };
-    const histUpTo = 24 * (f.history.length - 1);
-    const tg = t(f.game, game.upTo), th = t(f.history, histUpTo), tb = baseline ? t(bf?.game, baseline.upTo) : NO_BASE;
+    // история — за те же сутки, что посчитаны в игре (в идущей игре — не за всю операцию)
+    const gl = lastOf(f.game, game.upTo);
+    const th = gl ? t(f.history.slice(0, gl.i + 1), game.upTo) : t(f.history, 24 * (f.history.length - 1));
+    const tg = t(f.game, game.upTo), tb = baseline ? t(bf?.game, baseline.upTo) : NO_BASE;
     rows.push({ id: `tempo-${f.hq}`, title: `${f.name}: темп, км/сут`, game: tg, history: th.kind === 'none' ? NO_HIST : th, baseline: tb, vsHistory: numDiff(tg, th, su, 'истории'), vsBaseline: numDiff(tg, tb, su, '') });
     const last = lastOf(f.game, game.upTo);
     const dg: Cell = last ? num(f.game[last.i]!, 'км') : { kind: 'none', why: 'нет данных' };
