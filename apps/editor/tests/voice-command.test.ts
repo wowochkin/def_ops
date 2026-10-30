@@ -12,7 +12,7 @@ import {
 } from '../src/voice/actions/command';
 import { stopReading } from '../src/voice/dictation';
 import { parseTurn, releaseTurn, turnActions, type TurnDeps } from '../src/voice/actions/turn';
-import { spokenNumber } from '../src/voice/answers';
+import { findLine, pickByName, spokenNumber } from '../src/voice/answers';
 import { legendFor, shownLegend } from '../src/map-legend';
 import { enemyReport, intelReport, journalDayText, situationReport, unitReport, whereText } from '../src/voice/report';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
@@ -682,6 +682,79 @@ describe('возврат к ходу и ветви голосом', () => {
     offs.forEach((o) => o()); offs = [];
     td({ lines: [LINES[0]] });
     expect(await getAction('command.branches.show')!.run(undefined)).toBe('Ветвей нет: игра идёт одной линией.');
+  });
+});
+
+describe('ветви с похожими названиями', () => {
+  // имена развилок: ход 1, 5, 12 и повторы того же хода и часа — «… — 2»
+  const N1 = 'ветвь от хода 1 (17 апреля, 05:00)', N5 = 'ветвь от хода 5 (17 апреля, 05:00)', N5b = `${N5} — 2`;
+  const N12 = 'ветвь от хода 12 (17 апреля, 05:00)', N12b = `${N12} — 2`;
+  const LS = [
+    { id: null, name: 'основная линия', turns: 14, from: null, current: true },
+    { id: 'b1', name: N1, turns: 3, from: 1, current: false },
+    { id: 'b5', name: N5, turns: 6, from: 5, current: false },
+    { id: 'b5b', name: N5b, turns: 7, from: 5, current: false },
+    { id: 'b12', name: N12, turns: 13, from: 12, current: false },
+    { id: 'b12b', name: N12b, turns: 15, from: 12, current: false },
+  ];
+  const REC = { version: 1, scenario: 'berlin-1945-tasks', takeover: '1945-04-16T05:00', turns: Array.from({ length: 14 }, (_, i) => ({ time: `1945-04-${16 + i}T05:00`, orders: [], actions: [] })) } as unknown as GameRecord;
+  function td() {
+    const d = {
+      view: view(), prev: null, busy: null, blocked: null, enemy: 'llm', ai: { state: 'off' }, aiTurns: [], record: REC,
+      drafts: {}, acts: [], decision: { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' }, plan: null, planN: 2,
+      sendTurn: vi.fn(), retryAi: vi.fn(), skipAi: vi.fn(), setTab: vi.fn(), setUmpirePart: vi.fn(), showMissing: vi.fn(), notice: vi.fn(),
+      review: { open: false, ctl: null, show: vi.fn() }, journal: () => ({ name: 'j.md', text: '' }), gameRecord: () => null,
+      lines: LS, branches: { open: false, show: vi.fn() },
+      rewind: vi.fn(), switchBranch: vi.fn(async (id: string) => ({ ok: true as const, name: LS.find((l) => l.id === id)!.name, turns: 1 })),
+      deleteBranch: vi.fn(async () => null),
+    } as unknown as TurnDeps;
+    const get = () => d;
+    reg(turnActions(get));
+    offs.push(() => releaseTurn(get));
+    return d;
+  }
+  it('pickByName: полное название — точно, а не по словам («— 2», однозначный номер хода)', () => {
+    const names = LS.map((l) => l.name);
+    expect(pickByName(N12b, names)).toEqual([5]);
+    expect(pickByName(N12, names)).toEqual([4]);
+    expect(pickByName(N1, names)).toEqual([1]);
+    expect(pickByName(N5.toUpperCase(), names)).toEqual([2]);
+    expect(findLine('', LS, 'b5b').map((l) => l.id)).toEqual(['b5b']);
+  });
+  it('удалить ветвь: кнопка (id) и полное название — ровно та ветвь', async () => {
+    const d = td();
+    const del = getAction('command.branch.delete')!;
+    expect(del.confirm!({ id: 'b12b' })).toBe(`Удалить ветвь «${N12b}»? Её ходы пропадут.`);
+    expect(await del.run({ id: 'b12b' })).toBe(`Ветвь «${N12b}» удалена.`);
+    expect(d.deleteBranch).toHaveBeenLastCalledWith('b12b');
+    expect(await del.run({ name: N12b })).toBe(`Ветвь «${N12b}» удалена.`);
+    expect(d.deleteBranch).toHaveBeenLastCalledWith('b12b');
+    expect(await del.run({ name: N12 })).toBe(`Ветвь «${N12}» удалена.`);
+    expect(d.deleteBranch).toHaveBeenLastCalledWith('b12');
+    expect(await del.run({ name: N1 })).toBe(`Ветвь «${N1}» удалена.`);
+    expect(d.deleteBranch).toHaveBeenLastCalledWith('b1');
+  });
+  it('перейти на ветвь: кнопка (id) и полное название — ровно та ветвь', async () => {
+    const d = td();
+    const sw = getAction('command.branch.switch')!;
+    expect(sw.check!({ id: 'b5b' })).toBe(true);
+    await sw.run({ id: 'b5b' });
+    expect(d.switchBranch).toHaveBeenLastCalledWith('b5b');
+    await sw.run({ name: N5 });
+    expect(d.switchBranch).toHaveBeenLastCalledWith('b5');
+    await sw.run({ name: N5b });
+    expect(d.switchBranch).toHaveBeenLastCalledWith('b5b');
+  });
+  it('продолжить игру с ветви: кнопка (id) и полное название — ровно та ветвь', async () => {
+    const d = { catalog: [], scenario: 'berlin-1945-tasks', busy: null, game: false, calc: vi.fn(), result: null, time: null, takeAt: (x: string) => x, setTime: vi.fn(),
+      openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: { title: 'Берлинская операция, 16.04–2.05.1945', lines: LS }, begin: vi.fn(), continueGame: vi.fn(async () => undefined), stop: vi.fn(), discardSaved: vi.fn() } as unknown as ReplayDeps;
+    reg(replayActions(() => d));
+    expect(await getAction('replay.continue')!.run({ id: 'b12b' })).toBe(`Продолжаю игру: Берлинская операция, ${N12b}.`);
+    expect(d.continueGame).toHaveBeenLastCalledWith('b12b');
+    await getAction('replay.continue')!.run({ branch: N12 });
+    expect(d.continueGame).toHaveBeenLastCalledWith('b12');
+    await getAction('replay.continue')!.run({ branch: N1 });
+    expect(d.continueGame).toHaveBeenLastCalledWith('b1');
   });
 });
 

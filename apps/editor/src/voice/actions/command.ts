@@ -390,11 +390,15 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     if (d.game) return 'идёт игра. Сначала выйдите из неё: «Штаб, выйди из игры»';
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
   };
-  /** Линия незавершённой игры по названию: не названа — null (текущая); не нашлась или неоднозначна — что сказать. */
-  const lineOf = (name?: string) => {
-    if (!name?.trim()) return null;
+  /**
+   * Линия незавершённой игры по коду (кнопка «Продолжить» у ветви) или по названию: не названа — null (текущая); не
+   * нашлась или неоднозначна — что сказать.
+   */
+  const lineOf = (p?: { branch?: string; id?: string }) => {
+    const name = p?.branch;
+    if (!p?.id && !name?.trim()) return null;
     const ls = get().saved?.lines ?? [];
-    const hit = findLine(name, ls);
+    const hit = findLine(name ?? '', ls, p?.id);
     if (!hit.length) return `такой ветви нет. Есть: ${ls.map((l) => `«${l.name}»`).join(', ') || 'только основная линия'}.`;
     if (hit.length > 1) return `какую ветвь: ${hit.slice(0, 3).map((l) => `«${l.name}»`).join(', ')}?`;
     return hit[0];
@@ -456,11 +460,11 @@ export function replayActions(get: () => ReplayDeps): Action[] {
       available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
       run: async () => { get().discardSaved(); return 'Запись незавершённой игры удалена.'; } },
     { section: 'replay', id: 'replay.continue', title: 'Продолжить игру', describe: 'Продолжает сохранённую незавершённую игру; branch — название её ветви («ветвь от хода 5 (…)», «основная линия»; нет — текущая линия).',
-      params: { type: 'object', properties: { branch: { type: 'string' } } }, say: ['штаб, продолжи игру'],
+      params: { type: 'object', properties: { branch: { type: 'string' }, id: { type: 'string' } } }, say: ['штаб, продолжи игру'],
       available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
-      check: (p?: { branch?: string }) => { const r = lineOf(p?.branch); return typeof r === 'string' ? r : true; },
-      run: async (p?: { branch?: string }) => {
-        const s = get().saved!, l = lineOf(p?.branch);
+      check: (p?: { branch?: string; id?: string }) => { const r = lineOf(p); return typeof r === 'string' ? r : true; },
+      run: async (p?: { branch?: string; id?: string }) => {
+        const s = get().saved!, l = lineOf(p);
         if (typeof l === 'string') return `${l.charAt(0).toUpperCase()}${l.slice(1)}`;
         const n = await get().continueGame(l?.id ?? undefined);
         if (n && typeof n === 'object') { const e = n.error.trim().replace(/[.\s]+$/, ''); return `${e.charAt(0).toUpperCase()}${e.slice(1)}.`; }

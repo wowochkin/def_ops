@@ -6,7 +6,7 @@
  * одновременно с человеком по своей обстановке. Посредник видит решения модели и
  * может снять туман войны. Игра сохраняется в браузере после каждого хода.
  */
-import { confirmAsync } from './dialogs';
+import { confirmAsync, IN_APP } from './dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Resizer, usePanelWidth } from './panel-resize';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
@@ -70,7 +70,7 @@ import { speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
-import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines as gameLines, MAIN_LINE, unpackGame, withRecord, type SavedGame } from './game-branches';
+import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines as gameLines, MAIN_LINE, switchReply, unpackGame, withRecord, type SavedGame, type SwitchPending } from './game-branches';
 import { TURN_REFUSAL } from './sim/game-rewind';
 import { ribbonItems } from './turn-ribbon';
 import { TurnRibbon } from './TurnRibbon';
@@ -120,7 +120,7 @@ const capFirst = (x: string) => `${x.charAt(0).toUpperCase()}${x.slice(1).replac
 const WAIT_FAIL = 'поток игры остановился — возврат не выполнен';
 /** Предельное ожидание ответа потока на возврат или переход на ветвь. */
 const REWIND_WAIT_MS = 5 * 60_000;
-type RewindWait = { kind: 'rewind'; resolve: (r: RewindResult) => void } | { kind: 'switch'; resolve: (r: SwitchResult) => void; prev: SavedGame; stale: string[] };
+type RewindWait = { kind: 'rewind'; resolve: (r: RewindResult) => void } | ({ kind: 'switch'; resolve: (r: SwitchResult) => void } & SwitchPending);
 
 const TOGGLES = [
   { key: 'ghosts', title: 'Ист. положения', match: (id: string) => id === 'hist-units' || id === 'hist-marks' || id === 'lvl-op-hist' },
@@ -315,9 +315,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         freshProject();
         const w8 = rewindWait.current?.kind === 'switch' ? rewindWait.current : null;
         if (w8) rewindWait.current = null;
+        // ожидание уже снято (срок, ошибка потока), запись вернули прежней — а поток всё же на ветви: запись снова после перехода
+        const late = w8 ? null : lateSwitch.current;
+        lateSwitch.current = null;
+        const x = w8 ? switchReply(w8, 'switched', false) : late ? switchReply(late, 'switched', true) : null;
         void saveStep(async () => {
+          if (x?.save) {
+            putSaved(x.save);
+            const r = await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: x.save, stale: [] });
+            setNotice(r.error ? capFirst(r.error) : `Переход на ветвь «${x.save.line ?? MAIN_LINE}» всё же выполнен — запись игры на ней.`);
+          }
           // ходы выбранной ветви теперь в записи игры — её прежняя копия в хранилище не нужна
-          for (const k of w8?.stale ?? []) await idbBranchStore.del(k).catch(() => { /* лишняя запись — не потеря */ });
+          for (const k of x?.del ?? []) await idbBranchStore.del(k).catch(() => { /* лишняя запись — не потеря */ });
           w8?.resolve({ ok: true, name: savedRef.current?.line ?? MAIN_LINE, turns: m.turns });
         });
       } else if (m.kind === 'rewind-refused') {
@@ -387,11 +396,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         }
         turnsSeen.current = n;
         const rec = m.record;
+        // поздний ответ на снятый переход без switched: поток остался на прежней линии — запись уже прежняя
+        lateSwitch.current = null;
         // запись — по очереди с развилкой и переходом на ветвь (они меняют сохранённую запись асинхронно)
         void saveStep(async () => {
           // переход на ветвь не удался (запись пришла без switched): сохранённая запись — прежняя
           const w8 = rewindWait.current;
-          if (w8?.kind === 'switch') { rewindWait.current = null; setProgress(null); putSaved(w8.prev); w8.resolve({ ok: false, text: 'ветвь не применена — подробности на экране' }); }
+          if (w8?.kind === 'switch') { rewindWait.current = null; setProgress(null); putSaved(switchReply(w8, 'record', false).save!); w8.resolve({ ok: false, text: 'ветвь не применена — подробности на экране' }); }
           const next = withRecord(savedRef.current, rec, enemyRef.current, titleRef.current, rec.turns.length ? addH(rec.turns[rec.turns.length - 1].time, 0) : rec.takeover);
           putSaved(next);
           // ветви: ходы — в IndexedDB (старая запись с ходами в localStorage переносится при первой записи); сообщение об ошибке — один раз
@@ -426,8 +437,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const chain = useRef<Promise<void>>(Promise.resolve());
   const saveStep = (f: () => Promise<void>) => { chain.current = chain.current.then(f).catch(() => { /* хранилища нет — игра идёт без записи */ }); return chain.current; };
   const rewindWait = useRef<RewindWait | null>(null);
+  /** Переход на ветвь, ожидание которого снято по сроку или ошибке потока: поток может ещё ответить (switchReply). */
+  const lateSwitch = useRef<SwitchPending | null>(null);
   /** Когда поток последний раз что-то прислал (предельное ожидание возврата). */
   const lastBeat = useRef(0);
+  // ход решений штабов в ядре приложения (staff-progress) — тоже знак, что игра жива: поток ждёт ядро и молчит
+  useEffect(() => {
+    if (!IN_APP) return;
+    let off: (() => void) | null = null, live = true;
+    void import('@tauri-apps/api/event').then(({ listen }) => listen('staff-progress', () => { lastBeat.current = Date.now(); }))
+      .then((u) => { if (live) off = u; else u(); }).catch(() => undefined);
+    return () => { live = false; off?.(); };
+  }, []);
   const [branchesOpen, setBranchesOpen] = useState(false);
   /** Проект хода — с чистого листа (возврат, переход на ветвь): как при смене хода, плюс решения пунктов и доклад посредника. */
   const freshProject = () => {
@@ -469,8 +490,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     rewindWait.current = null;
     setProgress(null);
     setNotice(capFirst(text));
-    if (w8.kind === 'switch') { void saveStep(async () => { putSaved(w8.prev); await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: w8.prev, stale: [] }); }); w8.resolve({ ok: false, text }); }
-    else w8.resolve({ ok: false, text });
+    if (w8.kind === 'switch') {
+      // переход уже отдан потоку — он может ещё ответить switched: тогда запись снова после перехода (switchReply)
+      const x = switchReply(w8, 'fail', false);
+      if (x.keep) lateSwitch.current = w8;
+      void saveStep(async () => { putSaved(x.save); await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: x.save!, stale: [] }); });
+      w8.resolve({ ok: false, text });
+    } else w8.resolve({ ok: false, text });
   };
   /** Поток молчит REWIND_WAIT_MS (ни одного сообщения: переход на длинную ветвь шлёт ход за ходом) — отказ. */
   const guard = (w8: RewindWait) => {
@@ -492,7 +518,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     const prev = savedRef.current;
     if (rewindWait.current) { resolve({ ok: false, text: 'идёт возврат к ходу — подождите' }); return; }
     if (!prev) { resolve({ ok: false, text: 'запись игры ещё не сохранена' }); return; }
-    const w8: RewindWait = { kind: 'switch', resolve, prev, stale: [] };
+    const w8: RewindWait = { kind: 'switch', resolve, prev, next: null, stale: [] };
     rewindWait.current = w8;
     guard(w8);
     setProgress('переход на ветвь…');
@@ -500,8 +526,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       try {
         const c = await checkoutBranch(idbBranchStore, prev, id, new Date().toISOString());
         const r = await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: c.game, stale: [] });
-        if (r.error) throw new Error(r.error);
+        if (!r.saved) throw new Error(r.error ?? 'запись игры не сохранилась');
+        // ожидание сняли, пока шла запись (поток упал): переход потоку не отдаётся, следующий шаг очереди вернёт прежнюю запись
+        if (rewindWait.current !== w8) return;
+        if (r.error) setNotice(capFirst(r.error));
         w8.stale = c.stale;
+        w8.next = r.game;
         putSaved(r.game);
         send({ kind: 'switch', turns: r.game.record.turns });
       } catch (e) {
@@ -516,12 +546,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   });
   /** Удалить ветвь: запись игры без неё, затем её ходы. */
   const dropBranch = (id: string) => new Promise<string | null>((resolve) => {
+    // переход на ветвь ещё не закончен (или поток может ответить на снятый) — запись игры может смениться
+    if (rewindWait.current?.kind === 'switch' || lateSwitch.current) { resolve('идёт переход на ветвь — удалить ветвь можно, когда он закончится'); return; }
     void saveStep(async () => {
       const s = savedRef.current;
       if (!s) { resolve('запись игры ещё не сохранена'); return; }
       const r = await deleteBranch(idbBranchStore, localStorage, SAVE_KEY, s, id);
-      if (!r.error) putSaved(r.game); else setNotice(r.error);
-      resolve(r.error);
+      if (r.saved) putSaved(r.game);
+      if (r.error) setNotice(capFirst(r.error));
+      resolve(r.saved ? null : r.error);
     });
   });
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';

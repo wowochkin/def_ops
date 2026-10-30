@@ -164,6 +164,26 @@ export async function checkoutBranch(store: BranchStore, s0: SavedGame, id: stri
   return { game, stale: b.turns ? [] : [keyOf(s, id)] };
 }
 
+/**
+ * Переход на ветвь, отданный потоку игры: prev — запись до перехода, next — после него (записана до того, как переход
+ * отдан потоку; нет — ещё не отдан), stale — ходы выбранной ветви в хранилище (не нужны, когда поток на ветви).
+ */
+export interface SwitchPending { prev: SavedGame; next: SavedGame | null; stale: string[] }
+
+/**
+ * Что сделать с записью игры на ответ потока о переходе (late — ожидание уже снято по сроку или ошибке потока):
+ * - fail — срок вышел или поток упал: запись — prev; переход уже отдан потоку — помнить его (keep): поток может ещё
+ *   ответить. Ходы прежней линии, что checkoutBranch положил в хранилище, не убираются — они понадобятся;
+ * - switched — поток на ветви: запись next (late — её уже сменили на prev, записать снова), ходы ветви (stale) убрать;
+ * - record без switched — поток остался на прежней линии: запись prev (late — она уже prev).
+ * save: null — запись менять не нужно. Так поздний ответ не теряет ни одной линии и запись совпадает с потоком.
+ */
+export function switchReply(w: SwitchPending, ev: 'fail' | 'switched' | 'record', late: boolean): { save: SavedGame | null; del: string[]; keep: boolean } {
+  if (ev === 'fail') return { save: w.prev, del: [], keep: !!w.next };
+  if (ev === 'switched') return { save: late ? w.next : null, del: w.stale, keep: false };
+  return { save: late ? null : w.prev, del: [], keep: false };
+}
+
 /** Убрать ветвь из записи; её ходы (stale) удаляет commitGame после записи игры. */
 export function removeBranch(s: SavedGame, id: string): Change {
   const b = s.branches?.find((x) => x.id === id);
@@ -198,16 +218,19 @@ export function storeGame(st: Pick<Storage, 'setItem'>, key: string, s: SavedGam
 
 /**
  * Записать игру после перемены: ходы ветвей из старой записи (они в ней ещё лежат целиком) сначала уходят в
- * хранилище; ходы, что записи больше не нужны (stale), убираются только после удачной записи.
+ * хранилище; хранилище отказало — запись игры всё равно пишется, ходы ветвей остаются в ней (следующая запись снова
+ * попробует их перенести). Ходы, что записи больше не нужны (stale), убираются только после удачной записи.
+ * saved — запись игры легла; error — что сказать (и при saved: ветви не перенесены).
  */
-export async function commitGame(store: BranchStore, st: Pick<Storage, 'setItem'>, key: string, c: Change): Promise<{ error: string | null; game: SavedGame }> {
-  let game = c.game;
+export async function commitGame(store: BranchStore, st: Pick<Storage, 'setItem'>, key: string, c: Change): Promise<{ error: string | null; game: SavedGame; saved: boolean }> {
+  let game = c.game, moved: string | null = null;
   if (game.branches?.some((b) => b.turns)) {
-    try { game = await migrateBranches(store, game); } catch (e) { return { error: `Ветви не перенесены в хранилище окна: ${(e as Error)?.message ?? e}.`, game: c.game }; }
+    try { game = await migrateBranches(store, game); } catch (e) { moved = String((e as Error)?.message ?? e).replace(/[.\s]+$/, ''); }
   }
   const error = storeGame(st, key, game);
-  if (!error) for (const k of c.stale) await store.del(k).catch(() => { /* осталась лишняя запись — не потеря */ });
-  return { error, game };
+  if (error) return { error, game, saved: false };
+  for (const k of c.stale) await store.del(k).catch(() => { /* осталась лишняя запись — не потеря */ });
+  return { error: moved && `Ветви не перенесены в хранилище окна: ${moved}. Запись игры сохранена, ходы ветвей — в ней; следующая запись попробует перенести их ещё раз.`, game, saved: true };
 }
 
 /** Старая запись: ходы ветвей — в хранилище, в записи остаются сведения. */

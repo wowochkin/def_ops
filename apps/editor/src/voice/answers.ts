@@ -49,9 +49,19 @@ function near(a: string, b: string): boolean {
 /** Слова названия: числа — и словами («14» → «четырнадцать»). */
 const nameWords = (name: string) => norm(name).split(' ').filter(Boolean).flatMap((w) => (/^\d+$/.test(w) ? [w, numberWords(+w)] : [w]));
 
-/** Названия, подходящие к сказанному (номера в списке): каждое сказанное слово есть в названии. Нет слов — пусто. */
+/**
+ * Названия, подходящие к сказанному (номера в списке). Сначала — названное целиком: как написано, затем без регистра
+ * и знаков («ветвь от хода 12 (…) — 2» — не «ветвь от хода 12 (…)»); иначе каждое сказанное слово есть в названии
+ * (однобуквенные слова не в счёт, а числа — в счёт: «хода 1» — не «хода 12»). Нет слов — пусто.
+ */
 export function pickByName(said: string, names: string[]): number[] {
-  const q = norm(said).split(' ').filter((w) => w.length > 1 && !FILLER.has(w));
+  const raw = said.trim();
+  const same = names.indexOf(raw);
+  if (raw && same >= 0) return [same];
+  const full = norm(said);
+  const whole = full ? names.findIndex((x) => norm(x) === full) : -1;
+  if (whole >= 0) return [whole];
+  const q = full.split(' ').filter((w) => (w.length > 1 || /^\d$/.test(w)) && !FILLER.has(w));
   if (!q.length) return [];
   const exact = names.findIndex((x) => norm(x) === q.join(' '));
   if (exact >= 0) return [exact];
@@ -88,12 +98,16 @@ export function spokenNumber(s: string): number | null {
   return ws.length === 1 ? wordNum(ws[0], ONES) : null;
 }
 
-/** Ветвь игры по сказанному: по названию; не вышло — по номеру хода развилки («ветвь от хода второго»). */
-export function findLine<L extends { name: string; from: number | null }>(said: string, ls: L[]): L[] {
-  const q = norm(said);
+/**
+ * Ветвь игры: по коду (кнопки окна — id, без разбора названий); иначе по сказанному — по названию, не вышло — по номеру
+ * хода развилки («ветвь от хода второго»).
+ */
+export function findLine<L extends { id: string | null; name: string; from: number | null }>(said: string, ls: L[], id?: string | null): L[] {
+  if (id) return ls.filter((l) => l.id === id);
+  const q = said;
   const hit = pickByName(q, ls.map((l) => l.name));
   if (hit.length) return hit.map((i) => ls[i]);
-  const m = /(?:от|с) хода (.+)$/.exec(q);
+  const m = /(?:от|с) хода (.+)$/.exec(norm(q));
   const n = m ? spokenNumber(m[1]) : null;
   return n === null ? [] : ls.filter((l) => l.from === n);
 }

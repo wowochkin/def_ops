@@ -29,14 +29,32 @@ export interface UserOperation {
 }
 
 let dbp: Promise<IDBDatabase> | null = null;
+/** База занята другой вкладкой со старой версией — открытие не ждёт её, а отказывает (запись игры не встаёт в очередь навсегда). */
+const BLOCKED = 'база окна занята другой вкладкой приложения — закройте её';
+/**
+ * Открыть базу. Не открылась (ошибка, другая вкладка держит старую версию) — отказ, следующий вызов пробует заново.
+ * Другая вкладка открывает новую версию — своё соединение закрывается (иначе та вкладка ждёт), следующий вызов
+ * откроет базу заново.
+ */
 function db(): Promise<IDBDatabase> {
-  dbp ??= new Promise((res, rej) => {
+  dbp ??= new Promise<IDBDatabase>((res, rej) => {
+    let done = false;
+    const fail = (e: unknown) => { if (done) return; done = true; dbp = null; rej(e); };
     const r = indexedDB.open(DB, VER);
     r.onupgradeneeded = () => { for (const s of STORES) if (!r.result.objectStoreNames.contains(s)) r.result.createObjectStore(s, { keyPath: 'id' }); };
-    r.onsuccess = () => res(r.result);
-    r.onerror = () => rej(r.error);
+    r.onblocked = () => fail(new Error(BLOCKED));
+    r.onsuccess = () => {
+      const d = r.result;
+      // отказали по onblocked, а база потом открылась — соединение не нужно
+      if (done) { d.close(); return; }
+      done = true;
+      d.onversionchange = () => { d.close(); if (dbp === p) dbp = null; };
+      res(d);
+    };
+    r.onerror = () => fail(r.error);
   });
-  return dbp;
+  const p = dbp;
+  return p;
 }
 const req = <T>(r: IDBRequest<T>) => new Promise<T>((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 async function all<T>(s: StoreName): Promise<T[]> { try { return await req((await db()).transaction(s).objectStore(s).getAll()) as T[]; } catch { return []; } }

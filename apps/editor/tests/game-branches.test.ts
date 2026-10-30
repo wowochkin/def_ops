@@ -1,7 +1,7 @@
 // Ветви игры: имена, развилка при возврате, переключение без потери, старые записи, квота хранилища.
 import { describe, expect, it } from 'vitest';
 import type { GameRecord, GameTurn, Order } from '@def-ops/sim';
-import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines, MAIN_LINE, packGame, storeGame, unpackGame, withRecord, type BranchPayload, type BranchStore, type SavedGame } from '../src/game-branches';
+import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines, MAIN_LINE, packGame, QUOTA_TEXT, storeGame, switchReply, unpackGame, withRecord, type BranchPayload, type BranchStore, type SavedGame } from '../src/game-branches';
 
 const order = (f: string): Order => ({ formation: f, task: 'attack', target: { kind: 'point', at: [14, 52] }, issuedAt: '', source: 'human' } as unknown as Order);
 const at = (k: number) => `1945-04-${String(14 + k).padStart(2, '0')}T06:00`;
@@ -93,6 +93,66 @@ describe('checkoutBranch', () => {
   });
 });
 
+describe('switchReply: ответ потока на переход на ветвь', () => {
+  /** Запись игры, как её хранит окно: localStorage + хранилище ходов ветвей. */
+  const window_ = () => {
+    const st = fakeStore();
+    let ls = '';
+    const local = { setItem(_k: string, v: string) { ls = v; } };
+    const commit = (game: SavedGame) => commitGame(st, local, 'k', { game, stale: [] });
+    return { st, local, commit, saved: () => unpackGame(JSON.parse(ls) as SavedGame) };
+  };
+  /** Начало перехода, как в окне: развилка (текущая — 4 хода + 2 своих, ветвь — 7 ходов), выбор ветви, запись. */
+  const begin = async (w: ReturnType<typeof window_>) => {
+    const f = await forkBranch(w.st, game(seven), 5, at(5), seven.slice(4), NOW);
+    const prev: SavedGame = { ...f, record: { ...f.record, turns: [...f.record.turns, turn(5, 'b'), turn(6, 'b')] } };
+    await w.commit(prev);
+    const c = await checkoutBranch(w.st, prev, prev.branches![0].id, NOW);
+    const r = await w.commit(c.game);
+    return { prev, next: r.game, stale: c.stale };
+  };
+  /** Шаг окна: записать что сказано, убрать ненужные ходы. */
+  const apply = async (w: ReturnType<typeof window_>, x: ReturnType<typeof switchReply>) => {
+    if (x.save) await w.commit(x.save);
+    for (const k of x.del) await w.st.del(k);
+  };
+  it('late switched after timeout re-applies the checkout: no line lost', async () => {
+    const w = window_();
+    const p = await begin(w);
+    const fail = switchReply(p, 'fail', false);
+    expect(fail).toMatchObject({ save: p.prev, keep: true });
+    await apply(w, fail);
+    expect(w.saved().line).toBeUndefined(); // запись — прежняя линия
+    // поток всё же перешёл на ветвь: запись — снова после перехода, обе линии целы
+    const late = switchReply(p, 'switched', true);
+    expect(late).toMatchObject({ save: p.next, del: p.stale, keep: false });
+    await apply(w, late);
+    const s = w.saved();
+    expect(JSON.stringify(s.record.turns)).toBe(JSON.stringify(seven));
+    expect(w.st.map.size).toBe(1); // ходы прежней линии; копия ветви убрана
+    const back = await checkoutBranch(w.st, s, s.branches![0].id, NOW);
+    expect(JSON.stringify(back.game.record.turns)).toBe(JSON.stringify(p.prev.record.turns));
+  });
+  it('late record without switched: the old line stays, the chosen branch is still in the store', async () => {
+    const w = window_();
+    const p = await begin(w);
+    await apply(w, switchReply(p, 'fail', false));
+    const late = switchReply(p, 'record', true);
+    expect(late).toEqual({ save: null, del: [], keep: false });
+    const s = w.saved();
+    const c = await checkoutBranch(w.st, s, s.branches![0].id, NOW);
+    expect(JSON.stringify(c.game.record.turns)).toBe(JSON.stringify(seven));
+  });
+  it('в срок: switched — запись уже после перехода, ходы ветви убрать; record без switched — прежняя запись', async () => {
+    const w = window_();
+    const p = await begin(w);
+    expect(switchReply(p, 'switched', false)).toEqual({ save: null, del: p.stale, keep: false });
+    expect(switchReply(p, 'record', false)).toEqual({ save: p.prev, del: [], keep: false });
+    // переход ещё не отдан потоку (записи после перехода нет) — помнить нечего
+    expect(switchReply({ ...p, next: null }, 'fail', false)).toEqual({ save: p.prev, del: [], keep: false });
+  });
+});
+
 describe('deleteBranch', () => {
   it('removes metadata and payload', async () => {
     const st = fakeStore();
@@ -117,6 +177,28 @@ describe('legacy branches', () => {
     expect(st.map.size).toBe(1);
     const c = await checkoutBranch(st, r.game, 'old', NOW);
     expect(JSON.stringify(c.game.record.turns)).toBe(JSON.stringify(seven));
+  });
+});
+
+describe('commitGame: хранилище ветвей отказало', () => {
+  const legacy = (): SavedGame => ({ ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, count: 7, enemy: 'passive', turns: seven }] });
+  const broken = (): BranchStore => ({ put: async () => { throw new Error('IndexedDB недоступна'); }, get: async () => undefined, del: async () => undefined });
+  it('commitGame stores inline turns when migration fails', async () => {
+    let written = '';
+    const r = await commitGame(broken(), { setItem(_k: string, v: string) { written = v; } }, 'k', { game: legacy(), stale: [] });
+    expect(r.saved).toBe(true);
+    expect(JSON.parse(written).branches[0].turns).toHaveLength(7);
+    expect(r.game.branches![0].turns).toHaveLength(7);
+    expect(r.error).toBe('Ветви не перенесены в хранилище окна: IndexedDB недоступна. Запись игры сохранена, ходы ветвей — в ней; следующая запись попробует перенести их ещё раз.');
+  });
+  it('migration fails and localStorage is full — QUOTA_TEXT, nothing saved', async () => {
+    const r = await commitGame(broken(), { setItem() { throw new DOMException('q', 'QuotaExceededError'); } }, 'k', { game: legacy(), stale: [] });
+    expect(r.saved).toBe(false);
+    expect(r.error).toBe(QUOTA_TEXT);
+  });
+  it('удачная запись — saved: true, без ошибки', async () => {
+    const r = await commitGame(fakeStore(), { setItem() { /* ok */ } }, 'k', { game: legacy(), stale: [] });
+    expect(r).toMatchObject({ saved: true, error: null });
   });
 });
 

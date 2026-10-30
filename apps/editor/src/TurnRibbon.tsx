@@ -24,11 +24,13 @@ export function TurnRibbon({ items, lines, busy, open, project, notice }: {
     if (!project) { tap('command.rewind', { turn: n }); return; }
     void confirmAsync(REWIND_OFFER(n), { ok: 'Вернуться', danger: true }).then((ok) => { if (ok) tap('command.rewind.force', { turn: n }); });
   };
-  const switchTo = (name: string) => {
-    if (!project) { tap('command.branch.switch', { name }); return; }
-    void confirmAsync(SWITCH_OFFER(name), { ok: 'Перейти', danger: true }).then((ok) => { if (ok) tap('command.branch.switch.force', { name }); });
+  // кнопки — по коду ветви: названия могут совпадать почти целиком («… — 2»)
+  const switchTo = (l: BranchLine) => {
+    const p = { id: l.id!, name: l.name };
+    if (!project) { tap('command.branch.switch', p); return; }
+    void confirmAsync(SWITCH_OFFER(l.name), { ok: 'Перейти', danger: true }).then((ok) => { if (ok) tap('command.branch.switch.force', p); });
   };
-  const drop = (name: string) => { void confirmAsync(`Удалить ветвь «${name}»? Её ходы пропадут.`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) tap('command.branch.delete', { name }); }); };
+  const drop = (l: BranchLine) => { void confirmAsync(`Удалить ветвь «${l.name}»? Её ходы пропадут.`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) tap('command.branch.delete', { id: l.id!, name: l.name }); }); };
   const why = busy ? `Сейчас нельзя: ${busy.replace(/…$/, '')}` : undefined;
   // текущий ход — в виду (лента прокручивается к концу)
   const strip = useRef<HTMLDivElement>(null);
@@ -59,8 +61,8 @@ export function TurnRibbon({ items, lines, busy, open, project, notice }: {
           <div key={l.id ?? 'cur'} className={`tr-line${l.current ? ' on' : ''}`}>
             <div><b>{l.name}</b><span>ходов: {l.turns}{l.current ? ' · текущая' : l.from ? ` · расходится с ходом ${l.from}` : ''}</span></div>
             {!l.current && <div className="tr-line-b">
-              <button className="primary" data-action="command.branch.switch" disabled={!!busy} title={why} onClick={() => switchTo(l.name)}>Перейти</button>
-              <button className="danger" data-action="command.branch.delete" disabled={!!busy} title={why} onClick={() => drop(l.name)}>Удалить</button>
+              <button className="primary" data-action="command.branch.switch" disabled={!!busy} title={why} onClick={() => switchTo(l)}>Перейти</button>
+              <button className="danger" data-action="command.branch.delete" disabled={!!busy} title={why} onClick={() => drop(l)}>Удалить</button>
             </div>}
           </div>
         ))}

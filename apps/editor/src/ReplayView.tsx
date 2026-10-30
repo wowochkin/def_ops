@@ -561,7 +561,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         try {
           const c = await checkoutBranch(idbBranchStore, s, branch, new Date().toISOString());
           const w = await commitGame(idbBranchStore, localStorage, SAVE_KEY, c);
-          if (w.error) throw new Error(w.error);
+          if (!w.saved) throw new Error(w.error ?? 'запись игры не сохранилась');
+          // ветви не перенесены в хранилище, но запись легла (ходы ветвей — в ней): игра продолжается, причина — на экране
+          if (w.error) setNotice(w.error);
           s = w.game; setSaved(s);
         } catch (e) {
           // на экране — и для мыши: кнопка «Продолжить» у ветви
@@ -602,7 +604,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {(saved.branches?.length ?? 0) > 0 && <div className="rp-lines">
             {gameLines(saved).map((l) => <div key={l.id ?? 'cur'} className={`rp-line${l.current ? ' on' : ''}`}>
               <span><b>{l.name}</b> · ходов: {l.turns}{l.current ? ' · текущая линия' : ''}</span>
-              <ActButton action="replay.continue" params={l.id ? { branch: l.name } : {}}>Продолжить</ActButton>
+              <ActButton action="replay.continue" params={l.id ? { id: l.id, branch: l.name } : {}}>Продолжить</ActButton>
             </div>)}
           </div>}
           {savedErr && <p className="err">{savedErr}</p>}
