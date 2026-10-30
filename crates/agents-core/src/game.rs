@@ -685,13 +685,16 @@ impl Game {
             // ведомый: изъятый через голову или (история как замысел) взятый директивой игрока — у него есть «вернуть»
             .map(|h| serde_json::json!({ "id": w.hqs[h].id, "control": c.control[h], "led": c.led_hq[h] || self.sim.intent.led.get(h) == Some(&true) })).collect();
         let led: Vec<&str> = (0..w.divisions.len()).filter(|&i| c.led_div.get(i).copied().unwrap_or(false) && w.divisions[i].side == self.player).map(|i| w.divisions[i].id.as_str()).collect();
-        let requests: Vec<Value> = c.requests.iter().filter(|r| mine(r.hq as usize))
-            .map(|r| serde_json::json!({ "hq": w.hqs[r.hq as usize].id, "division": w.divisions[r.division as usize].id, "tick": r.tick, "answer": r.answer })).collect();
+        let req = |r: &crate::command::control::Request| serde_json::json!({ "hq": w.hqs[r.hq as usize].id, "division": w.divisions[r.division as usize].id, "tick": r.tick, "answer": r.answer });
+        let requests: Vec<Value> = c.requests.iter().filter(|r| mine(r.hq as usize)).map(req).collect();
+        // запросы противника (журнал посредника): с часом ответа
+        let enemy_requests: Vec<Value> = c.requests.iter().filter(|r| !mine(r.hq as usize))
+            .map(|r| { let mut v = req(r); if r.answer.is_some() { v["answeredAt"] = serde_json::json!(r.answered_at); } v }).collect();
         let top = w.hqs.iter().position(|h| h.side == self.player && h.echelon == crate::model::Echelon::HighCommand);
         let target = |t: Target| match t { Target::Hq(h) => w.hqs[h as usize].id.clone(), Target::Division(i) => w.divisions[i as usize].id.clone() };
         let historical: Vec<Value> = self.sim.historical.iter().filter(|(_, d)| Some(d.from as usize) == top)
             .map(|(at, d)| serde_json::json!({ "id": d.id, "at": at, "to": target(d.to), "task": d.task, "form": d.form, "note": d.note, "issued": self.issued.contains(&d.id) })).collect();
-        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "historical": historical })
+        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "enemyRequests": enemy_requests, "historical": historical })
     }
 }
 

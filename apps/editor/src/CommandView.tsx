@@ -37,7 +37,7 @@ import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
 type AiBatch = { issuer: string | null; done: number; total: number; cur: DraftField };
-import { findHq, formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, historyBackText, ENEMY_TITLE, type CommandOp } from './command-forms';
+import { findHq, formTitle, initialCmds, markFor, placeText, queueOp, MODE_TITLE, overHead, savedGameMode, saveGameMode, defaultEnemy, enemyOptions, fitEnemy, liveEnemyOptions, modeReply, historyBackText, ENEMY_TITLE, umpireApplies, type CommandOp } from './command-forms';
 import type { GameMode } from '@def-ops/sim';
 import { inSector, SectorPicker, withFocus, type Sector } from './Sectors';
 import * as kb from './kb/kb';
@@ -816,6 +816,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       lines.push('**Отданы приказы:**', '', ...(d.orders.length ? d.orders.map((o) => `- ${o}`) : ['- новых приказов нет']), '');
       if (d.actions.length) lines.push('**Распоряжения по тылу, инженерным войскам, резервам:**', '', ...d.actions.map((a) => `- ${a}`), '');
       lines.push('**Донесения за ход:**', '', ...(d.events.length ? d.events.map((x) => `- ${x}`) : ['- существенных событий нет']), '');
+      if (d.enemy || view.enemyLog) lines.push('**Противник (по разведке):**', '', ...(d.enemy?.length ? d.enemy.map((x) => `- ${placeText(x, view.places)}`) : ['- действий противника разведка не обнаружила']), '');
     }
     if (aiTurns.length) {
       lines.push('# Решения штаба противника (для разбора)', '');
@@ -963,7 +964,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}
-            {tab === 'umpire' && <Umpire record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => tap('command.reveal', { on })}
+            {tab === 'umpire' && <Umpire view={view} record={record} ai={ai} turns={aiTurns} current={current} stream={stream} phase={aiPhase} reveal={reveal} setReveal={(on) => tap('command.reveal', { on })}
               enemy={enemy} choices={enemyChoices} setEnemy={(mode) => tap('command.enemyMode', { mode })} llm={llm} part={umpPart} />}
           </>}
         </div>
@@ -1981,15 +1982,35 @@ function Journal({ v }: { v: TurnView }) {
           {d.actions.length > 0 && <><div className="jsub">Тыл, переправы, резервы</div><ul>{d.actions.map((o, i) => <li key={i} className={o.includes('НЕ ИСПОЛНЕНО') ? 'rej' : ''}>{o}</li>)}</ul></>}
           <div className="jsub">Донесения</div>
           {d.events.length ? <ul>{d.events.map((o, i) => <li key={i}>{o}</li>)}</ul> : <p className="muted">существенных событий нет</p>}
+          {(d.enemy || v.enemyLog) && <><div className="jsub">Противник (по разведке)</div>
+            {d.enemy?.length ? <ul className="jenemy">{d.enemy.map((o, i) => <li key={i}>{placeText(o, v.places)}</li>)}</ul> : <p className="muted">действий противника разведка не обнаружила</p>}</>}
         </div>
       ))}
     </div>
   );
 }
 
-function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, enemy, choices, setEnemy, llm, part }: {
+/** Действия противника по ходам (новее сверху): ход — по началу хода в журнале. */
+function EnemyLogList({ v }: { v: TurnView }) {
+  const log = v.enemyLog ?? [];
+  const starts = v.journal.map((d) => d.time.slice(0, 16));
+  const by = new Map<string, typeof log>();
+  for (const e of log) {
+    const k = [...starts].reverse().find((t) => t < e.time.slice(0, 16)) ?? starts[0] ?? e.time;
+    by.set(k, [...(by.get(k) ?? []), e]);
+  }
+  if (!log.length) return <p className="muted">Действий противника пока нет — записи появятся после хода.</p>;
+  return <>{[...by.entries()].reverse().map(([k, l]) => (
+    <div key={k} className="jday">
+      <h4>Ход с {ddmm(k)} {hhmm(k)}</h4>
+      <ul className="jenemy">{l.map((e, i) => <li key={i} data-kind={e.kind}>{placeText(e.text, v.places)}</li>)}</ul>
+    </div>
+  ))}</>;
+}
+
+function Umpire({ view, record, ai, turns, current, stream, phase, reveal, setReveal, enemy, choices, setEnemy, llm, part }: {
   record: GameRecord | null; ai: AiStatus; turns: AiTurn[]; current?: AiTurn; stream: string; phase: string; reveal: boolean; setReveal: (b: boolean) => void;
-  enemy: EnemyMode; choices: EnemyMode[]; setEnemy: (e: EnemyMode) => void; llm: Llm; part: 'enemy' | 'umpire';
+  enemy: EnemyMode; choices: EnemyMode[]; setEnemy: (e: EnemyMode) => void; llm: Llm; part: 'enemy' | 'umpire'; view: TurnView | null;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   // решение штаба противника за ход — раскрыть (голосом прочитать последнее — «как действовал противник»)
@@ -1998,6 +2019,9 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
     run: async (p: { time: string }) => { setOpen((o) => (o === p?.time ? null : p?.time ?? null)); } });
   const list = current && !turns.some((t) => t.time === current.time) ? [current, ...turns] : turns;
   const nUmp = (record?.turns ?? []).filter((t) => t.umpireNote).length;
+  // посредник на модели — только на нынешней модели (его поправки к боям); на агентной бои считает ядро
+  const applies = umpireApplies(view?.engine);
+  const agentEnemy = enemy === 'agents' || enemy === 'intent';
   return (
     <div className="cmd-sec">
       <p className="note warnbox">Посредник видит решения штаба противника и может снять туман войны. Если играете честно — заглядывайте сюда после игры.</p>
@@ -2014,15 +2038,22 @@ function Umpire({ record, ai, turns, current, stream, phase, reveal, setReveal, 
       </div>
       {enemy === 'llm' && <label className="umpire-model">Модель штаба противника и размышление <ModelPicker llm={llm} who="enemy" purpose="штаба противника" />
         {llm.check.state === 'fail' && <span className="err small">LM Studio: {llm.check.error}</span>}</label>}
-      <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
+      {applies === true
+        ? <label className="switch"><input type="checkbox" checked={!!llm.settings.umpire} onChange={(e) => llm.set({ umpire: e.target.checked })} /><span /> Посредник на модели: нюансы к боям по базе знаний</label>
+        : <p className="muted umpire-off">{applies}</p>}
       <label className="switch"><input type="checkbox" checked={llm.settings.stavka !== false} onChange={(e) => llm.set({ stavka: e.target.checked })} /><span /> Модель высшего командования (Ставка, ОКХ): разграничительные линии фронтов и групп армий, когда обстановка разошлась с историей или есть ходатайство</label>
-      <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>
+      {applies === true && <p className="muted umpire-about">Перед каждым ходом модель-посредник смотрит на ожидаемые бои и по справкам базы знаний (доктрина, нормативы, техника) добавляет то, чего правила не учитывают: видимость, взаимодействие родов войск, заграждения, качество обороны. Поправки — множители 0,8–1,25 с обоснованием; видны в журнале боя и записываются в игру.</p>}
       <div className="seg umpire-seg">
-        <ActButton className={part === 'enemy' ? 'on' : ''} action="command.umpire.part" params={{ part: 'enemy' }} data-hl="ump-enemy">Как действовал противник · {list.length}</ActButton>
+        <ActButton className={part === 'enemy' ? 'on' : ''} action="command.umpire.part" params={{ part: 'enemy' }} data-hl="ump-enemy">Как действовал противник · {agentEnemy && view?.enemyLog ? view.enemyLog.length : list.length}</ActButton>
         <ActButton className={part === 'umpire' ? 'on' : ''} action="command.umpire.part" params={{ part: 'umpire' }} data-hl="ump-umpire">Поправки посредника · {nUmp}</ActButton>
       </div>
-      {part === 'umpire' && (nUmp ? <UmpireNotes record={record} /> : <p className="muted">Посредник ещё не работал: включите его выше — поправки появятся со следующего хода.</p>)}
-      {part === 'enemy' && <>
+      {part === 'umpire' && (applies !== true ? <p className="muted">Поправок нет: бои считает ядро агентной модели.</p>
+        : nUmp ? <UmpireNotes record={record} /> : <p className="muted">Посредник ещё не работал: включите его выше — поправки появятся со следующего хода.</p>)}
+      {part === 'enemy' && agentEnemy && view?.enemyLog && <>
+      <p className="muted">Все действия противника по ходам, без тумана войны: документы штабов, решения командующих, смены «по истории / замысел сдвинут / решает сам», запросы на отход и ответы, отходы дивизий. В журнале боевых действий — только то, что видит разведка.</p>
+      <EnemyLogList v={view} />
+      </>}
+      {part === 'enemy' && !(agentEnemy && view?.enemyLog) && <>
       <p className="muted">Решения штаба противника по ходам: оценка, замысел, приказы и распоряжения (откройте ход). Где его войска сейчас — «Показать на карте всех» выше.</p>
       {ai.state === 'thinking' && <div className="ai-live"><div className="jsub">Штаб противника думает над решением на {ddmm(ai.time)} {hhmm(ai.time)}…</div>
         {phase && <div className="ai-phase"><i className="spinner" /> {phase}</div>}<pre>{stream.trimEnd().slice(-1500) || '…'}</pre>

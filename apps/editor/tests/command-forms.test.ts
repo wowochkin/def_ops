@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, historyBackText, liveEnemyOptions, modeReply, releaseAction, resumeEnemy, staffListed, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp } from '../src/command-forms';
+import { controlMark, defaultEnemy, enemyOptions, findHq, fitEnemy, historyBackText, liveEnemyOptions, modeReply, releaseAction, resumeEnemy, staffListed, formTitle, initialCmds, markFor, MODE_TITLE, overHead, placeText, queueOp, umpireApplies } from '../src/command-forms';
 
 describe('формы приказа по ступеням', () => {
   it('советская сторона: директива, через голову — с пометкой; распоряжение — боевое распоряжение', () => {
@@ -164,5 +164,13 @@ describe('противник в ходе игры', () => {
     expect(r.note).toContain('без штаба');
     expect(r.note).toContain('история как замысел');
     expect(r.note).not.toMatch(/passive|script/);
+  });
+});
+
+describe('посредник на модели', () => {
+  it('посредник на модели: настройка — только на нынешней модели, на агентной — объяснение', () => {
+    expect(umpireApplies('army')).toBe(true);
+    expect(umpireApplies(undefined)).toBe(true);
+    expect(umpireApplies('agents')).toMatch(/агентн.*ядро/);
   });
 });

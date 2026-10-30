@@ -17,6 +17,8 @@ export interface TraceCommand {
   hqs: { id: string; control: Control; led: boolean }[];
   led: string[];
   requests: { hq: string; division: string; tick: number; answer: boolean | null }[];
+  /** Запросы на отход штабов противника и ответы на них (answeredAt — час ответа) — для журнала посредника. */
+  enemyRequests?: { hq: string; division: string; tick: number; answer: boolean | null; answeredAt?: number }[];
   historical: { id: string; at: number; to: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean }[];
 }
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
@@ -65,6 +67,105 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
       .map((d) => ({ time: dm(d.time), hq: d.hq, hqName: name.get(d.hq) ?? d.hq, kind: d.kind, to: d.to, text: d.text, rule: d.rule })),
   };
 }
+
+/** Вид документа штаба словами. */
+export const DOC_KIND_RU: Record<string, string> = { directive: 'директива', order: 'боевой приказ', instruction: 'распоряжение', notice: 'извещение', report: 'донесение' };
+const INTENT_RU = { history: 'по истории', shifted: 'замысел сдвинут', own: 'решает сам' } as const;
+
+/** Действие противника за ход (журнал посредника; игроку — то, что видит разведка). */
+export interface EnemyEntry {
+  tick: number; time: string; hq: string;
+  /** Кто действовал: штаб, командующий, дивизия. */
+  who: string;
+  kind: 'document' | 'decision' | 'withdraw' | 'request' | 'answer' | 'intent';
+  text: string;
+  /** Дивизии, к которым запись относится (у штаба — его поддерево): по ним — видно ли разведке. */
+  divisions: string[];
+}
+
+/**
+ * Действия сторон, кроме side, за часы (from, to]: документы штабов, решения командующих, смены «по истории /
+ * сдвинут / сам», запросы на отход и ответы, отходы дивизий — по времени.
+ */
+export function enemyLog(t: AgentGameTrace, side: string, from: number, to: number): EnemyEntry[] {
+  const hq = new Map(t.hqs.map((h) => [h.id, h]));
+  const name = new Map([...t.hqs.map((h) => [h.id, h.name] as const), ...t.divisions.map((d) => [d.id, d.name] as const)]);
+  const nm = (id: string) => name.get(id) ?? id;
+  const enemyHq = (id: string) => { const h = hq.get(id); return h ? h.side !== side : !id.startsWith(`${side}_`); };
+  // поддерево штаба: дивизии, чья цепочка штабов проходит через него
+  const under = new Map<string, string[]>();
+  for (const d of t.divisions) {
+    if (d.side === side) continue;
+    const seen = new Set<string>();
+    for (let h: string | null = d.hq; h && !seen.has(h); h = hq.get(h)?.parent ?? null) { seen.add(h); under.set(h, [...(under.get(h) ?? []), d.id]); }
+  }
+  const sub = (id: string) => under.get(id) ?? [];
+  const at = (tick: number) => addHours(t.start, tick);
+  const inTurn = (tick: number) => tick > from && tick <= to;
+  const out: EnemyEntry[] = [];
+  for (const d of t.documents ?? []) {
+    if (!inTurn(d.tick) || !enemyHq(d.hq)) continue;
+    out.push({ tick: d.tick, time: d.time, hq: d.hq, who: nm(d.hq), kind: 'document', text: `${dm(d.time)} ${nm(d.hq)} · ${DOC_KIND_RU[d.kind] ?? d.kind}: ${d.text}`, divisions: sub(d.hq) });
+  }
+  // приказы штабов, которые документов не пишут (по истории — приказы сценария): из журнала дивизий «получен приказ»,
+  // один приказ нескольким дивизиям — одной записью
+  const writes = new Set((t.documents ?? []).map((d) => d.hq));
+  const idByName = new Map(t.hqs.map((h) => [h.name, h.id]));
+  const divOf = new Map(t.divisions.map((d) => [d.id, d]));
+  const got = new Map<string, EnemyEntry>();
+  for (const e of t.journal) {
+    const d = e.agent ? divOf.get(e.agent) : undefined;
+    const m = d && d.side !== side && inTurn(e.tick) ? /^получен приказ «(.+?)» от штаба «(.+?)»:\s*(.*)$/.exec(e.text) : null;
+    if (!d || !m) continue;
+    const from = idByName.get(m[2]) ?? d.hq;
+    if (writes.has(from) || !enemyHq(from)) continue;
+    const note = m[3].replace(/\s*\[[^\]]*@[^\]]*\]\s*$/, '');
+    const key = `${e.tick}|${from}|${m[1]}|${note}`;
+    const x = got.get(key) ?? { tick: e.tick, time: e.time, hq: from, who: m[2], kind: 'document' as const, text: '', divisions: [] };
+    x.divisions.push(d.id);
+    x.text = `${dm(e.time)} ${m[2]} · приказ «${m[1]}» — ${x.divisions.map(nm).join(', ')}${note ? `: ${note}` : ''}`;
+    got.set(key, x);
+  }
+  out.push(...got.values());
+  for (const c of t.commanders ?? []) {
+    if (!enemyHq(c.hq)) continue;
+    for (const x of c.decisions) {
+      if (!inTurn(x.tick)) continue;
+      const time = at(x.tick);
+      out.push({ tick: x.tick, time, hq: c.hq, who: c.name, kind: 'decision', text: `${dm(time)} ${c.name}: ${x.options[x.chosen]?.label ?? '—'} — ${x.why}`, divisions: sub(c.hq) });
+    }
+  }
+  for (const h of t.intent ?? []) {
+    if (!enemyHq(h.hq)) continue;
+    for (const x of h.changes) {
+      if (!inTurn(x.tick)) continue;
+      const time = at(x.tick);
+      out.push({ tick: x.tick, time, hq: h.hq, who: nm(h.hq), kind: 'intent', text: `${dm(time)} ${nm(h.hq)}: ${INTENT_RU[x.status] ?? x.status}${x.reason ? ` — ${x.reason}` : ''}`, divisions: sub(h.hq) });
+    }
+  }
+  const reqs = (t.command?.enemyRequests ?? []).filter((r) => enemyHq(r.hq));
+  for (const r of reqs) {
+    if (!inTurn(r.tick)) continue;
+    const time = at(r.tick);
+    out.push({ tick: r.tick, time, hq: r.hq, who: nm(r.hq), kind: 'request', text: `${dm(time)} ${nm(r.hq)}: запрос на отход ${nm(r.division)}`, divisions: [r.division] });
+  }
+  for (const r of reqs) {
+    const tick = r.answeredAt ?? r.tick;
+    if (r.answer == null || !inTurn(tick)) continue;
+    const time = at(tick), up = hq.get(r.hq)?.parent ?? r.hq;
+    out.push({ tick, time, hq: r.hq, who: nm(up), kind: 'answer', text: `${dm(time)} ${nm(up)}: ${nm(r.division)} — ${r.answer ? 'отход разрешён' : 'в отходе отказано'}`, divisions: [r.division] });
+  }
+  const div = new Map(t.divisions.map((d) => [d.id, d]));
+  for (const e of t.journal) {
+    const d = e.agent ? div.get(e.agent) : undefined;
+    if (!d || d.side === side || !inTurn(e.tick) || !/→ отступление/.test(e.text)) continue;
+    out.push({ tick: e.tick, time: e.time, hq: d.hq, who: d.name, kind: 'withdraw', text: `${dm(e.time)} ${d.name}: ${e.text.replace(/:?\s*\[[^\]]*@[^\]]*\]\s*$/, '')}`, divisions: [d.id] });
+  }
+  return out.sort((a, b) => a.tick - b.tick);
+}
+
+/** Запись видна игроку: хотя бы одна из её дивизий обнаружена разведкой. */
+export const enemyVisible = (e: EnemyEntry, seen: ReadonlySet<string>): boolean => e.divisions.some((d) => seen.has(d));
 
 /** Команда управления словами (для журнала хода). */
 /** hist — как назвать историческую директиву (срок и получатели); нет — по id. */

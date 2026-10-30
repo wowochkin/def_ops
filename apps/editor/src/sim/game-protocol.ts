@@ -3,7 +3,7 @@ import type { LngLat, MapDocument } from '@def-ops/core';
 import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
 import type { KbRefAnswer, KbRefRequest } from './kb-ref';
-import type { CommandView } from './agents-game';
+import type { CommandView, EnemyEntry } from './agents-game';
 import type { PostContext } from '../command-post';
 
 export type Thinking = 'off' | 'low' | 'medium' | 'high';
@@ -126,6 +126,8 @@ export interface JournalDay {
   decision?: HumanDecision;
   /** Что произошло за ход (донесения). */
   events: string[];
+  /** Действия противника за ход, которые видит разведка (агентная модель, «история как замысел» и штабы-агенты). */
+  enemy?: string[];
 }
 
 export interface Goal { title: string; historical: string; simulated: string | null; days: number | null; at: string | null; place: LngLat | null }
@@ -189,6 +191,8 @@ export interface TurnView {
   reserveGroups: { id: string; name: string; status: 'reserve' | 'arriving'; front: string | null; members: string[] }[];
   /** Командование по ступеням (агентная модель): режим, кто решает за штабы, запросы, исторические директивы, документы. */
   command?: CommandView;
+  /** Действия противника по ходам — все, без тумана войны (вкладка «Посредник»; последние 400). */
+  enemyLog?: EnemyEntry[];
 }
 
 export type AiStatus =

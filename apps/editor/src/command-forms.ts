@@ -175,3 +175,13 @@ export function placeText(text: string, places: { title: string; at: [number, nu
     return d >= 1 ? `${best.title}, ${d} км` : best.title;
   });
 }
+
+/**
+ * Посредник на модели — только где действует: его поправки (множители к боям) принимает расчёт нынешней модели;
+ * на агентной модели бои считает ядро, посредник не вызывается. Строка — почему настройки нет.
+ */
+export function umpireApplies(engine: 'army' | 'agents' | undefined): true | string {
+  return engine === 'agents'
+    ? 'Посредника на модели в этой игре нет: на агентной модели бои считает ядро, поправок к ним оно не принимает.'
+    : true;
+}

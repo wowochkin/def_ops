@@ -8,14 +8,13 @@ import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
 import { controlMark, findHq, MODE_TITLE, placeText, queueOp, releaseAction, staffListed, type CommandOp } from './command-forms';
-import { commandText } from './sim/agents-game';
+import { commandText, DOC_KIND_RU as KIND_RU } from './sim/agents-game';
 import type { LevelId } from './map-level-scale';
 import { postDocs, subtreeHqs } from './post-views';
 
 /** Уровень карты взятого штаба: его подчинённые — крупно. */
 const LEVEL_OF: Record<string, LevelId> = { front: 'front', army: 'army', corps: 'corps' };
 const ECH_RU: Record<string, string> = { high_command: 'верхняя инстанция', front: 'фронт', army: 'армия', corps: 'корпус' };
-const KIND_RU: Record<string, string> = { directive: 'директива', order: 'боевой приказ', instruction: 'распоряжение', notice: 'извещение', report: 'донесение' };
 const TASK_RU: Record<string, string> = { attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'резерв' };
 
 /** Командование по ступеням включено (агентная модель, режим «агенты» или «гибрид»). */

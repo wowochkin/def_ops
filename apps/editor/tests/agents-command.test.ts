@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { commandView, toAgentOrders, type AgentGameTrace } from '../src/sim/agents-game';
+import { commandView, enemyLog, enemyVisible, toAgentOrders, type AgentGameTrace } from '../src/sim/agents-game';
 
 const trace = (command?: unknown): AgentGameTrace => ({
   scenario: 's', name: 'S', start: '1945-04-16T05:00', hours: 0, seed: 1, fields: [], frames: [], journal: [],
@@ -43,6 +43,36 @@ describe('состояние управления в игре на агентн�
   it('форма приказа уходит в ядро', () => {
     const o = toAgentOrders({ theatre: null } as never, { state: { formations: [] } } as never, [{ id: 'o1', formation: 'su_8gva', task: 'defend', issuedAt: '1945-04-16T05:00', source: 'human', form: 'order' }]);
     expect(o[0]).toMatchObject({ hq: 'su_8gva', kind: 'defend', form: 'order' });
+  });
+});
+
+describe('журнал противника в «истории как замысле»', () => {
+  const t = { ...trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
+      enemyRequests: [{ hq: 'de_101ak', division: 'de_d1', tick: 3, answer: true }] }),
+    journal: [{ tick: 4, time: '1945-04-16T09:00', agent: 'de_d1', text: 'оборона → отступление' }],
+    commanders: [{ hq: 'de_101ak', side: 'de', name: 'Буссе', decisions: [{ tick: 3, trigger: 'цикл', chosen: 0, why: 'держать рубеж', options: [{ kind: 'hold', label: 'Держать' }] }] }],
+  } as never;
+  it('документы, решения командующих, отходы, запросы и ответы противника — за ход, по времени', () => {
+    const log = enemyLog(t, 'su', 0, 27);
+    expect(log.map((e) => e.kind)).toEqual(['document', 'decision', 'request', 'answer', 'withdraw']);
+    expect(log.every((e) => e.hq.startsWith('de_'))).toBe(true);
+    expect(log.find((e) => e.kind === 'document')!.divisions).toEqual(['de_d1']);
+  });
+  it('приказы штабов без документов (по истории) — из журнала дивизий, один приказ — одной записью', () => {
+    const j = { ...trace(), divisions: [...trace().divisions, { id: 'de_d2', name: '9. FJD', side: 'de', hq: 'de_101ak', kind: 'rifle', mobility: 'foot', size: 'division', quality: 1 }],
+      journal: [
+        { tick: 5, time: '1945-04-16T10:00', agent: 'de_d1', text: 'получен приказ «наступать» от штаба «CI. AK»: контратака у Зелова [de_d1@1945-04-16T10:00:counterattack]' },
+        { tick: 5, time: '1945-04-16T10:00', agent: 'de_d2', text: 'получен приказ «наступать» от штаба «CI. AK»: контратака у Зелова [de_d2@1945-04-16T10:00:counterattack]' },
+        { tick: 5, time: '1945-04-16T10:00', agent: 'su_d1', text: 'получен приказ «наступать» от штаба «4 гв. ск»: вперёд' },
+      ], documents: [] } as never;
+    const log = enemyLog(j, 'su', 0, 27);
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ kind: 'document', hq: 'de_101ak', divisions: ['de_d1', 'de_d2'], text: '16.04 10:00 CI. AK · приказ «наступать» — 303. ID, 9. FJD: контратака у Зелова' });
+  });
+  it('игроку — только то, что видит разведка; посреднику — всё', () => {
+    const log = enemyLog(t, 'su', 0, 27);
+    expect(log.filter((e) => enemyVisible(e, new Set()))).toEqual([]);
+    expect(log.filter((e) => enemyVisible(e, new Set(['de_d1'])))).toHaveLength(log.length);
   });
 });
 

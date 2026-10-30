@@ -331,6 +331,60 @@ const parts = {
     if (b.km === null || b.km > 15 || (b.center[0] === a.center[0] && b.center[1] === a.center[1])) fail('fly', `«Штабы» → 5 уд. А: ${b.km?.toFixed(1)} км, центр ${b.center}`);
     else ok('fly', `«Штабы» → 5 уд. А (${b.km.toFixed(1)} км от войск, 1:${b.denom})`);
   },
+  /** «Посредник» на агентной модели («история как замысел»): переключателя посредника на модели нет; действия противника — в журнале посредника, в «Журнале» — только видимое разведке. */
+  async umpire() {
+    await page.goto(`${URL_}/#replay`);
+    await page.evaluate(() => localStorage.setItem('def_ops.command.mode', 'intent'));
+    await replayAgents();
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    await at('command.post', { level: 'stavka' });
+    await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+    for (const k of ['assessment', 'intent', 'report']) await page.locator(`[data-hl="field-${k}"] textarea`).fill('Проверка журнала посредника.');
+    const turned = await at('command.turn', {});
+    if (/не готово|Не указана/.test(turned)) return fail('umpire', `ход не начат: ${turned}`);
+    await page.locator('text=/ход 2/').first().waitFor({ timeout: 900000 });
+    await page.waitForTimeout(1500);
+    await page.locator('.cmd-tabs button', { hasText: 'Посредник' }).click();
+    await at('command.umpire.part', { part: 'enemy' });
+    await page.waitForTimeout(500);
+    const sw = await page.locator('.umpire-cfg ~ label.switch', { hasText: 'Посредник на модели' }).count();
+    const why = await page.locator('.umpire-off').allInnerTexts();
+    if (sw || !why.some((t) => /агентной модели бои считает ядро/.test(t))) return fail('umpire', `переключатель: ${sw}, пояснение: ${why}`);
+    ok('umpire', 'переключателя нет на агентной');
+    const all = (await page.locator('.cmd-sec .jenemy li').allInnerTexts()).map((t) => t.trim());
+    const de = all.filter((t) => /·/.test(t));
+    if (!all.length || !de.length) return fail('umpire', `журнал посредника: записей ${all.length}, документов штабов ${de.length}; ${await page.evaluate(() => JSON.stringify({ n: window.__cmdView.enemyLog?.length, j: window.__cmdView.journal.map((d) => d.enemy?.length), e: window.__cmdView.engine }))}`);
+    await page.locator('.umpire-seg').scrollIntoViewIfNeeded();
+    await shot('umpire-intent.jpg');
+    ok('umpire', `противник в журнале посредника (записей ${all.length}, документов ${de.length})`);
+    await page.locator('.cmd-tabs button', { hasText: 'Журнал' }).click();
+    await page.locator('.jday').first().waitFor();
+    const vis = (await page.locator('.jday').first().locator('.jenemy li').allInnerTexts()).map((t) => t.trim());
+    const hasSec = await page.locator('.jday').first().locator('.jsub', { hasText: 'Противник (по разведке)' }).count();
+    if (!hasSec) return fail('umpire', 'в журнале нет раздела «Противник (по разведке)»');
+    const extra = vis.filter((t) => !all.includes(t));
+    if (extra.length) return fail('umpire', `строк журнала нет у посредника: ${extra.slice(0, 2).join(' / ')}`);
+    // каждая видимая запись — о дивизии, которая есть в разведсводке
+    const check = await page.evaluate(() => {
+      const v = window.__cmdView;
+      const seen = new Set(v.intel.map((x) => x.id));
+      const vis = new Set(v.journal.at(-1).enemy ?? []);
+      const turnFrom = v.journal.at(-1).time.slice(0, 16);
+      const log = (v.enemyLog ?? []).filter((e) => e.time.slice(0, 16) > turnFrom);
+      const shown = log.filter((e) => vis.has(e.text));
+      return { bad: shown.filter((e) => !e.divisions.some((d) => seen.has(d))).map((e) => e.text), hidden: log.length - shown.length, shown: shown.length, intel: seen.size };
+    });
+    if (check.bad.length) return fail('umpire', `в журнале строки о необнаруженных: ${check.bad.slice(0, 2).join(' / ')}`);
+    await page.locator('.jday').first().locator('.jsub', { hasText: 'Противник (по разведке)' }).scrollIntoViewIfNeeded();
+    await shot('journal-enemy.jpg');
+    ok('umpire', `журнал — только видимое (показано ${check.shown}, скрыто ${check.hidden}, обнаружено разведкой ${check.intel})`);
+  },
 };
 
 try {

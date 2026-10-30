@@ -918,3 +918,16 @@ fn intent_stavka_take_and_release() {
         assert_eq!(g.sim.intent.hq[k].status, Status::History, "{}", g.sim.world.hqs[k].id);
     }
 }
+
+/// След игры: запросы на отход противника — отдельно от своих (журнал посредника «истории как замысла»).
+#[test]
+fn trace_has_enemy_requests() {
+    use agents_core::game::{Game, Mode};
+    let (sim, meta) = berlin(); // «история как замысел» — на Берлинской операции
+    let mut g = Game::start_mode(sim, meta, 24, Side::Su, &[Side::Su], None, Mode::Intent);
+    g.advance(24);
+    let t = g.trace();
+    assert!(t["command"]["enemyRequests"].is_array(), "запросы противника в следе");
+    assert!(t["command"]["requests"].as_array().unwrap().iter().all(|r| r["hq"].as_str().unwrap().starts_with("su_")), "свои — отдельно");
+    assert!(t["command"]["enemyRequests"].as_array().unwrap().iter().all(|r| r["hq"].as_str().unwrap().starts_with("de_")), "чужие — только противника");
+}
