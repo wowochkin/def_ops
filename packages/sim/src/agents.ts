@@ -99,6 +99,9 @@ function typeOf(side: string, mobility: string): string {
 
 const ECH: Echelon[] = ['front', 'army', 'corps', 'division', 'brigade', 'regiment'];
 
+/** Окружена — отрезана не меньше стольких часов подряд (короткая изоляция на час-другой — не котёл). */
+export const CUT_H = 24;
+
 /** Перестановка, а не ход: больше стольких км за час (быстрее всех на марше — автоколонны, 25 км/ч днём). */
 export const JUMP_KM_H = 30;
 
@@ -179,7 +182,6 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
   // ядра — часов в окружении) не меньше суток, с начала этих суток (короткая изоляция на час-другой — не котёл); штаб —
   // когда так окружена не меньше половины его живых дивизий; уничтожен — все его дивизии
   const journal: SimState['journal'] = [];
-  const CUT_H = 24;
   const parentOf = new Map(defs.map((f) => [f.id, f.parent ?? null]));
   const under = new Map<string, number[]>();
   t.divisions.forEach((d, k) => { for (let p = parentOf.get(d.id), n = 0; p && n < 8; p = parentOf.get(p) ?? null, n++) under.set(p, [...(under.get(p) ?? []), k]); });

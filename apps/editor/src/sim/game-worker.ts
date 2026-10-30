@@ -14,6 +14,9 @@ import {
   addHours, applyActions, prepareTakeover,
   activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, stateDigest, digestMismatch, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameTurn, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
   operationSummary,
+  turnEvents,
+  debriefWindow,
+  type TurnDebrief,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
@@ -840,6 +843,7 @@ function postView() {
     lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
     ...(agents && agentTrace ? { command: commandView(agentTrace, human) ?? undefined, enemyLog: enemyLogAll } : {}),
     ...(agents && agentTrace ? { results: resultsView(agentTrace) } : {}),
+    ...(agents && agentTrace && rec.turns.length > 0 ? { debrief: debriefView(agentTrace) } : {}),
   };
   post({ kind: 'view', view });
 }
@@ -848,6 +852,24 @@ function postView() {
 function resultsView(t: AgentGameTrace): TurnView['results'] {
   try { return operationSummary(agentBase!, t, agentRawHistory ?? { divisions: [] }, history, { upTo: t.frames.length - 1, over: isOver() }); }
   catch (e) { console.warn('итоги игры не посчитаны:', e); return undefined; }
+}
+
+/**
+ * Разбор хода по правилам: окно — последний ход по ходу ядра (не раньше передачи командования), туман — как на карте
+ * (посредник видит всё). Кэш — по числу кадров и посреднику; ошибка — без разбора.
+ */
+let debriefCache: { key: string; d: TurnDebrief } | null = null;
+function debriefView(t: AgentGameTrace): TurnDebrief | undefined {
+  const key = `${t.frames.length}:${t.game.digest}:${reveal}`;
+  if (debriefCache?.key === key) return debriefCache.d;
+  try {
+    const w = debriefWindow(t, agents!.turnHours);
+    const sn = g.snapshots[g.snapshots.length - 1];
+    const f = reveal ? null : fog();
+    const d = turnEvents(agentBase!, t, agentRawHistory ?? { divisions: [] }, history, w.from, w.to, { side: rec.human === 'de' ? 'de' : 'su', ...(f ? { seen: (id: string) => f(id, sn) } : {}), reveal });
+    debriefCache = { key, d };
+    return d;
+  } catch (e) { console.warn('разбор хода не посчитан:', e); return undefined; }
 }
 
 /** Разбор хода на карте: бои хода с местом и зоны влияния сторон на конец и начало хода (с туманом войны, как карта). */

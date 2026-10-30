@@ -1,4 +1,4 @@
-import type { CommandTerms, OperationSummary } from '@def-ops/sim';
+import type { CommandTerms, OperationSummary, TurnDebrief } from '@def-ops/sim';
 import type { LngLat, MapDocument } from '@def-ops/core';
 import type { ActionCheck, AgentGameSpec, CommandOp, GameOutcome, GameRecord, GameTurn, IntelReport, Order, StaffAction, Target, Task, TurnBattle, UnitReport, ZoneGrid } from '@def-ops/sim';
 import type { AiTurn } from '@def-ops/staff-service/live';
@@ -179,6 +179,8 @@ export interface TurnView {
   supplyHours: Record<string, number | null>;
   /** Итоги игры (агентная модель): потери сторон по сыгранным часам (с часами до передачи командования) и исторические. */
   results?: OperationSummary;
+  /** Разбор последнего хода (агентная модель, после первого сыгранного хода): ключевые события по правилам и штабы своей стороны. */
+  debrief?: TurnDebrief;
   rangeHours: number;
   /** Свои переправы: действующие и наводимые; понтонных парков всего. */
   bridges: BridgeView[];
