@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { commandView, enemyLog, enemyVisible, toAgentOrders, type AgentGameTrace } from '../src/sim/agents-game';
+import { commandView, enemyLog, enemyPlayerText, enemyVisible, toAgentOrders, type AgentGameTrace } from '../src/sim/agents-game';
 
 const trace = (command?: unknown): AgentGameTrace => ({
   scenario: 's', name: 'S', start: '1945-04-16T05:00', hours: 0, seed: 1, fields: [], frames: [], journal: [],
@@ -67,12 +67,43 @@ describe('журнал противника в «истории как замы�
       ], documents: [] } as never;
     const log = enemyLog(j, 'su', 0, 27);
     expect(log).toHaveLength(1);
-    expect(log[0]).toMatchObject({ kind: 'document', hq: 'de_101ak', divisions: ['de_d1', 'de_d2'], text: '16.04 10:00 CI. AK · приказ «наступать» — 303. ID, 9. FJD: контратака у Зелова' });
+    expect(log[0]).toMatchObject({ kind: 'order', hq: 'de_101ak', divisions: ['de_d1', 'de_d2'], text: '16.04 10:00 CI. AK · приказ «наступать» — 303. ID, 9. FJD: контратака у Зелова' });
   });
-  it('игроку — только то, что видит разведка; посреднику — всё', () => {
+  it('игроку — только наблюдаемое (отход видимой дивизии); документы, решения, запросы и ответы — только посреднику', () => {
     const log = enemyLog(t, 'su', 0, 27);
     expect(log.filter((e) => enemyVisible(e, new Set()))).toEqual([]);
-    expect(log.filter((e) => enemyVisible(e, new Set(['de_d1'])))).toHaveLength(log.length);
+    expect(log.filter((e) => enemyVisible(e, new Set(['de_d1']))).map((e) => e.kind)).toEqual(['withdraw']);
+  });
+  it('две дивизии одного штаба, видна одна: игроку — только её приказ и отход, без имён невидимой и без документов штаба', () => {
+    const j = { ...trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
+        enemyRequests: [{ hq: 'de_101ak', division: 'de_d2', tick: 6, answer: false, answeredAt: 7 }] }),
+      divisions: [...trace().divisions, { id: 'de_d2', name: '9. FJD', side: 'de', hq: 'de_101ak', kind: 'rifle', mobility: 'foot', size: 'division', quality: 1 }],
+      journal: [
+        { tick: 5, time: '1945-04-16T10:00', agent: 'de_d1', text: 'получен приказ «наступать» от штаба «CI. AK»: контратака у Зелова' },
+        { tick: 5, time: '1945-04-16T10:00', agent: 'de_d2', text: 'получен приказ «наступать» от штаба «CI. AK»: контратака у Зелова' },
+        { tick: 8, time: '1945-04-16T13:00', agent: 'de_d1', text: 'оборона → отступление' },
+        { tick: 8, time: '1945-04-16T13:00', agent: 'de_d2', text: 'оборона → отступление' },
+      ],
+      commanders: [{ hq: 'de_101ak', side: 'de', name: 'Буссе', decisions: [{ tick: 4, trigger: 'цикл', chosen: 0, why: 'держать рубеж', options: [{ kind: 'hold', label: 'Держать' }] }] }],
+    } as never;
+    const log = enemyLog(j, 'su', 0, 27);
+    const seen = new Set(['de_d1']);
+    const player = log.map((e) => enemyPlayerText(e, seen)).filter((x): x is string => x !== null);
+    expect(player).toEqual(['16.04 10:00 303. ID: переходит к задаче «наступать»', '16.04 13:00 303. ID: оборона → отступление']);
+    expect(player.join(' ')).not.toMatch(/9\. FJD|CI\. AK|Буссе|держать рубеж|запрос|отказано/);
+    // посреднику — всё: донесение штаба, решение, приказ обоим получателям, запрос, ответ, оба отхода
+    expect(log.map((e) => e.kind)).toEqual(['document', 'decision', 'order', 'request', 'answer', 'withdraw', 'withdraw']);
+    expect(log.find((e) => e.kind === 'order')!.text).toContain('303. ID, 9. FJD');
+  });
+  it('директивы верховного командования противника — посреднику', () => {
+    const j = { ...trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
+        enemyHistorical: [{ id: 'hitler-1504', at: 2, to: 'de_101ak', task: 'defend', form: 'order', note: 'держать фронт на Одере' }] }),
+      hqs: [...trace().hqs, { id: 'de_hc', name: 'Верховное командование', side: 'de', echelon: 'high_command', parent: null }] } as never;
+    const log = enemyLog(j, 'su', 0, 27).filter((e) => e.hq === 'de_hc');
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ kind: 'decision', divisions: ['de_d1'] });
+    expect(log[0].text).toBe('16.04 07:00 Верховное командование · директива hitler-1504 — CI. AK: оборонять — держать фронт на Одере');
+    expect(enemyPlayerText(log[0], new Set(['de_d1']))).toBeNull();
   });
 });
 

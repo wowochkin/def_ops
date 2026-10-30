@@ -931,3 +931,14 @@ fn trace_has_enemy_requests() {
     assert!(t["command"]["requests"].as_array().unwrap().iter().all(|r| r["hq"].as_str().unwrap().starts_with("su_")), "свои — отдельно");
     assert!(t["command"]["enemyRequests"].as_array().unwrap().iter().all(|r| r["hq"].as_str().unwrap().starts_with("de_")), "чужие — только противника");
 }
+
+/// След игры: директивы верховного командования противника (журнал посредника).
+#[test]
+fn trace_has_enemy_historical() {
+    use agents_core::game::{Game, Mode};
+    let (sim, meta) = berlin();
+    let g = Game::start_mode(sim, meta, 24, Side::Su, &[Side::Su], None, Mode::Intent);
+    let h = g.trace()["command"]["enemyHistorical"].as_array().cloned().expect("директивы противника в следе");
+    assert!(h.iter().any(|d| d["id"] == "hitler-1504"), "директива Гитлера 15.04");
+    assert!(h.iter().all(|d| d["from"].as_str().unwrap().starts_with("de_")));
+}

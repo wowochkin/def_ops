@@ -29,7 +29,7 @@ import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { postPrompt } from '../command-post';
-import { agentEvents, agentGame, bridgesOf, commandText, commandView, enemyLog, enemyVisible, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
+import { agentEvents, agentGame, bridgesOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
 import { topForces } from './review-forces';
@@ -122,11 +122,11 @@ async function agentTurn(orders: Order[], actions: StaffAction[], command: Comma
   ];
   // исполненные команды (неисполненные — в «Команда не исполнена»)
   const ops = command.filter((_, k) => !t.game.commandResults?.[k]).map((c) => `Управление: ${commandText(c, (id) => names.get(id) ?? id, (id) => { const h = t.command?.historical.filter((y) => y.id === id); return h?.length ? `${ddmm(addHours(t.start, h[0].at))} → ${h.map((y) => names.get(y.to) ?? y.to).join(', ')}` : undefined; })}`);
-  // действия противника: посреднику — все, в журнал игрока — что видит разведка (как разведсводка хода)
+  // действия противника: посреднику — все, в журнал игрока — наблюдаемое о дивизиях, которые видит разведка
   const log = enemyLog(t, rec.human, from, t.frames.length - 1);
   enemyLogAll = [...enemyLogAll, ...log].slice(-ENEMY_LOG);
   const seen = new Set(intelReport(ctx, g.state, rec.human).map((x) => x.id));
-  return { events: [...ops, ...bad, ...agentEvents(t, from, t.frames.length - 1, rec.human)], enemy: log.filter((e) => enemyVisible(e, seen)).map((e) => e.text), results: a.results };
+  return { events: [...ops, ...bad, ...agentEvents(t, from, t.frames.length - 1, rec.human)], enemy: log.map((e) => enemyPlayerText(e, seen)).filter((x): x is string => x !== null), results: a.results };
 }
 
 const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;

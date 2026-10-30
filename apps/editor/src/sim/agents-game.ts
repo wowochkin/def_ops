@@ -19,6 +19,8 @@ export interface TraceCommand {
   requests: { hq: string; division: string; tick: number; answer: boolean | null }[];
   /** Запросы на отход штабов противника и ответы на них (answeredAt — час ответа) — для журнала посредника. */
   enemyRequests?: { hq: string; division: string; tick: number; answer: boolean | null; answeredAt?: number }[];
+  /** Директивы верховного командования противника (по истории; одна директива нескольким получателям — строками). */
+  enemyHistorical?: { id: string; at: number; from?: string; to: string; task: string; form: 'order' | 'instruction'; note: string }[];
   historical: { id: string; at: number; to: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean }[];
 }
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
@@ -77,10 +79,14 @@ export interface EnemyEntry {
   tick: number; time: string; hq: string;
   /** Кто действовал: штаб, командующий, дивизия. */
   who: string;
-  kind: 'document' | 'decision' | 'withdraw' | 'request' | 'answer' | 'intent';
+  /** order — приказ, полученный дивизиями (из их журнала); decision — и директивы верховного командования. */
+  kind: 'document' | 'decision' | 'withdraw' | 'request' | 'answer' | 'intent' | 'order';
   text: string;
   /** Дивизии, к которым запись относится (у штаба — его поддерево): по ним — видно ли разведке. */
   divisions: string[];
+  /** Задача приказа словами и имена получателей (kind order) — для текста игроку по видимым получателям. */
+  task?: string;
+  names?: Record<string, string>;
 }
 
 /**
@@ -107,9 +113,8 @@ export function enemyLog(t: AgentGameTrace, side: string, from: number, to: numb
     if (!inTurn(d.tick) || !enemyHq(d.hq)) continue;
     out.push({ tick: d.tick, time: d.time, hq: d.hq, who: nm(d.hq), kind: 'document', text: `${dm(d.time)} ${nm(d.hq)} · ${DOC_KIND_RU[d.kind] ?? d.kind}: ${d.text}`, divisions: sub(d.hq) });
   }
-  // приказы штабов, которые документов не пишут (по истории — приказы сценария): из журнала дивизий «получен приказ»,
-  // один приказ нескольким дивизиям — одной записью
-  const writes = new Set((t.documents ?? []).map((d) => d.hq));
+  // приказы, полученные дивизиями (из их журнала «получен приказ»; у штабов по истории других следов нет) — наблюдаемое
+  // игроку по видимым получателям; один приказ нескольким дивизиям — одной записью
   const idByName = new Map(t.hqs.map((h) => [h.name, h.id]));
   const divOf = new Map(t.divisions.map((d) => [d.id, d]));
   const got = new Map<string, EnemyEntry>();
@@ -117,16 +122,28 @@ export function enemyLog(t: AgentGameTrace, side: string, from: number, to: numb
     const d = e.agent ? divOf.get(e.agent) : undefined;
     const m = d && d.side !== side && inTurn(e.tick) ? /^получен приказ «(.+?)» от штаба «(.+?)»:\s*(.*)$/.exec(e.text) : null;
     if (!d || !m) continue;
-    const from = idByName.get(m[2]) ?? d.hq;
-    if (writes.has(from) || !enemyHq(from)) continue;
+    const issuer = idByName.get(m[2]) ?? d.hq;
+    if (!enemyHq(issuer)) continue;
     const note = m[3].replace(/\s*\[[^\]]*@[^\]]*\]\s*$/, '');
-    const key = `${e.tick}|${from}|${m[1]}|${note}`;
-    const x = got.get(key) ?? { tick: e.tick, time: e.time, hq: from, who: m[2], kind: 'document' as const, text: '', divisions: [] };
+    const key = `${e.tick}|${issuer}|${m[1]}|${note}`;
+    const x = got.get(key) ?? { tick: e.tick, time: e.time, hq: issuer, who: m[2], kind: 'order' as const, text: '', divisions: [], task: m[1] };
     x.divisions.push(d.id);
+    x.names = { ...x.names, [d.id]: d.name };
     x.text = `${dm(e.time)} ${m[2]} · приказ «${m[1]}» — ${x.divisions.map(nm).join(', ')}${note ? `: ${note}` : ''}`;
     got.set(key, x);
   }
   out.push(...got.values());
+  // директивы верховного командования противника — в свой час; несколько получателей — одной записью
+  const TASK: Record<string, string> = { attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'в резерв' };
+  const subOf = (id: string) => (hq.has(id) ? sub(id) : t.divisions.some((d) => d.id === id && d.side !== side) ? [id] : []);
+  const hist = new Map<string, NonNullable<TraceCommand['enemyHistorical']>>();
+  for (const h of t.command?.enemyHistorical ?? []) if (inTurn(h.at)) hist.set(`${h.id}|${h.at}`, [...(hist.get(`${h.id}|${h.at}`) ?? []), h]);
+  for (const hs of hist.values()) {
+    const h = hs[0], src = h.from ?? [...hq.values()].find((x) => x.side !== side && x.echelon === 'high_command')?.id ?? h.to;
+    const time = at(h.at);
+    out.push({ tick: h.at, time, hq: src, who: nm(src), kind: 'decision', divisions: [...new Set(hs.flatMap((x) => subOf(x.to)))],
+      text: `${dm(time)} ${nm(src)} · ${h.form === 'instruction' ? 'распоряжение' : 'директива'} ${h.id} — ${hs.map((x) => nm(x.to)).join(', ')}: ${TASK[h.task] ?? h.task}${h.note ? ` — ${h.note}` : ''}` });
+  }
   for (const c of t.commanders ?? []) {
     if (!enemyHq(c.hq)) continue;
     for (const x of c.decisions) {
@@ -164,8 +181,22 @@ export function enemyLog(t: AgentGameTrace, side: string, from: number, to: numb
   return out.sort((a, b) => a.tick - b.tick);
 }
 
-/** Запись видна игроку: хотя бы одна из её дивизий обнаружена разведкой. */
-export const enemyVisible = (e: EnemyEntry, seen: ReadonlySet<string>): boolean => e.divisions.some((d) => seen.has(d));
+/** Что игрок может наблюдать сам: отходы и действия по приказу дивизий; документы, решения, смены замысла, запросы и ответы между штабами — только посреднику. */
+const OBSERVABLE: ReadonlySet<EnemyEntry['kind']> = new Set(['withdraw', 'order']);
+
+/** Запись видна игроку: наблюдаемая и хотя бы одна из её дивизий обнаружена разведкой. */
+export const enemyVisible = (e: EnemyEntry, seen: ReadonlySet<string>): boolean => OBSERVABLE.has(e.kind) && e.divisions.some((d) => seen.has(d));
+
+/**
+ * Запись для журнала игрока: только о видимых дивизиях (приказ — по видимым получателям, без отдавшего штаба и
+ * обоснования); null — игроку не видна.
+ */
+export function enemyPlayerText(e: EnemyEntry, seen: ReadonlySet<string>, names?: ReadonlyMap<string, string>): string | null {
+  if (!enemyVisible(e, seen)) return null;
+  if (e.kind === 'withdraw') return e.text;
+  const vis = e.divisions.filter((d) => seen.has(d)).map((d) => names?.get(d) ?? e.names?.[d] ?? d);
+  return `${dm(e.time)} ${vis.join(', ')}: переходит к задаче «${e.task ?? '—'}»`;
+}
 
 /** Команда управления словами (для журнала хода). */
 /** hist — как назвать историческую директиву (срок и получатели); нет — по id. */

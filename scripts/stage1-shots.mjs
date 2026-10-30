@@ -368,19 +368,19 @@ const parts = {
     const vis = (await page.locator('.jday').first().locator('.jenemy li').allInnerTexts()).map((t) => t.trim());
     const hasSec = await page.locator('.jday').first().locator('.jsub', { hasText: 'Противник (по разведке)' }).count();
     if (!hasSec) return fail('umpire', 'в журнале нет раздела «Противник (по разведке)»');
-    const extra = vis.filter((t) => !all.includes(t));
-    if (extra.length) return fail('umpire', `строк журнала нет у посредника: ${extra.slice(0, 2).join(' / ')}`);
-    // каждая видимая запись — о дивизии, которая есть в разведсводке
-    const check = await page.evaluate(() => {
+    // документы штабов, решения, запросы и ответы — только посреднику
+    if (vis.some((t) => /·|запрос на отход|отход разрешён|в отходе отказано/.test(t))) return fail('umpire', `в журнале игрока ненаблюдаемое: ${vis.filter((t) => /·|запрос|отход разрешён|отказано/.test(t)).slice(0, 2).join(' / ')}`);
+    // журнал = наблюдаемые записи хода о дивизиях из разведсводки (приказ — по видимым получателям)
+    const check = await page.evaluate(async () => {
+      const m = await import('/src/sim/agents-game.ts');
       const v = window.__cmdView;
       const seen = new Set(v.intel.map((x) => x.id));
-      const vis = new Set(v.journal.at(-1).enemy ?? []);
-      const turnFrom = v.journal.at(-1).time.slice(0, 16);
+      const day = v.journal.at(-1), turnFrom = day.time.slice(0, 16);
       const log = (v.enemyLog ?? []).filter((e) => e.time.slice(0, 16) > turnFrom);
-      const shown = log.filter((e) => vis.has(e.text));
-      return { bad: shown.filter((e) => !e.divisions.some((d) => seen.has(d))).map((e) => e.text), hidden: log.length - shown.length, shown: shown.length, intel: seen.size };
+      const want = log.map((e) => m.enemyPlayerText(e, seen)).filter((x) => x !== null);
+      return { same: JSON.stringify(want) === JSON.stringify(day.enemy ?? []), shown: want.length, hidden: log.length - want.length, intel: seen.size, got: (day.enemy ?? []).slice(0, 2), want: want.slice(0, 2) };
     });
-    if (check.bad.length) return fail('umpire', `в журнале строки о необнаруженных: ${check.bad.slice(0, 2).join(' / ')}`);
+    if (!check.same) return fail('umpire', `журнал не совпал с наблюдаемым: ${JSON.stringify(check)}`);
     await page.locator('.jday').first().locator('.jsub', { hasText: 'Противник (по разведке)' }).scrollIntoViewIfNeeded();
     await shot('journal-enemy.jpg');
     ok('umpire', `журнал — только видимое (показано ${check.shown}, скрыто ${check.hidden}, обнаружено разведкой ${check.intel})`);

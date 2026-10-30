@@ -694,7 +694,11 @@ impl Game {
         let target = |t: Target| match t { Target::Hq(h) => w.hqs[h as usize].id.clone(), Target::Division(i) => w.divisions[i as usize].id.clone() };
         let historical: Vec<Value> = self.sim.historical.iter().filter(|(_, d)| Some(d.from as usize) == top)
             .map(|(at, d)| serde_json::json!({ "id": d.id, "at": at, "to": target(d.to), "task": d.task, "form": d.form, "note": d.note, "issued": self.issued.contains(&d.id) })).collect();
-        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "enemyRequests": enemy_requests, "historical": historical })
+        // директивы верховного командования противника (журнал посредника): от его штабов верхней инстанции
+        let enemy_historical: Vec<Value> = self.sim.historical.iter()
+            .filter(|(_, d)| !mine(d.from as usize) && w.hqs[d.from as usize].echelon == crate::model::Echelon::HighCommand)
+            .map(|(at, d)| serde_json::json!({ "id": d.id, "at": at, "from": w.hqs[d.from as usize].id, "to": target(d.to), "task": d.task, "form": d.form, "note": d.note })).collect();
+        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "enemyRequests": enemy_requests, "historical": historical, "enemyHistorical": enemy_historical })
     }
 }
 
