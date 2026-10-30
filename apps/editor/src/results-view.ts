@@ -267,5 +267,5 @@ export function compareRows(game: OperationSummary, full: OperationSummary | nul
 
 /** Агентный расчёт без сводки операции или со сводкой до сравнения (без событий) — сводку пересчитать из хода. */
 export function summaryNeeded(r: SimResult): boolean {
-  return r.engine === 'agents' && (!r.operation || !Array.isArray(r.operation.events));
+  return r.engine === 'agents' && (!r.operation || !Array.isArray(r.operation.events) || !r.debriefs);
 }

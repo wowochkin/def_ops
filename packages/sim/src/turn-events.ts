@@ -31,10 +31,12 @@ export const CAUSES_MAX = 3;
 export const TOUCH_KM = 10;
 
 export type KeyEventKind = 'breakthrough' | 'encirclement' | 'capture' | 'counterattack' | 'withdrawal' | 'destroyed';
-export interface KeyCause { kind: 'document' | 'decision' | 'order'; side: 'su' | 'de'; hq: string; tick: number; text: string }
+export interface KeyCause { kind: 'document' | 'decision' | 'order'; side: 'su' | 'de'; hq: string; /** Название штаба. */ name: string; tick: number; text: string }
 export interface KeyEvent {
   id: string; kind: KeyEventKind; side: 'su' | 'de'; tick: number; title: string; text: string;
   at: LngLat; from: LngLat | null; to: LngLat | null;
+  /** Место словами: у ближайшего пункта театра или км и румб от него. */
+  place: string;
   divisions: string[];
   /** Все штабы-предки участников. */
   hqs: string[];
@@ -255,13 +257,13 @@ export function turnEvents(
     const ids = new Set(ks.map((k) => D[k].id));
     const hqOfDiv = new Map(ks.map((k) => [D[k].id, D[k].hq]));
     const cs: KeyCause[] = [
-      ...(t.documents ?? []).filter((d) => d.kind !== 'report' && inRange(d.tick) && rank.has(d.hq)).map((d): KeyCause => ({ kind: 'document', side: hqSide(d.hq), hq: d.hq, tick: d.tick, text: clip(d.text) })),
-      ...(t.commanders ?? []).filter((c) => rank.has(c.hq)).flatMap((c) => c.decisions.filter((x) => inRange(x.tick)).map((x): KeyCause => ({ kind: 'decision', side: hqSide(c.hq), hq: c.hq, tick: x.tick, text: clip(x.why) }))),
+      ...(t.documents ?? []).filter((d) => d.kind !== 'report' && inRange(d.tick) && rank.has(d.hq)).map((d): KeyCause => ({ kind: 'document', side: hqSide(d.hq), hq: d.hq, name: name(d.hq), tick: d.tick, text: clip(d.text) })),
+      ...(t.commanders ?? []).filter((c) => rank.has(c.hq)).flatMap((c) => c.decisions.filter((x) => inRange(x.tick)).map((x): KeyCause => ({ kind: 'decision', side: hqSide(c.hq), hq: c.hq, name: name(c.hq), tick: x.tick, text: clip(x.why) }))),
     ];
     for (const j of t.journal) {
       if (!j.agent || !ids.has(j.agent) || !inRange(j.tick) || !j.text.startsWith('получен приказ')) continue;
       const dh = hqOfDiv.get(j.agent)!;
-      cs.push({ kind: 'order', side: hqSide(dh), hq: dh, tick: j.tick, text: clip(j.text).replace(/:\s*$/, '') });
+      cs.push({ kind: 'order', side: hqSide(dh), hq: dh, name: name(dh), tick: j.tick, text: clip(j.text).replace(/:\s*$/, '') });
     }
     // одна причина — один раз: тот же текст (документ нескольким адресатам, приказ по цепочке) — ближний и свежий
     const once = new Set<string>();
@@ -278,7 +280,7 @@ export function turnEvents(
     let ev: KeyEvent;
     if (ks.length || !r.ks.length) {
       const m = r.make(ks);
-      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: r.title, text: m.text, at: m.at, from: m.from, to: m.to,
+      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: r.title, text: m.text, at: m.at, from: m.from, to: m.to, place: describePlace(T, m.at),
         divisions: ks.map((k) => D[k].id), hqs: hqsOf(ks), km: m.km, lost: lossOf(ks), causes: [], weight: 0, seen: true };
     } else {
       const marks = r.ks.flatMap((k) => [pos(k, from), pos(k, to)]);
@@ -286,7 +288,7 @@ export function turnEvents(
       if (!own.length) continue;
       const c = center(own.map((k) => pos(k, to)))!;
       ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: ENEMY_TITLE[r.kind], text: `${ENEMY_TITLE[r.kind]}: затронуты ${divs(own.length)} — ${names(own)}, ${describePlace(T, c)}.`,
-        at: c, from: null, to: null, km: null, divisions: own.map((k) => D[k].id), hqs: hqsOf(own), lost: lossOf(own), causes: [], weight: 0, seen: false };
+        at: c, from: null, to: null, place: describePlace(T, c), km: null, divisions: own.map((k) => D[k].id), hqs: hqsOf(own), lost: lossOf(own), causes: [], weight: 0, seen: false };
     }
     if (hidden) ev.text = `${ev.text} ${HIDDEN}`;
     else ev.causes = causesOf(ks, r.tick);

@@ -159,7 +159,9 @@ describe('итоги: сравнение с историей и без вмеш�
     expect(summaryNeeded(r)).toBe(true);
     // сводка до сравнения (без событий) — тоже пересчитать
     expect(summaryNeeded({ ...r, operation: { ...game, events: undefined } as unknown as OperationSummary })).toBe(true);
-    expect(summaryNeeded({ ...r, operation: game })).toBe(false);
+    // сохранено до разбора хода — пересчёт и ради него
+    expect(summaryNeeded({ ...r, operation: game })).toBe(true);
+    expect(summaryNeeded({ ...r, operation: game, debriefs: { terms: {} as never, turns: [] } })).toBe(false);
     expect(summaryNeeded({ engine: 'army' } as SimResult)).toBe(false);
     expect(summaryNeeded({} as SimResult)).toBe(false);
   });

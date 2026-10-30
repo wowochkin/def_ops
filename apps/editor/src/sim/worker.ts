@@ -8,6 +8,7 @@ import type { SimRequest, SimResponse, SimResult } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
 import { kbStamp, withKbStamp, type KbStamp } from './kb-stamp';
+import { replayDebriefs } from './replay-debrief';
 
 // встроенные данные и свои (правила, загруженные операции)
 const get = (kind: DataKind, file: string) => getData(kind, file);
@@ -46,7 +47,10 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
     post({ kind: 'progress', text: 'загрузка данных…' });
     // отметка сборки из базы — по тем же правкам операции, что и данные (окно дождалось сборки до запуска)
     const [{ ctx, history }, kb] = await Promise.all([contextFrom(get, q.scenario, q.rules), kbStamp(q.scenario)]);
-    if (q.agents && q.summaryOnly) return post({ kind: 'summary', summary: operationSummary(ctx, q.agents.trace, q.agents.history, history) });
+    if (q.agents && q.summaryOnly) {
+      const summary = operationSummary(ctx, q.agents.trace, q.agents.history, history);
+      return post({ kind: 'summary', summary, ...(q.debriefs ? { debriefs: replayDebriefs(ctx, q.agents.trace, q.agents.history, history) } : {}) });
+    }
     if (q.agents) return agents(q, ctx, history, kb);
     const a = analyze(ctx, history, {
       seed: q.seed, runs: q.runs, toleranceKm: q.toleranceKm,
@@ -94,6 +98,10 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
   // итоги: потери сторон по всему ходу рядом с историческими; ошибка — переигровка без итогов
   let operation: SimResult['operation'];
   try { operation = operationSummary(base, A.trace, A.history, baseHistory); } catch (e) { console.warn('итоги операции не посчитаны:', e); }
+  // разбор хода по суткам — те же правила, что в игре; ошибка — переигровка без разбора
+  post({ kind: 'progress', text: 'разбор хода…' });
+  let debriefs: SimResult['debriefs'];
+  try { debriefs = replayDebriefs(base, A.trace, A.history, baseHistory); } catch (e) { console.warn('разбор хода не посчитан:', e); }
   post({ kind: 'progress', text: 'карта…' });
   const zones = zonesOf(ctx, run);
   const name = `${A.title} — агентная модель (seed ${q.seed})`;
@@ -120,7 +128,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
         return { title: e.title, historical: e.historical, simulated: e.simulated, days: [e.days], at: e.at, place, marker: !!h?.marker };
       }),
       eventsHit: events.filter((e) => e.days != null && Math.abs(e.days) <= 2).length, eventsTotal: events.length,
-      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb, ...(zones ? { zones } : {}), ...(operation ? { operation } : {}),
+      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb, ...(zones ? { zones } : {}), ...(operation ? { operation } : {}), ...(debriefs ? { debriefs } : {}),
     },
   });
 }

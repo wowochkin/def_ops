@@ -9,10 +9,10 @@
 import { aiHold } from './ai-hold';
 import { createFeature, type LngLat, type SymbolFeature } from '@def-ops/core';
 import {
-  checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
+  checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
   agentsHistory, type AgentGameSpec, type AgentHistory, type CommandOp,
   addHours, applyActions, prepareTakeover,
-  activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, stateDigest, digestMismatch, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameTurn, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, stateDigest, digestMismatch, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameTurn, type GameState, type History, type Order, type SimContext, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
   operationSummary,
   turnEvents,
   debriefWindow,
@@ -33,7 +33,7 @@ import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { postPrompt } from '../command-post';
-import { agentEvents, agentGame, bridgesOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
+import { agentEvents, agentGame, bridgesOf, fogOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
 import { BUSY_REFUSAL, dropPending as dropPendingOf, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, switchLine, turnGate } from './game-rewind';
@@ -775,18 +775,7 @@ const slim = (t: AiTurn): AiTurn => ({ ...t, reasoningTail: t.reasoningTail?.sli
 
 /** Туман войны: противник виден, пока он в пределах разведки наших войск (на момент снимка). */
 function fog() {
-  const km = detectKm(ctx);
-  const sideOf = new Map(g.state.formations.map((f) => [f.id, f.side]));
-  const cache = new Map<string, Set<string>>();
-  return (id: string, sn: Snapshot) => {
-    let set = cache.get(sn.time);
-    if (!set) {
-      const units = sn.units.filter((u) => !u.destroyed);
-      set = detected(ctx.theatre, units.filter((u) => sideOf.get(u.id) === rec.human), units.filter((u) => sideOf.get(u.id) !== rec.human), km);
-      cache.set(sn.time, set);
-    }
-    return sideOf.get(id) === rec.human || set.has(id);
-  };
+  return fogOf(ctx, g.state.formations, rec.human);
 }
 
 function postView() {

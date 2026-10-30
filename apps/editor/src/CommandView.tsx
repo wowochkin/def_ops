@@ -52,7 +52,7 @@ import { takeoverText, type TakeoverSummary } from './sim/takeover-state';
 import { act, ActButton, openModal, register, speak, useAction, voiceLive, voiceRecent } from './voice/registry';
 import { speakAnswersOn, useSpeakAnswers } from './voice/advisor-voice';
 import { hl, setFlashMapView } from './voice/highlight';
-import { setTourMap } from './voice/tour';
+import { setTourMap, type TourMapControl } from './voice/tour';
 import { createTourMap } from './voice/tour-map';
 import { zoneOverlays, zoneUrl } from './zones-overlay';
 import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type RewindResult, type SwitchResult, type TurnDeps } from './voice/actions/turn';
@@ -76,6 +76,9 @@ import { ribbonItems } from './turn-ribbon';
 import { TurnRibbon } from './TurnRibbon';
 import { idbBranchStore } from './game-branch-store';
 import { ResultsTab } from './ResultsTab';
+import { TurnDebriefPanel, useDebrief } from './TurnDebrief';
+import { DebriefOverlay } from './DebriefOverlay';
+import { debriefFor } from '@def-ops/sim';
 import type { BaselineState, ResultsPart } from './results-view';
 import { baselineSummary } from './sim/baseline';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
@@ -198,10 +201,18 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   // метка места на карте при подсветке исполненного голосом (voice/highlight)
   useEffect(() => (eng ? setFlashMapView(eng) : undefined), [eng]);
   // карта шагов разбора хода (voice/tour-map): переезд к месту, метка и рамка, проигрывание хода
-  useEffect(() => (eng ? setTourMap(createTourMap({
-    engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null, level: () => levelRef.current, setLevel,
-    frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
-  })) : undefined), [eng]); // eslint-disable-line react-hooks/exhaustive-deps
+  // та же карта — и у разбора хода во вкладке «Итоги» (щелчок по событию): tourMapRef
+  const tourMapRef = useRef<TourMapControl | null>(null);
+  useEffect(() => {
+    if (!eng) return undefined;
+    const m = createTourMap({
+      engine: () => engine.current, setTime, now: () => liveView.current?.time ?? null, level: () => levelRef.current, setLevel,
+      frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
+    });
+    tourMapRef.current = m;
+    const off = setTourMap(m);
+    return () => { off(); if (tourMapRef.current === m) tourMapRef.current = null; };
+  }, [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adv, setAdv] = useState<AdvMsg[]>([]);
   const [advQ, setAdvQ] = useState('');  // поле вопроса советнику (общее с голосом: «запиши в вопрос …»)
   const [plan, setPlanState] = useState<PlanState | null>(null);
@@ -1071,10 +1082,17 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   };
   useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
   // «Итоги» игры: потери сторон по сыгранным часам (агентная модель); вкладка есть и у нынешней модели — с пояснением
+  // разбор хода (часть «Ход»): позиция, раскрытое событие, связный текст модели — сбрасываются новым ходом
+  const debrief = useDebrief({ debrief: view?.debrief ?? null, resetKey: view?.time ?? '', model: () => (llmRef.current.check.state === 'ok' ? umpireModel() : null), show: (m) => tourMapRef.current?.show(m),
+    active: tab === 'results' && resPart === 'turn', reset: () => tourMapRef.current?.reset() });
+  // после хода «Итоги» открываются на разборе хода
+  useEffect(() => { if (view?.debrief) setResPart('turn'); }, [view?.time]); // eslint-disable-line react-hooks/exhaustive-deps
   const resultsDeps = useRef<ResultsDeps>(null!);
   resultsDeps.current = {
     section: () => 'command', summary: () => view?.results ?? null, side: () => (view?.human.id === 'de' ? 'de' : 'su'),
     setPart: (p) => { setTab('results'); setResPart(p); },
+    debrief: () => view?.debrief ?? null, terms: () => view!.terms, hq: () => debrief.hq, setHq: debrief.setHq, openEvent: debrief.openEvent,
+    narrate: debrief.narrate, modelOn: () => llm.check.state === 'ok',
   };
   useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   // штабная работа на ход: советник, решение, приказы, распоряжения — те же действия у кнопок
@@ -1200,8 +1218,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
                 scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
             {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} />}
-            {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={baseline} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={['losses', 'compare']}
-              empty={view.engine === 'agents' ? 'Итоги ещё не посчитаны.' : undefined} />}
+            {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={baseline} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={view.engine === 'agents' ? ['turn', 'losses', 'compare'] : ['losses', 'compare']}
+              empty={view.engine === 'agents' ? 'Итоги ещё не посчитаны.' : undefined}
+              turn={view.debrief && <TurnDebriefPanel d={view.debrief} terms={view.terms} hq={debrief.hq} open={debrief.open} narrative={debrief.narrative} modelOn={llm.check.state === 'ok'} />} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}
@@ -1255,6 +1274,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             <button onClick={() => setPickMode(null)}>Отмена</button></div>}
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {intelE && eng && <AgentMark engine={eng} at={intelE.at} />}
+          {tab === 'results' && resPart === 'turn' && view?.debrief && eng && <DebriefOverlay engine={eng} events={debriefFor(view.debrief, debrief.hq).events} open={debrief.open} side={view.debrief.side} />}
           {intelE && view && <IntelPanel e={intelE} time={view.time} first={view.turn === 1} onClose={() => tap('command.card.close')}
             actions={<><button data-action="command.tab" onClick={() => { tap('command.tab', { tab: 'intel' }); setMob('staff'); }}>Разведсводка →</button>
               {unit(sel) && unit(sel)!.status !== 'destroyed' && <button data-action="command.order.set" onClick={() => targetEnemy(intelE.id)}
@@ -1355,7 +1375,7 @@ function PostReports({ v, issuer, drafts, sel, onUnit, onOrder }: { v: TurnView;
         <ManningKpi g={divs.length ? g : null} />
         <div className={divs.some((u) => u.cutOff) ? 'alarm' : ''}><b>{divs.filter((u) => u.cutOff).length}</b><span>отрезано от подвоза</span></div>
       </div>
-      {v.turn > 1 && <div className="dispatch"><h4>Донесения за ход</h4>
+      {v.turn > 1 && <div className="dispatch"><h4>Донесения за ход {v.debrief && <ActButton className="turn-show" action="results.show" params={{ part: 'turn' }} data-hl="results-turn-link" title="Вкладка «Итоги», разбор хода: ключевые события на карте, «разобрать с позиции …»">Итоги хода ▸</ActButton>}</h4>
         {events.length ? <ul>{events.map((e, i) => <li key={i}>{e}</li>)}</ul> : <p className="muted">Существенных событий нет.</p>}</div>}
       <h4 className="cmd-h4">{top ? 'Фронты' : 'Подчинённые'}</h4>
       {subs.length ? subs.map((u) => <UnitCard topGen={v.terms?.topGen} mark={markFor(v, u.id)} key={u.id} u={u} open={sel === u.id} draft={drafts[u.id]} onToggle={() => onUnit(sel === u.id ? '' : u.id)} onOrder={() => onOrder(u.id)} />)
@@ -1425,7 +1445,7 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
         <div className={cut ? 'alarm' : ''}><b>{cut}</b><span>отрезано от подвоза</span></div>
       </div>
       {v.turn > 1 && <div className="dispatch">
-        <h4>Донесения за ход <ActButton className="turn-show" action="command.turn.show" data-hl="turn-show" title="Посредник покажет прошедший ход на карте: общее, главные бои, цели, тыл, противник">Разбор хода на карте ▸</ActButton></h4>
+        <h4>Донесения за ход <ActButton className="turn-show" action="command.turn.show" data-hl="turn-show" title="Посредник покажет прошедший ход на карте: общее, главные бои, цели, тыл, противник">Разбор хода на карте ▸</ActButton>{v.debrief && <ActButton className="turn-show" action="results.show" params={{ part: 'turn' }} data-hl="results-turn-link" title="Вкладка «Итоги», разбор хода: ключевые события на карте, «разобрать с позиции …»">Итоги хода ▸</ActButton>}</h4>
         {v.events.length ? <ul>{v.events.map((e, i) => <li key={i}>{e}</li>)}</ul> : <p className="muted">Существенных событий нет.</p>}
       </div>}
       {v.turn === 1 && <p className="note">{staffsOn(v) ? 'Командование принято. Вы — верхняя инстанция: исторические директивы, директивы штабам и взятие штабов под управление — во вкладке «Штабы», приказы — во вкладке «Приказы».' : 'Командование принято. Войска выполняют задачи, полученные до этого момента; исторические приказы дальше не поступают. Новые приказы — во вкладке «Приказы».'}</p>}

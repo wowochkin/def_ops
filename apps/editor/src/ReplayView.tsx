@@ -40,7 +40,15 @@ import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
 import { RivalryChart } from './RivalryChart';
 import { ResultsTab } from './ResultsTab';
-import { baselineSummary, rememberBaseline, summarizeInWorker } from './sim/baseline';
+import { TurnDebriefPanel, useDebrief } from './TurnDebrief';
+import { DebriefOverlay } from './DebriefOverlay';
+import { replayDebriefAt } from './sim/replay-debrief';
+import { createTourMap } from './voice/tour-map';
+import { setFlashMapView } from './voice/highlight';
+import { askText, RETRY_DELAYS_MS } from './voice/llm';
+import type { TourMapControl } from './voice/tour';
+import { debriefFor } from '@def-ops/sim';
+import { baselineSummary, recomputeInWorker, rememberBaseline } from './sim/baseline';
 import { summaryNeeded, type BaselineState, type ResultsPart } from './results-view';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 import { PLAYER_SPEEDS } from './replay-dock';
@@ -370,8 +378,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     // сохранено до сравнения итогов — сводка операции по сохранённому ходу
     if (summaryNeeded(r.result) && r.agents) {
       const token = runId.current;
-      void summarizeInWorker(r.result.scenario, r.result.seed, r.agents.trace, r.agents.history)
-        .then((operation) => { if (token === runId.current) setResult((x) => (x ? { ...x, operation } : x)); })
+      void recomputeInWorker(r.result.scenario, r.result.seed, r.agents.trace, r.agents.history)
+        .then(({ summary: operation, debriefs }) => { if (token === runId.current) setResult((x) => (x ? { ...x, operation, ...(debriefs ? { debriefs } : {}) } : x)); })
         .catch((e) => console.warn('итоги сохранённой переигровки не посчитаны:', e));
     }
     setResult(r.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
@@ -602,10 +610,40 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   };
   useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
   // «Итоги» — у расчёта агентной модели: вкладка боковой панели, части «Потери» и «Сравнение»
+  // разбор хода — по суткам расчёта: сутки, в которых время шкалы; щелчок по событию — время шкалы к его часу и карта к месту
+  const dayAt = replayDebriefAt(result?.debriefs, time);
+  const dayDebrief = dayAt >= 0 ? result!.debriefs!.turns[dayAt] : null;
+  const replayNow = useRef<string | null>(null);
+  replayNow.current = time;
+  const tourMapRef = useRef<TourMapControl | null>(null);
+  const levelNow = useRef(level);
+  levelNow.current = level;
+  // метка и рамка события (подсветка voice/highlight) — по карте переигровки; игра поверх ставит свою и снимает
+  useEffect(() => (eng && !game ? setFlashMapView(eng) : undefined), [eng, game]);
+  useEffect(() => {
+    if (!eng) return undefined;
+    tourMapRef.current = createTourMap({
+      engine: () => engine.current, setTime: (t) => setTime(t), now: () => replayNow.current, level: () => levelNow.current, setLevel,
+      frame: (cb) => requestAnimationFrame(cb), cancel: (id) => cancelAnimationFrame(id), clock: () => performance.now(),
+    });
+    return () => { tourMapRef.current = null; };
+  }, [eng]); // eslint-disable-line react-hooks/exhaustive-deps
+  const debrief = useDebrief({
+    debrief: dayDebrief, resetKey: `${result?.scenario ?? ''}|${result?.seed ?? ''}|${dayDebrief?.time ?? ''}`,
+    model: () => (llm.check.state === 'ok' ? (system, text, o) => askText(system, text, { settings: llm.settings, signal: o.signal, delays: RETRY_DELAYS_MS }) : null),
+    show: (m, tick) => {
+      const d = dayDebrief;
+      if (d) replayNow.current = new Date(Date.parse(`${d.time}Z`) - (d.to - tick) * 3.6e6).toISOString().slice(0, 16);
+      tourMapRef.current?.show(m);
+    },
+    active: tab === 'results' && resPart === 'turn', reset: () => tourMapRef.current?.reset(),
+  });
   const resultsDeps = useRef<ResultsDeps>(null!);
   resultsDeps.current = {
     section: () => (result?.engine === 'agents' ? 'replay' : null), summary: () => result?.operation ?? null, side: () => 'su',
     setPart: (p) => { setTab('results'); setResPart(p); },
+    debrief: () => dayDebrief, terms: () => result!.debriefs!.terms, hq: () => debrief.hq, setHq: debrief.setHq, openEvent: debrief.openEvent,
+    narrate: debrief.narrate, modelOn: () => llm.check.state === 'ok',
   };
   // «без вмешательства» — при открытии части «Сравнение»: из кэша (переигровка «История как замысел» запоминается сама)
   // или прогоном ядра того же сценария и seed
@@ -656,8 +694,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {result?.engine === 'agents' && <button className={tab === 'results' ? 'on' : ''} data-hl="results-tab" onClick={() => setTab('results')}>Итоги</button>}
         </div>
         {tab === 'results' && (result?.engine === 'agents'
-          ? <ResultsTab summary={result.operation?.events ? result.operation : null} baseline={baseline} own="расчёт" side="su" part={resPart} parts={['losses', 'compare']}
-            empty="В этом сохранении итогов нет — рассчитайте операцию заново." />
+          ? <ResultsTab summary={result.operation?.events ? result.operation : null} baseline={baseline} own="расчёт" side="su" part={resPart} parts={result.debriefs ? ['turn', 'losses', 'compare'] : ['losses', 'compare']}
+            empty="В этом сохранении итогов нет — рассчитайте операцию заново."
+            turn={dayDebrief && <>
+              <p className="rs-note">Разбор — по суткам расчёта: сутки, в которых время на шкале карты. Посредник видит обе стороны.</p>
+              <TurnDebriefPanel d={dayDebrief} terms={result.debriefs!.terms} hq={debrief.hq} open={debrief.open} narrative={debrief.narrative} modelOn={llm.check.state === 'ok'} span="Сутки" />
+            </>} />
           : <p className="rs rs-note">Итоги и разбор — у расчёта на агентной модели.</p>)}
         {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}
           onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { void confirmAsync(`Удалить сохранённую переигровку «${m.title}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); }); }} />}
@@ -731,6 +773,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {notice && <div className="cmd-notice" onClick={() => setNotice(null)}>{notice}</div>}
           {agentSelAt && eng && <AgentMark engine={eng} at={agentSelAt} />}
           {agentRun && agentSel && <AgentPanel run={agentRun} id={agentSel} hour={agentHour} onHour={agentToHour} onClose={() => setAgentSel(null)} llm={llm.settings} />}
+          {tab === 'results' && resPart === 'turn' && dayDebrief && eng && <DebriefOverlay engine={eng} events={debriefFor(dayDebrief, debrief.hq).events} open={debrief.open} side="su" />}
           {commanderOpen && eng && <CommanderOverlay engine={eng} trace={agentRun!.trace} c={commander!} tick={agentHour} names={hqNames} />}
           {card && !agentSel && <FormationPanel c={card} onClose={() => setCardSel(null)} onTab={setCardTab} badge={agentRun ? intentBadge(intentAt(agentRun.trace, card.id, agentHour)) : null}
             tabs={commander && agentRun ? [{ id: 'commander', label: 'Командующий', body: <CommanderPanel trace={agentRun.trace} c={commander} tick={agentHour} onTick={agentToHour} names={hqNames} /> }] : undefined}

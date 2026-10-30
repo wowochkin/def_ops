@@ -13,7 +13,7 @@ type Pt = [number, number];
 const short = (s: string, n = 34) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 /** Стрелка от a к b: прямая или дугой (bend — смещение середины, px); конец укорочен под наконечник. */
-function Arrow({ a, b, cls, bend = 0, label, marker, side = 1, wide = 7 }: { a: Pt; b: Pt; cls: string; bend?: number; label?: string; marker: string; side?: 1 | -1; wide?: number }) {
+export function Arrow({ a, b, cls, bend = 0, label, marker, side = 1, wide = 7 }: { a: Pt; b: Pt; cls: string; bend?: number; label?: string; marker: string; side?: 1 | -1; wide?: number }) {
   const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
   if (len < 14) return null;
   const nx = -dy / len, ny = dx / len;

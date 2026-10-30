@@ -128,6 +128,9 @@ describe('ключевые события хода', () => {
     // свой штаб армии раньше фронта, внутри штаба — свежие первыми
     expect(br.causes.map((c) => [c.kind, c.hq, c.tick])).toEqual([['document', 'su_8gva', 5], ['decision', 'su_1bf', 15]]);
     expect(br.causes[1].text).toBe('Ввести танки в прорыв');
+    // для окна: штаб причины названием, место события словами
+    expect(br.causes.map((c) => c.name)).toEqual(['8-я гвардейская армия', '1-й Белорусский фронт']);
+    expect(br.place).toMatch(/км к|^у /);
     const ca = d.events.find((e) => e.kind === 'counterattack')!;
     expect(ca.causes).toHaveLength(0);
     expect(ca.text).toContain('решения противника известны только посреднику');

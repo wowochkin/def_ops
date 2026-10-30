@@ -4,12 +4,32 @@
  * состояния этой модели (agentsToRun, agentsStateAt): дивизии — действующие соединения, штабы — подчинение.
  */
 import {
-  activeBoundaries, addHours, hqReports, agentKindOf, agentsStateAt, agentsToRun, groupOf, NOT_COMMITTED, onMap, sectorMap, supplyHoursOf, targetPoint, withBoundaries,
-  type AgentOrderKind, type AgentTrace, type CommandOp, type GameMode, type GameState, type Order, type SimContext, type SimState,
+  activeBoundaries, addHours, detected, detectKm, hqReports, agentKindOf, agentsStateAt, agentsToRun, groupOf, NOT_COMMITTED, onMap, sectorMap, supplyHoursOf, targetPoint, withBoundaries,
+  type AgentOrderKind, type AgentTrace, type CommandOp, type GameMode, type GameState, type Order, type SimContext, type SimState, type Snapshot,
 } from '@def-ops/sim';
 import type { LngLat } from '@def-ops/core';
 
 export { hqReports };
+
+/**
+ * Туман войны игры: дивизия видна, если она своя или противник в пределах разведки своих войск на момент снимка.
+ * id — те же, что у хода ядра (формирования игры — дивизии хода ядра, agentGame), так что разбор хода (turnEvents)
+ * спрашивает по ним же. Обнаруженные — по снимку, с кэшем по времени снимка.
+ */
+export function fogOf(ctx: SimContext, formations: { id: string; side: string }[], human: string): (id: string, sn: Snapshot) => boolean {
+  const km = detectKm(ctx);
+  const sideOf = new Map(formations.map((f) => [f.id, f.side]));
+  const cache = new Map<string, Set<string>>();
+  return (id, sn) => {
+    let set = cache.get(sn.time);
+    if (!set) {
+      const units = sn.units.filter((u) => !u.destroyed);
+      set = detected(ctx.theatre, units.filter((u) => sideOf.get(u.id) === human), units.filter((u) => sideOf.get(u.id) !== human), km);
+      cache.set(sn.time, set);
+    }
+    return sideOf.get(id) === human || set.has(id);
+  };
+}
 
 /** Состояние управления стороны игрока в ходе ядра (Game::trace, раздел command). */
 export interface TraceCommand {

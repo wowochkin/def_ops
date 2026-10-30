@@ -6,6 +6,7 @@
  */
 import type { AgentHistory, AgentTrace, OperationSummary } from '@def-ops/sim';
 import type { SimRequest, SimResponse } from './protocol';
+import type { ReplayDebriefs } from './replay-debrief';
 
 export const BASELINE_KEY = 'def_ops.baseline.v1';
 
@@ -51,15 +52,20 @@ export interface BaselineDeps {
 
 /** Сводка хода фоновым потоком переигровки (summaryOnly): контекст и история сценария — там же, где у расчёта. */
 export async function summarizeInWorker(scenario: string, seed: number, trace: AgentTrace, history: AgentHistory): Promise<OperationSummary> {
+  return (await recomputeInWorker(scenario, seed, trace, history, false)).summary;
+}
+
+/** Сводка и (debriefs) разбор хода по суткам — для сохранённой переигровки, где их нет. */
+export async function recomputeInWorker(scenario: string, seed: number, trace: AgentTrace, history: AgentHistory, debriefs = true): Promise<{ summary: OperationSummary; debriefs?: ReplayDebriefs }> {
   const { BUILTIN_CATALOG } = await import('./userdata');
   const e = BUILTIN_CATALOG.find((c) => c.id === scenario);
   if (!e) throw new Error(`операции ${scenario} нет в каталоге`);
-  const q: SimRequest = { scenario, rules: e.rules[0].id, seed, runs: 1, toleranceKm: e.toleranceKm, agents: { trace, history, title: '', stepHours: 6 }, summaryOnly: true };
+  const q: SimRequest = { scenario, rules: e.rules[0].id, seed, runs: 1, toleranceKm: e.toleranceKm, agents: { trace, history, title: '', stepHours: 6 }, summaryOnly: true, ...(debriefs ? { debriefs } : {}) };
   const w = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
   try {
-    return await new Promise<OperationSummary>((res, rej) => {
+    return await new Promise<{ summary: OperationSummary; debriefs?: ReplayDebriefs }>((res, rej) => {
       w.onmessage = (m: MessageEvent<SimResponse>) => {
-        if (m.data.kind === 'summary') res(m.data.summary);
+        if (m.data.kind === 'summary') res({ summary: m.data.summary, ...(m.data.debriefs ? { debriefs: m.data.debriefs } : {}) });
         else if (m.data.kind === 'error') rej(new Error(m.data.message));
       };
       w.onerror = (x) => rej(new Error(x.message || 'ошибка расчёта'));
