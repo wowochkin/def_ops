@@ -269,6 +269,22 @@ impl Sim {
         }
     }
 
+    /// Снимок для возврата к ходу: копия без потерь — мир, журнал, документы, история, командование, командующие,
+    /// «история как замысел», советские штабы по доктрине, модель; без обработчиков окна и записи запросов к модели.
+    pub fn snapshot(&self) -> Sim {
+        fn once<T: Clone>(c: &std::sync::OnceLock<T>) -> std::sync::OnceLock<T> { let o = std::sync::OnceLock::new(); if let Some(v) = c.get() { let _ = o.set(v.clone()); } o }
+        Sim {
+            theatre: self.theatre.clone(), rules: self.rules.clone(), seed: self.seed, start_hour: self.start_hour, world: self.world.clone(),
+            script: self.script.clone(), fires: self.fires.clone(), withdrawals: self.withdrawals.clone(), changes: self.changes.clone(),
+            sources: self.sources, rear_dir: once(&self.rear_dir), doctrine_text: self.doctrine_text.clone(), llm: self.llm.clone(),
+            llm_log: std::sync::Mutex::new(Vec::new()), llm_par: once(&self.llm_par),
+            llm_probe: std::sync::Mutex::new(self.llm_probe.lock().unwrap_or_else(|e| e.into_inner()).clone()),
+            su_staff: std::sync::Mutex::new(self.su_staff.lock().unwrap_or_else(|e| e.into_inner()).clone()),
+            on_progress: None, on_stream: None, journal: self.journal.clone(), historical: self.historical.clone(), command: self.command.clone(),
+            documents: self.documents.clone(), history: self.history.clone(), staff: self.staff.clone(), commanders: self.commanders.clone(), intent: self.intent.clone(),
+        }
+    }
+
     /// Боевая сила дивизии (часть II описания, раздел 19.1).
     pub fn strength(&self, d: &Division) -> f64 {
         let r = &self.rules;

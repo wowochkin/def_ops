@@ -2,7 +2,7 @@
 //! строками JSON на входе ({"cmd": …, "args": {…}}), ответ — строкой JSON на выходе ({"ok": …} или {"error": …}).
 //! Те же команды, что у настольного приложения (crates/agents-tauri).
 
-use agents_core::game::{Game, PlayerOrder, StaffIn, TakeoverIn};
+use agents_core::game::{Game, TakeoverIn};
 use agents_core::scenario::EditsIn;
 use agents_core::model::Side;
 use agents_core::staff::Source;
@@ -64,20 +64,12 @@ fn main() {
             }
             "game_turn" => {
                 let g = game.as_mut().ok_or("игра не начата")?;
-                let command: Vec<Value> = a["command"].as_array().cloned().unwrap_or_default();
-                let command_res: Vec<Option<String>> = command.iter().map(|c| g.command_json(c).err()).collect();
-                let command_bad: Vec<String> = command_res.iter().flatten().cloned().collect();
-                let staff: Option<StaffIn> = serde_json::from_value(a["staff"].clone()).map_err(|e| e.to_string())?;
-                let bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
-                let orders: Vec<PlayerOrder> = serde_json::from_value(a["orders"].clone()).map_err(|e| e.to_string())?;
-                let applied: Vec<Value> = orders.iter().map(|o| match g.order(o) { Ok(n) => json!({ "hq": o.hq, "divisions": n }), Err(e) => json!({ "hq": o.hq, "error": e }) }).collect();
-                g.advance(a["hours"].as_u64().unwrap_or(12) as u32);
-                let mut t = g.trace();
-                t["game"]["applied"] = json!(applied);
-                t["game"]["staffErrors"] = json!(bad);
-                t["game"]["commandErrors"] = json!(command_bad);
-                t["game"]["commandResults"] = json!(command_res);
-                Ok(t)
+                // ход как вход ядра (game::TurnIn): команды, распоряжения, приказы, часы; доктрина из базы знаний — doctrineText
+                let mut t: agents_core::game::TurnIn = serde_json::from_value(a.clone()).map_err(|e| e.to_string())?;
+                let text = |k: &str| a["doctrineText"][k].as_str().map(str::to_string).filter(|t| !t.trim().is_empty());
+                if a["doctrineText"].is_object() { t.doctrine = Some([text("su"), text("de")]); }
+                let r = g.play_turn(t);
+                Ok(g.turn_trace(&r))
             }
             "game_stop" => { game = None; Ok(Value::Null) }
             "game_directive" => {

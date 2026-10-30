@@ -337,7 +337,7 @@ fn off_track_rules_apply() {
     sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 15.0));
     let c = center(&sim, a);
     shift(&mut sim, a, g0.x - c.x, g0.y - c.y);
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     run_to(&mut sim, 2);
     assert_eq!(docs(&sim, f, "su_8gva"), vec![0, 1], "следующая подана по выполнению");
     assert_eq!(status(&sim, a).status, Status::Shifted);
@@ -368,7 +368,7 @@ fn on_track_pure_history() {
     let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
     let c = center(&sim, a);
     shift(&mut sim, a, g0.x - c.x, g0.y - c.y);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     let g1 = beyond(&sim, a, g0, 15.0);
     sim.intent.chains[ci].tasks[1].at = 5;
     sim.intent.chains[ci].tasks[1].goal = Some(g1);
@@ -395,7 +395,7 @@ fn skip_senseless() {
     sim.intent.chains[ci].tasks[2].at = 500;
     let g2 = beyond(&sim, a, g0, 10.0);
     sim.intent.chains[ci].tasks[2].goal = Some(g2);
-    sim.intent.track = Some(off_track(&mut sim, a, 22.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 22.0)));
     run_to(&mut sim, 3);
     // объект задачи 1 занят своими (дивизия другой армии)
     let g1 = sim.intent.chains[ci].tasks[1].goal.expect("цель");
@@ -415,7 +415,7 @@ fn leave_and_return() {
     let mut sim = intent_sim();
     let a = hq(&sim, "su_8gva");
     run_to(&mut sim, 1);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     shift(&mut sim, a, 0.0, -35.0);
     run_to(&mut sim, 2);
     let s = status(&sim, a);
@@ -436,7 +436,7 @@ fn german_leave_to_agent() {
     let mut sim = intent_sim();
     let a = hq(&sim, "de_9a");
     run_to(&mut sim, 1);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     let mine = under(&sim, a);
     let later = sim.script.iter().find(|o| o.to.iter().any(|d| mine.contains(&(*d as usize)))).expect("приказ сценария дивизиям 9 А").clone();
     assert!(intent::gate(&sim, &later), "на истории приказ проходит");
@@ -487,7 +487,7 @@ fn takeover_mid_operation() {
 fn army_without_track_no_leave() {
     let mut sim = intent_sim();
     let a = hq(&sim, "su_8gva");
-    sim.intent.track = Some(still_track(&sim, &[]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[])));
     shift(&mut sim, a, 0.0, -50.0);
     run_to(&mut sim, 6);
     assert!(!matches!(status(&sim, a).reason, Some(Reason::Strayed { .. })));
@@ -557,7 +557,7 @@ fn unfit_on_track_issues() {
     sim.intent.chains[ci].tasks.truncate(2);
     sim.intent.chains[ci].tasks[1].at = 4;
     run_to(&mut sim, 4);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     set_cohesion(&mut sim, a, 0.2);
     assert_eq!(intent::sense(&sim, &sim.intent.chains[ci], &sim.intent.chains[ci].tasks[1]), Err(Reason::Unfit));
     run_to(&mut sim, 5);
@@ -575,7 +575,7 @@ fn unfit_off_track_held_then_issued() {
     run_to(&mut sim, 4);
     let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
     sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 10.0));
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     set_cohesion(&mut sim, a, 0.2);
     run_to(&mut sim, 6);
     assert_eq!(docs(&sim, f, "su_8gva"), vec![0], "отошла от следа и неспособна — задача ждёт");
@@ -625,7 +625,7 @@ fn german_early(sim: &mut Sim) -> (agents_core::world::ScriptOrder, Vec<u32>, us
     b.issued = false;
     sim.intent.chains[ci].tasks = vec![done_a, b];
     sim.intent.chains[ci].next = 1;
-    sim.intent.track = Some(off_track(sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(sim, a, 20.0)));
     (o, divs, ci)
 }
 
@@ -657,7 +657,7 @@ fn withdrawal_through_world() {
     assert!(mine.iter().all(|&d| sim.world.divisions[d as usize].vars.positions == Some(ev.positions)));
     // отошла от следа и неспособна — отвод задержан, затем устарел: не применён, смена записана
     let mut sim = intent_sim();
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     set_cohesion(&mut sim, a, 0.2);
     let before: Vec<_> = mine.iter().map(|&d| sim.world.divisions[d as usize].vars.positions).collect();
     run_to(&mut sim, 3);
@@ -681,7 +681,7 @@ fn stale_task_superseded() {
     let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
     sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 8.0));
     sim.intent.chains[ci].tasks[2].goal = Some(beyond(&sim, a, g0, 12.0));
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     set_cohesion(&mut sim, a, 0.2);
     run_to(&mut sim, 6);
     assert_eq!(status(&sim, a).reason, Some(Reason::Unfit));
@@ -698,7 +698,7 @@ fn stale_task_superseded() {
 fn shifted_band_reason_strayed() {
     let mut sim = intent_sim();
     let a = hq(&sim, "su_8gva");
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     run_to(&mut sim, 3);
     let s = status(&sim, a);
     assert_eq!(s.status, Status::Shifted);
@@ -718,7 +718,7 @@ fn commander(sim: &Sim, h: u32) -> &Commander { sim.commanders.list.iter().find(
 /// Армию `a` увели с истории в час 1: след эталона на месте, армия — в 35 км к югу.
 fn stray(sim: &mut Sim, a: u32) {
     run_to(sim, 1);
-    sim.intent.track = Some(still_track(sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(sim, &[a])));
     shift(sim, a, 0.0, -35.0);
     run_to(sim, 2);
     assert_eq!(status(sim, a).status, Status::Own);
@@ -882,7 +882,7 @@ fn german_off_history_army_decides() {
     run_to(&mut sim, 1);
     assert_eq!(sim.command.control[a as usize], Control::Script, "на истории — по приказам сценария");
     assert!(commander(&sim, a).decisions.is_empty(), "на истории командующий не решает");
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     shift(&mut sim, a, -35.0, 0.0);
     run_to(&mut sim, 2);
     assert_eq!(status(&sim, a).status, Status::Own);
@@ -1011,7 +1011,7 @@ fn chain_end_off_track_hands_over() {
     let g = sim.intent.chains[ci].tasks[n - 1].goal.expect("цель");
     let c = center(&sim, a);
     shift(&mut sim, a, g.x - c.x, g.y - c.y);
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     run_to(&mut sim, 2);
     assert_eq!((status(&sim, a).status, status(&sim, a).reason.clone()), (Status::Own, Some(Reason::ChainEnd)));
     run_to(&mut sim, 3);
@@ -1027,7 +1027,7 @@ fn chain_end_on_track_stays_history() {
     let ci = chain_of(&sim, a);
     let n = sim.intent.chains[ci].next;
     sim.intent.chains[ci].tasks.truncate(n);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     run_to(&mut sim, 3);
     assert_eq!(status(&sim, a).status, Status::History);
 }
@@ -1052,7 +1052,7 @@ fn idle_off_history_armies_all_tasked() {
     }
     let mut t = off_track(&mut sim, a, 20.0);
     t.armies.extend(off_track(&mut sim, b, 20.0).armies);
-    sim.intent.track = Some(t);
+    sim.intent.track = Some(std::sync::Arc::new(t));
     run_to(&mut sim, 3);
     assert_eq!((status(&sim, a).status, status(&sim, b).status), (Status::Own, Status::Own));
     let (ta, tb) = (assigns(&sim, f, a), assigns(&sim, f, b));
@@ -1085,7 +1085,7 @@ fn drop_zone_excluded_from_assign() {
             let ll = sim.theatre.proj.to_lnglat(at);
             intent::intervene(&mut sim, &json!({ "actions": [{ "drop": { "to": "su_8gva", "after": 0, "near": ll, "km": km } }] })).expect("вмешательство");
         }
-        sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+        sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
         run_to(&mut sim, 3);
         sim
     };
@@ -1124,7 +1124,7 @@ fn assign_stays_in_operation_area() {
     shift(&mut sim, a, 150.0, 0.0);
     let c = center(&sim, a);
     if let Some(d) = sim.command.intent[a as usize].as_mut() { d.axis = vec![c, XY::new(c.x + 100.0, c.y)]; }
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     run_to(&mut sim, 3);
     assert_eq!(status(&sim, a).status, Status::Own);
     let plan = intent::plan_objectives(&sim, f);
@@ -1159,14 +1159,14 @@ fn supersede_on_track_silent() {
     let g0 = sim.intent.chains[ci].tasks[0].goal.expect("цель");
     sim.intent.chains[ci].tasks[1].goal = Some(beyond(&sim, a, g0, 8.0));
     sim.intent.chains[ci].tasks[2].goal = Some(beyond(&sim, a, g0, 12.0));
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     set_cohesion(&mut sim, a, 0.2);
     run_to(&mut sim, 6);
     assert_eq!(status(&sim, a).status, Status::Shifted);
     assert!(!sim.intent.chains[ci].tasks[1].issued, "задача 1 задержана");
     // в час задачи 2 армия снова у следа и в себе
     set_cohesion(&mut sim, a, 0.9);
-    sim.intent.track = Some(still_track(&sim, &[a]));
+    sim.intent.track = Some(std::sync::Arc::new(still_track(&sim, &[a])));
     run_to(&mut sim, 7);
     let ch = &sim.intent.chains[ci];
     assert!(!ch.tasks[1].issued && ch.tasks[2].issued, "задача 1 устарела, подана задача 2");
@@ -1211,7 +1211,7 @@ fn assign_defend_near_or_in_place() {
     shift(&mut sim, a, 150.0, 0.0);
     let c = center(&sim, a);
     if let Some(d) = sim.command.intent[a as usize].as_mut() { d.axis = vec![c, XY::new(c.x + 100.0, c.y)]; }
-    sim.intent.track = Some(off_track(&mut sim, a, 20.0));
+    sim.intent.track = Some(std::sync::Arc::new(off_track(&mut sim, a, 20.0)));
     run_to(&mut sim, 3);
     let ds: Vec<_> = commander(&sim, f).decisions.iter().filter_map(|d| match &d.options[d.chosen].choice.kind {
         Kind::Assign { army, at, defend: true, .. } if *army == a => Some((*at, d.options[d.chosen].choice.label.clone())),

@@ -5,6 +5,7 @@
 pub mod command;
 pub mod commander;
 pub mod game;
+pub mod game_rewind;
 pub mod intent;
 pub mod geo;
 pub mod llm;

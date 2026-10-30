@@ -43,8 +43,8 @@ pub struct State {
     pub chains: Vec<Chain>,
     /// По штабам мира.
     pub hq: Vec<HqState>,
-    /// След эталона; нет — ухода и возврата по расстоянию нет.
-    pub track: Option<Track>,
+    /// След эталона; нет — ухода и возврата по расстоянию нет. Общий у снимков (`Sim::snapshot`): не копируется.
+    pub track: Option<std::sync::Arc<Track>>,
     /// Смены состояния: (час, штаб, состояние, причина).
     pub log: Vec<(u32, u32, Status, Option<Reason>)>,
     /// Файл сценария (след эталона — рядом с ним): задаёт `scenario::load_with`.
@@ -114,7 +114,7 @@ pub fn enable(sim: &mut Sim, side: Side) {
         sim.intent.hq = vec![HqState { status: Status::History, reason: None, since: tick }; sim.world.hqs.len()];
         let loaded = match sim.intent.scenario.as_deref() { Some(p) => super::track::load(p), None => Err("нет следа эталона".to_string()) };
         match loaded {
-            Ok(t) => sim.intent.track = Some(t),
+            Ok(t) => sim.intent.track = Some(std::sync::Arc::new(t)),
             Err(e) => sim.journal.push(Event { tick, agent: u32::MAX, text: format!("история как замысел: {e}") }),
         }
     }

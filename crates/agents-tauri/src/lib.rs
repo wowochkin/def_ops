@@ -213,24 +213,11 @@ pub mod commands {
         tauri::async_runtime::spawn_blocking(move || {
             let mut lock = GAME.lock().map_err(|e| e.to_string())?;
             let g = lock.as_mut().ok_or("игра не начата")?;
-            // доктрина из базы знаний на этот ход (нет — прежняя)
-            if let Some(d) = doctrine_text { g.sim.doctrine_text = d.texts(); }
-            // команды управления (взять, вернуть, разрешить отход, исторические директивы) — до распоряжений и приказов
-            // по команде: null — исполнена, строка — почему нет
-            let command_res: Vec<Option<String>> = command.unwrap_or_default().iter().map(|c| g.command_json(c).err()).collect();
-            let command_bad: Vec<String> = command_res.iter().flatten().cloned().collect();
-            // распоряжения штаба (подвоз, переправы, подрыв, резервы, полосы) — до приказов хода
-            let staff_bad = staff.map(|s| g.staff(&s)).unwrap_or_default();
-            let applied: Vec<serde_json::Value> = orders.iter().map(|o| match g.order(o) {
-                Ok(n) => serde_json::json!({ "hq": o.hq, "divisions": n }),
-                Err(e) => serde_json::json!({ "hq": o.hq, "error": e }),
-            }).collect();
-            g.advance(hours);
-            let mut t = g.trace();
-            t["game"]["applied"] = serde_json::json!(applied);
-            t["game"]["staffErrors"] = serde_json::json!(staff_bad);
-            t["game"]["commandErrors"] = serde_json::json!(command_bad);
-            t["game"]["commandResults"] = serde_json::json!(command_res);
+            // ход как вход ядра: доктрина из базы знаний на ход (нет — прежняя) → команды управления (по команде: null —
+            // исполнена, строка — почему нет) → распоряжения штаба → приказы → расчёт; ход — в журнал игры
+            let turn = agents_core::game::TurnIn { command: command.unwrap_or_default(), staff, orders, hours, doctrine: doctrine_text.map(DoctrineIn::texts), between: Vec::new() };
+            let r = g.play_turn(turn);
+            let t = g.turn_trace(&r);
             Ok(t)
         }).await.map_err(|e| e.to_string())?
     }
