@@ -92,9 +92,11 @@ export interface DirDraft {
   echelon?: 'first' | 'second';
   commit?: boolean;
   note: string;
+  /** Указания составляются по задаче и обстановке (post-notes); правка руками ставит false — пересчёт останавливается. */
+  noteAuto?: boolean;
 }
 
-export const blankDir = (to: string, level: LevelId): DirDraft => ({ to, level, task: 'attack', form: level === 'division' ? 'instruction' : 'order', axis: [], immediate: [], subsequent: [], boundaries: [[], []], mainBlow: [], reserve: [], note: '' });
+export const blankDir = (to: string, level: LevelId): DirDraft => ({ to, level, task: 'attack', form: level === 'division' ? 'instruction' : 'order', axis: [], immediate: [], subsequent: [], boundaries: [[], []], mainBlow: [], reserve: [], note: '', noteAuto: true });
 
 type Node = { id: string; name: string; echelon: string; parent: string | null; control?: string };
 const hqsOf = (v: TurnView): Node[] => Object.entries(v.command?.hqs ?? {}).map(([id, h]) => ({ id, ...h }));
@@ -210,7 +212,7 @@ export function dirTaskOf(t: string): DirTask {
 
 /** Приказ, предложенный советником, → проект документа пункта: цель — пункт ближайшей задачи, обоснование — указания. */
 export function suggestionToDir(s: { formation: string; task: string; at: LngLat | null; why: string }, level: LevelId): DirDraft {
-  return { ...blankDir(s.formation, level), task: dirTaskOf(s.task), immediate: s.at ? [s.at] : [], note: s.why ?? '' };
+  return { ...blankDir(s.formation, level), task: dirTaskOf(s.task), immediate: s.at ? [s.at] : [], note: s.why ?? '', noteAuto: !s.why };
 }
 
 /** Пункт управления для советника: кто решает, его подчинённые, каким документом, через голову ли. */

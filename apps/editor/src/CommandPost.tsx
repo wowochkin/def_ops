@@ -9,10 +9,12 @@ import type { LngLat } from '@def-ops/core';
 import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
+import { confirmAsync } from './dialogs';
 import { controlMark, findHq, queueOp, type CommandOp } from './command-forms';
 import { blankDir, DIR_TASK_RU, type DirPick, local, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
 import { LEVELS, type LevelId } from './map-level-scale';
 import { wantsFly } from './post-views';
+import { withNote } from './post-notes';
 import { applyObject, findObjects, OBJ_KIND_RU, postObjects, shortName, type ObjKind } from './post-objects';
 
 export type { DirPick };
@@ -52,13 +54,15 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   const issuer = (chosen[level] && list.some((x) => x.id === chosen[level]) ? chosen[level] : list.find((x) => view && taken(view, x.id, cmds))?.id ?? list[0]?.id) ?? null;
   const subs = useMemo(() => (view && issuer ? recipients(view, issuer) : []), [view, issuer]);
   // проекты — по уровню и получателю: у «Корпуса» и «Дивизии» одни дивизии, но разные документы
-  const draft = sel && subs.some((x) => x.id === sel) ? dirs[`${level}:${sel}`] ?? blankDir(sel, level) : null;
+  const name = (id: string) => view?.command?.hqs[id]?.name ?? view?.own.find((u) => u.id === id)?.name ?? id;
+  // указания составляются по проекту и обстановке хода, пока их не правили руками (noteAuto)
+  const noted = (d: DirDraft) => (view && issuer ? withNote(d, view, { issuer, name }) : d);
+  const draft = sel && subs.some((x) => x.id === sel) ? noted(dirs[`${level}:${sel}`] ?? blankDir(sel, level)) : null;
   // указание на карте — только при открытом документе; смена уровня или штаба его снимает
   useEffect(() => { setPick(null); }, [level, issuer]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef({ draft, pick }); live.current = { draft, pick };
   const ready = (): true | string => (!on ? 'пункт управления — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view?.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
-  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: d }));
-  const name = (id: string) => view?.command?.hqs[id]?.name ?? view?.own.find((u) => u.id === id)?.name ?? id;
+  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: noted(d) }));
 
   useAction({
     id: 'command.post', section: 'replay', title: 'Пункт управления', describe: 'Пункт управления по уровню: Ставка, фронт, армия, корпус, дивизия (level) и штаб этой ступени (name) — уровень карты переключается вместе с ним.',
@@ -116,7 +120,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
       const n: DirDraft = { ...d };
       if (p.task && DIR_TASK_RU[p.task]) n.task = p.task;
       if (p.form === 'order' || p.form === 'instruction') n.form = level === 'division' ? 'instruction' : p.form;
-      if (p.note !== undefined) n.note = String(p.note);
+      if (p.note !== undefined) { n.note = String(p.note); n.noteAuto = false; }
       if (p.point) n.immediate = [p.point];
       if (p.toggle) { const l = n[p.toggle.field]; n[p.toggle.field] = l.includes(p.toggle.id) ? l.filter((x) => x !== p.toggle!.id) : [...l, p.toggle.id]; }
       if (p.junction !== undefined) n.junction = p.junction || undefined;
@@ -143,6 +147,18 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
       await act('command.dir.set', p ?? {});
       const n = { ...d, ...(p?.task ? { task: p.task } : {}) };
       return `${name(d.to)}: ${DIR_TASK_RU[n.task]}${p?.form ? `, ${p.form === 'order' ? 'приказом' : 'распоряжением'}` : ''}${p?.echelon ? `, ${p.echelon === 'first' ? 'первый' : 'второй'} эшелон` : ''}.`;
+    },
+  });
+  useAction({
+    id: 'command.dir.note.compose', section: 'replay', title: 'Составить указания заново', describe: 'Заменяет указания открытого документа составленными по задаче и обстановке; дальше они пересчитываются вместе с задачей, пока их не правят руками.',
+    say: ['штаб, составь указания заново'], irreversible: true, confirm: () => 'Указания будут заменены составленными по задаче и обстановке. Составить заново?',
+    available: ready, highlight: () => hl('post-form'),
+    run: async () => {
+      const d = live.current.draft;
+      if (!d) return 'Документ не открыт.';
+      const n = noted({ ...d, noteAuto: true });
+      put(n);
+      return `Указания составлены: ${n.note}`;
     },
   });
   useAction({
@@ -350,7 +366,9 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
         {has('echelon') && <div className="seg">{([['first', 'Первый эшелон'], ['second', 'Второй эшелон'], ['', 'Как решит штаб']] as const).map(([k, t]) =>
           <ActButton key={k} className={(d.echelon ?? '') === k ? 'on' : ''} action="command.dir.set" params={{ echelon: k }}>{t}</ActButton>)}</div>}
         {has('commit') && /танк/i.test(subs.find((x) => x.id === d.to)?.name ?? '') && <label className="post-chk1"><input type="checkbox" data-action="command.dir.set" checked={!!d.commit} onChange={() => void act('command.dir.set', { commit: !d.commit })} /> {label('commit')} <small className="muted">— {hint('commit')}</small></label>}
-        <label>{label('note')} <textarea rows={2} value={d.note} placeholder="Цель, силы, взаимодействие…" onChange={(e) => void act('command.dir.set', { note: e.target.value })} /></label>
+        <label>{label('note')} {d.noteAuto ? <small className="muted">составлены по задаче и обстановке — правьте</small>
+          : <button type="button" className="link" data-action="command.dir.note.compose" onClick={() => { void confirmAsync('Указания будут заменены составленными по задаче и обстановке. Составить заново?', { ok: 'Составить' }).then((ok) => { if (ok) void act('command.dir.note.compose', undefined, { by: 'mouse' }); }); }}>составить заново</button>}
+          <textarea rows={3} value={d.note} placeholder="Цель, силы, взаимодействие…" onChange={(e) => void act('command.dir.set', { note: e.target.value })} /></label>
         <div className="muted small">{d.immediateBy && `Ближайшая — к ${dm(d.immediateBy)}. `}{d.subsequentBy && `Последующая — к ${dm(d.subsequentBy)}. `}{s.overHead ? 'Через голову: пропущенные штабы получат извещение. ' : ''}До получателя — {d.form === 'order' ? 'около суток' : '1–3 ч'}.</div>
         {miss.length > 0 && <div className="adv-warn">Не хватает: {miss.join(', ')}.</div>}
         <div className="oedit-f">
