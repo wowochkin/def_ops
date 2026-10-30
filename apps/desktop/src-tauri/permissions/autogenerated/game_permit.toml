@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-permit"
+description = "Enables the game_permit command without any pre-configured scope."
+commands.allow = ["game_permit"]
+
+[[permission]]
+identifier = "deny-game-permit"
+description = "Denies the game_permit command without any pre-configured scope."
+commands.deny = ["game_permit"]

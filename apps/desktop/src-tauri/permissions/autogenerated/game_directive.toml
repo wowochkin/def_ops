@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-game-directive"
+description = "Enables the game_directive command without any pre-configured scope."
+commands.allow = ["game_directive"]
+
+[[permission]]
+identifier = "deny-game-directive"
+description = "Denies the game_directive command without any pre-configured scope."
+commands.deny = ["game_directive"]
