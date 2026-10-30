@@ -4,7 +4,7 @@
  * час (варианты, оценки, обстановка, мотивы); оценка противника против истины не раскрывается — командующий не знает
  * истины, серая строка «как было на самом деле» в карточке — пояснение для зрителя, не часть разговора.
  */
-import type { AgentCommander, AgentTrace } from '@def-ops/sim';
+import { OBJECTIVE, type AgentCommander, type AgentTrace } from '@def-ops/sim';
 import { agentGroup } from './formation-card';
 import { intentAt, NO_INTENT } from './intent-view';
 
@@ -210,7 +210,7 @@ function intentAnswer(c: AgentCommander, tick: number, names: Record<string, str
 }
 
 /** Объекты командующих на карте (profile.objective). */
-export const OBJECTIVE_AT: Record<string, { at: [number, number]; name: string }> = { berlin: { at: [13.3777, 52.5186], name: 'Берлин' } };
+export const OBJECTIVE_AT: Record<string, { at: [number, number]; name: string }> = { berlin: { at: [OBJECTIVE[0], OBJECTIVE[1]], name: 'Берлин' } };
 
 /** Отметка в ленте решений: час, подпись, будущее (после текущего часа), текущее. */
 export interface RibbonItem { tick: number; label: string; future: boolean; current: boolean }

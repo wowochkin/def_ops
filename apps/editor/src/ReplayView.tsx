@@ -40,7 +40,8 @@ import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
 import { RivalryChart } from './RivalryChart';
 import { ResultsTab } from './ResultsTab';
-import type { ResultsPart } from './results-view';
+import { baselineSummary, rememberBaseline, summarizeInWorker } from './sim/baseline';
+import { summaryNeeded, type BaselineState, type ResultsPart } from './results-view';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 import { PLAYER_SPEEDS } from './replay-dock';
 import { commanderOf, hqCentroid } from './commander-view';
@@ -270,6 +271,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // ход агентной модели последнего расчёта (для карточки агента) и выбранная дивизия
   const [agentRun, setAgentRun] = useState<AgentRun | null>(null);
   const pendingAgent = useRef<AgentRun | null>(null);
+  // правки базы последнего расчёта агентной модели и был ли он «Историей как замыслом» без варианта параметров —
+  // тогда его сводка и есть «переигровка без вмешательства» для сравнения
+  const pendingBase = useRef<{ edits: unknown; intent: boolean } | null>(null);
+  const [baseline, setBaseline] = useState<BaselineState>({ state: 'off' });
   const [agentSel, setAgentSel] = useState<string | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -285,11 +290,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       const m = e.data;
       if (m.kind === 'progress') setBusy(m.text);
       else if (m.kind === 'error') { setBusy(null); setError(m.message); w.terminate(); }
-      else {
+      else if (m.kind === 'done') {
         setBusy(null); w.terminate();
         const d = migrateDocument(m.result.doc);
         setAgentRun(m.result.engine === 'agents' ? pendingAgent.current : null); setAgentSel(null);
         setSavedId(null);
+        if (m.result.engine === 'agents' && m.result.operation && pendingBase.current?.intent) rememberBaseline(m.result.scenario, m.result.seed, pendingBase.current.edits, m.result.operation);
         setResult(m.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
         // расчёт долгий: о готовности — коротко; что дальше — если голосом пользовались недавно
         speak(speakable(calcDoneText(m.result.scenarioName, voiceRecent()), { full: true }));
@@ -316,7 +322,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setBusy('расчёт агентной модели…'); setError(null);
     // вариант параметров выбран для операции на экране; другая операция (названа голосом) — базовые параметры
     const params = sc === scenario ? variants.find((v) => v.id === variantId)?.params : undefined;
-    Promise.all([coreEditsFor(sc).then((edits) => runAgents(sc, { seed, params, edits, command })), invoke<string>('read_text', { path: op.history })])
+    Promise.all([coreEditsFor(sc).then((edits) => {
+      pendingBase.current = { edits, intent: command === 'intent' && !(params && Object.keys(params).length) };
+      return runAgents(sc, { seed, params, edits, command });
+    }), invoke<string>('read_text', { path: op.history })])
       .then(([trace, h]) => {
         if (token !== runId.current) return;
         const history = JSON.parse(h) as AgentHistory;
@@ -358,6 +367,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setScenario(m.scenario); setModel(m.engine); setSeed(m.seed);
     if (m.engine === 'army') { setRules(m.rules); setRuns(m.runs); }
     setAgentRun(r.agents ?? null); setAgentSel(null);
+    // сохранено до сравнения итогов — сводка операции по сохранённому ходу
+    if (summaryNeeded(r.result) && r.agents) {
+      const token = runId.current;
+      void summarizeInWorker(r.result.scenario, r.result.seed, r.agents.trace, r.agents.history)
+        .then((operation) => { if (token === runId.current) setResult((x) => (x ? { ...x, operation } : x)); })
+        .catch((e) => console.warn('итоги сохранённой переигровки не посчитаны:', e));
+    }
     setResult(r.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
     setSavedId(m.id); setTab('run');
   };
@@ -591,6 +607,19 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     section: () => (result?.engine === 'agents' ? 'replay' : null), summary: () => result?.operation ?? null, side: () => 'su',
     setPart: (p) => { setTab('results'); setResPart(p); },
   };
+  // «без вмешательства» — при открытии части «Сравнение»: из кэша (переигровка «История как замысел» запоминается сама)
+  // или прогоном ядра того же сценария и seed
+  const baseFor = useRef<SimResult | null>(null);
+  const wantBaseline = tab === 'results' && resPart === 'compare' && result?.engine === 'agents' && DESKTOP;
+  useEffect(() => {
+    if (baseFor.current !== result) { baseFor.current = null; setBaseline({ state: 'off' }); }
+    if (!wantBaseline || !result || baseFor.current === result) return;
+    baseFor.current = result;
+    setBaseline({ state: 'wait' });
+    baselineSummary(result.scenario, result.seed)
+      .then((summary) => { if (baseFor.current === result) setBaseline({ state: 'ready', summary }); })
+      .catch((e) => { if (baseFor.current === result) setBaseline({ state: 'error', text: String((e as Error)?.message ?? e) }); });
+  }, [wantBaseline, result]);
   useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} note={game.note} onOpenInEditor={onOpenInEditor}
@@ -627,7 +656,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           {result?.engine === 'agents' && <button className={tab === 'results' ? 'on' : ''} data-hl="results-tab" onClick={() => setTab('results')}>Итоги</button>}
         </div>
         {tab === 'results' && (result?.engine === 'agents'
-          ? <ResultsTab summary={result.operation ?? null} baseline={{ state: 'off' }} side="su" part={resPart} parts={['losses', 'compare']}
+          ? <ResultsTab summary={result.operation?.events ? result.operation : null} baseline={baseline} own="расчёт" side="su" part={resPart} parts={['losses', 'compare']}
             empty="В этом сохранении итогов нет — рассчитайте операцию заново." />
           : <p className="rs rs-note">Итоги и разбор — у расчёта на агентной модели.</p>)}
         {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}

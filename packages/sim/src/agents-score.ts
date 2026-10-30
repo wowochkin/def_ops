@@ -4,7 +4,7 @@
  * «Переигровке» (agentsToRun → compareWithHistory, checkEvents), без карты.
  */
 import { agentsHistory, agentsToRun, type AgentHistory, type AgentTrace } from './agents';
-import { checkEvents, compareStrength, compareWithHistory, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, summarize, type History } from './history';
+import { checkEvents, compareStrength, type EventResult, compareWithHistory, STRENGTH_MIN_POINTS, STRENGTH_WEIGHT, summarize, type History } from './history';
 import { evaluateNorms, outcomesScore, OUTCOME_WEIGHT, type Norm } from './norms';
 import type { SimContext } from './step';
 
@@ -29,11 +29,28 @@ export interface AgentsScore {
   score: number;
 }
 
-export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, toleranceKm = 10, stepHours = 6, outcomes: Norm[] = []): AgentsScore {
-  const { ctx, run } = agentsToRun(base, trace, stepHours);
-  const h = agentsHistory(history, baseHistory);
+/** Шаг снимков сверки, ч: на нём мерило и итоги операции видят события одинаково. */
+export const SCORE_STEP_HOURS = 6;
+
+/** Прогон ядра как RunResult и история для сверки — общий путь мерила и итогов операции. */
+function scoreRun(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, stepHours: number) {
+  return { ...agentsToRun(base, trace, stepHours), h: agentsHistory(history, baseHistory) };
+}
+
+/**
+ * События операции по ходу ядра: когда они случились в расчёте и на сколько суток от истории. Одно определение на
+ * мерило сходства (agentsScore) и сравнение итогов (operationSummary).
+ */
+export function agentsEvents(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, stepHours = SCORE_STEP_HOURS): EventResult[] {
+  const { ctx, run, h } = scoreRun(base, trace, history, baseHistory, stepHours);
+  return checkEvents(ctx, run, h);
+}
+
+export function agentsScore(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null, toleranceKm = 10, stepHours = SCORE_STEP_HOURS, outcomes: Norm[] = []): AgentsScore {
+  const { ctx, run, h } = scoreRun(base, trace, history, baseHistory, stepHours);
   const devs = compareWithHistory(ctx, run, h);
   const s = summarize(devs, toleranceKm);
+  // события — тем же путём, что agentsEvents (scoreRun → checkEvents)
   const ev = checkEvents(ctx, run, h);
   const hit = ev.filter((e) => e.days != null && Math.abs(e.days) <= 2).length;
   const occurred = ev.filter((e) => e.days != null);

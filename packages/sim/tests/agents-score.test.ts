@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '../src/data';
 import { contextFrom } from '../src/source';
-import { agentsHistory, agentsToRun, type AgentTrace } from '../src/agents';
-import { agentsScore } from '../src/agents-score';
+import { agentsHistory, agentsToRun, type AgentHistory, type AgentTrace } from '../src/agents';
+import { agentsEvents, agentsScore, SCORE_STEP_HOURS } from '../src/agents-score';
 import type { History, StrengthCheckpoint } from '../src/history';
 
 const get = (kind: string, file: string) => {
@@ -91,5 +93,22 @@ describe('агентная модель на карте: верхние инст
     expect(f.get('su_1bf')?.parent ?? null).toBe(null);
     expect(f.get('de_9a')?.parent ?? null).toBe(null);
     expect(f.get('su_8gva')?.parent).toBe('su_1bf');
+  });
+});
+
+describe('события операции: одно определение на мерило и сравнение', () => {
+  it('agentsScore events = agentsEvents', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const tr = trace();
+    const c = base.theatre.area('Muencheberg')!.center!;
+    // su_x у Мюнхеберга с часа 6
+    tr.frames = tr.frames.map((f, h) => h >= 6 ? [[c[0], c[1], ...f[0].slice(2)], f[1]] : f);
+    const hist = { divisions: [], events: (JSON.parse(readFileSync(join(__dirname, '../data/scenarios/agents/berlin-1945.history.json'), 'utf8')) as AgentHistory).events };
+    const ev = agentsEvents(base, tr, hist, history);
+    const sc = agentsScore(base, tr, hist, history, 10, SCORE_STEP_HOURS);
+    expect(SCORE_STEP_HOURS).toBe(6);
+    expect(ev.length).toBeGreaterThan(0);
+    expect(sc.events.map((e) => [e.id, e.days])).toEqual(ev.map((e) => [e.id, e.days]));
+    expect(ev.find((e) => e.id === 'seelow')?.simulated).not.toBeNull();
   });
 });

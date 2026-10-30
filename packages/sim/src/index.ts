@@ -29,6 +29,6 @@ export { OverlayAccumulator, applyOverlay, compareRoads, type RoadComparison, le
 export { HATCH, hatchWindow, isHatch, hatchPx, hatchScale, hatchStarts, poolInk, hatchMask, type HatchStats } from './overlay-hatch';
 export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
-export { agentsScore, type AgentsScore } from './agents-score';
+export { agentsScore, agentsEvents, SCORE_STEP_HOURS, type AgentsScore } from './agents-score';
 export { agentsToRun, agentsStateAt, agentsHistory, postureOf, agentKindOf, AGENT_TASK, type AgentTrace, type AgentCommander, type AgentCommanderOption, type AgentTrait, type AgentHistory, type AgentOrderKind } from './agents';
-export { LOSS_FIELDS, hasLosses, divisionLoss, lossSeries, historicalLosses, operationSummary, type Loss, type LossRow, type LossSeries, type HistoricalLoss, type OperationSummary } from './results';
+export { LOSS_FIELDS, hasLosses, divisionLoss, lossSeries, historicalLosses, operationSummary, distanceSeries, sideTotals, OBJECTIVE, type DistanceRow, type SideTotals, type Loss, type LossRow, type LossSeries, type HistoricalLoss, type OperationSummary } from './results';

@@ -7,13 +7,13 @@
 import type { ReactNode } from 'react';
 import type { HistoricalLoss, LossRow, OperationSummary } from '@def-ops/sim';
 import { ActButton } from './voice/registry';
-import { LossChart, SIDE_COLOR } from './ResultsCharts';
+import { DistanceChart, LossChart, SIDE_COLOR } from './ResultsCharts';
 import { fmtCount } from './num-format';
-import { histPerDay, histPeriod, histText, historyOf, lossesNote, PART_TITLE, sideHistory, sidePerDay, type BaselineState, type ResultsPart } from './results-view';
+import { baselineAt, compareRows, histPerDay, histPeriod, histText, historyOf, lossesNote, otherEvents, PART_TITLE, sideHistory, sidePerDay, type BaselineState, type Cell, type CompareRow, type Diff, type ResultsPart } from './results-view';
 
 const n = fmtCount;
 
-export function ResultsTab(p: { summary: OperationSummary | null; baseline: BaselineState; side: 'su' | 'de'; part: ResultsPart; parts: ResultsPart[]; turn?: ReactNode; empty?: string }) {
+export function ResultsTab(p: { summary: OperationSummary | null; baseline: BaselineState; side: 'su' | 'de'; part: ResultsPart; parts: ResultsPart[]; turn?: ReactNode; empty?: string; /** Заголовок своего столбца сравнения: «ваша игра» (по умолчанию) или «расчёт». */ own?: string }) {
   const part = p.parts.includes(p.part) ? p.part : p.parts[0];
   return (
     <div className="rs">
@@ -23,7 +23,7 @@ export function ResultsTab(p: { summary: OperationSummary | null; baseline: Base
       {part === 'turn' ? p.turn ?? <p className="rs-note">Разбор хода — после первого сыгранного хода.</p>
         : !p.summary ? <p className="rs-note">{p.empty ?? 'Итоги и разбор — на агентной модели.'}</p>
         : part === 'losses' ? <LossesPart s={p.summary} side={p.side} />
-        : <ComparePart s={p.summary} side={p.side} baseline={p.baseline} />}
+        : <ComparePart s={p.summary} side={p.side} baseline={p.baseline} own={p.own ?? 'ваша игра'} />}
     </div>
   );
 }
@@ -104,20 +104,50 @@ function HistoryBlock({ s, side }: { s: OperationSummary; side: 'su' | 'de' }) {
   </>;
 }
 
-/** Сравнение с историей: потери в сутки — расчёт, история, переигровка без вмешательства (когда посчитана). */
-function ComparePart({ s, side, baseline }: { s: OperationSummary; side: 'su' | 'de'; baseline: BaselineState }) {
+const dm = (d: string) => `${d.slice(8, 10)}.${d.slice(5, 7)}`;
+function cellText(c: Cell): string {
+  switch (c.kind) {
+    case 'date': return dm(c.date);
+    case 'num': return `${String(c.value).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}${c.unit === '%' ? ' %' : ''}`;
+    case 'pending': return 'ещё не наступило';
+    case 'never': return 'не случилось';
+    case 'none': return '—';
+  }
+}
+const cellTitle = (c: Cell) => (c.kind === 'none' ? c.why : undefined);
+function DiffText({ d }: { d: Diff }) {
+  return <small className={`rs-diff ${d.tone}`}>{d.tone === 'none' ? (d.text === 'нет данных' ? '' : d.text) : d.text}</small>;
+}
+function CmpRow({ r, base }: { r: CompareRow; base: boolean }) {
+  // событие впереди игры: «ещё не наступило» — в столбце игры, оценки не повторяют его
+  const quiet = r.game.kind === 'pending';
+  return <div className="rs-cmp-r">
+    <span className="rs-name" title={r.title}>{r.title}</span>
+    <span>{cellText(r.game)}</span>
+    <span title={r.src ?? cellTitle(r.history)} className={r.src ? 'rs-has-src' : undefined}>{cellText(r.history)}{!quiet && <DiffText d={r.vsHistory} />}</span>
+    <span title={cellTitle(r.baseline)}>{base ? <>{cellText(r.baseline)}{!quiet && <DiffText d={r.vsBaseline} />}</> : '—'}</span>
+    {r.note && <span className="rs-cmp-note">{r.note}</span>}
+  </div>;
+}
+
+/**
+ * Сравнение: ваша игра (в переигровке — расчёт), история и переигровка без вмешательства того же сценария и seed;
+ * оценка цветом и словами — с точки зрения своей стороны. Под таблицей — удаление фронтов от Берлина по суткам.
+ */
+function ComparePart({ s, side, baseline, own }: { s: OperationSummary; side: 'su' | 'de'; baseline: BaselineState; own: string }) {
   const base = baseline.state === 'ready' ? baseline.summary : null;
-  const cell = (x: number | null | undefined) => (x == null ? '—' : n(x));
+  const rows = compareRows(s, base, side);
+  const rest = otherEvents(s);
   return (
     <div className="rs-cmp">
-      <div className="rs-grid rs-cmp-g rs-head"><span>потери людей в сутки</span><span>расчёт</span><span>история</span><span>без вмеш.</span></div>
-      {[side, enemyOf(side)].map((sd) => {
-        const h = sideHistory(s, sd);
-        return <div key={sd} className="rs-grid rs-cmp-g"><span className="rs-name">{scopeName(s, sd)}</span><span>{cell(sidePerDay(s, sd)?.perDay)}</span><span>{cell(h && histPerDay(h))}</span><span>{cell(base && sidePerDay(base, sd)?.perDay)}</span></div>;
-      })}
-      {baseline.state === 'off' && <p className="rs-note">Переигровка без вмешательства для сравнения не считалась.</p>}
+      <div className="rs-cmp-r rs-head"><span>показатель</span><span>{own}</span><span>история</span><span>без вмеш.</span></div>
+      {rows.map((r) => <CmpRow key={r.id} r={r} base={!!base} />)}
+      {rest.total > 0 && <p className="rs-note">Остальные события: {rest.hit} из {rest.total} в пределах ±2 сут от истории.</p>}
       {baseline.state === 'wait' && <p className="rs-note">Переигровка без вмешательства считается…</p>}
+      {baseline.state === 'off' && <p className="rs-note">Переигровка без вмешательства для сравнения не считалась.</p>}
       {baseline.state === 'error' && <p className="rs-note err">Переигровка без вмешательства не посчитана: {baseline.text}</p>}
+      {!s.over && <p className="rs-note">Игра идёт: учтены сыгранные часы; события впереди — «ещё не наступило».</p>}
+      <DistanceChart s={s} baseline={base && baselineAt(base, s)} side={side} />
     </div>
   );
 }

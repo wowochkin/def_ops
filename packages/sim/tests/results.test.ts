@@ -2,7 +2,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { AgentHistory, AgentTrace } from '../src/agents';
-import { divisionLoss, hasLosses, historicalLosses, lossSeries, LOSS_FIELDS, type HistoricalLoss } from '../src/results';
+import { distanceSeries, divisionLoss, hasLosses, historicalLosses, lossSeries, LOSS_FIELDS, OBJECTIVE, operationSummary, type HistoricalLoss } from '../src/results';
+import { agentsScore } from '../src/agents-score';
+import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '../src/data';
+import { contextFrom } from '../src/source';
 
 const ROOT = join(__dirname, '../../..');
 const FIELDS11 = ['lng', 'lat', 'state', 'personnel', 'tanks', 'guns', 'ammo', 'fuel', 'fatigue', 'cohesion', 'encircled'];
@@ -123,5 +126,90 @@ describe('потери сторон по ходу ядра', () => {
     // Висло-Одерская: потерь операции в базе знаний нет — поля нет
     const vo = JSON.parse(readFileSync(join(ROOT, 'packages/sim/data/scenarios/agents/vistula-oder-1945.history.json'), 'utf8')) as AgentHistory;
     expect(vo.operationLosses).toBeUndefined();
+  });
+});
+
+const get = (kind: string, file: string) => {
+  const id = file.replace(/\.json$/, '');
+  if (kind === 'scenarios') return id.endsWith('.history') ? loadHistory(id.replace('.history', '')) : loadScenario(id);
+  if (kind === 'theatres') return loadTheatre(id);
+  if (kind === 'profiles') return loadProfile(id);
+  return loadRules(id);
+};
+const BERLIN = JSON.parse(readFileSync(join(ROOT, 'packages/sim/data/scenarios/agents/berlin-1945.history.json'), 'utf8')) as AgentHistory;
+/** Точка в km к востоку от lngLat (на той же широте). */
+const east = (p: [number, number], km: number): [number, number] => [p[0] + km / (111.32 * Math.cos((p[1] * Math.PI) / 180)), p[1]];
+/** Ход на 96 ч: su_x до часа 80 в 60 км восточнее, с часа 80 — у Мюнхеберга; su_y и de_z — на месте. */
+function longTrace(c: [number, number]): AgentTrace {
+  const t = trace(steady);
+  const far = east(c, 60);
+  t.hours = 96;
+  t.frames = Array.from({ length: 97 }, (_, h) => [0, 1, 2].map((k) => {
+    const r = [...t.frames[Math.min(h, 48)][k]];
+    if (k === 0) { const at = h >= 80 ? c : far; r[0] = at[0]; r[1] = at[1]; }
+    return r;
+  }));
+  return t;
+}
+
+describe('итоги: события и удаление от объекта', () => {
+  it('summary events are the score events', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const c = base.theatre.area('Muencheberg')!.center! as [number, number];
+    const t = longTrace(c);
+    const h: AgentHistory = { divisions: [], events: BERLIN.events };
+    const s = operationSummary(base, t, h, history);
+    const sc = agentsScore(base, t, h, history);
+    expect(s.events.map((e) => [e.id, e.days])).toEqual(sc.events.map((e) => [e.id, e.days]));
+    const seelow = s.events.find((e) => e.id === 'seelow')!;
+    expect(seelow.simulated).not.toBeNull();
+    expect(s.over).toBe(true);
+  });
+
+  it('summary up to hour', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const c = base.theatre.area('Muencheberg')!.center! as [number, number];
+    const t = longTrace(c);
+    const s = operationSummary(base, t, { divisions: [], events: BERLIN.events }, history, { upTo: 24, over: false });
+    expect(s.over).toBe(false);
+    expect(s.events.find((e) => e.id === 'seelow')!.simulated).toBeNull();
+    expect(s.distance.rows[0].game[1]).not.toBeNull();
+    expect(s.distance.rows[0].game[2]).toBeNull();
+  });
+
+  it('distanceSeries', () => {
+    const t = trace(steady);
+    const p = east(OBJECTIVE, 50);
+    t.frames.forEach((f) => { f[0][0] = p[0]; f[0][1] = p[1]; f[1][0] = p[0]; f[1][1] = p[1]; });
+    const h: AgentHistory = {
+      divisions: [],
+      armies: [
+        { formation: 'su_8gva', time: '1945-04-16T20:00', at: east(OBJECTIVE, 40), approxKm: 5 },
+        { formation: 'su_5ua', time: '1945-04-16T20:00', at: east(OBJECTIVE, 60), approxKm: 5 },
+      ],
+    };
+    t.hqs.push({ id: 'su_5ua', name: '5-я ударная армия', side: 'su', echelon: 'army', parent: 'su_1bf' });
+    const d = distanceSeries(t, h);
+    expect(d.days).toEqual(['1945-04-16', '1945-04-17', '1945-04-18']);
+    expect(d.rows).toHaveLength(1);
+    expect(d.rows[0]).toMatchObject({ hq: 'su_1bf', name: '1-й Белорусский фронт' });
+    expect(Math.abs(d.rows[0].game[0]! - 50)).toBeLessThanOrEqual(0.5);
+    // история фронта из двух армий — среднее положений (40 и 60 км к востоку)
+    expect(Math.abs(d.rows[0].history[0]! - 50)).toBeLessThanOrEqual(0.5);
+    expect(d.rows[0].history[1]).toBeNull();
+  });
+
+  it('sides divisions and strength', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    // su_y введена только с часа 30
+    const t = trace((k, h) => k === 1 && h < 30 ? { state: 'не введена в операцию', pers: 7000 } : steady(k, h));
+    const s = operationSummary(base, t, { divisions: [] }, history);
+    expect(s.sides.su.strength0).toBe(9000);
+    expect(s.sides.su.divisions).toEqual([1, 1, 2]);
+    expect(s.sides.su.strength[1]).toBe(9000 - 2400);
+    expect(s.sides.su.strength[0]).toBe(9000);
+    expect(s.sides.su.strength[2]).toBe(9000 - 4800 + 7000);
+    expect(s.sides.de.divisions[0]).toBe(1);
+    expect(s.sides.su.manningFromTable === null || s.sides.su.manningFromTable.length === 3).toBe(true);
   });
 });

@@ -76,7 +76,8 @@ import { ribbonItems } from './turn-ribbon';
 import { TurnRibbon } from './TurnRibbon';
 import { idbBranchStore } from './game-branch-store';
 import { ResultsTab } from './ResultsTab';
-import type { ResultsPart } from './results-view';
+import type { BaselineState, ResultsPart } from './results-view';
+import { baselineSummary } from './sim/baseline';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 
 export const SAVE_KEY = 'def_ops.game';
@@ -162,6 +163,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [tab, setTab] = useState<Tab>('reports');
   const [resPart, setResPart] = useState<ResultsPart>('losses');
+  // «переигровка без вмешательства» того же сценария и seed — при первом открытии части «Сравнение»
+  const [baseline, setBaseline] = useState<BaselineState>({ state: 'off' });
   const [sel, setSel] = useState<string | null>(null);
   const [pickMode, setPickMode] = useState<Pick | null>(null);
   const pick = pickMode?.kind === 'order';
@@ -234,6 +237,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     setCmds((q) => queueOp(q, { op: 'directive', directive: { ...toDirective(d, view!), issuer: post.issuer } as unknown as { to: string; task: string; form: string } }));
   };
   // указание пункта управления и прежние указания на карте (полосы, тыл) друг друга снимают; смена вкладки — тоже
+  const wantBaseline = tab === 'results' && resPart === 'compare' && view?.engine === 'agents' && !!view.results;
+  const baseScen = view?.scenario, baseSeed = view?.seed;
+  useEffect(() => {
+    if (!wantBaseline || baseline.state !== 'off' || !baseScen || baseSeed == null) return;
+    setBaseline({ state: 'wait' });
+    baselineSummary(baseScen, baseSeed)
+      .then((summary) => setBaseline({ state: 'ready', summary }))
+      .catch((e) => setBaseline({ state: 'error', text: String((e as Error)?.message ?? e) }));
+  }, [wantBaseline, baseScen, baseSeed]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { post.cancelPick(); }, [tab, sub]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (pickMode) post.cancelPick(); }, [pickMode]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (post.pick) setPickMode(null); }, [post.pick]);
@@ -1188,7 +1200,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
                 scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
             {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} />}
-            {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={{ state: 'off' }} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={['losses', 'compare']}
+            {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={baseline} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={['losses', 'compare']}
               empty={view.engine === 'agents' ? 'Итоги ещё не посчитаны.' : undefined} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}

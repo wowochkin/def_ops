@@ -7,6 +7,8 @@ export interface SimRequest {
   scenario: string; rules: string; seed: number; runs: number; toleranceKm: number;
   /** Агентная модель (дивизии; настольное приложение): ход, посчитанный ядром на Rust, и её история — карта строится здесь. */
   agents?: { trace: AgentTrace; history: AgentHistory; title: string; stepHours: number };
+  /** Только сводка операции по ходу agents (переигровка без вмешательства, сохранённая переигровка без сводки) — без карты. */
+  summaryOnly?: boolean;
 }
 
 export interface SimResult {
@@ -33,13 +35,14 @@ export interface SimResult {
   kb?: KbStamp | null;
   /** Зоны влияния сторон для карты: снимки через 24 ч от начала и последний (в старых сохранениях и при ошибке расчёта зон нет). */
   zones?: { side: string; frames: { time: string; grid: ZoneGrid }[] };
-  /** Итоги операции (агентная модель): потери сторон по суткам, фронтам и армиям и исторические (в старых сохранениях нет). */
+  /** Итоги операции (агентная модель): потери сторон, события, удаление фронтов от Берлина, силы сторон и исторические (в старых сохранениях нет или без событий). */
   operation?: OperationSummary;
 }
 
 export type SimResponse =
   | { kind: 'progress'; text: string }
   | { kind: 'done'; result: SimResult }
+  | { kind: 'summary'; summary: OperationSummary }
   | { kind: 'error'; message: string };
 
 export interface CatalogEntry { id: string; title: string; detail: string; toleranceKm: number; rules: { id: string; title: string }[] }

@@ -46,6 +46,7 @@ self.onmessage = async (e: MessageEvent<SimRequest>) => {
     post({ kind: 'progress', text: 'загрузка данных…' });
     // отметка сборки из базы — по тем же правкам операции, что и данные (окно дождалось сборки до запуска)
     const [{ ctx, history }, kb] = await Promise.all([contextFrom(get, q.scenario, q.rules), kbStamp(q.scenario)]);
+    if (q.agents && q.summaryOnly) return post({ kind: 'summary', summary: operationSummary(ctx, q.agents.trace, q.agents.history, history) });
     if (q.agents) return agents(q, ctx, history, kb);
     const a = analyze(ctx, history, {
       seed: q.seed, runs: q.runs, toleranceKm: q.toleranceKm,

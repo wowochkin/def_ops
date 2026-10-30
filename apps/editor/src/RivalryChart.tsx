@@ -12,7 +12,7 @@ import { btn } from './voice/highlight';
 import { inReplay } from './voice/actions/command';
 import { CHART_KEY, readOpen } from './replay-dock';
 
-const COLORS = ['#b3261e', '#d97706', '#0f766e', '#2563eb'];
+export const COLORS = ['#b3261e', '#d97706', '#0f766e', '#2563eb'];
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
 const first = (n: string) => n.split(' ')[0];
 /** Шаг оси километров: 1, 2, 5 × 10^k так, чтобы меток было 3–5. */
