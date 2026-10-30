@@ -7,8 +7,8 @@
 // --results — вместо этого снимки итогов и разбора хода в одном окружении: «Итоги» → «Потери» переигровки
 // (replay-results-losses), игра с начала операции (противник — история как замысел): «Доклады» Ставки на ходе 1
 // (game-reports), «Итоги» → «Сравнение» после двух ходов (command-compare), «Итоги» → «Разбор хода» после трёх с
-// раскрытым событием (command-debrief); затем 8-я гв. армия под управлением, подставная модель (поддельная LM Studio
-// на /llm/): «Составить советником (ИИ)» на втором поле из пяти (decision-ai) и поле вопроса советника (advisor-input).
+// раскрытым событием (command-debrief). Ответы модели — подставные (поддельная LM Studio на /llm/). Варианты советника
+// и поле вопроса советника — scripts/stage4-shots.mjs.
 // Нужны: сервер разработки редактора (cd apps/editor && npx vite) и target/release/agents-game.
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -126,24 +126,6 @@ async function resultsShots() {
   await page.waitForTimeout(2500);
   await shot('command-debrief.jpg');
   for (const t of await page.locator('.db-list li').allInnerTexts()) console.log('  событие:', t.replace(/\s+/g, ' ').slice(0, 300));
-  // 8-я гв. армия под управлением: «Составить советником (ИИ)» — второе поле из пяти пишется
-  await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
-  await page.locator('.staffs-row', { hasText: '8-я гвардейская' }).first().locator('button', { hasText: 'взять' }).click();
-  await page.locator('.lvl-sw button', { hasText: 'Армия' }).click();
-  await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
-  for (const t of await page.locator('.cmd-body textarea').all()) await t.fill('');
-  await page.waitForTimeout(3000);
-  lm.n = 0; lm.holdAt = 2;
-  await page.locator('[data-action="decision.compose.all"]').click();
-  await page.locator('.ai-btn-t small', { hasText: '2 из 5' }).waitFor({ timeout: 120000 });
-  await page.waitForTimeout(1500);
-  await shot('decision-ai.jpg');
-  lm.holdAt = 0; lm.release?.();
-  await page.locator('.ai-btn-t small', { hasText: 'из 5' }).waitFor({ state: 'detached', timeout: 120000 });
-  // советник: вопрос в поле (не отправлен)
-  await page.locator('[data-tour="cmd-advisor"]').click();
-  await page.locator('textarea[placeholder^="Свой вопрос"]').fill('Где противник может нанести контрудар?');
-  await shot('advisor-input.jpg');
 }
 
 const mainShots = async () => {

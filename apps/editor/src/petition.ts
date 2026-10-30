@@ -4,7 +4,7 @@
  * по правилу (command/petition.rs); если Ставку ведёт сам игрок — подавать некому. Нынешняя модель: ходатайство —
  * текст для модели-Ставки, работает лишь при ней; соседи — объединения верхнего уровня стороны. Где не действует — поле скрыто с пояснением. Без React.
  */
-import type { LngLat } from '@def-ops/core';
+import { createFeature, type Feature, type LabelFeature, type LineFeature, type LngLat } from '@def-ops/core';
 import type { CommandOp } from './command-forms';
 import type { EnemyMode, Place, TurnView } from './sim/game-protocol';
 import { taken } from './command-post';
@@ -98,4 +98,31 @@ export function petitionAnswer(v: TurnView, issuer: string): { time: string; acc
   if (!own.length) return null;
   const p = own.reduce((m, x) => (timeKey(x.time) >= timeKey(m.time) ? x : m));
   return { time: p.time, accepted: p.accepted, text: p.accepted ? (p.why ? `линия принята — ${p.why}` : 'линия принята') : p.why };
+}
+
+/** Цвет ходатайства на карте — свой, чтобы линию нельзя было спутать с разграничительными линиями проектов. */
+export const PETITION_COLOR = '#8e24aa';
+
+/**
+ * Ходатайство открытого пункта на карте: линия — пунктиром своего цвета (не штрихпунктир разграничительной линии),
+ * у её середины — подпись «ходатайство: линия с соседом (…)» с белой обводкой; одна точка — знаком с той же подписью.
+ */
+export function petitionMarks(p: PetitionDraft, neighbour: string, time: string): Feature[] {
+  if (!p.line.length) return [];
+  const t = { from: time, to: null };
+  const what = `линия с соседом${neighbour ? ` (${neighbour})` : ''}`;
+  const out: Feature[] = [];
+  if (p.line.length > 1) {
+    const f = createFeature('line', 'rkka.boundaryArmy', { points: p.line, layerId: 'plan' }, 1.2, 'own') as LineFeature;
+    f.style = { ...f.style, layers: f.style.layers.map((l) => ({ ...l, color: PETITION_COLOR, dash: [7, 5] })) };
+    f.name = `Ходатайство: ${what}`; f.time = t; out.push(f);
+  } else {
+    const f = createFeature('symbol', 'std.unitOval', { at: p.line[0], layerId: 'plan' }, 0.5, 'own');
+    f.name = `Ходатайство: ${what}`; f.time = t; out.push(f);
+  }
+  const mid = p.line[Math.floor(p.line.length / 2)];
+  const lb = createFeature('label', 'atlas.unit', { at: [mid[0] + 0.03, mid[1] + 0.012], text: `ходатайство: ${what}`, layerId: 'plan' }, 1, 'own') as LabelFeature;
+  lb.style = { ...lb.style, color: PETITION_COLOR, size: 14, halo: { color: '#ffffff', width: 2.2 } };
+  lb.time = t; out.push(lb);
+  return out;
 }

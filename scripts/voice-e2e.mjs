@@ -43,6 +43,9 @@
 // («проводи ход» — чего нет и «Составить черновик донесения?», «да»; «проводи ход» → «да» → доклад посредника голосом
 // посредника — роль umpire). В конце — отдельное окно «без рук от запуска до доклада посредника»: вступление («хватит»)
 // → переигровка → расчёт → командование → обстановка → варианты → «проводи ход» → «да» → посредник.
+// Там же — решение и советник этапа 4: «составь заново оценку обстановки» → «да» (пометка «составлено по обстановке»),
+// ходатайство («ходатайство о линии с первым Украинским фронтом», «добавь в ходатайство Котбус»), «дай два варианта» →
+// «принимаю первый и поправлю» (проект не пуст — переспрос) → «да».
 // Компактная панель: по умолчанию полоса; открыто окно — полоса не на окне (вопрос dialogs.ts, «Принять командование»),
 // ответа нет 8 с — напоминание; ответ посреди чтения окна — перебиванием «голосом» и «словом»; в командовании легенда
 // свёрнута, место на карте — не под панелью и легендой; длинная фраза — в полосе целиком (панель не разворачивается),
@@ -1984,7 +1987,11 @@ await ctx4.addInitScript(() => {
   window.__clicks = 0; window.addEventListener('pointerdown', () => { window.__clicks++; }, true);
   window.__said = [];
   const Ws = window.WebSocket;
-  window.WebSocket = class extends Ws { send(d) { if (typeof d === 'string') { try { window.__said.push(JSON.parse(d)); } catch { /* */ } } return super.send(d); } };
+  window.__heard = [];
+  window.WebSocket = class extends Ws {
+    constructor(...a) { super(...a); this.addEventListener('message', (e) => { if (typeof e.data === 'string' && /"text"/.test(e.data)) window.__heard.push(e.data.slice(0, 160)); }); }
+    send(d) { if (typeof d === 'string') { try { window.__said.push(JSON.parse(d)); } catch { /* */ } } return super.send(d); }
+  };
 });
 const LM4 = { plans: 0, enemy: 0, umpire: 0, log: [] };
 await ctx4.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
@@ -2124,6 +2131,45 @@ await check('в игре «Штаб, тур по командованию» — 
   await layer4.waitFor({ state: 'detached', timeout: 40000 }).catch(async () => { throw new Error(`«хватит» не закончил тур; лента: ${(await feed4()).slice(-600)}`); });
   await page4.waitForFunction(() => document.querySelector('[data-tour="cmd-tab-orders"].on'), null, { timeout: 5000 })
     .catch(async () => { throw new Error(`после тура открыта ${await tabOn()}, а не «Приказы»`); });
+});
+
+// пункт управления этапа 4 голосом (игра здесь — на нынешней модели, модель-Ставка на подставной модели): поле решения
+// заново — после «да», с пометкой «составлено по обстановке»; ходатайство о линии — сосед и пункт; варианты советника —
+// «принимаю первый и поправлю» (проект не пуст — штаб переспрашивает, «да»). Документы пункта управления («ближайшая
+// задача — Зелов») — только на агентной модели: здесь их нет, они проверяются в tests (post-objects, voice-staff).
+await check('в игре «составь заново оценку обстановки» → «да» — пометка «составлено по обстановке»; «ходатайство о линии с первым Украинским фронтом», «добавь в ходатайство Котбус»; «дай два варианта» → «принимаю первый и поправлю» → «да»', async () => {
+  const says = () => page4.evaluate(() => window.__said.filter((m) => m.type === 'say').slice(-6).map((m) => String(m.text).slice(0, 120)).join(' | '));
+  const step = (what, loc, ms = 30000) => loc.waitFor({ timeout: ms }).catch(async () => { throw new Error(`${what}; штаб говорил: ${await says()}; услышано: ${await page4.evaluate(() => window.__heard.filter((x) => !/"say"/.test(x)).slice(-8).join(' || '))}`); });
+  await hands4(['штаб, решение']);
+  await step('вкладка «Решение» не открылась', page4.locator('[data-tour="cmd-tab-decision"].on'));
+  // «да» — когда штаб договорил вопрос (пока он говорит, поддельный микрофон без подавления эха глушится)
+  const quiet = () => page4.waitForFunction(() => !/Говорит/.test(document.querySelector('.vp-state')?.textContent ?? ''), null, { timeout: 40000 }).catch(() => {});
+  const ta = page4.locator('[data-hl="field-assessment"] textarea');
+  await ta.evaluate((el) => { Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(el, 'Прежняя оценка.'); el.dispatchEvent(new Event('input', { bubbles: true })); });
+  await hands4(['штаб, составь заново оценку обстановки']);
+  await step('штаб не переспросил о замене', said4(/Составить оценку обстановки заново\? Текст будет заменён/));
+  await quiet();
+  await hands4(['штаб, да']);
+  await page4.locator('.confirm-box').waitFor({ state: 'detached', timeout: 30000 }).catch(async () => {
+    const strip = await panel4.locator('.vp-card.strip .vp-last').innerText().catch(() => '');
+    throw new Error(`«да» не закрыл вопрос о замене; полоса: ${strip}; окно: ${await page4.locator('.confirm-box').innerText().catch(() => '')}`);
+  });
+  await step('оценка обстановки не составлена заново (нет пометки)', page4.locator('[data-hl="field-assessment"] .dauto'));
+  if ((await ta.inputValue()) === 'Прежняя оценка.') throw new Error('оценка обстановки не заменена');
+  await hands4(['штаб, ходатайство о линии с первым Украинским фронтом']);
+  await step('сосед ходатайства не выбран', said4(/Ходатайство о линии с соседом: (?:1-й|первый) Укр/));
+  await hands4(['штаб, добавь в ходатайство Котбус']);
+  await step('пункт линии ходатайства не добавлен', said4(/Котбус/));
+  const pet = (await page4.locator('[data-hl="field-request"]').innerText()).replace(/\s+/g, ' ');
+  if (!/точ\S* — 1|1 точ/.test(pet)) throw new Error(`в линии ходатайства не одна точка: ${pet.slice(0, 200)}`);
+  await hands4(['штаб, дай два варианта']);
+  await step(`варианты не готовы (запросов: ${LM4.plans})`, said4('Советник предложил два варианта'), 90000);
+  // проект не пуст (поле решения, ходатайство) — штаб переспрашивает о замене
+  await hands4(['штаб, принимаю первый и поправлю']);
+  await step('штаб не переспросил о замене проекта', said4(/Заменить проект вариантом/));
+  await quiet();
+  await hands4(['штаб, да']);
+  await step('вариант не принят с правкой', said4(/Вариант «Удар на Зелов» принят/));
 });
 await ctx4.close();
 }

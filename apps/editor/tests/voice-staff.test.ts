@@ -909,6 +909,8 @@ describe('ходатайство голосом', () => {
     staff({ petition: NB } as never);
     expect(parseStaff('ходатайство о линии с первым украинским фронтом', 'replay')).toMatchObject({ id: 'decision.petition.neighbour', params: { name: 'первым украинским фронтом' } });
     expect(parseStaff('добавь в ходатайство Котбус', 'replay')).toEqual({ id: 'decision.petition.point', params: { place: 'Котбус' } });
+    // как в окне: rest — без обращения, raw — как сказано, с «Штаб,»
+    expect(parseStaff('добавь в ходатайство котбус', 'replay', 'Штаб, добавь в ходатайство Котбус.')).toEqual({ id: 'decision.petition.point', params: { place: 'Котбус' } });
     expect(parseStaff('очисти ходатайство', 'replay')).toEqual({ id: 'decision.petition.clear' });
   });
   it('сосед по названию, пункты — точки в конец линии, очистить', async () => {

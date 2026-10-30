@@ -31,7 +31,7 @@ import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
-import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
+import { petitionAnswer, petitionMarks, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
 import { DIR_TASK_RU, dirTaskOf, issuers, postContext, postProjectCount, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
 import { completeVariant, dirDraftOf, fromCore, planFallback, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
 import { withNote } from './post-notes';
@@ -821,12 +821,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
       f.name = 'Разграничительная линия (указывается)'; f.time = { from: view.time, to: null }; plan.push(f as never);
     }
-    // ходатайство открытого пункта: линия с соседом — пунктиром разграничительной линии; одна точка — знаком
+    // ходатайство открытого пункта: линия с соседом — пунктиром своего цвета с подписью; одна точка — знаком
     const pet = (lowPost() ? postDecisions[post.issuer!] : decision)?.petition;
     if (pet?.line.length) {
-      const nb = view.command?.hqs[pet.neighbour]?.name ?? view.groups.find((g) => g.id === pet.neighbour)?.name ?? 'соседом';
-      const f = pet.line.length > 1 ? createFeature('line', 'rkka.boundaryArmy', { points: pet.line, layerId: 'plan' }, 1, 'own') : createFeature('symbol', 'std.unitOval', { at: pet.line[0], layerId: 'plan' }, 0.5, 'own');
-      f.name = `Ходатайство: линия с ${nb}`; f.time = { from: view.time, to: null }; plan.push(f as never);
+      const nb = view.command?.hqs[pet.neighbour]?.name ?? view.groups.find((g) => g.id === pet.neighbour)?.name ?? '';
+      plan.push(...(petitionMarks(pet, nb, view.time) as never[]));
     }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionDraft } from '../src/petition';
+import { PETITION_COLOR, petitionAnswer, petitionMarks, petitionOp, petitionState, petitionText, type PetitionDraft } from '../src/petition';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const div = (id: string, parent: string, status = 'active') => ({ id, name: id, echelon: 'division', parent, status });
@@ -104,4 +104,26 @@ describe('ходатайство о разграничительной лини�
     expect(petitionAnswer(w as never, 'su_1bf')).toEqual({ time: '17.04 05:00', accepted: false, text: 'отнимает главный удар' });
     expect(petitionAnswer(w as never, 'su_2bf')).toBeNull();
   });
+});
+
+describe('ходатайство на карте', () => {
+  const draft: PetitionDraft = { neighbour: 'su_1uf', line: [[14.4, 52.3], [14.5, 52.2], [14.6, 52.1]], note: '' };
+  it('линия — своим цветом и пунктиром, не как разграничительная линия; подпись читаема', () => {
+    const fs = petitionMarks(draft, '1-й Украинский фронт', '1945-04-17T05:00');
+    const line = fs.find((f) => f.kind === 'line') as never as { style: { layers: { color: string; dash: number[] | null }[] }; name: string };
+    expect(line.style.layers[0].color).toBe(PETITION_COLOR);
+    expect(line.style.layers[0].dash).toEqual([7, 5]);
+    expect(line.name).toBe('Ходатайство: линия с соседом (1-й Украинский фронт)');
+    const lb = fs.find((f) => f.kind === 'label') as never as { text: string; at: number[]; style: { color: string; halo: { width: number } | null; size: number } };
+    expect(lb.text).toBe('ходатайство: линия с соседом (1-й Украинский фронт)');
+    expect(lb.style.color).toBe(PETITION_COLOR);
+    expect(lb.style.halo?.width).toBeGreaterThan(1);
+    expect(lb.style.size).toBeGreaterThanOrEqual(13);
+    expect(lb.at[1]).toBeCloseTo(52.2 + 0.012);
+  });
+  it('одна точка — знак и подпись, без линии', () => {
+    const fs = petitionMarks({ ...draft, line: [[14.4, 52.3]] }, '', '1945-04-17T05:00');
+    expect(fs.map((f) => f.kind)).toEqual(['symbol', 'label']);
+  });
+  it('нет точек — ничего', () => expect(petitionMarks({ ...draft, line: [] }, 'x', 't')).toEqual([]));
 });
