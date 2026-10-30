@@ -93,7 +93,11 @@ fn show_error(app: &tauri::AppHandle, msg: &str) {
 }
 
 fn main() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // macOS: своё меню приложения — системный Quit не проходит через ExitRequested (expo.rs, app_menu)
+    #[cfg(target_os = "macos")]
+    let builder = builder.menu(|app| expo::app_menu(app)).on_menu_event(expo::on_menu_event);
+    builder
         .manage(Services(Mutex::new(None)))
         .manage(Ready(Mutex::new(None)))
         .manage(expo::Expo::default())

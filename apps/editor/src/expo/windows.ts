@@ -36,16 +36,29 @@ export interface Windows {
 }
 
 export const MONITORS_EVENT = 'expo://monitors';
+/** Ошибка `expo_open`, пока главное окно на странице запуска (src-tauri/src/expo.rs, NOT_READY): повторить. */
+export const NOT_READY = 'EXPO_NOT_READY';
 
 /** Настольное приложение: команды Tauri. `invoke` и `listen` подставляются в тестах. */
 export function desktopWindows(
   invoke: Invoke = async (cmd, args) => (await import('@tauri-apps/api/core')).invoke(cmd, args),
   listen: (event: string, f: (payload: unknown) => void) => Promise<() => void> = async (event, f) =>
     (await import('@tauri-apps/api/event')).listen(event, (e) => f(e.payload)),
+  opts: { retries?: number; retryMs?: number } = {},
 ): Windows {
+  const retries = opts.retries ?? 20;
+  const retryMs = opts.retryMs ?? 500;
   return {
     monitors: async () => (await invoke('expo_monitors')) as MonitorInfo[],
-    open: async (p) => { await invoke('expo_open', { windows: p.windows }); },
+    async open(p) {
+      for (let i = 0; ; i++) {
+        try { await invoke('expo_open', { windows: p.windows }); return; }
+        catch (e) {
+          if (i >= retries || !String(e).startsWith(NOT_READY)) throw e;
+          await new Promise((r) => setTimeout(r, retryMs));
+        }
+      }
+    },
     closeAll: async () => { await invoke('expo_close_all'); },
     guard: async (on) => { await invoke('expo_set_guard', { on }); },
     onMonitors(f) {
