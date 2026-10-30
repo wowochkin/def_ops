@@ -2095,11 +2095,12 @@ await check('в игре «Штаб, тур по командованию» — 
   await hands4(['штаб, открой приказы']);
   await step4('вкладка «Приказы» не открылась', page4.locator('[data-tour="cmd-tab-orders"].on'));
   await hands4(['штаб, тур по командованию']);
-  await step4('тура по командованию нет', layer4.locator('.tour-count', { hasText: 'Командование · шаг 1 из 11' }));
+  await step4('тура по командованию нет', layer4.locator('.tour-count', { hasText: 'Командование · шаг 1 из 12' }));
   await frame4('cmd-head');
-  // шаг листается сам, когда штаб договорил; перебила поддельная «речь» (пауза) — «дальше»
+  // шаг листается сам, когда штаб договорил; перебила поддельная «речь» (пауза) — «дальше»; до «Докладов» — ещё шаг
+  // «Пункт управления» (в этой игре его нет — шаг только объясняет, где он бывает)
   const reports = layer4.locator('.tour-cap h2', { hasText: 'Доклады' });
-  if (!await reports.waitFor({ timeout: 20000 }).then(() => true, () => false)) await hands4(['штаб, дальше']);
+  for (let k = 0; k < 3 && !await reports.waitFor({ timeout: 20000 }).then(() => true, () => false); k++) await hands4(['штаб, дальше']);
   await step4('шаг «Доклады» не настал', reports);
   await step4('тур не открыл «Доклады»', page4.locator('[data-tour="cmd-tab-reports"].on'));
   await frame4('cmd-tab-reports');
