@@ -2,7 +2,7 @@
 // которым сверяется возврат, порядок «снять прежний запрос штаба противника — спросить заново».
 import { describe, expect, it, vi } from 'vitest';
 import type { GameRecord, GameTurn, Order } from '@def-ops/sim';
-import { applyBranch, BUSY_REFUSAL, commonPrefix, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, TURN_REFUSAL, turnGate, type BranchOps } from '../src/sim/game-rewind';
+import { applyBranch, BUSY_REFUSAL, dropPending, switchLine, commonPrefix, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, TURN_REFUSAL, turnGate, type BranchOps } from '../src/sim/game-rewind';
 
 const order = (formation: string): Order => ({ formation, task: 'attack', target: { kind: 'point', at: [14, 52] }, issuedAt: '', source: 'human' } as unknown as Order);
 const turn = (time: string, digest?: string, f = 'a'): GameTurn => ({ time, orders: [order(f)], ...(digest ? { digest } : {}) });
@@ -65,13 +65,16 @@ describe('restartAi', () => {
 });
 
 /** Линия игры в миниатюре: мир — строка сыгранного, отпечаток хода — мир после него, stash[k] — мир на начало хода k + 1. */
-function line(failOn?: string) {
+function line(failOn?: string, failOld?: string) {
+  // возврат при откате ветви (в линии на месте keep — ход ветви): failOld — ход прежней линии, который тогда не посчитается
+  let restoring = false;
   const L = { world: '', stash: [''], turns: [] as GameTurn[], notices: [] as string[], staff: { a: 1 } };
   const ops: BranchOps = {
-    rewindTo: (keep) => rewindLine(L, keep, null, (w) => { L.world = w; }),
+    rewindTo: (keep) => { restoring = L.turns.length > keep && L.turns[keep]?.orders[0].formation === 'b'; return rewindLine(L, keep, null, (w) => { L.world = w; }); },
     play: async (t) => {
       L.world += `|${t.time}:${t.orders[0].formation}`;
       if (t.time === failOn && t.orders[0].formation === 'b') throw new Error('запись не сходится');
+      if (t.time === failOld && t.orders[0].formation === 'a' && restoring) throw new Error('ядро не ответило');
       t.digest = L.world;
       L.stash.push(L.world);
     },
@@ -124,14 +127,14 @@ describe('rewindFlow', () => {
     const ok = await rewindFlow({
       refusal: rewindCheck({ busy: false, played: 2, turn: 1 }),
       run: async () => { await rewindLine(L, 0, () => Promise.reject(new Error('ядро не вернулось')), apply); },
-      refuse: (t) => calls.push(`refuse:${t}`), restart: () => calls.push('restart'), setRewinding: (on) => calls.push(`rewinding:${on}`),
+      refuse: (t) => calls.push(`refuse:${t}`), restart: (ok) => calls.push(`restart:${ok}`), setRewinding: (on) => calls.push(`rewinding:${on}`),
     });
     expect(ok).toBe(false);
     expect(apply).not.toHaveBeenCalled();
     expect(L.staff).toBe(staff);
     expect(L.turns).toHaveLength(2);
     expect(L.stash).toHaveLength(3);
-    expect(calls).toEqual(['rewinding:true', 'refuse:ядро не вернулось', 'rewinding:false', 'restart']);
+    expect(calls).toEqual(['rewinding:true', 'refuse:ядро не вернулось', 'rewinding:false', 'restart:false']);
   });
   it('отказ (идёт расчёт) — ничего не начинается', async () => {
     const run = vi.fn(async () => {});
@@ -144,5 +147,37 @@ describe('rewindFlow', () => {
     expect(turnGate(true)).toBe(TURN_REFUSAL);
     expect(TURN_REFUSAL).toBe('идёт возврат к ходу — ход не отдан');
     expect(turnGate(false)).toBeNull();
+  });
+});
+
+describe('switchLine', () => {
+  it('восстановление не удалось → ясная ошибка, обстановка и запись — с нынешней (короче) линией', async () => {
+    const { L, ops } = line('t4', 't3');
+    await applyBranch(L.turns, [turn('t1'), turn('t2'), turn('t3'), turn('t4')], ops);
+    const shown: { ok: boolean; turns: number }[] = [];
+    const branch = [turn('t1'), turn('t2'), turn('t3', undefined, 'b'), turn('t4', undefined, 'b')];
+    const err = await switchLine(L.turns, branch, { ...ops, show: (ok) => shown.push({ ok, turns: L.turns.length }) }).catch((e: Error) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe('ветвь не применена: запись не сходится; линия не восстановлена: ядро не ответило (сыграно ходов: 2)');
+    expect(shown).toEqual([{ ok: false, turns: 2 }]);
+  });
+  it('успех и неудача ветви — show на каждом исходе', async () => {
+    const { L, ops } = line('t3');
+    const shown: boolean[] = [];
+    const o = { ...ops, show: (ok: boolean) => shown.push(ok) };
+    expect(await switchLine(L.turns, [turn('t1'), turn('t2')], o)).toBe(true);
+    expect(await switchLine(L.turns, [turn('t1'), turn('t2'), turn('t3', undefined, 'b')], o)).toBe(false);
+    expect(shown).toEqual([true, false]);
+    expect(L.turns).toHaveLength(2);
+  });
+});
+
+describe('dropPending', () => {
+  it('снимает ожидание и останавливает штаб противника, советника и варианты решения', () => {
+    const ai = new AbortController(), advise = new AbortController(), plan = new AbortController();
+    const calls: string[] = [];
+    dropPending({ holdDrop: () => calls.push('hold'), aborts: [ai, advise, null, plan, undefined], reset: () => calls.push('reset') });
+    expect([ai.signal.aborted, advise.signal.aborted, plan.signal.aborted]).toEqual([true, true, true]);
+    expect(calls).toEqual(['hold', 'reset']);
   });
 });

@@ -32,7 +32,7 @@ import { postPrompt } from '../command-post';
 import { agentEvents, agentGame, bridgesOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
 import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
-import { applyBranch, BUSY_REFUSAL, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, turnGate } from './game-rewind';
+import { BUSY_REFUSAL, dropPending as dropPendingOf, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, switchLine, turnGate } from './game-rewind';
 import { topForces } from './review-forces';
 
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -643,18 +643,13 @@ function rewindTo(keep: number): Promise<GameTurn[]> {
 
 /** Снять то, что готовилось к прежней обстановке: ждущие приказы, «ход без приказов противника», запрос штаба противника, советника. */
 function dropPending() {
-  aiWait.drop();
-  ai?.abort.abort();
-  ai = null;
-  queued = null;
-  skipAi = false;
-  adviseAbort?.abort();
-  planAbort?.abort();
+  dropPendingOf({ holdDrop: aiWait.drop, aborts: [ai?.abort, adviseAbort, planAbort], reset: () => { ai = null; queued = null; skipAi = false; } });
 }
 
 /** Возврат или переход на ветвь идёт: ход не отдаётся (поток занят и для advance). */
 const rewindFlags = (on: boolean) => { rewinding = on; busy = on; };
-const rewindRestart = () => restartAi({ drop: aiWait.drop, start: startAi });
+/** Штаб противника заново; возврат не удался — выбор «ход без его приказов» (skipAi) остаётся, обстановка прежняя. */
+const rewindRestart = (ok: boolean) => { const skip = skipAi; restartAi({ drop: aiWait.drop, start: startAi }); if (!ok) skipAi = skip; };
 
 /** «Вернуться к ходу N»: пока ход считается — отказ; иначе ходы N… снимаются, штаб противника спрашивается заново на ходу N. */
 async function rewindReq(turn: number) {
@@ -683,18 +678,21 @@ async function switchReq(turns: GameTurn[]) {
     refuse: (text) => post({ kind: 'rewind-refused', text }),
     run: async () => {
       let mismatch: string | null = null;
-      const r = await applyBranch(rec.turns, turns, {
+      await switchLine(rec.turns, turns, {
         rewindTo: (k) => { mismatch = null; return rewindTo(k); },
         play: async (t) => { const bad = await replayTurn(t, `переход на ветвь: ход ${stash.length}…`); mismatch ??= bad; },
         over: isOver,
         push: (t) => rec.turns.push(t),
         notice: (text) => post({ kind: 'notice', text }),
+        // на любом исходе — обстановка и запись как есть (восстановление не удалось — линия короче прежней)
+        show: (ok) => {
+          if (mismatch) post({ kind: 'notice', text: mismatch });
+          if (ok) dropPending();
+          postView();
+          if (ok) post({ kind: 'switched', turns: rec.turns.length });
+          post({ kind: 'record', record: rec });
+        },
       });
-      if (mismatch) post({ kind: 'notice', text: mismatch });
-      if (r.ok) dropPending();
-      postView();
-      if (r.ok) post({ kind: 'switched', turns: rec.turns.length });
-      post({ kind: 'record', record: rec });
     },
   });
 }

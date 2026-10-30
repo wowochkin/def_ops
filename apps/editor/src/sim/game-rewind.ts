@@ -63,19 +63,30 @@ export async function rewindLine<S, C>(line: { stash: S[]; turns: GameTurn[] }, 
  * Ход возврата или перехода на ветвь: отказ — ответ без изменений; иначе — под флагом возврата, ошибка — отказ с её
  * текстом; в конце штаб противника — заново в любом случае (прежний запрос мог быть снят).
  */
-export async function rewindFlow(o: { refusal: string | null; run(): Promise<void>; refuse(text: string): void; restart(): void; setRewinding(on: boolean): void }): Promise<boolean> {
+export async function rewindFlow(o: { refusal: string | null; run(): Promise<void>; refuse(text: string): void; restart(ok: boolean): void; setRewinding(on: boolean): void }): Promise<boolean> {
   if (o.refusal) { o.refuse(o.refusal); return false; }
   o.setRewinding(true);
+  let ok = false;
   try {
     await o.run();
-    return true;
+    ok = true;
   } catch (e) {
     o.refuse(errText(e));
-    return false;
   } finally {
     o.setRewinding(false);
-    o.restart();
+    o.restart(ok);
   }
+  return ok;
+}
+
+/**
+ * Снять то, что готовилось к прежней обстановке: ожидание доклада посредника, запросы к модели (штаб противника,
+ * советник, варианты решения), затем — ждущий ход и прочее (reset).
+ */
+export function dropPending(d: { holdDrop(): void; aborts: (AbortController | null | undefined)[]; reset(): void }): void {
+  d.holdDrop();
+  for (const a of d.aborts) a?.abort();
+  d.reset();
 }
 
 /** Что умеет линия игры для перехода на ветвь (поток игры). */
@@ -111,9 +122,27 @@ export async function applyBranch(cur: GameTurn[], turns: GameTurn[], ops: Branc
     return { ok: true };
   } catch (e) {
     const why = errText(e);
-    await ops.rewindTo(p);
-    await playAll(old, ops);
+    try {
+      await ops.rewindTo(p);
+      await playAll(old, ops);
+    } catch (e2) {
+      throw new Error(`ветвь не применена: ${why}; линия не восстановлена: ${errText(e2)} (сыграно ходов: ${cur.length})`);
+    }
     ops.notice(`ветвь не применена: ${why}`);
     return { ok: false, error: why };
   }
+}
+
+/**
+ * Переход на ветвь целиком: applyBranch, затем show(ok) — на любом исходе, и при ошибке восстановления тоже (обстановка
+ * и запись — как есть сейчас, а не прежняя линия). Ошибка восстановления — наверх.
+ */
+export async function switchLine(cur: GameTurn[], turns: GameTurn[], ops: BranchOps & { show(ok: boolean): void }): Promise<boolean> {
+  let ok = false;
+  try {
+    ok = (await applyBranch(cur, turns, ops)).ok;
+  } finally {
+    ops.show(ok);
+  }
+  return ok;
 }
