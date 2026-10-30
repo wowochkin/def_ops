@@ -32,7 +32,7 @@
 **Interfaces:**
 - Produces: переменные CSS `--expo-bg`, `--expo-panel`, `--expo-line`, `--expo-text`, `--expo-muted`, `--expo-gold`, `--expo-alarm`, `--expo-own`, `--expo-enemy`, `--expo-ok`, `--expo-wait`, `--expo-fail`, `--expo-serif`, `--expo-sans`, `--expo-mono`, `--expo-text-min`, `--expo-text-small` на `:root`; класс `.expo-primary` — золотая главная кнопка; класс `.expo-danger` — тёмно-красная кнопка.
 
-- [ ] **Step 1: Падающий тест** — в `expo-root.test.tsx`:
+- [x] **Step 1: Падающий тест** — в `expo-root.test.tsx`:
 
 ```tsx
 it('visitor footer has no service captions', () => {
@@ -42,9 +42,9 @@ it('visitor footer has no service captions', () => {
 });
 ```
 
-- [ ] **Step 2:** `npx vitest run apps/editor/tests/expo-root.test.tsx` — FAIL (надпись есть).
-- [ ] **Step 3:** `npm install @fontsource/pt-mono -w @def-ops/editor` (или в корень — туда же, где `@fontsource/pt-serif`: `rg -n pt-serif package.json apps/editor/package.json`); в `demo/fonts.ts` — `import '@fontsource/pt-mono/400.css';`.
-- [ ] **Step 4:** `theme.css`:
+- [x] **Step 2:** `npx vitest run apps/editor/tests/expo-root.test.tsx` — FAIL (надпись есть).
+- [x] **Step 3:** `npm install @fontsource/pt-mono -w @def-ops/editor` (или в корень — туда же, где `@fontsource/pt-serif`: `rg -n pt-serif package.json apps/editor/package.json`); в `demo/fonts.ts` — `import '@fontsource/pt-mono/400.css';`.
+- [x] **Step 4:** `theme.css`:
 
 ```css
 /* Тема выставочного стенда: цвета, шрифты, кегль (80″ с 2–4 м — текст не меньше 32 px). */
@@ -59,7 +59,7 @@ it('visitor footer has no service captions', () => {
 }
 ```
 
-- [ ] **Step 5:** `expo.css` — первой строкой `@import './theme.css';`; все цвета и шрифты заменить переменными; `.expo` — `font: var(--expo-text-min) var(--expo-sans)`; `.expo h1` — 80 px PT Serif; `.expo h2` — 48 px; `.expo-timer` — 120 px `var(--expo-mono)`; `.expo button.expo-secondary` — `font-size: var(--expo-text-small)`; `.expo-footer` — `font-size: var(--expo-text-small)`; новые:
+- [x] **Step 5:** `expo.css` — первой строкой `@import './theme.css';`; все цвета и шрифты заменить переменными; `.expo` — `font: var(--expo-text-min) var(--expo-sans)`; `.expo h1` — 80 px PT Serif; `.expo h2` — 48 px; `.expo-timer` — 120 px `var(--expo-mono)`; `.expo button.expo-secondary` — `font-size: var(--expo-text-small)`; `.expo-footer` — `font-size: var(--expo-text-small)`; новые:
 
 ```css
 .expo button.expo-primary, .expo-operator button.expo-primary { background: var(--expo-gold); color: #1d1a12; border-color: var(--expo-gold); font-weight: 700; }
@@ -68,9 +68,9 @@ it('visitor footer has no service captions', () => {
 ```
 
   медиазапрос `max-width: 800px` не трогать (окно разработки).
-- [ ] **Step 6:** `ExpoView.tsx`: убрать `<span>Каркас выставочного режима · сцены без расчёта операции</span>`; главные кнопки сцен («Коснитесь, чтобы принять командование», «К решениям», «Ещё раз») — `className="expo-primary"`.
-- [ ] **Step 7:** тест — PASS; `npx vitest run apps/editor/tests/expo-` — PASS.
-- [ ] **Step 8:** Коммит `feat(выставка): тема стенда — цвета, шрифты, кегль для 80″`.
+- [x] **Step 6:** `ExpoView.tsx`: убрать `<span>Каркас выставочного режима · сцены без расчёта операции</span>`; главные кнопки сцен («Коснитесь, чтобы принять командование», «К решениям», «Ещё раз») — `className="expo-primary"`.
+- [x] **Step 7:** тест — PASS; `npx vitest run apps/editor/tests/expo-` — PASS.
+- [x] **Step 8:** Коммит `feat(выставка): тема стенда — цвета, шрифты, кегль для 80″`.
 
 ### Task 2: Элементы меню — шаг числа, порядок мониторов, сводка служб
 
@@ -86,7 +86,7 @@ it('visitor footer has no service captions', () => {
   - `const PROBE_WORDS: Record<ProbeState, string> = { wait: 'проверяю…', ok: 'готово', fail: 'нет связи', off: 'не требуется' }`.
   - `function ServiceSummary(p: { health: ProbeStates; note: string | null; stats: ExpoStats; screens: { open: number; want: number } }): JSX.Element` — четыре строки «Имя — слово» с отметкой `data-state={state}`; у экранов — «Экраны — {open} из {want}» при `ok`; строка `note`; три числа «Начато», «Завершено», «Сбоев».
 
-- [ ] **Step 1: Падающие тесты** (`expo-operator-parts.test.tsx`, happy-dom):
+- [x] **Step 1: Падающие тесты** (`expo-operator-parts.test.tsx`, happy-dom):
 
 ```tsx
 // @vitest-environment happy-dom
@@ -141,8 +141,8 @@ it('summary speaks words, not codes', () => {
 });
 ```
 
-- [ ] **Step 2:** `npx vitest run apps/editor/tests/expo-operator-parts.test.tsx` — FAIL (нет модуля).
-- [ ] **Step 3:** Реализация `operator-parts.tsx`:
+- [x] **Step 2:** `npx vitest run apps/editor/tests/expo-operator-parts.test.tsx` — FAIL (нет модуля).
+- [x] **Step 3:** Реализация `operator-parts.tsx`:
 
 ```tsx
 /** Элементы меню оператора: шаг числа, порядок мониторов, сводка служб и статистики дня. */
@@ -216,8 +216,8 @@ export function ServiceSummary({ health, note, stats, screens }: { health: Probe
 }
 ```
 
-- [ ] **Step 4:** тест — PASS.
-- [ ] **Step 5:** Коммит `feat(выставка): элементы меню оператора — шаг числа, порядок мониторов, сводка служб`.
+- [x] **Step 4:** тест — PASS.
+- [x] **Step 5:** Коммит `feat(выставка): элементы меню оператора — шаг числа, порядок мониторов, сводка служб`.
 
 ### Task 3: Меню оператора — сводка, действия, вкладки
 
@@ -231,7 +231,7 @@ export function ServiceSummary({ health, note, stats, screens }: { health: Probe
   - `OperatorProps`: вместо `status?: string` — `summary?: { phase: string; health: ProbeStates; note: string | null; stats: ExpoStats; screens: { open: number; want: number } }` и `monitors?: () => Promise<MonitorInfo[]>`.
   - Вкладки — `role="tablist"`, кнопки `role="tab"` «Сеанс», «Экраны», «Звук», «Доступ» с `aria-selected`; содержимое — `role="tabpanel"`.
 
-- [ ] **Step 1: Тесты** — в `expo-operator.test.tsx` заменить `authenticated menu changes saved settings and exits via callback`, `monitor order preserves separators until editing finishes`, `number fields allow an incomplete value while typing` на:
+- [x] **Step 1: Тесты** — в `expo-operator.test.tsx` заменить `authenticated menu changes saved settings and exits via callback`, `monitor order preserves separators until editing finishes`, `number fields allow an incomplete value while typing` на:
 
 ```tsx
 const enter = (view: ReturnType<typeof render>) => {
@@ -283,9 +283,9 @@ it('summary shows services in words', () => {
 ```
 
   Остальные тесты файла (угол, сочетание, блокировка ПИН) и `expo-root-menu.test.tsx` не меняются.
-- [ ] **Step 2:** `npx vitest run apps/editor/tests/expo-operator.test.tsx` — FAIL (нет вкладок, нет «: больше»).
-- [ ] **Step 3:** `scenes.tsx` — вынести строку заголовка в `phaseLabel(state)`; `PhaseTitle` возвращает `<span>{phaseLabel(state)}</span>`.
-- [ ] **Step 4:** `OperatorMenu.tsx` — переписать разметку после входа (вход по ПИН, `pinAttempt`, `save` через `normalizeSettings`, сброс при закрытии — как были):
+- [x] **Step 2:** `npx vitest run apps/editor/tests/expo-operator.test.tsx` — FAIL (нет вкладок, нет «: больше»).
+- [x] **Step 3:** `scenes.tsx` — вынести строку заголовка в `phaseLabel(state)`; `PhaseTitle` возвращает `<span>{phaseLabel(state)}</span>`.
+- [x] **Step 4:** `OperatorMenu.tsx` — переписать разметку после входа (вход по ПИН, `pinAttempt`, `save` через `normalizeSettings`, сброс при закрытии — как были):
 
 ```tsx
 type Tab = 'session' | 'screens' | 'sound' | 'access';
@@ -336,7 +336,7 @@ useEffect(() => { if (open && authorized && tab === 'screens') void monitors?.()
 ```
 
   Удалить `NumberSetting`, состояние `order` и поле «Порядок экранов (идентификаторы через запятую)», абзац `<p>{status}</p>`. Вход по ПИН: поле и кнопка в `.expo-pin` по центру.
-- [ ] **Step 5:** `ExpoRoot.tsx` — вместо `status` передать:
+- [x] **Step 5:** `ExpoRoot.tsx` — вместо `status` передать:
 
 ```tsx
 summary={{
@@ -348,7 +348,7 @@ monitors={() => windowsRef.current?.monitors() ?? Promise.resolve([])}
 ```
 
   удалить константу `status`. `ExpoSetup.tsx` — `monitors={() => expoWindows().monitors()}` (импорт из `./windows`).
-- [ ] **Step 6:** `expo.css` — стили меню на переменных темы:
+- [x] **Step 6:** `expo.css` — стили меню на переменных темы:
 
 ```css
 .expo-operator { width: min(100%, 1100px); background: var(--expo-panel); border: 1px solid var(--expo-line); color: var(--expo-text); font: 19px var(--expo-sans); }
@@ -378,22 +378,22 @@ monitors={() => windowsRef.current?.monitors() ?? Promise.resolve([])}
 ```
 
   удалить прежние разрозненные правила `.expo-settings`, `.expo-operator form`, повтор `.expo-operator input/select`.
-- [ ] **Step 7:** Скрипты: в `expo-shots.mjs` и `expo-core-check.mjs` строку `await page.getByLabel('Время выбора, с').fill('45');` заменить на:
+- [x] **Step 7:** Скрипты: в `expo-shots.mjs` и `expo-core-check.mjs` строку `await page.getByLabel('Время выбора, с').fill('45');` заменить на:
 
 ```js
 for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Время выбора, с: больше' }).click();
 ```
 
-- [ ] **Step 8:** `npx vitest run apps/editor/tests/expo-` — PASS; typecheck.
-- [ ] **Step 9:** Коммит `feat(выставка): меню оператора — сводка служб, крупные действия, вкладки настроек`.
+- [x] **Step 8:** `npx vitest run apps/editor/tests/expo-` — PASS; typecheck.
+- [x] **Step 9:** Коммит `feat(выставка): меню оператора — сводка служб, крупные действия, вкладки настроек`.
 
 ### Task 4: Живая проверка, снимки, описание
 
 **Files:**
 - Modify: `docs/img/expo-*.jpg`, `docs/system.md` (раздел 2.1), `docs/system.pdf`, `docs/system.docx`
 
-- [ ] **Step 1:** `npm run dev -w @def-ops/editor -- --port 5180 --strictPort` в фоне; `EXPO_URL=http://localhost:5180 node scripts/expo-shots.mjs` — `{"ok":true,"errors":[]}`; `CARGO_TARGET_DIR=$PWD/target cargo build --release -p agents-core --bin agents-game` и `EXPO_URL=http://localhost:5180 node scripts/expo-core-check.mjs` — `ok: true`.
-- [ ] **Step 2:** Посмотреть снимки `expo-attract`, `expo-welcome`, `expo-turn`, `expo-operator`, `expo-result`, `expo-startup`; поправить подписи в `docs/system.md` так, чтобы описывали видимое (меню: сводка служб цветными отметками, статистика дня, действия, вкладки «Сеанс · Экраны · Звук · Доступ»); в тексте 2.1 — порядок экранов списком мониторов кнопками «выше»/«ниже», шаги чисел кнопками «−»/«+».
-- [ ] **Step 3:** `CHROMIUM_PATH=… npm run docs:system`; `npm run typecheck`, `npm test`.
+- [x] **Step 1:** `npm run dev -w @def-ops/editor -- --port 5180 --strictPort` в фоне; `EXPO_URL=http://localhost:5180 node scripts/expo-shots.mjs` — `{"ok":true,"errors":[]}`; `CARGO_TARGET_DIR=$PWD/target cargo build --release -p agents-core --bin agents-game` и `EXPO_URL=http://localhost:5180 node scripts/expo-core-check.mjs` — `ok: true`.
+- [x] **Step 2:** Посмотреть снимки `expo-attract`, `expo-welcome`, `expo-turn`, `expo-operator`, `expo-result`, `expo-startup`; поправить подписи в `docs/system.md` так, чтобы описывали видимое (меню: сводка служб цветными отметками, статистика дня, действия, вкладки «Сеанс · Экраны · Звук · Доступ»); в тексте 2.1 — порядок экранов списком мониторов кнопками «выше»/«ниже», шаги чисел кнопками «−»/«+».
+- [x] **Step 3:** `CHROMIUM_PATH=… npm run docs:system`; `npm run typecheck`, `npm test`.
 - [ ] **Step 4:** Ручная проверка в настольном приложении (`npm run desktop:app` из рабочей копии на ветке `claude/expo`): меню открывается ⌃⌥⇧O, вкладки, «−»/«+», порядок мониторов, сводка. Результат — в отчёт.
-- [ ] **Step 5:** Коммит `docs(выставка): меню оператора и тема стенда — снимки и описание`.
+- [x] **Step 5:** Коммит `docs(выставка): меню оператора и тема стенда — снимки и описание`.
