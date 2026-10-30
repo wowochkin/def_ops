@@ -1,21 +1,20 @@
 /** Общие части сцен стенда: названия фронтов, заголовок фазы, таймер выбора (на паузе стоит). */
 import type { DirectorState } from './director';
 export const FRONT_NAMES = { su_1bf: '1-й Белорусский фронт', su_1uf: '1-й Украинский фронт' };
-export function PhaseTitle({ state }: { state: DirectorState }) {
+const PHASE_TITLES = {
+  startup: 'Подготовка стенда',
+  attract: 'Берлинская операция',
+  welcome: 'Выбор фронта',
+  briefing: 'Ввод в обстановку',
+  result: 'Итог сеанса',
+};
+const STEP_TITLES = { explain: 'Обстановка', choose: 'Решение', scroll: 'Ход операции' };
+export function phaseLabel(state: DirectorState): string {
   const p = state.phase;
-  return (
-    <span>
-      {p.kind === 'turn'
-        ? `Перелом ${p.n} из 3 · ${{ explain: 'Обстановка', choose: 'Решение', scroll: 'Ход операции' }[p.step]}`
-        : {
-            startup: 'Подготовка стенда',
-            attract: 'Берлинская операция',
-            welcome: 'Выбор фронта',
-            briefing: 'Ввод в обстановку',
-            result: 'Итог сеанса',
-          }[p.kind]}
-    </span>
-  );
+  return p.kind === 'turn' ? `Перелом ${p.n} из 3 · ${STEP_TITLES[p.step]}` : PHASE_TITLES[p.kind];
+}
+export function PhaseTitle({ state }: { state: DirectorState }) {
+  return <span>{phaseLabel(state)}</span>;
 }
 export function Timer({ state }: { state: DirectorState }) {
   const p = state.phase;

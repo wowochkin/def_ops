@@ -33,60 +33,83 @@ it('combo opens pin and five failures lock it for sixty seconds', () => {
   expect(pinAttempt(lock, '0000', EXPO_DEFAULTS, 60999).ok).toBe(false);
   expect(pinAttempt(lock, '0000', EXPO_DEFAULTS, 61000).ok).toBe(true);
 });
+const noop = () => {};
+const enter = (view: ReturnType<typeof render>) => {
+  fireEvent.change(view.getByLabelText('ПИН'), { target: { value: '0000' } });
+  fireEvent.click(view.getByRole('button', { name: 'Открыть меню' }));
+};
 it('authenticated menu changes saved settings and exits via callback', () => {
-  let seconds = 0,
-    exited = false;
+  let seconds = 0;
+  let exited = false;
   const view = render(
     <OperatorMenu
       settings={EXPO_DEFAULTS}
       onSave={async (s) => {
         seconds = s.timer.seconds;
       }}
-      onClose={() => {}}
+      onClose={noop}
       onExit={() => {
         exited = true;
       }}
-      onAction={() => {}}
+      onAction={noop}
     />,
   );
-  fireEvent.change(view.getByLabelText('ПИН'), { target: { value: '0000' } });
-  fireEvent.click(view.getByRole('button', { name: 'Открыть меню' }));
-  fireEvent.change(view.getByLabelText('Время выбора, с'), { target: { value: '45' } });
-  expect(seconds).toBe(45);
+  enter(view);
+  fireEvent.click(view.getByRole('button', { name: 'Время выбора, с: больше' }));
+  expect(seconds).toBe(35);
   fireEvent.click(view.getByRole('button', { name: 'Выйти в полный режим' }));
   expect(exited).toBe(true);
 });
-it('monitor order preserves separators until editing finishes', () => {
+it('settings are split into tabs', () => {
+  const view = render(<OperatorMenu settings={EXPO_DEFAULTS} onSave={async () => {}} onClose={noop} onExit={noop} onAction={noop} />);
+  enter(view);
+  expect(view.getByRole('tab', { name: 'Сеанс' }).getAttribute('aria-selected')).toBe('true');
+  expect(view.queryByLabelText('Новый ПИН (4–8 цифр)')).toBeNull();
+  fireEvent.click(view.getByRole('tab', { name: 'Доступ' }));
+  expect(view.getByLabelText('Новый ПИН (4–8 цифр)')).toBeTruthy();
+  expect(view.queryByRole('group', { name: 'Время выбора, с' })).toBeNull();
+});
+it('screens tab saves monitor order', async () => {
   let saved = EXPO_DEFAULTS;
+  const monitors = async () => [
+    { id: 'a', name: 'Левый', x: 0, y: 0, width: 1, height: 1, scale: 1 },
+    { id: 'b', name: 'Правый', x: 1, y: 0, width: 1, height: 1, scale: 1 },
+  ];
   const view = render(
     <OperatorMenu
       settings={EXPO_DEFAULTS}
+      monitors={monitors}
       onSave={async (s) => {
         saved = s;
       }}
-      onClose={() => {}}
-      onExit={() => {}}
-      onAction={() => {}}
+      onClose={noop}
+      onExit={noop}
+      onAction={noop}
     />,
   );
-  fireEvent.change(view.getByLabelText('ПИН'), { target: { value: '0000' } });
-  fireEvent.click(view.getByRole('button', { name: 'Открыть меню' }));
-  const order = view.getByLabelText('Порядок экранов (идентификаторы через запятую)') as HTMLInputElement;
-  fireEvent.change(order, { target: { value: 'second,' } });
-  expect(order.value).toBe('second,');
-  fireEvent.change(order, { target: { value: 'second, first' } });
-  fireEvent.blur(order);
-  expect(saved.screens.order).toEqual(['second', 'first']);
+  enter(view);
+  fireEvent.click(view.getByRole('tab', { name: 'Экраны' }));
+  fireEvent.click(await view.findByRole('button', { name: 'Правый: выше' }));
+  expect(saved.screens.order).toEqual(['b', 'a']);
 });
-it('number fields allow an incomplete value while typing', () => {
+it('summary shows services in words', () => {
   const view = render(
-    <OperatorMenu settings={EXPO_DEFAULTS} onSave={async () => {}} onClose={() => {}} onExit={() => {}} onAction={() => {}} />,
+    <OperatorMenu
+      settings={EXPO_DEFAULTS}
+      summary={{
+        phase: 'Перелом 2 из 3 · Решение · на паузе',
+        health: { core: 'ok', voice: 'fail', model: 'off', windows: 'ok' },
+        note: null,
+        stats: { sessions: 1, finished: 0, failures: 0 },
+        screens: { open: 1, want: 1 },
+      }}
+      onSave={async () => {}}
+      onClose={noop}
+      onExit={noop}
+      onAction={noop}
+    />,
   );
-  fireEvent.change(view.getByLabelText('ПИН'), { target: { value: '0000' } });
-  fireEvent.click(view.getByRole('button', { name: 'Открыть меню' }));
-  const input = view.getByLabelText('Время выбора, с') as HTMLInputElement;
-  fireEvent.change(input, { target: { value: '4' } });
-  expect(input.value).toBe('4');
-  fireEvent.change(input, { target: { value: '45' } });
-  expect(input.value).toBe('45');
+  enter(view);
+  expect(view.getByText('Голос — нет связи')).toBeTruthy();
+  expect(view.getByText('Перелом 2 из 3 · Решение · на паузе')).toBeTruthy();
 });

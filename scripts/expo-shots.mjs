@@ -44,7 +44,7 @@ await page.screenshot({ path: 'docs/img/expo-turn.jpg', type: 'jpeg', quality: 8
 await page.keyboard.press('Control+Alt+Shift+KeyO');
 await page.getByLabel('ПИН', { exact: true }).fill('0000');
 await page.getByRole('button', { name: 'Открыть меню' }).click();
-await page.getByLabel('Время выбора, с').fill('45');
+for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Время выбора, с: больше' }).click();
 const timer = await page.getByRole('timer').innerText();
 await page.waitForTimeout(1200);
 if ((await page.getByRole('timer').innerText()) !== timer) throw Error('таймер не на паузе');

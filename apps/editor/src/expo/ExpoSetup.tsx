@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { EXPO_DEFAULTS, settingsStore, type ExpoSettings } from './settings';
 import { OperatorMenu } from './OperatorMenu';
+import { expoWindows } from './windows';
 
 export function ExpoSetup() {
   const [open, setOpen] = useState(false);
@@ -45,6 +46,7 @@ export function ExpoSetup() {
         setup
         open={open}
         settings={settings}
+        monitors={() => expoWindows().monitors()}
         onSave={save}
         onClose={() => setOpen(false)}
         onAction={() => {}}

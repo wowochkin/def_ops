@@ -79,7 +79,7 @@ try {
   await page.keyboard.press('Control+Alt+Shift+KeyO');
   await page.getByLabel('ПИН', { exact: true }).fill('0000');
   await page.getByRole('button', { name: 'Открыть меню' }).click();
-  await page.getByLabel('Время выбора, с').fill('45');
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Время выбора, с: больше' }).click();
   await page.waitForTimeout(200);
   if (await page.getByRole('alert').count()) throw Error(await page.getByRole('alert').innerText());
   if (!calls.includes('expo_settings_write')) throw Error('В резервном режиме не сохранились настройки');

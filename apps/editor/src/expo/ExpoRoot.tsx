@@ -22,6 +22,7 @@ import { ExpoView } from './ExpoView';
 import { lockdown } from './lockdown';
 import { cornerHold, operatorCombo } from './operator';
 import { OperatorMenu } from './OperatorMenu';
+import { phaseLabel } from './scenes';
 
 type Host = ReturnType<typeof createHost>;
 
@@ -241,10 +242,6 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     setIdentify(info);
     busRef.current?.send({ k: 'identify', ...info });
   };
-  const status =
-    `Сеансов: ${stats.sessions} · Завершено: ${stats.finished} · Сбоев: ${stats.failures}. ` +
-    `Ядро: ${health.core}; голос: ${health.voice}; модель: ${health.model}; экраны: ${health.windows}. ${note ?? ''}`;
-
   return (
     <>
       {error && (
@@ -257,7 +254,14 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       {index === 0 && (
         <OperatorMenu
           open={menu}
-          status={status}
+          summary={{
+            phase: `${phaseLabel(frame.state)}${frame.state.paused ? ' · на паузе' : ''}`,
+            health,
+            note,
+            stats,
+            screens: { open: frame.count, want: (hostRef.current?.configuration() ?? frame.settings).screens.count },
+          }}
+          monitors={() => windowsRef.current?.monitors() ?? Promise.resolve([])}
           settings={hostRef.current?.configuration() ?? frame.settings}
           onSave={save}
           onClose={close}
