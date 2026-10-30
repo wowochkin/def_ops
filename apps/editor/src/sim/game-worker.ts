@@ -30,6 +30,7 @@ import { coreTakeoverFor, gameKbNow, takeoverNow } from './kb-recompile';
 import { gameKbData, type GameKb } from './kb-compile';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
+import { theatreObjects } from '../post-objects';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { postPrompt } from '../command-post';
@@ -824,7 +825,7 @@ function postView() {
     events: journal.length ? journal[journal.length - 1].events : [],
     ...turnMapView(),
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
-    ...objectsView(),
+    ...theatreObjects(ctx.theatre.data, s.time, (at) => describePlace(ctx.theatre, at)),
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,
@@ -837,16 +838,6 @@ function postView() {
     ...(agents && agentTrace && rec.turns.length > 0 ? { debrief: debriefView(agentTrace) } : {}),
   };
   post({ kind: 'view', view });
-}
-
-/** Объекты театра для выбора в приказах: рубежи, мосты и переправы (не разрушенные к ходу), реки. */
-function objectsView(): Pick<TurnView, 'lines' | 'crossings' | 'rivers'> {
-  const T = ctx.theatre, t = g.state.time;
-  return {
-    lines: T.data.lines.map((l) => ({ id: l.id, name: l.name, line: l.line })),
-    crossings: T.data.bridges.filter((b) => !b.destroyedAt || b.destroyedAt > t).map((b) => ({ id: b.id, name: b.name ?? `${b.kind === 'ferry' || b.openFrom ? 'Переправа' : 'Мост'} ${describePlace(T, b.at)}`, at: b.at })),
-    rivers: T.data.rivers.map((r) => ({ name: r.name, line: r.line, major: r.major })),
-  };
 }
 
 /** Итоги игры: потери по ходу ядра до последнего сыгранного часа (с часами до передачи командования); ошибка — без итогов. */

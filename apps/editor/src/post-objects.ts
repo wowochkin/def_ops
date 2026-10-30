@@ -38,16 +38,29 @@ export function midpoint(line: LngLat[]): LngLat {
 /** Сокращение названия для плашки и подписи: «8-я гвардейская армия» → «8 гв. А». */
 export const shortName = (n: string) => n.replace(/(\d+)-[яйе]\s/, '$1 ').replace(/гвардейск\p{L}*/u, 'гв.').replace(/ударн\p{L}*\s+армия/u, 'уд. А').replace(/танков\p{L}*\s+армия/u, 'ТА').replace(/армия Войска Польского/u, 'А ВП').replace(/\sармия$/u, ' А');
 
-/** Все объекты выбора по виду хода: свои — в строю, противник — что видит разведка, мосты — не разрушенные к ходу. */
+/** Все объекты выбора по виду хода: свои — не выбывшие (как получатели), противник — что видит разведка, мосты — не разрушенные к ходу. */
 export function postObjects(v: TurnView): PostObject[] {
   const hqs = v.command?.hqs ?? {};
   return [
     ...(v.places ?? []).map((p) => ({ kind: 'place' as const, id: p.id, title: p.title, at: p.at })),
     ...(v.lines ?? []).filter((l) => l.line.length > 0).map((l) => ({ kind: 'line' as const, id: l.id, title: l.name, at: midpoint(l.line), line: l.line })),
-    ...(v.own ?? []).filter((u) => u.status === 'active').map((u) => ({ kind: 'own' as const, id: u.id, title: hqs[u.id]?.name ?? u.name, at: u.at, parent: hqs[u.id]?.parent ?? u.parent })),
+    ...(v.own ?? []).filter((u) => u.status !== 'destroyed').map((u) => ({ kind: 'own' as const, id: u.id, title: hqs[u.id]?.name ?? u.name, at: u.at, parent: hqs[u.id]?.parent ?? u.parent })),
     ...(v.intel ?? []).map((e) => ({ kind: 'enemy' as const, id: e.id, title: e.name, at: e.at })),
     ...(v.crossings ?? []).map((b) => ({ kind: 'bridge' as const, id: b.id, title: b.name, at: b.at })),
   ];
+}
+
+/**
+ * Объекты театра в вид хода: рубежи (без укреплённости) и мосты и переправы, не разрушенные к ходу (без названия —
+ * «Мост/Переправа» + место словами). Рек нет: их геометрия велика, а каждый ход её слать незачем.
+ */
+export function theatreObjects(data: { lines: { id: string; name: string; line: LngLat[] }[]; bridges: { id: string; at: LngLat; name?: string; openFrom?: string | null; destroyedAt?: string | null; kind?: string }[] },
+  time: string, describe: (at: LngLat) => string): Required<Pick<TurnView, 'lines' | 'crossings'>> {
+  return {
+    lines: data.lines.map((l) => ({ id: l.id, name: l.name, line: l.line })),
+    crossings: data.bridges.filter((b) => !b.destroyedAt || b.destroyedAt > time)
+      .map((b) => ({ id: b.id, name: b.name ?? `${b.kind === 'ferry' || b.openFrom ? 'Переправа' : 'Мост'} ${describe(b.at)}`, at: b.at })),
+  };
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/ё/g, 'е');

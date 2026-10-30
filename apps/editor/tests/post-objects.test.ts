@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
 import { blankDir } from '../src/command-post';
-import { applyObject, findObjects, objectiveMark, postObjects, type PostObject } from '../src/post-objects';
+import { applyObject, findObjects, objectiveMark, postObjects, theatreObjects, type PostObject } from '../src/post-objects';
 
 const ZEL: LngLat = [14.47, 52.52], MUN: LngLat = [14.13, 52.5];
 const v = {
@@ -71,5 +71,26 @@ describe('объекты приказа', () => {
     expect(objectiveMark(blankDir('su_8gva', 'front'), '8-я гвардейская армия')).toBeNull();
     const ax = objectiveMark({ ...blankDir('su_8gva', 'front'), axis: [[14.6, 52.5], MUN] }, '8-я гвардейская армия');
     expect(ax).toEqual({ at: MUN, label: '8 гв. А: наступать — указанная точка' });
+  });
+  it('свои в резерве и прибывающие — тоже объекты (как получатели и щелчок по знаку); выбывшие — нет', () => {
+    const w = { ...(v as object), own: [
+      { id: 'su_r', name: 'резервная армия', echelon: 'army', parent: 'su_1bf', status: 'reserve', at: [14.0, 52.4] },
+      { id: 'su_a', name: 'прибывающая армия', echelon: 'army', parent: 'su_1bf', status: 'arriving', at: [14.0, 52.3] },
+      { id: 'su_dx', name: 'выбыла', echelon: 'division', parent: 'su_8gva', status: 'destroyed', at: [14.6, 52.5] },
+    ] } as never;
+    const l = postObjects(w);
+    expect(l.filter((o) => o.kind === 'own').map((o) => o.id)).toEqual(['su_r', 'su_a']);
+    expect(applyObject(blankDir('su_1bf', 'stavka'), 'mainBlow', by(l, 'su_r'), null).mainBlow).toEqual(['su_r']);
+  });
+  it('объекты театра в виде хода: рубежи и мосты, не разрушенные к ходу; рек нет (геометрия — не каждый ход)', () => {
+    const data = {
+      lines: [{ id: 'l1', name: 'Рубеж', line: [[14, 52], [14.1, 52.1]] as LngLat[], fortification: 2 }],
+      bridges: [{ id: 'b1', at: [14, 52] as LngLat, name: 'Мост A' }, { id: 'b2', at: [14.2, 52] as LngLat, destroyedAt: '1945-04-16T00:00' }, { id: 'b3', at: [14.3, 52] as LngLat, kind: 'ferry' }],
+      rivers: [{ name: 'Одер', line: [[14, 52], [14, 53]] as LngLat[], major: true }],
+    };
+    const o = theatreObjects(data, '1945-04-17T05:00', () => 'у Зелова');
+    expect(Object.keys(o).sort()).toEqual(['crossings', 'lines']);
+    expect(o.lines).toEqual([{ id: 'l1', name: 'Рубеж', line: [[14, 52], [14.1, 52.1]] }]);
+    expect(o.crossings.map((b) => b.name)).toEqual(['Мост A', 'Переправа у Зелова']);
   });
 });
