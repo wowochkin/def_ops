@@ -223,6 +223,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [focus, setFocus] = useState<Sector | null>(null);
   const [eng, setEng] = useState<MapEngine | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /** Незавершённую игру не удалось продолжить (ветвь не открылась) — под её строкой: карта может быть ещё не открыта. */
+  const [savedErr, setSavedErr] = useState<string | null>(null);
   const [level, setLevel] = useMapLevel();
   const [legendHidden, setLegendHidden, clearLegend] = useLegendHidden();
   const lvHidden = useMemo(() => hiddenOn(legendHidden, level), [legendHidden, level]);
@@ -559,12 +561,18 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         try {
           const c = await checkoutBranch(idbBranchStore, s, branch, new Date().toISOString());
           const w = await commitGame(idbBranchStore, localStorage, SAVE_KEY, c);
-          if (w.error) return w.error;
+          if (w.error) throw new Error(w.error);
           s = w.game; setSaved(s);
-        } catch (e) { return `Ветвь не открылась: ${(e as Error)?.message ?? e}.`; }
+        } catch (e) {
+          // на экране — и для мыши: кнопка «Продолжить» у ветви
+          const error = `Ветвь не открылась: ${String((e as Error)?.message ?? e).replace(/[.\s]+$/, '')}.`;
+          setNotice(error); setSavedErr(error);
+          return { error };
+        }
       }
       // противник старой записи может не подходить режиму игры (ядро такой отклонит): берём умолчание режима и говорим об этом
       const r = resumeEnemy(s.enemy, !!s.record.agents, s.record.agents?.mode ?? 'legacy', llm.check.state === 'fail');
+      setSavedErr(null);
       setGame({ start: null, saved: r.note ? { ...s, enemy: r.enemy } : s, enemy: r.enemy, note: r.note });
       return r.note;
     },
@@ -597,6 +605,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
               <ActButton action="replay.continue" params={l.id ? { branch: l.name } : {}}>Продолжить</ActButton>
             </div>)}
           </div>}
+          {savedErr && <p className="err">{savedErr}</p>}
         </div>}
         {/* voice-entry: конец */}
         <div className="seg rp-tabs" data-tour="replay-tabs">

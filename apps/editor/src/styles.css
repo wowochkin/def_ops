@@ -536,8 +536,10 @@ button.lg-row:hover:not(:disabled) { background: #f3f0e8; }
 .cmd-tabs button:last-child { margin-left: auto; color: #8c8577; }
 .cmd-tabs button:last-child.on { color: var(--ink); }
 /* лента ходов над вкладками: ход — вернуться к нему; ⑂ — развилка; «Ветви» — окно линий игры */
-.turn-ribbon { position: relative; display: flex; align-items: stretch; gap: 4px; padding: 5px 10px; border-bottom: 1px solid var(--line); background: #f7f5ef; }
-.tr-strip { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+.turn-ribbon { position: relative; display: flex; align-items: stretch; gap: 4px; padding: 0 10px 3px; border-bottom: 1px solid var(--line); background: #f7f5ef; }
+.tr-strip { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; padding: 6px 4px 2px 0; scroll-snap-type: x proximity; }
+.tr-strip.more { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 28px); mask-image: linear-gradient(to right, transparent 0, #000 28px); }
+.tr-item { scroll-snap-align: end; }
 .tr-item { position: relative; flex: 0 0 auto; display: flex; }
 .tr-turn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 118px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; text-align: left; font-size: 11px; line-height: 1.25; }
 .tr-turn b { font-size: 11.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }

@@ -3,11 +3,11 @@
  * выделен, ход с развилкой — значок «⑂» с числом ветвей; в конце — «Ветви»: окно со списком линий игры («Перейти»,
  * «Удалить»). Все кнопки — действия реестра (те же, что голосом); пока ход считается — недоступны с причиной.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { confirmAsync } from './dialogs';
 import type { RibbonItem } from './turn-ribbon';
 import { press } from './voice/actions/staff';
-import { REWIND_OFFER, type BranchLine } from './voice/actions/turn';
+import { REWIND_OFFER, SWITCH_OFFER, type BranchLine } from './voice/actions/turn';
 
 export function TurnRibbon({ items, lines, busy, open, project, notice }: {
   items: RibbonItem[]; lines: BranchLine[];
@@ -24,15 +24,22 @@ export function TurnRibbon({ items, lines, busy, open, project, notice }: {
     if (!project) { tap('command.rewind', { turn: n }); return; }
     void confirmAsync(REWIND_OFFER(n), { ok: 'Вернуться', danger: true }).then((ok) => { if (ok) tap('command.rewind.force', { turn: n }); });
   };
+  const switchTo = (name: string) => {
+    if (!project) { tap('command.branch.switch', { name }); return; }
+    void confirmAsync(SWITCH_OFFER(name), { ok: 'Перейти', danger: true }).then((ok) => { if (ok) tap('command.branch.switch.force', { name }); });
+  };
   const drop = (name: string) => { void confirmAsync(`Удалить ветвь «${name}»? Её ходы пропадут.`, { ok: 'Удалить', danger: true }).then((ok) => { if (ok) tap('command.branch.delete', { name }); }); };
   const why = busy ? `Сейчас нельзя: ${busy.replace(/…$/, '')}` : undefined;
   // текущий ход — в виду (лента прокручивается к концу)
   const strip = useRef<HTMLDivElement>(null);
-  useEffect(() => { const el = strip.current; if (el) el.scrollLeft = el.scrollWidth; }, [items.length]);
+  /** Слева есть ещё ходы — край ленты затухает (не полкарточки, а знак «дальше»). */
+  const [more, setMore] = useState(false);
+  const edge = () => { const el = strip.current; setMore(!!el && el.scrollLeft > 2); };
+  useEffect(() => { const el = strip.current; if (el) el.scrollLeft = el.scrollWidth; edge(); }, [items.length]);
   const forks = lines.length - 1;
   return (
     <div className="turn-ribbon" data-hl="ribbon" data-tour="cmd-ribbon">
-      <div className="tr-strip" ref={strip}>
+      <div className={`tr-strip${more ? ' more' : ''}`} ref={strip} onScroll={edge}>
         {items.map((it) => (
           <div key={it.n} className={`tr-item${it.current ? ' on' : ''}`}>
             {it.current
@@ -52,7 +59,7 @@ export function TurnRibbon({ items, lines, busy, open, project, notice }: {
           <div key={l.id ?? 'cur'} className={`tr-line${l.current ? ' on' : ''}`}>
             <div><b>{l.name}</b><span>ходов: {l.turns}{l.current ? ' · текущая' : l.from ? ` · расходится с ходом ${l.from}` : ''}</span></div>
             {!l.current && <div className="tr-line-b">
-              <button className="primary" data-action="command.branch.switch" disabled={!!busy} title={why} onClick={() => tap('command.branch.switch', { name: l.name })}>Перейти</button>
+              <button className="primary" data-action="command.branch.switch" disabled={!!busy} title={why} onClick={() => switchTo(l.name)}>Перейти</button>
               <button className="danger" data-action="command.branch.delete" disabled={!!busy} title={why} onClick={() => drop(l.name)}>Удалить</button>
             </div>}
           </div>

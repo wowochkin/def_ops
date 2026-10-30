@@ -117,6 +117,9 @@ const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', repo
 const freshDecision = (last: HumanDecision | null | undefined): HumanDecision => ({ ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' });
 const capFirst = (x: string) => `${x.charAt(0).toUpperCase()}${x.slice(1).replace(/[.!\s]+$/, '')}.`;
 /** Возврат к ходу или переход на ветвь, отданный потоку: ответ ждёт rewound / switched / rewind-refused. */
+const WAIT_FAIL = 'поток игры остановился — возврат не выполнен';
+/** Предельное ожидание ответа потока на возврат или переход на ветвь. */
+const REWIND_WAIT_MS = 5 * 60_000;
 type RewindWait = { kind: 'rewind'; resolve: (r: RewindResult) => void } | { kind: 'switch'; resolve: (r: SwitchResult) => void; prev: SavedGame; stale: string[] };
 
 const TOGGLES = [
@@ -265,8 +268,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     worker.current = w;
     w.onmessage = (e: MessageEvent<GameResponse>) => {
       const m = e.data;
+      lastBeat.current = Date.now();
       if (m.kind === 'progress') setProgress(m.text);
-      else if (m.kind === 'error') { setProgress(null); setError(m.message); }
+      else if (m.kind === 'error') { setProgress(null); setError(m.message); failWait(rewindWait.current, WAIT_FAIL); }
       else if (m.kind === 'notice') setNotice(m.text);
       else if (m.kind === 'view') {
         // первая обстановка игры — голосом (если голосом пользуются): можно спрашивать
@@ -397,7 +401,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         });
       }
     };
-    w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); };
+    w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); failWait(rewindWait.current, WAIT_FAIL); };
     const st: GameStart = saved ? { scenario: saved.record.scenario, rules: saved.record.rules, seed: saved.record.seed, takeover: saved.record.takeover } : start!;
     // новая игра берёт данные операции и состояние при передаче из нынешней сборки базы знаний — сначала дождаться
     // её (идёт после запуска и после правки базы); сохранённая игра восстанавливается на данных своего начала
@@ -422,6 +426,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const chain = useRef<Promise<void>>(Promise.resolve());
   const saveStep = (f: () => Promise<void>) => { chain.current = chain.current.then(f).catch(() => { /* хранилища нет — игра идёт без записи */ }); return chain.current; };
   const rewindWait = useRef<RewindWait | null>(null);
+  /** Когда поток последний раз что-то прислал (предельное ожидание возврата). */
+  const lastBeat = useRef(0);
   const [branchesOpen, setBranchesOpen] = useState(false);
   /** Проект хода — с чистого листа (возврат, переход на ветвь): как при смене хода, плюс решения пунктов и доклад посредника. */
   const freshProject = () => {
@@ -454,10 +460,30 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       return { ok: true, at, branch: name };
     }
   };
+  /**
+   * Возврат или переход не закончится (поток упал, не ответил за REWIND_WAIT_MS): ждущий ответ — отказом, переход —
+   * с прежней сохранённой записью, индикатор хода снят.
+   */
+  const failWait = (w8: RewindWait | null, text: string) => {
+    if (!w8 || rewindWait.current !== w8) return;
+    rewindWait.current = null;
+    setProgress(null);
+    setNotice(capFirst(text));
+    if (w8.kind === 'switch') { void saveStep(async () => { putSaved(w8.prev); await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: w8.prev, stale: [] }); }); w8.resolve({ ok: false, text }); }
+    else w8.resolve({ ok: false, text });
+  };
+  /** Поток молчит REWIND_WAIT_MS (ни одного сообщения: переход на длинную ветвь шлёт ход за ходом) — отказ. */
+  const guard = (w8: RewindWait) => {
+    const tick = () => { if (rewindWait.current !== w8) return; const idle = Date.now() - lastBeat.current; if (idle >= REWIND_WAIT_MS) failWait(w8, WAIT_FAIL); else setTimeout(tick, REWIND_WAIT_MS - idle); };
+    lastBeat.current = Date.now();
+    setTimeout(tick, REWIND_WAIT_MS);
+  };
   /** «Вернуться к ходу N»: поток возвращается, ответ — после развилки. */
   const rewindTo = (turn: number) => new Promise<RewindResult>((resolve) => {
     if (rewindWait.current) { resolve({ ok: false, text: 'идёт возврат к ходу — подождите' }); return; }
-    rewindWait.current = { kind: 'rewind', resolve };
+    const w8: RewindWait = { kind: 'rewind', resolve };
+    rewindWait.current = w8;
+    guard(w8);
     setProgress(`возврат к ходу ${turn}…`);
     send({ kind: 'rewind', turn });
   });
@@ -468,6 +494,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     if (!prev) { resolve({ ok: false, text: 'запись игры ещё не сохранена' }); return; }
     const w8: RewindWait = { kind: 'switch', resolve, prev, stale: [] };
     rewindWait.current = w8;
+    guard(w8);
     setProgress('переход на ветвь…');
     void saveStep(async () => {
       try {
@@ -480,7 +507,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       } catch (e) {
         if (rewindWait.current === w8) rewindWait.current = null;
         setProgress(null);
-        resolve({ ok: false, text: String((e as Error)?.message ?? e) });
+        const text = String((e as Error)?.message ?? e);
+        // и для мыши: «Перейти» в окне «Ветви» — причина на экране
+        setNotice(capFirst(`ветвь не открыта: ${text}`));
+        resolve({ ok: false, text });
       }
     });
   });
@@ -490,7 +520,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       const s = savedRef.current;
       if (!s) { resolve('запись игры ещё не сохранена'); return; }
       const r = await deleteBranch(idbBranchStore, localStorage, SAVE_KEY, s, id);
-      if (!r.error) putSaved(r.game);
+      if (!r.error) putSaved(r.game); else setNotice(r.error);
       resolve(r.error);
     });
   });

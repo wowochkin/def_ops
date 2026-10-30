@@ -325,6 +325,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
 
 // ---------------------------------------------------------------- действия переигровки (вход в командование)
 
+export type ContinueResult = string | void | { error: string };
 export interface ReplayDeps {
   catalog: { id: string; title: string }[];
   scenario: string;
@@ -351,7 +352,8 @@ export interface ReplayDeps {
    *  которым игра начата (недопустимый при режиме заменён умолчанием режима). */
   begin(enemy: EnemyMode | undefined, mode?: GameMode): EnemyMode | void;
   /** Возвращает сообщение, если противник сохранённой игры заменён (недопустим при её режиме). */
-  continueGame(branch?: string): string | void | Promise<string | void>;
+  /** Строка — заметка (противник заменён), игра продолжена; { error } — продолжить не удалось (ветвь не открылась). */
+  continueGame(branch?: string): ContinueResult | Promise<ContinueResult>;
   /** Остановить расчёт; удалить запись незавершённой игры. */
   stop(): void;
   discardSaved(): void;
@@ -461,6 +463,7 @@ export function replayActions(get: () => ReplayDeps): Action[] {
         const s = get().saved!, l = lineOf(p?.branch);
         if (typeof l === 'string') return `${l.charAt(0).toUpperCase()}${l.slice(1)}`;
         const n = await get().continueGame(l?.id ?? undefined);
+        if (n && typeof n === 'object') { const e = n.error.trim().replace(/[.\s]+$/, ''); return `${e.charAt(0).toUpperCase()}${e.slice(1)}.`; }
         return `Продолжаю игру: ${opName(s.title)}${l && l.id ? `, ${l.name}` : ''}.${n ? ` ${n}` : ''}`;
       } },
     { section: 'replay', id: 'replay.start', title: 'Начать игру', describe: 'Окно «Принять командование»: принять командование и начать игру.', params: ENEMY,

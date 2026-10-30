@@ -122,6 +122,7 @@ const when = (t: string) => `${dayMonth(t)}, ${t.slice(11, 16)}`;
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 const end = (x: string) => { const t = cap(x.trim()); return /[?]$/.test(t) ? t : `${t.replace(/[.!\s]+$/, '')}.`; };
 /** Проект хода не пуст (приказы, распоряжения, решение, решения пунктов) — при возврате он пропадёт. */
+export const SWITCH_OFFER = (name: string) => `В проекте хода есть приказы и распоряжения — при переходе они пропадут. Перейти на ветвь «${name}»?`;
 export const REWIND_OFFER = (n: number) => `В проекте хода есть приказы и распоряжения — при возврате они пропадут. Вернуться к ходу ${n}?`;
 
 // ---------------------------------------------------------------- действия
@@ -206,6 +207,21 @@ export function turnActions(get: () => TurnDeps): Action[] {
     const head = `Вернулся к ходу ${n} (${when(r.at)}).`;
     return r.branch ? `${head} Прежняя линия сохранена: «${r.branch}».` : r.dup ? `${head} Прежняя линия уже есть среди ветвей.` : head;
   };
+  /** Переход на ветвь: нельзя — почему; проект хода не пуст (offer) — то же предложение с явным «да», что при возврате. */
+  const switchAsk = (name: string, offer: boolean): true | string | Offer => {
+    const d = get();
+    if (d.busy) return BUSY_REWIND;
+    const r = pickLine(name);
+    if (typeof r === 'string') return r;
+    if (offer && (projectHas(d, d.view!.lastDecision) || d.postProject)) return { offer: SWITCH_OFFER(r.name), id: 'command.branch.switch.force', params: { name }, strict: true };
+    return true;
+  };
+  const switchRun = async (name: string) => {
+    const no = switchAsk(name, false);
+    if (no !== true) return end(no as string);
+    const x = await get().switchBranch((pickLine(name) as BranchLine).id!);
+    return x.ok ? `Перешёл на ветвь «${x.name}»: ход ${x.turns + 1}.` : end(x.text);
+  };
   /** Линия по названию: одна — она; нет, несколько, текущая — что сказать. */
   const pickLine = (name: string): BranchLine | string => {
     const ls = get().lines;
@@ -259,14 +275,9 @@ export function turnActions(get: () => TurnDeps): Action[] {
       run: async () => { get().branches.show(false); } },
     { ...base, id: 'command.branch.switch', highlight: () => hl('ribbon'), title: 'Перейти на ветвь', describe: 'Переходит на сохранённую ветвь игры (name — её название: «ветвь от хода 5 (…)», «основная линия»); текущая линия сохраняется ветвью.',
       params: NAME, say: ['штаб, перейди на ветвь от хода два'],
-      check: (p: { name: string }) => { const r = pickLine(p?.name); return typeof r === 'string' ? r : true; },
-      run: async (p: { name: string }) => {
-        const r = pickLine(p?.name);
-        if (typeof r === 'string') return end(r);
-        if (get().busy) return end(BUSY_REWIND);
-        const x = await get().switchBranch(r.id!);
-        return x.ok ? `Перешёл на ветвь «${x.name}»: ход ${x.turns + 1}.` : end(x.text);
-      } },
+      check: (p: { name: string }) => switchAsk(p?.name, true), run: async (p: { name: string }) => switchRun(p?.name) },
+    { ...base, id: 'command.branch.switch.force', model: false, highlight: () => hl('ribbon'), title: 'Перейти на ветвь (проект хода пропадёт)', describe: 'Переход на ветвь name, хотя в проекте хода есть приказы и распоряжения.',
+      params: NAME, check: (p: { name: string }) => switchAsk(p?.name, false), run: async (p: { name: string }) => switchRun(p?.name) },
     { ...base, id: 'command.branch.delete', highlight: () => hl('branches'), title: 'Удалить ветвь', describe: 'Удаляет сохранённую ветвь игры (name — её название) вместе с её ходами (необратимо). Текущую линию удалить нельзя.',
       params: NAME, say: ['штаб, удали ветвь от хода два'], irreversible: true,
       confirm: (p: { name: string }) => { const r = pickLine(p?.name); return `Удалить ${typeof r === 'string' ? 'ветвь' : `ветвь «${r.name}»`}? Её ходы пропадут.`; },

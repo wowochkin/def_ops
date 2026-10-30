@@ -661,6 +661,17 @@ describe('возврат к ходу и ветви голосом', () => {
     td({ record: { ...REC3, turns: [] } as GameRecord });
     expect(getAction('command.rewind.back')!.available()).toBe('вернуться некуда: это первый ход');
   });
+  it('переход на ветвь: пока ход считается — отказ; проект непустой — то же предложение, что при возврате', async () => {
+    td({ busy: 'расчёт хода…' });
+    expect(getAction('command.branch.switch')!.check!({ name: 'ветвь от хода два' })).toMatch(/^идёт расчёт хода/);
+    offs.forEach((o) => o()); offs = [];
+    const d = td({ acts: [{ key: 'p', action: { kind: 'priority' }, label: 'x', text: 'y' }] as never });
+    const o = getAction('command.branch.switch')!.check!({ name: 'ветвь от хода два' });
+    expect(o).toMatchObject({ id: 'command.branch.switch.force', params: { name: 'ветвь от хода два' }, strict: true });
+    expect((o as { offer: string }).offer).toBe('В проекте хода есть приказы и распоряжения — при переходе они пропадут. Перейти на ветвь «ветвь от хода 2 (17 апреля, 05:00)»?');
+    expect(await getAction('command.branch.switch.force')!.run({ name: 'ветвь от хода два' })).toBe('Перешёл на ветвь «ветвь от хода 2 (17 апреля, 05:00)»: ход 6.');
+    expect(d.switchBranch).toHaveBeenCalledWith('b1');
+  });
   it('«покажи ветви» и переход на ветвь', async () => {
     const d = td();
     expect(await getAction('command.branches.show')!.run(undefined)).toBe('Ветвей 1: основная линия — текущая, ходов 3; ветвь от хода 2 (17 апреля, 05:00), ходов 5.');
@@ -671,5 +682,24 @@ describe('возврат к ходу и ветви голосом', () => {
     offs.forEach((o) => o()); offs = [];
     td({ lines: [LINES[0]] });
     expect(await getAction('command.branches.show')!.run(undefined)).toBe('Ветвей нет: игра идёт одной линией.');
+  });
+});
+
+describe('продолжить игру с ветви', () => {
+  const LS = [{ id: null, name: 'основная линия', turns: 3, from: null, current: true }, { id: 'b1', name: 'ветвь от хода 2 (17 апреля, 05:00)', turns: 5, from: 2, current: false }];
+  const rep = (continueGame: ReplayDeps['continueGame']) => {
+    const d = { catalog: [], scenario: 'berlin-1945-tasks', busy: null, game: false, calc: vi.fn(), result: null, time: null, takeAt: (x: string) => x, setTime: vi.fn(),
+      openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: { title: 'Берлинская операция, 16.04–2.05.1945', lines: LS }, begin: vi.fn(), continueGame: vi.fn(continueGame), stop: vi.fn(), discardSaved: vi.fn() } as unknown as ReplayDeps;
+    reg(replayActions(() => d));
+    return d;
+  };
+  it('ветвь — по названию; сбой — только он, без «Продолжаю игру»', async () => {
+    const d = rep(async () => ({ error: 'ветвь не открылась: хранилище недоступно' }));
+    expect(await getAction('replay.continue')!.run({ branch: 'ветвь от хода два' })).toBe('Ветвь не открылась: хранилище недоступно.');
+    expect(d.continueGame).toHaveBeenCalledWith('b1');
+  });
+  it('удачно — «Продолжаю игру…» с названием ветви и заметкой о противнике', async () => {
+    rep(async () => 'Противник заменён.');
+    expect(await getAction('replay.continue')!.run({ branch: 'ветвь от хода два' })).toBe('Продолжаю игру: Берлинская операция, ветвь от хода 2 (17 апреля, 05:00). Противник заменён.');
   });
 });
