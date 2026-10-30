@@ -1,3 +1,6 @@
+/**
+ * Какой корень монтировать: `?expo=0` или автозапуск — хост стенда, `?expo=1|2` — окно вида, иначе — полный режим.
+ */
 import type { ExpoSettings } from './settings';
 export function expoWindowIndex(search: string): number | null {
   const value = new URLSearchParams(search).get('expo');
