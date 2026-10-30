@@ -70,6 +70,9 @@ export type Effect =
 /** Длительности фаз-заглушек этапа 1, мс. */
 export const DURATIONS = { welcome: 20_000, briefing: 35_000, explain: 10_000, scroll: 20_000 } as const;
 
+/** Касание, продвигающее фазу, в первые столько мс после входа в неё — дребезг или касание вместе с мышью; не продвигает. */
+export const DEBOUNCE_MS = 300;
+
 /** Предупреждение до конца таймера, мс. */
 const WARN_BEFORE = 10_000;
 /** Таймер выключен: через столько голос предлагает решить за посетителя, ещё через столько — выбор ИИ, мс. */
@@ -126,13 +129,15 @@ const afterScroll = (n: TurnN): Phase => (n < 3 ? turnPhase((n + 1) as TurnN) : 
 /**
  * С какого момента считается бездействие: только в фазах, где режиссёр ждёт посетителя (welcome, выбор, итог), —
  * от последнего ввода или от входа в фазу, что позже. Бриф, пояснение и прокрутка идут сами и бездействие не копят.
- * Таймер выключен: в выборе — не раньше выбора ИИ (оболочка ответит на aiPick событием choose).
+ * Таймер включён: в выборе бездействия нет. Таймер выключен: в выборе — не раньше выбора ИИ (оболочка ответит на aiPick событием choose).
  */
 function idleStart(s: DirectorState, cfg: ExpoSettings): number | null {
   const p = s.phase;
   const waiting = p.kind === 'welcome' || p.kind === 'result' || (p.kind === 'turn' && p.step === 'choose');
   if (!waiting) return null;
   let from = Math.max(s.lastInput, s.phaseStart);
+  // Таймер включён: выбор всегда кончается промедлением на сроке, даже если срок дольше бездействия.
+  if (p.kind === 'turn' && cfg.timer.on) return null;
   if (p.kind === 'turn' && !cfg.timer.on) from = Math.max(from, s.phaseStart + AI_PICK_AFTER);
   return from;
 }
@@ -227,6 +232,7 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
 
   switch (ev.t) {
     case 'touch':
+      if (now - s.phaseStart < DEBOUNCE_MS) return out(touched);
       if (p.kind === 'attract') return out(enter(touched, { kind: 'welcome' }, now, cfg, fx));
       if (p.kind === 'welcome' && cfg.fronts.length === 1) return out(enter({ ...touched, front: cfg.fronts[0] }, { kind: 'briefing' }, now, cfg, fx));
       if (p.kind === 'result') return out(enter(fresh(touched, fx), { kind: 'welcome' }, now, cfg, fx));

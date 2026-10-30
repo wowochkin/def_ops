@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPO_DEFAULTS, type ExpoSettings } from '../src/expo/settings';
-import { DURATIONS, initialState, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
+import { DEBOUNCE_MS, DURATIONS, initialState, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
 
 const cfgWith = (patch: Partial<ExpoSettings>): ExpoSettings => ({ ...JSON.parse(JSON.stringify(EXPO_DEFAULTS)), ...patch });
 
@@ -39,14 +39,14 @@ const turn = (p: Phase) => (p.kind === 'turn' ? p : null);
 
 /** До выбора в переломе 1: ready, touch, pickFront, бриф и пояснение по времени. */
 function toChoose(cfg: ExpoSettings = EXPO_DEFAULTS) {
-  return run(cfg).send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1bf' }).wait(DURATIONS.briefing).wait(DURATIONS.explain);
+  return run(cfg).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' }).wait(DURATIONS.briefing).wait(DURATIONS.explain);
 }
 
 describe('режиссёр сеанса', () => {
   it('full session path', () => {
     const r = run().send({ t: 'ready' });
     expect(r.phase.kind).toBe('attract');
-    r.send({ t: 'touch' });
+    r.wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('welcome');
     r.send({ t: 'pickFront', front: 'su_1bf' });
     expect(r.phase.kind).toBe('briefing');
@@ -70,23 +70,23 @@ describe('режиссёр сеанса', () => {
   });
 
   it('single front skips choice', () => {
-    const r = run(cfgWith({ fronts: ['su_1uf'] })).send({ t: 'ready' }, { t: 'touch' });
+    const r = run(cfgWith({ fronts: ['su_1uf'] })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('welcome');
-    r.send({ t: 'touch' });
+    r.wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('briefing');
     expect(r.state.front).toBe('su_1uf');
   });
 
   it('two fronts: touch keeps welcome, unknown front ignored', () => {
-    const r = run(cfgWith({ fronts: ['su_1bf'] , })).send({ t: 'ready' }, { t: 'touch' });
+    const r = run(cfgWith({ fronts: ['su_1bf'] , })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
     r.send({ t: 'pickFront', front: 'su_1uf' });
     expect(r.phase.kind).toBe('welcome');
-    const r2 = run().send({ t: 'ready' }, { t: 'touch' }, { t: 'touch' });
+    const r2 = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'touch' });
     expect(r2.phase.kind).toBe('welcome');
   });
 
   it('briefing skipped by next', () => {
-    const r = run().send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1uf' }, { t: 'next' });
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1uf' }, { t: 'next' });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'explain' });
   });
 
@@ -142,7 +142,7 @@ describe('режиссёр сеанса', () => {
 
   it('passive viewer not kicked', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
-    const r = run(off).send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const r = run(off).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', offered: true });
@@ -154,7 +154,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('timer on: passive viewer gets delays, not idle', () => {
-    const r = run().send({ t: 'ready' }, { t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 30_000);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
@@ -162,11 +162,35 @@ describe('режиссёр сеанса', () => {
   });
 
   it('idle in welcome returns', () => {
-    const r = run().send({ t: 'ready' }, { t: 'touch' }).wait(89_750);
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }).wait(89_750);
     expect(r.phase.kind).toBe('welcome');
     r.wait(250);
     expect(r.phase.kind).toBe('attract');
     expect(r.effects).toContainEqual({ e: 'newSession' });
+  });
+
+  it('double touch does not skip', () => {
+    const one = cfgWith({ fronts: ['su_1uf'] });
+    const r = run(one).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }).wait(100).send({ t: 'touch' });
+    expect(r.phase.kind).toBe('welcome');
+    r.wait(DEBOUNCE_MS).send({ t: 'touch' });
+    expect(r.phase.kind).toBe('briefing');
+    // Итог: двойное касание «Ещё раз» — только welcome.
+    const q = run(one).send({ t: 'ready' }, { t: 'jump', phase: 'result' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'touch' });
+    expect(q.phase.kind).toBe('welcome');
+    // Касание сразу после входа в фазу не продвигает её.
+    const a = run().send({ t: 'ready' }, { t: 'touch' });
+    expect(a.phase.kind).toBe('attract');
+  });
+
+  it('long timer beats idle', () => {
+    const cfg = cfgWith({ timer: { on: true, seconds: 120 }, idleSeconds: 90 });
+    const r = toChoose(cfg).send({ t: 'touch' });
+    r.wait(119_750);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose' });
+    r.wait(250);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
+    expect(r.effects.some((e) => e.e === 'newSession')).toBe(false);
   });
 
   it('double choose ignored', () => {
