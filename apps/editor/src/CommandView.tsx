@@ -10,7 +10,7 @@ import { confirmAsync } from './dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Resizer, usePanelWidth } from './panel-resize';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { groupManning, sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
+import { groupManning, sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type GameTurn, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
@@ -55,7 +55,7 @@ import { hl, setFlashMapView } from './voice/highlight';
 import { setTourMap } from './voice/tour';
 import { createTourMap } from './voice/tour-map';
 import { zoneOverlays, zoneUrl } from './zones-overlay';
-import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type TurnDeps } from './voice/actions/turn';
+import { blockedArrived, releaseTurn, turnActions, type Missing, type ReviewCtl, type RewindResult, type SwitchResult, type TurnDeps } from './voice/actions/turn';
 import { releaseScreen, screenActions, type ScreenDeps } from './voice/actions/screen';
 import { announceTurn, resetUmpire, type UmpireModel } from './voice/umpire';
 import { bindModelHold, setModelBusy } from './voice/model-queue';
@@ -70,7 +70,10 @@ import { speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
-import { commitGame, unpackGame, withRecord, type SavedGame } from './game-branches';
+import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines as gameLines, MAIN_LINE, unpackGame, withRecord, type SavedGame } from './game-branches';
+import { TURN_REFUSAL } from './sim/game-rewind';
+import { ribbonItems } from './turn-ribbon';
+import { TurnRibbon } from './TurnRibbon';
 import { idbBranchStore } from './game-branch-store';
 
 export const SAVE_KEY = 'def_ops.game';
@@ -110,6 +113,11 @@ type Act = StaffAct;
 type Pick = { kind: 'order' } | { kind: 'line' } | { kind: 'bridge' } | { kind: 'base'; base: string; name: string; from: LngLat } | { kind: 'commit'; formation: string; name: string; members?: { id: string; name: string }[] };
 interface AdvMsg { id: number; cat: string; catId: string; q: string; answer: string; wait?: string; result?: AdviceView }
 const EMPTY: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
+/** Решение нового хода: оценка и донесение — заново; замысел, замысел противника и риски — от прошлого решения, для правки. */
+const freshDecision = (last: HumanDecision | null | undefined): HumanDecision => ({ ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' });
+const capFirst = (x: string) => `${x.charAt(0).toUpperCase()}${x.slice(1).replace(/[.!\s]+$/, '')}.`;
+/** Возврат к ходу или переход на ветвь, отданный потоку: ответ ждёт rewound / switched / rewind-refused. */
+type RewindWait = { kind: 'rewind'; resolve: (r: RewindResult) => void } | { kind: 'switch'; resolve: (r: SwitchResult) => void; prev: SavedGame; stale: string[] };
 
 const TOGGLES = [
   { key: 'ghosts', title: 'Ист. положения', match: (id: string) => id === 'hist-units' || id === 'hist-marks' || id === 'lvl-op-hist' },
@@ -280,14 +288,48 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         setDrafts({}); setActs([]); setLinePts([]); setPickMode(null);
         // новый ход — очередь команд пуста; первый ход — уже действующие исторические директивы (в «гибриде» — все)
         setCmds((q) => (liveView.current?.time === m.view.time ? q : initialCmds(m.view)));
-        const last = m.view.lastDecision;
         // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
-        setDecision((d) => (liveView.current?.time === m.view.time ? d : { ...EMPTY, enemyIntent: last?.enemyIntent ?? '', intent: last?.intent ?? '', risks: last?.risks ?? '' }));
+        setDecision((d) => (liveView.current?.time === m.view.time ? d : freshDecision(m.view.lastDecision)));
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); }
       else if (m.kind === 'ai-phase') setAiPhase(m.text);
       else if (m.kind === 'llm-busy') setModelBusy('game', m.who); // голос знает, чем занята модель, и ждёт её
       else if (m.kind === 'blocked') { setProgress(null); setBlocked(m.error); blockedArrived(m.error); }
+      else if (m.kind === 'rewound') {
+        // возврат к ходу: проект хода — с чистого листа, доклад посредника за снятые ходы не звучит; прежняя линия — ветвью
+        // (по сохранённой записи, пока в ней все ходы: запись потока придёт следом и ляжет после развилки — очередь saveStep)
+        turnsSeen.current = m.turn - 1;
+        freshProject();
+        const w8 = rewindWait.current?.kind === 'rewind' ? rewindWait.current : null;
+        if (w8) rewindWait.current = null;
+        void saveStep(async () => {
+          const r = await forkLine(m.turn, m.at, m.tail);
+          w8?.resolve(r);
+        });
+      } else if (m.kind === 'switched') {
+        turnsSeen.current = m.turns;
+        freshProject();
+        const w8 = rewindWait.current?.kind === 'switch' ? rewindWait.current : null;
+        if (w8) rewindWait.current = null;
+        void saveStep(async () => {
+          // ходы выбранной ветви теперь в записи игры — её прежняя копия в хранилище не нужна
+          for (const k of w8?.stale ?? []) await idbBranchStore.del(k).catch(() => { /* лишняя запись — не потеря */ });
+          w8?.resolve({ ok: true, name: savedRef.current?.line ?? MAIN_LINE, turns: m.turns });
+        });
+      } else if (m.kind === 'rewind-refused') {
+        const w8 = rewindWait.current;
+        setNotice(capFirst(m.text));
+        // ход отдан во время возврата — отказ ходу, возврат идёт дальше
+        if (m.text === TURN_REFUSAL || !w8) { if (!w8) setProgress(null); }
+        else {
+          rewindWait.current = null;
+          setProgress(null);
+          if (w8.kind === 'switch') {
+            // поток на ветвь не перешёл — запись игры прежняя
+            void saveStep(async () => { putSaved(w8.prev); await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: w8.prev, stale: [] }).catch(() => undefined); w8.resolve({ ok: false, text: m.text }); });
+          } else w8.resolve({ ok: false, text: m.text });
+        }
+      }
       else if (m.kind === 'check') { checks.current.get(m.id)?.(m.result); checks.current.delete(m.id); }
       else if (m.kind === 'advice-stream') { if (!fieldFns.current.stream(m.id, m.text)) setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, answer: x.answer + m.text, wait: undefined } : x))); }
       else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
@@ -340,13 +382,19 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             onDone: () => w.postMessage({ kind: 'umpire-done' } satisfies GameRequest) });
         }
         turnsSeen.current = n;
-        const next = withRecord(savedRef.current, m.record, enemyRef.current, titleRef.current, m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover);
-        savedRef.current = next;
-        // ветви: ходы — в IndexedDB (старая запись с ходами в localStorage переносится при первой записи); сообщение об ошибке — один раз
-        void commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: next, stale: [] }).then((r) => {
-          if (savedRef.current === next && r.game.branches !== next.branches) savedRef.current = { ...next, branches: r.game.branches, ...(r.game.gid ? { gid: r.game.gid } : {}) };
+        const rec = m.record;
+        // запись — по очереди с развилкой и переходом на ветвь (они меняют сохранённую запись асинхронно)
+        void saveStep(async () => {
+          // переход на ветвь не удался (запись пришла без switched): сохранённая запись — прежняя
+          const w8 = rewindWait.current;
+          if (w8?.kind === 'switch') { rewindWait.current = null; setProgress(null); putSaved(w8.prev); w8.resolve({ ok: false, text: 'ветвь не применена — подробности на экране' }); }
+          const next = withRecord(savedRef.current, rec, enemyRef.current, titleRef.current, rec.turns.length ? addH(rec.turns[rec.turns.length - 1].time, 0) : rec.takeover);
+          putSaved(next);
+          // ветви: ходы — в IndexedDB (старая запись с ходами в localStorage переносится при первой записи); сообщение об ошибке — один раз
+          const r = await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: next, stale: [] });
+          if (savedRef.current === next && r.game.branches !== next.branches) putSaved({ ...next, branches: r.game.branches, ...(r.game.gid ? { gid: r.game.gid } : {}) });
           if (r.error && r.error !== lostShown.current) { lostShown.current = r.error; setNotice(r.error); }
-        }).catch(() => { /* хранилища нет — игра идёт без записи */ });
+        });
       }
     };
     w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); };
@@ -366,7 +414,86 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
   /** Запись игры как лежит в хранилище (ветви и имя линии сохраняются при каждой записи хода). */
   const savedRef = useRef<SavedGame | null>(saved);
+  /** Та же запись для отрисовки (лента ходов, окно «Ветви»). */
+  const [savedGame, setSavedGame] = useState<SavedGame | null>(saved);
+  const putSaved = (s: SavedGame | null) => { savedRef.current = s; setSavedGame(s); };
   const lostShown = useRef<string | null>(null);
+  /** Перемены сохранённой записи — строго по очереди (развилка, запись хода, переход на ветвь, удаление ветви). */
+  const chain = useRef<Promise<void>>(Promise.resolve());
+  const saveStep = (f: () => Promise<void>) => { chain.current = chain.current.then(f).catch(() => { /* хранилища нет — игра идёт без записи */ }); return chain.current; };
+  const rewindWait = useRef<RewindWait | null>(null);
+  const [branchesOpen, setBranchesOpen] = useState(false);
+  /** Проект хода — с чистого листа (возврат, переход на ветвь): как при смене хода, плюс решения пунктов и доклад посредника. */
+  const freshProject = () => {
+    const v = viewNow.current.cur;
+    turnStart.current = null;
+    resetUmpire();
+    setProgress(null); setBlocked(null);
+    setDrafts({}); setActs([]); liveActs.current = []; setPostDecisions({}); setLinePts([]); setPickMode(null);
+    if (v) { setCmds(initialCmds(v)); setDecision(freshDecision(v.lastDecision)); }
+  };
+  /**
+   * Прежняя линия после возврата к ходу n — ветвью. Хранилище ветвей отказало — ходы ветви остаются в самой записи
+   * (как в старых записях): следующая запись игры снова попробует перенести их в хранилище, ничего не теряется.
+   */
+  const forkLine = async (n: number, at: string, tail: GameTurn[]): Promise<RewindResult> => {
+    const cur = savedRef.current;
+    if (!cur || !tail.length) return { ok: true, at, branch: null };
+    const now = new Date().toISOString();
+    try {
+      const s = await forkBranch(idbBranchStore, cur, n, at, tail, now);
+      const added = (s.branches ?? []).find((b) => !(cur.branches ?? []).some((x) => x.id === b.id));
+      putSaved(s);
+      return added ? { ok: true, at, branch: added.name } : { ok: true, at, branch: null, dup: true };
+    } catch (e) {
+      const old = [...cur.record.turns.slice(0, n - 1), ...tail];
+      const name = branchName(n, at, [cur.line ?? MAIN_LINE, ...(cur.branches ?? []).map((b) => b.name)]);
+      putSaved({ ...cur, record: { ...cur.record, turns: cur.record.turns.slice(0, n - 1) },
+        branches: [...(cur.branches ?? []), { id: `b${Date.parse(now)}`, name, from: n, at, created: now, count: old.length, enemy: cur.enemy, turns: old }] });
+      setNotice(`Ветвь пока не в хранилище окна: ${(e as Error)?.message ?? e}. Запись попробует ещё раз.`);
+      return { ok: true, at, branch: name };
+    }
+  };
+  /** «Вернуться к ходу N»: поток возвращается, ответ — после развилки. */
+  const rewindTo = (turn: number) => new Promise<RewindResult>((resolve) => {
+    if (rewindWait.current) { resolve({ ok: false, text: 'идёт возврат к ходу — подождите' }); return; }
+    rewindWait.current = { kind: 'rewind', resolve };
+    setProgress(`возврат к ходу ${turn}…`);
+    send({ kind: 'rewind', turn });
+  });
+  /** Перейти на ветвь: сначала запись игры (текущая линия — ветвью), затем поток досчитывает ходы ветви. */
+  const switchTo = (id: string) => new Promise<SwitchResult>((resolve) => {
+    const prev = savedRef.current;
+    if (rewindWait.current) { resolve({ ok: false, text: 'идёт возврат к ходу — подождите' }); return; }
+    if (!prev) { resolve({ ok: false, text: 'запись игры ещё не сохранена' }); return; }
+    const w8: RewindWait = { kind: 'switch', resolve, prev, stale: [] };
+    rewindWait.current = w8;
+    setProgress('переход на ветвь…');
+    void saveStep(async () => {
+      try {
+        const c = await checkoutBranch(idbBranchStore, prev, id, new Date().toISOString());
+        const r = await commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: c.game, stale: [] });
+        if (r.error) throw new Error(r.error);
+        w8.stale = c.stale;
+        putSaved(r.game);
+        send({ kind: 'switch', turns: r.game.record.turns });
+      } catch (e) {
+        if (rewindWait.current === w8) rewindWait.current = null;
+        setProgress(null);
+        resolve({ ok: false, text: String((e as Error)?.message ?? e) });
+      }
+    });
+  });
+  /** Удалить ветвь: запись игры без неё, затем её ходы. */
+  const dropBranch = (id: string) => new Promise<string | null>((resolve) => {
+    void saveStep(async () => {
+      const s = savedRef.current;
+      if (!s) { resolve('запись игры ещё не сохранена'); return; }
+      const r = await deleteBranch(idbBranchStore, localStorage, SAVE_KEY, s, id);
+      if (!r.error) putSaved(r.game);
+      resolve(r.error);
+    });
+  });
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';
 
   // телефон: выбор места на карте — показать карту, выбрано — вернуться к штабу
@@ -893,6 +1020,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     // окно разбора монтируется позже отрисовки — его управление читается в момент вызова
     review: { open: review === 'open', get ctl() { return reviewCtl.current; }, show: (on) => setReview(on ? 'open' : 'hidden') },
     journal: () => ({ name: `${view?.scenario}-журнал.md`, text: journalMd() }),
+    postProject: Object.keys(postDecisions).length > 0,
+    lines: savedGame ? gameLines(savedGame) : [],
+    branches: { open: branchesOpen, show: setBranchesOpen },
+    rewind: rewindTo, switchBranch: switchTo, deleteBranch: dropBranch,
     gameRecord: () => (record ? { name: `${record.scenario}-игра.json`, text: JSON.stringify(record, null, 1) } : null),
   };
   useEffect(() => { const get = () => turnDeps.current; const offs = turnActions(get).map(register); return () => { offs.forEach((o) => o()); releaseTurn(get); }; }, []);
@@ -947,6 +1078,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             <ActButton className={`adv-btn${advOpen ? ' on' : ''}`} data-tour="cmd-advisor" action="command.advisor.show" params={{ mode: 'toggle' }} title="ИИ-советник: вопросы по обстановке, решению, тылу, правилам">Советник</ActButton></div>
         </div>
         {view && staffsOn(view) && <PostBar v={view} post={post} cmds={cmds} />}
+        {view && record && <TurnRibbon items={ribbonItems(record, view.journal, view.time, savedGame?.branches ?? [])} lines={savedGame ? gameLines(savedGame) : []}
+          busy={progress} open={branchesOpen} notice={setNotice}
+          project={projectHas({ drafts, acts, decision }, view.lastDecision) || Object.keys(postDecisions).length > 0} />}
         <nav className="cmd-tabs" data-tour="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ...(staffsOn(view) ? [['staffs', `Штабы${cmds.length ? ` · ${cmds.length}` : ''}`]] : []), ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
             <ActButton key={k} data-tour={`cmd-tab-${k}`} data-hl={`tab-${k}`} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>

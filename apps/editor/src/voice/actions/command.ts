@@ -20,7 +20,7 @@ import type { MapEngine } from '../../engine/types';
 import { showAt } from '../../engine/free-center';
 import type { GameMode } from '@def-ops/sim';
 import type { EnemyMode, TurnView } from '../../sim/game-protocol';
-import { pickByName } from '../answers';
+import { findLine, pickByName } from '../answers';
 import { readAloud } from '../dictation';
 import { findPlace, findUnit, parseRelative, resolveRelative } from '../places';
 import { getAction, registerParser, type Action, type PhraseHit } from '../registry';
@@ -344,13 +344,14 @@ export interface ReplayDeps {
   openTake(at: string): void;
   closeTake(): void;
   take: string | null;
-  saved: { title: string } | null;
+  /** Незавершённая игра; lines — её линии (текущая первой, затем ветви). */
+  saved: { title: string; lines?: { id: string | null; name: string; turns: number; from: number | null; current: boolean }[] } | null;
   /** Начать игру (без вопросов) и продолжить сохранённую. */
   /** mode — режим командования на агентной модели (нет — выбранный в окне и запомненный). Возвращает противника, с
    *  которым игра начата (недопустимый при режиме заменён умолчанием режима). */
   begin(enemy: EnemyMode | undefined, mode?: GameMode): EnemyMode | void;
   /** Возвращает сообщение, если противник сохранённой игры заменён (недопустим при её режиме). */
-  continueGame(): string | void;
+  continueGame(branch?: string): string | void | Promise<string | void>;
   /** Остановить расчёт; удалить запись незавершённой игры. */
   stop(): void;
   discardSaved(): void;
@@ -386,6 +387,15 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     const d = get();
     if (d.game) return 'идёт игра. Сначала выйдите из неё: «Штаб, выйди из игры»';
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
+  };
+  /** Линия незавершённой игры по названию: не названа — null (текущая); не нашлась или неоднозначна — что сказать. */
+  const lineOf = (name?: string) => {
+    if (!name?.trim()) return null;
+    const ls = get().saved?.lines ?? [];
+    const hit = findLine(name, ls);
+    if (!hit.length) return `такой ветви нет. Есть: ${ls.map((l) => `«${l.name}»`).join(', ') || 'только основная линия'}.`;
+    if (hit.length > 1) return `какую ветвь: ${hit.slice(0, 3).map((l) => `«${l.name}»`).join(', ')}?`;
+    return hit[0];
   };
   const takeOpen = (): true | string => { const r = inReplay(); return r !== true ? r : get().take ? true : 'окно «Принять командование» не открыто. Скажите: «Штаб, прими командование»'; };
   const ENEMY = { type: 'object', properties: { enemy: { enum: ['llm', 'passive', 'agents', 'intent'] }, mode: { enum: ['intent', 'legacy', 'agents', 'hybrid', 'commanders'] } } };
@@ -443,9 +453,16 @@ export function replayActions(get: () => ReplayDeps): Action[] {
       say: ['штаб, удали незавершённую игру'], irreversible: true, confirm: () => 'Удалить запись незавершённой игры?',
       available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
       run: async () => { get().discardSaved(); return 'Запись незавершённой игры удалена.'; } },
-    { section: 'replay', id: 'replay.continue', title: 'Продолжить игру', describe: 'Продолжает сохранённую незавершённую игру.', say: ['штаб, продолжи игру'],
+    { section: 'replay', id: 'replay.continue', title: 'Продолжить игру', describe: 'Продолжает сохранённую незавершённую игру; branch — название её ветви («ветвь от хода 5 (…)», «основная линия»; нет — текущая линия).',
+      params: { type: 'object', properties: { branch: { type: 'string' } } }, say: ['штаб, продолжи игру'],
       available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
-      run: async () => { const s = get().saved!; const n = get().continueGame(); return `Продолжаю игру: ${opName(s.title)}.${n ? ` ${n}` : ''}`; } },
+      check: (p?: { branch?: string }) => { const r = lineOf(p?.branch); return typeof r === 'string' ? r : true; },
+      run: async (p?: { branch?: string }) => {
+        const s = get().saved!, l = lineOf(p?.branch);
+        if (typeof l === 'string') return `${l.charAt(0).toUpperCase()}${l.slice(1)}`;
+        const n = await get().continueGame(l?.id ?? undefined);
+        return `Продолжаю игру: ${opName(s.title)}${l && l.id ? `, ${l.name}` : ''}.${n ? ` ${n}` : ''}`;
+      } },
     { section: 'replay', id: 'replay.start', title: 'Начать игру', describe: 'Окно «Принять командование»: принять командование и начать игру.', params: ENEMY,
       say: ['принимаю'],
       available: () => { const r = takeOpen(); return r !== true ? r : get().saved ? 'есть незавершённая игра — новая её заменит, нужно подтверждение' : true; },
@@ -534,6 +551,7 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
     return entry('replay.takeCommand', m[1] ? { at: m[1].replace(/^(?:с|со) /, '') } : {});
   if (/^(?:продолжи|продолжить|продолжим|вернись к|вернуться к|вернемся к)(?: прежней| прежнюю| сохраненной| сохраненную| незавершенной| незавершенную)? игр[уеы]$/.test(t))
     return entry('replay.continue');
+  if ((m = /^(?:продолжи|продолжить|продолжим) (?:игру )?(?:с|со|на|по) (ветв\S* .+|основн\S* лини\S*)$/.exec(t))) return entry('replay.continue', { branch: m[1] });
   // остальное — только в «Переигровке»: в других разделах «приблизь», «легенда», «журнал» — их собственные слова
   if (away) return null;
   if (/^(?:останови|остановить|прекрати|прерви) расчет$/.test(t)) return hit('replay.stop', undefined, NOT_IN_REPLAY);

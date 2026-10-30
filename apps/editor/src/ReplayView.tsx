@@ -17,7 +17,7 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
-import { dropGame } from './game-branches';
+import { checkoutBranch, commitGame, dropGame, lines as gameLines } from './game-branches';
 import { idbBranchStore } from './game-branch-store';
 import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import { defaultEnemy, fitEnemy, resumeEnemy } from './command-forms';
@@ -550,12 +550,22 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   voice.current = {
     catalog: CATALOG, scenario, busy, game: !!game, calc: (id) => { setScenario(id); run(id); },
     result, time, takeAt: (t) => turnStart(t, result!.start, result!.end, result!.turnHours), setTime,
-    openTake: setTake, closeTake: () => setTake(null), take, saved,
-    begin: beginGame, continueGame: () => {
-      if (!saved) return;
+    openTake: setTake, closeTake: () => setTake(null), take, saved: saved && { title: saved.title, lines: gameLines(saved) },
+    begin: beginGame, continueGame: async (branch?: string) => {
+      let s = saved;
+      if (!s) return;
+      // продолжить с ветви: она становится записью игры, текущая линия — ветвью (запись — до входа в игру)
+      if (branch) {
+        try {
+          const c = await checkoutBranch(idbBranchStore, s, branch, new Date().toISOString());
+          const w = await commitGame(idbBranchStore, localStorage, SAVE_KEY, c);
+          if (w.error) return w.error;
+          s = w.game; setSaved(s);
+        } catch (e) { return `Ветвь не открылась: ${(e as Error)?.message ?? e}.`; }
+      }
       // противник старой записи может не подходить режиму игры (ядро такой отклонит): берём умолчание режима и говорим об этом
-      const r = resumeEnemy(saved.enemy, !!saved.record.agents, saved.record.agents?.mode ?? 'legacy', llm.check.state === 'fail');
-      setGame({ start: null, saved: r.note ? { ...saved, enemy: r.enemy } : saved, enemy: r.enemy, note: r.note });
+      const r = resumeEnemy(s.enemy, !!s.record.agents, s.record.agents?.mode ?? 'legacy', llm.check.state === 'fail');
+      setGame({ start: null, saved: r.note ? { ...s, enemy: r.enemy } : s, enemy: r.enemy, note: r.note });
       return r.note;
     },
     stop, discardSaved: () => { discardGame(); setSaved(null); },
@@ -581,6 +591,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
             <ActButton className="primary" action="replay.continue">Продолжить</ActButton>
             <button data-action="replay.discardSaved" onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void act('replay.discardSaved'); }); }}>Удалить</button>
           </div>
+          {(saved.branches?.length ?? 0) > 0 && <div className="rp-lines">
+            {gameLines(saved).map((l) => <div key={l.id ?? 'cur'} className={`rp-line${l.current ? ' on' : ''}`}>
+              <span><b>{l.name}</b> · ходов: {l.turns}{l.current ? ' · текущая линия' : ''}</span>
+              <ActButton action="replay.continue" params={l.id ? { branch: l.name } : {}}>Продолжить</ActButton>
+            </div>)}
+          </div>}
         </div>}
         {/* voice-entry: конец */}
         <div className="seg rp-tabs" data-tour="replay-tabs">

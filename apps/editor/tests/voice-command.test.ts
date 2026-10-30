@@ -2,7 +2,7 @@
 // (раздел в фоне, игры нет, расчёта нет), «покажи Зелов», «доложи о восьмой гвардейской», вход в командование.
 import { getAction } from '../src/voice/registry';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { places as simPlaces, Theatre, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
+import { places as simPlaces, Theatre, type GameRecord, type IntelReport, type Scenario, type TheatreData, type UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
 import { act, markVoice, parsePhrase, register, setSpeaker, voiceRecent, type Action } from '../src/voice/registry';
 import { Dispatcher, helpText, YES_NO_SAY } from '../src/voice/dispatch';
@@ -11,6 +11,8 @@ import {
   type CommandDeps, type ReplayDeps,
 } from '../src/voice/actions/command';
 import { stopReading } from '../src/voice/dictation';
+import { parseTurn, releaseTurn, turnActions, type TurnDeps } from '../src/voice/actions/turn';
+import { spokenNumber } from '../src/voice/answers';
 import { legendFor, shownLegend } from '../src/map-legend';
 import { enemyReport, intelReport, journalDayText, situationReport, unitReport, whereText } from '../src/voice/report';
 import theatreFile from '../../../packages/sim/data/theatres/oder-berlin-1945.json';
@@ -590,5 +592,84 @@ describe('доклады — род и падеж (speech.ts)', () => {
     expect(whereText(unitRep({ id: 'x', name: '29-й гв. ск (8 гв. А)', parent: null }))).toBe('двадцать девятый гвардейский стрелковый корпус: наступает, у Зелова.');
     expect(enemyReport({ ...intel[0], name: '56-й тк', estimate: 'до 20 тыс. чел., около 200 танков и САУ', nearest: null }))
       .toMatch(/до двадцати тысяч человек, около двухсот танков/);
+  });
+});
+
+describe('возврат к ходу и ветви голосом', () => {
+  const REC3 = { version: 1, scenario: 'berlin-1945-tasks', takeover: '1945-04-16T05:00',
+    turns: ['1945-04-16T05:00', '1945-04-17T05:00', '1945-04-18T05:00'].map((time) => ({ time, orders: [], actions: [] })) } as unknown as GameRecord;
+  const LINES = [
+    { id: null, name: 'основная линия', turns: 3, from: null, current: true },
+    { id: 'b1', name: 'ветвь от хода 2 (17 апреля, 05:00)', turns: 5, from: 2, current: false },
+  ];
+  function td(over: Partial<TurnDeps> = {}) {
+    const d = {
+      view: view(), prev: null, busy: null, blocked: null, enemy: 'llm', ai: { state: 'off' }, aiTurns: [], record: REC3,
+      drafts: {}, acts: [], decision: { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' }, plan: null, planN: 2,
+      sendTurn: vi.fn(), retryAi: vi.fn(), skipAi: vi.fn(), setTab: vi.fn(), setUmpirePart: vi.fn(), showMissing: vi.fn(), notice: vi.fn(),
+      review: { open: false, ctl: null, show: vi.fn() }, journal: () => ({ name: 'j.md', text: '' }), gameRecord: () => null,
+      lines: LINES, branches: { open: false, show: vi.fn() },
+      rewind: vi.fn(async (n: number) => ({ ok: true as const, at: REC3.turns[n - 1].time, branch: `ветвь от хода ${n} (17 апреля, 05:00)` })),
+      switchBranch: vi.fn(async () => ({ ok: true as const, name: 'ветвь от хода 2 (17 апреля, 05:00)', turns: 5 })),
+      deleteBranch: vi.fn(async () => null),
+      ...over,
+    } as unknown as TurnDeps;
+    const get = () => d;
+    reg(turnActions(get));
+    offs.push(() => releaseTurn(get));
+    return d;
+  }
+  it('spokenNumber: цифры, количественные и порядковые 1–99', () => {
+    expect(spokenNumber('5')).toBe(5);
+    expect(spokenNumber('пять')).toBe(5);
+    expect(spokenNumber('пятому')).toBe(5);
+    expect(spokenNumber('двадцать первому')).toBe(21);
+    expect(spokenNumber('второму')).toBe(2);
+    expect(spokenNumber('одиннадцатому')).toBe(11);
+    expect(spokenNumber('пятьдесят')).toBe(50);
+    expect(spokenNumber('ветер')).toBeNull();
+  });
+  it('фразы возврата и ветвей — только в «Переигровке»', () => {
+    td();
+    expect(parseTurn('вернись к ходу пять', 'replay')).toEqual({ id: 'command.rewind', params: { turn: 5 } });
+    expect(parseTurn('вернись на ход назад', 'replay')).toEqual({ id: 'command.rewind.back', params: undefined });
+    expect(parseTurn('покажи ветви', 'replay')).toEqual({ id: 'command.branches.show', params: undefined });
+    expect(parseTurn('перейди на ветвь от хода пять', 'replay')).toEqual({ id: 'command.branch.switch', params: { name: 'ветвь от хода пять' } });
+    expect(parseTurn('вернись к ходу пять', 'maps')).toBeNull();
+    expect(parseTurn('покажи ветви', 'editor')).toBeNull();
+  });
+  it('«вернись к ходу N»: пока ход считается — причина; проект непустой — предложение со строгим «да»', async () => {
+    td({ busy: 'расчёт хода…' });
+    expect(getAction('command.rewind')!.check!({ turn: 2 })).toMatch(/^идёт расчёт хода/);
+    offs.forEach((o) => o()); offs = [];
+    td({ drafts: { su_8gva: { formation: 'su_8gva', task: 'attack', target: 'Seelow', targetText: 'Зелов', at: null, note: '' } } as never });
+    const o = getAction('command.rewind')!.check!({ turn: 2 });
+    expect(o).toMatchObject({ id: 'command.rewind.force', params: { turn: 2 }, strict: true });
+    expect((o as { offer: string }).offer).toBe('В проекте хода есть приказы и распоряжения — при возврате они пропадут. Вернуться к ходу 2?');
+  });
+  it('возврат: ответ с датой и прежней линией', async () => {
+    const d = td();
+    expect(getAction('command.rewind')!.check!({ turn: 2 })).toBe(true);
+    expect(await getAction('command.rewind')!.run({ turn: 2 })).toBe('Вернулся к ходу 2 (17 апреля, 05:00). Прежняя линия сохранена: «ветвь от хода 2 (17 апреля, 05:00)».');
+    expect(d.rewind).toHaveBeenCalledWith(2);
+    (d.rewind as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: true, at: '1945-04-18T05:00', branch: null });
+    expect(await getAction('command.rewind.back')!.run(undefined)).toBe('Вернулся к ходу 3 (18 апреля, 05:00).');
+    (d.rewind as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok: false, text: 'идёт расчёт хода — вернуться можно, когда он закончится' });
+    expect(await getAction('command.rewind')!.run({ turn: 1 })).toBe('Идёт расчёт хода — вернуться можно, когда он закончится.');
+  });
+  it('«вернись на ход назад» на первом ходе — некуда', () => {
+    td({ record: { ...REC3, turns: [] } as GameRecord });
+    expect(getAction('command.rewind.back')!.available()).toBe('вернуться некуда: это первый ход');
+  });
+  it('«покажи ветви» и переход на ветвь', async () => {
+    const d = td();
+    expect(await getAction('command.branches.show')!.run(undefined)).toBe('Ветвей 1: основная линия — текущая, ходов 3; ветвь от хода 2 (17 апреля, 05:00), ходов 5.');
+    expect(d.branches.show).toHaveBeenCalledWith(true);
+    expect(await getAction('command.branch.switch')!.run({ name: 'основную линию' })).toBe('Вы и так на ветви «основная линия».');
+    expect(await getAction('command.branch.switch')!.run({ name: 'ветвь от хода второго' })).toBe('Перешёл на ветвь «ветвь от хода 2 (17 апреля, 05:00)»: ход 6.');
+    expect(d.switchBranch).toHaveBeenCalledWith('b1');
+    offs.forEach((o) => o()); offs = [];
+    td({ lines: [LINES[0]] });
+    expect(await getAction('command.branches.show')!.run(undefined)).toBe('Ветвей нет: игра идёт одной линией.');
   });
 });

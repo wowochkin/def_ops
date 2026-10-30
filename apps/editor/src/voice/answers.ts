@@ -60,3 +60,40 @@ export function pickByName(said: string, names: string[]): number[] {
     return q.every((w) => ws.some((v) => near(w, v))) ? [i] : [];
   });
 }
+
+// числа 1–99 словами: десятки и «-надцать» — раньше единиц («пятнадцать», «пятьдесят» начинаются с «пят»)
+const TEENS: [RegExp, number][] = [[/^одиннадцат/, 11], [/^двенадцат/, 12], [/^тринадцат/, 13], [/^четырнадцат/, 14], [/^пятнадцат/, 15],
+  [/^шестнадцат/, 16], [/^семнадцат/, 17], [/^восемнадцат/, 18], [/^девятнадцат/, 19], [/^десят/, 10]];
+const TENS: [RegExp, number][] = [[/^двадцат/, 20], [/^тридцат/, 30], [/^сорок/, 40], [/^пят[ьи]десят/, 50], [/^шест[ьи]десят/, 60],
+  [/^сем[ьи]десят/, 70], [/^восем[ьи]десят|^восьмидесят/, 80], [/^девяност/, 90]];
+const ONES: [RegExp, number][] = [[/^(?:один|одн|перв)/, 1], [/^(?:два|две|двух|втор)/, 2], [/^(?:три|трех|трет)/, 3], [/^(?:четыр|четверт)/, 4],
+  [/^пят/, 5], [/^шест/, 6], [/^(?:сем|седьм)/, 7], [/^(?:восем|восьм)/, 8], [/^девят/, 9]];
+const wordNum = (w: string, list: [RegExp, number][]) => list.find(([re]) => re.test(w))?.[1] ?? null;
+
+/** Число 1–99 из реплики: цифрами («5», «5-му») или словами, количественное и порядковое («пять», «пятому», «двадцать первому»). */
+export function spokenNumber(s: string): number | null {
+  const ws = norm(s).split(' ').filter((w) => w && w !== 'номер');
+  if (!ws.length) return null;
+  const d = /^(\d{1,2})$/.exec(ws[0]);
+  if (d) return ws.length === 1 || (ws.length === 2 && /^\p{L}{1,3}$/u.test(ws[1])) ? (+d[1] >= 1 ? +d[1] : null) : null;
+  if (ws.length > 2) return null;
+  const teen = wordNum(ws[0], TEENS);
+  if (teen !== null) return ws.length === 1 ? teen : null;
+  const tens = wordNum(ws[0], TENS);
+  if (tens !== null) {
+    if (ws.length === 1) return tens;
+    const one = wordNum(ws[1], ONES);
+    return one !== null && wordNum(ws[1], TEENS) === null && wordNum(ws[1], TENS) === null ? tens + one : null;
+  }
+  return ws.length === 1 ? wordNum(ws[0], ONES) : null;
+}
+
+/** Ветвь игры по сказанному: по названию; не вышло — по номеру хода развилки («ветвь от хода второго»). */
+export function findLine<L extends { name: string; from: number | null }>(said: string, ls: L[]): L[] {
+  const q = norm(said);
+  const hit = pickByName(q, ls.map((l) => l.name));
+  if (hit.length) return hit.map((i) => ls[i]);
+  const m = /(?:от|с) хода (.+)$/.exec(q);
+  const n = m ? spokenNumber(m[1]) : null;
+  return n === null ? [] : ls.filter((l) => l.from === n);
+}
