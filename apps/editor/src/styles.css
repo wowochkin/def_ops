@@ -2186,3 +2186,6 @@ body.resizing { cursor: col-resize; user-select: none; }
 .db-overlay .db-arrow .line { stroke-width: 3.5; } .db-overlay .db-arrow.own .line { stroke: #b3261e; } .db-overlay .db-arrow.foe .line { stroke: #1d4ed8; }
 .db-overlay .db-arrow.on .line { stroke-width: 5; }
 .db-legend .db-l.own { border-top-color: #b3261e; } .db-legend .db-l.foe { border-top-color: #1d4ed8; }
+
+/* поле решения составлено по обстановке при открытии хода и ещё не правлено */
+.dfield .dauto { display: block; margin: 0 0 1px; font-size: 10.5px; font-weight: 400; color: #9a6a12; font-style: italic; }

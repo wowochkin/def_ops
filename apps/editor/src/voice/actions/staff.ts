@@ -93,6 +93,8 @@ export interface StaffDeps {
   advisorReady: boolean;
   /** Советник уже пишет решение (общий заказ). */
   composing: boolean;
+  /** Поля решения, составленные по обстановке и ещё не правленые: не считаются своим в проекте. */
+  auto?: readonly string[];
   /** Пункт управления: приоритет подвоза — его часть списка стороны (названные подчинённые вместо прежних его); нет — весь список. */
   mergePriority?(ids: string[]): string[];
   // приказы
@@ -186,12 +188,14 @@ export function decisionMissing(d: HumanDecision): string[] {
 
 /**
  * В проекте уже что-то есть — принятие варианта его заменит: приказы, распоряжения, оценка, донесение или поле решения,
- * которое не просто перенесено с прошлого хода (замысел, замысел противника, риски переносятся сами), ходатайство.
+ * которое не просто перенесено с прошлого хода (замысел, замысел противника, риски переносятся сами) и не составлено по
+ * обстановке при открытии хода и не правлено (auto), ходатайство.
  */
-export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision }, last: HumanDecision | null): boolean {
-  const d = p.decision;
-  const own = (k: 'enemyIntent' | 'intent' | 'risks') => !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
-  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || !!d.assessment.trim() || !!d.report.trim() || !!d.request?.trim()
+export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision; auto?: readonly string[] }, last: HumanDecision | null): boolean {
+  const d = p.decision, auto = p.auto ?? [];
+  const own = (k: 'enemyIntent' | 'intent' | 'risks') => !auto.includes(k) && !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
+  const put = (k: 'assessment' | 'report') => !auto.includes(k) && !!d[k].trim();
+  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || put('assessment') || put('report') || !!d.request?.trim()
     || own('enemyIntent') || own('intent') || own('risks');
 }
 
@@ -671,7 +675,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     { ...base, id: 'decision.compose.replace', title: 'Составить поле решения заново', describe: 'Заменяет написанное в поле решения черновиком по обстановке или текстом советника (advisor).',
       params: { type: 'object', properties: { field: { type: 'string' }, advisor: { type: 'boolean' } }, required: ['field'] },
       say: ['штаб, составь оценку обстановки заново'], irreversible: true, highlight: noted,
-      confirm: (p: { field: string }) => { const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? '')); return `Заменить ${f ? FIELD_ACC[f] : 'поле'}?`; },
+      confirm: (p: { field: string }) => { const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? '')); return `Составить ${f ? FIELD_ACC[f] : 'поле'} заново? Текст будет заменён.`; },
       check: (p: { field: string; advisor?: boolean }) => {
         const f = FIELD_KEYS.includes(p?.field as FieldKey) ? p.field as FieldKey : fieldOf(String(p?.field ?? ''));
         if (!f) return 'Скажите, какое поле: оценку обстановки, замысел противника, решение, риски или донесение.';
@@ -989,6 +993,14 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
     return hit('command.advisor.take', n ? { n } : {});
   }
   // решение
+  // «составь заново оценку обстановки», «составь риски заново советником» — замена поля (с подтверждением);
+  // «составь решение советником заново» — всё решение советником (действие реестра)
+  if ((m = /^(?:составь|составить|напиши|написать) (.+)$/.exec(t)) && /(?:^| )заново(?: |$)/.test(m[1])) {
+    const advisor = /(?:^| )советником(?: |$)/.test(m[1]);
+    const tail = m[1].replace(/(?:^| )(?:заново|советником)(?= |$)/g, '').trim();
+    const f = fieldOf(tail);
+    if (f && !(advisor && /^решени/.test(tail))) return hit('decision.compose.replace', advisor ? { field: f, advisor: true } : { field: f });
+  }
   if ((m = /^(?:возьми|взять|бери|перенеси|скопируй)(?: (.+?))? (?:с|из|от) прошлого хода$/.exec(t))) {
     const f = fieldOf(m[1] ?? '');
     if (f === null) return null;

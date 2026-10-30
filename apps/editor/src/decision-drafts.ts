@@ -135,6 +135,27 @@ export function draftField(f: DraftField, v: TurnView, s: DraftScope, d: HumanDe
   return f === 'assessment' ? draftAssessment(v, s) : f === 'enemyIntent' ? draftEnemyIntent(s) : f === 'intent' ? draftIntent(v, s) : f === 'risks' ? draftRisks(s) : draftReport(v, s, d);
 }
 
+/**
+ * Решение при открытии хода (без модели): оценка обстановки и донесение — по обстановке всегда (она изменилась);
+ * замысел противника, решение и риски — с прошлого хода, если там написаны, иначе по обстановке. Донесение — после
+ * решения (в нём решение на следующий ход). auto — поля, составленные сейчас (не перенесённые), для пометки «проверьте».
+ */
+export function prefillDecision(v: TurnView, s: DraftScope, last: HumanDecision | null): { decision: HumanDecision; auto: DraftField[] } {
+  const d: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '', request: '' };
+  const auto: DraftField[] = [];
+  for (const f of DRAFT_FIELDS) {
+    const kept = f === 'assessment' || f === 'report' ? '' : (last?.[f] ?? '').trim() ? last![f] : '';
+    if (kept) d[f] = kept;
+    else { d[f] = draftField(f, v, s, d); auto.push(f); }
+  }
+  return { decision: d, auto };
+}
+
+/** Решение штаба нижней ступени при первом открытии его пункта: есть (правленое или составленное) — не трогать. */
+export function ensurePost(m: Record<string, HumanDecision>, issuer: string, make: () => HumanDecision): Record<string, HumanDecision> {
+  return m[issuer] ? m : { ...m, [issuer]: make() };
+}
+
 /** Поле в винительном падеже — «составил оценку обстановки». */
 export const DRAFT_ACC: Record<DraftField, string> = { assessment: 'оценку обстановки', enemyIntent: 'замысел противника', intent: 'решение', risks: 'риски', report: 'донесение' };
 

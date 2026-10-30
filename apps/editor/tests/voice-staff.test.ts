@@ -872,3 +872,19 @@ describe('разговор с командующим голосом', () => {
     expect(await act('commander.ask', { question: 'x' })).toMatch(/другой раздел|переигровк/);
   });
 });
+
+describe('составить заново голосом', () => {
+  it('«составь заново <поле>[ советником]» — замена с подтверждением', () => {
+    staff();
+    expect(parseStaff('составь заново оценку обстановки', 'replay')).toEqual({ id: 'decision.compose.replace', params: { field: 'assessment' } });
+    expect(parseStaff('составь риски заново', 'replay')).toEqual({ id: 'decision.compose.replace', params: { field: 'risks' } });
+    expect(parseStaff('составь заново риски советником', 'replay')).toEqual({ id: 'decision.compose.replace', params: { field: 'risks', advisor: true } });
+    expect(getAction('decision.compose.replace')!.confirm!({ field: 'assessment' })).toBe('Составить оценку обстановки заново? Текст будет заменён.');
+  });
+  it('составленное по обстановке (не правленое) — не «непустой» проект', () => {
+    const base = { drafts: {}, acts: [] };
+    const d = { ...EMPTY, assessment: 'Оценка.', report: 'Донесение.', risks: 'Свои риски.' };
+    expect(projectHas({ ...base, decision: d, auto: ['assessment', 'report', 'risks'] }, null)).toBe(false);
+    expect(projectHas({ ...base, decision: d, auto: ['assessment', 'report'] }, null)).toBe(true);
+  });
+});

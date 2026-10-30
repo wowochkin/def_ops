@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { IntelReport, UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
-import { draftAssessment, draftEnemyIntent, draftField, draftIntent, draftReport, draftRisks, fieldPrompt, type DraftScope } from '../src/decision-drafts';
+import { DRAFT_FIELDS, draftAssessment, draftEnemyIntent, draftField, draftIntent, draftReport, draftRisks, ensurePost, fieldPrompt, prefillDecision, type DraftScope } from '../src/decision-drafts';
+import type { HumanDecision } from '../src/sim/game-protocol';
 
 const u = (id: string, name: string, o: Partial<UnitReport> = {}): UnitReport => ({
   id, name, parent: 'a', echelon: 'corps', status: 'active', at: [14, 52], place: 'у Зелова', posture: 'наступает', task: 'наступать', target: 'Зелов',
@@ -57,5 +58,43 @@ describe('черновики полей решения', () => {
     expect(q).toContain('за штаб «8-я гвардейская армия» риски решения');
     expect(q).toContain('решение: Прорвать полосу');
     expect(q).toContain('Документы на этот ход: 4 гв. ск — наступать: Зелов.');
+  });
+});
+
+describe('решение при открытии хода', () => {
+  it('prefill: оценка и донесение — по обстановке, замысел — с прошлого хода', () => {
+    const last = { ...D, intent: 'Прорвать оборону у Зелова', enemyIntent: 'Держит высоты', risks: 'Контрудар', assessment: 'старая', report: 'старое' };
+    const { decision, auto } = prefillDecision(v, scope(), last);
+    expect(decision.intent).toBe('Прорвать оборону у Зелова');
+    expect(decision.enemyIntent).toBe('Держит высоты');
+    expect(decision.risks).toBe('Контрудар');
+    expect(decision.assessment).toBe(draftAssessment(v, scope()));
+    expect(decision.assessment).not.toBe('старая');
+    expect(decision.report).toContain('Прорвать оборону у Зелова');
+    expect(decision.request ?? '').toBe('');
+    expect(auto).toEqual(['assessment', 'report']);
+  });
+  it('prefill: без прошлого хода — составлены все пять полей', () => {
+    const { decision, auto } = prefillDecision(v, scope(), null);
+    expect(auto).toEqual(DRAFT_FIELDS);
+    for (const k of DRAFT_FIELDS) expect(decision[k].trim()).not.toBe('');
+    expect(decision.report).toContain('Решение на 19.04: Продолжать выполнение задач');
+  });
+  it('prefill: пустое поле прошлого решения составляется', () => {
+    const { decision, auto } = prefillDecision(v, scope(), { ...D, intent: 'X', risks: '' });
+    expect(decision.intent).toBe('X');
+    expect(decision.risks).toBe(draftRisks(scope()));
+    expect(auto).toContain('risks');
+    expect(auto).not.toContain('intent');
+  });
+  it('ensurePost: правленое решение штаба не заменяется', () => {
+    const m: Record<string, HumanDecision> = { su_8gva: { ...D, intent: 'моё' } };
+    let called = 0;
+    const make = () => { called++; return { ...D, intent: 'чужое' }; };
+    expect(ensurePost(m, 'su_8gva', make)).toBe(m);
+    expect(called).toBe(0);
+    const n = ensurePost(m, 'su_5ua', () => ({ ...D, intent: 'нов' }));
+    expect(n.su_5ua.intent).toBe('нов');
+    expect(n.su_8gva).toBe(m.su_8gva);
   });
 });

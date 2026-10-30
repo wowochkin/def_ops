@@ -31,8 +31,8 @@ import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
 import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
-import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
-import { DRAFT_ACC, DRAFT_FIELDS, draftField, fieldPrompt, type DraftField, type DraftScope } from './decision-drafts';
+import { DIR_TASK_RU, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
+import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
 
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
@@ -182,6 +182,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [decision, setDecision] = useState<HumanDecision>(EMPTY);
   /** Решения штабов ступеней ниже Ставки (пункт управления): по штабу. */
   const [postDecisions, setPostDecisions] = useState<Record<string, HumanDecision>>({});
+  /** Поля решения, составленные по обстановке и ещё не правленые (пометка «проверьте»): по штабу, «» — верхняя инстанция. */
+  const [autoFields, setAutoFields] = useState<Record<string, DraftField[]>>({});
+  const unAuto = (k: string, fs: string[]) => setAutoFields((m) => (m[k]?.some((f) => fs.includes(f)) ? { ...m, [k]: m[k].filter((f) => !fs.includes(f)) } : m));
+  /** Счётчик открытий хода (новый ход, проект с чистого листа): решение составляется после отрисовки обстановки. */
+  const [opened, setOpened] = useState(0);
   // разбор операции: окно открывается после игры (или из меню); пока пишется, остаётся смонтированным
   const [review, setReview] = useState<'closed' | 'open' | 'hidden'>('closed');
   const reviewListener = useRef<((m: Extract<GameResponse, { kind: 'review-stream' | 'review-wait' | 'review-think' | 'review-done' }>) => void) | null>(null);
@@ -322,8 +327,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         setDrafts({}); setActs([]); setLinePts([]); setPickMode(null);
         // новый ход — очередь команд пуста; первый ход — уже действующие исторические директивы (в «гибриде» — все)
         setCmds((q) => (liveView.current?.time === m.view.time ? q : initialCmds(m.view)));
-        // новый ход — новая оценка и новое донесение; замысел, замысел противника и риски — от прошлого решения, для правки
-        setDecision((d) => (liveView.current?.time === m.view.time ? d : freshDecision(m.view.lastDecision)));
+        // новый ход — решение составляется заново по обстановке (эффект по opened): оценка и донесение — новые; замысел,
+        // замысел противника и риски — от прошлого решения; решения штабов ступеней — при открытии их пунктов
+        if (liveView.current?.time !== m.view.time) { setDecision(freshDecision(m.view.lastDecision)); setPostDecisions({}); setAutoFields({}); setOpened((n) => n + 1); }
       } else if (m.kind === 'ai') setAi(m.status);
       else if (m.kind === 'ai-stream') { setStream((s) => (m.reset ? '' : (s + m.text).slice(-4000))); }
       else if (m.kind === 'ai-phase') setAiPhase(m.text);
@@ -490,7 +496,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     resetUmpire();
     setProgress(null); setBlocked(null);
     setDrafts({}); setActs([]); liveActs.current = []; setPostDecisions({}); setLinePts([]); setPickMode(null);
-    if (v) { setCmds(initialCmds(v)); setDecision(freshDecision(v.lastDecision)); }
+    setAutoFields({});
+    if (v) { setCmds(initialCmds(v)); setDecision(freshDecision(v.lastDecision)); setOpened((n) => n + 1); }
   };
   /**
    * Прежняя линия после возврата к ходу n — ветвью. Хранилище ветвей отказало — ходы ветви остаются в самой записи
@@ -888,7 +895,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** В проекте уже что-то есть: принятие варианта его заменит. */
   /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
   const acceptByButton = async (v: PlanVariantView, idx: number) => {
-    if (!projectHas({ drafts, acts, decision }, view?.lastDecision ?? null)) { tap('command.variant.pick', { n: idx + 1 }); return; }
+    if (!projectHas({ drafts, acts, decision, auto: autoFields[''] }, view?.lastDecision ?? null)) { tap('command.variant.pick', { n: idx + 1 }); return; }
     if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', { n: idx + 1 });
   };
   /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
@@ -896,7 +903,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     const v = planLive.current?.variants[idx];
     if (!v) return 'Такого варианта нет.';
     // пункт ниже Ставки: решение — его штаба
-    const putDecision = (x: HumanDecision) => { if (lowPost()) setPostDecisions((m) => ({ ...m, [post.issuer!]: x })); else setDecision(x); };
+    const putDecision = (x: HumanDecision) => {
+      if (lowPost()) setPostDecisions((m) => ({ ...m, [post.issuer!]: x })); else setDecision(x);
+      setAutoFields((m) => ({ ...m, [lowPost() ? post.issuer! : '']: [] }));
+    };
     if (only) {
       putDecision({ ...v.decision }); setTab('decision');
       const t = `Решение из варианта «${v.title}» — во вкладке «Решение»; приказы не менялись.`;
@@ -941,19 +951,40 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const curDecision = (): HumanDecision => (lowPost() ? postDecisions[post.issuer!] ?? EMPTY : decision);
   const setCur = (p: Partial<HumanDecision>) => {
     if (lowPost()) { const id = post.issuer!; setPostDecisions((m) => ({ ...m, [id]: { ...(m[id] ?? EMPTY), ...p } })); } else setDecision((d) => ({ ...d, ...p }));
+    unAuto(lowPost() ? post.issuer! : '', Object.keys(p)); // правка руками (голосом) — уже не «составлено по обстановке»
   };
   /** Обстановка для черновиков решения: штаб пункта — его подчинённые, противник в его полосе, его документы на ход. */
-  const draftScope = (): DraftScope => {
-    const v = view!;
-    if (staffsOn(v) && post.issuer) {
-      const ids = new Set(recipients(v, post.issuer).map((x) => x.id));
+  const scopeFor = (v: TurnView, issuer: string | null, lvl: MapLevel): DraftScope => {
+    if (staffsOn(v) && issuer) {
+      const ids = new Set(recipients(v, issuer).map((x) => x.id));
       const plans = cmds.flatMap((c) => (c.op === 'directive' && ids.has(c.directive.to)
         ? [`${short(v.command?.hqs[c.directive.to]?.name ?? unit(c.directive.to)?.name ?? c.directive.to)} — ${DIR_TASK_RU[c.directive.task as keyof typeof DIR_TASK_RU] ?? c.directive.task}${(c.directive as { note?: string }).note ? `: ${(c.directive as { note?: string }).note}` : ''}`] : []));
-      return { who: v.command?.hqs[post.issuer]?.name ?? v.human.name, own: postReports(v, post.issuer), intel: postIntel(v, post.level, post.issuer).flatMap((g) => g.members), plans };
+      return { who: v.command?.hqs[issuer]?.name ?? v.human.name, own: postReports(v, issuer), intel: postIntel(v, lvl, issuer).flatMap((g) => g.members), plans };
     }
     return { who: v.human.name, own: v.own, intel: v.intel,
       plans: Object.values(drafts).map((d) => `${short(unit(d.formation)?.name ?? d.formation)} — ${TASK_RU[d.task as Task]}${d.targetText ? `: ${d.targetText}` : ''}`) };
   };
+  const draftScope = (): DraftScope => scopeFor(view!, post.issuer, post.level);
+  /** Прошлое решение штаба ступени (запись хода хранит решения пунктов при решении верхней инстанции). */
+  const lastPost = (id: string): HumanDecision | null => (view?.lastDecision as (HumanDecision & { posts?: Record<string, HumanDecision> }) | null)?.posts?.[id] ?? null;
+  /** В решениях штабов ступеней есть своё: правленое, не только составленное по обстановке или перенесённое. */
+  const postEdited = Object.entries(postDecisions).some(([id, d]) => projectHas({ drafts: {}, acts: [], decision: d, auto: autoFields[id] }, lastPost(id)));
+  // открыт ход — решение верхней инстанции составлено по обстановке (без модели); правленое на этом ходу не трогается
+  useEffect(() => {
+    if (!opened || !view) return;
+    const top = staffsOn(view) ? issuers(view, 'stavka')[0]?.id ?? null : null;
+    const r = prefillDecision(view, scopeFor(view, top, 'stavka'), view.lastDecision);
+    setDecision(r.decision);
+    setAutoFields((m) => ({ ...m, '': r.auto }));
+  }, [opened]); // eslint-disable-line react-hooks/exhaustive-deps
+  // открыт пункт штаба ступени ниже Ставки — его решение составлено, если на этом ходу его ещё нет (правленое не заменяется)
+  const lowId = view && lowPost() ? post.issuer : null;
+  useEffect(() => {
+    if (!view || !lowId || postDecisions[lowId]) return;
+    const r = prefillDecision(view, scopeFor(view, lowId, post.level), lastPost(lowId));
+    setPostDecisions((m) => ensurePost(m, lowId, () => r.decision));
+    setAutoFields((m) => (m[lowId] ? m : { ...m, [lowId]: r.auto }));
+  }, [view?.time, lowId, opened]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Чтение ответа советника своим голосом (без голосового управления): остановить. */
   const readStop = useRef<(() => void) | null>(null);
   useEffect(() => () => readStop.current?.(), []);
@@ -974,6 +1005,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const writeTo = (issuer: string | null, f: DraftField, text: string) => {
     if (issuer) setPostDecisions((all) => ({ ...all, [issuer]: { ...(all[issuer] ?? EMPTY), [f]: text } }));
     else setDecision((d) => ({ ...d, [f]: text }));
+    unAuto(issuer ?? '', [f]);
   };
   const askField = (f: DraftField, d: HumanDecision, inBatch = false) => {
     const issuer = lowPost() ? post.issuer : null;
@@ -1023,7 +1055,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     if (!view) return 'Обстановка ещё не готова.';
     const s = draftScope(), d = curDecision();
     setTab('decision');
-    if (!advisor) { setCur({ [f]: draftField(f, view, s, d) }); return `Составил ${DRAFT_ACC[f]} по обстановке — прочитайте и поправьте.`; }
+    if (!advisor) {
+      setCur({ [f]: draftField(f, view, s, d) });
+      const k = lowPost() ? post.issuer! : '';
+      setAutoFields((m) => ({ ...m, [k]: [...(m[k] ?? []).filter((x) => x !== f), f] }));
+      return `Составил ${DRAFT_ACC[f]} по обстановке — прочитайте и поправьте.`;
+    }
     askField(f, d);
     return `Советник пишет ${DRAFT_ACC[f]} за штаб «${s.who}».`;
   };
@@ -1111,7 +1148,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     advisorText: advQ, setAdvisorText: setAdvQ,
     advisorBusy: adv.some((m) => !m.result), askAdvisor: (q) => askAdvisor('situation', 'свободный вопрос', q),
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
-    decision: view ? curDecision() : decision, setDecision: setCur,
+    decision: view ? curDecision() : decision, setDecision: setCur, auto: autoFields[view && lowPost() ? post.issuer! : ''] ?? [],
     composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView,
     mergePriority: (() => { const sc = scopeNow(); if (!sc || !view) return undefined; const pool = priorityPool(view, sc); const pa = acts.find((a) => a.action.kind === 'priority')?.action; const cur = pa?.kind === 'priority' ? pa.formations : view.priority; return (ids: string[]) => mergePriority(cur, pool, ids); })(),
     drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
@@ -1130,7 +1167,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     // окно разбора монтируется позже отрисовки — его управление читается в момент вызова
     review: { open: review === 'open', get ctl() { return reviewCtl.current; }, show: (on) => setReview(on ? 'open' : 'hidden') },
     journal: () => ({ name: `${view?.scenario}-журнал.md`, text: journalMd() }),
-    postProject: Object.keys(postDecisions).length > 0,
+    postProject: postEdited,
     lines: savedGame ? gameLines(savedGame) : [],
     branches: { open: branchesOpen, show: setBranchesOpen },
     rewind: rewindTo, switchBranch: switchTo, deleteBranch: dropBranch,
@@ -1190,7 +1227,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         {view && staffsOn(view) && <PostBar v={view} post={post} cmds={cmds} />}
         {view && record && <TurnRibbon items={ribbonItems(record, view.journal, view.time, savedGame?.branches ?? [])} lines={savedGame ? gameLines(savedGame) : []}
           busy={progress} open={branchesOpen} notice={setNotice}
-          project={projectHas({ drafts, acts, decision }, view.lastDecision) || Object.keys(postDecisions).length > 0} />}
+          project={projectHas({ drafts, acts, decision, auto: autoFields[''] }, view.lastDecision) || postEdited} />}
         <nav className="cmd-tabs" data-tour="cmd-tabs">
           {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ...(staffsOn(view) ? [['staffs', `Штабы${cmds.length ? ` · ${cmds.length}` : ''}`]] : []), ['journal', 'Журнал'], ['umpire', 'Посредник'], ['results', 'Итоги']] as [Tab, string][]).map(([k, t]) => (
             <ActButton key={k} data-tour={`cmd-tab-${k}`} data-hl={`tab-${k}`} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
@@ -1204,9 +1241,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             {tab === 'intel' && staffsOn(view) && post.issuer && <PostIntel v={view} level={post.level} issuer={post.issuer} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'intel' && !staffsOn(view) && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'decision' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command'
-              ? <Decision v={view} d={decision} set={(p) => setDecision((d) => ({ ...d, ...p }))} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              ? <Decision v={view} d={decision} auto={autoFields[''] ?? []} set={setCur} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
                 ai={aiFields[''] ?? {}} batch={batchView && batchView.issuer === null ? batchView : null} otherBusy={!!batchView && batchView.issuer !== null} />
-              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} set={(p) => setPostDecisions((m) => ({ ...m, [post.issuer!]: { ...(m[post.issuer!] ?? EMPTY), ...p } }))} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} auto={autoFields[post.issuer] ?? []} set={setCur} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
                 ai={aiFields[post.issuer] ?? {}} batch={batchView && batchView.issuer === post.issuer ? batchView : null} otherBusy={!!batchView && batchView.issuer !== post.issuer} />)}
             {tab === 'orders' && <>
               <div className="seg subtabs">
@@ -1794,7 +1831,7 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
 const IcDraft = () => <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></svg>;
 const IcSpark = () => <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>;
 
-function Decision({ v, d, set, planN, planBusy, who, llmOk, ai, batch, otherBusy }: { v: TurnView; d: HumanDecision; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean;
+function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, otherBusy }: { v: TurnView; d: HumanDecision; auto: DraftField[]; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean;
   ai: Partial<Record<DraftField, AiFieldState>>; batch: AiBatch | null; otherBusy: boolean }) {
   const last = v.lastDecision;
   const filled = DRAFT_FIELDS.some((k) => d[k].trim());
@@ -1803,21 +1840,25 @@ function Decision({ v, d, set, planN, planBusy, who, llmOk, ai, batch, otherBusy
     void confirmAsync('Заменить всё решение текстом советника?', { ok: 'Заменить' }).then((ok) => { if (ok) tap('decision.compose.all.replace'); });
   };
   const aiCls = (k: DraftField) => (ai[k] ? ` ai-${ai[k]}` : '');
-  /** Составить поле: по обстановке или советником; написанное — заменить только после вопроса. */
+  /** Составить поле: по обстановке или советником; написанное — заменить только после вопроса («текст будет заменён»). */
   const compose = (k: DraftField, advisor: boolean) => (e: React.MouseEvent) => {
     e.preventDefault();
     if (!d[k].trim()) { tap('decision.compose', { field: k, advisor }); return; }
-    void confirmAsync(`Заменить написанное ${advisor ? 'текстом советника' : 'черновиком по обстановке'}?`, { ok: 'Заменить' }).then((ok) => { if (ok) tap('decision.compose.replace', { field: k, advisor }); });
+    void confirmAsync(advisor ? 'Составить заново советником? Текст будет заменён.' : 'Составить заново? Текст будет заменён черновиком по обстановке.', { ok: 'Составить заново' })
+      .then((ok) => { if (ok) tap('decision.compose.replace', { field: k, advisor }); });
   };
+  /** Пометка поля, составленного по обстановке и ещё не правленого. */
+  const Auto = ({ k }: { k: DraftField }) => (auto.includes(k) && d[k].trim() ? <small className="dauto">составлено по обстановке — проверьте</small> : null);
   const Gen = ({ k }: { k: DraftField }) => <em className="dgen">
     {ai[k] === 'wait' || ai[k] === 'typing' ? <small className="ai-writing"><IcSpark />советник пишет<i className="dots"><b>.</b><b>.</b><b>.</b></i></small> : <>
-      <button className="ic-btn" data-action="decision.compose" title="Составить по обстановке — доклады, разведка, документы на ход (без модели)" aria-label="Составить по обстановке" onClick={compose(k, false)}><IcDraft /></button>
+      <button className="ic-btn" data-action="decision.compose" title={d[k].trim() ? 'Составить заново по обстановке' : 'Составить по обстановке — доклады, разведка, документы на ход (без модели)'} aria-label={d[k].trim() ? 'Составить заново по обстановке' : 'Составить по обстановке'} onClick={compose(k, false)}><IcDraft /></button>
       <button className="ic-btn ai" data-action="decision.compose" disabled={!llmOk || !!batch} title={llmOk ? 'Написать советником (ИИ) — за этот штаб, текст печатается в поле' : 'Советник не на связи — языковая модель не отвечает'} aria-label="Написать советником" onClick={compose(k, true)}><IcSpark /></button>
     </>}
   </em>;
   const F = ({ k, label, hint, rows, req }: { k: Exclude<keyof HumanDecision, 'request' | 'report'>; label: string; hint: string; rows: number; req?: boolean }) => (
     <label className={`dfield${req && !d[k].trim() ? ' need' : ''}`} data-hl={`field-${k}`}>
       <span>{label}{req && <i> обязательно</i>}<Gen k={k} />{last?.[k] && last[k] !== d[k] && <button className="link" data-action="decision.fromLast" title={last[k]} onClick={(e) => { e.preventDefault(); tap('decision.fromLast', { field: k }); }}>взять с прошлого хода</button>}</span>
+      <Auto k={k} />
       <textarea className={aiCls(k).trim()} rows={rows} value={d[k]} placeholder={hint} onChange={(e) => set({ [k]: e.target.value })} />
     </label>
   );
@@ -1840,13 +1881,14 @@ function Decision({ v, d, set, planN, planBusy, who, llmOk, ai, batch, otherBusy
           <select value={planN} disabled={planBusy} data-action="command.variants.count" onChange={(e) => tap('command.variants.count', { n: +e.target.value })} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
           {planBusy ? <StaffButton action="command.advisor.stop"><i className="spinner" /> Стоп</StaffButton> : <StaffButton className="primary" action="command.variants" params={{ count: planN }}>Варианты от советника</StaffButton>}
         </div></div>
-      <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Замысел, замысел противника и риски переносятся с прошлого хода — уточните их; оценку обстановки и донесение пишут заново на каждый ход (обстановка изменилась), прошлые можно взять кнопкой и поправить. Все прошлые решения — во вкладке «Журнал».</p>
+      <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Решение составлено при открытии хода по обстановке (без модели): оценка обстановки и донесение — заново, замысел, замысел противника и риски — с прошлого хода (не было — по обстановке). Поля с пометкой «составлено по обстановке — проверьте» прочитайте и поправьте; лист у поля — составить заново. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}
       {F({ k: 'intent', label: 'Решение (замысел действий)', hint: 'Цель на сутки, главный удар, кто наступает, кто обеспечивает, куда вводятся резервы…', rows: 4, req: true })}
       {F({ k: 'risks', label: 'Риски', hint: 'Что может пойти не так и как парировать…', rows: 2 })}
       <label className={`dfield${!d.report.trim() ? ' need' : ''}`} data-hl="field-report">
         <span>Боевое донесение {v.terms?.topTo ?? 'в Ставку'}<i> обязательно</i><Gen k="report" /></span>
+        <Auto k="report" />
         <textarea className={aiCls('report').trim()} rows={5} value={d.report} placeholder="Положение войск к утру, итоги суток, решение на следующие сутки, просьбы…" onChange={(e) => set({ report: e.target.value })} />
       </label>
       <label className="dfield" data-hl="field-request">
