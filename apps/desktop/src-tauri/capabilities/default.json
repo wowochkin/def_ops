@@ -28,6 +28,8 @@
     "allow-game-permit",
     "allow-game-rewind",
     "allow-game-variants",
-    "allow-game-stop"
+    "allow-game-stop",
+    "allow-expo-settings-read",
+    "allow-expo-settings-write"
   ]
 }

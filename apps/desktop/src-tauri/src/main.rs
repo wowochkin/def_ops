@@ -53,6 +53,33 @@ fn launch(app: &tauri::AppHandle) -> Result<Child, String> {
     cmd.spawn().map_err(|e| format!("не запускается Node: {e}"))
 }
 
+/// Файл настроек выставочного стенда в папке данных приложения.
+fn expo_settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo.json"))
+}
+
+/// Текст настроек стенда (expo.json) или None, если файла нет. Проверка значений — в редакторе (expo/settings.ts).
+#[tauri::command]
+fn expo_settings_read(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    match std::fs::read_to_string(expo_settings_path(&app)?) {
+        Ok(t) => Ok(Some(t)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(format!("не читается expo.json: {e}")),
+    }
+}
+
+/// Записать настройки стенда: во временный файл рядом и переименованием, чтобы обрыв не оставил половину файла.
+/// bad = true — сохранить испорченный текст как expo.json.bad (сам expo.json не трогается).
+#[tauri::command]
+fn expo_settings_write(app: tauri::AppHandle, text: String, bad: Option<bool>) -> Result<(), String> {
+    let path = expo_settings_path(&app)?;
+    let target = if bad.unwrap_or(false) { path.with_file_name("expo.json.bad") } else { path };
+    if let Some(dir) = target.parent() { std::fs::create_dir_all(dir).map_err(|e| format!("нет папки данных: {e}"))?; }
+    let tmp = target.with_extension("tmp");
+    std::fs::write(&tmp, text).map_err(|e| format!("не пишется {}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, &target).map_err(|e| { let _ = std::fs::remove_file(&tmp); format!("не переименовывается в {}: {e}", target.display()) })
+}
+
 /// Сообщение на странице запуска (ошибка запуска сервисов).
 fn show_error(app: &tauri::AppHandle, msg: &str) {
     if let Some(w) = app.get_webview_window("main") {
@@ -77,7 +104,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
-            agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release, agents_tauri::commands::game_permit, agents_tauri::commands::game_rewind, agents_tauri::commands::game_variants
+            agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release, agents_tauri::commands::game_permit, agents_tauri::commands::game_rewind, agents_tauri::commands::game_variants,
+            expo_settings_read, expo_settings_write
         ])
         .setup(|app| {
             let handle = app.handle().clone();
