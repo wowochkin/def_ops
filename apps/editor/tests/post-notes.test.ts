@@ -50,6 +50,42 @@ describe('указания по задаче и обстановке', () => {
     expect(s).toContain('Справа — 5-я ударная армия, слева — 69-я армия.');
     expect(s).toContain('CI армейский корпус (у Зелов).');
   });
+  it('написание пунктов одно: и у цели, и у противника — без исходного в скобках', () => {
+    const w = view() as unknown as { intel: { place: string }[] };
+    w.intel[0].place = 'у Зелов (Seelow)';
+    const s = draftNote(w as never, { ...d, immediateTitle: 'Зелов (Seelow)', subsequent: [[14.2, 52.5]], subsequentTitle: 'Мюнхеберг (Müncheberg)' }, o);
+    expect(s).toContain('ближайшая — Зелов к 17.04 12:00; последующая — Мюнхеберг.');
+    expect(s).toContain('CI армейский корпус (у Зелов).');
+    expect(s).not.toContain('Seelow');
+  });
+  it('невидимый противник (не в разведсводке) в указания не попадает', () => {
+    const w = view() as unknown as { intel: object[]; enemy?: object[] };
+    w.intel = [];
+    w.enemy = [{ id: 'de_ci', name: 'CI армейский корпус', at: [14.42, 52.52], place: 'у Зелова' }];
+    const s = draftNote(w as never, d, o);
+    expect(s).not.toContain('CI армейский корпус');
+    expect(s).not.toContain('Перед фронтом');
+  });
+  it('немецкий получатель: соседи — немецкие армии, противник — советский, без советских терминов', () => {
+    const g = (id: string, name: string, at: LngLat) => ({ id, name, echelon: 'army', parent: 'de_hgw', status: 'active', at, ammo: 1, fuel: 1, tanks: 0, cutOff: false });
+    const w = {
+      places: [],
+      own: [g('de_9a', '9-я армия', [14.3, 52.5]), g('de_3pa', '3-я танковая армия', [14.3, 52.9]), g('de_4pa', '4-я танковая армия', [14.3, 51.9])],
+      intel: [{ id: 'su_8gva', name: '8-я гвардейская армия', at: [14.5, 52.52], place: 'у Зелов (Seelow)' }],
+      command: { hqs: {
+        de_hgw: { name: 'группа армий «Висла»', echelon: 'front', parent: null },
+        de_9a: { name: '9-я армия', echelon: 'army', parent: 'de_hgw' },
+        de_3pa: { name: '3-я танковая армия', echelon: 'army', parent: 'de_hgw' },
+        de_4pa: { name: '4-я танковая армия', echelon: 'army', parent: 'de_hgw' },
+      } },
+    } as never;
+    const N: Record<string, string> = { de_3pa: '3-я танковая армия', de_4pa: '4-я танковая армия' };
+    const dd: DirDraft = { ...blankDir('de_9a', 'front'), task: 'defend', immediate: [[14.47, 52.52]], immediateTitle: 'Зелов (Seelow)' };
+    const s = draftNote(w, dd, { issuer: 'de_hgw', name: (id) => N[id] ?? id });
+    // ось — от места армии на восток, к цели: справа (юг) — 4-я ТА, слева (север) — 3-я ТА
+    expect(s).toBe('Задача — оборонять: ближайшая — Зелов. Справа — 4-я танковая армия, слева — 3-я танковая армия. Перед фронтом — 8-я гвардейская армия (у Зелов).');
+    for (const t of ['Ставк', 'подвижной группы', 'фронта', 'директив']) expect(s).not.toContain(t);
+  });
   it('без цели и соседей — только задача', () => {
     expect(draftNote(view(), { ...blankDir('su_8gva', 'front'), task: 'defend' }, o)).toBe('Задача — оборонять.');
   });

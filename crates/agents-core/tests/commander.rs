@@ -1733,3 +1733,25 @@ mod mind {
         }
     }
 }
+
+/// Названия вариантов обеих сторон читаются без склонения: название штаба (именительный падеж) стоит только после
+/// тире, двоеточия или стрелки («Ввод в прорыв — 2-я гв. ТА»), не после глагола или предлога («Ввести {} в прорыв»).
+#[test]
+fn option_titles_read_without_declension() {
+    let root = repo_root();
+    let mut n = 0;
+    for f in ["options_su.rs", "options_de.rs", "variants.rs"] {
+        let src = std::fs::read_to_string(format!("{root}/crates/agents-core/src/commander/{f}")).expect(f);
+        for (i, _) in src.match_indices("label: format!(\"").chain(src.match_indices("common(&r.shift, kind, format!(\"")) {
+            let s = &src[i..];
+            let s = &s[s.find('"').unwrap() + 1..];
+            let lit = &s[..s.find('"').unwrap()];
+            n += 1;
+            for (j, _) in lit.match_indices('{') {
+                let before: String = lit[..j].chars().rev().take(2).collect::<Vec<_>>().into_iter().rev().collect();
+                assert!(["— ", ": ", "→ ", "№ "].contains(&before.as_str()) || before.ends_with('('), "{f}: «{lit}» — название после «{before}»");
+            }
+        }
+    }
+    assert!(n >= 12, "найдено названий: {n}");
+}

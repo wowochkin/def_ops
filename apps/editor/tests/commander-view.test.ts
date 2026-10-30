@@ -18,7 +18,7 @@ const zhukov: AgentCommander = {
   snapshots: [snap(0, 0.5, 0.2, 0, 1), snap(6, 0.7, 0.3, 8, 0.98), snap(12, 0.3, 0.7, 12, 0.9, ['su_5ua', 'su_8gva'])],
   decisions: [
     { tick: 6, trigger: 'цикл', chosen: 0, why: 'Продолжать по плану: перевес 0,13', options: [opt('continue', 'Продолжать по плану', 0.27, { task: 0.08 }), opt('waitMobile', 'Не вводить подвижную группу', -0.26, { preserve: 0.12 }, { hours: 24, advanceKm: 4, losses: 0.1, encircled: 0 })] },
-    { tick: 12, trigger: 'прорыв', chosen: 1, why: 'Ввести ТА: главная полоса не прорвана', options: [opt('continue', 'Продолжать по плану', 0.2), opt('commitMobile', 'Ввести 1 гв. ТА в прорыв', 0.71, { task: 0.4 }, { hours: 24, advanceKm: 11, losses: 0.2, encircled: 0 })] },
+    { tick: 12, trigger: 'прорыв', chosen: 1, why: 'Ввести ТА: главная полоса не прорвана', options: [opt('continue', 'Продолжать по плану', 0.2), opt('commitMobile', 'Ввод в прорыв — 1-я гв. ТА', 0.71, { task: 0.4 }, { hours: 24, advanceKm: 11, losses: 0.2, encircled: 0 })] },
   ],
 };
 const gerBase = (hq: string, name: string, kinds: [number, string][]): AgentCommander => ({
@@ -83,16 +83,16 @@ describe('intentOf', () => {
 describe('rivalrySeries', () => {
   it('расстояние по снимкам и метки решений; у немцев — держать/отходить 9 А и деблокирование 12 А', () => {
     // деблокирование — решение верхней инстанции (de_hc, вид relief), у которого армия-деблокатор — 12 А
-    const relief = (tick: number, by: string) => ({ tick, trigger: 'цикл', chosen: 0, why: 'выручить', options: [{ ...opt('relief', 'Выручить 9-я армия ударом снаружи', 0.3), army: 'de_9a', by }] });
+    const relief = (tick: number, by: string) => ({ tick, trigger: 'цикл', chosen: 0, why: 'выручить', options: [{ ...opt('relief', 'Удар снаружи на выручку — 9-я армия', 0.3), army: 'de_9a', by }] });
     const hitler: AgentCommander = { ...gerBase('de_hc', 'Гитлер', [[1, 'forbid']]), decisions: [...gerBase('de_hc', 'Гитлер', [[1, 'forbid']]).decisions, relief(20, 'de_12a'), relief(30, 'de_3pza')] };
     const t = trace([zhukov, konev, gerBase('de_9a', 'Буссе', [[1, 'hold'], [7, 'hold'], [13, 'withdraw']]), gerBase('de_12a', 'Венк', [[1, 'hold']]), gerBase('de_3pza', 'Мантейфель', [[1, 'withdraw']]), hitler]);
     const s = rivalrySeries(t);
     expect(s.map((x) => x.hq)).toEqual(['su_1bf', 'su_1uf', 'de_9a', 'de_12a']);
     expect(s[0].points).toEqual([[0, 90], [6, 84], [12, 78]]);
-    expect(s[0].marks).toEqual([{ tick: 12, label: 'Ввести 1 гв. ТА в прорыв' }]);
+    expect(s[0].marks).toEqual([{ tick: 12, label: 'Ввод в прорыв — 1-я гв. ТА' }]);
     expect(s[2].points).toEqual([]);
     expect(s[2].marks.map((m) => [m.tick, m.label])).toEqual([[1, 'Держаться'], [13, 'Отходить']]);
-    expect(s[3].marks).toEqual([{ tick: 20, label: 'Выручить 9-я армия ударом снаружи' }]);
+    expect(s[3].marks).toEqual([{ tick: 20, label: 'Удар снаружи на выручку — 9-я армия' }]);
   });
 });
 
@@ -101,7 +101,7 @@ describe('answer', () => {
   it('почему — обоснование и правило выбранного варианта', () => {
     const a = ask(SUGGESTIONS[0]);
     expect(a).toContain('главная полоса не прорвана');
-    expect(a).toContain('ПУ-43: правило «Ввести 1 гв. ТА в прорыв»');
+    expect(a).toContain('ПУ-43: правило «Ввод в прорыв — 1-я гв. ТА»');
   });
   it('противник — оценка по армиям, истину не раскрывает', () => {
     const a = ask(SUGGESTIONS[1]);

@@ -14,17 +14,24 @@ fn load(name: &str, edits: Option<&EditsIn>) -> Sim {
 
 fn three(v: &agents_core::model::Vars) -> [f64; 3] { [v.personnel, v.tanks, v.guns] }
 
-/// Баланс по стороне: в строю + выбывшие = на начало + пополнения.
+/// Баланс по стороне: в строю + выбывшие = на начало + пополнения — за всю Берлинскую операцию (по сценарию), в
+/// которой есть и сведение остатков, и капитуляции окружённых, и прорыв из окружения.
 #[test]
-fn balance_berlin_48h() {
-    let mut sim = load("berlin-1945", None);
+fn balance_berlin_whole_operation() {
+    let root = repo_root();
+    let path = format!("{root}/packages/sim/data/scenarios/agents/berlin-1945.json");
+    let (mut sim, meta) = agents_core::scenario::load_with(&path, &format!("{root}/{DATA_DIR}"), &root, None, None).expect("сценарий");
     let sum = |sim: &Sim, side: Side, f: &dyn Fn(&agents_core::model::Division) -> [f64; 3]| {
         let mut s = [0.0; 3];
         for d in sim.world.divisions.iter().filter(|d| d.side == side) { let x = f(d); for k in 0..3 { s[k] += x[k]; } }
         s
     };
     let start: Vec<[f64; 3]> = [Side::Su, Side::De].iter().map(|&s| sum(&sim, s, &|d| three(&d.vars))).collect();
-    for _ in 0..48 { sim.step(); }
+    for _ in 0..meta.hours { sim.step(); }
+    let de = |f: &dyn Fn(&agents_core::model::Division) -> bool| sim.world.divisions.iter().filter(|d| d.side == Side::De && f(d)).count();
+    assert!(de(&|d| d.state == State::Merged) > 0, "сведения остатков не было");
+    assert!(de(&|d| d.vars.captured > 0.0) > 0, "капитуляций не было");
+    assert!(sim.journal.iter().any(|e| e.text.contains("вышла с прорывом")), "прорыва из окружения не было");
     for (n, &side) in [Side::Su, Side::De].iter().enumerate() {
         let alive = sum(&sim, side, &|d| if matches!(d.state, State::Destroyed | State::Merged) { [0.0; 3] } else { three(&d.vars) });
         let lost = sum(&sim, side, &|d| d.vars.lost);

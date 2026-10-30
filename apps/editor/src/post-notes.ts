@@ -11,7 +11,9 @@ import { km, midpoint } from './post-objects';
 export interface NoteOpts { issuer: string; name: (id: string) => string }
 
 const when = (t?: string) => (t ? ` к ${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}` : '');
-const what = (pts: LngLat[], title?: string) => title ?? (pts.length > 1 ? 'указанный рубеж' : 'указанная точка');
+/** Название пункта без исходного написания в скобках — одно написание у цели и у противника («Зелов», не «Зелов (Seelow)»). */
+const plain = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
+const what = (pts: LngLat[], title?: string) => (title ? plain(title) : pts.length > 1 ? 'указанный рубеж' : 'указанная точка');
 
 /** Точка цели проекта: ближайшая задача (у рубежа — середина), иначе конец оси. */
 function objective(d: DirDraft): LngLat | null {
@@ -59,7 +61,7 @@ export function draftNote(v: TurnView, d: DirDraft, o: NoteOpts): string {
   const goal = objective(d);
   if (goal) {
     const near = (v.intel ?? []).map((e) => ({ e, k: km(goal, e.at) })).filter((x) => x.k <= 15).sort((x, y) => x.k - y.k).slice(0, 3);
-    if (near.length) out.push(`Перед фронтом — ${near.map(({ e }) => `${e.name} (${e.place.replace(/\s*\([^)]*\)/g, '')})`).join(', ')}.`);
+    if (near.length) out.push(`Перед фронтом — ${near.map(({ e }) => `${e.name} (${plain(e.place)})`).join(', ')}.`);
   }
   if (me?.cutOff) out.push('Подвоз не доходит — без пополнения.');
   if (me && me.ammo < 0.3) out.push('Боеприпасы на исходе.');

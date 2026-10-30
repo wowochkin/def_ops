@@ -3,7 +3,7 @@
  * штабов; карта события (переезд, метка, рамка); строки события «что / где / почему / что значит»; вход для связного
  * текста модели по тем же фактам и проверка ответа (ни одного числа, которого нет во входе). Чистые функции.
  */
-import { debriefFor, type CommandTerms, type DebriefHq, type KeyEvent, type TurnDebrief } from '@def-ops/sim';
+import { debriefFor, RUMB_TO, type CommandTerms, type DebriefHq, type KeyEvent, type TurnDebrief } from '@def-ops/sim';
 import type { TourMap } from './voice/tours';
 import { placeGen } from './voice/speech';
 
@@ -36,9 +36,13 @@ export function eventMap(e: KeyEvent): TourMap {
   return { at: e.at, level: e.kind === 'capture' ? 'army' : 'division', fit, spot: e.at, ...(fit.length > 1 ? { box: fit } : {}) };
 }
 
-/** Место словами для показа: без латинского названия в скобках, пункт — в родительном падеже («у Зеелова»). */
+/**
+ * Место словами для показа: без латинского названия в скобках, пункт — в родительном падеже («у Зеелова»), румб —
+ * полными словами, как в тексте события («к юго-востоку»).
+ */
 export function placeWords(p: string): string {
-  return p.replace(/\s*\([^)]*\)/g, '').replace(/^(у |.* от )(.+)$/, (_m, a: string, n: string) => a + placeGen(n));
+  return p.replace(/\s*\([^)]*\)/g, '').replace(/ к (С|СВ|В|ЮВ|Ю|ЮЗ|З|СЗ) от /, (_m, r: string) => ` к ${RUMB_TO[r]} от `)
+    .replace(/^(у |.* от )(.+)$/, (_m, a: string, n: string) => a + placeGen(n));
 }
 
 const r1 = (x: number) => Math.round(x * 10) / 10;

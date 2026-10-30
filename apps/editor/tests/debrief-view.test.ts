@@ -1,7 +1,7 @@
 // Разбор хода в окне: выбор «с позиции …», карта события, строки события, вход и проверка связного текста модели.
 import { describe, expect, it } from 'vitest';
 import type { CommandTerms, DebriefHq, KeyEvent, TurnDebrief } from '@def-ops/sim';
-import { debriefInput, debriefResetKey, debriefShown, DEBRIEF_SYSTEM, verdictLines, eventLines, eventMap, narrativeFits, perspectiveOptions } from '../src/debrief-view';
+import { debriefInput, debriefResetKey, debriefShown, DEBRIEF_SYSTEM, verdictLines, eventLines, eventMap, narrativeFits, perspectiveOptions, placeWords } from '../src/debrief-view';
 
 const SU: CommandTerms = { top: 'Ставка', topGen: 'Ставки', topTo: 'в Ставку', group: 'фронт' } as CommandTerms;
 const DE: CommandTerms = { top: 'ОКХ', topGen: 'ОКХ', topTo: 'в ОКХ', group: 'группа армий' } as CommandTerms;
@@ -28,6 +28,12 @@ const debrief = (events: KeyEvent[], o: Partial<TurnDebrief> = {}): TurnDebrief 
 });
 
 describe('разбор хода в окне', () => {
+  it('«Где»: румб полными словами, как в тексте события', () => {
+    expect(placeWords('8 км к ЮВ от Зелов (Seelow)')).toBe('8 км к юго-востоку от Зелова');
+    expect(placeWords('3 км к С от Зелов (Seelow)')).toBe('3 км к северу от Зелова');
+    expect(placeWords('у Зелов (Seelow)')).toBe('у Зелова');
+  });
+
   it('perspective options', () => {
     const o = perspectiveOptions(debrief([]), SU);
     expect(o[0]).toEqual({ id: null, label: 'Ставка', depth: 0, note: null });
@@ -57,7 +63,7 @@ describe('разбор хода в окне', () => {
     const d = debrief([ev({})]);
     const l = eventLines(d.events[0], d, 'su_8gva');
     expect(l.what).toBe(d.events[0].text);
-    expect(l.where).toBe('4,2 км к З от Зеелова');
+    expect(l.where).toBe('4,2 км к западу от Зеелова');
     // причина — с часом и штабом
     expect(l.why[0]).toBe('16.04 19:00, 8-я гвардейская армия: Армии наступать на Зеелов');
     expect(l.meaning).toContain('до Берлина 42 км, за ход ближе на 9 км');

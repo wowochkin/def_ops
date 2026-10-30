@@ -87,8 +87,9 @@ describe('потери сторон по ходу ядра', () => {
   });
 
   it('removed army is not a loss', () => {
-    // su_x снята с операции на часе 20 (вмешательство remove): «не введена», численность — 0
-    const removed = (k: number, h: number): Row => k === 0 && h >= 20 ? { state: 'не введена в операцию', pers: 0, lost: 100 * 19 } : steady(k, h);
+    // su_x снята с операции на часе 20 (вмешательство remove): «не введена», численность — 0; счётчик выбывших в кадре
+    // и после снятия растёт — часы вне операции в потери не идут
+    const removed = (k: number, h: number): Row => k === 0 && h >= 20 ? { state: 'не введена в операцию', pers: 0, lost: 100 * h } : steady(k, h);
     const exact = lossSeries(trace(removed));
     expect(exact.rows.find((r) => r.id === 'su_8gva')!.total.personnel).toBe(1900);
     expect(exact.rows.find((r) => r.id === 'su')!.total.personnel).toBe(1900);
@@ -108,6 +109,33 @@ describe('потери сторон по ходу ядра', () => {
     expect(r).toContainEqual({ scope: 'su_8gva', to: '1945-05-01T20:00', total: 24484, source: 'ЦАМО', reliability: 'B' });
     expect(r[0].scope).toBe('su');
     expect(historicalLosses({ divisions: [] })).toEqual([]);
+  });
+
+  it('per-army losses: ЦАМО rows from the knowledge base, ×15,6 rows are estimates', () => {
+    const hist = JSON.parse(readFileSync(join(ROOT, 'packages/sim/data/scenarios/agents/berlin-1945.history.json'), 'utf8')) as AgentHistory;
+    type Fact = { key: string; value: unknown; claim?: { kind: string; subject: string; to: string; total: number } };
+    const seed = JSON.parse(readFileSync(join(ROOT, 'packages/knowledge/data/seed.json'), 'utf8')) as { entries: { id: string; facts?: Fact[] }[] };
+    const rows = hist.losses ?? [];
+    const camo = rows.filter((r) => r.source.startsWith('ЦАМО'));
+    const est = rows.filter((r) => !r.source.startsWith('ЦАМО'));
+    expect(camo.length).toBeGreaterThanOrEqual(11);
+    // строки ЦАМО — итог той же таблицы в карточке соединения базы знаний (тот же итог, та же дата конца)
+    for (const r of camo) {
+      const facts = (seed.entries.find((e) => e.id === `f:${r.formation}`)?.facts ?? []).filter((f) => f.key === 'losses' && f.claim?.kind === 'losses');
+      expect(facts.some((f) => f.claim!.subject === r.formation && f.claim!.total === r.value && f.claim!.to === r.until.slice(0, 10)), r.formation).toBe(true);
+      expect(r.reliability).toBe('B');
+    }
+    // остальные — оценки: среднесуточные потери фронта за операцию (Кривошеев) × 15,6 сут до 1.05 20:00, не источник
+    expect(est.map((r) => r.formation).sort()).toEqual(['su_1uf', 'su_2bf']);
+    for (const r of est) {
+      expect(r.source).toMatch(/× 15,6 сут \(оценка\)$/);
+      expect(r.reliability).toBe('C');
+      const op = (hist.operationLosses ?? []).find((x) => x.scope === r.formation && x.total != null)!;
+      const days = (Date.parse(op.to) - Date.parse(op.from!)) / 864e5 + 1;
+      const perDay = Math.round(op.total! / days);
+      expect(r.source).toContain(`${perDay} в сутки`);
+      expect(r.value).toBe(Math.round(perDay * 15.6));
+    }
   });
 
   it('operationLosses come from the knowledge base', () => {

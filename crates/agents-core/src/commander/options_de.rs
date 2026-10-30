@@ -156,7 +156,7 @@ pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice
         if in_pocket(sim, a.hq) || (!flank && share <= 0.0) { continue; }
         let k = WD_PER_CUT * share + if flank { WD_FLANK } else { 0.0 };
         out.push(Choice {
-            kind: Kind::Withdraw { hq: a.hq }, label: format!("Отвести {} на рубеж в глубине", name(sim, a.hq)),
+            kind: Kind::Withdraw { hq: a.hq }, label: format!("Отход на рубеж в глубине — {}", name(sim, a.hq)),
             contrib: contrib(&[(Motive::Save, WD_SAVE + k), (Motive::NoEncircle, WD_NOENC + k), (Motive::Hold, WD_HOLD), (Motive::Task, WD_TASK)]),
             uncertainty: WD_UNC, losses: WD_LOSS, rule: "Truppenführung: elastische Verteidigung — отход, чтобы не быть охваченным",
         });
@@ -174,7 +174,7 @@ pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice
             .min_by(|x, y| x.1.total_cmp(&y.1));
         if let Some((at, _)) = best {
             out.push(Choice {
-                kind: Kind::Counterattack { from: a.hq, at }, label: format!("Контратаковать резервом {} по вклинившемуся противнику", name(sim, a.hq)),
+                kind: Kind::Counterattack { from: a.hq, at }, label: format!("Контратака резервом по вклинившемуся противнику — {}", name(sim, a.hq)),
                 contrib: contrib(&[(Motive::Destroy, CA_DESTROY), (Motive::Hold, CA_HOLD), (Motive::Preserve, CA_PRESERVE)]),
                 uncertainty: CA_UNC, losses: CA_LOSS, rule: "Truppenführung: вклинение ликвидируется немедленной контратакой резерва",
             });
@@ -187,7 +187,7 @@ pub fn options_de(sim: &Sim, hq: u32, _p: &Profile, pic: &Picture) -> Vec<Choice
         let from = mine.iter().filter(|a| a.hq != to.hq && quiet(a) && !pic.open_flanks.contains(&a.hq)).max_by(|x, y| x.strength.total_cmp(&y.strength));
         if let Some(from) = from {
             out.push(Choice {
-                kind: Kind::ShiftForces { from: from.hq, to: to.hq }, label: format!("Передать силы от {} к {}", name(sim, from.hq), name(sim, to.hq)),
+                kind: Kind::ShiftForces { from: from.hq, to: to.hq }, label: format!("Передача сил: {} → {}", name(sim, from.hq), name(sim, to.hq)),
                 contrib: contrib(&[(Motive::Hold, SF_HOLD)]),
                 uncertainty: SF_UNC, losses: SF_LOSS, rule: "Truppenführung: силы собираются на решающем участке за счёт спокойных",
             });
@@ -237,7 +237,7 @@ pub fn options_high(sim: &Sim, hq: u32, _p: &Profile) -> Vec<Choice> {
         let Some(c) = centroid(sim, &divisions_of(sim, a)) else { continue };
         if let Some((by, _)) = outside_hq(sim, hq, c) {
             out.push(Choice {
-                kind: Kind::Relief { army: a, by, toward: c }, label: format!("Выручить {} ударом снаружи", name(sim, a)),
+                kind: Kind::Relief { army: a, by, toward: c }, label: format!("Удар снаружи на выручку — {}", name(sim, a)),
                 contrib: contrib(&[(Motive::Save, RL_SAVE), (Motive::Hold, RL_HOLD), (Motive::Preserve, RL_PRESERVE)]),
                 uncertainty: RL_UNC, losses: RL_LOSS, rule: "Truppenführung: окружённым помогают встречным ударом извне",
             });
@@ -259,7 +259,7 @@ pub fn options_high(sim: &Sim, hq: u32, _p: &Profile) -> Vec<Choice> {
             if seen.contains(&h) { continue; }
             seen.push(h);
             out.push(Choice {
-                kind: Kind::MoveReserve { hq: h, to }, label: format!("Двинуть резерв {} к угрожаемой армии", name(sim, h)),
+                kind: Kind::MoveReserve { hq: h, to }, label: format!("Выдвижение резерва к угрожаемой армии — {}", name(sim, h)),
                 contrib: contrib(&[(Motive::Save, MR_SAVE), (Motive::Hold, MR_HOLD)]),
                 uncertainty: MR_UNC, losses: MR_LOSS, rule: "Truppenführung: резерв старшего начальника вводится на решающем участке",
             });

@@ -222,7 +222,7 @@ pub fn assign(sim: &Sim, p: &Profile, army: u32) -> Option<Choice> {
     let rival = p.rival.as_deref().and_then(|id| sim.rules.commanders.profiles.iter().find(|q| q.id == id)).and_then(|rp| profile_objective_xy(sim, rp))
         .map_or(0.0, |o| if at.dist(o) < c.dist(o) { ASSIGN_RIVAL } else { 0.0 });
     Some(Choice {
-        kind: Kind::Assign { army, at, from_plan, defend }, label: format!("Поставить {} задачу: {what}", name(sim, army)),
+        kind: Kind::Assign { army, at, from_plan, defend }, label: format!("Задача — {}: {what}", name(sim, army)),
         contrib: contrib(&[(Motive::Task, ASSIGN_TASK), (Motive::Rival, rival), (Motive::Preserve, ASSIGN_PRESERVE)]),
         uncertainty: if from_plan { ASSIGN_UNC_PLAN } else { ASSIGN_UNC_GROUND }, losses: ASSIGN_LOSS,
         rule: if from_plan { RULE_ASSIGN_PLAN } else if defend { RULE_ASSIGN_DEFEND } else { RULE_ASSIGN_GROUND },
@@ -258,7 +258,7 @@ fn plan_options(sim: &Sim, hq: u32, p: &Profile, pic: &Picture, strayed: bool) -
                 else if late(m) { (COMMIT_UNC_LATE, COMMIT_LOSS_OPEN, COMMIT_TASK, RULE_COMMIT_LATE) }
                 else { (COMMIT_UNC_OPEN, COMMIT_LOSS_OPEN, COMMIT_TASK, RULE_COMMIT) };
             out.push(Choice {
-                kind: Kind::CommitMobile { hq: m.hq }, label: format!("Ввести {} в прорыв", name(sim, m.hq)),
+                kind: Kind::CommitMobile { hq: m.hq }, label: format!("Ввод в прорыв — {}", name(sim, m.hq)),
                 contrib: contrib(&[(Motive::Task, task), (Motive::Rival, rival), (Motive::Preserve, COMMIT_PRESERVE)]),
                 uncertainty: unc, losses: loss, rule,
             });
@@ -298,7 +298,7 @@ fn plan_options(sim: &Sim, hq: u32, p: &Profile, pic: &Picture, strayed: bool) -
                     });
                 if let Some((a, _)) = best {
                     out.push(Choice {
-                        kind: Kind::TurnToRival { hq: a.hq, at }, label: format!("Повернуть {} к объекту соперника", name(sim, a.hq)),
+                        kind: Kind::TurnToRival { hq: a.hq, at }, label: format!("Поворот к объекту соперника — {}", name(sim, a.hq)),
                         contrib: contrib(&[(Motive::Rival, TURN_RIVAL), (Motive::Task, TURN_TASK)]),
                         uncertainty: TURN_UNC, losses: TURN_LOSS, rule: "ПУ-43: смена направления усилий — по решению командующего с уведомлением старшего",
                     });
@@ -322,7 +322,7 @@ fn plan_options(sim: &Sim, hq: u32, p: &Profile, pic: &Picture, strayed: bool) -
     // второй эшелон
     for a in pic.armies.iter().filter(|a| role(sim, a.hq) == Role::Second) {
         out.push(Choice {
-            kind: Kind::CommitSecond { hq: a.hq }, label: format!("Ввести {} из второго эшелона", name(sim, a.hq)),
+            kind: Kind::CommitSecond { hq: a.hq }, label: format!("Ввод из второго эшелона — {}", name(sim, a.hq)),
             contrib: contrib(&[(Motive::Task, SECOND_TASK), (Motive::Preserve, SECOND_PRESERVE)]),
             uncertainty: SECOND_UNC, losses: SECOND_LOSS, rule: "ПУ-43: второй эшелон вводится для наращивания удара на решающем направлении",
         });

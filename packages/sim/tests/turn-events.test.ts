@@ -258,6 +258,46 @@ describe('ключевые события хода', () => {
     expect(debriefFor(d, 'su_33a').verdict.join('\n')).toContain('исторического пути этого штаба в данных нет');
   });
 
+  it('relocation jump is not a breakthrough or withdrawal', () => {
+    // 8 гв. А в наступлении переставлена за час на 40 км к западу (передача командования), потом стоит
+    const jump = turnEvents(base, trace((id, h) => push8(id, h) ? { state: ATTACK, at: off(HOME[id], h >= 15 ? -40 : 0) } : {}), H, history, 11, 23, { side: 'su' });
+    expect(jump.events.filter((e) => e.kind === 'breakthrough')).toHaveLength(0);
+    // 9-я армия в отходе переставлена за час на 40 км к западу
+    const back = turnEvents(base, trace((id, h) => id.startsWith('de_') ? { state: 'отход', at: off(HOME[id], h >= 15 ? -40 : 0) } : {}), H, history, 11, 23, { side: 'de' });
+    expect(back.events.filter((e) => e.kind === 'withdrawal')).toHaveLength(0);
+    // настоящий отход тех же дивизий (5 км за ход) — событие
+    const real = turnEvents(base, trace((id, h) => id.startsWith('de_') ? { state: 'отход', at: off(HOME[id], -5 * Math.max(0, h - 11) / 12) } : {}), H, history, 11, 23, { side: 'de' });
+    expect(real.events.filter((e) => e.kind === 'withdrawal')).toHaveLength(1);
+  });
+
+  it('quiet turn: retreat is not advance', () => {
+    // советские дивизии в обороне сместились на 5 км к востоку — от противника (он западнее)
+    const back = turnEvents(base, trace((id, h) => id.startsWith('su_') ? { at: off(HOME[id], 5 * Math.max(0, h - 11) / 12) } : {}), H, history, 11, 23, { side: 'su' });
+    expect(back.events).toHaveLength(0);
+    expect(back.quiet.maxAdvanceKm).toBeLessThan(0.5);
+    // на 3 км к западу — к противнику: продвижение 3 км
+    const fwd = turnEvents(base, trace((id, h) => id.startsWith('su_') ? { at: off(HOME[id], -3 * Math.max(0, h - 11) / 12) } : {}), H, history, 11, 23, { side: 'su' });
+    expect(fwd.events).toHaveLength(0);
+    expect(fwd.quiet.maxAdvanceKm).toBeCloseTo(3, 0);
+  });
+
+  it('goal: only own formations\' reach events', () => {
+    const t = trace((id, h) => push8(id, h) ?? {});
+    const withF = (f: string): AgentHistory => ({ ...H, events: H.events!.map((e) => (e.id === 'seelow' ? { ...e, formations: [f] } : e)) });
+    expect(turnEvents(base, t, withF('su_33a'), history, 11, 23, { side: 'su' }).hqs.su_8gva.goal?.title ?? '').not.toContain('Мюнхеберг');
+    expect(turnEvents(base, t, withF('su_8gva'), history, 11, 23, { side: 'su' }).hqs.su_8gva.goal?.title).toContain('Мюнхеберг');
+    // и для штаба над ними — фронт видит цель своей армии
+    expect(turnEvents(base, t, withF('su_8gva'), history, 11, 23, { side: 'su' }).hqs.su_1bf.goal).not.toBeNull();
+  });
+
+  it('goal: km before and after over the same divisions', () => {
+    // никто не двигался; su_a стояла в 30 км восточнее и к концу хода разгромлена — удаление не меняется
+    const t = trace((id, h) => (id === 'su_a' ? (h >= 15 ? { state: 'небоеспособна' } : { at: off(HOME.su_a, 30) }) : {}));
+    const g = turnEvents(base, t, H, history, 11, 23, { side: 'su' }).hqs.su_8gva.goal!;
+    expect(g.kmBefore).not.toBeNull();
+    expect(Math.abs(g.kmBefore! - g.kmAfter!)).toBeLessThan(0.5);
+  });
+
   it('window from game trace', () => {
     const fr = (n: number) => Array.from({ length: n }, () => []);
     expect(debriefWindow({ frames: fr(61), game: { takeover: 54 } }, 12)).toEqual({ from: 54, to: 60 });

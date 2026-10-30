@@ -6,7 +6,7 @@
  * пороги показа, не правила модели. Чистые функции: их зовут фоновые потоки переигровки и игры.
  */
 import type { LngLat } from '@def-ops/core';
-import { CUT_H, postureOf, type AgentHistory, type AgentTrace } from './agents';
+import { CUT_H, JUMP_KM_H, postureOf, type AgentHistory, type AgentTrace } from './agents';
 import { agentsEvents } from './agents-score';
 import type { EventResult, History } from './history';
 import { areaTitle, describePlace } from './reports';
@@ -87,7 +87,7 @@ const center = (ps: LngLat[]): LngLat | null => ps.length ? [ps.reduce((a, p) =>
  * Место в тексте события: названия пунктов не склоняются, поэтому — с родовым словом: «у пункта Зелов (Seelow)»,
  * «8 км к северо-востоку от пункта Зелов (Seelow)». В поле place — как в докладах («у Зелов»): окно склоняет его само.
  */
-const RUMB_TO: Record<string, string> = { С: 'северу', СВ: 'северо-востоку', В: 'востоку', ЮВ: 'юго-востоку', Ю: 'югу', ЮЗ: 'юго-западу', З: 'западу', СЗ: 'северо-западу' };
+export const RUMB_TO: Record<string, string> = { С: 'северу', СВ: 'северо-востоку', В: 'востоку', ЮВ: 'юго-востоку', Ю: 'югу', ЮЗ: 'юго-западу', З: 'западу', СЗ: 'северо-западу' };
 const where = (T: SimContext['theatre'], at: LngLat) => describePlace(T, at).replace(/^у /, 'у пункта ')
   .replace(/ к (С|СВ|В|ЮВ|Ю|ЮЗ|З|СЗ) от /, (_m, r: string) => ` к ${RUMB_TO[r]} от пункта `);
 /** Км словами: меньше 10 — с десятыми, дальше — целые. */
@@ -145,6 +145,8 @@ export function turnEvents(
   const pos = (k: number, x: number): LngLat => [t.frames[x][k][iLng] as number, t.frames[x][k][iLat] as number];
   const enc = (k: number, x: number) => (iEnc >= 0 ? (t.frames[x][k][iEnc] as number) ?? 0 : 0);
   const any = (f: (x: number) => boolean) => { for (let x = from + 1; x <= to; x++) if (f(x)) return x; return -1; };
+  // перестановка (передача командования): за час больше JUMP_KM_H — не ход, в прорыв, отход и продвижение не идёт
+  const jumped = D.map((_, k) => any((x) => post(k, x - 1) !== null && post(k, x) !== null && km(pos(k, x - 1), pos(k, x)) > JUMP_KM_H) >= 0);
   const lostW = D.map((_, k) => divisionLoss(t, k, to).personnel - divisionLoss(t, k, from).personnel);
   const visible = (k: number) => dSide[k] === me || reveal || !o.seen || o.seen(D[k].id);
   const name = (id: string) => hq.get(id)?.name ?? id;
@@ -200,7 +202,7 @@ export function turnEvents(
     const gName = name(g), side = dSide[ks[0]];
     const avgMove = (kk: number[]) => kk.reduce((a, k) => a + km(pos(k, from), pos(k, to)), 0) / kk.length;
     // прорыв: наступавшие дивизии прошли в среднем не меньше порога
-    const att = ks.filter((k) => inLine(k, from) && inLine(k, to) && (post(k, from) === 'attack' || any((x) => post(k, x) === 'attack') >= 0));
+    const att = ks.filter((k) => !jumped[k] && inLine(k, from) && inLine(k, to) && (post(k, from) === 'attack' || any((x) => post(k, x) === 'attack') >= 0));
     // одна дивизия большой армии — не прорыв армии: нужно не меньше двух (или все, если в объединении одна)
     if (att.length >= Math.min(2, ks.length) && hours > 0 && avgMove(att) >= Math.max(4, BREAK_KM_DAY * hours / 24)) {
       raw.push({ id: `breakthrough:${g}:${to}`, kind: 'breakthrough', side, tick: to, ks: att, title: `Прорыв: ${gName}`, make: (kk) => {
@@ -226,7 +228,7 @@ export function turnEvents(
       }
     }
     // отход: не меньше половины живых дивизий отходили и сместились не меньше WITHDRAW_KM
-    const wd = live0.filter((k) => !out(k, to) && (post(k, from) === 'withdraw' || any((x) => post(k, x) === 'withdraw') >= 0) && km(pos(k, from), pos(k, to)) >= WITHDRAW_KM);
+    const wd = live0.filter((k) => !jumped[k] && !out(k, to) && (post(k, from) === 'withdraw' || any((x) => post(k, x) === 'withdraw') >= 0) && km(pos(k, from), pos(k, to)) >= WITHDRAW_KM);
     if (live0.length && wd.length * 2 >= live0.length && wd.length) {
       raw.push({ id: `withdrawal:${g}:${to}`, kind: 'withdrawal', side, tick: to, ks: wd, title: `Отход: ${gName}`, make: (kk) => {
         const a = center(kk.map((k) => pos(k, from)))!, b = center(kk.map((k) => pos(k, to)))!, avg = avgMove(kk);
@@ -305,9 +307,20 @@ export function turnEvents(
   events.sort((a, b) => b.weight - a.weight);
   const kept = events.slice(0, KEY_EVENTS_MAX).sort((a, b) => a.tick - b.tick || b.weight - a.weight);
 
-  // ход без событий: наибольшее смещение и потери своих
+  // ход без событий: наибольшее продвижение вперёд — смещение к ближайшей дивизии противника (отход — не продвижение)
+  // и потери своих
   const mine = D.map((_, k) => k).filter((k) => dSide[k] === me);
-  const moved = mine.filter((k) => inLine(k, from) && inLine(k, to)).map((k) => km(pos(k, from), pos(k, to)));
+  const foes0 = D.map((_, k) => k).filter((k) => dSide[k] !== me && inLine(k, from));
+  const forward = (k: number) => {
+    const a = pos(k, from), b = pos(k, to);
+    if (!foes0.length) return km(a, b);
+    const f = pos(foes0.reduce((m, j) => (km(pos(j, from), a) < km(pos(m, from), a) ? j : m)), from);
+    const c = Math.cos((a[1] * Math.PI) / 180);
+    const [mx, my, fx, fy] = [(b[0] - a[0]) * c, b[1] - a[1], (f[0] - a[0]) * c, f[1] - a[1]];
+    const fl = Math.hypot(fx, fy);
+    return fl > 0 ? Math.max(0, ((mx * fx + my * fy) / fl / Math.hypot(mx, my) || 0) * km(a, b)) : 0;
+  };
+  const moved = mine.filter((k) => !jumped[k] && inLine(k, from) && inLine(k, to)).map(forward);
   const quiet = { maxAdvanceKm: r1(moved.length ? Math.max(...moved) : 0), lost: lossOf(mine) };
 
   // штабы своей стороны
@@ -321,7 +334,9 @@ export function turnEvents(
     const alive = ks.filter((k) => inLine(k, to));
     const points = alive.map((k) => pos(k, to));
     const c = center(points);
-    const c0 = center(ks.filter((k) => inLine(k, from)).map((k) => pos(k, from)));
+    // удаление до цели в начале и в конце хода — по одним и тем же дивизиям (в строю и в начале, и в конце хода)
+    const both = alive.filter((k) => inLine(k, from));
+    const c0 = center(both.map((k) => pos(k, from))), c1 = center(both.map((k) => pos(k, to)));
     let state: DebriefHq['state'] = 'line';
     if (!alive.length) {
       const entered = ks.filter((k) => { for (let y = 0; y <= to; y++) if (!pending(k, y)) return true; return false; });
@@ -337,11 +352,13 @@ export function turnEvents(
     // раньшее по истории): самое раннее по дате у далёкого фронта — чужая цель (Торгау для 8 гв. А под Берлином)
     let goal: DebriefHq['goal'] = null;
     if (c) {
-      const cand = ((h.events ?? []) as HistEvent[]).filter((e) => e.kind === 'reach' && sideOf(e.side ?? 'su') === me && !occurred.has(e.id) && locOf(e));
+      // событие с перечнем соединений — цель только тех штабов, чьи войска (или старшие штабы) в нём названы
+      const own = (e: HistEvent) => !e.formations?.length || ks.some((k) => e.formations!.includes(D[k].id) || e.formations!.some((f) => dChain[k].includes(f)));
+      const cand = ((h.events ?? []) as HistEvent[]).filter((e) => e.kind === 'reach' && sideOf(e.side ?? 'su') === me && own(e) && !occurred.has(e.id) && locOf(e));
       if (cand.length) {
         const near = cand.reduce((m, e) => { const a = km(c, locOf(e)!), b = km(c, locOf(m)!); return a < b - 0.5 || (Math.abs(a - b) <= 0.5 && e.date < m.date) ? e : m; });
         const loc = locOf(near)!;
-        goal = { title: near.place ? areaTitle(near.place) : near.title, kmBefore: c0 ? r1(km(c0, loc)) : null, kmAfter: r1(km(c, loc)) };
+        goal = { title: near.place ? areaTitle(near.place) : near.title, kmBefore: c0 ? r1(km(c0, loc)) : null, kmAfter: r1(km(c1 ?? c, loc)) };
       }
     }
     // удаление от исторического положения: штаб (ближайшее время в пределах 12 ч), иначе среднее его дивизий в тот же день
