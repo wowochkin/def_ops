@@ -102,7 +102,7 @@ fn options_with(sim: &Sim, hq: u32, p: &Profile, pic: &Picture) -> Vec<Choice> {
             if main == [k] { continue; }
             let kind = Kind::ShiftMainBlow { to: vec![k] };
             if v.iter().any(|c| c.kind == kind) { continue; }
-            v.push(common(&r.shift, kind, format!("Перенести главный удар на {}", sim.world.hqs[k as usize].name), RULE_SHIFT));
+            v.push(common(&r.shift, kind, format!("Главный удар — {}", sim.world.hqs[k as usize].name), RULE_SHIFT));
         }
     }
     v

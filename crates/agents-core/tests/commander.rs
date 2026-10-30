@@ -636,6 +636,16 @@ mod options_su {
         assert!(c.rule.contains("НКО"), "{}", c.rule);
     }
 
+    /// Название варианта переноса главного удара — без склонения названия армии (именительный падеж верен как есть).
+    #[test]
+    fn shift_variant_title_reads_without_declension() {
+        let sim = load();
+        let o = agents_core::commander::variants::options_for(&sim, hq(&sim, "su_1bf"));
+        let t: Vec<&str> = o.iter().filter(|c| matches!(c.kind, Kind::ShiftMainBlow { .. })).map(|c| c.label.as_str()).collect();
+        assert!(!t.is_empty(), "нет вариантов переноса удара");
+        for l in t { assert!(l.starts_with("Главный удар — ") && !l.contains(" на "), "{l}"); }
+    }
+
     #[test]
     fn shift_main_blow_when_other_army_runs_ahead() {
         let mut sim = load();
