@@ -669,11 +669,11 @@ impl Game {
             let orders: Vec<Value> = v.orders.iter().zip(&v.roles).map(|(o, &r)| serde_json::json!({
                 "to": id(o.to), "task": task(o.task), "form": serde_json::to_value(o.form).unwrap_or(Value::Null), "axis": pts(&o.axis),
                 "immediate": o.immediate.as_ref().map(|l| pts(&l.pts)), "subsequent": o.subsequent.as_ref().map(|l| pts(&l.pts)),
-                "right": pts(&o.boundaries[1].1), "left": pts(&o.boundaries[0].1),
+                "right": o.boundaries.get(1).map(|b| pts(&b.1)).unwrap_or_else(|| Value::from(Vec::<Value>::new())), "left": o.boundaries.first().map(|b| pts(&b.1)).unwrap_or_else(|| Value::from(Vec::<Value>::new())),
                 "commit": v.commit.contains(&o.to), "echelon": role(r), "note": o.note, "rule": o.rule,
             })).collect();
             serde_json::json!({
-                "kind": v.kind, "label": v.label, "rule": v.rule, "score": v.score, "axis": pts(&v.intent.axis),
+                "kind": v.kind, "label": v.label, "rule": v.rule, "score": v.score, "extra": v.extra, "axis": pts(&v.intent.axis),
                 "mainBlow": v.intent.main_blow.iter().map(|&k| self.sim.world.hqs[k as usize].id.clone()).collect::<Vec<_>>(),
                 "reserve": v.intent.reserve.iter().map(|&k| self.sim.world.hqs[k as usize].id.clone()).collect::<Vec<_>>(),
                 "orders": orders,

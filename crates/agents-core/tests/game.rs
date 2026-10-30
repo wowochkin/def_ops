@@ -1087,7 +1087,9 @@ fn variants_cover_all_subs() {
     let g = petition_game(Side::Su, "su_1bf");
     let v = g.variants("su_1bf", 3).expect("варианты");
     let v = v.as_array().expect("список");
-    assert!((2..=3).contains(&v.len()), "{}", v.len());
+    let main = v.iter().filter(|x| x["extra"] != true).count();
+    assert!((2..=3).contains(&main), "{main}");
+    assert!(v.len() <= main + 1);
     let kinds: std::collections::BTreeSet<&str> = v.iter().map(|x| x["kind"].as_str().unwrap()).collect();
     assert_eq!(kinds.len(), v.len(), "виды различны");
     assert!(kinds.contains("continue"), "{kinds:?}");
@@ -1143,7 +1145,7 @@ fn variants_agents_mode_top() {
     let g = seelow_game(Mode::Agents, 0);
     let v = g.variants("su_stavka", 1).expect("варианты");
     let v = v.as_array().unwrap();
-    assert_eq!(v.len(), 1);
+    assert_eq!(v.iter().filter(|x| x["extra"] != true).count(), 1);
     let subs = active_ids(&g, "su_stavka");
     assert!(subs.contains("su_1bf"));
     assert_eq!(variant_to(&v[0]), subs);
@@ -1168,4 +1170,41 @@ fn variants_bad_hq() {
     let e = g.variants("de_9a", 1).unwrap_err();
     assert!(e.contains("нет штаба"), "{e}");
     assert!(g.variants("нет_такого", 1).unwrap_err().contains("нет штаба"));
+}
+
+/// n = 1 — лучший по пользе вариант; «продолжать», если он не лучший, — отдельно, лишним элементом с пометкой `extra`.
+#[test]
+fn variants_n1_best_and_continue_extra() {
+    let g = petition_game(Side::Su, "su_1bf");
+    let all = g.variants("su_1bf", 3).unwrap();
+    let top = all.as_array().unwrap()[0].clone();
+    let one = g.variants("su_1bf", 1).unwrap();
+    let one = one.as_array().unwrap();
+    assert_eq!(one[0]["kind"], top["kind"], "первый — лучший");
+    assert_ne!(one[0]["extra"], true);
+    assert!(one.iter().any(|x| x["kind"] == "continue"), "«продолжать» доступен");
+    if top["kind"] != "continue" {
+        assert_eq!(one.len(), 2);
+        assert_eq!(one[1]["extra"], true);
+    } else { assert_eq!(one.len(), 1); }
+}
+
+/// Цель приказа без своей полосы (второй эшелон, подвижная группа, дополненный правилом) — внутри данной ему полосы.
+#[test]
+fn variants_target_inside_given_band() {
+    use agents_core::command::band::{outside_km, Band};
+    let g = petition_game(Side::Su, "su_1bf");
+    let proj = &g.sim.theatre.proj;
+    let xy = |v: &serde_json::Value| v.as_array().unwrap().iter().map(|p| proj.to_xy([p[0].as_f64().unwrap(), p[1].as_f64().unwrap()])).collect::<Vec<_>>();
+    let mut seen = 0;
+    for x in g.variants("su_1bf", 3).unwrap().as_array().unwrap() {
+        for o in x["orders"].as_array().unwrap() {
+            if o["task"] != "move" { continue; }
+            let at = agents_core::command::agent::mid(&xy(&o["immediate"])).unwrap();
+            let b = Band { left: xy(&o["left"]), right: xy(&o["right"]) };
+            assert!(outside_km(at, &b) < 0.5, "{} {}: цель вне полосы на {:.1} км", x["kind"], o["to"], outside_km(at, &b));
+            seen += 1;
+        }
+    }
+    assert!(seen > 0, "есть приказы без своей полосы");
 }

@@ -14,6 +14,7 @@ use super::options_su::options_su;
 use super::picture::{divisions_of, picture, Picture};
 use super::profile::{Common, Motive, Motives, Profile};
 use crate::command::agent::{frame, mid, place, plan, subs_of};
+use crate::command::band::{extend_back, outside_km, Band};
 use crate::command::control::Role;
 use crate::command::directive::{Directive, Form, Line, Target, Task};
 use crate::geo::XY;
@@ -41,6 +42,8 @@ pub struct Variant {
     pub orders: Vec<Directive>,
     pub commit: Vec<Target>,
     pub roles: Vec<Role>,
+    /// Сверх `n`: «продолжать», не попавший в лучшие (база для дополнения вариантов).
+    pub extra: bool,
 }
 
 /// Вид варианта строкой; ответы на запросы, ожидание подвижной группы и передача сил игроку не предлагаются.
@@ -259,21 +262,27 @@ fn realize_with(sim: &Sim, hq: u32, k: &Kind, label: &str, pic: &Picture) -> Var
         let goal = if goal.dist(p) < 1.0 { let d = toward_enemy(sim, p, side); XY::new(p.x + d.x * AXIS_STUB_KM, p.y + d.y * AXIS_STUB_KM) } else { goal };
         o.axis = vec![p, goal];
     }
-    // полоса — у получателя без своей: полоса ближайшего с полосой, нет таких — полоса штаба
-    let bands: Vec<(Vec<XY>, Vec<XY>, XY)> = orders.iter().zip(&banded).filter(|x| *x.1).map(|(o, _)| (o.boundaries[0].1.clone(), o.boundaries[1].1.clone(), place(sim, o.to))).collect();
+    // полоса — у получателя без своей (второй эшелон, подвижная группа, дополненный правилом): полоса подчинённого
+    // первого эшелона, в которой лежит его цель; нет такой — полоса штаба, назад — до цели
+    let bands: Vec<Band> = orders.iter().zip(&banded).filter(|x| *x.1).map(|(o, _)| Band { left: o.boundaries[0].1.clone(), right: o.boundaries[1].1.clone() }).collect();
+    let base = fr.axis.first().copied().unwrap_or_else(|| mid(&subs.iter().map(|&t| place(sim, t)).collect::<Vec<_>>()).unwrap_or_default());
     for (i, o) in orders.iter_mut().enumerate() {
         if banded[i] { continue; }
         let p = place(sim, o.to);
-        let (l, r) = bands.iter().min_by(|a, b| a.2.dist(p).total_cmp(&b.2.dist(p))).map(|b| (b.0.clone(), b.1.clone())).unwrap_or((fr.band.left.clone(), fr.band.right.clone()));
-        o.boundaries = vec![(None, l), (None, r)];
+        let at = o.immediate.as_ref().and_then(|l| mid(&l.pts)).unwrap_or(p);
+        let back = |b: &Band| { let a = (at.x - base.x) * fr.dir.x + (at.y - base.y) * fr.dir.y; extend_back(b, base, fr.dir, a.min(0.0) - 2.0) };
+        let b = bands.iter().find(|b| outside_km(at, b) == 0.0).cloned()
+            .or_else(|| bands.iter().map(back).find(|b| outside_km(at, b) == 0.0))
+            .unwrap_or_else(|| back(&fr.band));
+        o.boundaries = vec![(None, b.left), (None, b.right)];
     }
     if intent.axis.len() < 2 { intent.axis = fr.axis.clone(); }
     let roles = subs.iter().map(|&t| f.command.role(t)).collect();
-    Variant { kind: name, label: label.to_string(), rule: "", score: 0.0, intent, orders, commit, roles }
+    Variant { kind: name, label: label.to_string(), rule: "", score: 0.0, intent, orders, commit, roles, extra: false }
 }
 
-/// До `n` (1…3) вариантов штаба `hq` по убыванию пользы, без повторов вида; «продолжать» есть всегда (последним,
-/// если не попал в лучшие). Мир не меняется.
+/// `n` (1…3) лучших вариантов штаба `hq` по убыванию пользы, без повторов вида; «продолжать», если не попал в лучшие,
+/// — лишним элементом после них с пометкой `extra`. Мир не меняется.
 pub fn variants(sim: &Sim, hq: u32, n: usize) -> Vec<Variant> {
     let n = n.clamp(1, 3);
     let p = profile_of(sim, hq);
@@ -293,16 +302,16 @@ pub fn variants(sim: &Sim, hq: u32, n: usize) -> Vec<Variant> {
         if best.iter().any(|b| kind_name(&b.0.kind) == kind_name(&x.0.kind)) { continue; }
         best.push(x.clone());
     }
-    if !best.iter().any(|b| b.0.kind == Kind::Continue) {
-        if let Some(c) = scored.iter().find(|x| x.0.kind == Kind::Continue) {
-            if best.len() == n { best.pop(); }
-            best.push(c.clone());
-        }
-    }
-    best.into_iter().map(|(ch, s)| {
+    let mut extra = None;
+    if !best.iter().any(|b| b.0.kind == Kind::Continue) { extra = scored.iter().find(|x| x.0.kind == Kind::Continue).cloned(); }
+    let has_extra = extra.is_some();
+    let k = best.len();
+    best.extend(extra);
+    best.into_iter().enumerate().map(|(i, (ch, s))| {
         let mut v = realize_with(sim, hq, &ch.kind, &ch.label, &pic);
         v.rule = ch.rule;
         v.score = s;
+        v.extra = has_extra && i == k;
         v
     }).collect()
 }
