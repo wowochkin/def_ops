@@ -12,7 +12,7 @@ import {
   checkAction, checkEvents, contextFrom, dayEvents, describePlace, describeTarget, detected, detectKm, gameOutcome, intelReport, sideStrength, onMap, places, playTurn,
   agentsHistory, type AgentGameSpec, type AgentHistory, type CommandOp,
   addHours, applyActions, prepareTakeover,
-  activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, stateDigest, digestMismatch, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameTurn, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
@@ -84,6 +84,8 @@ const ENEMY_LOG = 400;
 /** Вызов команды ядра через основное окно (у фонового потока нет доступа к командам приложения). */
 let callId = 0;
 const calls = new Map<number, { res: (v: unknown) => void; rej: (e: Error) => void }>();
+/** Доктрина последнего хода ядра (ответ окна): с которой ход считан — в запись игры; null — база не давала. */
+let lastDoctrine: { su?: string; de?: string } | null | undefined;
 function agentsCall<T>(cmd: string, args: Record<string, unknown>, moment?: string): Promise<T> {
   const id = ++callId;
   post({ kind: 'agents-call', id, cmd, args, ...(moment ? { moment } : {}) });
@@ -100,7 +102,7 @@ function setAgent(t: AgentGameTrace) {
  * переправы, подрыв, резервы, линии), их последствия и приказы обеих сторон уходят ядру; итог — новые контекст и
  * состояние, донесения — из журнала агентов.
  */
-async function agentTurn(orders: Order[], actions: StaffAction[], command: CommandOp[] = []): Promise<{ events: string[]; enemy: string[]; results: { action: StaffAction; ok: boolean; text: string }[] }> {
+async function agentTurn(orders: Order[], actions: StaffAction[], command: CommandOp[] = [], doctrine?: GameTurn['doctrine']): Promise<{ doctrine: GameTurn['doctrine']; events: string[]; enemy: string[]; results: { action: StaffAction; ok: boolean; text: string }[] }> {
   const from = agentTrace!.frames.length - 1;
   const before = g.state;
   const bb = bridgesOf(ctx);
@@ -112,7 +114,8 @@ async function agentTurn(orders: Order[], actions: StaffAction[], command: Comma
   agentDropped = [];
   // полосы — на сетке ядра; нет территории ядра (другой театр) — без полос
   if (!agentTrace!.control || !territoryFromCore(ctx.theatre, agentTrace!.control)) fx.sectors = [];
-  const t = await agentsCall<AgentGameTrace>('game_turn', { orders: toAgentOrders(ctx, { ...g, state: a.state }, orders), hours: agents!.turnHours, staff: fx, ...(command.length ? { command } : {}) }, before.time);
+  const t = await agentsCall<AgentGameTrace>('game_turn', { orders: toAgentOrders(ctx, { ...g, state: a.state }, orders), hours: agents!.turnHours, staff: fx, ...(command.length ? { command } : {}), ...(doctrine !== undefined ? { doctrineText: doctrine } : {}) }, before.time);
+  const usedDoctrine = lastDoctrine ?? null;
   setAgent(t);
   const names = new Map([...t.hqs.map((h) => [h.id, h.name] as const), ...t.divisions.map((d) => [d.id, d.name] as const)]);
   const bad = [
@@ -126,7 +129,7 @@ async function agentTurn(orders: Order[], actions: StaffAction[], command: Comma
   const log = enemyLog(t, rec.human, from, t.frames.length - 1);
   enemyLogAll = [...enemyLogAll, ...log].slice(-ENEMY_LOG);
   const seen = new Set(intelReport(ctx, g.state, rec.human).map((x) => x.id));
-  return { events: [...ops, ...bad, ...agentEvents(t, from, t.frames.length - 1, rec.human)], enemy: log.map((e) => enemyPlayerText(e, seen)).filter((x): x is string => x !== null), results: a.results };
+  return { doctrine: usedDoctrine, events: [...ops, ...bad, ...agentEvents(t, from, t.frames.length - 1, rec.human)], enemy: log.map((e) => enemyPlayerText(e, seen)).filter((x): x is string => x !== null), results: a.results };
 }
 
 const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}`;
@@ -135,7 +138,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
   const m = e.data;
   try {
     if (m.kind === 'kbRefResult') kbc.receive(m);
-    else if (m.kind === 'agents-reply') { const c = calls.get(m.id); calls.delete(m.id); if (c) { if (m.ok) c.res(m.result); else c.rej(new Error(m.error ?? 'ошибка ядра агентной модели')); } }
+    else if (m.kind === 'agents-reply') { const c = calls.get(m.id); calls.delete(m.id); if (c) { if (m.ok) { lastDoctrine = m.doctrineText; c.res(m.result); } else c.rej(new Error(m.error ?? 'ошибка ядра агентной модели')); } }
     else if (m.kind === 'start') await start(m.start, m.record, m.llm, m.enemy);
     else if (m.kind === 'turn') { queued = { orders: m.orders, actions: m.actions, decision: m.decision, command: m.command ?? [], posts: m.posts }; await advance(); }
     else if (m.kind === 'check') post({ kind: 'check', id: m.id, result: checkAction(ctx, g.state, { ...m.action, issuedAt: g.state.time }, m.pendingBridges) });
@@ -219,24 +222,44 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   rec = record ?? { version: 1, scenario: s.scenario, rules: ctx.rules.id, seed: s.seed, takeover: g.state.time, human, ai: cfg.side, aiStaff, turns: [], ...(agents ? { agents } : {}), kb };
   journal = [];
   enemyLogAll = [];
-  for (const [k, t] of rec.turns.entries()) {
+  // отпечаток на начале игры: в записи есть — сверить, нет (старая запись) — дописать
+  const start0 = digestMismatch(rec.startDigest, turnDigest(), 0);
+  rec.startDigest = turnDigest();
+  await replayTurns(rec.turns, start0);
+  postView();
+  post({ kind: 'record', record: rec });
+  startAi();
+}
+
+/** Отпечаток мира расчёта сейчас: агентная модель — отпечаток игры ядра, нынешняя — stateDigest. */
+const turnDigest = () => (agents ? agentTrace!.game.digest : stateDigest(g.state));
+
+/**
+ * Повтор ходов записи (продолжение игры, ветвь): приказы, распоряжения, поправки, команды и доктрину берёт из записи,
+ * модель не зовёт. После каждого хода — отпечаток расчёта: записанный сверяется, первое расхождение — notice (дальше
+ * игра идёт по расчёту); запись получает отпечаток расчёта (в старых записях его дописывают).
+ */
+async function replayTurns(turns: GameTurn[], first: string | null = null): Promise<void> {
+  let mismatch = first;
+  for (const [k, t] of turns.entries()) {
     if (outcome) break;
-    post({ kind: 'progress', text: `восстановление игры: ход ${k + 1} из ${rec.turns.length}…` });
+    post({ kind: 'progress', text: `восстановление игры: ход ${k + 1} из ${turns.length}…` });
     if (t.time !== g.state.time) throw new Error(`запись игры не сходится с расчётом (${t.time} ≠ ${g.state.time})`);
     const before = g.state;
     if (agents) {
-      const r = await agentTurn(t.orders, t.actions ?? [], t.command ?? []);
+      const r = await agentTurn(t.orders, t.actions ?? [], t.command ?? [], t.doctrine);
+      t.doctrine = r.doctrine;
       journal.push(withEnemy(day(before.time, t.orders, before, r.results.filter((x) => x.action.side === rec.human), t.human as HumanDecision | undefined, ((t.stavka ?? []) as (StavkaResult & { side: string })[]).filter((x) => x.side === rec.human), r.events), r.enemy));
     } else {
       const r = playTurn(ctx, g, t.orders, t.actions ?? [], t.umpire ?? []);
       g = r;
       journal.push(day(before.time, t.orders, before, r.results, t.human as HumanDecision | undefined, ((t.stavka ?? []) as (StavkaResult & { side: string })[]).filter((x) => x.side === rec.human)));
     }
+    mismatch ??= digestMismatch(t.digest, turnDigest(), k + 1);
+    t.digest = turnDigest();
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
   }
-  postView();
-  post({ kind: 'record', record: rec });
-  startAi();
+  if (mismatch) post({ kind: 'notice', text: mismatch });
 }
 
 /** Запись журнала с действиями противника, видимыми разведке. */
@@ -553,12 +576,14 @@ async function advance() {
     if (agents) {
       post({ kind: 'progress', text: `агентная модель: ход ${agents.turnHours} ч…` });
       const r = await agentTurn(orders, actions, queued.command);
+      rec.turns[rec.turns.length - 1].doctrine = r.doctrine;
       journal.push(withEnemy(day(before.time, orders, before, r.results.filter((x) => x.action.side === rec.human), queued.decision, stavka.filter((x) => x.side === rec.human), r.events), r.enemy));
     } else {
       const r = playTurn(ctx, g, orders, actions, ump?.mods ?? []);
       g = r;
       journal.push(day(before.time, orders, before, r.results, queued.decision, stavka.filter((x) => x.side === rec.human)));
     }
+    rec.turns[rec.turns.length - 1].digest = turnDigest();
     if (kbFallback) journal[journal.length - 1].events.push(KB_FALLBACK_NOTE);
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
     queued = null;

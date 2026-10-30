@@ -90,7 +90,7 @@ export type GameRequest =
   /** Посредник: показать на карте всех (без тумана войны). */
   | { kind: 'reveal'; on: boolean }
   /** Ответ основного окна на вызов ядра агентной модели. */
-  | { kind: 'agents-reply'; id: number; ok: boolean; result?: unknown; error?: string }
+  | { kind: 'agents-reply'; id: number; ok: boolean; result?: unknown; error?: string; doctrineText?: { su?: string; de?: string } | null }
   /** Справка из базы знаний окна (ответ на kbRef); ошибка — ok: false, поток считает по сиду. */
   | { kind: 'kbRefResult'; id: number; ok: boolean; answer?: KbRefAnswer; error?: string };
 
@@ -230,6 +230,8 @@ export type GameResponse =
   | { kind: 'plan-variant'; id: number; index: number; variant: PlanVariantView }
   | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
   | { kind: 'error'; message: string }
+  /** Сообщение игроку, игра продолжается (например, запись разошлась с расчётом). */
+  | { kind: 'notice'; text: string }
   /** Вызов команды ядра агентной модели (Tauri) — поток сам её вызвать не может, вызывает основное окно; moment — время игры (доктрина штабов на момент хода). */
   | { kind: 'agents-call'; id: number; cmd: string; args: Record<string, unknown>; moment?: string }
   /** Справка по роли (и доктрина) из базы знаний окна — со слоем пользователя, закреплениями, смысловым поиском. */

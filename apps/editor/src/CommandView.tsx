@@ -257,6 +257,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       const m = e.data;
       if (m.kind === 'progress') setProgress(m.text);
       else if (m.kind === 'error') { setProgress(null); setError(m.message); }
+      else if (m.kind === 'notice') setNotice(m.text);
       else if (m.kind === 'view') {
         // первая обстановка игры — голосом (если голосом пользуются): можно спрашивать
         if (!liveView.current && voiceRecent()) speak(speakable(`Обстановка готова, ход ${m.view.turn}. Скажите, например: «Штаб, доложи обстановку».`, { full: true }));
@@ -314,9 +315,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       else if (m.kind === 'agents-call') {
         // ход агентной модели считает ядро приложения: поток вызывает команду через окно; к ходу — доктрина из базы
         // окна на время игры для штабов на модели (базы нет — без поля, ядро берёт зашитый текст)
-        void Promise.all([import('@tauri-apps/api/core'), m.cmd === 'game_turn' ? import('./sim/kb-doctrine').then((d) => d.agentDoctrineText(m.moment)) : undefined])
-          .then(([{ invoke }, doctrineText]) => invoke(m.cmd, doctrineText ? { ...m.args, doctrineText } : m.args))
-          .then((result) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result } satisfies GameRequest))
+        // повтор записи: доктрина хода уже в args (поле есть, null — база не давала) — из записи, а не из нынешней базы;
+        // в ответ — доктрина, с которой ход считан (в запись игры)
+        const given = m.cmd === 'game_turn' && 'doctrineText' in m.args;
+        void Promise.all([import('@tauri-apps/api/core'), m.cmd !== 'game_turn' ? undefined : given ? (m.args.doctrineText as { su?: string; de?: string } | null) ?? undefined : import('./sim/kb-doctrine').then((d) => d.agentDoctrineText(m.moment))])
+          .then(([{ invoke }, doctrineText]) => invoke(m.cmd, { ...m.args, doctrineText }).then((result) => ({ result, doctrineText })))
+          .then(({ result, doctrineText }) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: true, result, ...(m.cmd === 'game_turn' ? { doctrineText: doctrineText ?? null } : {}) } satisfies GameRequest))
           .catch((err) => w.postMessage({ kind: 'agents-reply', id: m.id, ok: false, error: String((err as Error)?.message ?? err) } satisfies GameRequest));
       } else if (m.kind === 'kbRef') {
         // справка по роли из базы окна (слой пользователя, закрепления, смысловой поиск), доктрина — на момент хода;

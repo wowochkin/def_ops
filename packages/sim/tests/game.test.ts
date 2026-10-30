@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadContext } from '../src/data';
-import { dayEvents, describePlace, intelReport, playTurn, replayGame, runScenario, runToDocument, startGame, unitReports, type GameRecord, type Order } from '../src';
+import { dayEvents, describePlace, digestMismatch, intelReport, playTurn, replayGame, stateDigest, runScenario, runToDocument, startGame, unitReports, type GameRecord, type Order } from '../src';
 
 describe('игра: передача командования, доклады, туман войны', () => {
   const ctx = loadContext('berlin-1945-tasks');
@@ -116,4 +116,44 @@ describe('посредник: поправки на ход', () => {
     const rec: GameRecord = { version: 1, scenario: ctx.scenario.id, rules: ctx.rules.id, seed: 1, takeover: '1945-04-17T05:00', human: 'su', ai: 'de', turns: [{ time: g0.state.time, orders: [], umpire: [mod] }] };
     expect(replayGame(ctx, rec).snapshots.at(-1)).toEqual(g1.snapshots.at(-1));
   }, 60000);
+});
+
+describe('отпечаток мира по ходам записи', () => {
+  const ctx = loadContext('berlin-1945-tasks');
+  const takeover = '1945-04-19T05:00';
+  const mk = (second: boolean) => {
+    let g = startGame(ctx, 1, takeover, 'su');
+    const unit = g.state.formations.find((f) => f.side === 'su' && f.echelon === 'army' && !f.destroyed)!;
+    const area = ctx.theatre.data.areas.find((a) => a.id === 'Bernau')!.id;
+    const rec: GameRecord = { version: 1, scenario: ctx.scenario.id, rules: ctx.rules.id, seed: 1, takeover, human: 'su', ai: 'de', turns: [] };
+    const humanOnly: Order[] = [{ id: 'h1', formation: unit.id, task: 'attack', target: area, issuedAt: g.state.time, source: 'human' }];
+    for (let k = 0; k < 2; k++) {
+      const orders = k === 0 ? humanOnly : second ? [{ ...humanOnly[0], id: 'h2', target: ctx.theatre.data.areas.find((a) => a.id !== area)!.id, issuedAt: g.state.time }] : [];
+      rec.turns.push({ time: g.state.time, orders });
+      g = playTurn(ctx, g, orders);
+    }
+    return { g, rec, humanOnly };
+  };
+
+  it('stateDigest repeats on replay', () => {
+    const a = mk(false);
+    const d = stateDigest(a.g.state);
+    expect(d).toMatch(/^[0-9a-f]{16}$/);
+    expect(stateDigest(replayGame(ctx, a.rec).state)).toBe(d);
+    expect(stateDigest(mk(true).g.state)).not.toBe(d);
+  }, 120000);
+
+  it('replay of a skipped-ai turn needs no model', () => {
+    const a = mk(false);
+    const rec: GameRecord = { ...a.rec, turns: [a.rec.turns[0], { ...a.rec.turns[1], orders: [], ai: { ok: false, error: 'модель не ответила' }, digest: stateDigest(a.g.state) }] };
+    const again = replayGame(ctx, rec);
+    expect(stateDigest(again.state)).toBe(rec.turns[1].digest);
+  }, 120000);
+
+  it('old record without digests', () => {
+    expect(digestMismatch(undefined, 'abc', 3)).toBeNull();
+    expect(digestMismatch('aa', 'aa', 3)).toBeNull();
+    expect(digestMismatch('aa', 'bb', 3)).toContain('на ходу 3');
+    expect(digestMismatch('aa', 'bb', 0)).toContain('на начале игры');
+  });
 });

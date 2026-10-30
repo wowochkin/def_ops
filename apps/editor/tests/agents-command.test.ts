@@ -15,7 +15,7 @@ const trace = (command?: unknown): AgentGameTrace => ({
     { tick: 27, time: '1945-04-17T08:00', hq: 'su_4gsk', kind: 'notice', to: ['su_d1'], text: 'через голову', rule: null },
   ],
   ...(command ? { command } : {}),
-  game: { takeover: 0, hour: 27, over: false },
+  game: { takeover: 0, turn: 0, digest: '0000000000000000', hour: 27, over: false },
 } as AgentGameTrace);
 
 describe('состояние управления в игре на агентной модели', () => {

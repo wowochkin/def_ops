@@ -24,7 +24,7 @@ export interface TraceCommand {
   historical: { id: string; at: number; to: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean }[];
 }
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
-export type AgentGameTrace = AgentTrace & { control?: string; command?: TraceCommand; game: { takeover: number; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[]; commandErrors?: string[]; commandResults?: (string | null)[] } };
+export type AgentGameTrace = AgentTrace & { control?: string; command?: TraceCommand; game: { takeover: number; turn: number; digest: string; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[]; commandErrors?: string[]; commandResults?: (string | null)[] } };
 
 /** Кто решает за штаб: сценарий (гибрид), штаб-агент, игрок. */
 export type Control = 'script' | 'agent' | 'player';
