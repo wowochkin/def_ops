@@ -32,8 +32,8 @@ import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, p
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
-import { DIR_TASK_RU, dirTaskOf, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
-import { completeVariant, dirDraftOf, fromCore, historyLoss, planFallback, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
+import { DIR_TASK_RU, dirTaskOf, issuers, postContext, postProjectCount, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
+import { completeVariant, dirDraftOf, fromCore, planFallback, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
 import { withNote } from './post-notes';
 import { objectiveMark, shortName } from './post-objects';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
@@ -66,7 +66,7 @@ import { bindModelHold, setModelBusy } from './voice/model-queue';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
-  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, prevOf, projectHas, releaseStaff, staffActions, TASKS,
+  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS, variantAsks, variantQuestion,
   type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
@@ -939,6 +939,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [planN, setPlanNRaw] = useState<number>(() => { try { const n = Number(localStorage.getItem('def_ops.planVariants')); return n >= 1 && n <= 3 ? n : 3; } catch { return 3; } });
   const setPlanN = (n: number) => { setPlanNRaw(n); try { localStorage.setItem('def_ops.planVariants', String(n)); } catch { /* */ } };
   /** Попросить советника о вариантах решения на ход; возвращает номер запроса. */
+  /** Своё в проекте пункта: правленые проекты документов подчинённым и документы им в очереди. */
+  const postProjectNow = () => (view && staffsOn(view) && post.issuer ? postProjectCount(view, post.issuer, post.level, post.dirs, cmds) : 0);
   /** Варианты по правилам ядра: агентная модель с командованием по ступеням, открыт пункт управления. */
   const rulesOk = (): boolean => !!(view && view.engine === 'agents' && staffsOn(view) && post.issuer);
   /** Попросить у советника (языковая модель) варианты этого запроса. */
@@ -995,12 +997,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** В проекте уже что-то есть: принятие варианта его заменит. */
   /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
   const acceptByButton = async (v: PlanVariantView, idx: number, edit = false) => {
-    // история как замысел: директивы снимут получателей с истории — спросить (с правкой — директив ещё нет)
-    const loss = !edit && view && v.dirs ? historyLoss(view, v.dirs) : [];
-    if (loss.length && !(await confirmAsync(`Директивы снимут с истории: ${loss.join(', ')}. Принять вариант?`, { ok: 'Принять' }))) return;
+    // вопрос — тот же, что у голоса (staff.ts variantQuestion): проект не пуст и/или директивы снимут штабы с истории
     const p = edit ? { n: idx + 1, edit } : { n: idx + 1 };
-    if (!projectHas(staff.current, prevOf(staff.current))) { tap('command.variant.pick', p); return; }
-    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', p);
+    if (!variantAsks(staff.current, v, { edit })) { tap('command.variant.pick', p); return; }
+    if (await confirmAsync(variantQuestion(staff.current, v, { edit }), { ok: 'Принять' })) tap('command.variant.replace', p);
   };
   /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
   const applyPlan = async (idx: number, only: boolean, edit = false): Promise<string> => {
@@ -1280,7 +1280,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
     decision: view ? curDecision() : decision, setDecision: setCur, auto: autoFields[view && lowPost() ? post.issuer! : ''] ?? [],
     prevDecision: view && lowPost() ? lastPost(post.issuer!) : view?.lastDecision ?? null,
-    composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView, petition: petNow ?? undefined,
+    composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView, petition: petNow ?? undefined, postDocs: postProjectNow(), rulesReady: rulesOk(),
     mergePriority: (() => { const sc = scopeNow(); if (!sc || !view) return undefined; const pool = priorityPool(view, sc); const pa = acts.find((a) => a.action.kind === 'priority')?.action; const cur = pa?.kind === 'priority' ? pa.formations : view.priority; return (ids: string[]) => mergePriority(cur, pool, ids); })(),
     drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
     acts, addAct: addActCheck, dropAct,
@@ -1291,7 +1291,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   // ход, штаб противника, посредник, разбор, файлы — те же действия у кнопок
   const turnDeps = useRef<TurnDeps>(null!);
   turnDeps.current = {
-    view, prev: turnStart.current, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, auto: autoFields[''] ?? [], plan, planN,
+    view, prev: turnStart.current, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, auto: autoFields[''] ?? [], postDocs: postProjectNow(), plan, planN,
     sendTurn, showMissing, notice: setNotice, setTab, setUmpirePart: setUmpPart,
     retryAi: () => { setBlocked(null); setProgress('повторный запрос…'); send({ kind: 'retry-ai' }); },
     skipAi: () => { setBlocked(null); setProgress('расчёт хода…'); send({ kind: 'skip-ai' }); },

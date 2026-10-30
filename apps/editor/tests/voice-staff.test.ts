@@ -935,11 +935,37 @@ describe('«Варианты советника» — по правилам и �
     await act('command.variant.pick', { n: 2, edit: true });
     expect(d.applyPlan).toHaveBeenLastCalledWith(1, false, true);
   });
-  it('без модели: на агентной модели — варианты по правилам, на нынешней — недоступно с причиной', () => {
-    staff({ advisorReady: false, view: view({ engine: 'agents', command: { mode: 'agents', hqs: {} } as never }) } as never);
+  it('без модели: варианты по правилам — только при открытом пункте агентной модели (как кнопка), иначе — причина', () => {
+    const agents = view({ engine: 'agents', command: { mode: 'agents', hqs: {} } as never });
+    staff({ advisorReady: false, rulesReady: true, view: agents } as never);
     expect(getAction('command.variants')!.available()).toBe(true);
+    offs.forEach((o) => o()); offs = [];
+    // агентная модель, но пункта нет — то же объяснение, а не «Готовлю…» с ошибкой
+    staff({ advisorReady: false, rulesReady: false, view: agents } as never);
+    expect(getAction('command.variants')!.available()).toBe('советник не на связи; варианты по правилам — в игре на агентной модели');
     offs.forEach((o) => o()); offs = [];
     staff({ advisorReady: false } as never);
     expect(getAction('command.variants')!.available()).toBe('советник не на связи; варианты по правилам — в игре на агентной модели');
+  });
+  const dirV = (to: string, name: string) => ({ to, name, task: 'attack', form: 'order' as const, axis: [], immediate: [], subsequent: [], right: [], left: [], note: '', mainBlow: [] });
+  const intentView = () => view({ engine: 'agents', command: { mode: 'intent', hqs: {
+    su_1bf: { name: '1-й Белорусский фронт', echelon: 'front', parent: 'st', control: 'player', led: false },
+    su_1uf: { name: '1-й Украинский фронт', echelon: 'front', parent: 'st', control: 'script', led: false },
+  } } as never });
+  const full = () => plan({ variants: [variant('Удар на Зелов', { dirs: [dirV('su_1bf', '1-й Белорусский фронт'), dirV('su_1uf', '1-й Украинский фронт')] }), variant('Обход с севера')] });
+  it('история как замысел: принятие голосом называет, кого директивы снимут с истории', () => {
+    staff({ plan: full(), view: intentView() } as never);
+    expect(getAction('command.variant.pick')!.check!({ n: 1 })).toMatch(/снимут с истории: 1-й Украинский фронт/);
+    expect(parseStaff('выбираю первый', 'replay')).toEqual({ id: 'command.variant.replace', params: { n: 1 } });
+    expect(getAction('command.variant.replace')!.confirm!({ n: 1 })).toMatch(/^Директивы снимут с истории: 1-й Украинский фронт\. /);
+    // с правкой директив нет — и вопроса нет
+    expect(getAction('command.variant.pick')!.check!({ n: 1, edit: true })).toBe(true);
+    expect(parseStaff('принимаю первый и поправлю', 'replay')).toEqual({ id: 'command.variant.pick', params: { n: 1, edit: true } });
+  });
+  it('правленые проекты пункта и документы подчинённым в очереди — проект не пуст: принятие спрашивает', () => {
+    staff({ plan: plan(), postDocs: 2 } as never);
+    expect(getAction('command.variant.pick')!.check!({ n: 1 })).toMatch(/^В проекте уже есть решение/);
+    expect(parseStaff('выбираю первый', 'replay')).toMatchObject({ id: 'command.variant.replace' });
+    expect(projectHas({ drafts: {}, acts: [], decision: EMPTY, postDocs: 1 }, null)).toBe(true);
   });
 });

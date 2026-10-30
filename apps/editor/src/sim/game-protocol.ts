@@ -174,8 +174,6 @@ export interface TurnView {
   /** Рубежи театра, мосты и переправы театра, не разрушенные к ходу (с названием), — для выбора объектов в приказах. */
   lines?: { id: string; name: string; line: LngLat[] }[];
   crossings?: { id: string; name: string; at: LngLat }[];
-  /** Большие реки театра (для переправ в вариантах по правилам). */
-  rivers?: { name: string; major: boolean; line: LngLat[] }[];
   /** Задержка доведения приказов по ступеням, часов. */
   delays: Record<string, number>;
   detectKm: number;

@@ -5,7 +5,7 @@ import type { LngLat } from '@def-ops/core';
 import type { PlanVariantView, TurnView } from '../src/sim/game-protocol';
 import type { DraftScope } from '../src/decision-drafts';
 import { staffScope } from '../src/post-staff';
-import { completeVariant, dirDraftOf, fromCore, historyLoss, planFallback, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
+import { completeVariant, dirDraftOf, fromCore, historyLoss, majorRivers, planFallback, riverFeature, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const rep = (id: string, name: string, echelon: string, parent: string, at: LngLat, x: object = {}) => ({
@@ -36,7 +36,8 @@ const view = (over: Partial<TurnView> & { mode?: string; ctl?: Record<string, st
   bases: [{ id: 'b1', name: 'Ландсберг', at: [14.95, 52.6], state: 'active', activeFrom: null }],
   priority: [], priorityMax: 2, supplyHours: { su_d1: 30, su_d9: 20, su_d5: 12 }, rangeHours: 24,
   bridges: [], parks: 2, parksBy: { su_1bf: { allot: 2, own: 2, busy: 0 } },
-  rivers: [{ name: 'Одер', major: true, line: [[14.4, 52.3], [14.4, 52.9]] }],
+  // реки — слоем карты «rivers» (большие — толще), отдельного поля в виде нет
+  doc: { layers: [], features: [riverFeature({ name: 'Одер', major: true, line: [[14.4, 52.3], [14.4, 52.9]] }), riverFeature({ name: 'ручей', major: false, line: [[14.45, 52.3], [14.45, 52.9]] })] },
   crossings: [],
   ...over,
 } as unknown as TurnView);
@@ -152,5 +153,14 @@ describe('история как замысел и отказ модели', () =
     expect(r.variants).toBe(rules);
     expect(r.warning).toBe('Советник не ответил (таймаут) — показаны варианты по правилам.');
     expect(planFallback(rules, { done: true, ok: true, count: 2 }).variants).toEqual([]);
+  });
+});
+
+describe('реки для переправ — из слоя карты', () => {
+  it('большие реки берутся из знаков слоя «rivers»; поля rivers в виде нет', () => {
+    expect(majorRivers(view())).toEqual([{ name: 'Одер', line: [[14.4, 52.3], [14.4, 52.9]] }]);
+    // @ts-expect-error — реки идут слоем карты, а не полем вида (каждый ход — десятки килобайт)
+    const r: TurnView['rivers'] = undefined;
+    expect(r).toBeUndefined();
   });
 });

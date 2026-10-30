@@ -5,7 +5,7 @@
  * дополняется вариантом «продолжать»: у кого приказа модели нет — приказ правила с пометкой; приказ модели выбывшему
  * или чужому — снимается с пометкой. Без модели или при её отказе — варианты по правилам.
  */
-import type { LngLat } from '@def-ops/core';
+import { createFeature, type Feature, type LngLat } from '@def-ops/core';
 import type { StaffAction } from '@def-ops/sim';
 import type { CoreOrder, CoreVariant, HumanDecision, PlanActView, PlanVariantView, TurnView, VariantDir } from './sim/game-protocol';
 import { DRAFT_FIELDS, draftField, type DraftScope } from './decision-drafts';
@@ -16,6 +16,20 @@ import { hqCenter } from './post-views';
 import { km, objectiveMark, shortName } from './post-objects';
 
 export type { CoreOrder, CoreVariant, VariantDir };
+
+/** Масштаб знака большой реки на слое карты «rivers» (малые — 0,7): по нему переправы узнают большие реки. */
+export const RIVER_MAJOR_K = 1.3;
+/** Знак реки театра на слое «rivers» (большие — толще). Реки идут картой, а не полем вида: так вид хода не тяжелеет. */
+export function riverFeature(rv: { name?: string; major?: boolean; line: LngLat[] }): Feature {
+  const f = createFeature('line', 'inf.river', { points: rv.line, layerId: 'rivers' }, rv.major ? RIVER_MAJOR_K : 0.7);
+  f.name = rv.name;
+  return f;
+}
+/** Большие реки театра — из знаков слоя карты «rivers». */
+export function majorRivers(v: TurnView): { name: string; line: LngLat[] }[] {
+  return (v.doc?.features ?? []).filter((f) => f.layerId === 'rivers' && f.kind === 'line' && (f.scale ?? 0) >= RIVER_MAJOR_K)
+    .map((f) => ({ name: f.name ?? '', line: (f as { points: LngLat[] }).points }));
+}
 
 /** Пометка варианта, составленного правилом, без языковой модели. */
 export const RULES_MARK = 'по правилам, без модели';
@@ -153,7 +167,7 @@ export function ruleActs(v: TurnView, scope: StaffScope | null, dirs: VariantDir
   const pk = by ? v.parksBy?.[by] : undefined;
   let free = scope ? (scope.bridges === 'build' ? (pk?.own ?? 0) - (pk?.busy ?? 0) : 0) : (v.parks ?? 0) - (v.bridges ?? []).filter((x) => x.building).length;
   const near = [...(v.crossings ?? []).map((x) => x.at), ...(v.bridges ?? []).map((x) => x.at)];
-  const rivers = (v.rivers ?? []).filter((r) => r.major);
+  const rivers = majorRivers(v);
   let i = 0;
   for (const d of dirs.filter(attacking)) {
     if (free <= 0) break;

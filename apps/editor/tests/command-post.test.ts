@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dirTaskOf, FIELDS, issuers, missing, postContext, postPrompt, postTitle, recipients, resolveFrom, sender, suggestionToDir, toDirective, type DirDraft } from '../src/command-post';
+import { dirTaskOf, FIELDS, postProjectCount, issuers, missing, postContext, postPrompt, postTitle, recipients, resolveFrom, sender, suggestionToDir, toDirective, type DirDraft } from '../src/command-post';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const v = (taken: string[] = []) => ({
@@ -93,5 +93,17 @@ describe('советник по пункту управления', () => {
     expect(c).toMatchObject({ level: 'army', issuer: 'su_8gva', issuerName: '8-я гв. армия', doc: 'Боевой приказ армии', overHead: false });
     expect(c.recipients.map((x) => x.id)).toEqual(['su_4gsk', 'su_29gsk', 'su_d9']);
     expect(postPrompt(c)).toContain('приказы — только подчинённым этого штаба: 4-й гв. ск, 29-й гв. ск, 1 тбр');
+  });
+});
+
+describe('проект пункта для «не пуст ли проект»', () => {
+  const d = (to: string, x: Partial<DirDraft> = {}): DirDraft => ({ to, level: 'front', task: 'attack', form: 'order', axis: [], immediate: [], subsequent: [], boundaries: [[], []], mainBlow: [], reserve: [], note: '', ...x });
+  it('правленые проекты подчинённым и документы им в очереди считаются; принятые из варианта и не правленые — нет', () => {
+    expect(postProjectCount(v(), 'su_1bf', 'front', {}, [])).toBe(0);
+    expect(postProjectCount(v(), 'su_1bf', 'front', { 'front:su_8gva': d('su_8gva') }, [])).toBe(1);
+    expect(postProjectCount(v(), 'su_1bf', 'front', { 'front:su_8gva': d('su_8gva', { auto: true }) }, [])).toBe(0);
+    // проект другого уровня или не подчинённому — не этого пункта
+    expect(postProjectCount(v(), 'su_1bf', 'front', { 'army:su_4gsk': d('su_4gsk', { level: 'army' }) }, [])).toBe(0);
+    expect(postProjectCount(v(), 'su_1bf', 'front', {}, [{ op: 'directive', directive: { to: 'su_1gta', task: 'attack', form: 'order' } }, { op: 'directive', directive: { to: 'su_4gsk', task: 'attack', form: 'order' } }])).toBe(1);
   });
 });

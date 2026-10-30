@@ -64,7 +64,8 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   useEffect(() => { setPick(null); }, [level, issuer]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef({ draft, pick }); live.current = { draft, pick };
   const ready = (): true | string => (!on ? 'пункт управления — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view?.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
-  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: noted(d) }));
+  // правка проекта (в том числе принятого из варианта) — уже свой: снимает пометку auto
+  const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: noted({ ...d, auto: undefined }) }));
 
   useAction({
     id: 'command.post', section: 'replay', title: 'Пункт управления', describe: 'Пункт управления по уровню: Ставка, фронт, армия, корпус, дивизия (level) и штаб этой ступени (name) — уровень карты переключается вместе с ним.',
@@ -221,7 +222,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
     level, issuer, issuers: list, sel, dirs, draft, pick: draft ? pick : null,
     cancelPick: () => setPick(null),
     load: (ds) => {
-      setDirs((x) => ({ ...x, ...Object.fromEntries(ds.map((d) => [`${d.level}:${d.to}`, noted(d)])) }));
+      setDirs((x) => ({ ...x, ...Object.fromEntries(ds.map((d) => [`${d.level}:${d.to}`, noted({ ...d, auto: true })])) }));
       setSel(ds[0]?.to ?? null); setPick(null);
     },
     addPoint: (pt) => {

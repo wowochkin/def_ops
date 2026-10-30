@@ -94,6 +94,8 @@ export interface DirDraft {
   note: string;
   /** Указания составляются по задаче и обстановке (post-notes); правка руками ставит false — пересчёт останавливается. */
   noteAuto?: boolean;
+  /** Проект из варианта советника, ещё не правленый: не считается своим в проекте (принятие другого варианта — без вопроса). */
+  auto?: boolean;
 }
 
 export const blankDir = (to: string, level: LevelId): DirDraft => ({ to, level, task: 'attack', form: level === 'division' ? 'instruction' : 'order', axis: [], immediate: [], subsequent: [], boundaries: [[], []], mainBlow: [], reserve: [], note: '', noteAuto: true });
@@ -168,6 +170,16 @@ export function missing(d: DirDraft, now?: string): string[] {
   const early = (t?: string) => !!(t && now && t.slice(0, 16) < now.slice(0, 16));
   if (early(d.immediateBy) || early(d.subsequentBy)) out.push('срок не раньше начала хода');
   return out;
+}
+
+/**
+ * Сколько своего в проекте пункта (для вопроса «вариант заменит проект»): правленые проекты документов подчинённым на
+ * этом уровне (принятые из варианта и не правленые — нет) и документы подчинённым в очереди хода.
+ */
+export function postProjectCount(v: TurnView, issuer: string, level: LevelId, dirs: Record<string, DirDraft>, cmds: CommandOp[]): number {
+  const ids = new Set(recipients(v, issuer).map((x) => x.id));
+  const drafts = Object.values(dirs).filter((d) => d.level === level && ids.has(d.to) && !d.auto).length;
+  return drafts + cmds.filter((c) => c.op === 'directive' && ids.has(c.directive.to)).length;
 }
 
 /** Слова советской стороны — словами стороны игрока (ОКХ, группа армий). */

@@ -31,6 +31,7 @@ import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 import { SUGGESTIONS } from '../../commander-view';
 import { manningText } from '../../num-format';
+import { historyLoss } from '../../plan-rules';
 
 // ---------------------------------------------------------------- типы состояния (общие с CommandView)
 
@@ -98,6 +99,10 @@ export interface StaffDeps {
   auto?: readonly string[];
   /** Прошлое решение того же штаба (пункт ниже Ставки — его, а не Ставки); нет поля — прошлое решение верхней инстанции. */
   prevDecision?: HumanDecision | null;
+  /** Пункт управления: правленые проекты документов подчинённым и документы им в очереди (command-post postProjectCount). */
+  postDocs?: number;
+  /** Варианты по правилам ядра возможны: агентная модель, командование по ступеням, открыт пункт управления (как у кнопки). */
+  rulesReady?: boolean;
   /** Ходатайство о разграничительной линии в пункте управления: где действует, кто рассматривает, соседи (petition.ts). */
   petition?: PetitionState;
   /** Пункт управления: приоритет подвоза — его часть списка стороны (названные подчинённые вместо прежних его); нет — весь список. */
@@ -197,14 +202,34 @@ export function decisionMissing(d: HumanDecision): string[] {
  * обстановке при открытии хода и не правлено (auto), ходатайство.
  */
 /** Прошлое решение, с которым сравнивается проект: штаба пункта (ниже Ставки) или верхней инстанции. */
-export const prevOf = (d: StaffDeps): HumanDecision | null => (d.prevDecision !== undefined ? d.prevDecision : d.view?.lastDecision ?? null);
+export const prevOf = (d: { view: TurnView | null; prevDecision?: HumanDecision | null }): HumanDecision | null => (d.prevDecision !== undefined ? d.prevDecision : d.view?.lastDecision ?? null);
 
-export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision; auto?: readonly string[] }, last: HumanDecision | null): boolean {
+/** Проект для вопроса «вариант заменит»: решение, приказы, распоряжения, проекты и очередь пункта управления. */
+export type ProjectLike = { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision; auto?: readonly string[]; postDocs?: number };
+
+export function projectHas(p: ProjectLike, last: HumanDecision | null): boolean {
   const d = p.decision, auto = p.auto ?? [];
   const own = (k: 'enemyIntent' | 'intent' | 'risks') => !auto.includes(k) && !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
   const put = (k: 'assessment' | 'report') => !auto.includes(k) && !!d[k].trim();
-  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || put('assessment') || put('report') || !!d.request?.trim() || !!(d.petition && (d.petition.line.length || d.petition.note.trim()))
+  return Object.keys(p.drafts).length > 0 || p.acts.length > 0 || (p.postDocs ?? 0) > 0 || put('assessment') || put('report') || !!d.request?.trim() || !!(d.petition && (d.petition.line.length || d.petition.note.trim()))
     || own('enemyIntent') || own('intent') || own('risks');
+}
+
+type VariantDeps = ProjectLike & { view: TurnView | null; prevDecision?: HumanDecision | null };
+type AcceptOpts = { only?: boolean; edit?: boolean };
+/** Кого директивы варианта снимут с истории: только при принятии целиком (с правкой и «только решение» директив нет). */
+export function variantLoss(d: VariantDeps, v: PlanVariantView, o: AcceptOpts = {}): string[] {
+  return !o.only && !o.edit && d.view && v.dirs ? historyLoss(d.view, v.dirs) : [];
+}
+/** Принятие варианта переспрашивает: проект не пуст (кроме «только решение») или директивы снимут штабы с истории. */
+export function variantAsks(d: VariantDeps, v: PlanVariantView, o: AcceptOpts = {}): boolean {
+  return (!o.only && projectHas(d, prevOf(d))) || variantLoss(d, v, o).length > 0;
+}
+/** Вопрос перед принятием варианта — один на все пути (кнопка, голос, предложение штаба). */
+export function variantQuestion(d: VariantDeps, v: PlanVariantView, o: AcceptOpts = {}): string {
+  const loss = variantLoss(d, v, o);
+  return [loss.length ? `Директивы снимут с истории: ${loss.join(', ')}.` : '',
+    projectHas(d, prevOf(d)) ? `Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены.` : `Принять вариант «${v.title}»?`].filter(Boolean).join(' ');
 }
 
 const hhmm = (t: string) => t.slice(11, 16);
@@ -509,7 +534,8 @@ export function staffActions(get: () => StaffDeps): Action[] {
   };
   const pick = async (n: unknown, only: boolean, edit = false) => { const x = variant(n); return typeof x === 'string' ? x : edit ? get().applyPlan(x.i, only, true) : get().applyPlan(x.i, only); };
   /** Варианты по правилам ядра: игра на агентной модели с командованием по ступеням. */
-  const rulesOn = () => { const v = get().view; return v?.engine === 'agents' && !!v.command && v.command.mode !== 'legacy'; };
+  // то же условие, что у кнопки (CommandView rulesOk): агентная модель, командование по ступеням, открыт пункт
+  const rulesOn = () => !!get().rulesReady;
   /** Открыть подвкладку «Приказов»; её нет на этом уровне — не переключать, вернуть причину словами. */
   const toOrders = (s: OrdersSub): string | undefined => {
     const why = get().subsOk?.[s];
@@ -601,15 +627,17 @@ export function staffActions(get: () => StaffDeps): Action[] {
     { ...base, id: 'command.variant.pick', title: 'Принять вариант', describe: 'Принимает вариант решения N в пустой проект: целиком — приказы в очередь хода; edit — «принять и поправить»: приказы в проекты пункта управления; only — только решение.',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, only: { type: 'boolean' }, edit: { type: 'boolean' } }, required: ['n'] }, say: ['штаб, выбираю первый', 'штаб, принимаю второй и поправлю'],
       available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
-      check: (p: { n: number; only?: boolean }) => {
+      check: (p: { n: number; only?: boolean; edit?: boolean }) => {
         const x = variant(p?.n); if (typeof x === 'string') return x;
-        return !p.only && has() ? 'В проекте уже есть решение или приказы — вариант их заменит. Скажите: «выбираю …» ещё раз, я переспрошу.' : true;
+        if (!p.only && has()) return 'В проекте уже есть решение или приказы — вариант их заменит. Скажите: «выбираю …» ещё раз, я переспрошу.';
+        const loss = variantLoss(get(), x.v, p);
+        return loss.length ? `Директивы снимут с истории: ${loss.join(', ')}. Скажите: «выбираю …» ещё раз, я переспрошу.` : true;
       },
       run: async (p: { n: number; only?: boolean; edit?: boolean }) => pick(p?.n, !!p?.only, !!p?.edit) },
     { ...base, id: 'command.variant.replace', title: 'Заменить проект вариантом', describe: 'Заменяет непустой проект (решение, приказы, распоряжения) вариантом N (необратимо); edit — приказы в проекты пункта управления.',
       params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, edit: { type: 'boolean' } }, required: ['n'] }, irreversible: true, available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       check: (p: { n: number }) => { const x = variant(p?.n); return typeof x === 'string' ? x : true; },
-      confirm: (p: { n: number }) => { const x = variant(p?.n); return `Заменить проект вариантом «${typeof x === 'string' ? '' : x.v.title}»? Текущие решение, приказы и распоряжения будут заменены.`; },
+      confirm: (p: { n: number; edit?: boolean }) => { const x = variant(p?.n); return typeof x === 'string' ? x : variantQuestion(get(), x.v, { edit: !!p?.edit }); },
       run: async (p: { n: number; edit?: boolean }) => pick(p?.n, false, !!p?.edit) },
     { ...base, id: 'command.advisor.ask', title: 'Спросить советника', describe: 'Задаёт советнику вопрос своими словами; ответ штаб зачитает, когда он будет готов.',
       // cat, topic — вопрос из дерева тем (кнопки советника): ответ — на экране, вслух не зачитывается
@@ -1036,7 +1064,8 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
       return hit('command.variant.pick', edit ? { n: 1, edit } : { n: 1 });
     }
     const d = live!();
-    return hit(d.view && projectHas(d, prevOf(d)) ? 'command.variant.replace' : 'command.variant.pick', edit ? { n, edit } : { n });
+    const x = p?.variants[n - 1];
+    return hit(d.view && x && variantAsks(d, x, { edit }) ? 'command.variant.replace' : 'command.variant.pick', edit ? { n, edit } : { n });
   }
   // советник: вопрос, остановка, «подробнее», предложенный приказ
   if ((m = /^(?:спроси|спросите|задай вопрос|вопрос)(?: у)? советник\p{L}*(?: о| об| про)? (.+)$/u.exec(t))) return hit('command.advisor.ask', { text: m[1] });

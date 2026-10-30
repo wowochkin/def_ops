@@ -31,6 +31,7 @@ import { gameKbData, type GameKb } from './kb-compile';
 import systemTpl from '../../../../services/staff/prompts/staff.system.md?raw';
 import liveTpl from '../../../../services/staff/prompts/staff.live.md?raw';
 import { theatreObjects } from '../post-objects';
+import { riverFeature } from '../plan-rules';
 import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.md?raw';
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { postPrompt } from '../command-post';
@@ -803,9 +804,7 @@ function postView() {
   doc.layers.unshift({ id: 'rivers', name: 'Театр: реки', role: 'base', visible: true, locked: true, opacity: 0.85 });
   for (const rv of ctx.theatre.data.rivers) {
     if (rv.line.length < 2) continue;
-    const f = createFeature('line', 'inf.river', { points: rv.line, layerId: 'rivers' }, rv.major ? 1.3 : 0.7);
-    f.name = rv.name;
-    doc.features.unshift(f);
+    doc.features.unshift(riverFeature(rv));
   }
   // тыл: базы снабжения (действующие и переносимые)
   const lg = s.logistics?.[human];
@@ -838,7 +837,6 @@ function postView() {
     ...turnMapView(),
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
     ...theatreObjects(ctx.theatre.data, s.time, (at) => describePlace(ctx.theatre, at)),
-    rivers: ctx.theatre.data.rivers.filter((r) => r.major).map((r) => ({ name: r.name ?? '', major: true, line: r.line })),
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,

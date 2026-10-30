@@ -24,7 +24,7 @@ import { numberWords, speakable } from '../speech';
 import { lastUmpire, repeatUmpire, showTurnReview } from '../umpire';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 import { BUSY_REFUSAL as BUSY_REWIND, rewindCheck } from '../../sim/game-rewind';
-import { askTarget, BUSY, decisionMissing, NEEDS_TARGET, projectHas, type OrderDraft, type PlanState, type StaffAct } from './staff';
+import { askTarget, BUSY, decisionMissing, NEEDS_TARGET, projectHas, variantAsks, type OrderDraft, type PlanState, type StaffAct } from './staff';
 
 // ---------------------------------------------------------------- состояние
 
@@ -58,6 +58,8 @@ export interface TurnDeps {
   decision: HumanDecision;
   plan: PlanState | null;
   planN: number;
+  /** Пункт управления: правленые проекты и документы подчинённым в очереди (принятие варианта их заменит). */
+  postDocs?: number;
   /** Отдать ход на расчёт (приказы, распоряжения, решение). */
   sendTurn(): void;
   retryAi(): void;
@@ -169,7 +171,8 @@ export function turnActions(get: () => TurnDeps): Action[] {
     const p = d.plan;
     const vs = p && p.time === v.time ? p.variants.map((x, i) => ({ x, i })).filter((y) => y.x) : [];
     if (p && p.done && vs.length && p.accepted === undefined) {
-      const replace = projectHas(d, v.lastDecision);
+      // тот же вопрос, что у кнопки и «выбираю …»: проект не пуст или директивы снимут штабы с истории
+      const replace = variantAsks({ ...d, prevDecision: v.lastDecision }, vs[0].x);
       return { offer: `${head} ${replace ? 'Заменить проект вариантом' : 'Составить решение по варианту'} «${vs[0].x.title}»?`,
         id: replace ? 'command.variant.replace' : 'command.variant.pick', params: { n: vs[0].i + 1 } };
     }
