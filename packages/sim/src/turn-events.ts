@@ -95,7 +95,9 @@ const clip = (s0: string, n = 240) => { const s = s0.replace(/\s*\[[^\]]*@[^\]]*
 const vb = (n: number, one: string, many: string) => (n === 1 ? one : many);
 const ddmm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}`;
 
-type Raw = { id: string; kind: KeyEventKind; side: 'su' | 'de'; tick: number; ks: number[]; at: LngLat; from: LngLat | null; to: LngLat | null; km: number | null; title: string; text: string };
+/** Событие до тумана: участники по правилу; место, стрелка и текст — make(участники), чтобы строить их по видимым. */
+type Raw = { id: string; kind: KeyEventKind; side: 'su' | 'de'; tick: number; ks: number[]; title: string;
+  make: (ks: number[]) => { at: LngLat; from: LngLat | null; to: LngLat | null; km: number | null; text: string } };
 type HistEvent = NonNullable<History['events']>[number] & { side?: string; place?: string; radiusKm?: number; formations?: string[]; at?: LngLat | null };
 
 /**
@@ -154,6 +156,7 @@ export function turnEvents(
 
   const raw: Raw[] = [];
   const covered = new Set<number>();
+  const names = (ks: number[]) => listNames(ks.map((k) => D[k].name));
   for (const e of evTo) {
     if (!e.simulated || before.has(e.id)) continue;
     const he = hev.get(e.id);
@@ -163,10 +166,12 @@ export function turnEvents(
     const under = (k: number) => !he.formations?.length || he.formations.includes(D[k].id) || he.formations.some((f) => dChain[k].includes(f));
     if (he.kind === 'cut') {
       const ks = D.map((_, k) => k).filter((k) => under(k) && enc(k, to) > 0 && !out(k, to));
-      const c = center(ks.map((k) => pos(k, to)));
-      if (!ks.length || !c) continue;
+      if (!ks.length) continue;
       ks.forEach((k) => covered.add(k));
-      raw.push({ id: e.id, kind: 'encirclement', side: dSide[ks[0]], tick, ks, at: c, from: null, to: null, km: null, title: e.title, text: `${vb(ks.length, 'Отрезана', 'Отрезаны')} ${divs(ks.length)}: ${listNames(ks.map((k) => D[k].name))}; ${when}.` });
+      raw.push({ id: e.id, kind: 'encirclement', side: dSide[ks[0]], tick, ks, title: e.title, make: (ks) => {
+        const c = center(ks.map((k) => pos(k, to)))!;
+        return { at: c, from: null, to: null, km: null, text: `${vb(ks.length, 'Отрезана', 'Отрезаны')} ${divs(ks.length)}: ${names(ks)}; ${when}.` };
+      } });
     } else if (he.kind === 'reach' || he.kind === 'meet') {
       const loc = locOf(he);
       if (!loc) continue;
@@ -175,24 +180,24 @@ export function turnEvents(
       const near = D.map((_, k) => k).filter((k) => (!side || dSide[k] === side) && under(k) && inLine(k, tick));
       let ks = near.filter((k) => km(pos(k, tick), loc) <= r);
       if (!ks.length && near.length) ks = [near.reduce((a, k) => (km(pos(k, tick), loc) < km(pos(a, tick), loc) ? k : a))];
-      raw.push({ id: e.id, kind: 'capture', side: side ?? (ks.length ? dSide[ks[0]] : me), tick, ks, at: loc, from: null, to: null, km: null, title: e.title,
-        text: `${describePlace(T, loc).replace(/^у /, 'У ')}${ks.length ? `: ${listNames(ks.map((k) => D[k].name))}` : ''}; ${when}.` });
+      // место события — пункт сверки (известен и без разведки), участники — только переданные
+      raw.push({ id: e.id, kind: 'capture', side: side ?? (ks.length ? dSide[ks[0]] : me), tick, ks, title: e.title, make: (ks) => ({
+        at: loc, from: null, to: null, km: null, text: `${describePlace(T, loc).replace(/^у /, 'У ')}${ks.length ? `: ${names(ks)}` : ''}; ${when}.` }) });
     }
   }
 
   const hours = to - from;
   for (const [g, ks] of groups) {
     const gName = name(g), side = dSide[ks[0]];
+    const avgMove = (kk: number[]) => kk.reduce((a, k) => a + km(pos(k, from), pos(k, to)), 0) / kk.length;
     // прорыв: наступавшие дивизии прошли в среднем не меньше порога
     const att = ks.filter((k) => inLine(k, from) && inLine(k, to) && (post(k, from) === 'attack' || any((x) => post(k, x) === 'attack') >= 0));
     // одна дивизия большой армии — не прорыв армии: нужно не меньше двух (или все, если в объединении одна)
-    if (att.length >= Math.min(2, ks.length) && hours > 0) {
-      const avg = att.reduce((a, k) => a + km(pos(k, from), pos(k, to)), 0) / att.length;
-      if (avg >= Math.max(4, BREAK_KM_DAY * hours / 24)) {
-        const a = center(att.map((k) => pos(k, from)))!, b = center(att.map((k) => pos(k, to)))!;
-        raw.push({ id: `breakthrough:${g}:${to}`, kind: 'breakthrough', side, tick: to, ks: att, at: b, from: a, to: b, km: r1(avg), title: `Прорыв: ${gName}`,
-          text: `${gName}: ${divs(att.length)} ${vb(att.length, 'продвинулась', 'продвинулись')} в среднем на ${fmtKm(avg)} км за ${plural(hours, 'час', 'часа', 'часов')}, ${describePlace(T, b)}.` });
-      }
+    if (att.length >= Math.min(2, ks.length) && hours > 0 && avgMove(att) >= Math.max(4, BREAK_KM_DAY * hours / 24)) {
+      raw.push({ id: `breakthrough:${g}:${to}`, kind: 'breakthrough', side, tick: to, ks: att, title: `Прорыв: ${gName}`, make: (kk) => {
+        const a = center(kk.map((k) => pos(k, from)))!, b = center(kk.map((k) => pos(k, to)))!, avg = avgMove(kk);
+        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'продвинулась', 'продвинулись')} в среднем на ${fmtKm(avg)} км за ${plural(hours, 'час', 'часа', 'часов')}, ${describePlace(T, b)}.` };
+      } });
     }
     // контрудар: армия в обороне, не меньше COUNTER_MIN дивизий перешли в наступление
     const live0 = ks.filter((k) => inLine(k, from));
@@ -200,68 +205,67 @@ export function turnEvents(
     if (def0.length * 2 > live0.length) {
       const sw = def0.map((k) => [k, any((x) => post(k, x) === 'attack')] as const).filter(([, x]) => x >= 0);
       if (sw.length >= COUNTER_MIN) {
-        const kk = sw.map(([k]) => k);
-        const a = center(kk.map((k) => pos(k, from)))!;
-        const foes = D.map((_, k) => k).filter((k) => dSide[k] !== side && inLine(k, to));
-        const foe = foes.length ? foes.reduce((m, k) => (km(pos(k, to), a) < km(pos(m, to), a) ? k : m)) : -1;
-        const target = foe >= 0 ? pos(foe, to) : null;
-        const foeName = foe < 0 ? '' : dSide[foe] === me || visible(foe) ? D[foe].name : 'противник';
-        raw.push({ id: `counterattack:${g}:${to}`, kind: 'counterattack', side, tick: Math.min(...sw.map(([, x]) => x)), ks: kk, at: a, from: target ? a : null, to: target, km: null, title: `Контрудар: ${gName}`,
-          text: `${gName}: ${divs(kk.length)} из обороны ${vb(kk.length, 'перешла', 'перешли')} в наступление${foe >= 0 ? ` — на ${foeName}, ${describePlace(T, target!)}` : ''}.` });
+        raw.push({ id: `counterattack:${g}:${to}`, kind: 'counterattack', side, tick: Math.min(...sw.map(([, x]) => x)), ks: sw.map(([k]) => k), title: `Контрудар: ${gName}`, make: (kk) => {
+          const a = center(kk.map((k) => pos(k, from)))!;
+          // цель стрелки — ближайшая дивизия другой стороны из тех, что видны (свои видны всегда)
+          const foes = D.map((_, k) => k).filter((k) => dSide[k] !== side && inLine(k, to) && visible(k));
+          const foe = foes.length ? foes.reduce((m, k) => (km(pos(k, to), a) < km(pos(m, to), a) ? k : m)) : -1;
+          const target = foe >= 0 ? pos(foe, to) : null;
+          return { at: a, from: target ? a : null, to: target, km: null,
+            text: `${gName}: ${divs(kk.length)} из обороны ${vb(kk.length, 'перешла', 'перешли')} в наступление${target ? ` — на ${D[foe].name}, ${describePlace(T, target)}` : ''}.` };
+        } });
       }
     }
     // отход: не меньше половины живых дивизий отходили и сместились не меньше WITHDRAW_KM
     const wd = live0.filter((k) => !out(k, to) && (post(k, from) === 'withdraw' || any((x) => post(k, x) === 'withdraw') >= 0) && km(pos(k, from), pos(k, to)) >= WITHDRAW_KM);
     if (live0.length && wd.length * 2 >= live0.length && wd.length) {
-      const a = center(wd.map((k) => pos(k, from)))!, b = center(wd.map((k) => pos(k, to)))!;
-      const avg = wd.reduce((s, k) => s + km(pos(k, from), pos(k, to)), 0) / wd.length;
-      raw.push({ id: `withdrawal:${g}:${to}`, kind: 'withdrawal', side, tick: to, ks: wd, at: b, from: a, to: b, km: r1(avg), title: `Отход: ${gName}`,
-        text: `${gName}: ${divs(wd.length)} ${vb(wd.length, 'отошла', 'отошли')} в среднем на ${fmtKm(avg)} км, ${describePlace(T, b)}.` });
+      raw.push({ id: `withdrawal:${g}:${to}`, kind: 'withdrawal', side, tick: to, ks: wd, title: `Отход: ${gName}`, make: (kk) => {
+        const a = center(kk.map((k) => pos(k, from)))!, b = center(kk.map((k) => pos(k, to)))!, avg = avgMove(kk);
+        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'отошла', 'отошли')} в среднем на ${fmtKm(avg)} км, ${describePlace(T, b)}.` };
+      } });
     }
     // окружение: отрезанность перешла CUT_H внутри окна (кроме дивизий котла из событий сверки)
     const cut = ks.map((k) => [k, enc(k, from) < CUT_H && !out(k, from) ? any((x) => enc(k, x) >= CUT_H) : -1] as const).filter(([k, x]) => x >= 0 && !covered.has(k));
     if (cut.length) {
-      const kk = cut.map(([k]) => k);
-      const c = center(kk.map((k) => pos(k, to)))!;
-      raw.push({ id: `encirclement:${g}:${to}`, kind: 'encirclement', side, tick: Math.min(...cut.map(([, x]) => x)), ks: kk, at: c, from: null, to: null, km: null, title: `Окружение: ${gName}`,
-        text: `${gName}: больше суток ${vb(kk.length, 'отрезана', 'отрезаны')} ${divs(kk.length)} — ${listNames(kk.map((k) => D[k].name))}, ${describePlace(T, c)}.` });
+      raw.push({ id: `encirclement:${g}:${to}`, kind: 'encirclement', side, tick: Math.min(...cut.map(([, x]) => x)), ks: cut.map(([k]) => k), title: `Окружение: ${gName}`, make: (kk) => {
+        const c = center(kk.map((k) => pos(k, to)))!;
+        return { at: c, from: null, to: null, km: null, text: `${gName}: больше суток ${vb(kk.length, 'отрезана', 'отрезаны')} ${divs(kk.length)} — ${names(kk)}, ${describePlace(T, c)}.` };
+      } });
     }
     // разгром: дивизии стали небоеспособны или сведены в другие (капитуляция — по пленным)
-    const dead = ks.map((k) => [k, !out(k, from) && out(k, to) ? any((x) => out(k, x)) : -1] as const).filter(([, x]) => x >= 0);
-    if (dead.length) {
-      const kk = dead.map(([k]) => k);
-      const lastAt = (k: number, x: number) => pos(k, Math.max(from, x - 1));
-      const c = center(dead.map(([k, x]) => lastAt(k, x)))!;
+    const dead = new Map(ks.map((k) => [k, !out(k, from) && out(k, to) ? any((x) => out(k, x)) : -1] as const).filter(([, x]) => x >= 0));
+    if (dead.size) {
       const what = (k: number) => {
         const cap = iCap >= 0 ? Math.round((t.frames[to][k][iCap] as number) - (t.frames[from][k][iCap] as number)) : 0;
         return `${D[k].name} — ${cap > 0 ? `капитулировала (в плен — ${cap})` : st(k, to).startsWith('сведена') ? 'сведена в другую' : 'небоеспособна'}`;
       };
-      raw.push({ id: `destroyed:${g}:${to}`, kind: 'destroyed', side, tick: Math.min(...dead.map(([, x]) => x)), ks: kk, at: c, from: null, to: null, km: null, title: `Разгром: ${gName}`,
-        text: `${gName}: ${listNames(kk.map(what))}.` });
+      raw.push({ id: `destroyed:${g}:${to}`, kind: 'destroyed', side, tick: Math.min(...dead.values()), ks: [...dead.keys()], title: `Разгром: ${gName}`, make: (kk) => ({
+        at: center(kk.map((k) => pos(k, Math.max(from, dead.get(k)! - 1))))!, from: null, to: null, km: null, text: `${gName}: ${listNames(kk.map(what))}.` }) });
     }
   }
 
-  // причины: документы, решения командующих, полученные приказы участников (окно с запасом CAUSE_LOOKBACK_H)
+  // причины: документы, решения командующих, полученные приказы участников — с CAUSE_LOOKBACK_H до начала окна и не
+  // позже часа события; сперва ближайшего штаба (свой штаб дивизии, затем старший и выше), затем свежие
   const lo = from - CAUSE_LOOKBACK_H;
-  const inRange = (x: number) => x >= lo && x <= to;
   const hqSide = (id: string) => sideOf(hq.get(id)?.side ?? 'su');
-  const causesOf = (ks: number[], hqs: Set<string>): KeyCause[] => {
+  const causesOf = (ks: number[], tick: number): KeyCause[] => {
+    const inRange = (x: number) => x >= lo && x <= tick;
+    const rank = new Map<string, number>();
+    for (const k of ks) dChain[k].forEach((x, i) => rank.set(x, Math.min(rank.get(x) ?? i, i)));
     const ids = new Set(ks.map((k) => D[k].id));
     const hqOfDiv = new Map(ks.map((k) => [D[k].id, D[k].hq]));
     const cs: KeyCause[] = [
-      ...(t.documents ?? []).filter((d) => d.kind !== 'report' && inRange(d.tick) && hqs.has(d.hq)).map((d): KeyCause => ({ kind: 'document', side: hqSide(d.hq), hq: d.hq, tick: d.tick, text: clip(d.text) })),
-      ...(t.commanders ?? []).filter((c) => hqs.has(c.hq)).flatMap((c) => c.decisions.filter((x) => inRange(x.tick)).map((x): KeyCause => ({ kind: 'decision', side: hqSide(c.hq), hq: c.hq, tick: x.tick, text: clip(x.why) }))),
+      ...(t.documents ?? []).filter((d) => d.kind !== 'report' && inRange(d.tick) && rank.has(d.hq)).map((d): KeyCause => ({ kind: 'document', side: hqSide(d.hq), hq: d.hq, tick: d.tick, text: clip(d.text) })),
+      ...(t.commanders ?? []).filter((c) => rank.has(c.hq)).flatMap((c) => c.decisions.filter((x) => inRange(x.tick)).map((x): KeyCause => ({ kind: 'decision', side: hqSide(c.hq), hq: c.hq, tick: x.tick, text: clip(x.why) }))),
     ];
-    const seenText = new Set<string>();
     for (const j of t.journal) {
-      if (!j.agent || !ids.has(j.agent) || !inRange(j.tick) || !j.text.startsWith('получен приказ') || seenText.has(j.text)) continue;
-      seenText.add(j.text);
+      if (!j.agent || !ids.has(j.agent) || !inRange(j.tick) || !j.text.startsWith('получен приказ')) continue;
       const dh = hqOfDiv.get(j.agent)!;
       cs.push({ kind: 'order', side: hqSide(dh), hq: dh, tick: j.tick, text: clip(j.text).replace(/:\s*$/, '') });
     }
-    // одна причина — один раз: тот же текст (документ нескольким адресатам, приказ по цепочке) — свежий
+    // одна причина — один раз: тот же текст (документ нескольким адресатам, приказ по цепочке) — ближний и свежий
     const once = new Set<string>();
-    return cs.sort((a, b) => b.tick - a.tick).filter((c) => !once.has(c.text) && !!once.add(c.text)).slice(0, CAUSES_MAX);
+    return cs.sort((a, b) => rank.get(a.hq)! - rank.get(b.hq)! || b.tick - a.tick).filter((c) => !once.has(c.text) && !!once.add(c.text)).slice(0, CAUSES_MAX);
   };
   const lossOf = (ks: number[]) => Math.round(ks.reduce((a, k) => a + lostW[k], 0));
   const hqsOf = (ks: number[]) => [...new Set(ks.flatMap((k) => dChain[k]))];
@@ -269,19 +273,23 @@ export function turnEvents(
   const events: KeyEvent[] = [];
   for (const r of raw) {
     const hidden = r.side !== me && !reveal;
-    let ev: KeyEvent = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: r.title, text: r.text, at: r.at, from: r.from, to: r.to,
-      divisions: r.ks.map((k) => D[k].id), hqs: hqsOf(r.ks), km: r.km, lost: lossOf(r.ks), causes: [], weight: 0, seen: true };
-    if (hidden && o.seen && !r.ks.some((k) => o.seen!(D[k].id))) {
-      // туман: событие невидимого противника — только если затрагивает свои войска, по ним
-      const marks = r.ks.flatMap((k) => [pos(k, from), pos(k, to)]).concat(r.ks.length ? [] : [r.at]);
+    // туман: событие противника строится только по видимым участникам; ни одного — по своим затронутым войскам
+    const ks = hidden && o.seen ? r.ks.filter((k) => o.seen!(D[k].id)) : r.ks;
+    let ev: KeyEvent;
+    if (ks.length || !r.ks.length) {
+      const m = r.make(ks);
+      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: r.title, text: m.text, at: m.at, from: m.from, to: m.to,
+        divisions: ks.map((k) => D[k].id), hqs: hqsOf(ks), km: m.km, lost: lossOf(ks), causes: [], weight: 0, seen: true };
+    } else {
+      const marks = r.ks.flatMap((k) => [pos(k, from), pos(k, to)]);
       const own = D.map((_, k) => k).filter((k) => dSide[k] === me && inLine(k, to) && marks.some((p) => km(pos(k, to), p) <= TOUCH_KM));
       if (!own.length) continue;
       const c = center(own.map((k) => pos(k, to)))!;
-      ev = { ...ev, title: ENEMY_TITLE[r.kind], text: `${ENEMY_TITLE[r.kind]}: затронуты ${divs(own.length)} — ${listNames(own.map((k) => D[k].name))}, ${describePlace(T, c)}.`,
-        at: c, from: null, to: null, km: null, divisions: own.map((k) => D[k].id), hqs: hqsOf(own), lost: lossOf(own), seen: false };
+      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: ENEMY_TITLE[r.kind], text: `${ENEMY_TITLE[r.kind]}: затронуты ${divs(own.length)} — ${names(own)}, ${describePlace(T, c)}.`,
+        at: c, from: null, to: null, km: null, divisions: own.map((k) => D[k].id), hqs: hqsOf(own), lost: lossOf(own), causes: [], weight: 0, seen: false };
     }
     if (hidden) ev.text = `${ev.text} ${HIDDEN}`;
-    else ev.causes = causesOf(r.ks, new Set(hqsOf(r.ks)));
+    else ev.causes = causesOf(ks, r.tick);
     ev.weight = r1(WEIGHT[ev.kind] + ev.lost / 1000);
     events.push(ev);
   }

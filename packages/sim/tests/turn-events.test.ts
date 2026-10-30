@@ -125,13 +125,59 @@ describe('ключевые события хода', () => {
     t.commanders = [{ hq: 'su_1bf', decisions: [{ tick: 15, trigger: 'x', chosen: 0, why: 'Ввести танки в прорыв', options: [] }] }] as unknown as AgentTrace['commanders'];
     const d = turnEvents(base, t, H, history, 11, 23, { side: 'su' });
     const br = d.events.find((e) => e.kind === 'breakthrough')!;
-    expect(br.causes.map((c) => [c.kind, c.hq, c.tick])).toEqual([['decision', 'su_1bf', 15], ['document', 'su_8gva', 5]]);
-    expect(br.causes[0].text).toBe('Ввести танки в прорыв');
+    // свой штаб армии раньше фронта, внутри штаба — свежие первыми
+    expect(br.causes.map((c) => [c.kind, c.hq, c.tick])).toEqual([['document', 'su_8gva', 5], ['decision', 'su_1bf', 15]]);
+    expect(br.causes[1].text).toBe('Ввести танки в прорыв');
     const ca = d.events.find((e) => e.kind === 'counterattack')!;
     expect(ca.causes).toHaveLength(0);
     expect(ca.text).toContain('решения противника известны только посреднику');
     const r = turnEvents(base, t, H, history, 11, 23, { side: 'su', reveal: true });
     expect(r.events.find((e) => e.kind === 'counterattack')!.causes.map((c) => c.text)).toContain('Контрудар у Альт-Тухебанда');
+  });
+
+  it('causes bounded by event tick, own hq first', () => {
+    const t = trace((id, h) => (id === 'de_a' || id === 'de_b') && h >= 16 ? { state: 'наступление: встречный бой' } : push8(id, h) ?? {});
+    t.documents = [
+      { tick: 12, time: '', hq: 'de_9a', kind: 'order', to: ['de_a'], text: 'Контрудар у Альт-Тухебанда', rule: null },
+      { tick: 20, time: '', hq: 'de_9a', kind: 'order', to: ['de_a'], text: 'Отойти на рубеж Одерской позиции', rule: null },
+      { tick: 7, time: '', hq: 'su_8gva', kind: 'order', to: ['su_a'], text: 'Армии наступать на Зеелов', rule: null },
+      { tick: 21, time: '', hq: 'su_1bf', kind: 'directive', to: ['su_8gva', 'su_33a'], text: 'Фронту наступать на Берлин', rule: null },
+    ];
+    const d = turnEvents(base, t, H, history, 11, 23, { side: 'su', reveal: true });
+    const ca = d.events.find((e) => e.kind === 'counterattack')!;
+    expect(ca.tick).toBe(16);
+    expect(ca.causes.map((c) => c.text)).toEqual(['Контрудар у Альт-Тухебанда']);
+    const br = d.events.find((e) => e.kind === 'breakthrough')!;
+    expect(br.causes.map((c) => c.hq)).toEqual(['su_8gva', 'su_1bf']);
+  });
+
+  it('partly seen enemy event keeps only seen participants', () => {
+    // немецкие de_a и de_b наступают на 8 км к востоку; видна только de_a
+    const t = trace((id, h) => id === 'de_a' || id === 'de_b' ? { state: ATTACK, at: off(HOME[id], 8 * Math.max(0, h - 11) / 12) } : {});
+    const d = turnEvents(base, t, H, history, 11, 23, { side: 'su', seen: (id) => id !== 'de_b' });
+    const br = d.events.find((e) => e.kind === 'breakthrough')!;
+    expect(br.side).toBe('de');
+    expect(br.divisions).toEqual(['de_a']);
+    expect(br.text).not.toContain('de_b');
+    expect(br.from).toEqual(HOME.de_a);
+    expect(br.to![0]).toBeCloseTo(off(HOME.de_a, 8)[0], 6);
+    expect(br.to![1]).toBeCloseTo(HOME.de_a[1], 6);
+    expect(br.at).toEqual(br.to);
+  });
+
+  it('own counterattack arrow only to a seen foe', () => {
+    const near = off(HOME.su_a, -3);
+    const t = trace((id, h) => (id === 'su_a' || id === 'su_b') && h >= 16 ? { state: 'наступление: встречный бой' } : id === 'de_a' ? { at: near } : {});
+    const d = turnEvents(base, t, H, history, 11, 23, { side: 'su', seen: (id) => id === 'de_b' });
+    const ca = d.events.find((e) => e.kind === 'counterattack')!;
+    expect(ca.to).toEqual(HOME.de_b);
+    expect(ca.text).toContain('дивизия de_b');
+    expect(ca.text).not.toContain('de_a');
+    const blind = turnEvents(base, t, H, history, 11, 23, { side: 'su', seen: () => false });
+    const cb = blind.events.find((e) => e.kind === 'counterattack')!;
+    expect(cb.to).toBeNull();
+    expect(cb.from).toBeNull();
+    expect(cb.text).not.toContain('de_');
   });
 
   it('de side events and fog', () => {
