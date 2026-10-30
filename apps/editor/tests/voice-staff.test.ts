@@ -10,7 +10,7 @@ import { nameCase } from '../src/voice/speech';
 import { Dispatcher, YES_NO_SAY } from '../src/voice/dispatch';
 import { commandActions, setSectionSource, type CommandDeps } from '../src/voice/actions/command';
 import {
-  adviceArrived, adviceReady, commanderAction, decisionMissing, draftReportText, parseStaff, planArrived, press, projectHas, releaseCommander, releaseStaff, staffActions, taskOf, variantText,
+  adviceArrived, adviceReady, commanderAction, decisionMissing, pickOnPost, planStaleWhy, draftReportText, parseStaff, planArrived, press, projectHas, releaseCommander, releaseStaff, staffActions, taskOf, variantText,
   type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from '../src/voice/actions/staff';
 import { parseDictation, stopReading } from '../src/voice/dictation';
@@ -969,5 +969,30 @@ describe('«Варианты советника» — по правилам и �
     expect(getAction('command.variant.pick')!.check!({ n: 1 })).toMatch(/^В проекте уже есть решение/);
     expect(parseStaff('выбираю первый', 'replay')).toMatchObject({ id: 'command.variant.replace' });
     expect(projectHas({ drafts: {}, acts: [], decision: EMPTY, postDocs: 1 }, null)).toBe(true);
+  });
+  it('вариант привязан к пункту и линии игры: другой пункт, другая линия — устарел, принятие отказано с пояснением', async () => {
+    const at = { time: '1945-04-18T05:00', issuer: 'su_8ga', level: 'army', epoch: 2 };
+    const mine = plan({ issuer: 'su_8ga', level: 'army', epoch: 2 } as never);
+    expect(planStaleWhy(mine, at)).toBeNull();
+    expect(planStaleWhy(mine, { ...at, issuer: 'su_1bf', level: 'front' })).toMatch(/для другого пункта управления/);
+    expect(planStaleWhy(mine, { ...at, level: 'front' })).toMatch(/для другого пункта управления/);
+    expect(planStaleWhy(mine, { ...at, epoch: 3 })).toMatch(/на другой линии игры/);
+    expect(planStaleWhy(mine, { ...at, time: '1945-04-19T05:00' })).toMatch(/прошлого хода/);
+    // голос: пункт сменили — «принимаю первый» отказано, applyPlan не вызывается
+    const d = staff({ plan: mine, planAt: { ...at, issuer: 'su_1bf', level: 'front' } } as never);
+    expect(await act('command.variant.pick', { n: 1 })).toMatch(/для другого пункта управления.*Попросите новые/);
+    expect(await act('command.variant.replace', { n: 1 })).toMatch(/для другого пункта управления/);
+    expect(d.applyPlan).not.toHaveBeenCalled();
+    offs.forEach((o) => o()); offs = [];
+    // возврат к ходу того же времени (новая линия) — тоже устарел
+    staff({ plan: mine, planAt: { ...at, epoch: 3 } } as never);
+    expect(await act('command.variant.pick', { n: 1 })).toMatch(/на другой линии игры/);
+  });
+  it('смена пункта снимает выбор точек на карте (ходатайство, объекты)', () => {
+    const was = { issuer: 'su_8ga', level: 'army' }, same = { issuer: 'su_8ga', level: 'army' };
+    expect(pickOnPost({ kind: 'petition' }, was, same)).toEqual({ kind: 'petition' });
+    expect(pickOnPost({ kind: 'petition' }, was, { issuer: 'su_1bf', level: 'front' })).toBeNull();
+    expect(pickOnPost({ kind: 'bridge' }, was, { issuer: 'su_8ga', level: 'front' })).toBeNull();
+    expect(pickOnPost(null, was, { issuer: null, level: 'front' })).toBeNull();
   });
 });

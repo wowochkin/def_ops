@@ -20,7 +20,7 @@ import { btn, hl, note, noted } from '../highlight';
 import { short } from '../report';
 import { nameCase, numberWords } from '../speech';
 import { inReplay, NO_GAME, pickTitle, type CmdTab } from './command';
-import { BUSY, findOwn, TASKS, type OrderDraft, type OrdersSub, type PlanState, type StaffAct, type Suggestion } from './staff';
+import { BUSY, findOwn, planStaleWhy, TASKS, type OrderDraft, type OrdersSub, type PlanAt, type PlanState, type StaffAct, type Suggestion } from './staff';
 
 export interface ScreenDeps {
   view: TurnView | null;
@@ -47,6 +47,8 @@ export interface ScreenDeps {
   talk: number;
   setPlanN(n: number): void;
   plan: PlanState | null;
+  /** Где сейчас игра: варианты для другого хода, линии или пункта не берутся. */
+  planAt?: PlanAt;
   planOpen: number | null;
   setPlanOpen(i: number | null): void;
   takeSuggestion(s: Suggestion): void;
@@ -161,6 +163,9 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       run: async (p: { n: number; order?: number; act?: number }) => {
         const v = variant(p?.n);
         if (!v) return 'Такого варианта нет.';
+        const pl = get().plan, at = get().planAt;
+        const why = pl && at ? planStaleWhy(pl, at) : null;
+        if (why) return `Не выйдет: ${why}.`;
         if (p.order !== undefined) {
           const o = v.orders[p.order - 1];
           if (!o || !o.ok) return 'Такого приказа в варианте нет.';

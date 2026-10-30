@@ -66,8 +66,8 @@ import { bindModelHold, setModelBusy } from './voice/model-queue';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
-  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS, variantAsks, variantQuestion,
-  type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
+  adviceReady, decisionMissing, NEEDS_TARGET, pickOnPost, planReady, planStaleKind, planStaleWhy, press, projectHas, releaseStaff, staffActions, TASKS, variantAsks, variantQuestion,
+  type BoundsDraft, type OrderDraft, type PlanAt, type PlanState, type StaffAct, type StaffDeps,
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
 import { numberWords, plural, speakable } from './voice/speech';
@@ -277,6 +277,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   }, [wantBaseline, baseScen, baseSeed]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { post.cancelPick(); }, [tab, sub]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (pickMode) post.cancelPick(); }, [pickMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  // смена пункта управления: начатый выбор точек (ходатайство, объекты тыла, переправы, резервы) — уже не для этого пункта
+  const postWas = useRef({ issuer: post.issuer ?? null, level: post.level as string });
+  useEffect(() => { const now = { issuer: post.issuer ?? null, level: post.level as string }; setPickMode((p) => pickOnPost(p, postWas.current, now)); postWas.current = now; }, [post.issuer, post.level]);
   useEffect(() => { if (post.pick) setPickMode(null); }, [post.pick]);
   const levelRef = useRef(level);
   levelRef.current = level;
@@ -511,6 +514,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     resetUmpire();
     setProgress(null); setBlocked(null);
     setDrafts({}); setActs([]); liveActs.current = []; setPostDecisions({}); setLinePts([]); setPickMode(null);
+    // варианты советника — для прежней линии: снимаются (и подготовка их — тоже)
+    send({ kind: 'plan-stop' }); setPlan(null); planRules.current = null;
     setAutoFields({});
     if (v) { setCmds(initialCmds(v)); setDecision(freshDecision(v.lastDecision)); setOpened((n) => n + 1); }
   };
@@ -942,6 +947,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const postProjectNow = () => (view && staffsOn(view) && post.issuer ? postProjectCount(view, post.issuer, post.level, post.dirs, cmds) : 0);
   /** Варианты по правилам ядра: агентная модель с командованием по ступеням, открыт пункт управления. */
   const rulesOk = (): boolean => !!(view && view.engine === 'agents' && staffsOn(view) && post.issuer);
+  /** Где сейчас игра — ход, пункт управления, уровень, линия: варианты советника привязаны к ним. */
+  const planAtNow = (): PlanAt | undefined => (view ? { time: view.time, issuer: staffsOn(view) ? post.issuer ?? null : null, level: staffsOn(view) ? post.level : null, epoch: lineEpoch } : undefined);
   /** Попросить у советника (языковая модель) варианты этого запроса. */
   const askLlm = (id: number, count: number) => {
     if (!view) return;
@@ -958,7 +965,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     const id = ++checkId.current;
     const llmOn = llm.check.state === 'ok', rules = rulesOk();
     planRules.current = { id, count, rules: [], base: null, llm: llmOn };
-    setPlan({ id, time: view.time, count, variants: [], progress: rules ? 'варианты по правилам…' : 'подготовка…', done: false });
+    setPlan({ id, ...planAtNow()!, count, variants: [], progress: rules ? 'варианты по правилам…' : 'подготовка…', done: false });
     setPlanOpen(0);
     setAdvOpen(true); setAdvMin(false);
     if (rules) send({ kind: 'plan-rules', id, count, hq: post.issuer });
@@ -1005,6 +1012,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const applyPlan = async (idx: number, only: boolean, edit = false): Promise<string> => {
     const v = planLive.current?.variants[idx];
     if (!v) return 'Такого варианта нет.';
+    // вариант составлен для другого хода, линии игры или пункта — не принимается (иначе снял бы чужие директивы и отдал свои не от того штаба)
+    const at = planAtNow(), why = at ? planStaleWhy(planLive.current!, at) : null;
+    if (why) { const t = `Вариант не принят: ${why}.`; setNotice(t); return t; }
     // пункт ниже Ставки: решение — его штаба
     const putDecision = (x: HumanDecision) => {
       if (lowPost()) setPostDecisions((m) => ({ ...m, [post.issuer!]: x })); else setDecision(x);
@@ -1272,7 +1282,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const lastAdvice = [...adv].reverse().find((x) => x.result?.ok);
   staff.current = {
     view, busy: view ? progress : null, setTab, setSub, subsOk, goTo: (at) => goTo(at), select: setSel,
-    plan, planN, askPlan, stopAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); },
+    plan, planAt: planAtNow(), planN, askPlan, stopAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); },
     openVariant: (i) => { setPlanOpen(i); setAdvOpen(true); setAdvMin(false); }, applyPlan,
     advisorText: advQ, setAdvisorText: setAdvQ,
     advisorBusy: adv.some((m) => !m.result), askAdvisor: (q) => askAdvisor('situation', 'свободный вопрос', q),
@@ -1311,7 +1321,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     drafts, setDraft: staff.current.setDraft, subsOk,
     advisor: { open: advOpen, min: advMin }, setAdvisor: (o, mn) => { setAdvOpen(o); setAdvMin(mn); if (!mn) setAdvSeen(adv.length); },
     clearAdvisor: () => { send({ kind: 'advise-stop' }); send({ kind: 'plan-stop' }); setAdv([]); setPlan(null); }, talk: adv.length,
-    setPlanN, plan, planOpen, setPlanOpen, takeSuggestion,
+    setPlanN, plan, planAt: planAtNow(), planOpen, setPlanOpen, takeSuggestion,
     suggestion: (msg, i) => adv.find((x) => x.id === msg)?.result?.suggestions[i] ?? null,
     hasAct: (k) => acts.some((a) => a.key === k), acts, dropAct,
     addAct: async (a) => { if (!a.action) return false; const ok = await addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {}); if (ok) setNotice(`В распоряжение: ${a.label} — ${a.text}`); return ok; },
@@ -1465,7 +1475,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       {advOpen && view && !advMin && <Advisor resize={{ width: advW, setWidth: setAdvW, reset: resetAdvW }} llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
         dyn={advDyn} focus={focus}
         drafted={(f) => (staffsOn(view) ? cmds.some((c) => c.op === 'directive' && c.directive.to === f) : !!drafts[f])} postName={staffsOn(view) && post.issuer ? view.command?.hqs[post.issuer]?.name : undefined}
-        plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i, e) => void acceptByButton(v, i, e)}
+        plan={plan} planStale={plan ? planStaleKind(plan, planAtNow()!) : null} planN={planN} acceptPlan={(v, i, e) => void acceptByButton(v, i, e)}
         planOpen={planOpen}
         hasAct={(k) => acts.some((a) => a.key === k)} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} ctl={reviewCtl} /></div>}
@@ -1776,7 +1786,7 @@ function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, foc
   /** Пункт управления: советник думает за этот штаб. */
   postName?: string;
   llm: Llm; msgs: AdvMsg[]; text: string; setText: (s: string) => void; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
-  plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number, edit?: boolean) => void;
+  plan: PlanState | null; planStale: PlanStale; planN: number; acceptPlan: (v: PlanVariantView, i: number, edit?: boolean) => void;
   planOpen: number | null; hasAct: (key: string) => boolean;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
@@ -1913,14 +1923,20 @@ function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, foc
 }
 
 /** Варианты решения от советника: карточки по мере генерации; принять целиком, только решение или отдельные приказы и распоряжения. */
+type PlanStale = ReturnType<typeof planStaleKind>;
+const STALE_TEXT: Record<NonNullable<PlanStale>, string> = {
+  time: 'Ход сменился — эти варианты составлены для прошлой обстановки',
+  line: 'Линия игры сменилась (возврат к ходу или переход на ветвь) — эти варианты составлены для прежней линии',
+  post: 'Пункт управления сменился — эти варианты составлены для другого пункта',
+};
 function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
-  plan: PlanState; stale: boolean; open: number | null; accept: (v: PlanVariantView, i: number, edit?: boolean) => void; drafted: (f: string) => boolean; hasAct: (key: string) => boolean;
+  plan: PlanState; stale: PlanStale; open: number | null; accept: (v: PlanVariantView, i: number, edit?: boolean) => void; drafted: (f: string) => boolean; hasAct: (key: string) => boolean;
 }) {
   const D: [Exclude<keyof HumanDecision, 'petition'>, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
   return (
     <div className="adv-msg plan" data-hl="plan">
       <div className="adv-q"><small>Решение › Варианты решения на ход · {ddmm(plan.time)} {hhmm(plan.time)}</small>Предложите {plan.count === 1 ? 'вариант' : `${plan.count} варианта`} решения на ход</div>
-      {stale && <div className="adv-warn">Ход сменился — эти варианты составлены для прошлой обстановки; принять их нельзя. <StaffButton className="link" action="command.variants" params={{ count: plan.count }}>предложить заново</StaffButton></div>}
+      {stale && <div className="adv-warn">{STALE_TEXT[stale]}; принять их нельзя. <StaffButton className="link" action="command.variants" params={{ count: plan.count }}>предложить заново</StaffButton></div>}
       {plan.warning && <div className="adv-warn">⚠ {plan.warning}</div>}
       {plan.variants.map((v, i) => v && (
         <div key={i} className={`plan-var${plan.accepted === i ? ' on' : ''}`} data-hl={`variant-${i + 1}`}>

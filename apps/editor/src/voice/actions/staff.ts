@@ -44,7 +44,25 @@ export interface OrderDraft { formation: string; task: Task; target: Target; tar
 /** Распоряжение в проекте (тыл, переправа, резерв, полоса): ключ, действие, подпись и что сказала проверка. */
 export interface StaffAct { key: string; action: StaffAction; label: string; text: string; at?: LngLat; from?: LngLat }
 /** Варианты решения на ход от советника (на ход time): по мере генерации, затем итог. */
-export interface PlanState { id: number; time: string; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
+export interface PlanState { id: number; time: string; /** Пункт управления, уровень и линия игры, для которых составлены варианты (нет — Ставка, первая линия). */ issuer?: string | null; level?: string | null; epoch?: number; count: number; variants: PlanVariantView[]; progress: string; done: boolean; error?: string; warning?: string; seconds?: number; model?: string; accepted?: number }
+/** Где сейчас игра: ход, пункт управления, уровень, линия (возврат к ходу и переход на ветвь — новая). */
+export interface PlanAt { time: string; issuer?: string | null; level?: string | null; epoch?: number }
+/** Почему варианты советника уже не годятся здесь (другой ход, линия игры, пункт или уровень); годятся — null. */
+export function planStaleKind(p: PlanState, at: PlanAt): 'time' | 'line' | 'post' | null {
+  if (p.time !== at.time) return 'time';
+  if ((p.epoch ?? 0) !== (at.epoch ?? 0)) return 'line';
+  if ((p.issuer ?? null) !== (at.issuer ?? null) || (p.level ?? null) !== (at.level ?? null)) return 'post';
+  return null;
+}
+const STALE_WHY = { time: 'для прошлого хода', line: 'на другой линии игры (до возврата к ходу или перехода на ветвь)', post: 'для другого пункта управления' } as const;
+export function planStaleWhy(p: PlanState, at: PlanAt): string | null {
+  const k = planStaleKind(p, at);
+  return k ? `варианты составлены ${STALE_WHY[k]}. Попросите новые: «Штаб, дай три варианта»` : null;
+}
+/** Выбор точек на карте после смены пункта управления: пункт или уровень сменились — выбор снимается. */
+export function pickOnPost<P>(pick: P | null, was: { issuer: string | null; level: string }, now: { issuer: string | null; level: string }): P | null {
+  return was.issuer !== now.issuer || was.level !== now.level ? null : pick;
+}
 export type Suggestion = AdviceView['suggestions'][number];
 export type OrdersSub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Полоса, намечаемая между двумя армиями: фронт, армии, точки линии. */
@@ -64,6 +82,8 @@ export interface StaffDeps {
   goTo(at: LngLat): void;
   // советник
   plan: PlanState | null;
+  /** Где сейчас игра (ход, пункт, уровень, линия): варианты для другого — устарели. Нет — сверяется только ход. */
+  planAt?: PlanAt;
   /** Сколько вариантов просить по умолчанию. */
   planN: number;
   /** Попросить варианты (советник открывается); возвращает номер запроса. */
@@ -524,7 +544,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     const r = planHas(); if (r !== true) return r;
     const p = get().plan!;
     if (!p.done) return 'советник ещё готовит варианты — подождите';
-    return p.time !== view().time ? 'варианты составлены для прошлого хода. Попросите новые: «Штаб, дай три варианта»' : true;
+    return planStaleWhy(p, get().planAt ?? { time: view().time }) ?? true;
   };
   const variant = (n: unknown): { v: PlanVariantView; i: number } | string => {
     const vs = get().plan!.variants;
