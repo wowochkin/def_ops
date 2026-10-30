@@ -67,7 +67,7 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
             <p className="expo-kicker">Берлинская операция · 1945</p>
             <h1>Примите командование</h1>
             <p>Выберите фронт и пройдите три перелома операции.</p>
-            {controls && <button onClick={() => send({ t: 'touch' })}>Коснитесь, чтобы принять командование</button>}
+            {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Коснитесь, чтобы принять командование</button>}
           </section>
         )}
         {p.kind === 'welcome' && (
@@ -93,7 +93,7 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
             <h1>Ввод в обстановку</h1>
             <h2>{state.front && FRONT_NAMES[state.front]}</h2>
             <p>Здесь появится карта операции и задача фронта.</p>
-            {controls && <button onClick={() => send({ t: 'next' })}>К решениям</button>}
+            {controls && <button className="expo-primary" onClick={() => send({ t: 'next' })}>К решениям</button>}
           </section>
         )}
         {p.kind === 'turn' && (
@@ -161,7 +161,7 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
           <section className="expo-wide">
             <h1>Сеанс завершён</h1>
             <p>Три перелома пройдены. Расчёт итогов появится после подключения модели.</p>
-            {controls && <button onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
+            {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
           </section>
         )}
       </div>
@@ -177,8 +177,7 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
           </button>
         )}
         {notice && <span role="status">{notice}</span>}
-        <span>Каркас выставочного режима · сцены без расчёта операции</span>
-        {controls && p.kind !== 'startup' && (
+        {controls && p.kind !== 'startup' && p.kind !== 'attract' && (
           <button className="expo-secondary" disabled={state.paused} onClick={() => send({ t: 'restart' })}>
             Начать заново
           </button>

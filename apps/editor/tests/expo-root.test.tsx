@@ -80,3 +80,8 @@ it('keys ignored outside profile and active keyboard profile chooses', () => {
   fireEvent.keyDown(document, { key: '2' });
   expect(events).toEqual([{ t: 'choose', card: 1 }]);
 });
+it('visitor footer has no service captions', () => {
+  const state = step(initialState(0), { t: 'jump', phase: 'turn' }, EXPO_DEFAULTS).state;
+  const view = render(<ExpoView window={0} state={state} settings={EXPO_DEFAULTS} count={1} send={() => {}} />);
+  expect(view.queryByText(/Каркас выставочного режима/)).toBeNull();
+});

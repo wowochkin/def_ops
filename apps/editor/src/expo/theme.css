@@ -1,0 +1,20 @@
+/* Тема выставочного стенда: цвета, шрифты, кегль (80″ с 2–4 м — текст не меньше 32 px). */
+:root {
+  --expo-bg: #0f1a18;
+  --expo-panel: #16231f;
+  --expo-line: #3a4a44;
+  --expo-text: #eee8d8;
+  --expo-muted: #b9b6a6;
+  --expo-gold: #f2c14e;
+  --expo-alarm: #7a1f1a;
+  --expo-own: #c4382c;
+  --expo-enemy: #3d6fb6;
+  --expo-ok: #2f9e55;
+  --expo-wait: #c9a227;
+  --expo-fail: #c4382c;
+  --expo-serif: 'PT Serif', serif;
+  --expo-sans: 'PT Sans Narrow', sans-serif;
+  --expo-mono: 'PT Mono', monospace;
+  --expo-text-min: 32px;
+  --expo-text-small: 28px;
+}

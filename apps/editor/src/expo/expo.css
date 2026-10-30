@@ -1,26 +1,29 @@
-/* Выставочный режим: окна стенда, меню оператора, экраны подготовки и номеров экранов. */
+/* Выставочный режим: окна стенда, меню оператора, экраны подготовки и номеров экранов. Цвета и шрифты — theme.css. */
+@import './theme.css';
+
 html.expo-active,
 .expo-active body {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  background: var(--expo-bg);
 }
 .expo-active {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
 }
+
+/* Окно посетителя */
 .expo {
   height: 100dvh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background: #121c1d;
-  color: #eee8d8;
-  font:
-    24px 'PT Sans Narrow',
-    sans-serif;
-  padding: 28px 40px;
+  background: radial-gradient(ellipse at 30% 20%, #18302a 0%, var(--expo-bg) 70%);
+  color: var(--expo-text);
+  font: var(--expo-text-min) / 1.35 var(--expo-sans);
+  padding: 28px 48px;
 }
 .expo-header,
 .expo-footer {
@@ -31,14 +34,22 @@ html.expo-active,
 }
 .expo-header {
   background: transparent;
-  border-bottom: 1px solid #57615c;
-  padding-bottom: 18px;
-  color: #c4c5b4;
+  border-bottom: 1px solid var(--expo-line);
+  padding-bottom: 16px;
+  color: var(--expo-muted);
+  font-size: var(--expo-text-small);
+}
+.expo-header > span:nth-child(2) {
+  font-family: var(--expo-serif);
+  color: var(--expo-text);
 }
 .expo-footer {
-  border-top: 1px solid #57615c;
+  border-top: 1px solid var(--expo-line);
   padding-top: 16px;
-  font-size: 18px;
+  font-size: var(--expo-text-small);
+}
+.expo-footer > button:last-child {
+  margin-left: auto;
 }
 .expo-content {
   flex: 1;
@@ -46,48 +57,47 @@ html.expo-active,
   overflow: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
 }
 .expo-wide {
   text-align: center;
-  padding: 30px 0;
+  padding: 24px 0;
 }
 .expo h1 {
-  font:
-    normal 64px 'PT Serif',
-    serif;
-  color: #eee8d8;
-  margin: 20px 0 28px;
+  font: normal 80px / 1.1 var(--expo-serif);
+  color: var(--expo-text);
+  margin: 16px 0 24px;
 }
 .expo h2 {
-  color: #eee8d8;
-  font-size: 32px;
+  font: normal 48px / 1.15 var(--expo-serif);
+  color: var(--expo-text);
   margin: 0 0 16px;
 }
 .expo p {
-  line-height: 1.4;
+  margin: 0 0 16px;
 }
 .expo-kicker {
   text-transform: uppercase;
-  letter-spacing: 3px;
-  color: #ceb77a;
+  letter-spacing: 4px;
+  color: var(--expo-gold);
+  font-size: var(--expo-text-small);
 }
 .expo button {
   min-height: var(--expo-target, 96px);
-  padding: 16px 24px;
-  border: 1px solid #8f987f;
-  border-radius: 4px;
-  background: #354139;
-  color: #fff4d6;
+  padding: 16px 28px;
+  border: 1px solid var(--expo-line);
+  border-radius: 6px;
+  background: var(--expo-panel);
+  color: var(--expo-text);
   font: inherit;
   cursor: pointer;
   white-space: normal;
 }
 .expo button:hover {
-  background: #48553f;
+  background: #213530;
 }
 .expo button:focus-visible {
-  outline: 3px solid #edd28a;
+  outline: 3px solid var(--expo-gold);
   outline-offset: 4px;
 }
 .expo button:disabled {
@@ -96,11 +106,26 @@ html.expo-active,
 }
 .expo button.expo-secondary {
   background: transparent;
-  font-size: 19px;
+  font-size: var(--expo-text-small);
+}
+.expo button[aria-pressed='true'] {
+  border-color: var(--expo-gold);
+  box-shadow: inset 0 0 0 2px var(--expo-gold);
+}
+.expo button.expo-primary,
+.expo-operator button.expo-primary {
+  background: var(--expo-gold);
+  border-color: var(--expo-gold);
+  color: #1d1a12;
+  font-weight: 700;
+}
+.expo button.expo-primary:hover,
+.expo-operator button.expo-primary:hover {
+  background: #ffd469;
 }
 .expo-cards {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   justify-content: center;
 }
 .expo-cards > * {
@@ -116,9 +141,12 @@ html.expo-active,
 .expo-cards button span {
   display: block;
 }
+.expo-cards button strong {
+  font: 40px var(--expo-serif);
+}
 .expo-cards button span {
   margin-top: 12px;
-  color: #cccbb9;
+  color: var(--expo-muted);
 }
 .expo-roles {
   display: grid;
@@ -128,29 +156,45 @@ html.expo-active,
   grid-template-columns: 1fr 1fr;
 }
 .expo-map {
-  grid-column: 1/-1;
-  padding: 24px;
-  border: 1px solid #57615c;
-  background: linear-gradient(125deg, #24342e, #162624);
+  position: relative;
+  grid-column: 1 / -1;
+  padding: 24px 28px;
+  border: 1px solid var(--expo-line);
+  border-radius: 8px;
+  background: linear-gradient(125deg, #1d332c, #12211d);
 }
 .expo-side {
-  padding: 20px;
-  border-left: 3px solid #8e8260;
+  padding: 8px 24px;
+  border-left: 4px solid var(--expo-gold);
 }
 .expo-side p {
-  margin: 12px 0;
+  color: var(--expo-muted);
 }
 .expo-timer {
-  font-size: 52px;
+  font: 120px / 1 var(--expo-mono);
   font-variant-numeric: tabular-nums;
-  color: #ead497;
-  margin: 12px 0;
+  color: var(--expo-gold);
+  margin: 8px 0 20px;
+}
+.expo-map .expo-timer {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  margin: 0;
+}
+.expo-single .expo-side h2 {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+.expo-single .expo-side p {
+  margin: 0;
 }
 .expo-timer.urgent {
-  color: #ff9e8e;
+  color: var(--expo-own);
 }
 .expo-status {
   min-height: 120px;
+  color: var(--expo-muted);
 }
 @media (max-width: 800px) {
   .expo {
@@ -167,97 +211,20 @@ html.expo-active,
     padding: 12px;
   }
 }
-.expo button[aria-pressed='true'] {
-  border-color: #ead497;
-}
-.expo-modal {
+
+/* Подготовка, номера экранов, ошибка запуска */
+.expo-startup {
   position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: #07100de6;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px;
-  font:
-    20px 'PT Sans Narrow',
-    sans-serif;
-  color: #eee8d8;
+  inset: 110px 48px 150px;
+  background: var(--expo-bg);
+  color: var(--expo-text);
+  text-align: center;
+  padding: 50px;
+  font: var(--expo-text-min) var(--expo-sans);
 }
-.expo-operator {
-  width: min(100%, 1000px);
-  max-height: 90dvh;
-  overflow: auto;
-  background: #1b2926;
-  border: 1px solid #8f987f;
-  padding: 28px;
-  border-radius: 6px;
-  font-size: 18px;
-}
-.expo-operator header {
-  background: transparent;
-  color: #c4c5b4;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.expo-operator h2 {
-  color: #eee8d8;
-  margin: 0;
-}
-.expo-operator input,
-.expo-operator select {
-  color: #eee8d8;
-  background: #101c19;
-  border: 1px solid #677365;
-  padding: 7px;
-  font: inherit;
-  min-width: 0;
-}
-.expo-operator label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.expo-operator label.expo-check {
-  flex-direction: row;
-  align-items: center;
-}
-.expo-settings {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 24px;
-}
-.expo-operator button {
-  color: #eee8d8;
-  background: #354139;
-  border: 1px solid #8f987f;
-  padding: 14px 20px;
-  min-height: 54px;
-  font: inherit;
-  cursor: pointer;
-}
-.expo-operator-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
-}
-.expo-operator form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 400px;
-}
-.expo-error {
-  position: fixed;
-  top: 70px;
-  left: 40px;
-  z-index: 20;
-  background: #642c26;
-  padding: 16px;
-  color: white;
+.expo-startup h1 {
+  font: 64px var(--expo-serif);
+  color: var(--expo-text);
 }
 .expo-identify {
   position: fixed;
@@ -267,26 +234,280 @@ html.expo-active,
   place-content: center;
   text-align: center;
   background: #10241df5;
-  color: #fff5ca;
-  font:
-    64px 'PT Sans Narrow',
-    sans-serif;
+  border: 2px solid var(--expo-gold);
+  color: var(--expo-text);
+  font: 64px var(--expo-sans);
   pointer-events: none;
 }
-.expo-startup {
-  position: fixed;
-  inset: 110px 40px 150px;
-  background: #121c1d;
-  color: #eee8d8;
-  text-align: center;
-  padding: 50px;
-  font:
-    28px 'PT Sans Narrow',
-    sans-serif;
+.expo-identify strong {
+  font: 160px var(--expo-serif);
+  color: var(--expo-gold);
 }
-.expo-startup h1 {
-  font:
-    48px 'PT Serif',
-    serif;
-  color: #eee8d8;
+.expo-error {
+  position: fixed;
+  top: 70px;
+  left: 48px;
+  z-index: 20;
+  background: var(--expo-alarm);
+  padding: 16px;
+  color: #fff4ec;
+}
+
+/* Меню оператора */
+.expo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #07100de6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+.expo-operator {
+  width: min(100%, 1100px);
+  max-height: 92dvh;
+  box-sizing: border-box;
+  overflow: auto;
+  background: var(--expo-panel);
+  border: 1px solid var(--expo-line);
+  border-radius: 8px;
+  padding: 24px 28px;
+  color: var(--expo-text);
+  font: 19px / 1.35 var(--expo-sans);
+}
+.expo-operator header {
+  background: transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.expo-operator h2 {
+  margin: 0;
+  font: 30px var(--expo-serif);
+  color: var(--expo-text);
+}
+.expo-operator button {
+  min-height: 52px;
+  padding: 12px 20px;
+  border: 1px solid var(--expo-line);
+  border-radius: 6px;
+  background: #22342e;
+  color: var(--expo-text);
+  font: inherit;
+  cursor: pointer;
+}
+.expo-operator button:hover:not(:disabled) {
+  background: #2b423a;
+}
+.expo-operator button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.expo-operator button.expo-danger {
+  background: var(--expo-alarm);
+  border-color: #a3392f;
+  color: #fff4ec;
+}
+.expo-operator input,
+.expo-operator select {
+  color: var(--expo-text);
+  background: #0f1a17;
+  border: 1px solid var(--expo-line);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+  min-width: 0;
+}
+.expo-operator input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--expo-gold);
+}
+.expo-operator input[type='range'] {
+  accent-color: var(--expo-gold);
+  padding: 0;
+}
+.expo-operator label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--expo-muted);
+}
+.expo-operator label.expo-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  color: var(--expo-text);
+}
+.expo-phase {
+  margin: 0 0 14px;
+  font: 22px var(--expo-serif);
+  color: var(--expo-muted);
+}
+.expo-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 32px;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--expo-line);
+  border-radius: 8px;
+  margin-bottom: 18px;
+  background: #121e1b;
+}
+.expo-summary ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
+}
+.expo-summary li::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: var(--expo-muted);
+}
+.expo-summary li[data-state='ok']::before {
+  background: var(--expo-ok);
+}
+.expo-summary li[data-state='wait']::before {
+  background: var(--expo-wait);
+}
+.expo-summary li[data-state='fail']::before {
+  background: var(--expo-fail);
+}
+.expo-summary dl {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+  text-align: center;
+}
+.expo-summary dd {
+  margin: 0;
+  font: 34px var(--expo-mono);
+  color: var(--expo-gold);
+}
+.expo-summary dt {
+  font-size: 15px;
+  color: var(--expo-muted);
+}
+.expo-note {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  color: var(--expo-wait);
+}
+.expo-operator-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.expo-operator-actions .expo-danger {
+  margin-left: auto;
+}
+.expo-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--expo-line);
+  margin: 22px 0 18px;
+}
+.expo-operator .expo-tabs button {
+  min-height: 48px;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: var(--expo-muted);
+}
+.expo-operator .expo-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--expo-gold);
+  color: var(--expo-gold);
+}
+.expo-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 28px;
+  align-items: start;
+}
+.expo-operator fieldset {
+  grid-column: 1 / -1;
+  border: 1px solid var(--expo-line);
+  border-radius: 6px;
+  padding: 10px 14px 14px;
+  margin: 0;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.expo-operator legend {
+  color: var(--expo-muted);
+  padding: 0 6px;
+}
+.expo-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--expo-muted);
+}
+.expo-stepper > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.expo-stepper output {
+  min-width: 72px;
+  text-align: center;
+  font: 26px var(--expo-mono);
+  color: var(--expo-text);
+}
+.expo-operator .expo-stepper button {
+  width: 52px;
+  padding: 0;
+  font-size: 26px;
+}
+.expo-monitors {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-left: 28px;
+  display: grid;
+  gap: 8px;
+}
+.expo-monitors li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.expo-monitors li span {
+  flex: 1;
+}
+.expo-muted {
+  color: var(--expo-muted);
+}
+.expo-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 32px 0 16px;
+}
+.expo-operator .expo-pin label {
+  align-items: center;
+}
+.expo-pin input {
+  font: 34px var(--expo-mono);
+  text-align: center;
+  letter-spacing: 8px;
+  width: 260px;
+}
+.expo-operator [role='alert'] {
+  color: #ff9e8e;
+  text-align: center;
 }
