@@ -12,7 +12,7 @@ import { recipients } from './command-post';
 const km = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * 111.32 * Math.cos(((a[1] + b[1]) / 2) * Math.PI / 180), (a[1] - b[1]) * 110.57);
 
 /** Предки (по подчинённости своих штабов и докладов). */
-function ancestry(v: TurnView, id: string): string[] {
+export function ancestry(v: TurnView, id: string): string[] {
   const hqs = v.command?.hqs ?? {};
   const out: string[] = [];
   for (let x = hqs[id]?.parent ?? v.own.find((u) => u.id === id)?.parent ?? null, n = 0; x && n < 8; x = hqs[x]?.parent ?? null, n++) out.push(x);
@@ -47,7 +47,7 @@ function aggregate(id: string, name: string, echelon: string, parent: string | n
     id, name, parent, echelon: echelon as UnitReport['echelon'], status: 'active', at: [w((u) => u.at[0]), w((u) => u.at[1])], place: most((u) => u.place) ?? '',
     posture: most((u) => u.posture) ?? '', task, target: task ? most((u) => (u.task === task ? u.target : null)) : null, orderSource: most((u) => u.orderSource),
     personnel: Math.round(P), tanks: l.reduce((s, u) => s + u.tanks, 0), guns: l.reduce((s, u) => s + u.guns, 0),
-    strength: w((u) => u.strength), manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
+    strength: g.strength, manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
     cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
   };
 }

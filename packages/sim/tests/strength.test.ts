@@ -4,7 +4,7 @@ import { compareStrength, runScenario, type History, type StrengthCheckpoint } f
 import { evaluateRules } from '../src/calibrate';
 import { analyze, reportMarkdown } from '../src/report';
 import { establishmentOf } from '../src/establishment';
-import { hqReports, unitReports } from '../src/reports';
+import { groupManning, hqReports, unitReports } from '../src/reports';
 import type { Formation, FormationDef, SimState } from '../src/types';
 import type { SimContext } from '../src/step';
 import rows from '../data/rules/establishment.json';
@@ -113,6 +113,7 @@ describe('укомплектованность: от штата и от нача
   it('штат по виду соединения: у каждой строки — источник; неизвестный вид — null', () => {
     for (const r of rows.rows) { expect(r.source).not.toBe(''); expect(r.personnel).toBeGreaterThan(0); }
     const sd = establishmentOf('su', 'sd');
+    expect(sd!.personnel).toBe(11706);
     expect(sd!.personnel).toBeGreaterThanOrEqual(11000);
     expect(sd!.personnel).toBeLessThanOrEqual(12500);
     expect(establishmentOf('su', 'нет такого')).toBeNull();
@@ -135,6 +136,17 @@ describe('укомплектованность: от штата и от нача
     const [h] = hqReports(ctx, own, 'su');
     const sd = establishmentOf('su', 'sd')!.personnel;
     expect(h.manning).toBeCloseTo(10000 / (2 * sd), 4);
+    // армия из стрелковой дивизии и танкового корпуса: от штата — только дивизия со штатом
+    const { ctx: c1, state: s1 } = ctxWith([{ staffKind: 'sd', personnel: 4920, initial: 5000 }, { staffKind: 'tk', personnel: 9000, initial: 10000 }]);
+    const o1 = unitReports(c1, s1, 'su', null);
+    const [h1] = hqReports(c1, o1, 'su');
+    expect(h1.manning).toBeCloseTo(4920 / sd, 4);
+    expect(h1.strength).toBeCloseTo(13920 / 15000, 4);
+    // смешанный список (доклад штаба и его дивизии, с повтором) — как одни дивизии
+    const alone = groupManning(o1);
+    expect(groupManning([h1, ...o1, o1[0]])).toEqual(alone);
+    // список одних докладов штабов — по их штатам: люди со штатом = manning × establishment
+    expect(groupManning([h1]).manning).toBeCloseTo(4920 / sd, 4);
     // без единого штата — null
     const { ctx: c2, state: s2 } = ctxWith([{ staffKind: 'tk', personnel: 9000, initial: 9000 }]);
     expect(hqReports(c2, unitReports(c2, s2, 'su', null), 'su')[0].manning).toBeNull();

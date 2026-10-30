@@ -28,7 +28,7 @@ import { IntelPanel, useEsc } from './FormationCard';
 import { AgentMark } from './AgentCard';
 import { Staffs, staffsOn, useStaffActions } from './CommandStaffs';
 import { CommandPost, PostBar, usePost, type PostState } from './CommandPost';
-import { divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
+import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, postReports, postReserves } from './post-views';
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
@@ -468,9 +468,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
   /** Показать доклад своего объединения: выбрать его; если открыта не «Доклады» и не «Приказы → Войска» — открыть «Доклады». */
   const showUnit = (id: string, fly = true) => {
-    // карточка штаба (не дивизии): карта переезжает к его войскам
+    // карточка штаба (не дивизии): карта переезжает к его войскам; подчинённый пункта — без смены пункта и уровня
     const ech = view?.command?.hqs[id]?.echelon ?? view?.own.find((u) => u.id === id)?.echelon;
-    if (fly && ech && ech !== 'division' && staffsOn(view)) tap('map.hq', { name: id });
+    const keep = !!view && !!post.issuer && ancestry(view, id).includes(post.issuer);
+    if (fly && ech && ech !== 'division' && staffsOn(view)) tap('map.hq', { name: id, ...(keep ? { keep: true } : {}) });
     setSel(id); setIntelSel(null);
     const tb = liveTab.current;
     if (tb.tab === 'orders' && tb.sub !== 'units') setSub('units');
@@ -569,10 +570,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     showAt(en, at, zoomIn ? Math.max(z, 9) : z);
   };
   useAction({
-    id: 'map.hq', section: 'replay', title: 'Показать штаб на карте', describe: 'Карта плавно переезжает к войскам штаба (фронта, армии, корпуса) на масштабе его ступени; уровень карты переключается вместе с ним. Только в игре.',
-    params: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] }, say: ['штаб, покажи восьмую гвардейскую армию на карте'],
+    id: 'map.hq', section: 'replay', title: 'Показать штаб на карте', describe: 'Карта плавно переезжает к войскам штаба (фронта, армии, корпуса) на масштабе его ступени; штаб становится пунктом управления, уровень карты переключается вместе с ним. keep — только переезд карты, пункт и уровень прежние (карточка подчинённого). Только в игре.',
+    params: { type: 'object', properties: { name: { type: 'string' }, keep: { type: 'boolean', description: 'true — не менять пункт и уровень' } }, required: ['name'] }, say: ['штаб, покажи восьмую гвардейскую армию на карте'],
     available: () => (view?.command ? true : 'штабы на карте — в игре на агентной модели'), highlight: () => hl('post-bar'),
-    run: async (p: { name: string }) => {
+    run: async (p: { name: string; keep?: boolean }) => {
       const hqs = view!.command!.hqs;
       const id = findHq(hqs, String(p?.name ?? ''));
       if (!id) return 'Такого штаба нет.';
@@ -580,7 +581,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       const at = hqCenter(view!, id);
       const text = at ? '' : `${hqs[id].name}: у штаба нет войск на карте`;
       if (!at) { setNotice(text); return text; }
-      const lv = ECHELON_LEVEL[hqs[id].echelon] ?? level;
+      if (p?.keep) { if (en) flyToHq(en, at, level); return `Карта: ${hqs[id].name}.`; }
+      // штаб — пунктом своей ступени (список пунктов, «Штабы»); не отдаёт приказов — только уровень карты
+      const lv = post.choose(id) ?? ECHELON_LEVEL[hqs[id].echelon] ?? level;
       setLevel(lv);
       if (en) flyToHq(en, at, lv);
       return `Карта: ${hqs[id].name}.`;
@@ -1073,7 +1076,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки', 
     <div className={`ucard${open ? ' open' : ''}${u.status !== 'active' ? ' dim' : ''}`} data-hl={`unit-${u.id}`}>
       <button className="ucard-h" data-action="command.unit.show" onClick={onToggle}>
         <span className="ucard-n">{short(u.name)}</span>
-        <span className="ucard-bars"><Bar v={u.manning ?? u.strength} label={`укомплектованность ${manningText(u)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
+        <span className="ucard-bars"><Bar v={u.strength} label={`укомплектованность ${manningText(u)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
         <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв ${topGen}, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
         {chips.length > 0 && <span className="ucard-chips">{chips.map(([c, t]) => <i key={t} className={c}>{t}</i>)}</span>}
       </button>

@@ -186,19 +186,24 @@ const manningOf = (personnel: number, e: number | undefined): Pick<UnitReport, '
   e ? { manning: personnel / e, establishment: e } : { manning: null, establishment: null };
 
 /**
- * Укомплектованность группы по людям, а не среднее долей: от начала операции — сумма людей / сумма людей на начало
- * (personnel / strength), от штата — люди соединений со штатом / сумма их штатов (нет штата ни у кого — null).
- * Без суммы штатов (доклад без establishment) штат соединения — personnel / manning.
+ * Укомплектованность группы по людям, а не среднее долей (одно определение для докладов штабов, сводок и голоса).
+ * От начала операции — сумма людей / сумма людей на начало (personnel / strength); от штата — люди соединений со
+ * штатом / сумма их штатов (нет штата ни у кого — null). Считается по дивизиям: есть в списке дивизии — доклады штабов
+ * не учитываются (их люди — те же дивизии), повторы по id — один раз. Список без дивизий (доклады объединений) —
+ * по докладам: люди со штатом — manning × establishment; без establishment штат — personnel / manning.
  */
-export function groupManning(l: (Pick<UnitReport, 'personnel' | 'strength' | 'manning'> & { establishment?: number | null })[]): { strength: number; manning: number | null; establishment: number | null } {
+export function groupManning(l: (Pick<UnitReport, 'personnel' | 'strength' | 'manning'> & { id?: string; echelon?: string; establishment?: number | null })[]): { strength: number; manning: number | null; establishment: number | null } {
+  const divs = l.some((u) => u.echelon === 'division') ? l.filter((u) => u.echelon === 'division') : l;
+  const seen = new Set<string>();
+  const list = divs.filter((u) => !u.id || (!seen.has(u.id) && !!seen.add(u.id)));
   let P = 0, P0 = 0, Ps = 0, E = 0;
-  for (const u of l) {
+  for (const u of list) {
     P += u.personnel;
     P0 += u.strength > 0 ? u.personnel / u.strength : 0;
     const e = u.establishment ?? (u.manning ? u.personnel / u.manning : 0);
-    if (e > 0) { Ps += u.personnel; E += e; }
+    if (e > 0 && u.manning != null) { Ps += u.manning * e; E += e; }
   }
-  const strength = P0 > 0 ? P / P0 : l.length ? l.reduce((s, u) => s + u.strength, 0) / l.length : 1;
+  const strength = P0 > 0 ? P / P0 : list.length ? list.reduce((s, u) => s + u.strength, 0) / list.length : 1;
   return { strength, manning: E > 0 ? Ps / E : null, establishment: E > 0 ? Math.round(E) : null };
 }
 
@@ -342,9 +347,8 @@ export function orderDelay(ctx: SimContext, f: Pick<Formation, 'side' | 'echelon
 
 /**
  * Доклады армий и корпусов стороны по докладам их дивизий: в агентной модели действуют дивизии, а приказы удобно
- * отдавать и объединениям (ядро разошлёт приказ всем их дивизиям). Место — центр тяжести, силы — сумма, запасы и
- * укомплектованность от начала операции — средние по численности, от штата — по людям и штатам (groupManning),
- * положение и задача — у большинства людей.
+ * отдавать и объединениям (ядро разошлёт приказ всем их дивизиям). Место — центр тяжести, силы — сумма, запасы —
+ * средние по численности, укомплектованность — по людям (groupManning), положение и задача — у большинства людей.
  */
 export function hqReports(ctx: SimContext, own: UnitReport[], side: string): UnitReport[] {
   const parent = new Map(ctx.scenario.formations.map((f) => [f.id, f.parent ?? null]));
@@ -366,7 +370,7 @@ export function hqReports(ctx: SimContext, own: UnitReport[], side: string): Uni
       id: h.id, name: h.name, parent: h.parent ?? null, echelon: h.echelon, status: 'active', at, place: describePlace(ctx.theatre, at),
       posture: top(l, (u) => u.posture) ?? '', task, target: task ? top(l.filter((u) => u.task === task), (u) => u.target) : null,
       orderSource: top(l, (u) => u.orderSource), personnel: Math.round(P), tanks: l.reduce((s, u) => s + u.tanks, 0), guns: l.reduce((s, u) => s + u.guns, 0),
-      strength: w((u) => u.strength), manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
+      strength: g.strength, manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
       cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
     };
   }).filter((x): x is UnitReport => !!x);

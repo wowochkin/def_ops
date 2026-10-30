@@ -512,7 +512,7 @@ const parts = {
     await shot('journal-enemy.jpg');
     ok('umpire', `журнал — только видимое (показано ${check.shown}, скрыто ${check.hidden}, обнаружено разведкой ${check.intel})`);
   },
-  /** Укомплектованность в игре на агентной модели: «Доклады» пункта фронта — у армий «… % от штата, … % от начала операции», от штата заметно ниже; голос «доложи обстановку» — с «от штата». */
+  /** Укомплектованность в игре на агентной модели: «Доклады» пункта фронта — у армий «… % от штата, … % от начала операции», от штата заметно ниже; щелчок по карточке армии не меняет пункт; голос «доложи обстановку» — с «от штата». */
   async manning() {
     await page.goto(`${URL_}/`);
     await page.evaluate(() => localStorage.setItem('def_ops.agents.command', 'commanders'));
@@ -539,6 +539,20 @@ const parts = {
     if (+m[1] >= 90 || +m[1] >= +m[2] - 20) return fail('manning', `от штата ${m[1]} % не ниже заметно, чем от начала ${m[2]} %`);
     if (!/от штата/.test(kpi)) return fail('manning', `сводка без «от штата»: ${kpi.replace(/\s+/g, ' ')}`);
     ok('manning', `доклады — от штата и от начала (8 гв. А: ${m[1]} % от штата, ${m[2]} % от начала; сводка: ${kpi.replace(/\s+/g, ' ')})`);
+    // карточка 8 гв. А на пункте фронта: доклад раскрыт, карта едет к армии, пункт — прежний (1 БФ)
+    const c0 = await page.evaluate(() => window.__cmdEngine.getView().center);
+    await page.locator('.cmd-sec .ucard[data-hl="unit-su_8gva"] .ucard-h').click();
+    await page.waitForTimeout(2000);
+    const head = await page.locator('.cmd-sec h3').first().innerText();
+    const open = page.locator('.cmd-sec .ucard.open[data-hl="unit-su_8gva"]');
+    const opened = await open.count();
+    const sost = opened ? await open.innerText() : '';
+    const c1 = await page.evaluate(() => window.__cmdEngine.getView().center);
+    await shot('manning-card.jpg');
+    if (!/1-й Белорусский фронт/.test(head)) return fail('manning', `щелчок по карточке 8 гв. А сменил пункт: ${head}`);
+    if (!opened || !/Состав\s*\d+ % от штата, \d+ % от начала операции/.test(sost)) return fail('manning', `карточка 8 гв. А не раскрыта или без двух мерил: ${sost.replace(/\s+/g, ' ').slice(0, 160)}`);
+    if (c0[0] === c1[0] && c0[1] === c1[1]) return fail('manning', 'карточка 8 гв. А: карта не переехала');
+    ok('manning', `карточка 8 гв. А — пункт прежний (${head.split(' к ')[0]}), карта переехала, «Состав» — оба мерила`);
     const said = await at('command.report', {});
     if (!/от штата/.test(said)) return fail('manning', `голос без «от штата»: ${said.slice(0, 200)}`);
     ok('manning', `голос — от штата (${(/средняя укомплектованность[^;.]*/.exec(said) ?? [''])[0]})`);

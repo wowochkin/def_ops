@@ -160,7 +160,10 @@ export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimCont
     let values: number[] = [];
     try {
       if (m.kind === 'unmodelled') { out.push({ norm: n, values, mean: null, verdict: 'none', text: `не моделируется: ${m.why}` }); continue; }
-      if (m.kind === 'assumption') { const v = measureParam(ctxOf(paramScenario), m.expr, agents); if (!Number.isFinite(v)) { out.push({ norm: n, values: [], mean: null, verdict: 'none', text: `не включено в правилах: ${m.why}` }); continue; } out.push({ norm: n, values: [v], mean: v, verdict: 'assumed', text: `${fmt(v)} ${n.unit ?? ''} — ${m.why}` }); continue; }
+      if (m.kind === 'assumption') { const v = measureParam(ctxOf(paramScenario), m.expr, agents);
+        // штата нет — допущение без числа (мерило «от штата» не считается), а не «не моделируется»
+        if (!Number.isFinite(v) && m.expr.startsWith('establishment.')) { out.push({ norm: n, values: [], mean: null, verdict: 'assumed', text: `числа нет: ${m.why}` }); continue; }
+        if (!Number.isFinite(v)) { out.push({ norm: n, values: [], mean: null, verdict: 'none', text: `не включено в правилах: ${m.why}` }); continue; } out.push({ norm: n, values: [v], mean: v, verdict: 'assumed', text: `${fmt(v)} ${n.unit ?? ''} — ${m.why}` }); continue; }
       values = m.kind === 'pace' ? runsOf(m.scenario).map((r) => measurePace(ctxOf(m.scenario), r, m))
         : m.kind === 'loss' ? runsOf(m.scenario).map((r) => measureLoss(ctxOf(m.scenario), r, m))
         : m.kind === 'frontage' ? measureFrontage(ctxOf(m.scenario), m)

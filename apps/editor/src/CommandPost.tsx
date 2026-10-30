@@ -32,6 +32,8 @@ export interface PostState {
   addPoint(p: LngLat): void;
   /** Щелчок по знаку: штаб ступени — пункт, подчинённый — его проект; true — обработан. */
   click(id: string): boolean;
+  /** Выбрать штаб пунктом его ступени (без смены вкладки); ступень — или null, если штаб приказов не отдаёт. */
+  choose(id: string): LevelId | null;
 }
 
 const dm = (t?: string) => (t ? `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}` : '');
@@ -184,6 +186,14 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
       if (f === 'boundaryR') put({ ...d, boundaries: [[...d.boundaries[0], pt], d.boundaries[1]] });
       else if (f === 'boundaryL') put({ ...d, boundaries: [d.boundaries[0], [...d.boundaries[1], pt]] });
       else put({ ...d, [f]: [...d[f], pt] });
+    },
+    choose: (id) => {
+      if (!view || !on) return null;
+      const e = view.command?.hqs[id]?.echelon;
+      const lv = LEVELS.find((l) => issuers(view, l).some((x) => x.id === id) && (l !== 'division' || e !== 'corps'));
+      if (!lv) return null;
+      setChosen((c) => ({ ...c, [lv]: id })); setLevel(lv); setSel(null); setPick(null);
+      return lv;
     },
     click: (id) => {
       if (!on) return false;
