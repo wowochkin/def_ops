@@ -15,7 +15,7 @@ import {
   answer, chosenOf, decisionRibbon, MOTIVE_COLOR, MOTIVE_RU, moodWords, SUGGESTIONS, TRAIT_RU, viewAt, type Decision, type Snapshot,
 } from './commander-view';
 
-const sign = (x: number) => `${x >= 0 ? '+' : '−'}${Math.abs(x).toFixed(Math.abs(x) < 10 ? 1 : 0).replace('.', ',')}`;
+const sign = (x: number) => `${Math.round(x) >= 0 ? '+' : '−'}${fmtKm(Math.abs(x)).replace(/ км$/, '')}`;
 const dm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
 const when = (t: string) => `${dm(t)} ${t.slice(11, 16)}`;
 

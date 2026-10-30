@@ -7,6 +7,9 @@ describe('общий формат чисел карточек', () => {
     expect(fmtHours(-2)).toBe('0 ч');
     expect(fmtKm(12.6)).toBe('13 км');
     expect(fmtKm(1234.4)).toBe('1\u00a0234 км'); // тысячи — неразрывный пробел
+    expect(fmtKm(-12.6)).toBe('\u221213 км'); // минус — знак «−»
+    expect(fmtCount(-4920.6)).toBe('\u22124\u00a0921');
+    expect(fmtCount(-0.2)).toBe('0');
     expect(fmtFrac(0.5)).toBe('0,50');
     expect(fmtFrac(1)).toBe('1,00');
     expect(fmtCount(4920.6)).toBe('4\u00a0921');

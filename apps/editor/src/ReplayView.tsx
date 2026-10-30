@@ -454,7 +454,9 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   useEffect(() => {
     if (!cardSel) noFly.current = null;
     if (!cardSel || !eng || !agentRun) return;
-    if (noFly.current === cardSel) { noFly.current = null; return; }
+    const skip = noFly.current === cardSel;
+    noFly.current = null; // метка действует один запуск: повторный щелчок по той же карточке не должен «залипнуть»
+    if (skip) return;
     const ech = agentRun.trace.hqs.find((h) => h.id === cardSel)?.echelon;
     const lv = ech && ech !== 'division' ? ECHELON_LEVEL[ech] : undefined;
     if (!lv) return;

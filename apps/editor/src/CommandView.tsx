@@ -698,7 +698,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** Подвкладки «Приказов» с доступным на уровне действием (`true`) или причиной, почему их нет. */
   const subsOk = view ? ordersSubs(view, scopeNow()) : ALL_SUBS;
   // открытая подвкладка стала недоступной (сменили уровень) — назад в «Пункт управления»
-  useEffect(() => { if (subsOk[sub] !== true) setSub('units'); }, [sub, subsOk.rear, subsOk.bridges, subsOk.reserves, subsOk.bounds]);
+  useEffect(() => { if (subsOk[sub] !== true) { setSub('units'); setPickMode(null); } }, [sub, subsOk.rear, subsOk.bridges, subsOk.reserves, subsOk.bounds]);
   /** Решение на экране: штаба пункта (ниже Ставки) или верхней инстанции. */
   const curDecision = (): HumanDecision => (lowPost() ? postDecisions[post.issuer!] ?? EMPTY : decision);
   const setCur = (p: Partial<HumanDecision>) => {
@@ -1969,6 +1969,8 @@ function PostJournal({ v, issuer, record }: { v: TurnView; issuer: string; recor
           {d.received.length ? <ul>{d.received.map((x, k) => doc(x, k, true))}</ul> : <p className="muted">нет</p>}
           <div className="jsub">Обстановка</div>
           {d.events.length ? <ul>{d.events.map((o, i) => <li key={i}>{o}</li>)}</ul> : <p className="muted">существенных событий у войск штаба нет</p>}
+          {(d.enemy || v.enemyLog) && <><div className="jsub">Противник (по разведке)</div>
+            {d.enemy?.length ? <ul className="jenemy">{d.enemy.map((o, i) => <li key={i}>{placeText(o, v.places)}</li>)}</ul> : <p className="muted">действий противника разведка не обнаружила</p>}</>}
         </div>
       ))}
     </div>

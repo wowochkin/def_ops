@@ -33,7 +33,7 @@ export function freeOffset(map: Rect, covers: Rect[]): { dx: number; dy: number 
 }
 
 /** Что лежит поверх карты: панель голоса, легенда, окно советника, карточка соединения справа и подпись тура (видимые). */
-export const COVERS = '[data-tour="voice"], .legend, .advisor, .tour-cap, .fc-panel';
+export const COVERS = '[data-tour="voice"], .legend, .advisor, .tour-cap, .fc-panel, .map-dock';
 
 /**
  * Поставить место at в середину свободной части карты (zoom — масштаб, не задан — прежний). Закрытия ищутся в окне

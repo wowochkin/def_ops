@@ -133,6 +133,8 @@ export interface PostJournalDay {
   decision: HumanDecision | null;
   issued: NonNullable<TurnView['command']>['documents'];
   received: NonNullable<TurnView['command']>['documents'];
+  /** Противник по разведке — сквозной по стороне, не отфильтрован по войскам пункта; нет поля — разведка в игре не включена. */
+  enemy?: string[];
 }
 
 /**
@@ -158,6 +160,7 @@ export function postJournal(v: TurnView, issuer: string, decisions: { time: stri
       decision: decisions.find((x) => x.time === d.time)?.d ?? null,
       issued: inDay.filter((x) => x.hq === issuer),
       received: inDay.filter((x) => x.hq !== issuer && x.to.includes(issuer)),
+      ...(d.enemy ? { enemy: d.enemy } : {}),
     };
   });
 }

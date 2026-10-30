@@ -84,6 +84,15 @@ describe('журнал боевых действий пункта', () => {
     expect(j[1].received.map((x) => x.hq)).toEqual(['a1']);
     expect(j[0].issued).toEqual([]);
   });
+  it('разведка о противнике сквозная: попадает в день журнала пункта без фильтра по его войскам', () => {
+    const x = { ...(w as object), journal: [
+      { time: '1945-04-16T05:00', events: [], orders: [], actions: [], decision: null, enemy: ['303 пд контратакует'] },
+      { time: '1945-04-17T01:00', events: [], orders: [], actions: [], decision: null },
+    ] } as never;
+    const j = postJournal(x, 'k1', []);
+    expect(j[0].enemy).toEqual(['303 пд контратакует']);
+    expect(j[1].enemy).toBeUndefined();
+  });
   it('Ставка — все события стороны', () => {
     expect(postJournal(w, 's', [])[0].events).toHaveLength(2);
   });
