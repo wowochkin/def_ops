@@ -24,6 +24,9 @@ export function divisionsUnder(v: TurnView, hq: string): UnitReport[] {
   return v.own.filter((u) => u.echelon === 'division' && u.status === 'active' && ancestry(v, u.id).includes(hq));
 }
 
+/** Нужен ли переезд карты: щелчок по знаку на карте шлёт fly: false (штаб и так на виду). */
+export const wantsFly = (p?: { fly?: boolean } | null): boolean => p?.fly !== false;
+
 /** Центр войск штаба: среднее положение его действующих дивизий по численности; дивизий нет — null. */
 export function hqCenter(v: TurnView, hq: string): LngLat | null {
   const l = divisionsUnder(v, hq);

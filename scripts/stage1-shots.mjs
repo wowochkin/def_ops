@@ -311,6 +311,17 @@ const parts = {
     if (a.km === null || a.km > 15) fail('fly', `пункт → 8 гв. А: центр в ${a.km?.toFixed(1)} км от войск`);
     else if (Math.abs(a.denom / 200000 - 1) > 0.1) fail('fly', `пункт → 8 гв. А: масштаб 1:${a.denom}`);
     else ok('fly', `пункт → 8 гв. А (${a.km.toFixed(1)} км от войск, 1:${a.denom}; было ${before.km?.toFixed(0)} км)`);
+    // щелчок по знаку на карте (fly: false) — карта не едет
+    const ctr = (await state('su_8gva')).center;
+    await at('command.post', { level: 'stavka' });
+    await page.waitForTimeout(1500);
+    const st0 = (await state('su_8gva')).center;
+    await at('command.post', { name: 'su_8gva', fly: false });
+    await page.waitForTimeout(1800);
+    const st1 = (await state('su_8gva')).center;
+    if (Math.abs(st1[0] - st0[0]) > 0.01 || Math.abs(st1[1] - st0[1]) > 0.01) fail('fly', `fly:false: карта поехала ${st0} → ${st1}`);
+    else ok('fly', 'щелчок по знаку (fly: false) — карта на месте');
+    void ctr;
     await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
     await at('command.staffs.all', { on: true });
     await page.locator('.staffs-go', { hasText: '5-я ударная армия' }).first().click();

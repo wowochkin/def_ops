@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hqCenter, postDocs, subtreeHqs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
+import { hqCenter, wantsFly, postDocs, subtreeHqs, postIntel, postJournal, postReports, postReserves } from '../src/post-views';
 
 const u = (id: string, parent: string, at: [number, number], personnel = 8000, extra = {}) => ({ id, name: id, parent, echelon: 'division', status: 'active', at, place: '', posture: 'обороняется', task: 'оборонять', target: null, orderSource: null, personnel, tanks: 10, guns: 100, strength: 0.8, ammo: 1, fuel: 1, fatigue: 0.2, cutOff: false, movedKm: 0, combats: [], pending: [], ...extra });
 const hq = (name: string, echelon: string, parent: string | null) => ({ control: 'agent', led: false, name, echelon, parent });
@@ -92,5 +92,11 @@ describe('журнал боевых действий пункта', () => {
     expect(c[0]).toBeCloseTo(14.51, 5);
     expect(c[1]).toBeCloseTo(52.59, 5);
     expect(hqCenter(v as never, 'нет')).toBeNull();
+  });
+  it('переезд карты: из списка и голосом — да; щелчок по знаку на карте (fly: false) — нет', () => {
+    expect(wantsFly({ })).toBe(true);
+    expect(wantsFly(undefined)).toBe(true);
+    expect(wantsFly({ fly: true })).toBe(true);
+    expect(wantsFly({ fly: false })).toBe(false);
   });
 });

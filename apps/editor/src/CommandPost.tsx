@@ -12,6 +12,7 @@ import { hl } from './voice/highlight';
 import { controlMark, findHq, queueOp, type CommandOp } from './command-forms';
 import { blankDir, DIR_TASK_RU, local, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
 import { LEVELS, type LevelId } from './map-level-scale';
+import { wantsFly } from './post-views';
 
 export type DirPick = 'axis' | 'immediate' | 'subsequent' | 'boundaryR' | 'boundaryL' | 'mainBlow';
 const PICK_RU: Record<DirPick, string> = { axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' };
@@ -56,8 +57,8 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
 
   useAction({
     id: 'command.post', section: 'replay', title: 'Пункт управления', describe: 'Пункт управления по уровню: Ставка, фронт, армия, корпус, дивизия (level) и штаб этой ступени (name) — уровень карты переключается вместе с ним.',
-    params: { type: 'object', properties: { level: { enum: LEVELS }, name: { type: 'string' } } }, say: ['штаб, пункт управления армии', 'штаб, пункт управления восьмой гвардейской армии'], available: ready, highlight: () => hl('post'),
-    run: async (p: { level?: LevelId; name?: string }) => {
+    params: { type: 'object', properties: { level: { enum: LEVELS }, name: { type: 'string' }, fly: { type: 'boolean', description: 'false — не переезжать картой (щелчок по знаку на карте)' } } }, say: ['штаб, пункт управления армии', 'штаб, пункт управления восьмой гвардейской армии'], available: ready, highlight: () => hl('post'),
+    run: async (p: { level?: LevelId; name?: string; fly?: boolean }) => {
       let lv = p?.level && LEVELS.includes(p.level) ? p.level : level;
       let id: string | null = null;
       if (p?.name) {
@@ -71,7 +72,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
         setChosen((c) => ({ ...c, [lv]: id! }));
       }
       setLevel(lv); setSel(null); setPick(null); openTab();
-      if (id) onHq?.(id);
+      if (id && wantsFly(p)) onHq?.(id);
       return `Пункт управления: ${POST_TITLE[lv]}${id ? ` — ${name(id)}` : ''}. Уровень карты — «${LEVEL_RU[lv]}».`;
     },
   });

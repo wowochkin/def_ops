@@ -391,8 +391,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         // вкладка «Приказы» с пунктом управления: штаб ступени — пункт, подчинённый — его документ
         if (liveTab.current.tab === 'orders' && liveTab.current.sub === 'units' && postRef.current?.click(id)) return;
         // штаб ступени уровня — пункт управления на любой вкладке: доклады, разведка, решение — его
-        if (postRef.current?.issuers.some((x) => x.id === id) && postRef.current.issuer !== id) { tap('command.post', { name: id }); return; }
-        if (v.own.some((u) => u.id === id)) { showUnit(id); return; }
+        if (postRef.current?.issuers.some((x) => x.id === id) && postRef.current.issuer !== id) { tap('command.post', { name: id, fly: false }); return; }
+        if (v.own.some((u) => u.id === id)) { showUnit(id, false); return; }
         if (v.intel.some((x) => x.id === id)) { setIntelSel(id); return; }
         const g = v.groups.find((x) => x.id === id);
         if (g) { setIntelSel(null); setTab('reports'); setNotice(`${g.name}: доклады его объединений — во вкладке «Доклады»`); }
@@ -466,10 +466,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
 
   const unit = (id: string | null) => view?.own.find((u) => u.id === id) ?? null;
   /** Показать доклад своего объединения: выбрать его; если открыта не «Доклады» и не «Приказы → Войска» — открыть «Доклады». */
-  const showUnit = (id: string) => {
+  const showUnit = (id: string, fly = true) => {
     // карточка штаба (не дивизии): карта переезжает к его войскам
     const ech = view?.command?.hqs[id]?.echelon ?? view?.own.find((u) => u.id === id)?.echelon;
-    if (ech && ech !== 'division' && staffsOn(view)) tap('map.hq', { name: id });
+    if (fly && ech && ech !== 'division' && staffsOn(view)) tap('map.hq', { name: id });
     setSel(id); setIntelSel(null);
     const tb = liveTab.current;
     if (tb.tab === 'orders' && tb.sub !== 'units') setSub('units');

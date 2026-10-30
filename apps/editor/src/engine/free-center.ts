@@ -32,8 +32,8 @@ export function freeOffset(map: Rect, covers: Rect[]): { dx: number; dy: number 
   return { dx: clamp((pad.left - pad.right) / 2, map.width / 3) || 0, dy: clamp((pad.top - pad.bottom) / 2, map.height / 3) || 0 };
 }
 
-/** Что лежит поверх карты: панель голоса, легенда, окно советника и подпись тура (видимые). */
-export const COVERS = '[data-tour="voice"], .legend, .advisor, .tour-cap';
+/** Что лежит поверх карты: панель голоса, легенда, окно советника, карточка соединения справа и подпись тура (видимые). */
+export const COVERS = '[data-tour="voice"], .legend, .advisor, .tour-cap, .fc-panel';
 
 /**
  * Поставить место at в середину свободной части карты (zoom — масштаб, не задан — прежний). Закрытия ищутся в окне

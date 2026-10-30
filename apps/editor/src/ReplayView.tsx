@@ -383,7 +383,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
           ref = f ? byName.get(f.name!.replace(/: уничтожено.*$/, ''))! : null;
         }
         if (ref && divIds.has(ref)) { setAgentSel(ref); setCardSel(null); return; }
-        if (ref && hqIds.has(ref)) { setCardSel(ref); setAgentSel(null); return; }
+        if (ref && hqIds.has(ref)) { noFly.current = ref; setCardSel(ref); setAgentSel(null); return; }
         const id = divisionNear(agentRun.trace, hourOf(agentRun.trace.start, t), (p) => eng.project(p) as [number, number], pt);
         if (id) { setAgentSel(id); setCardSel(null); }
         return;
@@ -440,10 +440,14 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   /** Штаб агентной модели: уровень корпуса с приближением к нему — щёлкать по его дивизиям. */
   // открыта карточка штаба (не дивизии): карта плавно переезжает к его войскам на масштабе его ступени;
   // час проигрывания в зависимостях нет — при проигрывании карта не едет
+  /** Карточку открыл щелчок по знаку на карте — штаб уже на виду, карта не едет. */
+  const noFly = useRef<string | null>(null);
   const flyNow = useRef({ at: null as LngLat | null, hour: 0 });
   flyNow.current = { at: agentSelAt, hour: agentHour };
   useEffect(() => {
+    if (!cardSel) noFly.current = null;
     if (!cardSel || !eng || !agentRun) return;
+    if (noFly.current === cardSel) { noFly.current = null; return; }
     const ech = agentRun.trace.hqs.find((h) => h.id === cardSel)?.echelon;
     const lv = ech && ech !== 'division' ? ECHELON_LEVEL[ech] : undefined;
     if (!lv) return;
