@@ -272,6 +272,8 @@ impl Game {
             } else {
                 crate::command::control::agents_side(&mut sim, player);
                 if mode == Mode::Commanders { crate::commander::enable(&mut sim, player); }
+                // полосы армий следуют за войсками — в играх «агенты» и «командующие» (гибрид — нет)
+                if matches!(mode, Mode::Agents | Mode::Commanders) { sim.command.follow_bands = true; }
             }
             // противник под внешним управлением (штаб на модели): его приказы сценария и артподготовки сняты, как раньше
             let other = |hq: u32, sim: &Sim| { let s = sim.world.hqs[hq as usize].side; s != player && free.contains(&s) };

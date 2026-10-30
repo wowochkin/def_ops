@@ -1299,3 +1299,20 @@ fn intent_bands_follow_armies() {
     if std::env::var("BANDS_PRINT").is_ok() { eprintln!("записей полос: {}", sim.command.bands.len()); }
     assert!(sim.command.bands.iter().any(|(h, t, _)| sim.world.hqs[*h as usize].id == "su_8gva" && *t > 0), "полосы 8 гв. А в следе");
 }
+
+/// Полосы следуют за войсками только в режимах `intent`, `agents`, `commanders`: «фронты по истории» (эталон мерила) —
+/// без продления и без записи полос.
+#[test]
+fn fronts_mode_bands_untouched() {
+    use agents_core::command::control::{command_mode, feed};
+    let mut sim = load();
+    let mut pending = Vec::new();
+    for sd in [Side::Su, Side::De] { pending.extend(command_mode(&mut sim, "fronts", sd).unwrap()); }
+    while sim.world.tick < 96 { feed(&mut sim, &mut pending, true); sim.step(); }
+    assert!(!sim.command.follow_bands && sim.command.bands.is_empty());
+    assert!(!sim.documents.iter().any(|d| d.text.starts_with("продлить полосу")), "в режиме фронтов полосы не продлеваются");
+    // в истории как замысле — продлеваются
+    let mut sim = intent_sim();
+    run_to(&mut sim, 96);
+    assert!(sim.command.follow_bands && sim.documents.iter().any(|d| d.text.starts_with("продлить полосу")));
+}

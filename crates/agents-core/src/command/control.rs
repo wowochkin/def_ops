@@ -63,6 +63,9 @@ pub struct CommandState {
     /// нарисованную полосу); подпись последней записи по штабу — замысел и его границы.
     pub bands: Vec<(u32, u32, crate::command::band::Band)>,
     pub band_sig: std::collections::HashMap<u32, (String, u32, usize, usize)>,
+    /// Полосы армий следуют за войсками (продление и запись в след) — режимы `intent`, `agents`, `commanders` и игра в
+    /// них; прочие режимы (сценарий, фронты и журналы по истории, гибрид) — эталоны мерила, их полосы не трогаются.
+    pub follow_bands: bool,
 }
 
 /// Запрос корпуса на отход дивизии: ответ — да, нет или ещё нет.
@@ -76,7 +79,7 @@ impl CommandState {
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
         CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], named_hq: vec![false; hqs], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
             role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
-            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new(), bands: Vec::new(), band_sig: Default::default() }
+            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new(), bands: Vec::new(), band_sig: Default::default(), follow_bands: false }
     }
 }
 
@@ -190,6 +193,7 @@ pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Resu
     match mode {
         "script" => Ok(Vec::new()),
         "agents" | "hybrid" => {
+            if mode == "agents" { sim.command.follow_bands = true; }
             agents_side(sim, side);
             for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == crate::model::Echelon::HighCommand { sim.command.control[k] = Control::Agent; } }
             Ok(historical_for(sim, side, None, mode == "hybrid"))
@@ -198,6 +202,7 @@ pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Resu
         // командующие: путь «агенты» плюс командующие у штабов с профилем; Гитлер — агент, его исторические
         // директивы после начала не подаются (остаются только готовые к началу)
         "commanders" => {
+            sim.command.follow_bands = true;
             agents_side(sim, side);
             for (k, h) in sim.world.hqs.iter().enumerate() { if h.side == side && h.echelon == crate::model::Echelon::HighCommand { sim.command.control[k] = Control::Agent; } }
             crate::commander::enable(sim, side);
@@ -208,6 +213,7 @@ pub fn command_mode(sim: &mut Sim, mode: &str, side: crate::model::Side) -> Resu
         // и ниже — штабы-агенты), немецкие штабы — по приказам сценария; исторические директивы и приказы подаёт
         // цепочками intent::step (по часу или выполнению, пока имеют смысл); командующие — у обеих сторон
         "intent" => {
+            sim.command.follow_bands = true;
             if side == crate::model::Side::Su { let _ = front_historical(sim, side, false); }
             crate::commander::enable(sim, side);
             crate::intent::enable(sim, side);

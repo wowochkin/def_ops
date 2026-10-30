@@ -91,6 +91,27 @@ describe('агентная модель в «Переигровке»', () => {
     expect(lines.find((f) => f.time?.from === '1945-04-16T05:00')!.time?.to).toBe('1945-04-16T11:00');
   });
 
+  it('расчётная линия между армиями снимается, только если у обеих есть полоса ядра', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const t0 = trace();
+    // вторая советская армия того же фронта южнее
+    const t: AgentTrace = {
+      ...t0,
+      divisions: [...t0.divisions, { id: 'su_w', name: '2-я стрелковая дивизия', side: 'su', hq: 'su_5ua', kind: 'sd', mobility: 'foot', size: 'rifle', quality: 1 }],
+      hqs: [...t0.hqs, { id: 'su_5ua', name: '5-я ударная армия', side: 'su', echelon: 'army', parent: 'su_1bf' }],
+      frames: t0.frames.map((f) => [...f, [14.6, 52.3, 'наступление: атака', 9000, 10, 50, 2, 1, 0.1, 0.9, 0]]),
+    };
+    const band = (hq: string, lat: number) => ({ hq, tick: 0, left: [[14.7, lat + 0.08], [14.2, lat + 0.08]] as [number, number][], right: [[14.7, lat - 0.08], [14.2, lat - 0.08]] as [number, number][] });
+    const calc = (bands: AgentTrace['bands']) => {
+      const { ctx, run } = agentsToRun(base, { ...t, bands }, 3);
+      const doc = runToDocument(ctx, run, agentsHistory({ divisions: [], events: [] }, history), { name: 'проба' });
+      return doc.features.filter((f) => f.layerId === 'lvl-op-bounds' && f.name?.includes('(расчёт)') && f.name.includes('8') && f.name.includes('5')).length;
+    };
+    expect(calc(undefined)).toBeGreaterThan(0);
+    expect(calc([band('su_8gva', 52.5)])).toBeGreaterThan(0);                       // у 5 УА полосы ядра нет — линия остаётся
+    expect(calc([band('su_8gva', 52.5), band('su_5ua', 52.3)])).toBe(0);            // у обеих — снята
+  });
+
   it('состояние на час для игры: только дивизии, приказ ядра — задача, не введённые и выбывшие', async () => {
     const { ctx: base } = await contextFrom(get, 'berlin-1945-tasks');
     const t = { ...trace(), orders: [{ kind: 'attack' as const, target: [14.2, 52.5] as [number, number], from: 'su_8gva', issued: 10, arrives: 11, note: 'приказ игрока: на Зелов' }, null, null] };

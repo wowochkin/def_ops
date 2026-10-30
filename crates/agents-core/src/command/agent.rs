@@ -93,13 +93,15 @@ pub fn current_band(sim: &Sim, h: u32) -> Option<(Band, XY, XY)> {
 /// Глубина полосы вперёд от переднего края, если ближайшей задачи впереди нет (или она ближе 5 км), км.
 const BAND_DEPTH_KM: f64 = 20.0;
 
-/// Продление полос армий (пункт 9 спецификации пакета команд): армия-агент наступает, а её передний край по оси дальше
+/// Продление полос армий (пункт 9 спецификации пакета команд; режимы `follow_bands`): армия — агент или штаб игрока
+/// (полоса по его директиве; штаб держит её впереди войск, очертание прежнее) — наступает, а её передний край по оси дальше
 /// конца полосы без половины глубины полосы (или рубеж ближайшей задачи за концом полосы) — границы замысла
 /// продлеваются вперёд по оси до переднего края плюс глубина ближайшей задачи (нет — 20 км); документ — распоряжение
 /// в штабе армии. Новый замысел (директива) границы задаёт заново.
 pub fn extend_bands(sim: &mut Sim, tick: u32) {
+    if !sim.command.follow_bands { return; }
     for h in 0..sim.world.hqs.len() {
-        if sim.world.hqs[h].echelon != Echelon::Army || sim.command.control[h] != Control::Agent { continue; }
+        if sim.world.hqs[h].echelon != Echelon::Army || !matches!(sim.command.control[h], Control::Agent | Control::Player) { continue; }
         let Some(intent) = sim.command.intent[h].as_ref() else { continue };
         if !matches!(intent.task, Task::Attack | Task::Move) || intent.axis.len() < 2 { continue; }
         let subs = subs_of(sim, h as u32);
@@ -127,8 +129,9 @@ pub fn extend_bands(sim: &mut Sim, tick: u32) {
 /// Запись полос армий для следа: при смене замысла или его границ и когда войска армии вышли больше чем на 3 км за
 /// последнюю записанную полосу (полоса без границ растёт вширь по войскам).
 pub fn record_bands(sim: &mut Sim, tick: u32) {
+    if !sim.command.follow_bands { return; }
     for h in 0..sim.world.hqs.len() {
-        if sim.world.hqs[h].echelon != Echelon::Army || sim.command.control[h] != Control::Agent { continue; }
+        if sim.world.hqs[h].echelon != Echelon::Army || !matches!(sim.command.control[h], Control::Agent | Control::Player) { continue; }
         let Some(intent) = sim.command.intent[h].as_ref() else { continue };
         let sig = (intent.id.clone(), intent.issued, intent.boundaries.len(), intent.boundaries.iter().map(|(_, l)| l.len()).sum::<usize>());
         let same = sim.command.band_sig.get(&(h as u32)) == Some(&sig);

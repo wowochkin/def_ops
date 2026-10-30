@@ -686,8 +686,9 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
  *  - по директивам (hist-bounds) — линии из Scenario.boundaries в сроки их действия, с источником в названии;
  *  - расчётные по ходам — границы полос фронтов (sim-bounds, lvl-st-bounds, lvl-op-bounds) и армий внутри фронта
  *    (lvl-op-bounds) от переднего края в глубину; где действует директива, расчётная линия идёт по ней;
- *  - агентная модель со следом полос (ctx.agentBands) — вместо расчётных линий армий действующие полосы армий ядра
- *    (обе границы, lvl-op-bounds и sim-bounds) от часа смены до следующей смены.
+ *  - агентная модель со следом полос (ctx.agentBands) — действующие полосы армий ядра (обе границы, lvl-op-bounds и
+ *    sim-bounds) от часа смены до следующей смены; расчётная линия между двумя армиями с полосами ядра не рисуется,
+ *    у прочих армий (по сценарию, противник, без полосы) — остаётся.
  * С туманом войны (visible) — только свои полосы.
  */
 function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible?: PublishOptions['visible']): Feature[] {
@@ -722,11 +723,13 @@ function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
           out.push(f);
         }
       }
-      // полосы армий — внутри фронта (агентная модель со следом полос — полосы ядра, ниже)
-      if (ctx.agentBands) continue;
+      // полосы армий — внутри фронта; линия между армиями, у которых обеих в этот час есть полоса ядра (агентная
+      // модель, след полос), не рассчитывается — их полосы ниже
+      const banded = new Set((ctx.agentBands ?? []).filter((b) => b.time <= sn.time).map((b) => b.hq));
       const am = sectorMap(T, ctx.scenario, units, sd, sn.time, { level: 'army', groups: army });
       if (am.groups.length > 1) for (const l of sectorLines(T, am, { depthKm: depthKm * 0.6 })) {
         if ((front.get(l.pair[0]) ?? l.pair[0]) !== (front.get(l.pair[1]) ?? l.pair[1])) continue;
+        if (l.pair.every((g) => banded.has(g))) continue;
         const f = createFeature('line', 'rkka.boundaryArmy', { points: l.points, layerId: 'lvl-op-bounds' }, 0.7, side);
         f.name = `Разграничительная линия ${l.pair.map((g) => names.get(g) ?? g).join(' / ')} (расчёт), ход ${sn.turn}`;
         f.time = { from: sn.time, to };

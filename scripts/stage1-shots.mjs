@@ -114,6 +114,65 @@ const parts = {
       else if (bad.length) fail('bounds', `час ${H}: за полосой дальше 5 км — ${bad.map((x) => `${x.a} ${x.far} из ${x.n} (до ${x.worst} км)`).join(', ')}`);
       else ok('bounds', `час ${H}`);
     }
+    // игра в «истории как замысле»: взят 1-й Белорусский фронт, после двух ходов (24 ч) линии армий фронта доходят до их войск
+    await page.evaluate(() => localStorage.setItem('def_ops.command.mode', 'intent'));
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    const taken = await at('command.take', { name: '1-й Белорусский фронт' });
+    if (!/взять под управление/.test(taken)) return fail('bounds', `игра: фронт не взят: ${taken}`);
+    const t0 = await page.evaluate(() => window.__cmdView.time);
+    for (let k = 0; k < 2; k++) {
+      const turn = await page.evaluate(() => window.__cmdView.turn);
+      // ход — по решению верхней инстанции: пункт управления — Ставка
+      await at('command.post', { level: 'stavka' });
+      await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+      await page.waitForTimeout(500);
+      for (const f of ['assessment', 'intent', 'report']) { const ta = page.locator(`[data-hl="field-${f}"] textarea`); await ta.fill(`Проверка полос армий, ход ${k + 1}.`); await ta.blur(); }
+      await page.waitForTimeout(500);
+      const turned = await at('command.turn', {});
+      if (/не готово|Не указана/.test(turned)) return fail('bounds', `игра: ход ${k + 1} не начат: ${turned}`);
+      await page.waitForFunction((n) => window.__cmdView?.turn > n, turn, { timeout: 900000 });
+      await page.waitForTimeout(1500);
+    }
+    const g = await page.evaluate(() => {
+      const v = window.__cmdView, t = v.time.slice(0, 16);
+      const lines = v.doc.features.filter((f) => f.layerId === 'lvl-op-bounds' && f.name?.startsWith('Полоса ') && f.time && f.time.from <= t && (f.time.to === null || f.time.to > t));
+      const by = new Map(v.own.map((u) => [u.id, u]));
+      const inFront = (id) => { for (let k = id, n = 0; k && n < 8; k = by.get(k)?.parent ?? null, n++) if (k === 'su_1bf') return true; return false; };
+      const armyOf = (id) => { for (let k = by.get(id)?.parent, n = 0; k && n < 8; k = by.get(k)?.parent, n++) if (by.get(k)?.echelon === 'army') return k; return null; };
+      const lat0 = 52.5, KX = 111.32 * Math.cos(lat0 * Math.PI / 180), KY = 110.57;
+      const xy = (p) => [p[0] * KX, p[1] * KY];
+      const inside = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [ax, ay] = poly[i], [bx, by_] = poly[j]; if ((ay > p[1]) !== (by_ > p[1]) && p[0] < ax + (p[1] - ay) * (bx - ax) / (by_ - ay)) c = !c; } return c; };
+      const seg = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy; const u = l2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0; return Math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy); };
+      const out = (p, poly) => inside(p, poly) ? 0 : Math.min(...poly.map((a, i) => seg(p, a, poly[(i + 1) % poly.length])));
+      const armies = v.own.filter((u) => u.echelon === 'army' && u.status === 'active' && inFront(u.id)).map((u) => u.id);
+      const res = armies.map((a) => {
+        const left = lines.find((f) => f.ref === a && f.name.includes('левая')), right = lines.find((f) => f.ref === a && f.name.includes('правая'));
+        const divs = v.own.filter((u) => u.echelon === 'division' && u.status === 'active' && armyOf(u.id) === a);
+        if (!left || !right) return { a, n: divs.length, none: true };
+        const poly = [...left.points, ...[...right.points].reverse()].map(xy);
+        const km = divs.map((u) => out(xy(u.at), poly));
+        return { a, n: divs.length, far: km.filter((x) => x > 5).length, worst: Math.round(Math.max(0, ...km) * 10) / 10 };
+      });
+      const su = v.own.filter((u) => u.echelon === 'division' && u.status === 'active' && armies.includes(armyOf(u.id)));
+      if (su.length) window.__cmdEngine.setView({ center: [su.reduce((x, u) => x + u.at[0], 0) / su.length, su.reduce((x, u) => x + u.at[1], 0) / su.length] });
+      const ech = {}; for (const u of v.own) ech[`${u.echelon}/${u.status}`] = (ech[`${u.echelon}/${u.status}`] ?? 0) + 1;
+      return { time: t, res, info: `${JSON.stringify(ech)}; фронты: ${v.own.filter((u) => u.echelon === 'front').map((u) => u.id).join(',')}; линий полос: ${lines.length}` };
+    });
+    await page.locator('.lvl-sw button', { hasText: 'Фронт' }).click({ timeout: 3000 }).catch(() => {});
+    await shot('bounds-game.jpg');
+    const hours = (Date.parse(`${g.time}:00Z`) - Date.parse(`${t0.slice(0, 16)}:00Z`)) / 3600000;
+    console.log(`  игра ${g.time} (+${hours} ч): ` + g.res.map((x) => x.none ? `${x.a} без полосы (${x.n} див.)` : `${x.a} ${x.n - x.far}/${x.n}${x.worst > 0 ? ` (до ${x.worst} км)` : ''}`).join(', '));
+    const badG = g.res.filter((x) => x.n > 0 && (x.none || x.far > 0));
+    if (hours < 24) fail('bounds', `игра: прошло ${hours} ч`);
+    else if (!g.res.length) fail('bounds', `игра: армий фронта нет (${g.info})`);
+    else if (badG.length) fail('bounds', `игра: ${badG.map((x) => x.none ? `${x.a} без полосы` : `${x.a} ${x.far} из ${x.n} дальше 5 км (до ${x.worst} км)`).join(', ')}`);
+    else ok('bounds', `игра: +${hours} ч, армий 1-го Белорусского фронта ${g.res.length}, войска в своих полосах`);
   },
   /** Вкладка «Командующий» не дрожит: ширины колонок картины неизменны при проигрывании по часу. */
   async commander() {
