@@ -32,7 +32,7 @@ import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, p
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { DIR_TASK_RU, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
-import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
+import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
 
 type AiFieldState = 'wait' | 'typing' | 'done';
 /** Общий заказ советнику: сколько полей готово, какое пишется. */
@@ -62,7 +62,7 @@ import { bindModelHold, setModelBusy } from './voice/model-queue';
 import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import { commandActions, releaseCommand, TAKEOVER_REMIND, takeoverIsAnswer, takeoverParse, takeoverRead, type CommandDeps } from './voice/actions/command';
 import {
-  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, projectHas, releaseStaff, staffActions, TASKS,
+  adviceReady, decisionMissing, NEEDS_TARGET, planReady, press, prevOf, projectHas, releaseStaff, staffActions, TASKS,
   type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
@@ -895,7 +895,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   /** В проекте уже что-то есть: принятие варианта его заменит. */
   /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
   const acceptByButton = async (v: PlanVariantView, idx: number) => {
-    if (!projectHas({ drafts, acts, decision, auto: autoFields[''] }, view?.lastDecision ?? null)) { tap('command.variant.pick', { n: idx + 1 }); return; }
+    if (!projectHas(staff.current, prevOf(staff.current))) { tap('command.variant.pick', { n: idx + 1 }); return; }
     if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', { n: idx + 1 });
   };
   /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
@@ -966,7 +966,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   };
   const draftScope = (): DraftScope => scopeFor(view!, post.issuer, post.level);
   /** Прошлое решение штаба ступени (запись хода хранит решения пунктов при решении верхней инстанции). */
-  const lastPost = (id: string): HumanDecision | null => (view?.lastDecision as (HumanDecision & { posts?: Record<string, HumanDecision> }) | null)?.posts?.[id] ?? null;
+  const lastPost = (id: string): HumanDecision | null => lastPostDecision(record?.turns, id);
   /** В решениях штабов ступеней есть своё: правленое, не только составленное по обстановке или перенесённое. */
   const postEdited = Object.entries(postDecisions).some(([id, d]) => projectHas({ drafts: {}, acts: [], decision: d, auto: autoFields[id] }, lastPost(id)));
   // открыт ход — решение верхней инстанции составлено по обстановке (без модели); правленое на этом ходу не трогается
@@ -1149,6 +1149,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     advisorBusy: adv.some((m) => !m.result), askAdvisor: (q) => askAdvisor('situation', 'свободный вопрос', q),
     suggestions: lastAdvice?.result?.suggestions.filter((x) => x.ok) ?? [], takeSuggestion,
     decision: view ? curDecision() : decision, setDecision: setCur, auto: autoFields[view && lowPost() ? post.issuer! : ''] ?? [],
+    prevDecision: view && lowPost() ? lastPost(post.issuer!) : view?.lastDecision ?? null,
     composeField, composeAll, advisorReady: llm.check.state === 'ok', composing: !!batchView,
     mergePriority: (() => { const sc = scopeNow(); if (!sc || !view) return undefined; const pool = priorityPool(view, sc); const pa = acts.find((a) => a.action.kind === 'priority')?.action; const cur = pa?.kind === 'priority' ? pa.formations : view.priority; return (ids: string[]) => mergePriority(cur, pool, ids); })(),
     drafts, setDraft: (id, d) => setDrafts((all) => { const n = { ...all }; if (d) n[id] = d; else delete n[id]; return n; }),
@@ -1160,7 +1161,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   // ход, штаб противника, посредник, разбор, файлы — те же действия у кнопок
   const turnDeps = useRef<TurnDeps>(null!);
   turnDeps.current = {
-    view, prev: turnStart.current, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, plan, planN,
+    view, prev: turnStart.current, busy: view ? progress : null, blocked, enemy, ai, aiTurns, record, drafts, acts, decision, auto: autoFields[''] ?? [], plan, planN,
     sendTurn, showMissing, notice: setNotice, setTab, setUmpirePart: setUmpPart,
     retryAi: () => { setBlocked(null); setProgress('повторный запрос…'); send({ kind: 'retry-ai' }); },
     skipAi: () => { setBlocked(null); setProgress('расчёт хода…'); send({ kind: 'skip-ai' }); },

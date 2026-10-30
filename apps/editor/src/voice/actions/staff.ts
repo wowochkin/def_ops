@@ -95,6 +95,8 @@ export interface StaffDeps {
   composing: boolean;
   /** Поля решения, составленные по обстановке и ещё не правленые: не считаются своим в проекте. */
   auto?: readonly string[];
+  /** Прошлое решение того же штаба (пункт ниже Ставки — его, а не Ставки); нет поля — прошлое решение верхней инстанции. */
+  prevDecision?: HumanDecision | null;
   /** Пункт управления: приоритет подвоза — его часть списка стороны (названные подчинённые вместо прежних его); нет — весь список. */
   mergePriority?(ids: string[]): string[];
   // приказы
@@ -191,6 +193,9 @@ export function decisionMissing(d: HumanDecision): string[] {
  * которое не просто перенесено с прошлого хода (замысел, замысел противника, риски переносятся сами) и не составлено по
  * обстановке при открытии хода и не правлено (auto), ходатайство.
  */
+/** Прошлое решение, с которым сравнивается проект: штаба пункта (ниже Ставки) или верхней инстанции. */
+export const prevOf = (d: StaffDeps): HumanDecision | null => (d.prevDecision !== undefined ? d.prevDecision : d.view?.lastDecision ?? null);
+
 export function projectHas(p: { drafts: Record<string, unknown>; acts: unknown[]; decision: HumanDecision; auto?: readonly string[] }, last: HumanDecision | null): boolean {
   const d = p.decision, auto = p.auto ?? [];
   const own = (k: 'enemyIntent' | 'intent' | 'risks') => !auto.includes(k) && !!d[k].trim() && d[k].trim() !== (last?.[k] ?? '').trim();
@@ -458,7 +463,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
   };
   const view = () => get().view!;
   const base = { section: 'replay', available: ready };
-  const has = () => projectHas(get(), view().lastDecision);
+  const has = () => projectHas(get(), prevOf(get()));
   const draftReport = async () => {
     const d = get();
     d.setDecision({ report: draftReportText(view(), d.decision) });
@@ -977,7 +982,7 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
       return hit('command.variant.pick', { n: 1 });
     }
     const d = live!();
-    return hit(d.view && projectHas(d, d.view.lastDecision) ? 'command.variant.replace' : 'command.variant.pick', { n });
+    return hit(d.view && projectHas(d, prevOf(d)) ? 'command.variant.replace' : 'command.variant.pick', { n });
   }
   // советник: вопрос, остановка, «подробнее», предложенный приказ
   if ((m = /^(?:спроси|спросите|задай вопрос|вопрос)(?: у)? советник\p{L}*(?: о| об| про)? (.+)$/u.exec(t))) return hit('command.advisor.ask', { text: m[1] });

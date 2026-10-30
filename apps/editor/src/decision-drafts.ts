@@ -151,6 +151,18 @@ export function prefillDecision(v: TurnView, s: DraftScope, last: HumanDecision 
   return { decision: d, auto };
 }
 
+/**
+ * Прошлое решение штаба ступени: самое позднее из записанных ходов (turns[].human.posts) — пункт мог не открываться
+ * на прошлом ходу, тогда правленое раньше берётся с того хода, где оно было.
+ */
+export function lastPostDecision(turns: readonly { human?: unknown }[] | undefined, id: string): HumanDecision | null {
+  for (let i = (turns?.length ?? 0) - 1; i >= 0; i--) {
+    const d = (turns![i].human as { posts?: Record<string, HumanDecision> } | undefined)?.posts?.[id];
+    if (d) return d;
+  }
+  return null;
+}
+
 /** Решение штаба нижней ступени при первом открытии его пункта: есть (правленое или составленное) — не трогать. */
 export function ensurePost(m: Record<string, HumanDecision>, issuer: string, make: () => HumanDecision): Record<string, HumanDecision> {
   return m[issuer] ? m : { ...m, [issuer]: make() };

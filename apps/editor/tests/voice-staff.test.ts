@@ -888,3 +888,17 @@ describe('составить заново голосом', () => {
     expect(projectHas({ ...base, decision: d, auto: ['assessment', 'report'] }, null)).toBe(true);
   });
 });
+
+describe('пункт ниже Ставки: проект — по решению штаба пункта и его прошлому решению', () => {
+  const ARMY: HumanDecision = { ...EMPTY, intent: 'Армия: удар на Зелов.', enemyIntent: 'Держит высоты.', risks: 'Фланг.' };
+  it('правленое решение штаба пункта — принятие варианта спрашивает', async () => {
+    staff({ plan: plan(), decision: { ...ARMY, intent: 'Правлено.' }, auto: ['assessment', 'report'], prevDecision: ARMY } as never);
+    expect(getAction('command.variant.pick')!.check!({ n: 2 })).toMatch(/^В проекте уже есть решение/);
+    expect(parseStaff('выбираю второй', 'replay')).toMatchObject({ id: 'command.variant.replace' });
+  });
+  it('перенесённое из прошлого решения штаба (не Ставки) и составленное — не «непустой»', () => {
+    staff({ plan: plan(), decision: { ...ARMY, assessment: 'Оценка.', report: 'Донесение.' }, auto: ['assessment', 'report'], prevDecision: ARMY } as never);
+    expect(getAction('command.variant.pick')!.check!({ n: 2 })).toBe(true);
+    expect(parseStaff('выбираю второй', 'replay')).toMatchObject({ id: 'command.variant.pick' });
+  });
+});

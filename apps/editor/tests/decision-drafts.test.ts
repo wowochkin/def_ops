@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { IntelReport, UnitReport } from '@def-ops/sim';
 import type { TurnView } from '../src/sim/game-protocol';
-import { DRAFT_FIELDS, draftAssessment, draftEnemyIntent, draftField, draftIntent, draftReport, draftRisks, ensurePost, fieldPrompt, prefillDecision, type DraftScope } from '../src/decision-drafts';
+import { DRAFT_FIELDS, draftAssessment, draftEnemyIntent, draftField, draftIntent, draftReport, draftRisks, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftScope } from '../src/decision-drafts';
 import type { HumanDecision } from '../src/sim/game-protocol';
 
 const u = (id: string, name: string, o: Partial<UnitReport> = {}): UnitReport => ({
@@ -96,5 +96,21 @@ describe('решение при открытии хода', () => {
     const n = ensurePost(m, 'su_5ua', () => ({ ...D, intent: 'нов' }));
     expect(n.su_5ua.intent).toBe('нов');
     expect(n.su_8gva).toBe(m.su_8gva);
+  });
+});
+
+describe('прошлое решение штаба ступени', () => {
+  it('правлено на ходе N, пункт не открыт на N+1, открыт на N+2 — текст сохранён', () => {
+    const army = { ...D, intent: 'Своё решение армии', enemyIntent: 'Держит высоты' };
+    const turns = [
+      { time: 'N', human: { ...D, posts: { su_8gva: army } } },
+      { time: 'N+1', human: { ...D, posts: { su_5ua: { ...D, intent: 'чужое' } } } },
+      { time: 'N+1b', human: { ...D } },
+    ];
+    expect(lastPostDecision(turns, 'su_8gva')).toBe(army);
+    expect(prefillDecision(v, scope(), lastPostDecision(turns, 'su_8gva')).decision.intent).toBe('Своё решение армии');
+    expect(lastPostDecision(turns, 'su_5ua')!.intent).toBe('чужое');
+    expect(lastPostDecision(turns, 'su_3ua')).toBeNull();
+    expect(lastPostDecision(undefined, 'su_8gva')).toBeNull();
   });
 });

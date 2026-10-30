@@ -647,6 +647,14 @@ describe('возврат к ходу и ветви голосом', () => {
     expect(o).toMatchObject({ id: 'command.rewind.force', params: { turn: 2 }, strict: true });
     expect((o as { offer: string }).offer).toBe('В проекте хода есть приказы и распоряжения — при возврате они пропадут. Вернуться к ходу 2?');
   });
+  it('составленное по обстановке (не правленое) решение — возврат и переход на ветвь без вопроса', () => {
+    const decision = { assessment: 'Оценка.', enemyIntent: '', intent: 'Замысел.', report: 'Донесение.', risks: '' };
+    td({ decision, auto: ['assessment', 'intent', 'report'] } as never);
+    expect(getAction('command.rewind')!.check!({ turn: 2 })).toBe(true);
+    offs.forEach((o) => o()); offs = [];
+    td({ decision, auto: ['assessment', 'report'] } as never);
+    expect(getAction('command.rewind')!.check!({ turn: 2 })).toMatchObject({ id: 'command.rewind.force' });
+  });
   it('возврат: ответ с датой и прежней линией', async () => {
     const d = td();
     expect(getAction('command.rewind')!.check!({ turn: 2 })).toBe(true);

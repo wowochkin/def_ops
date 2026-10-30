@@ -73,6 +73,8 @@ export interface TurnDeps {
   gameRecord(): { name: string; text: string } | null;
   /** Решения пунктов управления ниже Ставки в проекте хода (их тоже снимает возврат). */
   postProject?: boolean;
+  /** Поля решения верхней инстанции, составленные по обстановке и не правленые (projectHas их не считает). */
+  auto: readonly string[];
   /** Линии игры (game-branches lines): текущая первой. */
   lines: BranchLine[];
   /** Окно «Ветви» у ленты ходов. */
