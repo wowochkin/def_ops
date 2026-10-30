@@ -39,6 +39,9 @@ import { FormationPanel, useEsc } from './FormationCard';
 import { CommanderPanel } from './CommanderPanel';
 import { CommanderOverlay } from './CommanderOverlay';
 import { RivalryChart } from './RivalryChart';
+import { ResultsTab } from './ResultsTab';
+import type { ResultsPart } from './results-view';
+import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 import { PLAYER_SPEEDS } from './replay-dock';
 import { commanderOf, hqCentroid } from './commander-view';
 import { flyToHq } from './engine/free-center';
@@ -213,7 +216,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [report, setReport] = useState(false);
   const [saved, setSaved] = useState<SavedGame | null>(loadSaved);
   // сохранённые переигровки: вкладка списка, список, id сохранения открытого результата
-  const [tab, setTab] = useState<'run' | 'saved'>('run');
+  const [tab, setTab] = useState<'run' | 'saved' | 'results'>('run');
+  const [resPart, setResPart] = useState<ResultsPart>('losses');
   const [replays, setReplays] = useState<SavedReplay[]>([]);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -581,6 +585,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     stop, discardSaved: () => { discardGame(); setSaved(null); },
   };
   useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
+  // «Итоги» — у расчёта агентной модели: вкладка боковой панели, части «Потери» и «Сравнение»
+  const resultsDeps = useRef<ResultsDeps>(null!);
+  resultsDeps.current = {
+    section: () => (result?.engine === 'agents' ? 'replay' : null), summary: () => result?.operation ?? null, side: () => 'su',
+    setPart: (p) => { setTab('results'); setResPart(p); },
+  };
+  useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} note={game.note} onOpenInEditor={onOpenInEditor}
       onExit={({ discard }) => { if (discard) discardGame(); setSaved(loadSaved()); setGame(null); }} />;
@@ -588,7 +599,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (
     <ZonesContext.Provider value={zones}>
-    <div className="replay">
+    <div className={`replay${tab === 'results' ? ' rs-wide' : ''}`}>
       <aside className="rp-side">
         <div className="rp-head" data-tour="replay-head">
           <h2>Переигровка</h2>
@@ -613,7 +624,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         <div className="seg rp-tabs" data-tour="replay-tabs">
           <button className={tab === 'run' ? 'on' : ''} onClick={() => setTab('run')}>Расчёт</button>
           <button className={tab === 'saved' ? 'on' : ''} onClick={() => setTab('saved')}>Сохранённые{replays.length ? ` · ${replays.length}` : ''}</button>
+          {result?.engine === 'agents' && <button className={tab === 'results' ? 'on' : ''} data-hl="results-tab" onClick={() => setTab('results')}>Итоги</button>}
         </div>
+        {tab === 'results' && (result?.engine === 'agents'
+          ? <ResultsTab summary={result.operation ?? null} baseline={{ state: 'off' }} side="su" part={resPart} parts={['losses', 'compare']}
+            empty="В этом сохранении итогов нет — рассчитайте операцию заново." />
+          : <p className="rs rs-note">Итоги и разбор — у расчёта на агентной модели.</p>)}
         {tab === 'saved' && <SavedList list={replays} current={savedId} busy={!!busy} onOpen={(m) => void openReplay(m)}
           onRename={(m, t) => void renameReplay(m.id, t)} onDelete={(m) => { void confirmAsync(`Удалить сохранённую переигровку «${m.title}»?`, { ok: 'Удалить', danger: true }).then((ok) => { if (!ok) return; void deleteReplay(m.id); if (savedId === m.id) setSavedId(null); }); }} />}
         {tab === 'run' && <>

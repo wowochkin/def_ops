@@ -69,9 +69,9 @@ export function parseDay(text: string): { day: number; month?: number } | null {
 
 // ---------------------------------------------------------------- вкладки, слои, участки, операции
 
-export type CmdTab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 'staffs';
-export const TAB_TITLE: Record<CmdTab, string> = { reports: 'Доклады', intel: 'Разведка', decision: 'Решение', orders: 'Приказы', journal: 'Журнал', umpire: 'Посредник', staffs: 'Штабы' };
-const TAB_STEMS: [string, CmdTab][] = [['докла', 'reports'], ['разве', 'intel'], ['решен', 'decision'], ['прика', 'orders'], ['журна', 'journal'], ['посре', 'umpire'], ['штабы', 'staffs']];
+export type CmdTab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 'staffs' | 'results';
+export const TAB_TITLE: Record<CmdTab, string> = { reports: 'Доклады', intel: 'Разведка', decision: 'Решение', orders: 'Приказы', journal: 'Журнал', umpire: 'Посредник', staffs: 'Штабы', results: 'Итоги' };
+const TAB_STEMS: [string, CmdTab][] = [['докла', 'reports'], ['разве', 'intel'], ['решен', 'decision'], ['прика', 'orders'], ['журна', 'journal'], ['посре', 'umpire'], ['штабы', 'staffs'], ['итог', 'results']];
 /** Вкладка по слову («приказы», «журнал», «посредника»); нет — null. */
 export function tabByWord(w: string): CmdTab | null { const n = norm(w); return TAB_STEMS.find(([s]) => n.startsWith(s))?.[1] ?? null; }
 
@@ -283,7 +283,7 @@ export function commandActions(get: () => CommandDeps): Action[] {
         note({ at: r.at }, ...(r.who?.kind === 'own' ? [hl(`unit-${r.who.id}`)] : r.who?.kind === 'enemy' ? [hl('enemy-card')] : []));
         return `Показываю: ${r.label}.`;
       } },
-    { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник.',
+    { ...base, id: 'command.tab', title: 'Вкладка командования', describe: 'Открывает вкладку: доклады, разведка, решение, приказы, журнал, посредник, итоги.',
       params: { type: 'object', properties: { tab: { enum: Object.keys(TAB_TITLE) } }, required: ['tab'] }, say: ['штаб, открой приказы'],
       highlight: (p: { tab: CmdTab }) => hl(`tab-${p?.tab}`),
       run: async (p: { tab: CmdTab }) => { if (!TAB_TITLE[p?.tab]) return 'Такой вкладки нет.'; const cm = get().view?.command;

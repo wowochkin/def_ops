@@ -3,7 +3,7 @@
  * модулями сборки (packages/sim/data), прогон и сравнение с историей — тем же кодом,
  * что и в npm run sim:history. Сервер не нужен.
  */
-import { agentsHistory, agentsToRun, analyze, checkEvents, compareWithHistory, contextFrom, reportMarkdown, runToDocument, snapshotZones, summarize, summaryToDocument, type DataKind, type History, type RunResult, type ZoneGrid, type SimContext } from '@def-ops/sim';
+import { agentsHistory, agentsToRun, analyze, checkEvents, operationSummary, compareWithHistory, contextFrom, reportMarkdown, runToDocument, snapshotZones, summarize, summaryToDocument, type DataKind, type History, type RunResult, type ZoneGrid, type SimContext } from '@def-ops/sim';
 import type { SimRequest, SimResponse, SimResult } from './protocol';
 import { getData } from './userdata';
 import { replayUnits } from '../formation-card';
@@ -90,6 +90,9 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
   const history = agentsHistory(A.history, baseHistory);
   const s = summarize(compareWithHistory(ctx, run, history), q.toleranceKm);
   const events = checkEvents(ctx, run, history);
+  // итоги: потери сторон по всему ходу рядом с историческими; ошибка — переигровка без итогов
+  let operation: SimResult['operation'];
+  try { operation = operationSummary(base, A.trace, A.history, baseHistory); } catch (e) { console.warn('итоги операции не посчитаны:', e); }
   post({ kind: 'progress', text: 'карта…' });
   const zones = zonesOf(ctx, run);
   const name = `${A.title} — агентная модель (seed ${q.seed})`;
@@ -116,7 +119,7 @@ function agents(q: SimRequest, base: SimContext, baseHistory: History, kb: KbSta
         return { title: e.title, historical: e.historical, simulated: e.simulated, days: [e.days], at: e.at, place, marker: !!h?.marker };
       }),
       eventsHit: events.filter((e) => e.days != null && Math.abs(e.days) <= 2).length, eventsTotal: events.length,
-      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb, ...(zones ? { zones } : {}),
+      report: withKbStamp(report, kb), doc, summary, units: replayUnits(ctx, run), kb, ...(zones ? { zones } : {}), ...(operation ? { operation } : {}),
     },
   });
 }

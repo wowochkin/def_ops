@@ -7,6 +7,7 @@ import type { LngLat } from '@def-ops/core';
 import type { Echelon, Formation, FormationDef, Order, Posture, SimState, Task } from './types';
 import { addHours, type SimContext } from './step';
 import type { History, RunResult, Snapshot } from './history';
+import type { HistoricalLoss } from './results';
 
 /** Ход агентной модели (trace::describe). */
 export interface AgentTrace {
@@ -73,6 +74,10 @@ export interface AgentHistory {
   /** Положения армий (штабов) по документам — для оперативного масштаба карты; в сверку не входят. */
   armies?: { formation: string; time: string; at: LngLat; approxKm: number; reliability?: string | null; source?: string }[];
   events?: History['events'];
+  /** Потери штабов к сроку по документам — для сверки (контрольные точки) и итогов. */
+  losses?: { formation: string; until: string; value: number; source: string; reliability: 'A' | 'B' | 'C' }[];
+  /** Потери операции по базе знаний (сторона или фронт, период, источник, надёжность) — для итогов. */
+  operationLosses?: HistoricalLoss[];
 }
 
 /** Состояние агента → положение соединения на карте; null — нет на карте (ещё не введена, сведена в другую). */

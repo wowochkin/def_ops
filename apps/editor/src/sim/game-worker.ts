@@ -13,6 +13,7 @@ import {
   agentsHistory, type AgentGameSpec, type AgentHistory, type CommandOp,
   addHours, applyActions, prepareTakeover,
   activeBoundaries, commandTerms, groupOf, parksOf, PARKS_TOP, runToDocument, sideZones, turnBattles, withBoundaries, sectorText, shortName, startGame, stateDigest, digestMismatch, supplyHoursOf, targetPoint, TASK_RU, unitReports, type GameRecord, type GameTurn, type GameState, type History, type Order, type SimContext, type Snapshot, type StaffAction, type GameEnd, type GameOutcome, type DataKind,
+  operationSummary,
 } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 import { situationTriggers, staffQueries, stavkaNeed, stavkaTurn, type StavkaNeed, type StavkaResult, actionsToStaff, advise, buildAdvice, buildSituation, decideTurn, planOrdersApplied, planVariants, type PlanVariantRaw, type Situation, umpireTurn, REVIEW_SECTIONS, reviewDigest, reviewMessages, type ReviewInput, type AdvisorConfig, type AiTurn, type LiveConfig } from '@def-ops/staff-service/live';
@@ -75,6 +76,8 @@ const isOver = () => !!outcome;
 let agents: AgentGameSpec | null = null;
 let agentTrace: AgentGameTrace | null = null;
 let agentBase: SimContext | null = null;
+/** История дивизий агентной модели как прочитана (с потерями операции) — для итогов. */
+let agentRawHistory: AgentHistory | null = null;
 /** Штаб игрока на агентной модели: тыл, линии, директивы, введённые резервы — между ходами. */
 let agentStaff: AgentStaff = { committed: {} };
 /** Переправы стороны игрока, снятые при передаче командования (ядру — с первым ходом). */
@@ -205,7 +208,8 @@ async function start(s: { scenario: string; rules: string; seed: number; takeove
   if (agents) {
     // агентная модель: история дивизий и ход до передачи командования считает ядро; противник на модели — вне ядра
     post({ kind: 'progress', text: 'агентная модель: расчёт до передачи командования…' });
-    history = agentsHistory(JSON.parse(await agentsCall<string>('read_text', { path: agents.history })) as AgentHistory, history);
+    agentRawHistory = JSON.parse(await agentsCall<string>('read_text', { path: agents.history })) as AgentHistory;
+    history = agentsHistory(agentRawHistory, history);
     agentBase = ctx;
     agentHuman = human;
     agentStaff = { committed: {} };
@@ -835,8 +839,15 @@ function postView() {
     reserveGroups: reserveGroupsView(own),
     lastDecision: (([...rec.turns].reverse().find((t) => t.human)?.human) as HumanDecision | undefined) ?? null,
     ...(agents && agentTrace ? { command: commandView(agentTrace, human) ?? undefined, enemyLog: enemyLogAll } : {}),
+    ...(agents && agentTrace ? { results: resultsView(agentTrace) } : {}),
   };
   post({ kind: 'view', view });
+}
+
+/** Итоги игры: потери по ходу ядра до последнего сыгранного часа (с часами до передачи командования); ошибка — без итогов. */
+function resultsView(t: AgentGameTrace): TurnView['results'] {
+  try { return operationSummary(agentBase!, t, agentRawHistory ?? { divisions: [] }, history, { upTo: t.frames.length - 1, over: isOver() }); }
+  catch (e) { console.warn('итоги игры не посчитаны:', e); return undefined; }
 }
 
 /** Разбор хода на карте: бои хода с местом и зоны влияния сторон на конец и начало хода (с туманом войны, как карта). */

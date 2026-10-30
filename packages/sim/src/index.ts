@@ -31,3 +31,4 @@ export { RoadNet, roadNet, visualPath } from './roadnet';
 export { groupOf, activeBoundaries, effectiveBoundaries, withBoundaries, checkTriggers, sectorMap, sectorAt, sectorPrefer, sectorLines, sectorLabels, sectorViolations, sectorText, sideOf, type SectorMap, type SectorLevel, type SectorLine, type SectorUnit, type SectorViolation, type SectorOptions } from './sectors';
 export { agentsScore, type AgentsScore } from './agents-score';
 export { agentsToRun, agentsStateAt, agentsHistory, postureOf, agentKindOf, AGENT_TASK, type AgentTrace, type AgentCommander, type AgentCommanderOption, type AgentTrait, type AgentHistory, type AgentOrderKind } from './agents';
+export { LOSS_FIELDS, hasLosses, divisionLoss, lossSeries, historicalLosses, operationSummary, type Loss, type LossRow, type LossSeries, type HistoricalLoss, type OperationSummary } from './results';

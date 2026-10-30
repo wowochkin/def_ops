@@ -552,6 +552,19 @@ for (const [f, perDay] of KRIVOSHEEV_DAILY) {
   lossRefs.push({ formation: f, until: '1945-05-01T20:00', value: Math.round(perDay * 15.6), source: `Кривошеев: ${perDay} в сутки за 16.04–8.05 × 15,6 сут (оценка)`, reliability: 'C' });
 }
 
+// ---------- потери операции для итогов: числа — из базы знаний (seed.json), с источником и надёжностью ----------
+// Советские — Кривошеев 2001, гл. V (op:berlin) по сторонам и фронтам; танки и орудия — Кривошеев 1993 по статье
+// «Штурм Берлина» (battle:berlin-storm, C); немецкие — справка ЖБД 1 БФ (f:su_1bf, док. № 91), только полоса 1 БФ.
+const KRIV_2001 = { from: '1945-04-16', to: '1945-05-08', source: 'Кривошеев 2001, гл. V', reliability: 'A', kb: 'op:berlin' };
+const OPERATION_LOSSES: unknown[] = [
+  { scope: 'su', ...KRIV_2001, irrecoverable: 78291, sanitary: 274184, total: 352475, perDay: 15325 },
+  { scope: 'su', from: '1945-04-16', to: '1945-05-08', tanks: 1997, guns: 2108, source: 'Кривошеев 1993, с. 220 (по статье «Штурм Берлина»)', reliability: 'C', kb: 'battle:berlin-storm' },
+  { scope: 'su_1bf', ...KRIV_2001, irrecoverable: 37610, sanitary: 141880, total: 179490 },
+  { scope: 'su_1uf', ...KRIV_2001, irrecoverable: 27580, sanitary: 86245, total: 113825 },
+  { scope: 'su_2bf', ...KRIV_2001, irrecoverable: 13070, sanitary: 46040, total: 59110 },
+  { scope: 'de', from: '1945-04-16', to: '1945-05-09', killed: 218691, captured: 250534, tanks: 1030, source: 'справка из ЖБД 1 БФ о потерях противника (док. № 91)', reliability: 'A', kb: 'f:su_1bf', note: 'по советскому донесению, только полоса 1 БФ' },
+];
+
 // ---------- советские стрелковые корпуса и верхние инстанции ----------
 // Численность, расстановка и приказы посчитаны по армии (как раньше); здесь дивизия, стоящая под армией, встаёт под
 // свой корпус из реестра на начало операции, корпус — под армию той же записи. Приказы на отдельную дивизию сохраняют
@@ -629,7 +642,7 @@ writeFileSync(resolve(dir, 'berlin-1945.json'), JSON.stringify(scenario, null, 1
 writeFileSync(resolve(dir, 'berlin-1945.history.json'), JSON.stringify({
   scenario: scenario.id,
   note: `положения дивизий — из наборов переписи (только собственные); отбракованы положения дальше ${REJECT_KM} км от положения армии в тот же день (rejected); армии, корпуса и немецкие дивизии — история сценария нынешней модели (для сравнения с ней); «за день» — 20:00, утро 16.04 — 05:00 (МСК)`,
-  divisions: histDiv, armies: histArmy, events, rejected, losses: lossRefs,
+  divisions: histDiv, armies: histArmy, events, rejected, losses: lossRefs, operationLosses: OPERATION_LOSSES,
 }, null, 1) + '\n');
 const su = out.filter((o) => o.side === 'su'), de = out.filter((o) => o.side === 'de');
 console.log(`соединений: советских ${su.length}, немецких ${de.length}; штабов ${hqList.length}; приказов ${orders.length} (пропущено видов ${skipped}, без получателей ${empty})`);

@@ -1,5 +1,5 @@
 import type { MapDocument } from '@def-ops/core';
-import type { AgentHistory, AgentTrace, ZoneGrid } from '@def-ops/sim';
+import type { AgentHistory, AgentTrace, OperationSummary, ZoneGrid } from '@def-ops/sim';
 import type { ReplayUnits } from '../formation-card';
 import type { KbStamp } from './kb-stamp';
 
@@ -33,6 +33,8 @@ export interface SimResult {
   kb?: KbStamp | null;
   /** Зоны влияния сторон для карты: снимки через 24 ч от начала и последний (в старых сохранениях и при ошибке расчёта зон нет). */
   zones?: { side: string; frames: { time: string; grid: ZoneGrid }[] };
+  /** Итоги операции (агентная модель): потери сторон по суткам, фронтам и армиям и исторические (в старых сохранениях нет). */
+  operation?: OperationSummary;
 }
 
 export type SimResponse =

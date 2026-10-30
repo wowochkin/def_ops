@@ -75,6 +75,9 @@ import { TURN_REFUSAL } from './sim/game-rewind';
 import { ribbonItems } from './turn-ribbon';
 import { TurnRibbon } from './TurnRibbon';
 import { idbBranchStore } from './game-branch-store';
+import { ResultsTab } from './ResultsTab';
+import type { ResultsPart } from './results-view';
+import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -106,7 +109,7 @@ const advisorScope = (v: TurnView, history: boolean): RoleScope => ({
 });
 
 type Draft = OrderDraft;
-type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 'staffs';
+type Tab = 'reports' | 'intel' | 'decision' | 'orders' | 'journal' | 'umpire' | 'staffs' | 'results';
 type Sub = 'units' | 'rear' | 'bridges' | 'reserves' | 'bounds';
 /** Распоряжение штаба в проекте: ключ (одно на базу, на резерв; приоритет — одно), действие и что сказала проверка. */
 type Act = StaffAct;
@@ -158,6 +161,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const enemyChoices = liveEnemyOptions(!!gameSpec, gameSpec?.mode ?? 'legacy');
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [tab, setTab] = useState<Tab>('reports');
+  const [resPart, setResPart] = useState<ResultsPart>('losses');
   const [sel, setSel] = useState<string | null>(null);
   const [pickMode, setPickMode] = useState<Pick | null>(null);
   const pick = pickMode?.kind === 'order';
@@ -1054,6 +1058,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     reveal, setReveal: (on) => { setReveal(on); send({ kind: 'reveal', on }); }, exit: (discard) => onExit({ discard }),
   };
   useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
+  // «Итоги» игры: потери сторон по сыгранным часам (агентная модель); вкладка есть и у нынешней модели — с пояснением
+  const resultsDeps = useRef<ResultsDeps>(null!);
+  resultsDeps.current = {
+    section: () => 'command', summary: () => view?.results ?? null, side: () => (view?.human.id === 'de' ? 'de' : 'su'),
+    setPart: (p) => { setTab('results'); setResPart(p); },
+  };
+  useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   // штабная работа на ход: советник, решение, приказы, распоряжения — те же действия у кнопок
   const staff = useRef<StaffDeps>(null!);
   const lastAdvice = [...adv].reverse().find((x) => x.result?.ok);
@@ -1145,7 +1156,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
           busy={progress} open={branchesOpen} notice={setNotice}
           project={projectHas({ drafts, acts, decision }, view.lastDecision) || Object.keys(postDecisions).length > 0} />}
         <nav className="cmd-tabs" data-tour="cmd-tabs">
-          {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ...(staffsOn(view) ? [['staffs', `Штабы${cmds.length ? ` · ${cmds.length}` : ''}`]] : []), ['journal', 'Журнал'], ['umpire', 'Посредник']] as [Tab, string][]).map(([k, t]) => (
+          {([['reports', 'Доклады'], ['intel', 'Разведка'], ['decision', 'Решение'], ['orders', `Приказы${draftList.length + acts.length ? ` · ${draftList.length + acts.length}` : ''}`], ...(staffsOn(view) ? [['staffs', `Штабы${cmds.length ? ` · ${cmds.length}` : ''}`]] : []), ['journal', 'Журнал'], ['umpire', 'Посредник'], ['results', 'Итоги']] as [Tab, string][]).map(([k, t]) => (
             <ActButton key={k} data-tour={`cmd-tab-${k}`} data-hl={`tab-${k}`} action="command.tab" params={{ tab: k }} className={`${tab === k ? 'on' : ''}${k === 'decision' && decisionMissing(decision).length ? ' todo' : ''}`}>{t}</ActButton>
           ))}
         </nav>
@@ -1177,6 +1188,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
                 scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
             {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} />}
+            {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={{ state: 'off' }} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={['losses', 'compare']}
+              empty={view.engine === 'agents' ? 'Итоги ещё не посчитаны.' : undefined} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && view.command?.hqs[post.issuer]?.echelon !== 'high_command' && <PostJournal v={view} issuer={post.issuer} record={record} />}
             {tab === 'journal' && staffsOn(view) && post.issuer && <PostDocs v={view} issuer={post.issuer} />}
             {tab === 'journal' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command') && <Journal v={view} />}
