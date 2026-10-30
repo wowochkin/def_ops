@@ -3,7 +3,7 @@
 // при любом FAIL процесс завершается с кодом 1.
 //
 //   node scripts/stage1-shots.mjs [--url http://localhost:5173] [--out evals-out/stage1] [--only commander,dock,…]
-// Части: commander, dock, zones, staffs, orders, fly, umpire, bounds, manning.
+// Части: commander, dock, zones, staffs, orders, fly, umpire, bounds, manning, doc и docbounds (снимки для описания).
 // Нужны: сервер разработки редактора (cd apps/editor && npx vite) и target/release/agents-game.
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -19,19 +19,25 @@ const ONLY = arg('--only', '') ? arg('--only', '').split(',').map((s) => s.trim(
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-await ctx.addInitScript(() => {
-  if (sessionStorage.getItem('shots.init')) return;
-  sessionStorage.setItem('shots.init', '1');
-  localStorage.clear();
-  localStorage.setItem('def_ops.voice.intro', 'off');
-  localStorage.setItem('def_ops.tour.seen', JSON.stringify(['replay', 'command', 'editor', 'maps', 'knowledge', 'modeling']));
-  localStorage.setItem('def_ops.command.mode', 'agents');
-  localStorage.setItem('def_ops.mapLevel5', 'stavka');
-  localStorage.setItem('def_ops.agents.command', 'commanders');
-});
-const page = await ctx.newPage();
-await attachAgentsBridge(page);
+let ctx, page, core;
+/** Новое окно и новый процесс ядра: часть не зависит от того, что осталось от предыдущей (игра, расчёт хода в ядре). */
+async function open() {
+  if (core) core.stop();
+  if (ctx) await ctx.close();
+  ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addInitScript(() => {
+    if (sessionStorage.getItem('shots.init')) return;
+    sessionStorage.setItem('shots.init', '1');
+    localStorage.clear();
+    localStorage.setItem('def_ops.voice.intro', 'off');
+    localStorage.setItem('def_ops.tour.seen', JSON.stringify(['replay', 'command', 'editor', 'maps', 'knowledge', 'modeling']));
+    localStorage.setItem('def_ops.command.mode', 'agents');
+    localStorage.setItem('def_ops.mapLevel5', 'stavka');
+    localStorage.setItem('def_ops.agents.command', 'commanders');
+  });
+  page = await ctx.newPage();
+  core = await attachAgentsBridge(page);
+}
 const shot = async (name) => { await page.waitForTimeout(800); await page.screenshot({ path: join(OUT, name), type: 'jpeg', quality: 82 }); };
 let failed = 0;
 const ok = (part, what) => console.log(`ok ${part}: ${what}`);
@@ -44,6 +50,12 @@ async function replayAgents() {
   await page.locator('[data-action="replay.calc"]').click();
   await page.locator('.rp-go.primary[data-action="replay.calc"]').waitFor({ timeout: 900000 });
   await page.locator('.take-btn').waitFor({ timeout: 600000 });
+}
+
+/** Каждая часть начинает с нового окна и ядра, без незавершённой игры, чтобы части шли подряд. */
+async function fresh() {
+  await open();
+  await page.goto(`${URL_}/`);
 }
 
 const parts = {
@@ -268,6 +280,7 @@ const parts = {
     if (z5.key === z4.key) return fail('zones', 'при шаге на сутки наложение зон не сменилось');
     await page.locator('.player .ic[title="Назад на сутки"]').click();
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__replayEngine.setView({ center: [14.3, 52.35], zoom: 7.3 }));
     await shot('replay-zones.jpg');
     ok('zones', 'слой и легенда');
     await page.locator('.lyr-menu > .pop-btn').click();
@@ -277,6 +290,77 @@ const parts = {
     await page.locator('.lyr-menu > .pop-btn').click();
     if (await page.locator('.lyr-row', { hasText: 'Зоны влияния сторон' }).locator('input').isChecked()) return fail('zones', 'после перезагрузки флажок снова включён');
     ok('zones', 'выбор помнится');
+  },
+  /** Снимки для описания (docs/img): вкладка «Командующий» и график состязания в колонке с легендой, «Слои» с зонами. */
+  async doc() {
+    await replayAgents();
+    await page.locator('.lvl-sw button', { hasText: 'Фронт' }).click();
+    const slider = page.locator('.pl-track input[type=range]');
+    const toLabel = async (day, hhmm) => {
+      for (let h = 0; h < 400; h++) {
+        await slider.evaluate((el, v) => {
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, String(v));
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }, h);
+        await page.waitForTimeout(40);
+        const t = await page.locator('.player').first().innerText();
+        if (new RegExp(`${day} апреля[\\s\\S]*${hhmm}`).test(t)) return h;
+      }
+      return -1;
+    };
+    // слои с зонами — на старте
+    await page.locator('.lyr-menu > .pop-btn').click();
+    await shot('replay-layers.jpg');
+    await page.keyboard.press('Escape');
+    if ((await toLabel(17, '04:00')) < 0) return fail('doc', 'нет часа 17 апреля 04:00');
+    await page.evaluate(() => window.__replayCard('su_1bf'));
+    await page.locator('.ag-tabs button', { hasText: 'Командующий' }).click();
+    await page.locator('.map-dock > .cm-chart').waitFor();
+    // Берлин правее середины карты, левее карточки: замысел «ввести армию в прорыв» виден целиком
+    await page.evaluate(() => window.__replayEngine.setView({ center: [13.95, 52.17], zoom: 8.2 }));
+    await shot('replay-commander.jpg');
+    await page.evaluate(() => document.querySelector('.cm-opts')?.scrollIntoView({ block: 'start' }));
+    await shot('replay-commander-decisions.jpg');
+    for (const q of ['почему не выбрал другой вариант?', 'что знал о противнике?']) { await page.locator('.cm-sugg button', { hasText: q }).click(); await page.waitForTimeout(300); }
+    await page.evaluate(() => { const b = document.querySelector('.ag-panel .ag-body'); if (b) b.scrollTop = b.scrollHeight; });
+    await shot('replay-commander-chat.jpg');
+    if ((await toLabel(23, '01:00')) < 0) return fail('doc', 'нет часа 23 апреля 01:00');
+    await page.evaluate(() => window.__replayEngine.setView({ center: [13.95, 52.17], zoom: 8.2 }));
+    await page.waitForTimeout(500);
+    await shot('replay-commander-map.jpg');
+    ok('doc', 'снимки командующего и слоёв');
+  },
+  /** Снимок для описания: полоса армии в «Истории как замысле» на 22.04 05:00 (час 144), уровень «Армия», у 8 гв. А. */
+  async docbounds() {
+    await page.goto(`${URL_}/`);
+    await page.evaluate(() => localStorage.setItem('def_ops.agents.command', 'intent'));
+    await replayAgents();
+    await page.locator('.lvl-sw button', { hasText: 'Армия' }).click();
+    const slider = page.locator('.pl-track input[type=range]');
+    await slider.evaluate((el) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '144');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForTimeout(600);
+    const c = await page.evaluate(() => {
+      const { trace } = window.__replayBounds();
+      const F = (k) => trace.fields.indexOf(k);
+      const hq = new Map(trace.hqs.map((h) => [h.id, h]));
+      const under = (id) => { for (let k = id, n = 0; k && n < 8; k = hq.get(k)?.parent, n++) if (k === 'su_8gva') return true; return false; };
+      const rows = trace.frames[144].filter((r, k) => under(trace.divisions[k].hq));
+      return [rows.reduce((x, r) => x + r[F('lng')], 0) / rows.length, rows.reduce((x, r) => x + r[F('lat')], 0) / rows.length];
+    });
+    await page.evaluate((ctr) => window.__replayEngine.setView({ center: [ctr[0] + 0.12, ctr[1] - 0.05], zoom: 9.2 }), c);
+    await page.locator('.map-dock > .legend .lg-h').click();
+    // на снимке — только линии: полосы армий, фронты и расчётный фронт (прочие слои скрыты)
+    await page.locator('.lyr-menu > .pop-btn').click();
+    await page.locator('.lyr-menu button', { hasText: 'Скрыть все' }).click();
+    for (const t of ['Линия фронта (расчёт)', 'Разграничительные линии', 'Полосы фронтов и армий']) await page.locator('.lyr-row', { hasText: t }).locator('input').check();
+    await page.keyboard.press('Escape');
+    await shot('bounds-army.jpg');
+    ok('docbounds', 'снимок полосы 8 гв. А');
   },
   /** «Штабы»: кнопки раздельны; на пункте 8 гв. А — только её поддерево и директивы фронта; «показать все» открывает остальные. */
   async staffs() {
@@ -317,7 +401,7 @@ const parts = {
     if (bad.length) return fail('staffs', `в журнале чужие документы: ${bad.slice(0, 2).join(' / ')}`);
     await page.locator('.cmd-sec.staffs section', { hasText: 'Штабы' }).first().scrollIntoViewIfNeeded();
     await page.locator('.cmd-sec.staffs h4', { hasText: /^Штабы$/ }).evaluate((e) => e.scrollIntoView({ block: 'start' }));
-    await shot('command-staffs.jpg');
+    await shot('command-staffs-own.jpg');
     ok('staffs', `только поддерево 8 гв. А (штабов: ${rows.length}, документов: ${docs.length})`);
     await page.locator('[data-action="command.staffs.all"]').first().click();
     await page.waitForTimeout(300);
@@ -560,9 +644,10 @@ const parts = {
 };
 
 try {
-  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split('\n').slice(0, 3).join(' ')));
+  for (const [name, fn] of Object.entries(parts)) if (want(name)) await fresh().then(fn).catch((e) => fail(name, String(e).split('\n').slice(0, 3).join(' ')));
   for (const n of ONLY ?? []) if (!parts[n] && !['dock', 'zones', 'staffs', 'orders', 'fly', 'umpire', 'bounds'].includes(n)) fail(n, 'неизвестная часть');
 } finally {
+  core?.stop();
   await browser.close();
 }
 process.exit(failed ? 1 : 0);
