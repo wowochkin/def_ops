@@ -1931,6 +1931,7 @@ button.kb-rub:hover { border-color: #2f5f8f; }
 .start-llm { margin-top: 20px; display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; background: #fbfaf6; border: 1px solid var(--line, #dcd8cc); }
 .start-llm > div { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .start-llm small { color: #5a5852; }
+.start-expo { margin-top: 12px; }
 .start-llm-err { color: var(--danger, #a3261c); font-size: 13px; }
 .start-dot { position: relative; flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: #b9b4a6; }
 .start-dot.ok { background: #2f9e55; } .start-dot.fail { background: #c4382c; }

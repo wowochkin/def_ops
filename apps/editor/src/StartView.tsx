@@ -1,8 +1,7 @@
-import { ExpoSetup } from './expo/ExpoSetup';
 /**
  * Начальная страница («Начало»): первый раздел при запуске. Что это за приложение, кнопка экскурсии «О приложении»
  * (то же действие, что «Штаб, расскажи о приложении»), переходы по разделам с короткими пояснениями, состояние
- * языковой модели и флажок «Вступление при запуске». Всё — через действия реестра: кнопки и голос делают одно и то же.
+ * языковой модели, строка выставочного стенда и флажок «Вступление при запуске». Всё — через действия реестра: кнопки и голос делают одно и то же.
  */
 import type { ReactNode } from 'react';
 import { Icon } from './ui';
@@ -11,6 +10,7 @@ import { useIntroSetting } from './voice/tour';
 import { act } from './voice/registry';
 import type { Llm } from './shared';
 import type { Section } from './sections';
+import { ExpoSetup } from './expo/ExpoSetup';
 
 const WHAT: { id: Exclude<Section, 'start'>; text: string }[] = [
   { id: 'replay', text: 'Рассчитать операцию, сравнить с историей, принять командование — с любой ступени, от Ставки до дивизии' },
@@ -100,7 +100,6 @@ export function StartView({ llm }: { llm: Llm }) {
             </div>
           </div>
         </section>
-        <ExpoSetup />
         <h3 className="start-h">Разделы</h3>
         <div className="start-grid" data-tour="start-sections">
           {WHAT.map((w, i) => (
@@ -120,6 +119,7 @@ export function StartView({ llm }: { llm: Llm }) {
           </div>
           {st === 'fail' && <ActButton action="shell.open" params={{ section: 'staff' }}>Открыть «ИИ»</ActButton>}
         </section>
+        <ExpoSetup />
         <p className="note">Голос (только Mac с Apple Silicon, настольное приложение): значок микрофона — вверху по центру, его можно перетащить. Скажите «Штаб, расскажи о приложении» или «Штаб, что я могу?».</p>
       </div>
     </div>

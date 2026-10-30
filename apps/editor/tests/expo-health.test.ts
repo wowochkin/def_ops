@@ -88,3 +88,20 @@ it('a hanging probe is bounded and abort releases it', async () => {
   abort.abort();
   expect(await cancelled).toBe(false);
 });
+it('voice failure restarts it at once and reports once per outage', async () => {
+  vi.useFakeTimers();
+  let restarts = 0;
+  const failures: string[] = [];
+  const stop = watchdog(
+    [{ id: 'voice', label: 'Голос', check: async () => false, restart: async () => { restarts++; } }],
+    (id) => failures.push(id),
+    100,
+  );
+  await vi.advanceTimersByTimeAsync(100);
+  expect(failures).toEqual(['voice']);
+  expect(restarts).toBe(1);
+  await vi.advanceTimersByTimeAsync(300);
+  expect(failures).toEqual(['voice']);
+  expect(restarts).toBe(1);
+  stop();
+});

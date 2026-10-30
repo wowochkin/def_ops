@@ -167,7 +167,14 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
       </div>
       <footer className="expo-footer">
         {controls && access.voiceButton && (
-          <button onClick={() => setNotice('Голосовой ввод появится на этапе «ИИ и голос».')}>Говорить</button>
+          <button
+            onClick={() => {
+              send({ t: 'speak' });
+              setNotice('Голосовой ввод появится на этапе «ИИ и голос».');
+            }}
+          >
+            Говорить
+          </button>
         )}
         {notice && <span role="status">{notice}</span>}
         <span>Каркас выставочного режима · сцены без расчёта операции</span>

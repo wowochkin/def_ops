@@ -14,7 +14,7 @@ import type { ExpoSettings } from './settings';
 import type { ExpoBus } from './bus';
 import { plan, type Windows, type MonitorInfo } from './windows';
 
-const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'restart'];
+const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'speak', 'restart'];
 
 const sameScreens = (a: ExpoSettings['screens'], b: ExpoSettings['screens']) =>
   a.count === b.count && a.order.length === b.order.length && a.order.every((id, i) => id === b.order[i]);

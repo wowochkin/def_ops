@@ -56,6 +56,7 @@ export type DirectorEvent =
   | { t: 'next' }
   | { t: 'choose'; card: number }
   | { t: 'replace'; card: number }
+  | { t: 'speak' }
   | { t: 'restart' }
   | { t: 'pause' }
   | { t: 'resume' }
@@ -98,7 +99,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -253,6 +254,10 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
         return out({ ...touched, phase: { ...p, replacements: p.replacements + 1 } });
       }
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
+    case 'speak':
+      if (p.kind === 'startup' || p.kind === 'attract') return out(s);
+      fx.push({ e: 'say', key: 'voice-soon', priority: 'action' });
+      return out(touched);
   }
   return out(s);
 }

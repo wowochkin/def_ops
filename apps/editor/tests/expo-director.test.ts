@@ -245,6 +245,17 @@ describe('режиссёр сеанса', () => {
     expect(r.phase).toMatchObject({ n: 3, step: 'choose' });
   });
 
+  it('speak asks voice and counts as input', () => {
+    const r = run().send({ t: 'ready' });
+    const mark = r.effects.length;
+    r.send({ t: 'speak' });
+    expect(r.since(mark)).toEqual([]);
+    const c = toChoose().wait(5_000).send({ t: 'speak' });
+    expect(c.effects).toContainEqual({ e: 'say', key: 'voice-soon', priority: 'action' });
+    expect(c.state.lastInput).toBe(c.now);
+    expect(c.phase).toMatchObject({ kind: 'turn', step: 'choose' });
+  });
+
   it('step is pure', () => {
     const s = initialState(0);
     const snap = JSON.stringify(s);

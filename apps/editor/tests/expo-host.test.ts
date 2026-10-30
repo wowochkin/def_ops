@@ -121,3 +121,37 @@ it('settings other than screens do not rearrange windows', async () => {
   await host.stop();
   b.close();
 });
+it('missed beat reopens windows and stop releases guard and closes views', async () => {
+  const [a, b] = memoryBus();
+  const calls: string[] = [];
+  const two = [
+    { id: 'a', name: 'A', x: 0, y: 0, width: 100, height: 100, scale: 1 },
+    { id: 'b', name: 'B', x: 100, y: 0, width: 100, height: 100, scale: 1 },
+  ];
+  const windows: Windows = {
+    monitors: async () => two,
+    open: async (p) => {
+      calls.push(`open:${p.count}`);
+    },
+    closeAll: async () => {
+      calls.push('closeAll');
+    },
+    guard: async (on) => {
+      calls.push(`guard:${on}`);
+    },
+    onMonitors: () => () => {},
+  };
+  const host = createHost({ ...EXPO_DEFAULTS, screens: { count: 2, order: [] } }, a, windows, () => {});
+  await host.start();
+  expect(calls).toEqual(['guard:true', 'open:2']);
+  expect(host.ready()).toBe(false);
+  await host.checkWindows();
+  expect(calls.slice(2)).toEqual(['closeAll', 'open:2']);
+  b.send({ k: 'beat', window: 1, at: Date.now() });
+  expect(host.ready()).toBe(true);
+  await host.checkWindows();
+  expect(calls).toHaveLength(4);
+  await host.stop();
+  expect(calls.slice(4)).toEqual(['guard:false', 'closeAll']);
+  b.close();
+});
