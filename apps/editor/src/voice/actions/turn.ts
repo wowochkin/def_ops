@@ -176,6 +176,9 @@ export function turnActions(get: () => TurnDeps): Action[] {
     if (p && !p.done && p.time === v.time) return `${head} Советник готовит варианты — скажу, когда будут готовы.`;
     if (m.decision.length === 1 && !d.decision.report.trim())
       return { offer: `${head} Составить черновик донесения?`, id: 'decision.draftReport' };
+    // варианты — и без модели (по правилам, агентная модель); недоступны вовсе — только что не готово
+    const va = getAction('command.variants');
+    if (va && va.available() !== true) return head;
     return { offer: `${head} Попросить у советника варианты решения?`, id: 'command.variants', params: { count: d.planN } };
   };
   const confirm = () => {

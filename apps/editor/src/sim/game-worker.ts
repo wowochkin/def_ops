@@ -35,7 +35,7 @@ import advisorSystemTpl from '../../../../services/staff/prompts/advisor.system.
 import advisorUserTpl from '../../../../services/staff/prompts/advisor.user.md?raw';
 import { postPrompt } from '../command-post';
 import { agentEvents, agentGame, bridgesOf, fogOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
-import type { AdviceView, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
+import type { AdviceView, CoreVariant, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
 import { BUSY_REFUSAL, dropPending as dropPendingOf, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, switchLine, turnGate } from './game-rewind';
 import { topForces } from './review-forces';
@@ -175,6 +175,7 @@ self.onmessage = async (e: MessageEvent<GameRequest>) => {
     else if (m.kind === 'llm-hold') modelQueue.hold(m.on);
     else if (m.kind === 'advise') void adviseReq(m);
     else if (m.kind === 'plan') void planReq(m);
+    else if (m.kind === 'plan-rules') void planRules(m);
     else if (m.kind === 'plan-stop') planAbort?.abort();
     else if (m.kind === 'advise-stop') adviseAbort?.abort();
     else if (m.kind === 'reveal') { reveal = m.on; postView(); }
@@ -554,6 +555,17 @@ async function planReq(m: Extract<GameRequest, { kind: 'plan' }>) {
   post({ kind: 'plan-done', id: m.id, ok: r.ok, error: abort.signal.aborted ? 'остановлено' : r.error, warning: r.warning, model: r.model, seconds: Math.round((Date.now() - t0) / 1000) });
 }
 
+/** Варианты по правилам (ядро агентной модели): варианты командующего штаба hq; нет hq — верхняя инстанция стороны. */
+async function planRules(m: Extract<GameRequest, { kind: 'plan-rules' }>) {
+  const fail = (error: string) => post({ kind: 'plan-rules', id: m.id, ok: false, error });
+  if (!agents || !agentTrace) return fail('варианты по правилам — в игре на агентной модели');
+  const hqs = commandView(agentTrace, rec.human)?.hqs ?? {};
+  const hq = m.hq ?? Object.entries(hqs).find(([, h]) => h.echelon === 'high_command')?.[0];
+  if (!hq) return fail('нет штаба верхней инстанции');
+  try { post({ kind: 'plan-rules', id: m.id, ok: true, variants: await agentsCall<CoreVariant[]>('game_variants', { hq, n: m.count }) }); }
+  catch (e) { fail(String((e as Error)?.message ?? e)); }
+}
+
 const absolute = (u: string) => (/^https?:/.test(u) ? u : new URL(u, self.location.origin).href).replace(/\/+$/, '');
 const status = (s: AiStatus) => post({ kind: 'ai', status: s });
 
@@ -826,6 +838,7 @@ function postView() {
     ...turnMapView(),
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
     ...theatreObjects(ctx.theatre.data, s.time, (at) => describePlace(ctx.theatre, at)),
+    rivers: ctx.theatre.data.rivers.filter((r) => r.major).map((r) => ({ name: r.name ?? '', major: true, line: r.line })),
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,

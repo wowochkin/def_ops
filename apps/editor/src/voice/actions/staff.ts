@@ -71,8 +71,8 @@ export interface StaffDeps {
   stopAdvisor(): void;
   /** Раскрыть вариант i (с нуля) на экране. */
   openVariant(i: number): void;
-  /** Принять вариант i в проект (only — только решение), без вопросов; что сделано — словами. */
-  applyPlan(i: number, only: boolean): Promise<string>;
+  /** Принять вариант i в проект (only — только решение; edit — приказы в проекты пункта управления, без очереди), без вопросов; что сделано — словами. */
+  applyPlan(i: number, only: boolean, edit?: boolean): Promise<string>;
   /** Советник отвечает на вопрос. */
   advisorBusy: boolean;
   /** Задать вопрос советнику (советник открывается; cat, topic — тема из дерева тем); возвращает номер вопроса. */
@@ -247,6 +247,13 @@ export function variantText(v: PlanVariantView, n: number): string {
   const main = ok.slice(0, 3).map((o) => `${short(o.name)} — ${TASK_RU[o.task]}${o.targetText ? `, ${short(o.targetText)}` : ''}`);
   const rest = ok.length - main.length;
   const acts = v.acts.filter((a) => a.ok).length;
+  // полный вариант пункта: приказы всем подчинённым — в замысле словами; сколько их и сколько дополнено правилом
+  if (v.dirs) return [
+    `Вариант ${ordName(n - 1)}: «${v.title}»${v.source === 'rules' ? ' — по правилам, без модели' : ''}.`, sent(v.idea),
+    v.decision.intent ? `Замысел: ${sent(v.decision.intent)}` : '',
+    `Приказов подчинённым: ${numberWords(v.dirs.length)}${v.filled?.length ? `, из них дополнено правилом: ${numberWords(v.filled.length)}` : ''}.`,
+    acts ? `Распоряжений по тылу и переправам: ${numberWords(acts, 'n')}.` : '',
+  ].filter(Boolean).join(' ');
   return [
     `Вариант ${ordName(n - 1)}: «${v.title}».`, sent(v.idea),
     v.decision.intent ? `Замысел: ${sent(v.decision.intent)}` : '',
@@ -500,7 +507,9 @@ export function staffActions(get: () => StaffDeps): Action[] {
     const count = vs.filter(Boolean).length;
     return vs[i] ? { v: vs[i], i } : `Такого варианта нет: их ${numberWords(count)}.`;
   };
-  const pick = async (n: unknown, only: boolean) => { const x = variant(n); return typeof x === 'string' ? x : get().applyPlan(x.i, only); };
+  const pick = async (n: unknown, only: boolean, edit = false) => { const x = variant(n); return typeof x === 'string' ? x : edit ? get().applyPlan(x.i, only, true) : get().applyPlan(x.i, only); };
+  /** Варианты по правилам ядра: игра на агентной модели с командованием по ступеням. */
+  const rulesOn = () => { const v = get().view; return v?.engine === 'agents' && !!v.command && v.command.mode !== 'legacy'; };
   /** Открыть подвкладку «Приказов»; её нет на этом уровне — не переключать, вернуть причину словами. */
   const toOrders = (s: OrdersSub): string | undefined => {
     const why = get().subsOk?.[s];
@@ -558,9 +567,13 @@ export function staffActions(get: () => StaffDeps): Action[] {
 
   return [
     // ---- советник
-    { ...base, id: 'command.variants', title: 'Варианты решения от советника', describe: 'Просит у советника от одного до трёх полных вариантов решения на ход (решение, приказы, тыл, переправы, резервы).',
+    { ...base, id: 'command.variants', title: 'Варианты советника', describe: 'Просит от одного до трёх полных вариантов решения на ход: решение, задачи всем подчинённым, полосы и ось главного удара, резервы, тыл, переправы. Советник (языковая модель) — и дополнение правилом; без модели — варианты командующих по правилам.',
       params: { type: 'object', properties: { count: { type: 'integer', minimum: 1, maximum: 3 } } }, say: ['штаб, дай три варианта'], highlight: () => [hl('plan-cta'), hl('advisor')],
-      available: () => { const r = ready(); return r !== true ? r : planBusy() ? 'советник уже готовит варианты — подождите или скажите «стоп»' : true; },
+      available: () => {
+        const r = ready(); if (r !== true) return r;
+        if (get().advisorReady === false && !rulesOn()) return 'советник не на связи; варианты по правилам — в игре на агентной модели';
+        return planBusy() ? 'советник уже готовит варианты — подождите или скажите «стоп»' : true;
+      },
       run: async (p?: { count?: number }) => {
         const n = p?.count === undefined ? get().planN : Math.round(Number(p.count));
         if (!(n >= 1 && n <= 3)) return 'Советник предлагает от одного до трёх вариантов.';
@@ -568,6 +581,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
         const id = get().askPlan(n);
         // голосом пользуются (кнопка — тоже это действие) — штаб доложит, когда варианты будут готовы
         if (voiceRecent()) voicePlan = id;
+        if (get().advisorReady === false) return `Готовлю ${variantsWord(n)} решения по правилам, без модели.`;
         return `Прошу у советника ${variantsWord(n)} решения. Это займёт время — скажу, когда будут готовы.`;
       } },
     { ...base, id: 'command.variants.list', title: 'Какие варианты', describe: 'Перечисляет готовые варианты решения от советника (новые не готовит).',
@@ -584,19 +598,19 @@ export function staffActions(get: () => StaffDeps): Action[] {
     { ...base, id: 'command.variant.more', title: 'Подробнее о варианте', describe: 'Читает вариант решения N: суть, замысел, главные приказы; раскрывает его на экране.',
       params: N, say: ['штаб, подробнее о первом'], available: planHas, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       run: async (p: { n: number }) => { const x = variant(p?.n); if (typeof x === 'string') return x; get().openVariant(x.i); return readAloud(variantText(x.v, x.i + 1)); } },
-    { ...base, id: 'command.variant.pick', title: 'Принять вариант', describe: 'Принимает вариант решения N в пустой проект (only — только решение, без приказов).',
-      params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, only: { type: 'boolean' } }, required: ['n'] }, say: ['штаб, выбираю первый'],
+    { ...base, id: 'command.variant.pick', title: 'Принять вариант', describe: 'Принимает вариант решения N в пустой проект: целиком — приказы в очередь хода; edit — «принять и поправить»: приказы в проекты пункта управления; only — только решение.',
+      params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, only: { type: 'boolean' }, edit: { type: 'boolean' } }, required: ['n'] }, say: ['штаб, выбираю первый', 'штаб, принимаю второй и поправлю'],
       available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       check: (p: { n: number; only?: boolean }) => {
         const x = variant(p?.n); if (typeof x === 'string') return x;
         return !p.only && has() ? 'В проекте уже есть решение или приказы — вариант их заменит. Скажите: «выбираю …» ещё раз, я переспрошу.' : true;
       },
-      run: async (p: { n: number; only?: boolean }) => pick(p?.n, !!p?.only) },
-    { ...base, id: 'command.variant.replace', title: 'Заменить проект вариантом', describe: 'Заменяет непустой проект (решение, приказы, распоряжения) вариантом N (необратимо).',
-      params: N, irreversible: true, available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
+      run: async (p: { n: number; only?: boolean; edit?: boolean }) => pick(p?.n, !!p?.only, !!p?.edit) },
+    { ...base, id: 'command.variant.replace', title: 'Заменить проект вариантом', describe: 'Заменяет непустой проект (решение, приказы, распоряжения) вариантом N (необратимо); edit — приказы в проекты пункта управления.',
+      params: { type: 'object', properties: { n: { type: 'integer', minimum: 1, maximum: 3 }, edit: { type: 'boolean' } }, required: ['n'] }, irreversible: true, available: planReady, highlight: (p: { n: number }) => hl(`variant-${p?.n}`),
       check: (p: { n: number }) => { const x = variant(p?.n); return typeof x === 'string' ? x : true; },
       confirm: (p: { n: number }) => { const x = variant(p?.n); return `Заменить проект вариантом «${typeof x === 'string' ? '' : x.v.title}»? Текущие решение, приказы и распоряжения будут заменены.`; },
-      run: async (p: { n: number }) => pick(p?.n, false) },
+      run: async (p: { n: number; edit?: boolean }) => pick(p?.n, false, !!p?.edit) },
     { ...base, id: 'command.advisor.ask', title: 'Спросить советника', describe: 'Задаёт советнику вопрос своими словами; ответ штаб зачитает, когда он будет готов.',
       // cat, topic — вопрос из дерева тем (кнопки советника): ответ — на экране, вслух не зачитывается
       params: { type: 'object', properties: { text: TEXT, cat: TEXT, topic: TEXT }, required: ['text'] }, say: ['штаб, спроси советника: где лучше наступать?'], highlight: () => hl('advisor'),
@@ -721,7 +735,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
       },
       run: async (p: { field: string; advisor?: boolean }) => compose(p) },
     { ...base, id: 'decision.compose.all', title: 'Составить решение советником', describe: 'Советник (языковая модель) пишет все поля решения за штаб пункта управления — оценку обстановки, замысел противника, решение, риски и донесение — одно за другим. Поля пусты.',
-      say: ['штаб, составь решение советником'], highlight: () => hl('ai-compose'),
+      say: ['штаб, составь решение советником'], highlight: () => hl('field-assessment'),
       check: () => {
         const d = get();
         if (!d.advisorReady) return 'Советник не на связи — языковая модель не отвечает. Поля можно составить по обстановке: «составь оценку обстановки».';
@@ -731,7 +745,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
       },
       run: async () => get().composeAll() },
     { ...base, id: 'decision.compose.all.replace', title: 'Составить решение советником заново', describe: 'Советник переписывает все поля решения (написанное заменяется).',
-      say: ['штаб, составь решение советником заново'], irreversible: true, highlight: () => hl('ai-compose'),
+      say: ['штаб, составь решение советником заново'], irreversible: true, highlight: () => hl('field-assessment'),
       confirm: () => 'Заменить всё решение текстом советника?',
       check: () => (!get().advisorReady ? 'Советник не на связи — языковая модель не отвечает.' : get().composing ? 'Советник уже пишет решение.' : true),
       run: async () => get().composeAll() },
@@ -1007,7 +1021,10 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
   }
   if ((m = /^только решение(?: (?:по|из|от|с))? (.+)$/.exec(t)) && nth(m[1])) return hit('command.variant.pick', { n: nth(m[1]), only: true });
   if ((m = /^(?:выбираю|выбери|выбрать|выберем|беру|берем|принимаю|прими|принять|утверждаю)(?: (.+))?$/.exec(t))) {
-    const tail = m[1] ?? '';
+    // «… и поправлю», «… с правкой» — принять и поправить: приказы в проекты пункта управления
+    const em = /^(.*?) (?:и (?:поправлю|поправим|поправить|исправлю|доработаю)|с правкой|на правку)$/.exec(m[1] ?? '');
+    const edit = !!em;
+    const tail = em ? em[1] : m[1] ?? '';
     const n = nth(tail);
     const named = /(?:^| )вариант\p{L}*$|^вариант\p{L}*(?: |$)/u.test(tail);
     if (!n && !(named && tail.split(' ').length === 1)) return null;
@@ -1016,10 +1033,10 @@ export function parseStaff(rest: string, section: string, raw = rest): PhraseHit
     const vs = p?.variants.filter(Boolean) ?? [];
     if (!n) {
       if (vs.length > 1) return { say: `Какой вариант: ${vs.map((x, i) => `${ordName(i)} — «${x.title}»`).join(', ')}?` };
-      return hit('command.variant.pick', { n: 1 });
+      return hit('command.variant.pick', edit ? { n: 1, edit } : { n: 1 });
     }
     const d = live!();
-    return hit(d.view && projectHas(d, prevOf(d)) ? 'command.variant.replace' : 'command.variant.pick', { n });
+    return hit(d.view && projectHas(d, prevOf(d)) ? 'command.variant.replace' : 'command.variant.pick', edit ? { n, edit } : { n });
   }
   // советник: вопрос, остановка, «подробнее», предложенный приказ
   if ((m = /^(?:спроси|спросите|задай вопрос|вопрос)(?: у)? советник\p{L}*(?: о| об| про)? (.+)$/u.exec(t))) return hit('command.advisor.ask', { text: m[1] });

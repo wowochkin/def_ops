@@ -927,3 +927,19 @@ describe('ходатайство голосом', () => {
     expect(getAction('decision.petition.point')!.available()).toMatch(/^Ставку ведёте/);
   });
 });
+
+describe('«Варианты советника» — по правилам и с правкой', () => {
+  it('«принимаю второй и поправлю» — принять с правкой', async () => {
+    const d = staff({ plan: plan() });
+    expect(parseStaff('принимаю второй и поправлю', 'replay')).toEqual({ id: 'command.variant.pick', params: { n: 2, edit: true } });
+    await act('command.variant.pick', { n: 2, edit: true });
+    expect(d.applyPlan).toHaveBeenLastCalledWith(1, false, true);
+  });
+  it('без модели: на агентной модели — варианты по правилам, на нынешней — недоступно с причиной', () => {
+    staff({ advisorReady: false, view: view({ engine: 'agents', command: { mode: 'agents', hqs: {} } as never }) } as never);
+    expect(getAction('command.variants')!.available()).toBe(true);
+    offs.forEach((o) => o()); offs = [];
+    staff({ advisorReady: false } as never);
+    expect(getAction('command.variants')!.available()).toBe('советник не на связи; варианты по правилам — в игре на агентной модели');
+  });
+});

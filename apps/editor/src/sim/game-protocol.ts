@@ -86,6 +86,8 @@ export type GameRequest =
   | { kind: 'advise'; id: number; category: string; topic: string; question: string; draft: string; thread: { q: string; a: string }[]; reference: string; post?: PostContext }
   /** Советник: варианты решения на ход (count — сколько), проект решения словами, справка из базы знаний; остановить. */
   | { kind: 'plan'; id: number; count: number; draft: string; reference: string; post?: PostContext }
+  /** Варианты решения по правилам (ядро агентной модели, game_variants) для штаба hq; null — верхняя инстанция стороны. */
+  | { kind: 'plan-rules'; id: number; count: number; hq: string | null }
   | { kind: 'plan-stop' }
   /** Остановить ответ советника. */
   | { kind: 'advise-stop' }
@@ -172,6 +174,8 @@ export interface TurnView {
   /** Рубежи театра, мосты и переправы театра, не разрушенные к ходу (с названием), — для выбора объектов в приказах. */
   lines?: { id: string; name: string; line: LngLat[] }[];
   crossings?: { id: string; name: string; at: LngLat }[];
+  /** Большие реки театра (для переправ в вариантах по правилам). */
+  rivers?: { name: string; major: boolean; line: LngLat[] }[];
   /** Задержка доведения приказов по ступеням, часов. */
   delays: Record<string, number>;
   detectKm: number;
@@ -243,6 +247,8 @@ export type GameResponse =
   | { kind: 'plan-progress'; id: number; text: string }
   | { kind: 'plan-variant'; id: number; index: number; variant: PlanVariantView }
   | { kind: 'plan-done'; id: number; ok: boolean; error?: string; warning?: string; model?: string; seconds?: number }
+  /** Варианты по правилам (game_variants): лучшие n и, если «продолжать» не среди них, — он с extra. */
+  | { kind: 'plan-rules'; id: number; ok: boolean; variants?: CoreVariant[]; error?: string }
   | { kind: 'error'; message: string }
   /** Сообщение игроку, игра продолжается (например, запись разошлась с расчётом). */
   | { kind: 'notice'; text: string }
@@ -276,6 +282,21 @@ export interface AdviceView {
 /** Распоряжение варианта (тыл, переправы, резервы) — готовое к включению в проект; ok=false — не исполнимо. */
 export interface PlanActView { key: string; action: StaffAction | null; label: string; text: string; at?: LngLat; from?: LngLat; given: string; ok: boolean }
 
+/** Приказ варианта по правилам ядра (game_variants). */
+export interface CoreOrder {
+  to: string; task: string; form: 'order' | 'instruction';
+  axis: LngLat[]; immediate: LngLat[]; subsequent: LngLat[]; right: LngLat[]; left: LngLat[];
+  commit?: boolean;
+  /** Роль в построении: первый, второй эшелон, подвижная группа, введённая. */
+  echelon?: 'first' | 'second' | 'mobile' | 'committed' | null;
+  note: string;
+  rule?: string | null;
+}
+/** Вариант командующего по правилам: вид, название, правило, оценка, ось, главный удар и резерв, приказы всем подчинённым. */
+export interface CoreVariant { kind: string; label: string; rule: string; score: number; axis: LngLat[]; mainBlow: string[]; reserve?: string[]; extra?: boolean; orders: CoreOrder[] }
+/** Приказ варианта получателю: имя, главный удар варианта; filled — дополнен правилом. */
+export interface VariantDir extends CoreOrder { name: string; mainBlow: string[]; filled?: boolean; /** цель словами: «Зелов» */ target?: string }
+
 /** Вариант решения на ход от советника: решение целиком, приказы и распоряжения, сопоставленные с обстановкой. */
 export interface PlanVariantView {
   title: string;
@@ -283,6 +304,14 @@ export interface PlanVariantView {
   decision: HumanDecision;
   orders: AdviceView['suggestions'];
   acts: PlanActView[];
+  /** Откуда вариант: языковая модель (дополнена правилом) или правила ядра без модели. */
+  source?: 'llm' | 'rules';
+  /** Приказы всем подчинённым пункта: задача, ось, рубежи, разграничительные линии (пункт управления). */
+  dirs?: VariantDir[];
+  /** Нынешняя модель: объединения без новых приказов — прежние задачи. */
+  kept?: string[];
+  /** Пункт: подчинённые, чьи приказы дополнены правилом (у модели их не было). */
+  filled?: string[];
   /** Исправление неисполнимых приказов по подсказке: сколько было отброшено и сколько исправлено. */
   fix?: { failed: number; fixed: number; error?: string; notes?: { n: number; text: string }[] };
 }

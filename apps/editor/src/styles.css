@@ -755,6 +755,8 @@ button.tr-turn:disabled { opacity: .55; cursor: default; }
 .plan-h { display: flex; align-items: baseline; gap: 6px; cursor: pointer; }
 .plan-h b { flex: 1; font: 700 13.5px/1.3 'PT Serif', Georgia, serif; }
 .plan-ok { font-style: normal; font-size: 10.5px; color: #fff; background: var(--accent); border-radius: 8px; padding: 0 6px; }
+/* вариант по правилам, без языковой модели */
+.plan-src { font-size: 10.5px; color: var(--muted, #6b6b6b); border: 1px dashed #c9b7b1; border-radius: 8px; padding: 0 6px; margin-left: 6px; white-space: nowrap; }
 .plan-sum { font-size: 11px; }
 .plan-body { display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 6px; }
 .plan-f small { display: block; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
@@ -771,6 +773,8 @@ button.tr-turn:disabled { opacity: .55; cursor: default; }
 .plan-cta button { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .plan-cta-act { display: flex; flex-direction: column; gap: 6px; align-items: stretch; flex: none; }
 .plan-cta-act select { font-size: 12px; }
+.plan-cta-act .primary { font-size: 13px; font-weight: 600; padding: 6px 14px; }
+.plan-cta > span { color: #6b4a42; }
 .adv-fu { display: flex; flex-wrap: wrap; gap: 4px; }
 .adv-fu button, .adv-presets button { border-radius: 12px; padding: 2px 9px; font-size: 11.5px; text-align: left; }
 .adv-presets { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 12px 4px; border-top: 1px solid var(--line); }

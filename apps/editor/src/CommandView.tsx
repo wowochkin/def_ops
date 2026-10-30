@@ -32,8 +32,10 @@ import { ancestry, divisionsUnder, hqCenter, postDocs, postIntel, postJournal, p
 import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, postSupply, priorityLimit, priorityPool, staffDeny, staffScope, type StaffScope } from './post-staff';
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
-import { DIR_TASK_RU, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
-import { objectiveMark } from './post-objects';
+import { DIR_TASK_RU, dirTaskOf, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
+import { completeVariant, dirDraftOf, fromCore, historyLoss, planFallback, RULES_MARK, variantFeatures, type CoreVariant } from './plan-rules';
+import { withNote } from './post-notes';
+import { objectiveMark, shortName } from './post-objects';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
 
 type AiFieldState = 'wait' | 'typing' | 'done';
@@ -68,7 +70,7 @@ import {
   type BoundsDraft, type OrderDraft, type PlanState, type StaffAct, type StaffDeps,
 } from './voice/actions/staff';
 import { dayMonth } from './voice/report';
-import { speakable } from './voice/speech';
+import { numberWords, plural, speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
@@ -137,7 +139,7 @@ const TOGGLES = [
   { key: 'hfront', title: 'Ист. фронт', match: (id: string) => id === 'hist-front' },
   { key: 'front', title: 'Фронт', match: (id: string) => id === 'sim-front' || id.startsWith('sim-front-') },
   { key: 'combat', title: 'Бои', match: (id: string) => id === 'sim-combat' },
-  { key: 'plan', title: 'Замысел', match: (id: string) => id === 'plan' },
+  { key: 'plan', title: 'Замысел', match: (id: string) => id === 'plan' || id === 'plan-var' },
   { key: 'rear', title: 'Тыл', match: (id: string) => id === 'logistics' },
   { key: 'rivers', title: 'Реки', match: (id: string) => id === 'rivers' },
   { key: 'pockets', title: 'Котлы', match: (id: string) => id === 'sim-pockets' },
@@ -233,6 +235,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     planLive.current = n;
     setPlanState(n);
   };
+  /** Варианты по правилам этого запроса: показанные (без модели и при её отказе) и «продолжать» — база дополнения вариантов модели. */
+  const planRules = useRef<{ id: number; count: number; rules: PlanVariantView[]; base: CoreVariant | null; llm: boolean } | null>(null);
+  /** Обработчики ответов о вариантах (поток создан один раз — функции свежие через ref). */
+  const planFns = useRef<{ rules(m: Extract<GameResponse, { kind: 'plan-rules' }>): void; complete(v: PlanVariantView): PlanVariantView }>({ rules: () => {}, complete: (v) => v });
   /** Вариант, раскрытый на экране (щелчком или «подробнее о …»). */
   const [planOpen, setPlanOpen] = useState<number | null>(0);
   const [time, setTime] = useState<string | null>(null);
@@ -388,11 +394,16 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       else if (m.kind === 'advice-wait') setAdv((l) => l.map((x) => (x.id === m.id ? { ...x, wait: m.text } : x)));
       else if (m.kind === 'review-stream' || m.kind === 'review-wait' || m.kind === 'review-think' || m.kind === 'review-done') reviewListener.current?.(m);
       else if (m.kind === 'plan-progress') setPlan((p) => (p?.id === m.id ? { ...p, progress: m.text } : p));
-      else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = m.variant; return { ...p, variants: v }; });
+      else if (m.kind === 'plan-rules') planFns.current.rules(m);
+      else if (m.kind === 'plan-variant') setPlan((p) => { if (p?.id !== m.id) return p; const v = [...p.variants]; v[m.index] = planFns.current.complete(m.variant); return { ...p, variants: v }; });
       else if (m.kind === 'plan-done') {
         const p = planLive.current;
         if (p?.id === m.id) {
-          const n = { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model };
+          // советник не дал вариантов — варианты по правилам (если есть) с предупреждением
+          const rules = planRules.current?.id === m.id ? planRules.current.rules : [];
+          const fb = rules.length ? planFallback(rules, { done: true, ok: m.ok, error: m.error, count: p.variants.filter(Boolean).length }) : { variants: [] };
+          const n = fb.variants.length ? { ...p, variants: fb.variants, done: true, warning: fb.warning ?? (m.ok ? 'Советник не дал вариантов — показаны варианты по правилам.' : undefined), seconds: m.seconds, model: m.model }
+            : { ...p, done: true, error: m.error, warning: m.warning, seconds: m.seconds, model: m.model };
           setPlan(n);
           // просили голосом — штаб докладывает, что варианты готовы
           planReady(n);
@@ -731,10 +742,13 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const liveTab = useRef({ tab, sub }); liveTab.current = { tab, sub };
   const blankDraft = (id: string): Draft => ({ formation: id, task: 'attack', target: null, targetText: '', at: null, note: '' });
 
+  /** Варианты советника (внутри документа карты имя plan занято проектом). */
+  const planNow = plan;
   /** Документ карты: туман войны (из расчёта), замысел — стрелки проекта приказов, видимость слоёв. */
   const doc = useMemo(() => {
     if (!view) return null;
-    const d: MapDocument = { ...view.doc, layers: [...view.doc.layers, { id: 'plan', name: 'Замысел: проект приказов', role: 'custom', visible: true, locked: true, opacity: 0.9 }] };
+    const d: MapDocument = { ...view.doc, layers: [...view.doc.layers, { id: 'plan', name: 'Замысел: проект приказов', role: 'custom', visible: true, locked: true, opacity: 0.9 },
+      { id: 'plan-var', name: 'Замысел: открытый вариант советника', role: 'custom', visible: true, locked: true, opacity: 0.45 }] };
     d.layers = d.layers.map((l) => { const t = TOGGLES.find((x) => x.match(l.id)); return t ? { ...l, visible: vis[t.key] } : l; });
     const plan = Object.values(drafts).flatMap((dr) => {
       const u = unit(dr.formation);
@@ -787,6 +801,22 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         const lb = createFeature('label', 'atlas.unit', { at: [mk.at[0] + 0.03, mk.at[1] + 0.012], text: mk.label, layerId: 'plan' }, 0.8, 'own'); lb.time = { from: view.time, to: null }; plan.push(lb as never);
       }
     }
+    // раскрытый непринятый вариант советника этого хода — бледнее проекта: ось, линии, точки цели, переправы и базы
+    const pv = planNow && planNow.time === view.time && planOpen != null && planNow.accepted !== planOpen ? planNow.variants[planOpen] : null;
+    if (pv) {
+      const nm = (id: string) => shortName(short(view.command?.hqs[id]?.name ?? unit(id)?.name ?? id));
+      for (const x of variantFeatures(pv, nm)) {
+        const name = `вариант ${planOpen! + 1}: ${x.name}`;
+        if (x.kind === 'point') {
+          const f = createFeature('symbol', 'std.unitOval', { at: x.pts[0], layerId: 'plan-var' }, 0.6, 'own'); f.name = name; f.time = { from: view.time, to: null }; plan.push(f as never);
+          const lb = createFeature('label', 'atlas.unit', { at: [x.pts[0][0] + 0.03, x.pts[0][1] + 0.012], text: `${planOpen! + 1}: ${x.name.replace(/: точка цели$/, '')}`, layerId: 'plan-var' }, 0.75, 'own'); lb.time = { from: view.time, to: null }; plan.push(lb as never);
+          continue;
+        }
+        if (x.pts.length < 2) continue;
+        const f = x.kind === 'arrow' ? createFeature('arrow', 'inf.attack', { points: x.pts, layerId: 'plan-var' }, 0.55, 'own') : createFeature('line', 'rkka.boundaryArmy', { points: x.pts, layerId: 'plan-var' }, 1, 'own');
+        f.name = name; f.time = { from: view.time, to: null }; plan.push(f as never);
+      }
+    }
     if (linePts.length > 1) {
       const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
       f.name = 'Разграничительная линия (указывается)'; f.time = { from: view.time, to: null }; plan.push(f as never);
@@ -800,7 +830,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
-  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.sel, post.level, post.issuer, decision.petition, postDecisions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.sel, post.level, post.issuer, decision.petition, postDecisions, plan, planOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
   // стороны зон — по легенде уровня
   const zSides = { own: !lvHidden.has('zones-own'), enemy: !lvHidden.has('zones-enemy') };
@@ -909,25 +939,71 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [planN, setPlanNRaw] = useState<number>(() => { try { const n = Number(localStorage.getItem('def_ops.planVariants')); return n >= 1 && n <= 3 ? n : 3; } catch { return 3; } });
   const setPlanN = (n: number) => { setPlanNRaw(n); try { localStorage.setItem('def_ops.planVariants', String(n)); } catch { /* */ } };
   /** Попросить советника о вариантах решения на ход; возвращает номер запроса. */
+  /** Варианты по правилам ядра: агентная модель с командованием по ступеням, открыт пункт управления. */
+  const rulesOk = (): boolean => !!(view && view.engine === 'agents' && staffsOn(view) && post.issuer);
+  /** Попросить у советника (языковая модель) варианты этого запроса. */
+  const askLlm = (id: number, count: number) => {
+    if (!view) return;
+    const draft = draftText();
+    void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text, post: postCtx() }));
+  };
+  /**
+   * «Варианты советника»: агентная модель — сначала варианты по правилам (быстро: база дополнения и запас), затем,
+   * если модель на связи, — варианты модели, каждый дополняется правилом до полного; модели нет или она не дала
+   * вариантов — варианты по правилам. Возвращает номер запроса.
+   */
   const askPlan = (count: number): number => {
     if (!view) return 0;
     const id = ++checkId.current;
-    setPlan({ id, time: view.time, count, variants: [], progress: 'подготовка…', done: false });
+    const llmOn = llm.check.state === 'ok', rules = rulesOk();
+    planRules.current = { id, count, rules: [], base: null, llm: llmOn };
+    setPlan({ id, time: view.time, count, variants: [], progress: rules ? 'варианты по правилам…' : 'подготовка…', done: false });
     setPlanOpen(0);
     setAdvOpen(true); setAdvMin(false);
-    const draft = draftText();
-    void kb.roleRef([`решение на сутки: замысел, главный удар, тыл, переправы, резервы. ${decision.intent}`], advisorScope(view, false)).catch(() => ({ refs: [], text: '' })).then((r) => send({ kind: 'plan', id, count, draft, reference: r.text, post: postCtx() }));
+    if (rules) send({ kind: 'plan-rules', id, count, hq: post.issuer });
+    else if (llmOn) askLlm(id, count);
+    else setPlan((p) => (p?.id === id ? { ...p, done: true, error: 'советник не на связи; варианты по правилам — в игре на агентной модели' } : p));
     return id;
+  };
+  planFns.current = {
+    rules: (m) => {
+      const pr = planRules.current, v = liveView.current;
+      if (!pr || pr.id !== m.id || !v) return;
+      const issuer = postRef.current?.issuer ?? null;
+      if (m.ok && issuer) {
+        const cores = m.variants ?? [];
+        const sc = staffScope(v, postRef.current!.level, issuer), ds = scopeFor(v, issuer, postRef.current!.level);
+        pr.base = cores.find((c) => c.kind === 'continue') ?? null;
+        pr.rules = cores.filter((c) => !c.extra).slice(0, pr.count).map((c) => fromCore(v, ds, issuer, c, sc));
+      }
+      if (pr.llm) { askLlm(m.id, pr.count); return; }
+      const fb = planFallback(pr.rules, { done: false, ok: false, count: 0 });
+      const p = planLive.current;
+      if (p?.id !== m.id) return;
+      const n = { ...p, variants: fb.variants, done: true, error: fb.variants.length ? undefined : m.error ?? 'правила не дали вариантов' };
+      setPlan(n);
+      planReady(n);
+    },
+    complete: (x) => {
+      const v = liveView.current, pr = planRules.current;
+      if (!v) return x;
+      const issuer = staffsOn(v) ? postRef.current?.issuer ?? null : null;
+      return completeVariant(v, issuer, x, pr?.id === planLive.current?.id ? pr?.base ?? null : null);
+    },
   };
   const planDraft = (o: PlanVariantView['orders'][number]): Draft => ({ formation: o.formation, task: o.task, target: o.target, targetText: o.targetText, at: o.at, note: o.why });
   /** В проекте уже что-то есть: принятие варианта его заменит. */
   /** Кнопка «Принять вариант»: непустой проект — после вопроса (действие замены), пустой — сразу. */
-  const acceptByButton = async (v: PlanVariantView, idx: number) => {
-    if (!projectHas(staff.current, prevOf(staff.current))) { tap('command.variant.pick', { n: idx + 1 }); return; }
-    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', { n: idx + 1 });
+  const acceptByButton = async (v: PlanVariantView, idx: number, edit = false) => {
+    // история как замысел: директивы снимут получателей с истории — спросить (с правкой — директив ещё нет)
+    const loss = !edit && view && v.dirs ? historyLoss(view, v.dirs) : [];
+    if (loss.length && !(await confirmAsync(`Директивы снимут с истории: ${loss.join(', ')}. Принять вариант?`, { ok: 'Принять' }))) return;
+    const p = edit ? { n: idx + 1, edit } : { n: idx + 1 };
+    if (!projectHas(staff.current, prevOf(staff.current))) { tap('command.variant.pick', p); return; }
+    if (await confirmAsync(`Заменить проект вариантом «${v.title}»? Текущие решение, приказы и распоряжения будут заменены (их можно будет поправить).`, { ok: 'Заменить' })) tap('command.variant.replace', p);
   };
   /** Принять вариант idx в проект без вопросов: целиком (решение, приказы, распоряжения) или только решение; итог словами. */
-  const applyPlan = async (idx: number, only: boolean): Promise<string> => {
+  const applyPlan = async (idx: number, only: boolean, edit = false): Promise<string> => {
     const v = planLive.current?.variants[idx];
     if (!v) return 'Такого варианта нет.';
     // пункт ниже Ставки: решение — его штаба
@@ -943,17 +1019,38 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     }
     putDecision({ ...v.decision });
     const orders = v.orders.filter((o) => o.ok);
-    // командование по ступеням: приказы — документами пункта в очереди хода
-    if (view && staffsOn(view)) { const subs = new Set(post.issuer ? recipients(view, post.issuer).map((x) => x.id) : []); setCmds((q) => q.filter((c) => !(c.op === 'directive' && subs.has(c.directive.to)))); orders.forEach(toPostDir); }
+    // полный вариант пункта: приказы всем подчинённым — в очередь хода (целиком) или в проекты пункта (с правкой)
+    const full = !!(v.dirs && view && staffsOn(view) && post.issuer);
+    const dirDrafts = full ? v.dirs!.map((d) => dirDraftOf(d, post.level)) : [];
+    if (full) {
+      const subs = new Set(recipients(view!, post.issuer!).map((x) => x.id));
+      const name = (id: string) => view!.command?.hqs[id]?.name ?? unit(id)?.name ?? id;
+      setCmds((q) => {
+        let n = q.filter((c) => !(c.op === 'directive' && subs.has(c.directive.to)));
+        if (!edit) for (const d of dirDrafts) n = queueOp(n, { op: 'directive', directive: { ...toDirective(withNote(d, view!, { issuer: post.issuer!, name }), view!), issuer: post.issuer } as unknown as { to: string; task: string; form: string } });
+        return n;
+      });
+      if (edit) post.load(dirDrafts);
+    } else if (view && staffsOn(view)) { const subs = new Set(post.issuer ? recipients(view, post.issuer).map((x) => x.id) : []); setCmds((q) => q.filter((c) => !(c.op === 'directive' && subs.has(c.directive.to)))); orders.forEach(toPostDir); }
     else setDrafts(Object.fromEntries(orders.map((o) => [o.formation, planDraft(o)])));
     setActs([]); liveActs.current = [];
     let added = 0;
     const failed: string[] = [];
     for (const a of v.acts) if (a.ok && a.action) { if (await addAct(a.key, a.action, a.label, a.from ? { from: a.from } : {})) added++; else failed.push(a.label); }
     setPlan((p) => (p ? { ...p, accepted: idx } : p));
-    setTab('decision');
     // телефон: советник закрывает экран — убрать, чтобы был виден проект (беседа и варианты сохраняются)
     if (window.matchMedia?.('(max-width: 760px)').matches) setAdvOpen(false);
+    const fail = failed.length ? ` (не исполнимы: ${failed.join(', ')})` : '';
+    if (full && edit) {
+      setTab('orders'); setSub('units');
+      setNotice(`Вариант «${v.title}» принят на правку: решение, ${dirDrafts.length} ${plural(dirDrafts.length, ['проект', 'проекта', 'проектов'])} документов в пункте управления (не отданы), распоряжений ${added}${fail}. Поправьте и отдайте каждый документ.`);
+      return `Вариант «${v.title}» — на правку: проектов документов в пункте управления ${numberWords(dirDrafts.length)}, открыт первый — ${short(dirDrafts[0] ? (view!.command?.hqs[dirDrafts[0].to]?.name ?? dirDrafts[0].to) : '')}. Поправьте и отдайте.`;
+    }
+    setTab('decision');
+    if (full) {
+      setNotice(`Вариант «${v.title}» принят целиком: решение, документов в очереди хода ${dirDrafts.length}, распоряжений ${added}${fail}. Проверьте во вкладках «Решение» и «Приказы», затем завершите ход.`);
+      return `Вариант «${v.title}» принят: документов в очереди хода ${numberWords(dirDrafts.length)}, распоряжений ${numberWords(added, 'n')}${failed.length ? `; не исполнимы: ${failed.map(short).join(', ')}` : ''}.`;
+    }
     setNotice(`Вариант «${v.title}» принят в проект: решение, приказов ${orders.length}, распоряжений ${added}${failed.length ? ` (не исполнимы: ${failed.join(', ')})` : ''}. Проверьте и поправьте во вкладках «Решение» и «Приказы», затем завершите ход.`);
     return `Вариант «${v.title}» принят: решение, приказов ${orders.length}, распоряжений ${added}${failed.length ? `; не исполнимы: ${failed.map(short).join(', ')}` : ''}. Проверить — скажите «что не готово?».`;
   };
@@ -1275,9 +1372,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             {tab === 'intel' && staffsOn(view) && post.issuer && <PostIntel v={view} level={post.level} issuer={post.issuer} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'intel' && !staffsOn(view) && <Intel v={fv!} onGo={(id) => tap('map.show', { name: id })} onAttack={(id) => targetEnemy(id)} />}
             {tab === 'decision' && (!staffsOn(view) || !post.issuer || view.command?.hqs[post.issuer]?.echelon === 'high_command'
-              ? <Decision v={view} d={decision} auto={autoFields[''] ?? []} set={setCur} pet={petNow} issuer={null} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              ? <Decision v={view} d={decision} auto={autoFields[''] ?? []} set={setCur} pet={petNow} issuer={null} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'} rulesOk={rulesOk()}
                 ai={aiFields[''] ?? {}} batch={batchView && batchView.issuer === null ? batchView : null} otherBusy={!!batchView && batchView.issuer !== null} />
-              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} auto={autoFields[post.issuer] ?? []} set={setCur} pet={petNow} issuer={post.issuer} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'}
+              : <Decision v={view} who={view.command!.hqs[post.issuer].name} d={postDecisions[post.issuer] ?? EMPTY} auto={autoFields[post.issuer] ?? []} set={setCur} pet={petNow} issuer={post.issuer} petPick={pickMode?.kind === 'petition'} setPetPick={(b) => setPickMode(b ? { kind: 'petition' } : null)} planN={planN} planBusy={!!plan && !plan.done} llmOk={llm.check.state === 'ok'} rulesOk={rulesOk()}
                 ai={aiFields[post.issuer] ?? {}} batch={batchView && batchView.issuer === post.issuer ? batchView : null} otherBusy={!!batchView && batchView.issuer !== post.issuer} />)}
             {tab === 'orders' && <>
               <div className="seg subtabs">
@@ -1369,7 +1466,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       {advOpen && view && !advMin && <Advisor resize={{ width: advW, setWidth: setAdvW, reset: resetAdvW }} llm={llm} msgs={adv} text={advQ} setText={setAdvQ}
         dyn={advDyn} focus={focus}
         drafted={(f) => (staffsOn(view) ? cmds.some((c) => c.op === 'directive' && c.directive.to === f) : !!drafts[f])} postName={staffsOn(view) && post.issuer ? view.command?.hqs[post.issuer]?.name : undefined}
-        plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i) => void acceptByButton(v, i)}
+        plan={plan} planStale={!!plan && plan.time !== view.time} planN={planN} acceptPlan={(v, i, e) => void acceptByButton(v, i, e)}
         planOpen={planOpen}
         hasAct={(k) => acts.some((a) => a.key === k)} />}
       {review !== 'closed' && view && <div hidden={review === 'hidden'}><ReviewView view={view} llm={llm} send={send} listen={(f) => { reviewListener.current = f; }} ctl={reviewCtl} /></div>}
@@ -1680,7 +1777,7 @@ function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, foc
   /** Пункт управления: советник думает за этот штаб. */
   postName?: string;
   llm: Llm; msgs: AdvMsg[]; text: string; setText: (s: string) => void; drafted: (f: string) => boolean; dyn: Dyn; focus: Sector | null;
-  plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number) => void;
+  plan: PlanState | null; planStale: boolean; planN: number; acceptPlan: (v: PlanVariantView, i: number, edit?: boolean) => void;
   planOpen: number | null; hasAct: (key: string) => boolean;
 }) {
   /** Путь по дереву: индексы узлов (пусто — категории). */
@@ -1818,7 +1915,7 @@ function Advisor({ resize, postName, llm, msgs, text, setText, drafted, dyn, foc
 
 /** Варианты решения от советника: карточки по мере генерации; принять целиком, только решение или отдельные приказы и распоряжения. */
 function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
-  plan: PlanState; stale: boolean; open: number | null; accept: (v: PlanVariantView, i: number) => void; drafted: (f: string) => boolean; hasAct: (key: string) => boolean;
+  plan: PlanState; stale: boolean; open: number | null; accept: (v: PlanVariantView, i: number, edit?: boolean) => void; drafted: (f: string) => boolean; hasAct: (key: string) => boolean;
 }) {
   const D: [Exclude<keyof HumanDecision, 'petition'>, string][] = [['assessment', 'Оценка обстановки'], ['enemyIntent', 'Замысел противника'], ['intent', 'Решение'], ['risks', 'Риски'], ['report', 'Донесение вышестоящему']];
   return (
@@ -1829,14 +1926,18 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
       {plan.variants.map((v, i) => v && (
         <div key={i} className={`plan-var${plan.accepted === i ? ' on' : ''}`} data-hl={`variant-${i + 1}`}>
           <div className="plan-h" data-action="command.variant.open" onClick={() => tap('command.variant.open', open === i ? { open: false } : { n: i + 1 })}>
-            <b>{i + 1}. {v.title}</b>{plan.accepted === i && <i className="plan-ok">принят</i>}<span className="muted">{open === i ? '▾' : '▸'}</span>
+            <b>{i + 1}. {v.title}</b>{v.source === 'rules' && <i className="plan-src">{RULES_MARK}</i>}{plan.accepted === i && <i className="plan-ok">принят</i>}<span className="muted">{open === i ? '▾' : '▸'}</span>
           </div>
           <div className="plan-idea">{v.idea}</div>
-          <div className="plan-sum muted">приказов {v.orders.filter((o) => o.ok).length}{v.orders.some((o) => !o.ok) ? ` (+${v.orders.filter((o) => !o.ok).length} не сопоставлено)` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}{v.fix ? ` · исправление по подсказке: ${v.fix.fixed} из ${v.fix.failed} ${v.fix.failed === 1 ? 'приказа' : 'приказов'} исправлено` : ''}</div>
+          {v.dirs ? <div className="plan-sum muted">приказов подчинённым {v.dirs.length}{v.filled?.length ? ` (дополнено правилом ${v.filled.length})` : ''}{v.orders.some((o) => !o.ok) ? ` · снято ${v.orders.filter((o) => !o.ok).length}` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}</div>
+          : <div className="plan-sum muted">приказов {v.orders.filter((o) => o.ok).length}{v.orders.some((o) => !o.ok) ? ` (+${v.orders.filter((o) => !o.ok).length} не сопоставлено)` : ''} · распоряжений {v.acts.filter((a) => a.ok).length}{v.fix ? ` · исправление по подсказке: ${v.fix.fixed} из ${v.fix.failed} ${v.fix.failed === 1 ? 'приказа' : 'приказов'} исправлено` : ''}{v.kept?.length ? ` · без новых приказов ${v.kept.length}` : ''}</div>}
           {open === i && <div className="plan-body">
             {D.filter(([k]) => v.decision[k]).map(([k, t]) => <div key={k} className="plan-f"><small>{t}</small><div>{v.decision[k]}</div></div>)}
-            {v.orders.length > 0 && <div className="plan-f"><small>Приказы войскам</small>
-              {v.orders.map((o, j) => <div key={j} className={`plan-row${o.ok ? '' : ' bad'}`}>
+            {v.dirs && <div className="plan-f" data-hl={`variant-${i + 1}-dirs`}><small>Приказы подчинённым — задача, ось, полоса</small>
+              {v.dirs.map((d) => <div key={d.to} className="plan-row"><span><b>{short(d.name)}</b> — {DIR_TASK_RU[dirTaskOf(d.task)]}{d.target ? `: ${d.target}` : ''}{d.mainBlow.includes(d.to) && <em className="muted"> главный удар</em>}{d.filled && <em className="muted"> дополнено правилом</em>}</span></div>)}</div>}
+            {v.kept && v.kept.length > 0 && <div className="plan-f"><small>Без новых приказов (прежние задачи)</small><div>{v.kept.map(short).join(', ')}</div></div>}
+            {v.orders.length > 0 && (!v.dirs || v.orders.some((o) => !o.ok)) && <div className="plan-f"><small>{v.dirs ? 'Снятые приказы советника' : 'Приказы войскам'}</small>
+              {v.orders.filter((o) => !v.dirs || !o.ok).map((o, j) => <div key={j} className={`plan-row${o.ok ? '' : ' bad'}`}>
                 <span><b>{short(o.name)}</b> — {TASK_RU[o.task]}{o.targetText ? `: ${o.targetText}` : ''}<em className="muted"> {o.why}</em>{!o.ok && <em className="iss"> {o.issue ?? 'не сопоставлено с обстановкой'}</em>}</span>
                 {o.ok && !stale && <StaffButton className="link" disabled={drafted(o.formation)} action="command.variant.take" params={{ n: i + 1, order: j + 1 }}>{drafted(o.formation) ? 'в проекте' : 'взять'}</StaffButton>}
               </div>)}</div>}
@@ -1847,8 +1948,14 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
               </div>)}</div>}
           </div>}
           {!stale && <div className="plan-act">
-            <button className="primary" data-action="command.variant.pick" disabled={!plan.done} title={plan.done ? '' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять вариант'}</button>
-            <StaffButton action="command.variant.pick" params={{ n: i + 1, only: true }} disabled={!plan.done}>Только решение</StaffButton>
+            {v.dirs ? <>
+              <button className="primary" data-action="command.variant.pick" disabled={!plan.done} title={plan.done ? 'Решение, документы всем подчинённым — в очередь хода, распоряжения' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять целиком'}</button>
+              <button data-action="command.variant.pick" disabled={!plan.done} title="Решение и распоряжения; документы — проектами в «Пункте управления», отдаются после правки" onClick={() => accept(v, i, true)}>Принять и поправить</button>
+              <StaffButton className="link" action="command.variant.pick" params={{ n: i + 1, only: true }} disabled={!plan.done}>только решение</StaffButton>
+            </> : <>
+              <button className="primary" data-action="command.variant.pick" disabled={!plan.done} title={plan.done ? '' : 'дождитесь всех вариантов'} onClick={() => accept(v, i)}>{plan.accepted === i ? 'Принять заново' : 'Принять вариант'}</button>
+              <StaffButton action="command.variant.pick" params={{ n: i + 1, only: true }} disabled={!plan.done}>Только решение</StaffButton>
+            </>}
           </div>}
         </div>
       ))}
@@ -1866,14 +1973,9 @@ function PlanBlock({ plan, stale, open, accept, drafted, hasAct }: {
 const IcDraft = () => <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></svg>;
 const IcSpark = () => <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>;
 
-function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, otherBusy, pet, issuer, petPick, setPetPick }: { v: TurnView; d: HumanDecision; auto: DraftField[]; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean;
+function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, rulesOk, ai, batch, pet, issuer, petPick, setPetPick }: { v: TurnView; d: HumanDecision; auto: DraftField[]; set: (p: Partial<HumanDecision>) => void; planN: number; planBusy: boolean; who?: string; llmOk: boolean; rulesOk: boolean;
   ai: Partial<Record<DraftField, AiFieldState>>; batch: AiBatch | null; otherBusy: boolean; pet: PetitionState | null; issuer: string | null; petPick: boolean; setPetPick: (b: boolean) => void }) {
   const last = v.lastDecision;
-  const filled = DRAFT_FIELDS.some((k) => d[k].trim());
-  const all = () => {
-    if (!filled) { tap('decision.compose.all'); return; }
-    void confirmAsync('Заменить всё решение текстом советника?', { ok: 'Заменить' }).then((ok) => { if (ok) tap('decision.compose.all.replace'); });
-  };
   const aiCls = (k: DraftField) => (ai[k] ? ` ai-${ai[k]}` : '');
   /** Составить поле: по обстановке или советником; написанное — заменить только после вопроса («текст будет заменён»). */
   const compose = (k: DraftField, advisor: boolean) => (e: React.MouseEvent) => {
@@ -1901,21 +2003,19 @@ function Decision({ v, d, auto, set, planN, planBusy, who, llmOk, ai, batch, oth
     <div className="cmd-sec">
       <h3>Решение{who ? ` — ${who}` : ''} на {ddmm(v.time)} {hhmm(v.time)}</h3>
       {who && <p className="note">Решение этого штаба — для журнала и разбора; ход проводится по решению {v.terms?.topGen ?? 'Ставки'} (уровень «{v.terms?.top ?? 'Ставка'}»).</p>}
-      <div className={`ai-compose${batch ? ' run' : ''}`} data-hl="ai-compose">
-        <button className="ai-btn" data-action="decision.compose.all" disabled={!llmOk || !!batch || otherBusy} onClick={all}
-          title={!llmOk ? 'Советник не на связи — языковая модель не отвечает' : otherBusy ? 'Советник пишет решение другого штаба' : 'Советник (языковая модель) пишет все поля решения за этот штаб — одно за другим'}>
-          <span className="ai-spark"><IcSpark /></span>
-          <span className="ai-btn-t"><b>Составить советником (ИИ)</b>
-            <small>{batch ? `пишет ${DRAFT_ACC[batch.cur]} · ${batch.done + 1} из ${batch.total}` : 'оценка, замысел противника, решение, риски, донесение'}</small></span>
-        </button>
-        {batch && <StaffButton className="link" action="command.advisor.stop">остановить</StaffButton>}
-        {batch && <div className="ai-prog"><i style={{ width: `${(batch.done / batch.total) * 100}%` }} /></div>}
-      </div>
-      <div className="plan-cta" data-hl="plan-cta"><span>Не знаете, с чего начать? Советник предложит полные варианты — решение, приказы, тыл, переправы, резервы; выберите, примите и поправьте. Сколько вариантов — выберите рядом (один готовится быстрее).</span>
+      {/* советник пишет поля решения (голосом: «составь решение советником») — ход и остановка */}
+      {batch && <div className="ai-compose run" data-hl="ai-compose"><small><IcSpark /> советник пишет {DRAFT_ACC[batch.cur]} · {batch.done + 1} из {batch.total}</small>
+        <StaffButton className="link" action="command.advisor.stop">остановить</StaffButton>
+        <div className="ai-prog"><i style={{ width: `${(batch.done / batch.total) * 100}%` }} /></div></div>}
+      <div className="plan-cta" data-hl="plan-cta">
         <div className="plan-cta-act">
           <select value={planN} disabled={planBusy} data-action="command.variants.count" onChange={(e) => tap('command.variants.count', { n: +e.target.value })} title="Сколько вариантов просить (запоминается)">{[1, 2, 3].map((n) => <option key={n} value={n}>{n === 1 ? '1 вариант' : `${n} варианта`}</option>)}</select>
-          {planBusy ? <StaffButton action="command.advisor.stop"><i className="spinner" /> Стоп</StaffButton> : <StaffButton className="primary" action="command.variants" params={{ count: planN }}>Варианты от советника</StaffButton>}
-        </div></div>
+          {planBusy ? <StaffButton action="command.advisor.stop"><i className="spinner" /> Стоп</StaffButton>
+            : <StaffButton className="primary" action="command.variants" params={{ count: planN }} disabled={!llmOk && !rulesOk}
+              title={!llmOk && !rulesOk ? 'Советник не на связи; варианты по правилам — в игре на агентной модели' : ''}>Варианты советника</StaffButton>}
+        </div>
+        <span>{llmOk ? 'советник (ИИ) и правила: задачи всем подчинённым, полосы, ось, резервы, тыл, переправы'
+          : rulesOk ? 'советник не на связи — варианты по правилам (варианты командующих)' : 'советник не на связи; варианты по правилам — в игре на агентной модели'}</span></div>
       <p className="note">Решение штаба на ход — те же части, что у штаба противника. Без оценки обстановки, решения и боевого донесения ход не проводится. Решение составлено при открытии хода по обстановке (без модели): оценка обстановки и донесение — заново, замысел, замысел противника и риски — с прошлого хода (не было — по обстановке). Поля с пометкой «составлено по обстановке — проверьте» прочитайте и поправьте; лист у поля — составить заново. Все прошлые решения — во вкладке «Журнал».</p>
       {F({ k: 'assessment', label: 'Оценка обстановки', hint: 'Положение своих войск и противника, соотношение сил, местность, состояние снабжения, что изменилось за сутки…', rows: 6, req: true })}
       {F({ k: 'enemyIntent', label: 'Замысел противника', hint: 'Что противник, по-видимому, намерен делать: где держит, куда отходит, где готовит контрудар…', rows: 3 })}

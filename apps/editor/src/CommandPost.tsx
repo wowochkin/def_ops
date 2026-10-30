@@ -39,6 +39,8 @@ export interface PostState {
   click(id: string): boolean;
   /** Выбрать штаб пунктом его ступени (без смены вкладки); ступень — или null, если штаб приказов не отдаёт. */
   choose(id: string): LevelId | null;
+  /** Проекты документов (вариант «принять и поправить»): в проекты пункта, без очереди; открыт первый. */
+  load(ds: DirDraft[]): void;
 }
 
 const dm = (t?: string) => (t ? `${t.slice(8, 10)}.${t.slice(5, 7)} ${t.slice(11, 16)}` : '');
@@ -218,6 +220,10 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   return {
     level, issuer, issuers: list, sel, dirs, draft, pick: draft ? pick : null,
     cancelPick: () => setPick(null),
+    load: (ds) => {
+      setDirs((x) => ({ ...x, ...Object.fromEntries(ds.map((d) => [`${d.level}:${d.to}`, noted(d)])) }));
+      setSel(ds[0]?.to ?? null); setPick(null);
+    },
     addPoint: (pt) => {
       const { draft: d, pick: f } = live.current;
       if (!d || !f || f === 'mainBlow') return;
