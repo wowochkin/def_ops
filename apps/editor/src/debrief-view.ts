@@ -131,3 +131,25 @@ export function narrativeFits(text: string, input: string): boolean {
   const have = new Set(numbers(input));
   return numbers(text).every((x) => have.has(x));
 }
+
+export type NarrativeState = { state: 'off' } | { state: 'wait' } | { state: 'ready'; text: string } | { state: 'unfit' } | { state: 'error'; text: string };
+
+/**
+ * Ключ сброса разбора в игре: время хода и номер линии (возврат к ходу, переход на ветвь, новый проект хода — номер
+ * растёт). Одно время на разных линиях — разные ходы: позиция, раскрытое событие и связный текст прежней линии не
+ * переходят на новую.
+ */
+export function debriefResetKey(time: string, epoch: number): string {
+  return `${epoch}|${time}`;
+}
+
+/** Состояние разбора: ключ, при котором выбраны позиция и событие, и связный текст модели по (ключу, позиции). */
+export interface DebriefUi { key: string; hq: string | null; open: number | null; narr: { key: string; s: NarrativeState } }
+
+/** Что показать при ключе resetKey: выбранное при другом ключе — снято (позиция — верхняя инстанция, текст — нет). */
+export function debriefShown(st: DebriefUi, resetKey: string): { hq: string | null; open: number | null; narrative: NarrativeState } {
+  const same = st.key === resetKey;
+  const hq = same ? st.hq : null;
+  const k = `${resetKey}|${hq ?? ''}`;
+  return { hq, open: same ? st.open : null, narrative: st.narr.key === k ? st.narr.s : { state: 'off' } };
+}

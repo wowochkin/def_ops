@@ -10,37 +10,40 @@ import { debriefFor, type CommandTerms, type TurnDebrief } from '@def-ops/sim';
 import { act, ActButton } from './voice/registry';
 import type { TourMap } from './voice/tours';
 import type { UmpireModel } from './voice/umpire';
-import { DEBRIEF_SYSTEM, debriefInput, eventLines, eventMap, narrativeFits, perspectiveOptions, quietLine, tickTime, verdictLines } from './debrief-view';
+import { DEBRIEF_SYSTEM, debriefInput, debriefShown, eventLines, eventMap, narrativeFits, perspectiveOptions, quietLine, tickTime, verdictLines, type NarrativeState } from './debrief-view';
 
-export type NarrativeState = { state: 'off' } | { state: 'wait' } | { state: 'ready'; text: string } | { state: 'unfit' } | { state: 'error'; text: string };
+export type { NarrativeState };
 
 /**
- * Состояние разбора в окне: позиция («с позиции …»), раскрытое событие и связный текст модели. Новый ход (resetKey)
- * сбрасывает позицию и раскрытое и отменяет ждущий запрос к модели; связный текст — по (ходу, позиции).
+ * Состояние разбора в окне: позиция («с позиции …»), раскрытое событие и связный текст модели. Новый ход (resetKey;
+ * в игре — время хода и номер линии) сбрасывает позицию и раскрытое сразу же (выбранное помнит свой ключ) и отменяет
+ * ждущий запрос к модели; связный текст — по (ходу, позиции).
  */
 export function useDebrief(o: { debrief: TurnDebrief | null; resetKey: string; model: () => UmpireModel | null; show: (m: TourMap, tick: number) => void;
   /** Часть «Ход» на экране; ушли с неё — карта возвращается (уровень, время, метка снята: reset). */ active: boolean; reset: () => void }) {
   const live = useRef(o); live.current = o;
   const [hq, setHq] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
+  /** Ключ, при котором выбраны позиция и событие. */
+  const [at, setAt] = useState(o.resetKey);
   const [narr, setNarr] = useState<{ key: string; s: NarrativeState }>({ key: '', s: { state: 'off' } });
   const abort = useRef<AbortController | null>(null);
   /** Карта показывала событие: при смене позиции и уходе с части «Ход» — вернуть её. */
   const shown = useRef(false);
   const unshow = () => { if (shown.current) { shown.current = false; live.current.reset(); } };
   useEffect(() => { if (!o.active) unshow(); }, [o.active]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { setHq(null); setOpen(null); abort.current?.abort(); abort.current = null; setNarr({ key: '', s: { state: 'off' } }); }, [o.resetKey]);
+  useEffect(() => { setAt(o.resetKey); setHq(null); setOpen(null); abort.current?.abort(); abort.current = null; setNarr({ key: '', s: { state: 'off' } }); }, [o.resetKey]);
   useEffect(() => () => abort.current?.abort(), []);
-  const key = `${o.resetKey}|${hq ?? ''}`;
-  const hqRef = useRef(hq); hqRef.current = hq;
+  const shownNow = debriefShown({ key: at, hq, open, narr }, o.resetKey);
+  const hqRef = useRef(shownNow.hq); hqRef.current = shownNow.hq;
   return {
-    hq, open,
-    narrative: narr.key === key ? narr.s : { state: 'off' } as NarrativeState,
-    setHq: (h: string | null) => { setHq(h); setOpen(null); hqRef.current = h; unshow(); },
+    ...shownNow,
+    setHq: (h: string | null) => { setAt(live.current.resetKey); setHq(h); setOpen(null); hqRef.current = h; unshow(); },
     openEvent: (n: number) => {
       const d = live.current.debrief;
       const e = d && debriefFor(d, hqRef.current).events[n - 1];
       if (!e) return;
+      setAt(live.current.resetKey); setHq(hqRef.current);
       setOpen(n);
       shown.current = true;
       live.current.show(eventMap(e), e.tick);

@@ -77,6 +77,7 @@ import { TurnRibbon } from './TurnRibbon';
 import { idbBranchStore } from './game-branch-store';
 import { ResultsTab } from './ResultsTab';
 import { TurnDebriefPanel, useDebrief } from './TurnDebrief';
+import { debriefResetKey } from './debrief-view';
 import { DebriefOverlay } from './DebriefOverlay';
 import { debriefFor } from '@def-ops/sim';
 import type { BaselineState, ResultsPart } from './results-view';
@@ -477,9 +478,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     return () => { live = false; off?.(); };
   }, []);
   const [branchesOpen, setBranchesOpen] = useState(false);
+  /** Номер линии: возврат к ходу и переход на ветвь — новый (разбор хода того же времени на другой линии — с чистого листа). */
+  const [lineEpoch, setLineEpoch] = useState(0);
   /** Проект хода — с чистого листа (возврат, переход на ветвь): как при смене хода, плюс решения пунктов и доклад посредника. */
   const freshProject = () => {
     const v = viewNow.current.cur;
+    setLineEpoch((n) => n + 1);
     turnStart.current = null;
     resetUmpire();
     setProgress(null); setBlocked(null);
@@ -1083,7 +1087,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   useEffect(() => { const get = () => voice.current; const offs = commandActions(get).map(register); return () => { offs.forEach((o) => o()); releaseCommand(get); }; }, []);
   // «Итоги» игры: потери сторон по сыгранным часам (агентная модель); вкладка есть и у нынешней модели — с пояснением
   // разбор хода (часть «Ход»): позиция, раскрытое событие, связный текст модели — сбрасываются новым ходом
-  const debrief = useDebrief({ debrief: view?.debrief ?? null, resetKey: view?.time ?? '', model: () => (llmRef.current.check.state === 'ok' ? umpireModel() : null), show: (m) => tourMapRef.current?.show(m),
+  const debrief = useDebrief({ debrief: view?.debrief ?? null, resetKey: debriefResetKey(view?.time ?? '', lineEpoch), model: () => (llmRef.current.check.state === 'ok' ? umpireModel() : null), show: (m) => tourMapRef.current?.show(m),
     active: tab === 'results' && resPart === 'turn', reset: () => tourMapRef.current?.reset() });
   // после хода «Итоги» открываются на разборе хода
   useEffect(() => { if (view?.debrief) setResPart('turn'); }, [view?.time]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -1,7 +1,7 @@
 // Разбор хода в окне: выбор «с позиции …», карта события, строки события, вход и проверка связного текста модели.
 import { describe, expect, it } from 'vitest';
 import type { CommandTerms, DebriefHq, KeyEvent, TurnDebrief } from '@def-ops/sim';
-import { debriefInput, DEBRIEF_SYSTEM, verdictLines, eventLines, eventMap, narrativeFits, perspectiveOptions } from '../src/debrief-view';
+import { debriefInput, debriefResetKey, debriefShown, DEBRIEF_SYSTEM, verdictLines, eventLines, eventMap, narrativeFits, perspectiveOptions } from '../src/debrief-view';
 
 const SU: CommandTerms = { top: 'Ставка', topGen: 'Ставки', topTo: 'в Ставку', group: 'фронт' } as CommandTerms;
 const DE: CommandTerms = { top: 'ОКХ', topGen: 'ОКХ', topTo: 'в ОКХ', group: 'группа армий' } as CommandTerms;
@@ -97,5 +97,15 @@ describe('разбор хода в окне', () => {
     expect(narrativeFits('Армия продвинулась на 15 км.', input)).toBe(false);
     expect(narrativeFits('   ', input)).toBe(false);
     expect(narrativeFits('Армия наступала успешно.', input)).toBe(true);
+  });
+
+  it('same time new line resets', () => {
+    // A до хода 3, возврат к 2, B до хода 3, переход на A — время то же, линия другая: разбор с чистого листа
+    const t = '1945-04-17T05:00';
+    const k1 = debriefResetKey(t, 1), k2 = debriefResetKey(t, 2);
+    expect(k1).not.toBe(k2);
+    const st = { key: k1, hq: 'su_8gva', open: 2, narr: { key: `${k1}|su_8gva`, s: { state: 'ready' as const, text: 'Армия наступала.' } } };
+    expect(debriefShown(st, k1)).toEqual({ hq: 'su_8gva', open: 2, narrative: { state: 'ready', text: 'Армия наступала.' } });
+    expect(debriefShown(st, k2)).toEqual({ hq: null, open: null, narrative: { state: 'off' } });
   });
 });
