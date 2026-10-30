@@ -109,6 +109,24 @@ describe('ключевые события хода', () => {
     expect(before.events.find((e) => e.kind === 'capture')).toBeUndefined();
   });
 
+  it('place names without declension', () => {
+    // названия пунктов не склоняются: в тексте — «у пункта Зелов», «8 км к северо-востоку от пункта Зелов», «Пункт Зелов: …», не «у Зелов»
+    const c = base.theatre.area('Muencheberg')!.center! as P;
+    const texts = [
+      turnEvents(base, trace((id, h) => push8(id, h) ?? {}), H, history, 11, 23, { side: 'su' }),
+      turnEvents(base, trace((id, h) => (id === 'de_a' || id === 'de_b') && h >= 16 ? { state: 'наступление: встречный бой' } : {}), H, history, 11, 23, { side: 'su' }),
+      turnEvents(base, trace((id, h) => id.startsWith('de_') ? { enc: h + 7 } : {}), H, history, 11, 23, { side: 'su' }),
+      turnEvents(base, trace((id, h) => id === 'su_a' ? { at: h >= 15 ? c : off(c, 20) } : {}), H, history, 11, 23, { side: 'su' }),
+    ].flatMap((d) => d.events.map((e) => e.text));
+    expect(texts.length).toBeGreaterThanOrEqual(4);
+    for (const t of texts) {
+      expect(t).not.toMatch(/(?:^|[\s,—])[Уу] (?!пункта )\p{Lu}/u);
+      expect(t).not.toMatch(/ от (?!пункта )\p{Lu}/u);
+      expect(t).not.toMatch(/ к (?:С|СВ|В|ЮВ|Ю|ЮЗ|З|СЗ) /);
+    }
+    expect(texts.some((t) => / пункта \p{Lu}/u.test(t))).toBe(true);
+  });
+
   it('quiet turn', () => {
     const d = turnEvents(base, trace((id, h) => id.startsWith('su_') ? { lost: 10 * h } : {}), H, history, 11, 23, { side: 'su' });
     expect(d.events).toHaveLength(0);

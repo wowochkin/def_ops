@@ -15,6 +15,7 @@ import type { TurnView } from '../../sim/game-protocol';
 import { dayMonth, sentence, short } from '../report';
 import { cardinalGen, nameCase, numberWords, placeGen, plural, speakable } from '../speech';
 import type { Tour, TourMap } from './index';
+import { eventMap, quietLine } from '../../debrief-view';
 
 export const REVIEW_TOUR = 'turn-review';
 /** Главных боёв в разборе. */
@@ -100,6 +101,8 @@ function battleStep(v: TurnView, b: TurnBattle): ReviewStep {
 }
 
 const onMap = (u: UnitReport) => u.status === 'active';
+/** Шагов-событий разбора хода агентной модели — не больше. */
+const KEY_EVENTS_MAX = 3;
 
 /** Шаги разбора хода v (prev — обстановка на начало хода; нет — ход проигрывается от v.time − длины хода). */
 export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
@@ -120,12 +123,16 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   const att = v.battles.filter((b) => b.role === 'attack'), won = att.filter((b) => b.outcome === 'breakthrough' || b.outcome === 'advance');
   const def = v.battles.filter((b) => b.role === 'defend');
   const lost = prev && Math.round((prev.strength - v.strength) * 100) >= 1 ? `, за ход потеряно ${pct(prev.strength - v.strength)}` : '';
+  // ключевые события хода (агентная модель — боёв с местом нет): до трёх самых весомых — шагами после общего
+  const keyEvents = v.battles.length ? [] : [...(v.debrief?.events ?? [])].sort((a, b) => b.weight - a.weight);
   const overview = [
     `Итоги хода на ${+v.time.slice(11, 13)} ч ${dayMonth(v.time)}.`,
     far && far.movedKm >= 1 ? `Войска продвинулись до ${Math.round(far.movedKm)} км, дальше всех — ${short(far.name)}.` : 'Войска остались на прежних рубежах.',
     v.battles.length
       ? `Боёв за ход — ${v.battles.length}: наступали мы ${times(att.length)}, успешно — ${won.length}${def.length ? `; противник атаковал ${times(def.length)}` : ''}.`
       // боёв с местом нет (агентная модель их не отдаёт) — главное из донесений
+      // агентная модель: ключевые события хода по правилам (разбор хода); их нет — продвижение и потери одной строкой
+      : v.debrief ? (keyEvents.length ? `Ключевых событий за ход — ${keyEvents.length}.` : `За ход ключевых событий нет. ${quietLine(v.debrief)}`)
       : v.events.length ? `Главное из донесений: ${sentence(v.events[0])}` : 'За ход боёв не было.',
     `В строю ${pct(v.strength)} исходной численности${lost}.`,
   ].join(' ');
@@ -133,6 +140,7 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
 
   // главные бои
   for (const b of mainBattles(v.battles)) out.push(battleStep(v, b));
+  for (const e of keyEvents.slice(0, KEY_EVENTS_MAX)) out.push({ kind: 'battle', title: e.title, text: say(e.text), facts: e.text, map: eventMap(e) });
 
   // продвижение к целям: достигнутое за ход или следующая цель
   const reached = v.goals.filter((g) => g.simulated && (!prev || !prev.goals.find((p) => p.title === g.title)?.simulated));

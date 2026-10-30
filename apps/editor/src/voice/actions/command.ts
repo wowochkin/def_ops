@@ -27,6 +27,7 @@ import { getAction, registerParser, type Action, type PhraseHit } from '../regis
 import { hl, btn, note, noted } from '../highlight';
 import { dayMonth, enemyReport, groupReport, intelReport, journalDayText, moreText, short, situationReport, unitReport, whereText } from '../report';
 import { ordinalWords, speakable } from '../speech';
+import { parseResults } from './results';
 
 // ---------------------------------------------------------------- раздел открыт?
 
@@ -561,6 +562,9 @@ export function parseCommand(rest: string, section: string): PhraseHit | null {
   if ((m = /^(?:продолжи|продолжить|продолжим) (?:игру )?(?:с|со|на|по) (ветв\S* .+|основн\S* лини\S*)$/.exec(t))) return entry('replay.continue', { branch: m[1] });
   // остальное — только в «Переигровке»: в других разделах «приблизь», «легенда», «журнал» — их собственные слова
   if (away) return null;
+  // итоги и разбор хода (voice/actions/results.ts) — раньше общих «покажи …» (названия мест)
+  const res = parseResults(rest, section);
+  if (res) return res;
   if (/^(?:останови|остановить|прекрати|прерви) расчет$/.test(t)) return hit('replay.stop', undefined, NOT_IN_REPLAY);
   if (/^(?:удали|удалить|сотри) (?:незавершенную|сохраненную|прежнюю) игру$/.test(t)) return hit('replay.discardSaved', undefined, NOT_IN_REPLAY);
   // выход

@@ -1,9 +1,10 @@
 // «Итоги» голосом: results.show открывает вкладку и часть; разбор хода — «с позиции …», событие, связный текст.
 import { afterEach, describe, expect, it } from 'vitest';
-import type { CommandTerms, DebriefHq, KeyEvent, TurnDebrief } from '@def-ops/sim';
-import { act, register } from '../src/voice/registry';
+import type { CommandTerms, DebriefHq, KeyEvent, OperationSummary, TurnDebrief } from '@def-ops/sim';
+import { act, parsePhrase, register } from '../src/voice/registry';
+import { numberWords } from '../src/voice/speech';
 import { setSectionSource } from '../src/voice/actions/command';
-import { releaseResults, resultsActions, type ResultsDeps } from '../src/voice/actions/results';
+import { lossesSay, parseResults, releaseResults, resultsActions, type ResultsDeps } from '../src/voice/actions/results';
 import type { ResultsPart } from '../src/results-view';
 
 const TERMS = { top: 'Ставка', topGen: 'Ставки', topTo: 'в Ставку', group: 'фронт' } as CommandTerms;
@@ -105,5 +106,62 @@ describe('разбор хода голосом и кнопками', () => {
     const w = mount('command', { debrief: DEBRIEF, model: true }); offs.push(w.off);
     await act('command.debrief.narrate');
     expect(w.narrated()).toBe(1);
+  });
+});
+
+const L = (personnel: number, tanks = 0, guns = 0) => ({ personnel, tanks, guns });
+const row = (id: 'su' | 'de', total: number, last: number) => ({ id, name: id, side: id, echelon: 'side' as const, parent: null,
+  total: L(total, 40, 25), captured: 0, reinforced: 0, byDay: [L(total - last), L(last)] });
+const SUMMARY = (history: OperationSummary['history']['losses'] = []) => ({
+  losses: { exact: true, upTo: 48, days: ['1945-04-16', '1945-04-17'], rows: [row('su', 12345, 3000), row('de', 8000, 2500)] },
+  history: { losses: history },
+}) as unknown as OperationSummary;
+
+describe('фразы итогов и разбора', () => {
+  let offs: (() => void)[] = [];
+  afterEach(() => { offs.forEach((o) => o()); offs = []; });
+  setSectionSource(() => 'replay');
+
+  it('parse results phrases', () => {
+    const m = mount('command', { debrief: DEBRIEF }); offs.push(m.off);
+    expect(parseResults('итоги хода', 'replay')).toEqual({ id: 'results.show', params: { part: 'turn' } });
+    expect(parseResults('сравни с историей', 'replay')).toEqual({ id: 'results.show', params: { part: 'compare' } });
+    expect(parseResults('покажи потери', 'replay')).toEqual({ id: 'results.show', params: { part: 'losses' } });
+    expect(parseResults('покажи итоги', 'replay')).toEqual({ id: 'results.show', params: {} });
+    expect(parseResults('доложи потери', 'replay')).toEqual({ id: 'results.losses.read' });
+    expect(parseResults('разбери ход с позиции восьмой гвардейской армии', 'replay')).toEqual({ id: 'command.debrief.as', params: { name: 'восьмой гвардейской армии' } });
+    expect(parseResults('разбери ход с позиции Ставки', 'replay')).toEqual({ id: 'command.debrief.as', params: { name: 'Ставки' } });
+    expect(parseResults('покажи событие два', 'replay')).toEqual({ id: 'command.debrief.event', params: { n: 2 } });
+    expect(parseResults('покажи событие 2', 'replay')).toEqual({ id: 'command.debrief.event', params: { n: 2 } });
+    expect(parseResults('расскажи ход связно', 'replay')).toEqual({ id: 'command.debrief.narrate' });
+    expect(parseResults('покажи Зелов', 'replay')).toBeNull();
+    expect(parseResults('итоги хода', 'maps')).toBeNull();
+    // через общий разбор фраз: раньше «покажи …» — названий мест
+    expect(parsePhrase('покажи событие два', 'replay')).toEqual({ id: 'command.debrief.event', params: { n: 2 } });
+  });
+
+  it('debrief.as by spoken name', async () => {
+    const m = mount('command', { debrief: DEBRIEF }); offs.push(m.off);
+    await act('command.debrief.as', { name: 'восьмой гвардейской армии' });
+    expect(m.hqs).toEqual(['su_8gva']);
+  });
+
+  it('losses say', () => {
+    const t = lossesSay(SUMMARY([{ scope: 'su', from: '1945-04-16', to: '1945-05-08', perDay: 15000, source: 'Кривошеев', reliability: 'A' }]), 'su');
+    expect(t).not.toMatch(/\d/);
+    expect(t).toContain(numberWords(12345));
+    expect(t).toContain(numberWords(3000));
+    expect(t).toContain(numberWords(8000));
+    expect(t).toMatch(/за последние сутки/);
+    expect(t).toMatch(new RegExp(`в истории[^.]*${numberWords(15000)}`));
+    const bare = lossesSay(SUMMARY(), 'su');
+    expect(bare).not.toMatch(/в истории/);
+    // за немецкую сторону свои — немецкие
+    expect(lossesSay(SUMMARY(), 'de').indexOf(numberWords(8000))).toBeLessThan(lossesSay(SUMMARY(), 'de').indexOf(numberWords(12345)));
+  });
+
+  it('losses read action', async () => {
+    const m = mount('command'); offs.push(m.off);
+    expect(String(await act('results.losses.read'))).toMatch(/итогов нет|потер/i);
   });
 });

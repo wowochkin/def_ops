@@ -2,7 +2,7 @@
 // (место — метка и рамка), продвижение к целям, тыл, что известно о противнике (только по разведке); текст —
 // моделью одним запросом на весь разбор или по правилам.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { IntelReport, TurnBattle, UnitReport } from '@def-ops/sim';
+import type { IntelReport, KeyEvent, TurnBattle, TurnDebrief, UnitReport } from '@def-ops/sim';
 import { scaleDenominator, zoomForScale, type LngLat } from '@def-ops/core';
 import { scaleInLevel, type LevelId } from '../src/map-level-scale';
 import type { TurnView } from '../src/sim/game-protocol';
@@ -148,6 +148,26 @@ describe('разбор хода: шаги из данных хода', () => {
   it('боёв с местом нет (агентная модель), а донесения есть — главное из донесений', () => {
     const s = turnReview(view({ battles: [], engine: 'agents' }), prev);
     expect(s[0].text).toMatch(/Главное из донесений: восьмая гвардейская армия прорвала первую полосу обороны у Зелова\./);
+  });
+  const kev = (id: string, weight: number, at: LngLat): KeyEvent => ({ id, kind: 'breakthrough', side: 'su', tick: 20, title: `Прорыв: ${id}`,
+    text: '8-я гвардейская армия: 3 дивизии продвинулись в среднем на 8 км за 12 часов, у пункта Зелов (Seelow).', at, from: null, to: null,
+    place: 'у Зелов (Seelow)', divisions: [], hqs: [], km: 8, lost: 0, causes: [], weight, seen: true });
+  const deb = (events: KeyEvent[]): TurnDebrief => ({ from: 0, to: 24, time: '1945-04-17T05:00', side: 'su', events, hqs: {}, quiet: { maxAdvanceKm: 0.4, lost: 120 } });
+  it('turn review uses key events', () => {
+    const a = kev('a', 2, SEELOW), b = kev('b', 5, HIDDEN);
+    const s = turnReview(view({ battles: [], engine: 'agents', debrief: deb([a, b]) }), prev);
+    const evs = s.filter((x) => x.kind === 'battle');
+    expect(evs).toHaveLength(2);
+    expect(s[1]).toBe(evs[0]);
+    // самое весомое первым
+    expect(evs[0].title).toBe('Прорыв: b');
+    expect(evs[1].map.spot).toBe(a.at);
+    expect(evs[1].text).toMatch(/Восьмая гвардейская армия/);
+  });
+  it('turn review quiet', () => {
+    const s = turnReview(view({ battles: [], engine: 'agents', debrief: deb([]) }), prev);
+    expect(s.filter((x) => x.kind === 'battle')).toHaveLength(0);
+    expect(s[0].text).toMatch(/ключевых событий нет/);
   });
   it('конец игры — первым шагом исход', () => {
     const over = turnReview(view({ over: true, outcome: { result: 'victory', text: 'Знамя Победы поднято над рейхстагом.', at: '1945-04-30T22:00' } }), prev);

@@ -4,12 +4,17 @@
  * `command.debrief.as {name}` — «разобрать с позиции …», `command.debrief.event {n}` — событие на карте и раскрыть,
  * `command.debrief.narrate` — связный текст модели по тем же фактам. Регистрируют ReplayView и CommandView; игра
  * открывается поверх переигровки, поэтому окна — стопкой: действия говорят с верхним, а когда игра закрыта, действия
- * снова принадлежат переигровке.
+ * снова принадлежат переигровке. `results.losses.read` — «доложи потери»: свои и противника словами (`lossesSay`).
+ * Фразы — `parseResults` (зовёт `parseCommand` до общих «покажи …»): «итоги хода», «покажи потери», «сравни с историей»,
+ * «доложи потери», «разбери ход с позиции …», «покажи событие два», «расскажи ход связно».
  */
-import { register, type Action } from '../registry';
+import { getAction, register, type Action, type PhraseHit } from '../registry';
 import { hl } from '../highlight';
 import { inReplay } from './command';
-import { PART_TITLE, type ResultsPart } from '../../results-view';
+import { spokenNumber } from '../answers';
+import { findUnit } from '../places';
+import { numberWords, plural } from '../speech';
+import { histPerDay, historyOf, PART_TITLE, type ResultsPart } from '../../results-view';
 import { perspectiveOptions } from '../../debrief-view';
 import { debriefFor, type CommandTerms, type OperationSummary, type TurnDebrief } from '@def-ops/sim';
 
@@ -50,7 +55,6 @@ export function resultsActions(get: () => ResultsDeps): Action[] {
     id: 'results.show', section: 'replay', title: 'Итоги операции',
     describe: 'Открывает вкладку «Итоги» и её часть: turn — разбор хода (в игре — последний ход, в переигровке — сутки на шкале времени), losses — потери сторон рядом с историческими, compare — сравнение с историей.',
     params: { type: 'object', properties: { part: { enum: ['turn', 'losses', 'compare'] } } },
-    say: ['штаб, покажи итоги', 'штаб, покажи потери'],
     available: () => { const r = inReplay(); if (r !== true) return r; return top()?.section() ? true : 'итогов нет: рассчитайте операцию на агентной модели'; },
     highlight: (p?: { part?: ResultsPart }) => hl(`results-${p?.part ?? 'losses'}`),
     run: async (p?: { part?: ResultsPart }) => {
@@ -73,8 +77,11 @@ export function resultsActions(get: () => ResultsDeps): Action[] {
       if (!d || !b) return 'Разбора хода нет.';
       const terms = d.terms(), q = norm(p?.name ?? '');
       const opts = perspectiveOptions(b, terms);
+      // штаб по названию — тем же поиском соединения, что у вкладки штаба (номер словами, падеж, сокращения)
+      const hqs = opts.flatMap((o) => (o.id != null ? [{ ...o, id: o.id, name: o.label }] : []));
       const hit = [terms.top, terms.topGen].map(norm).includes(q) ? opts[0]
-        : opts.find((o) => o.id != null && (o.id === p?.name || norm(o.label) === q)) ?? (q.length >= 3 ? opts.find((o) => o.id != null && norm(o.label).startsWith(q)) : undefined);
+        : opts.find((o) => o.id != null && (o.id === p?.name || norm(o.label) === q)) ?? (q ? findUnit(p?.name ?? '', hqs).unit : undefined)
+          ?? (q.length >= 3 ? opts.find((o) => o.id != null && norm(o.label).startsWith(q)) : undefined);
       if (!hit) return `Такого штаба нет: ${p?.name ?? ''}.`;
       d.setHq(hit.id);
       d.setPart('turn');
@@ -114,7 +121,24 @@ export function resultsActions(get: () => ResultsDeps): Action[] {
       return 'Связный разбор хода: модель пишет по данным хода.';
     },
   };
-  actions = [show, as, event, narrate];
+  const read: Action = {
+    id: 'results.losses.read', section: 'replay', title: 'Доложить потери',
+    describe: 'Докладывает потери своей стороны и противника за всё время и за последние сутки (люди, танки, орудия), рядом — исторические среднесуточные, если они есть в базе знаний.',
+    say: ['штаб, доложи потери'],
+    available: show.available,
+    highlight: () => hl('results-losses'),
+    run: async () => {
+      const d = top(), s = d?.summary();
+      if (!d || !s) return 'Итогов нет.';
+      d.setPart('losses');
+      return lossesSay(s, d.side());
+    },
+  };
+  show.say = ['штаб, итоги хода', 'штаб, покажи потери', 'штаб, сравни с историей', 'штаб, покажи итоги'];
+  as.say = ['штаб, разбери ход с позиции Ставки', 'штаб, разбери ход с позиции восьмой гвардейской армии'];
+  event.say = ['штаб, покажи событие два'];
+  narrate.say = ['штаб, расскажи ход связно'];
+  actions = [show, as, event, narrate, read];
   return actions;
 }
 
@@ -124,4 +148,67 @@ export function releaseResults(get: () => ResultsDeps): void {
   if (i >= 0) stack.splice(i, 1);
   again?.(); again = null;
   if (stack.length && actions.length) { const offs = actions.map(register); again = () => offs.forEach((o) => o()); }
+}
+
+// ---------------------------------------------------------------- доклад потерь и фразы
+
+const people = (n: number) => `${numberWords(n)} ${plural(n, ['человек', 'человека', 'человек'])}`;
+const lossWords = (l: { personnel: number; tanks: number; guns: number }) => [
+  people(Math.round(l.personnel)),
+  l.tanks >= 1 ? `${numberWords(Math.round(l.tanks))} ${plural(Math.round(l.tanks), ['танк', 'танка', 'танков'])}` : null,
+  l.guns >= 1 ? `${numberWords(Math.round(l.guns), 'n')} ${plural(Math.round(l.guns), ['орудие', 'орудия', 'орудий'])}` : null,
+].filter(Boolean).join(', ');
+
+/**
+ * Потери голосом: свои и противника за всё время и за последние сутки, числа словами; рядом — исторические
+ * среднесуточные стороны, если они есть в базе знаний (немецкие — по советскому донесению). Старый ход — с пометкой оценки.
+ */
+export function lossesSay(s: OperationSummary, side: 'su' | 'de'): string {
+  const other = side === 'su' ? 'de' : 'su';
+  const part = (id: 'su' | 'de', who: string): string | null => {
+    const r = s.losses.rows.find((x) => x.id === id);
+    if (!r) return null;
+    const last = r.byDay[r.byDay.length - 1];
+    const perDay = historyOf(s, id).map(histPerDay).find((x) => x != null) ?? null;
+    return [
+      `${who} — ${lossWords(r.total)}`,
+      last && r.byDay.length > 1 ? `; за последние сутки — ${people(Math.round(last.personnel))}` : '',
+      perDay != null ? `; в истории — в среднем ${people(perDay)} в сутки${id === 'de' ? ', по советскому донесению' : ''}` : '',
+      '.',
+    ].join('');
+  };
+  const out = [part(side, 'Наши потери'), part(other, 'Потери противника')].filter((x): x is string => !!x);
+  if (!out.length) return 'Потерь в расчёте нет.';
+  if (!s.losses.exact) out.push('Это оценка по убыли численности: пополнения и передачи не различаются.');
+  return out.join(' ');
+}
+
+const hitOr = (id: string, params?: unknown): PhraseHit => (getAction(id)
+  ? (params === undefined ? { id } : { id, params })
+  : { say: 'Сейчас нельзя: итогов нет — рассчитайте операцию на агентной модели или сыграйте ход.' });
+
+/**
+ * Фразы итогов и разбора хода (rest — без обращения; только в «Переигровке»); не они — null. Номер события — словами
+ * и цифрами; штаб — как сказан (ищет действие).
+ */
+export function parseResults(rest: string, section: string): PhraseHit | null {
+  if (section !== 'replay') return null;
+  const t = norm(rest);
+  let m: RegExpExecArray | null;
+  if (/^(?:покажи |открой )?итоги хода$/.test(t)) return hitOr('results.show', { part: 'turn' });
+  if (/^(?:покажи|открой) итоги(?: операции)?$|^итоги(?: операции)?$/.test(t)) return hitOr('results.show', {});
+  if (/^(?:покажи|открой) потери(?: сторон)?$/.test(t)) return hitOr('results.show', { part: 'losses' });
+  if (/^(?:сравни|сравнить|покажи сравнение|сравнение)(?: игру)? с историей$/.test(t)) return hitOr('results.show', { part: 'compare' });
+  if (/^(?:доложи|доложите|прочитай|какие|каковы)(?: наши)? потери$|^доклад о потерях$/.test(t)) return hitOr('results.losses.read');
+  if ((m = /^(?:разбери|разобрать|разбор) ход(?:а)? с позиции (.+)$/.exec(t))) {
+    // название — как сказано (регистр сохранён: «Ставки»)
+    const raw = /с позиции\s+(.+)$/i.exec(rest.trim())?.[1]?.replace(/[«»".]/g, '').trim() ?? m[1];
+    return hitOr('command.debrief.as', { name: raw });
+  }
+  if ((m = /^(?:покажи |открой |раскрой )?событие (?:номер )?(.+)$/.exec(t))) {
+    const n = spokenNumber(m[1]);
+    return n == null ? null : hitOr('command.debrief.event', { n });
+  }
+  if (/^(?:расскажи|разбери|опиши) ход связно$|^связный разбор(?: хода)?$/.test(t)) return hitOr('command.debrief.narrate');
+  return null;
 }

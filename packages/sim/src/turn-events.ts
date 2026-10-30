@@ -83,6 +83,13 @@ function km(a: LngLat, b: LngLat): number {
 }
 const r1 = (x: number) => Math.round(x * 10) / 10;
 const center = (ps: LngLat[]): LngLat | null => ps.length ? [ps.reduce((a, p) => a + p[0], 0) / ps.length, ps.reduce((a, p) => a + p[1], 0) / ps.length] : null;
+/**
+ * Место в тексте события: названия пунктов не склоняются, поэтому — с родовым словом: «у пункта Зелов (Seelow)»,
+ * «8 км к северо-востоку от пункта Зелов (Seelow)». В поле place — как в докладах («у Зелов»): окно склоняет его само.
+ */
+const RUMB_TO: Record<string, string> = { С: 'северу', СВ: 'северо-востоку', В: 'востоку', ЮВ: 'юго-востоку', Ю: 'югу', ЮЗ: 'юго-западу', З: 'западу', СЗ: 'северо-западу' };
+const where = (T: SimContext['theatre'], at: LngLat) => describePlace(T, at).replace(/^у /, 'у пункта ')
+  .replace(/ к (С|СВ|В|ЮВ|Ю|ЮЗ|З|СЗ) от /, (_m, r: string) => ` к ${RUMB_TO[r]} от пункта `);
 /** Км словами: меньше 10 — с десятыми, дальше — целые. */
 const fmtKm = (x: number) => { const v = x < 10 ? r1(x) : Math.round(x); return (v >= 10 ? String(Math.round(v)) : String(v)).replace('.', ','); };
 const plural = (n: number, one: string, few: string, many: string) => {
@@ -184,7 +191,7 @@ export function turnEvents(
       if (!ks.length && near.length) ks = [near.reduce((a, k) => (km(pos(k, tick), loc) < km(pos(a, tick), loc) ? k : a))];
       // место события — пункт сверки (известен и без разведки), участники — только переданные
       raw.push({ id: e.id, kind: 'capture', side: side ?? (ks.length ? dSide[ks[0]] : me), tick, ks, title: e.title, make: (ks) => ({
-        at: loc, from: null, to: null, km: null, text: `${describePlace(T, loc).replace(/^у /, 'У ')}${ks.length ? `: ${names(ks)}` : ''}; ${when}.` }) });
+        at: loc, from: null, to: null, km: null, text: `${where(T, loc).replace(/^у /, 'У ')}${ks.length ? `: ${names(ks)}` : ''}; ${when}.` }) });
     }
   }
 
@@ -198,7 +205,7 @@ export function turnEvents(
     if (att.length >= Math.min(2, ks.length) && hours > 0 && avgMove(att) >= Math.max(4, BREAK_KM_DAY * hours / 24)) {
       raw.push({ id: `breakthrough:${g}:${to}`, kind: 'breakthrough', side, tick: to, ks: att, title: `Прорыв: ${gName}`, make: (kk) => {
         const a = center(kk.map((k) => pos(k, from)))!, b = center(kk.map((k) => pos(k, to)))!, avg = avgMove(kk);
-        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'продвинулась', 'продвинулись')} в среднем на ${fmtKm(avg)} км за ${plural(hours, 'час', 'часа', 'часов')}, ${describePlace(T, b)}.` };
+        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'продвинулась', 'продвинулись')} в среднем на ${fmtKm(avg)} км за ${plural(hours, 'час', 'часа', 'часов')}, ${where(T, b)}.` };
       } });
     }
     // контрудар: армия в обороне, не меньше COUNTER_MIN дивизий перешли в наступление
@@ -214,7 +221,7 @@ export function turnEvents(
           const foe = foes.length ? foes.reduce((m, k) => (km(pos(k, to), a) < km(pos(m, to), a) ? k : m)) : -1;
           const target = foe >= 0 ? pos(foe, to) : null;
           return { at: a, from: target ? a : null, to: target, km: null,
-            text: `${gName}: ${divs(kk.length)} из обороны ${vb(kk.length, 'перешла', 'перешли')} в наступление${target ? ` — на ${D[foe].name}, ${describePlace(T, target)}` : ''}.` };
+            text: `${gName}: ${divs(kk.length)} из обороны ${vb(kk.length, 'перешла', 'перешли')} в наступление${target ? ` — на ${D[foe].name}, ${where(T, target)}` : ''}.` };
         } });
       }
     }
@@ -223,7 +230,7 @@ export function turnEvents(
     if (live0.length && wd.length * 2 >= live0.length && wd.length) {
       raw.push({ id: `withdrawal:${g}:${to}`, kind: 'withdrawal', side, tick: to, ks: wd, title: `Отход: ${gName}`, make: (kk) => {
         const a = center(kk.map((k) => pos(k, from)))!, b = center(kk.map((k) => pos(k, to)))!, avg = avgMove(kk);
-        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'отошла', 'отошли')} в среднем на ${fmtKm(avg)} км, ${describePlace(T, b)}.` };
+        return { at: b, from: a, to: b, km: r1(avg), text: `${gName}: ${divs(kk.length)} ${vb(kk.length, 'отошла', 'отошли')} в среднем на ${fmtKm(avg)} км, ${where(T, b)}.` };
       } });
     }
     // окружение: отрезанность перешла CUT_H внутри окна (кроме дивизий котла из событий сверки)
@@ -231,7 +238,7 @@ export function turnEvents(
     if (cut.length) {
       raw.push({ id: `encirclement:${g}:${to}`, kind: 'encirclement', side, tick: Math.min(...cut.map(([, x]) => x)), ks: cut.map(([k]) => k), title: `Окружение: ${gName}`, make: (kk) => {
         const c = center(kk.map((k) => pos(k, to)))!;
-        return { at: c, from: null, to: null, km: null, text: `${gName}: больше суток ${vb(kk.length, 'отрезана', 'отрезаны')} ${divs(kk.length)} — ${names(kk)}, ${describePlace(T, c)}.` };
+        return { at: c, from: null, to: null, km: null, text: `${gName}: больше суток ${vb(kk.length, 'отрезана', 'отрезаны')} ${divs(kk.length)} — ${names(kk)}, ${where(T, c)}.` };
       } });
     }
     // разгром: дивизии стали небоеспособны или сведены в другие (капитуляция — по пленным)
@@ -287,7 +294,7 @@ export function turnEvents(
       const own = D.map((_, k) => k).filter((k) => dSide[k] === me && inLine(k, to) && marks.some((p) => km(pos(k, to), p) <= TOUCH_KM));
       if (!own.length) continue;
       const c = center(own.map((k) => pos(k, to)))!;
-      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: ENEMY_TITLE[r.kind], text: `${ENEMY_TITLE[r.kind]}: затронуты ${divs(own.length)} — ${names(own)}, ${describePlace(T, c)}.`,
+      ev = { id: r.id, kind: r.kind, side: r.side, tick: r.tick, title: ENEMY_TITLE[r.kind], text: `${ENEMY_TITLE[r.kind]}: затронуты ${divs(own.length)} — ${names(own)}, ${where(T, c)}.`,
         at: c, from: null, to: null, place: describePlace(T, c), km: null, divisions: own.map((k) => D[k].id), hqs: hqsOf(own), lost: lossOf(own), causes: [], weight: 0, seen: false };
     }
     if (hidden) ev.text = `${ev.text} ${HIDDEN}`;

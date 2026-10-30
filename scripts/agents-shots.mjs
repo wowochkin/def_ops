@@ -2,8 +2,13 @@
 // (scripts/agents-bridge.mjs): переигровка Берлинской на агентной модели — уровни карты, окно передачи командования
 // с режимом (штабы-агенты), вкладка «Штабы», пункт управления Ставки и армии, журнал документов после хода.
 //
-//   node scripts/agents-shots.mjs [--url http://localhost:5173] [--out docs/img] [--doc]
+//   node scripts/agents-shots.mjs [--url http://localhost:5173] [--out docs/img] [--doc] [--results]
 // --doc — и снимки уровней карты на нынешней модели и на агентной для описания (replay-*.jpg).
+// --results — вместо этого снимки итогов и разбора хода в одном окружении: «Итоги» → «Потери» переигровки
+// (replay-results-losses), игра с начала операции (противник — история как замысел): «Доклады» Ставки на ходе 1
+// (game-reports), «Итоги» → «Сравнение» после двух ходов (command-compare), «Итоги» → «Разбор хода» после трёх с
+// раскрытым событием (command-debrief); затем 8-я гв. армия под управлением, подставная модель (поддельная LM Studio
+// на /llm/): «Составить советником (ИИ)» на втором поле из пяти (decision-ai) и поле вопроса советника (advisor-input).
 // Нужны: сервер разработки редактора (cd apps/editor && npx vite) и target/release/agents-game.
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -37,7 +42,111 @@ const day = async (n) => {
   for (let k = 0; k < n; k++) await page.locator('.player .ic[title="Вперёд на сутки"]').click();
 };
 const level = async (t, at) => { await page.locator('.lvl-sw button', { hasText: t }).click(); await page.evaluate((c) => window.__replayEngine?.setView({ center: c }), at); };
-try {
+const RESULTS = process.argv.includes('--results');
+
+/** Поддельная LM Studio (/llm/): модель mock-staff; поле решения — текст «подставного советника»; hold — следующий
+ *  запрос ждёт release (снимок «советник пишет …» посреди общего заказа). */
+const lm = { n: 0, holdAt: 0, release: null };
+const lmText = () => 'Подставной советник (проверка стенда): текст подставной — проверяется вёрстка, а не содержание. Армия ведёт наступление на Зееловские высоты, подвоз доходит.';
+const sse = (content) => [...content.match(/[\s\S]{1,200}/g).map((c) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: c } }] })}\n\n`),
+  `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] })}\n\n`, 'data: [DONE]\n\n'].join('');
+async function fakeLm() {
+  await ctx.route((u) => u.pathname.startsWith('/llm/'), async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('/v1/models')) return route.fulfill({ json: { object: 'list', data: [{ id: 'mock-staff', object: 'model' }] } });
+    if (!url.pathname.endsWith('/v1/chat/completions')) return route.fulfill({ status: 404, body: '' });
+    const body = route.request().postDataJSON();
+    const schema = body.response_format?.json_schema?.name;
+    // советник отвечает по схеме staff_advice: текст — в answer
+    const content = schema === 'staff_advice' ? JSON.stringify({ answer: lmText(body), basis: [], unknowns: [], suggestions: [], followUps: [] })
+      : schema ? '{}' : lmText(body);
+    lm.n++;
+    if (lm.holdAt && lm.n === lm.holdAt) await new Promise((r) => { lm.release = r; });
+    const reply = body.stream ? { status: 200, headers: { 'content-type': 'text/event-stream' }, body: sse(content) }
+      : { json: { id: 'fake', object: 'chat.completion', model: 'mock-staff', choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content } }] } };
+    return route.fulfill(reply).catch(() => {});
+  });
+}
+
+/** Ход игры: решение (все поля) и «Провести»; ждать хода n. */
+async function playTurn(n) {
+  await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+  for (const t of await page.locator('.cmd-body textarea').all()) if (!(await t.inputValue())) await t.fill('Наступать по плану операции; 8 гв. армия — на Зееловские высоты.');
+  await page.locator('[data-action="command.turn"]').click();
+  await page.locator('.cmd-date span', { hasText: `ход ${n}` }).waitFor({ timeout: 900000 });
+  // доклад посредника и итоги хода — в фоне
+  await page.waitForTimeout(4000);
+}
+
+async function resultsShots() {
+  await fakeLm();
+  await page.goto(`${URL_}/#replay`);
+  // переигровка на агентной модели («История как замысел», seed 1): «Итоги» → «Потери»
+  await page.locator('.rp-form select').first().selectOption('agents', { timeout: 60000 });
+  await page.locator('[data-action="replay.calc"]').click();
+  await page.locator('.rp-go.primary[data-action="replay.calc"]').waitFor({ timeout: 900000 });
+  await page.locator('.take-btn').waitFor({ timeout: 600000 });
+  await page.getByText('Условные обозначения').first().click();
+  await page.locator('[data-hl="results-tab"]').click();
+  await page.locator('[data-hl="results-losses"]').click();
+  await page.locator('.rs-losses').waitFor({ timeout: 300000 });
+  // 1-й Белорусский фронт — до армий
+  await page.locator('.rs-losses details summary', { hasText: '1-й Белорусский' }).first().click();
+  await shot('replay-results-losses.jpg');
+  // игра с начала операции, противник — история как замысел
+  await page.locator('.player .ic[title="Назад на сутки"]').click({ clickCount: 20 });
+  await page.locator('.take-btn').click();
+  await page.locator('.modal.take').waitFor();
+  const intent = page.locator('[data-hl="enemy-intent"]');
+  if (await intent.count()) await intent.click(); else await page.locator('[data-hl="enemy-passive"]').click();
+  await page.locator('.modal.take button.primary').click();
+  await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+  await page.locator('.cmd-body .cmd-sec, .cmd-body .staffs').first().waitFor({ timeout: 600000 });
+  await page.locator('.lvl-sw button', { hasText: 'Ставка' }).click();
+  await page.evaluate(() => window.__cmdEngine?.setView({ center: [14.0, 52.55] }));
+  await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
+  await shot('game-reports.jpg');
+  // два хода — сравнение с историей и с переигровкой без вмешательства
+  await playTurn(2);
+  await playTurn(3);
+  await page.locator('.cmd-tabs button', { hasText: 'Итоги' }).click();
+  await page.locator('[data-hl="results-compare"]').click();
+  await page.locator('.rs-cmp').waitFor({ timeout: 300000 });
+  await page.locator('.rs-cmp .rs-note', { hasText: 'считается' }).waitFor({ state: 'detached', timeout: 900000 });
+  await shot('command-compare.jpg');
+  // третий ход — разбор хода с позиции Ставки, событие 2 (или 1) раскрыто, карта у события
+  await playTurn(4);
+  await page.locator('.cmd-tabs button', { hasText: 'Итоги' }).click();
+  await page.locator('[data-hl="results-turn"]').click();
+  await page.locator('.db-time').waitFor({ timeout: 300000 });
+  await page.locator('[data-hl="debrief-as"]').selectOption('');
+  const ev = page.locator('.db-ev');
+  const k = await ev.count();
+  if (k) await ev.nth(Math.min(1, k - 1)).click();
+  await page.waitForTimeout(2500);
+  await shot('command-debrief.jpg');
+  for (const t of await page.locator('.db-list li').allInnerTexts()) console.log('  событие:', t.replace(/\s+/g, ' ').slice(0, 300));
+  // 8-я гв. армия под управлением: «Составить советником (ИИ)» — второе поле из пяти пишется
+  await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
+  await page.locator('.staffs-row', { hasText: '8-я гвардейская' }).first().locator('button', { hasText: 'взять' }).click();
+  await page.locator('.lvl-sw button', { hasText: 'Армия' }).click();
+  await page.locator('.cmd-tabs button', { hasText: 'Решение' }).click();
+  for (const t of await page.locator('.cmd-body textarea').all()) await t.fill('');
+  await page.waitForTimeout(3000);
+  lm.n = 0; lm.holdAt = 2;
+  await page.locator('[data-action="decision.compose.all"]').click();
+  await page.locator('.ai-btn-t small', { hasText: '2 из 5' }).waitFor({ timeout: 120000 });
+  await page.waitForTimeout(1500);
+  await shot('decision-ai.jpg');
+  lm.holdAt = 0; lm.release?.();
+  await page.locator('.ai-btn-t small', { hasText: 'из 5' }).waitFor({ state: 'detached', timeout: 120000 });
+  // советник: вопрос в поле (не отправлен)
+  await page.locator('[data-tour="cmd-advisor"]').click();
+  await page.locator('textarea[placeholder^="Свой вопрос"]').fill('Где противник может нанести контрудар?');
+  await shot('advisor-input.jpg');
+}
+
+const mainShots = async () => {
   await page.goto(`${URL_}/#replay`);
   if (process.argv.includes('--doc')) {
     // уровни карты на нынешней модели (Берлинская, итог пяти прогонов): дивизия и фронт — 23.04, Ставка — 20 и 25.04
@@ -141,6 +250,9 @@ try {
   await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).click();
   await page.locator('.staffs-docs').scrollIntoViewIfNeeded();
   await shot('command-docs.jpg');
+};
+try {
+  if (RESULTS) await resultsShots(); else await mainShots();
 } finally {
   core.stop();
   await browser.close();
