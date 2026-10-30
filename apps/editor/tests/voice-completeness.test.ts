@@ -58,6 +58,8 @@ const EXCEPTIONS: { file: string; exact: string[]; why: string }[] = [
   { file: 'CommandView.tsx', exact: ['() => { onCancel(); openModelBasis(scenario); }', '() => openKbEntry(r.id)'], why: '«Основа модели», «по базе: R…» уводят в другие разделы («Моделирование», «Знания»); голосом — «открой …»' },
   { file: 'CommandView.tsx', exact: ['llm.recheck'], why: 'проверить связь с моделью — голос перепроверяет связь сам, когда к модели обращаются' },
   { file: 'CommandView.tsx', exact: ['(e) => llm.set({ umpire: e.target.checked })', '(e) => llm.set({ stavka: e.target.checked })'], why: 'настройки моделей посредника и Ставки — раздел «ИИ», не командование; голосом — «открой ИИ»' },
+  { file: 'CommandPost.tsx', exact: ['(e) => setQ(e.target.value)', '() => setKind(k)'], why: 'поиск объекта по буквам и вкладка вида (пункты, рубежи, свои, противник, мосты) — голосом объект называется сразу: «ближайшая задача — Зелов»' },
+  { file: 'CommandPost.tsx', exact: ['() => setOpen(!open)'], why: 'раскрыть список объектов у поля — голосом объект называется сразу: «ось на Мюнхеберг», «правая линия по рубежу …»' },
   { file: 'ReviewView.tsx', exact: ['pdf'], why: 'печать — окно печати системы, оно только мышью; голосом — «сохрани разбор» (PDF в «Загрузки»)' },
   { file: 'voice/VoicePanel.tsx', exact: ['() => power(true)'], why: '«Включить голос» — только рукой: при выключенном голосе штаб не слышит (выключить — через реестр, voice.off.ask)' },
   { file: 'voice/VoicePanel.tsx', exact: ['startMic'], why: 'микрофон не открылся — голосом сказать нечем' },

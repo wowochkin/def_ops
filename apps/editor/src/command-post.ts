@@ -63,6 +63,9 @@ export const FIELDS: Record<LevelId, Field[]> = {
   ],
 };
 
+/** Поле проекта, которое указывается на карте или выбором объекта. */
+export type DirPick = 'axis' | 'immediate' | 'subsequent' | 'boundaryR' | 'boundaryL' | 'mainBlow';
+
 export type DirTask = 'attack' | 'defend' | 'delay' | 'withdraw' | 'move' | 'reserve';
 export const DIR_TASK_RU: Record<DirTask, string> = { attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'в резерв' };
 
@@ -73,9 +76,14 @@ export interface DirDraft {
   task: DirTask;
   form: Form;
   axis: LngLat[];
+  /** Цель оси, выбранная из списка объектов (подпись точки цели на карте); указание щелчками её снимает. */
+  axisTitle?: string;
   immediate: LngLat[];
+  /** Название объекта ближайшей задачи (выбран из списка). */
+  immediateTitle?: string;
   immediateBy?: string;
   subsequent: LngLat[];
+  subsequentTitle?: string;
   subsequentBy?: string;
   boundaries: [LngLat[], LngLat[]];
   mainBlow: string[];

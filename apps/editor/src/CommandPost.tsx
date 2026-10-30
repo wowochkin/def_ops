@@ -10,12 +10,15 @@ import type { TurnView } from './sim/game-protocol';
 import { act, ActButton, useAction } from './voice/registry';
 import { hl } from './voice/highlight';
 import { controlMark, findHq, queueOp, type CommandOp } from './command-forms';
-import { blankDir, DIR_TASK_RU, local, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
+import { blankDir, DIR_TASK_RU, type DirPick, local, DOC_TITLE, FIELDS, issuers, missing, POST_TITLE, postTitle, recipients, sender, taken, toDirective, type DirDraft, type DirTask } from './command-post';
 import { LEVELS, type LevelId } from './map-level-scale';
 import { wantsFly } from './post-views';
+import { applyObject, findObjects, OBJ_KIND_RU, postObjects, shortName, type ObjKind } from './post-objects';
 
-export type DirPick = 'axis' | 'immediate' | 'subsequent' | 'boundaryR' | 'boundaryL' | 'mainBlow';
+export type { DirPick };
 const PICK_RU: Record<DirPick, string> = { axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' };
+/** Название выбранного объекта у поля точек: указание щелчками или очистка его снимает. */
+const TITLE = { axis: 'axisTitle', immediate: 'immediateTitle', subsequent: 'subsequentTitle' } as const;
 const LEVEL_RU: Record<LevelId, string> = { stavka: 'Ставка', front: 'Фронт', army: 'Армия', corps: 'Корпус', division: 'Дивизия' };
 
 export interface PostState {
@@ -124,6 +127,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
         if (p.clear === 'boundaryR') n.boundaries = [[], n.boundaries[1]];
         else if (p.clear === 'boundaryL') n.boundaries = [n.boundaries[0], []];
         else n[p.clear] = [];
+        if (p.clear in TITLE) delete n[TITLE[p.clear as keyof typeof TITLE]];
       }
       put(n);
       return undefined;
@@ -151,9 +155,27 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
       // указание заново — с чистого листа
       if (p.field === 'boundaryR') put({ ...d, boundaries: [[], d.boundaries[1]] });
       else if (p.field === 'boundaryL') put({ ...d, boundaries: [d.boundaries[0], []] });
-      else if (p.field !== 'mainBlow') put({ ...d, [p.field]: [] });
+      else if (p.field !== 'mainBlow') { const n: DirDraft = { ...d, [p.field]: [] }; delete n[TITLE[p.field]]; put(n); }
       setPick(p.field);
       return `Щёлкайте по карте: ${PICK_RU[p.field]}; закончить — «Готово».`;
+    },
+  });
+  useAction({
+    id: 'command.dir.object', section: 'replay', title: 'Объект в документе', describe: 'Ставит в открытый документ пункта управления объект из списка — населённый пункт, рубеж, свою армию или соединение, противника, мост: в ближайшую или последующую задачу, ось главного удара (от места получателя), правую или левую разграничительную линию (рубеж — линией), армии главного удара (field: immediate, subsequent, axis, boundaryR, boundaryL, mainBlow); объект — по id или по названию (name).',
+    params: { type: 'object', properties: { field: { enum: ['immediate', 'subsequent', 'axis', 'boundaryR', 'boundaryL', 'mainBlow'] }, id: { type: 'string' }, name: { type: 'string' } }, required: ['field'] },
+    say: ['штаб, ближайшая задача — Зелов', 'штаб, ось на Мюнхеберг', 'штаб, правая линия по рубежу Зееловские высоты'], available: ready, highlight: () => hl('post-form'),
+    run: async (p: { field: DirPick; id?: string; name?: string }) => {
+      const d = live.current.draft;
+      if (!d || !view) return 'Документ не открыт: скажите, например, «директива первому Белорусскому фронту».';
+      if (!p?.field || !(p.field in PICK_RU)) return 'Куда поставить объект: ближайшая или последующая задача, ось, правая или левая линия, главный удар.';
+      const all = postObjects(view);
+      const from = view.own.find((u) => u.id === d.to)?.at ?? null;
+      const o = (p.id ? all.find((x) => x.id === p.id) : undefined) ?? (p.name ? findObjects(all, p.name, from, p.field === 'mainBlow' ? 'own' : undefined, 1)[0] : undefined);
+      if (!o) return `Объекта «${p.name ?? p.id ?? ''}» нет в списке.`;
+      const n = applyObject(d, p.field, o, from);
+      if (n === d) return `${o.title} — не армия в подчинении ${name(d.to)}.`;
+      put(n); setPick(null);
+      return `${PICK_RU[p.field][0].toUpperCase()}${PICK_RU[p.field].slice(1)} — ${o.title}.`;
     },
   });
   useAction({
@@ -210,8 +232,6 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   };
 }
 
-/** Сокращение названия для плашки: «8-я гвардейская армия» → «8 гв. А». */
-const shortName = (n: string) => n.replace(/(\d+)-[яйе]\s/, '$1 ').replace(/гвардейск\p{L}*/u, 'гв.').replace(/ударн\p{L}*\s+армия/u, 'уд. А').replace(/танков\p{L}*\s+армия/u, 'ТА').replace(/армия Войска Польского/u, 'А ВП').replace(/\sармия$/u, ' А');
 
 /**
  * Выбор нескольких из списка: выбранные — плашками с «×», добавить — из списка остальных или (map) щелчком по знаку
@@ -232,15 +252,43 @@ function Pick({ label, field, items, chosen, map }: { label: string; field: 'mai
   </div>;
 }
 
-/** Точки поля: сколько указано и кнопки «Указать на карте» / «Готово» / «Очистить». */
-function Points({ label, hint, field, pts, pick }: { label: string; hint?: string; field: DirPick; pts: LngLat[]; pick: DirPick | null }) {
+/**
+ * Выбор объекта из списка для поля точек: вкладки по видам (пункты, рубежи, свои, противник, мосты), поиск по буквам,
+ * строки с удалением от получателя; выбор ставит объект в поле (command.dir.object).
+ */
+function ObjectPicker({ v, field, from }: { v: TurnView; field: DirPick; from: LngLat | null }) {
+  const [kind, setKind] = useState<ObjKind>(field === 'immediate' || field === 'subsequent' || field.startsWith('boundary') ? 'line' : 'place');
+  const [q, setQ] = useState('');
+  const all = useMemo(() => postObjects(v), [v]);
+  const rows = findObjects(all, q, from, kind);
+  return <div className="post-objs" data-hl="post-objs">
+    <div className="seg">{(Object.keys(OBJ_KIND_RU) as ObjKind[]).map((k) => <button key={k} className={k === kind ? 'on' : ''} onClick={() => setKind(k)}>{OBJ_KIND_RU[k]}</button>)}</div>
+    <input type="search" placeholder="поиск по названию…" value={q} onChange={(e) => setQ(e.target.value)} />
+    <div className="post-objs-list">
+      {rows.length ? rows.map((o) => <ActButton key={`${o.kind}:${o.id}`} className="orow" action="command.dir.object" params={{ field, id: o.id }}>
+        <span className="orow-n">{o.title}</span><span className="orow-t muted">{o.km != null ? `${o.km} км` : ''}</span></ActButton>)
+        : <span className="muted">{q ? 'ничего не найдено' : 'нет объектов этого вида'}</span>}
+    </div>
+  </div>;
+}
+
+/** Точки поля: сколько указано (или название выбранного объекта), «на карте» / «Готово», «из списка», «очистить». */
+function Points({ v, label, hint, field, pts, title, pick, from }: { v: TurnView; label: string; hint?: string; field: DirPick; pts: LngLat[]; title?: string; pick: DirPick | null; from: LngLat | null }) {
   const on = pick === field;
-  return <div className="post-pts">
-    <span>{label}{hint && <small className="muted"> — {hint}</small>}: {pts.length ? <b>{pts.length} т.</b> : <span className="muted">не указан{field.startsWith('boundary') ? 'а' : ''}</span>}</span>
-    <span>
-      <ActButton className={`link${on ? ' on' : ''}`} action="command.dir.pick" params={{ field: on ? '' : field }}>{on ? 'Готово' : pts.length ? 'заново' : 'на карте'}</ActButton>
-      {pts.length > 0 && !on && <> <ActButton className="link danger" action="command.dir.set" params={{ clear: field }}>очистить</ActButton></>}
-    </span>
+  const [open, setOpen] = useState(false);
+  // объект поставлен (поле изменилось) — список закрывается
+  const key = JSON.stringify(pts);
+  useEffect(() => { setOpen(false); }, [key]);
+  return <div className="post-pts-w">
+    <div className="post-pts">
+      <span>{label}{hint && <small className="muted"> — {hint}</small>}: {pts.length ? <b>{title ?? `${pts.length} т.`}</b> : <span className="muted">не указан{field.startsWith('boundary') ? 'а' : ''}</span>}</span>
+      <span>
+        <ActButton className={`link${on ? ' on' : ''}`} action="command.dir.pick" params={{ field: on ? '' : field }}>{on ? 'Готово' : pts.length ? 'заново' : 'на карте'}</ActButton>
+        {!on && <> <button className={`link${open ? ' on' : ''}`} onClick={() => setOpen(!open)} title="Пункт, рубеж, армия, противник, мост">из списка</button></>}
+        {pts.length > 0 && !on && <> <ActButton className="link danger" action="command.dir.set" params={{ clear: field }}>очистить</ActButton></>}
+      </span>
+    </div>
+    {open && !on && <ObjectPicker v={v} field={field} from={from} />}
   </div>;
 }
 
@@ -261,6 +309,8 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
   const reserves = v.reserveGroups.filter((g) => g.status === 'reserve' && v.command?.hqs[g.id]);
   const miss = d ? missing(d, v.time) : [];
   const toTime = (t?: string) => (t ? t.slice(0, 16) : '');
+  // место получателя — начало оси, выбранной из списка, и удаления в списке объектов
+  const from = d ? v.own.find((u) => u.id === d.to)?.at ?? null : null;
   return (
     <div className="cmd-sec post" data-hl="post">
       <h3>Пункт управления: {local(POST_TITLE[level], v)}</h3>
@@ -286,14 +336,14 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
           <ActButton key={k} className={d.form === k ? 'on' : ''} action="command.dir.set" params={{ form: k }} title={k === 'order' ? 'Подготовленный документ: около суток на ступень, полная слаженность' : 'Боевое распоряжение: 1–3 ч на ступень, слаженность ниже'}>{t}</ActButton>)}</div>}
         <label>{label('task')} <select value={d.task} data-action="command.dir.set" onChange={(e) => void act('command.dir.set', { task: e.target.value })}>
           {(Object.keys(DIR_TASK_RU) as DirTask[]).map((t) => <option key={t} value={t}>{DIR_TASK_RU[t]}</option>)}</select></label>
-        {has('axis') && <Points label={label('axis')} hint={hint('axis')} field="axis" pts={d.axis} pick={pick} />}
+        {has('axis') && <Points v={v} from={from} label={label('axis')} hint={hint('axis')} field="axis" pts={d.axis} title={d.axisTitle} pick={pick} />}
         {has('mainBlow') && below.length > 0 && <Pick label={label('mainBlow')} field="mainBlow" items={below} chosen={d.mainBlow} map={pick} />}
-        {has('immediate') && <><Points label={label('immediate')} field="immediate" pts={d.immediate} pick={pick} />
+        {has('immediate') && <><Points v={v} from={from} label={label('immediate')} field="immediate" pts={d.immediate} title={d.immediateTitle} pick={pick} />
           {level !== 'division' && <label className="small">срок <input type="datetime-local" data-action="command.dir.set" value={toTime(d.immediateBy)} min={toTime(v.time)} onChange={(e) => void act('command.dir.set', { by: { field: 'immediate', at: e.target.value } })} /></label>}</>}
-        {has('subsequent') && <><Points label={label('subsequent')} field="subsequent" pts={d.subsequent} pick={pick} />
+        {has('subsequent') && <><Points v={v} from={from} label={label('subsequent')} field="subsequent" pts={d.subsequent} title={d.subsequentTitle} pick={pick} />
           <label className="small">срок <input type="datetime-local" data-action="command.dir.set" value={toTime(d.subsequentBy)} min={toTime(v.time)} onChange={(e) => void act('command.dir.set', { by: { field: 'subsequent', at: e.target.value } })} /></label></>}
         {has('boundaries') && <div className="post-bnd"><span>{label('boundaries')}{hint('boundaries') && <small className="muted"> — {hint('boundaries')}</small>}</span>
-          <Points label="правая" field="boundaryR" pts={d.boundaries[0]} pick={pick} /><Points label="левая" field="boundaryL" pts={d.boundaries[1]} pick={pick} /></div>}
+          <Points v={v} from={from} label="правая" field="boundaryR" pts={d.boundaries[0]} pick={pick} /><Points v={v} from={from} label="левая" field="boundaryL" pts={d.boundaries[1]} pick={pick} /></div>}
         {has('junction') && below.length > 0 && <label>{label('junction')}{hint('junction') && <small className="muted"> — {hint('junction')}</small>} <select value={d.junction ?? ''} data-action="command.dir.set" onChange={(e) => void act('command.dir.set', { junction: e.target.value })}>
           <option value="">не назначен</option>{below.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>}
         {has('reserve') && reserves.length > 0 && <Pick label={`${label('reserve')} — ${hint('reserve')}`} field="reserve" items={reserves} chosen={d.reserve} />}

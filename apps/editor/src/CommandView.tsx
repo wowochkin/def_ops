@@ -33,6 +33,7 @@ import { ALL_SUBS, mergePriority, ordersSubs, parksKey, postBases, postBridges, 
 import { dictate, dictateReady, sayAloud } from './voice/standalone';
 import { petitionAnswer, petitionOp, petitionState, petitionText, type PetitionState } from './petition';
 import { DIR_TASK_RU, issuers, postContext, recipients, resolveFrom, suggestionToDir, toDirective } from './command-post';
+import { objectiveMark } from './post-objects';
 import { DRAFT_ACC, DRAFT_FIELDS, draftField, ensurePost, fieldPrompt, lastPostDecision, prefillDecision, type DraftField, type DraftScope } from './decision-drafts';
 
 type AiFieldState = 'wait' | 'typing' | 'done';
@@ -764,7 +765,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     }
     // проекты пункта управления: ось — стрелкой, рубежи задач и разграничительные линии — линиями
     // только документы ступени на карте: директива Ставки на уровне армии заслоняла бы корпуса
-    for (const dd of Object.values(post.dirs).filter((x) => x.level === post.level)) {
+    // и открытый, ещё не сохранённый проект — точка цели видна с первого указания
+    const postDirs = Object.values(post.dirs).filter((x) => x.level === post.level);
+    if (post.draft && !post.dirs[`${post.draft.level}:${post.draft.to}`]) postDirs.push(post.draft);
+    for (const dd of postDirs) {
       const nm = view.command?.hqs[dd.to]?.name ?? unit(dd.to)?.name ?? dd.to;
       const add = (pts: LngLat[], what: string, preset: string, k = 1) => {
         if (pts.length < 2) return;
@@ -776,7 +780,12 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
       add(dd.subsequent, 'последующая задача', 'atlas.defense', 1.2);
       add(dd.boundaries[0], 'правая разграничительная линия', 'rkka.boundaryArmy');
       add(dd.boundaries[1], 'левая разграничительная линия', 'rkka.boundaryArmy');
-      if (dd.immediate.length === 1) { const f = createFeature('symbol', 'std.unitOval', { at: dd.immediate[0], layerId: 'plan' }, 0.6, 'own'); f.name = `${nm}: пункт (проект)`; f.time = { from: view.time, to: null }; plan.push(f as never); }
+      // точка цели с подписью — до отдачи
+      const mk = objectiveMark(dd, nm);
+      if (mk) {
+        const f = createFeature('symbol', 'std.unitOval', { at: mk.at, layerId: 'plan' }, 0.6, 'own'); f.name = `${mk.label} (проект)`; f.time = { from: view.time, to: null }; plan.push(f as never);
+        const lb = createFeature('label', 'atlas.unit', { at: [mk.at[0] + 0.03, mk.at[1] + 0.012], text: mk.label, layerId: 'plan' }, 0.8, 'own'); lb.time = { from: view.time, to: null }; plan.push(lb as never);
+      }
     }
     if (linePts.length > 1) {
       const f = createFeature('line', 'rkka.boundaryArmy', { points: linePts, layerId: 'plan' }, 1, 'own');
@@ -791,7 +800,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     }
     d.features = [...view.doc.features, ...plan];
     return withFocus(d, focus);
-  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.level, post.issuer, decision.petition, postDecisions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, drafts, vis, acts, focus, linePts, post.dirs, post.sel, post.level, post.issuer, decision.petition, postDecisions]); // eslint-disable-line react-hooks/exhaustive-deps
   // зоны влияния сторон — картинкой под знаками; за ход — переход от зон на начало к зонам на конец (по времени карты)
   // стороны зон — по легенде уровня
   const zSides = { own: !lvHidden.has('zones-own'), enemy: !lvHidden.has('zones-enemy') };

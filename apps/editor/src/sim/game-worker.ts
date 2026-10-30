@@ -824,6 +824,7 @@ function postView() {
     events: journal.length ? journal[journal.length - 1].events : [],
     ...turnMapView(),
     places: places(ctx.theatre).map((p) => ({ id: p.id, title: p.title, at: p.at })),
+    ...objectsView(),
     delays: prof.orderDelayHours as Record<string, number>,
     detectKm: Math.round(detectKm(ctx)),
     goals, journal, doc,
@@ -836,6 +837,16 @@ function postView() {
     ...(agents && agentTrace && rec.turns.length > 0 ? { debrief: debriefView(agentTrace) } : {}),
   };
   post({ kind: 'view', view });
+}
+
+/** Объекты театра для выбора в приказах: рубежи, мосты и переправы (не разрушенные к ходу), реки. */
+function objectsView(): Pick<TurnView, 'lines' | 'crossings' | 'rivers'> {
+  const T = ctx.theatre, t = g.state.time;
+  return {
+    lines: T.data.lines.map((l) => ({ id: l.id, name: l.name, line: l.line })),
+    crossings: T.data.bridges.filter((b) => !b.destroyedAt || b.destroyedAt > t).map((b) => ({ id: b.id, name: b.name ?? `${b.kind === 'ferry' || b.openFrom ? 'Переправа' : 'Мост'} ${describePlace(T, b.at)}`, at: b.at })),
+    rivers: T.data.rivers.map((r) => ({ name: r.name, line: r.line, major: r.major })),
+  };
 }
 
 /** Итоги игры: потери по ходу ядра до последнего сыгранного часа (с часами до передачи командования); ошибка — без итогов. */

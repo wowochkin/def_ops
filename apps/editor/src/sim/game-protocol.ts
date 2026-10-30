@@ -169,6 +169,10 @@ export interface TurnView {
   zones: ZoneGrid | null;
   zonesPrev: ZoneGrid | null;
   places: Place[];
+  /** Рубежи театра, мосты и переправы театра, не разрушенные к ходу (с названием), реки — для выбора объектов в приказах. */
+  lines?: { id: string; name: string; line: LngLat[] }[];
+  crossings?: { id: string; name: string; at: LngLat }[];
+  rivers?: { name: string; line: LngLat[]; major: boolean }[];
   /** Задержка доведения приказов по ступеням, часов. */
   delays: Record<string, number>;
   detectKm: number;
