@@ -74,7 +74,7 @@ import { numberWords, plural, speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
-import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines as gameLines, MAIN_LINE, switchReply, unpackGame, withRecord, type SavedGame, type SwitchPending } from './game-branches';
+import { checkoutBranch, commitGame, deleteBranch, forkBranch, lines as gameLines, MAIN_LINE, switchReply, unpackGame, withRecord, type SavedGame, type SwitchPending } from './game-branches';
 import { TURN_REFUSAL } from './sim/game-rewind';
 import { ribbonItems } from './turn-ribbon';
 import { TurnRibbon } from './TurnRibbon';
@@ -173,6 +173,10 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const [resPart, setResPart] = useState<ResultsPart>('losses');
   // «переигровка без вмешательства» того же сценария и seed — при первом открытии части «Сравнение»
   const [baseline, setBaseline] = useState<BaselineState>({ state: 'off' });
+  /** «Повторить» переигровку без вмешательства: номер попытки (новый — расчёт заново). */
+  const [baseTry, setBaseTry] = useState(0);
+  /** Вкладка «Штабы»: «показать все» (не только поддерево пункта) — держится, пока открыто командование. */
+  const [staffsAll, setStaffsAll] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
   const [pickMode, setPickMode] = useState<Pick | null>(null);
   const pick = pickMode?.kind === 'order';
@@ -267,14 +271,15 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const wantBaseline = tab === 'results' && resPart === 'compare' && view?.engine === 'agents' && !!view.results;
   const baseScen = view?.scenario, baseSeed = view?.seed;
   useEffect(() => {
-    if (!wantBaseline || baseline.state !== 'off' || !baseScen || baseSeed == null) return;
+    if (!wantBaseline || (baseline.state !== 'off' && baseline.state !== 'error') || !baseScen || baseSeed == null) return;
+    if (baseline.state === 'error' && !baseTry) return;
     setBaseline({ state: 'wait' });
     // на поправках ядра, с которыми игра начата (запись; как у потока игры — gameKbData), записи ещё нет — на нынешних
     const rec = savedRef.current?.record;
     baselineSummary(baseScen, baseSeed, {}, rec ? { edits: rec.kb ? rec.kb.core ?? null : null } : {})
       .then((summary) => setBaseline({ state: 'ready', summary }))
       .catch((e) => setBaseline({ state: 'error', text: String((e as Error)?.message ?? e) }));
-  }, [wantBaseline, baseScen, baseSeed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wantBaseline, baseScen, baseSeed, baseTry]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { post.cancelPick(); }, [tab, sub]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (pickMode) post.cancelPick(); }, [pickMode]); // eslint-disable-line react-hooks/exhaustive-deps
   // смена пункта управления: начатый выбор точек (ходатайство, объекты тыла, переправы, резервы) — уже не для этого пункта
@@ -526,20 +531,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const forkLine = async (n: number, at: string, tail: GameTurn[]): Promise<RewindResult> => {
     const cur = savedRef.current;
     if (!cur || !tail.length) return { ok: true, at, branch: null };
-    const now = new Date().toISOString();
-    try {
-      const s = await forkBranch(idbBranchStore, cur, n, at, tail, now);
-      const added = (s.branches ?? []).find((b) => !(cur.branches ?? []).some((x) => x.id === b.id));
-      putSaved(s);
-      return added ? { ok: true, at, branch: added.name } : { ok: true, at, branch: null, dup: true };
-    } catch (e) {
-      const old = [...cur.record.turns.slice(0, n - 1), ...tail];
-      const name = branchName(n, at, [cur.line ?? MAIN_LINE, ...(cur.branches ?? []).map((b) => b.name)]);
-      putSaved({ ...cur, record: { ...cur.record, turns: cur.record.turns.slice(0, n - 1) },
-        branches: [...(cur.branches ?? []), { id: `b${Date.parse(now)}`, name, from: n, at, created: now, count: old.length, enemy: cur.enemy, turns: old }] });
-      setNotice(`Ветвь пока не в хранилище окна: ${(e as Error)?.message ?? e}. Запись попробует ещё раз.`);
-      return { ok: true, at, branch: name };
-    }
+    const s = await forkBranch(idbBranchStore, cur, n, at, tail, new Date().toISOString(),
+      (why) => setNotice(`Ветвь пока не в хранилище окна: ${why}. Запись попробует ещё раз.`));
+    const added = (s.branches ?? []).find((b) => !(cur.branches ?? []).some((x) => x.id === b.id));
+    putSaved(s);
+    return added ? { ok: true, at, branch: added.name } : { ok: true, at, branch: null, dup: true };
   };
   /**
    * Возврат или переход не закончится (поток упал, не ответил за REWIND_WAIT_MS): ждущий ответ — отказом, переход —
@@ -1275,6 +1271,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
     setPart: (p) => { setTab('results'); setResPart(p); },
     debrief: () => view?.debrief ?? null, terms: () => view!.terms, hq: () => debrief.hq, setHq: debrief.setHq, openEvent: debrief.openEvent,
     narrate: debrief.narrate, modelOn: () => llm.check.state === 'ok',
+    baselineError: () => (baseline.state === 'error' ? baseline.text : null),
+    retryBaseline: () => setBaseTry((n) => n + 1),
   };
   useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   // штабная работа на ход: советник, решение, приказы, распоряжения — те же действия у кнопок
@@ -1400,7 +1398,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
               {sub === 'reserves' && <Reserves v={staffsOn(view) && post.issuer ? { ...view, reserveGroups: postReserves(view, post.issuer) } : view} acts={acts} pickMode={pickMode} setPickMode={setPickMode}
                 scope={scopeNow()} onOrder={(id) => tap('command.order.open', { name: id })} />}
             </>}
-            {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} />}
+            {tab === 'staffs' && staffsOn(view) && <Staffs v={view} cmds={cmds} issuer={post.issuer} all={staffsAll} setAll={setStaffsAll} />}
             {tab === 'results' && <ResultsTab summary={view.results ?? null} baseline={baseline} side={view.human.id === 'de' ? 'de' : 'su'} part={resPart} parts={view.engine === 'agents' ? ['turn', 'losses', 'compare'] : ['losses', 'compare']}
               empty={view.engine === 'agents' ? 'Итоги ещё не посчитаны.' : undefined}
               turn={view.debrief && <TurnDebriefPanel d={view.debrief} terms={view.terms} hq={debrief.hq} open={debrief.open} narrative={debrief.narrative} modelOn={llm.check.state === 'ok'} />} />}

@@ -632,6 +632,10 @@ describe('возврат к ходу и ветви голосом', () => {
   it('фразы возврата и ветвей — только в «Переигровке»', () => {
     td();
     expect(parseTurn('вернись к ходу пять', 'replay')).toEqual({ id: 'command.rewind', params: { turn: 5 } });
+    // порядковое перед «ходу»
+    expect(parseTurn('вернись к пятому ходу', 'replay')).toEqual({ id: 'command.rewind', params: { turn: 5 } });
+    expect(parseTurn('вернемся к двадцать первому ходу', 'replay')).toEqual({ id: 'command.rewind', params: { turn: 21 } });
+    expect(parseTurn('вернись к 3-му ходу', 'replay')).toEqual({ id: 'command.rewind', params: { turn: 3 } });
     expect(parseTurn('вернись на ход назад', 'replay')).toEqual({ id: 'command.rewind.back', params: undefined });
     expect(parseTurn('покажи ветви', 'replay')).toEqual({ id: 'command.branches.show', params: undefined });
     expect(parseTurn('перейди на ветвь от хода пять', 'replay')).toEqual({ id: 'command.branch.switch', params: { name: 'ветвь от хода пять' } });

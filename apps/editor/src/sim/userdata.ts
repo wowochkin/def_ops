@@ -98,6 +98,8 @@ export async function saveReplay(meta: SavedReplay, data: SavedReplayData) {
   await write('replay_data', (o) => o.put(data));
   await write('replays', (o) => o.put(meta));
 }
+/** Только данные сохранения (сведения в списке — как были): пересчитанные итоги старого сохранения. */
+export const putReplayData = (data: SavedReplayData) => write('replay_data', (o) => o.put(data));
 export const renameReplay = async (id: string, title: string) => { const m = await one<SavedReplay>('replays', id); if (m) await write('replays', (o) => o.put({ ...m, title })); };
 export async function deleteReplay(id: string) {
   await write('replays', (o) => o.delete(id));
@@ -108,6 +110,10 @@ export interface GameBranchData { id: string; turns: unknown[]; doctrines?: stri
 export const getGameBranch = (id: string) => one<GameBranchData>('game_branches', id);
 export const putGameBranch = (d: GameBranchData) => write('game_branches', (o) => o.put(d));
 export const deleteGameBranch = (id: string) => write('game_branches', (o) => o.delete(id));
+/** Ключи ходов ветвей (без самих ходов) — для уборки сирот; хранилище недоступно — пусто. */
+export async function gameBranchKeys(): Promise<string[]> {
+  try { return (await req((await db()).transaction('game_branches').objectStore('game_branches').getAllKeys())).map(String); } catch { return []; }
+}
 export const saveRules = (r: UserRules) => write('rules', (o) => o.put(r));
 export const deleteRules = (id: string) => write('rules', (o) => o.delete(id));
 export const listOperations = () => all<UserOperation>('operations');

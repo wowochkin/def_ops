@@ -38,7 +38,7 @@ import { postPrompt } from '../command-post';
 import { agentEvents, agentGame, bridgesOf, fogOf, commandText, commandView, enemyLog, enemyPlayerText, hourAt, hqReports, staffEffects, territoryFromCore, toAgentOrders, withStaff, type AgentGameTrace, type AgentStaff, type EnemyEntry } from './agents-game';
 import type { AdviceView, CoreVariant, PlanActView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, HumanDecision, JournalDay, LlmSettings, TurnView } from './game-protocol';
 import { llmQueue } from './llm-queue';
-import { BUSY_REFUSAL, dropPending as dropPendingOf, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, switchLine, turnGate } from './game-rewind';
+import { BUSY_REFUSAL, dropPending as dropPendingOf, expectedDigest, restartAi, rewindCheck, rewindFlow, recordTurn, rewindLine, switchLine, turnGate } from './game-rewind';
 import { topForces } from './review-forces';
 
 const profilesMd = import.meta.glob('../../../../services/staff/profiles/*.md', { query: '?raw', import: 'default' });
@@ -613,23 +613,27 @@ async function advance() {
         actions.push(...r.actions);
       }
     }
-    rec.turns.push({ time: g.state.time, orders, actions, human: queued.posts ? { ...queued.decision, posts: queued.posts } : queued.decision, ...(queued.command.length ? { command: queued.command } : {}), ...(stavka.length ? { stavka } : {}), ...(t ? { ai: slim(t) } : {}),
+    // ход — в запись только после расчёта: упал расчёт — в записи нет хода, которого мир не видел
+    const turn: GameTurn = { time: g.state.time, orders, actions, human: queued.posts ? { ...queued.decision, posts: queued.posts } : queued.decision, ...(queued.command.length ? { command: queued.command } : {}), ...(stavka.length ? { stavka } : {}), ...(t ? { ai: slim(t) } : {}),
       ...(ump?.mods.length ? { umpire: ump.mods } : {}),
       ...(ump ? { umpireNote: { ok: ump.ok, error: ump.error, assessment: ump.assessment, issues: ump.issues, proposed: ump.proposed, engagements: ump.engagements, refs: ump.refs.map((r) => ({ id: r.id, title: r.title })), seconds: ump.seconds,
-        names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) });
+        names: Object.fromEntries(ump.mods.flatMap((m) => m.formations).map((id) => [id, g.state.formations.find((f) => f.id === id)?.name ?? id])) } } : {}) };
     post({ kind: 'progress', text: 'расчёт хода…' });
     const before = g.state;
-    if (agents) {
-      post({ kind: 'progress', text: `агентная модель: ход ${agents.turnHours} ч…` });
-      const r = await agentTurn(orders, actions, queued.command);
-      rec.turns[rec.turns.length - 1].doctrine = r.doctrine;
-      journal.push(withEnemy(day(before.time, orders, before, r.results.filter((x) => x.action.side === rec.human), queued.decision, stavka.filter((x) => x.side === rec.human), r.events), r.enemy));
-    } else {
-      const r = playTurn(ctx, g, orders, actions, ump?.mods ?? []);
-      g = r;
-      journal.push(day(before.time, orders, before, r.results, queued.decision, stavka.filter((x) => x.side === rec.human)));
-    }
-    rec.turns[rec.turns.length - 1].digest = turnDigest();
+    const q = queued;
+    await recordTurn(rec.turns, turn, async (nt) => {
+      if (agents) {
+        post({ kind: 'progress', text: `агентная модель: ход ${agents.turnHours} ч…` });
+        const r = await agentTurn(orders, actions, q.command);
+        nt.doctrine = r.doctrine;
+        journal.push(withEnemy(day(before.time, orders, before, r.results.filter((x) => x.action.side === rec.human), q.decision, stavka.filter((x) => x.side === rec.human), r.events), r.enemy));
+      } else {
+        const r = playTurn(ctx, g, orders, actions, ump?.mods ?? []);
+        g = r;
+        journal.push(day(before.time, orders, before, r.results, q.decision, stavka.filter((x) => x.side === rec.human)));
+      }
+      nt.digest = turnDigest();
+    });
     if (kbFallback) journal[journal.length - 1].events.push(KB_FALLBACK_NOTE);
     outcome = gameOutcome(ctx, history, g, end, rec.human, baseStrength);
     stash.push(stashNow());

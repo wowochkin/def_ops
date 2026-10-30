@@ -2,7 +2,7 @@
 // которым сверяется возврат, порядок «снять прежний запрос штаба противника — спросить заново».
 import { describe, expect, it, vi } from 'vitest';
 import type { GameRecord, GameTurn, Order } from '@def-ops/sim';
-import { applyBranch, BUSY_REFUSAL, dropPending, switchLine, commonPrefix, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, TURN_REFUSAL, turnGate, type BranchOps } from '../src/sim/game-rewind';
+import { applyBranch, BUSY_REFUSAL, recordTurn, dropPending, switchLine, commonPrefix, expectedDigest, restartAi, rewindCheck, rewindFlow, rewindLine, TURN_REFUSAL, turnGate, type BranchOps } from '../src/sim/game-rewind';
 
 const order = (formation: string): Order => ({ formation, task: 'attack', target: { kind: 'point', at: [14, 52] }, issuedAt: '', source: 'human' } as unknown as Order);
 const turn = (time: string, digest?: string, f = 'a'): GameTurn => ({ time, orders: [order(f)], ...(digest ? { digest } : {}) });
@@ -107,6 +107,15 @@ describe('applyBranch', () => {
     expect(L.world).toBe(world);
     expect(L.stash).toHaveLength(5);
   });
+  it('identical-digest switch: общие ходы — с данными ветви (решение, доклад посредника)', async () => {
+    const { L, ops } = line();
+    const note = (t: GameTurn, text: string) => ({ ...t, human: { text } } as unknown as GameTurn);
+    await applyBranch(L.turns, [note(turn('t1'), 'прежнее'), note(turn('t2'), 'прежнее')], ops);
+    const branch = [note(turn('t1', L.turns[0].digest), 'ветви'), note(turn('t2', L.turns[1].digest), 'ветви'), turn('t3', undefined, 'b')];
+    expect((await applyBranch(L.turns, branch, ops)).ok).toBe(true);
+    expect(L.turns.map((t) => (t.human as unknown as { text?: string } | undefined)?.text)).toEqual(['ветви', 'ветви', undefined]);
+    expect(L.stash).toHaveLength(4);
+  });
   it('окончание игры — дальше ходы ветви не считаются', async () => {
     const { L, ops } = line();
     let n = 0;
@@ -179,5 +188,16 @@ describe('dropPending', () => {
     dropPending({ holdDrop: () => calls.push('hold'), aborts: [ai, advise, null, plan, undefined], reset: () => calls.push('reset') });
     expect([ai.signal.aborted, advise.signal.aborted, plan.signal.aborted]).toEqual([true, true, true]);
     expect(calls).toEqual(['hold', 'reset']);
+  });
+});
+
+describe('recordTurn', () => {
+  it('ghost turn: ход в линию — только после расчёта; расчёт упал — линии без него', async () => {
+    const turns: GameTurn[] = [turn('t1', 'd1')];
+    await expect(recordTurn(turns, turn('t2'), async () => { throw new Error('ядро не ответило'); })).rejects.toThrow('ядро не ответило');
+    expect(turns).toHaveLength(1);
+    const r = await recordTurn(turns, turn('t2'), async (t) => { t.digest = 'd2'; return 7; });
+    expect(r).toBe(7);
+    expect(turns.map((t) => t.digest)).toEqual(['d1', 'd2']);
   });
 });

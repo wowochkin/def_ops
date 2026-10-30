@@ -80,10 +80,13 @@ export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmd
   });
 }
 
-export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; issuer: string | null }) {
+export function Staffs({ v, cmds, issuer, ...p }: { v: TurnView; cmds: CommandOp[]; issuer: string | null;
+  /** «Показать все» — состояние окна командования (вкладку сменили и вернулись — то же); не передано — своё. */
+  all?: boolean; setAll?: (on: boolean) => void }) {
   const c = v.command!;
   const [hq, setHq] = useState<string>('');
-  const [all, setAll] = useState(false);
+  const [own, setOwn] = useState(false);
+  const all = p.all ?? own, setAll = p.setAll ?? setOwn;
   // «только своё»: пункт есть и это не верхняя инстанция
   const scopable = !!issuer && c.hqs[issuer]?.echelon !== 'high_command';
   const scoped = scopable && !all;

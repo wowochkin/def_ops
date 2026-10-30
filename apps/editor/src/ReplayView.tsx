@@ -17,13 +17,13 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
-import { checkoutBranch, commitGame, dropGame, lines as gameLines } from './game-branches';
+import { checkoutBranch, commitGame, discardSave, lines as gameLines, sweepBranches } from './game-branches';
 import { idbBranchStore } from './game-branch-store';
 import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import { defaultEnemy, fitEnemy, resumeEnemy } from './command-forms';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
 import { registerSectors, SectorPicker, withFocus, type Sector } from './Sectors';
-import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
+import { BUILTIN_CATALOG, deleteReplay, fullCatalog, getReplay, listReplays, onDataChange, putReplayData, renameReplay, saveReplay, sectorsOf, type SavedReplay } from './sim/userdata';
 import { ZonesContext } from './time';
 import { mdToHtml } from './markdown';
 import { useCoverage } from './modeling/Coverage';
@@ -49,7 +49,7 @@ import { askText, RETRY_DELAYS_MS } from './voice/llm';
 import type { TourMapControl } from './voice/tour';
 import { debriefFor } from '@def-ops/sim';
 import { baselineSummary, recomputeInWorker, rememberBaseline } from './sim/baseline';
-import { summaryNeeded, type BaselineState, type ResultsPart } from './results-view';
+import { recomputedReplay, resultsEmpty, summaryNeeded, type BaselineState, type ResultsPart } from './results-view';
 import { releaseResults, resultsActions, type ResultsDeps } from './voice/actions/results';
 import { PLAYER_SPEEDS } from './replay-dock';
 import { commanderOf, hqCentroid } from './commander-view';
@@ -198,10 +198,18 @@ export function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-/** Игру сбросили: запись из localStorage и ходы её ветвей из IndexedDB. */
+/** Игру сбросили или заменили новой: запись из localStorage и ходы её ветвей из IndexedDB. */
 function discardGame() {
-  void dropGame(idbBranchStore, loadSaved()).catch(() => { /* */ });
-  try { localStorage.removeItem(SAVE_KEY); } catch { /* */ }
+  void discardSave(idbBranchStore, localStorage, SAVE_KEY, loadSaved()).catch(() => { /* */ });
+}
+/**
+ * При открытии: ходы ветвей, на которые запись игры не ссылается (прежняя игра, неудачная запись), — убрать. Запись
+ * есть, но не читается (или хранилище окна недоступно) — не трогать ничего.
+ */
+function sweepOrphans() {
+  let s: SavedGame | null;
+  try { s = loadSaved(); if (!s && localStorage.getItem(SAVE_KEY) !== null) return; } catch { return; }
+  void sweepBranches(idbBranchStore, s).catch(() => { /* */ });
 }
 export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm; onOpenInEditor: (d: MapDocument) => void }) {
   // каталог: встроенные операции и подготовленные свои (раздел «Моделирование»), со своими наборами правил
@@ -224,6 +232,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   const [mapKey, setMapKey] = useState(0);
   const [report, setReport] = useState(false);
   const [saved, setSaved] = useState<SavedGame | null>(loadSaved);
+  useEffect(sweepOrphans, []);
   // сохранённые переигровки: вкладка списка, список, id сохранения открытого результата
   const [tab, setTab] = useState<'run' | 'saved' | 'results'>('run');
   const [resPart, setResPart] = useState<ResultsPart>('losses');
@@ -283,6 +292,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   // тогда его сводка и есть «переигровка без вмешательства» для сравнения
   const pendingBase = useRef<{ edits: unknown; intent: boolean } | null>(null);
   const [baseline, setBaseline] = useState<BaselineState>({ state: 'off' });
+  /** «Повторить» переигровку без вмешательства: номер попытки (новый — расчёт заново). */
+  const [baseTry, setBaseTry] = useState(0);
+  /** Итоги сохранённой переигровки пересчитываются по её ходу. */
+  const [recomputing, setRecomputing] = useState(false);
   const [agentSel, setAgentSel] = useState<string | null>(null);
   const engine = useRef<MapEngine | null>(null);
 
@@ -376,11 +389,18 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (m.engine === 'army') { setRules(m.rules); setRuns(m.runs); }
     setAgentRun(r.agents ?? null); setAgentSel(null);
     // сохранено до сравнения итогов — сводка операции по сохранённому ходу
+    // пересчитанное — в само сохранение: при следующем открытии считать не нужно
+    setRecomputing(false);
     if (summaryNeeded(r.result) && r.agents) {
       const token = runId.current;
+      setRecomputing(true);
       void recomputeInWorker(r.result.scenario, r.result.seed, r.agents.trace, r.agents.history)
-        .then(({ summary: operation, debriefs }) => { if (token === runId.current) setResult((x) => (x ? { ...x, operation, ...(debriefs ? { debriefs } : {}) } : x)); })
-        .catch((e) => console.warn('итоги сохранённой переигровки не посчитаны:', e));
+        .then((x) => {
+          void putReplayData(recomputedReplay(r, x)).catch((e) => console.warn('пересчитанные итоги не записаны в сохранение:', e));
+          if (token === runId.current) setResult((y) => (y ? recomputedReplay({ result: y }, x).result : y));
+        })
+        .catch((e) => console.warn('итоги сохранённой переигровки не посчитаны:', e))
+        .finally(() => { if (token === runId.current) setRecomputing(false); });
     }
     setResult(r.result); setDoc(d); setTime(d.timeline?.start ?? null); setMapKey((k) => k + 1); setFocus(null);
     setSavedId(m.id); setTab('run');
@@ -567,6 +587,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     // противник — допустимый при режиме (не назван — умолчание окна)
     const down = llm.check.state === 'fail';
     const enemy = enemy0 ? fitEnemy(enemy0, !!agents, mode, down) : defaultEnemy(!!agents, down, mode);
+    // новая игра поверх незавершённой (замена подтверждена): прежняя запись и ходы её ветвей — прочь
+    if (saved) { discardGame(); setSaved(null); }
     setGame({ start: { scenario: result.scenario, rules: result.rules, seed: result.seed, takeover: take, ...(agents ? { agents } : {}) }, saved: null, enemy });
     return enemy;
   };
@@ -644,6 +666,8 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     setPart: (p) => { setTab('results'); setResPart(p); },
     debrief: () => dayDebrief, terms: () => result!.debriefs!.terms, hq: () => debrief.hq, setHq: debrief.setHq, openEvent: debrief.openEvent,
     narrate: debrief.narrate, modelOn: () => llm.check.state === 'ok',
+    baselineError: () => (baseline.state === 'error' ? baseline.text : null),
+    retryBaseline: () => { baseFor.current = null; setBaseTry((n) => n + 1); },
   };
   // «без вмешательства» — при открытии части «Сравнение»: из кэша (переигровка «История как замысел» запоминается сама)
   // или прогоном ядра того же сценария и seed
@@ -657,7 +681,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     baselineSummary(result.scenario, result.seed)
       .then((summary) => { if (baseFor.current === result) setBaseline({ state: 'ready', summary }); })
       .catch((e) => { if (baseFor.current === result) setBaseline({ state: 'error', text: String((e as Error)?.message ?? e) }); });
-  }, [wantBaseline, result]);
+  }, [wantBaseline, result, baseTry]);
   useEffect(() => { const get = () => resultsDeps.current; const offs = resultsActions(get).map(register); return () => { offs.forEach((o) => o()); releaseResults(get); }; }, []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} note={game.note} onOpenInEditor={onOpenInEditor}
@@ -695,7 +719,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         </div>
         {tab === 'results' && (result?.engine === 'agents'
           ? <ResultsTab summary={result.operation?.events ? result.operation : null} baseline={baseline} own="расчёт" side="su" part={resPart} parts={result.debriefs ? ['turn', 'losses', 'compare'] : ['losses', 'compare']}
-            empty="В этом сохранении итогов нет — рассчитайте операцию заново."
+            empty={resultsEmpty(recomputing)}
             turn={dayDebrief && <>
               <p className="rs-note">Разбор — по суткам расчёта: сутки, в которых время на шкале карты. Посредник видит обе стороны.</p>
               <TurnDebriefPanel d={dayDebrief} terms={result.debriefs!.terms} hq={debrief.hq} open={debrief.open} narrative={debrief.narrative} modelOn={llm.check.state === 'ok'} span="Сутки" />

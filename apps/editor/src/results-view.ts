@@ -265,6 +265,16 @@ export function compareRows(game: OperationSummary, full: OperationSummary | nul
   return rows;
 }
 
+/** Итогов в сохранении нет: пока они пересчитываются по сохранённому ходу — «считаются…». */
+export const resultsEmpty = (recomputing: boolean): string => (recomputing
+  ? 'В этом сохранении итогов не было — они считаются…'
+  : 'В этом сохранении итогов нет — рассчитайте операцию заново.');
+
+/** Данные сохранения с пересчитанными сводкой и разбором — чтобы при следующем открытии не считать снова. */
+export function recomputedReplay<D extends { result: SimResult }>(d: D, x: { summary: OperationSummary; debriefs?: SimResult['debriefs'] }): D {
+  return { ...d, result: { ...d.result, operation: x.summary, ...(x.debriefs ? { debriefs: x.debriefs } : {}) } };
+}
+
 /** Агентный расчёт без сводки операции или со сводкой до сравнения (без событий) — сводку пересчитать из хода. */
 export function summaryNeeded(r: SimResult): boolean {
   return r.engine === 'agents' && (!r.operation || !Array.isArray(r.operation.events) || !r.debriefs);

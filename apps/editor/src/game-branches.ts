@@ -17,9 +17,8 @@ export interface SavedBranch {
   at: string;
   /** Когда сохранена (ISO). */
   created: string;
-  /** Число ходов линии (сами ходы — в хранилище ветвей). */
+  /** Число ходов линии (сами ходы — в хранилище ветвей). В самых старых записях нет — тогда по turns. */
   count: number;
-  enemy: EnemyMode;
   /** Только в старых записях: ходы лежали здесь; при первой записи уходят в хранилище ветвей. */
   turns?: GameTurn[];
 }
@@ -42,6 +41,8 @@ export interface BranchStore {
   put(key: string, p: BranchPayload): Promise<void>;
   get(key: string): Promise<BranchPayload | undefined>;
   del(key: string): Promise<void>;
+  /** Все ключи хранилища (для уборки ходов, на которые запись игры не ссылается); нет — уборки нет. */
+  keys?(): Promise<string[]>;
 }
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -118,34 +119,56 @@ async function turnsOfBranch(store: BranchStore, s: SavedGame, b: SavedBranch): 
 }
 const putTurns = (store: BranchStore, key: string, turns: GameTurn[]) => store.put(key, packTurns(turns));
 const meta = (b: SavedBranch): SavedBranch => { const { turns: _t, ...m } = b; return m; };
+const countOf = (b: SavedBranch) => b.count ?? b.turns?.length ?? 0;
+const errText = (e: unknown) => String((e as Error)?.message ?? e).replace(/[.\s]+$/, '');
+
+/**
+ * Линия line уже есть среди ветвей (кроме skip): совпадает с ветвью или с её началом — хранить её ещё раз незачем.
+ * Ходы ветви не прочитались — ветвь не в счёт (лучше лишняя ветвь, чем потерянная линия).
+ */
+async function covered(store: BranchStore, s: SavedGame, line: GameTurn[], skip?: string): Promise<boolean> {
+  for (const b of s.branches ?? []) {
+    if (b.id === skip || countOf(b) < line.length) continue;
+    const bt = await turnsOfBranch(store, s, b).catch(() => null);
+    if (bt && commonPrefix(bt, line) === line.length) return true;
+  }
+  return false;
+}
+/** Ветвь, что расходилась с прежней линией с хода from, с новой линией расходится не позже хода n (начало — at). */
+const divergeBy = (b: SavedBranch, n: number, at: string): SavedBranch => (b.from > n ? { ...b, from: n, at } : b);
 
 /** Результат перемены: новая запись игры и ключи ходов, что после её записи больше не нужны. */
 export interface Change { game: SavedGame; stale: string[] }
 
 /**
  * Возврат к ходу n: снятые ходы tail остаются ветвью (линия = первые n − 1 ходов + tail). Такая линия уже есть среди
- * ветвей — новой не делается; tail пуст — нечего хранить. Ходы ветви пишутся в хранилище до возврата записи.
+ * ветвей (целиком или началом ветви) — новой не делается; tail пуст — нечего хранить. Ветви, что расходились с линией
+ * позже хода n, теперь расходятся с ходом n. Ходы ветви пишутся в хранилище до возврата записи; хранилище отказало —
+ * ходы остаются в самой записи (следующая запись перенесёт), причина — в onStoreError.
  */
-export async function forkBranch(store: BranchStore, s0: SavedGame, n: number, at: string, tail: GameTurn[], now: string): Promise<SavedGame> {
+export async function forkBranch(store: BranchStore, s0: SavedGame, n: number, at: string, tail: GameTurn[], now: string, onStoreError?: (why: string) => void): Promise<SavedGame> {
   if (!tail.length) return s0;
   const s = withGid(s0, now);
   const kept = s.record.turns.slice(0, n - 1);
   const old = [...kept, ...tail];
-  const branches = s.branches ?? [];
-  for (const b of branches) {
-    if (b.count !== old.length) continue;
-    const c = commonPrefix(await turnsOfBranch(store, s, b), old);
-    if (c === old.length) return { ...s, record: { ...s.record, turns: kept } };
-  }
+  const branches = (s.branches ?? []).map((b) => divergeBy(b, n, at));
+  const cut = { ...s, record: { ...s.record, turns: kept }, ...(branches.length ? { branches } : {}) };
+  if (await covered(store, s, old)) return cut;
   const name = branchName(n, at, [s.line ?? MAIN_LINE, ...branches.map((b) => b.name)]);
-  const b: SavedBranch = { id: newId(branches.map((x) => x.id), now), name, from: n, at, created: now, count: old.length, enemy: s.enemy };
-  await putTurns(store, keyOf(s, b.id), old);
-  return { ...s, record: { ...s.record, turns: kept }, branches: [...branches, b] };
+  const b: SavedBranch = { id: newId(branches.map((x) => x.id), now), name, from: n, at, created: now, count: old.length };
+  try { await putTurns(store, keyOf(s, b.id), old); } catch (e) {
+    if (!onStoreError) throw e;
+    onStoreError(errText(e));
+    return { ...cut, branches: [...branches, { ...b, turns: old }] };
+  }
+  return { ...cut, branches: [...branches, b] };
 }
 
 /**
  * Перейти на ветвь: текущая линия уходит в ветви (под именем линии, новым кодом), выбранная становится записью.
- * Ходы прежней линии пишутся в хранилище сразу; ходы выбранной ветви (stale) убирает commitGame после записи игры.
+ * Текущая линия пуста или уже есть (начало выбранной или другой ветви) — в ветви не уходит. Прочие ветви расходятся
+ * с новой линией не позже, чем выбранная расходилась с прежней. Ходы прежней линии пишутся в хранилище сразу; ходы
+ * выбранной ветви (stale) убирает commitGame после записи игры.
  */
 export async function checkoutBranch(store: BranchStore, s0: SavedGame, id: string, now: string): Promise<Change> {
   const branches = s0.branches ?? [];
@@ -156,11 +179,17 @@ export async function checkoutBranch(store: BranchStore, s0: SavedGame, id: stri
   const cp = commonPrefix(s.record.turns, chosen);
   // начало хода cp + 1: свой ход прежней линии, иначе — ход выбранной; обе линии совпали целиком — конец последнего общего
   const at = (s.record.turns[cp] ?? chosen[cp])?.time ?? (cp ? chosen[cp - 1].time : s.record.takeover);
-  const oldId = newId(branches.map((x) => x.id), now);
-  const old: SavedBranch = { id: oldId, name: s.line ?? MAIN_LINE, from: cp + 1, at, created: b.created, count: s.record.turns.length, enemy: s.enemy };
-  await putTurns(store, keyOf(s, oldId), s.record.turns);
+  const cur = s.record.turns;
+  const keep = cur.length > 0 && cp < cur.length && !(await covered(store, s, cur, id));
+  let old: SavedBranch | null = null;
+  if (keep) {
+    old = { id: newId(branches.map((x) => x.id), now), name: s.line ?? MAIN_LINE, from: cp + 1, at, created: b.created, count: cur.length };
+    await putTurns(store, keyOf(s, old.id), cur);
+  }
+  const rest = branches.flatMap((x) => (x.id === id ? (old ? [old] : []) : [divergeBy(x, b.from, b.at)]));
   const record = { ...s.record, turns: chosen };
-  const game: SavedGame = { ...s, record, enemy: b.enemy, line: b.name, turn: turnOf(record), branches: branches.map((x) => (x.id === id ? old : x)) };
+  const { branches: _b, ...base } = s;
+  const game: SavedGame = { ...base, record, line: b.name, turn: turnOf(record), ...(rest.length ? { branches: rest } : {}) };
   return { game, stale: b.turns ? [] : [keyOf(s, id)] };
 }
 
@@ -225,7 +254,7 @@ export function storeGame(st: Pick<Storage, 'setItem'>, key: string, s: SavedGam
 export async function commitGame(store: BranchStore, st: Pick<Storage, 'setItem'>, key: string, c: Change): Promise<{ error: string | null; game: SavedGame; saved: boolean }> {
   let game = c.game, moved: string | null = null;
   if (game.branches?.some((b) => b.turns)) {
-    try { game = await migrateBranches(store, game); } catch (e) { moved = String((e as Error)?.message ?? e).replace(/[.\s]+$/, ''); }
+    try { game = await migrateBranches(store, game); } catch (e) { moved = errText(e); }
   }
   const error = storeGame(st, key, game);
   if (error) return { error, game, saved: false };
@@ -250,4 +279,21 @@ export async function deleteBranch(store: BranchStore, st: Pick<Storage, 'setIte
 export async function dropGame(store: BranchStore, s: SavedGame | null): Promise<void> {
   if (!s?.gid) return;
   for (const b of s.branches ?? []) if (!b.turns) await store.del(keyOf(s, b.id)).catch(() => { /* */ });
+}
+
+/** Запись игры заменяется или удаляется: ходы её ветвей, затем сама запись. */
+export async function discardSave(store: BranchStore, st: Pick<Storage, 'removeItem'>, key: string, s: SavedGame | null): Promise<void> {
+  try { st.removeItem(key); } catch { /* */ }
+  await dropGame(store, s);
+}
+
+/**
+ * Уборка при открытии: ходы в хранилище, на которые запись игры s не ссылается (прежняя игра, неудачная запись,
+ * переход на ветвь, прерванный закрытием окна), — удалить. Запуск — только когда переходов не идёт (при загрузке).
+ */
+export async function sweepBranches(store: BranchStore, s: SavedGame | null): Promise<void> {
+  if (!store.keys) return;
+  const live = new Set(s?.gid ? (s.branches ?? []).filter((b) => !b.turns).map((b) => keyOf(s, b.id)) : []);
+  const all = await store.keys().catch(() => [] as string[]);
+  for (const k of all) if (!live.has(k)) await store.del(k).catch(() => { /* */ });
 }

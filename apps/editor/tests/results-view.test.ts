@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { HistoricalLoss, LossSeries, OperationSummary } from '@def-ops/sim';
 import type { EventResult, SideTotals } from '@def-ops/sim';
 import type { SimResult } from '../src/sim/protocol';
-import { compareRows, histPerDay, lossesNote, otherEvents, sidePerDay, summaryNeeded, TABLE_NOTE } from '../src/results-view';
+import { compareRows, histPerDay, lossesNote, otherEvents, recomputedReplay, resultsEmpty, sidePerDay, summaryNeeded, TABLE_NOTE } from '../src/results-view';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { ResultsTab } from '../src/ResultsTab';
 
 const series = (exact: boolean): LossSeries => ({
   exact, upTo: 48, days: ['1945-04-16', '1945-04-17'],
@@ -164,5 +167,28 @@ describe('итоги: сравнение с историей и без вмеш�
     expect(summaryNeeded({ ...r, operation: game, debriefs: { terms: {} as never, turns: [] } })).toBe(false);
     expect(summaryNeeded({ engine: 'army' } as SimResult)).toBe(false);
     expect(summaryNeeded({} as SimResult)).toBe(false);
+  });
+});
+
+describe('сохранённая переигровка: итоги пересчитаны', () => {
+  it('recomputed debriefs written back: сводка и разбор — в данные сохранения, пересчёт больше не нужен', () => {
+    const data = { id: 'r1', result: { engine: 'agents', scenario: 's', seed: 1 } as unknown as SimResult };
+    expect(summaryNeeded(data.result)).toBe(true);
+    const op = { events: [] } as unknown as OperationSummary;
+    const out = recomputedReplay(data, { summary: op, debriefs: { turns: [] } as never });
+    expect(out.id).toBe('r1');
+    expect(out.result.operation).toBe(op);
+    expect(summaryNeeded(out.result)).toBe(false);
+    expect(data.result).not.toHaveProperty('operation'); // исходное не тронуто
+  });
+  it('пока считается — «считается…», а не «рассчитайте заново»', () => {
+    expect(resultsEmpty(true)).toMatch(/считаются…$/);
+    expect(resultsEmpty(false)).toMatch(/рассчитайте операцию заново/);
+  });
+  it('ошибка переигровки без вмешательства — кнопка «Повторить»', () => {
+    const s = summary(true, []);
+    const html = renderToString(createElement(ResultsTab, { summary: s, baseline: { state: 'error', text: 'ядро не ответило' }, side: 'su', part: 'compare', parts: ['losses', 'compare'] }));
+    expect(html.replace(/<!-- -->/g, '')).toContain('не посчитана: ядро не ответило');
+    expect(html).toContain('data-action="results.baseline.retry"');
   });
 });

@@ -53,12 +53,13 @@ export function showAt(en: Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick
 }
 
 /**
- * Перевезти карту к штабу: масштаб ступени (`levelDefaultScale`), место at — в свободной части карты. Есть плавный
+ * Перевезти карту к штабу: масштаб ступени (`levelDefaultScale`; карта уже крупнее — её масштаб), место at — в свободной части карты. Есть плавный
  * переход (`flyTo`) — плавно, нет — прыжком. Сдвиг в пикселях переводится в градусы на целевом масштабе (проекция
  * Меркатора, плитка 512), поэтому движку не нужно сперва приезжать.
  */
 export function flyToHq(en: Pick<MapEngine, 'getView' | 'setView'> & Partial<Pick<MapEngine, 'flyTo' | 'getContainer'>>, at: LngLat, level: LevelId): void {
-  const zoom = zoomForScale(at[1], levelDefaultScale(level));
+  // пользователь уже ближе масштаба ступени — его масштаб остаётся (карта не отъезжает)
+  const zoom = Math.max(en.getView().zoom, zoomForScale(at[1], levelDefaultScale(level)));
   let center: LngLat = at;
   if (typeof document !== 'undefined' && en.getContainer) {
     const box = en.getContainer().getBoundingClientRect();

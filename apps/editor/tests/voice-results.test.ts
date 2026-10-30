@@ -18,18 +18,19 @@ const DEBRIEF: TurnDebrief = {
   hqs: { su_8gva: HQ('su_8gva', '8-я гвардейская армия', null), su_1gta: HQ('su_1gta', '1-я гвардейская танковая армия', null, { alive: 0, state: 'removed', points: [] }) },
 };
 
-function mount(section: 'replay' | 'command', o: { debrief?: TurnDebrief | null; model?: boolean } = {}) {
+function mount(section: 'replay' | 'command', o: { debrief?: TurnDebrief | null; model?: boolean; baseErr?: string | null } = {}) {
   const log: ResultsPart[] = [];
   const hqs: (string | null)[] = [], opened: number[] = [];
-  let hq: string | null = null, narrated = 0;
+  let hq: string | null = null, narrated = 0, retried = 0;
   const deps: ResultsDeps = {
     section: () => section, summary: () => null, side: () => 'su', setPart: (p) => { log.push(p); },
     debrief: () => (o.debrief === undefined ? null : o.debrief), terms: () => TERMS, hq: () => hq,
     setHq: (h) => { hq = h; hqs.push(h); }, openEvent: (n) => { opened.push(n); }, narrate: () => { narrated++; }, modelOn: () => !!o.model,
+    baselineError: () => o.baseErr ?? null, retryBaseline: () => { retried++; },
   };
   const get = () => deps;
   const offs = resultsActions(get).map(register);
-  return { log, hqs, opened, narrated: () => narrated, off: () => { offs.forEach((o) => o()); releaseResults(get); } };
+  return { log, hqs, opened, narrated: () => narrated, retried: () => retried, off: () => { offs.forEach((o) => o()); releaseResults(get); } };
 }
 
 describe('results.show', () => {
@@ -163,5 +164,23 @@ describe('фразы итогов и разбора', () => {
   it('losses read action', async () => {
     const m = mount('command'); offs.push(m.off);
     expect(String(await act('results.losses.read'))).toMatch(/итогов нет|потер/i);
+  });
+});
+
+describe('results.baseline.retry', () => {
+  let offs: (() => void)[] = [];
+  afterEach(() => { offs.forEach((o) => o()); offs = []; });
+  setSectionSource(() => 'replay');
+  it('baseline error is retried: «повторить» — кнопкой и голосом; ошибки нет — недоступно', async () => {
+    const ok = mount('command'); offs.push(ok.off);
+    expect(String(await act('results.baseline.retry'))).toMatch(/повторять нечего/i);
+    expect(ok.retried()).toBe(0);
+    ok.off(); offs = [];
+    const m = mount('command', { baseErr: 'ядро не ответило' }); offs.push(m.off);
+    expect(parseResults('повтори расчет без вмешательства', 'replay')).toEqual({ id: 'results.baseline.retry' });
+    const r = await act('results.baseline.retry');
+    expect(m.retried()).toBe(1);
+    expect(m.log).toEqual(['compare']);
+    expect(String(r)).toMatch(/без вмешательства/);
   });
 });

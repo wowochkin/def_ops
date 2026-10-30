@@ -101,6 +101,16 @@ export interface BranchOps {
   notice(text: string): void;
 }
 
+/**
+ * Новый ход в линию turns — только когда он посчитан (compute дописывает в него итог: отпечаток, доктрину); расчёт
+ * упал — в линии нет хода, которого не было (запись не расходится с миром).
+ */
+export async function recordTurn<R>(turns: GameTurn[], t: GameTurn, compute: (t: GameTurn) => Promise<R>): Promise<R> {
+  const r = await compute(t);
+  turns.push(t);
+  return r;
+}
+
 async function playAll(ts: GameTurn[], ops: BranchOps) {
   for (const t of ts) {
     if (ops.over()) break;
@@ -119,6 +129,8 @@ export async function applyBranch(cur: GameTurn[], turns: GameTurn[], ops: Branc
   const old = await ops.rewindTo(p);
   try {
     await playAll(turns.slice(p), ops);
+    // общие ходы совпали по отпечатку (или входу), но решение, доклад посредника и прочее — ветви: линия — это ветвь
+    for (let k = 0; k < p && k < cur.length; k++) cur[k] = { ...turns[k], ...(turns[k].digest === undefined && cur[k].digest !== undefined ? { digest: cur[k].digest } : {}) };
     return { ok: true };
   } catch (e) {
     const why = errText(e);

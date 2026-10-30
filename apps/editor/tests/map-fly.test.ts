@@ -17,4 +17,10 @@ describe('переезд карты к штабу', () => {
     expect(calls[0]).toMatchObject({ center: at, zoom: zoomForScale(at[1], levelDefaultScale('corps')) });
     expect(ECHELON_LEVEL).toMatchObject({ front: 'front', army: 'army', corps: 'corps', division: 'division', high_command: 'stavka' });
   });
+  it('масштаб пользователя крупнее масштаба ступени — остаётся', () => {
+    const calls: { zoom?: number }[] = [];
+    const def = zoomForScale(at[1], levelDefaultScale('army'));
+    flyToHq({ getView: () => ({ center: [13, 52], zoom: def + 2, bearing: 0 }), setView: () => undefined, flyTo: (v) => calls.push(v) }, at, 'army');
+    expect(calls[0]).toMatchObject({ center: at, zoom: def + 2 });
+  });
 });

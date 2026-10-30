@@ -36,6 +36,10 @@ export interface ResultsDeps {
   /** Связный текст модели по фактам разбора. */
   narrate(): void;
   modelOn(): boolean;
+  /** Переигровка без вмешательства не посчиталась — почему; null — не было ошибки. */
+  baselineError?(): string | null;
+  /** Посчитать её заново (часть «Сравнение» открыта). */
+  retryBaseline?(): void;
 }
 
 const stack: (() => ResultsDeps)[] = [];
@@ -134,11 +138,25 @@ export function resultsActions(get: () => ResultsDeps): Action[] {
       return lossesSay(s, d.side());
     },
   };
+  const retry: Action = {
+    id: 'results.baseline.retry', section: 'replay', title: 'Повторить переигровку без вмешательства',
+    describe: 'Часть «Сравнение»: переигровка без вмешательства не посчиталась (ошибка) — посчитать её заново.',
+    say: ['штаб, повтори расчёт без вмешательства'],
+    available: () => { const r = show.available!(); if (r !== true) return r; return top()?.baselineError?.() ? true : 'повторять нечего: переигровка без вмешательства не отказывала'; },
+    highlight: () => hl('results-compare'),
+    run: async () => {
+      const d = top();
+      if (!d?.baselineError?.() || !d.retryBaseline) return 'Повторять нечего.';
+      d.setPart('compare');
+      d.retryBaseline();
+      return 'Считаю переигровку без вмешательства заново.';
+    },
+  };
   show.say = ['штаб, итоги хода', 'штаб, покажи потери', 'штаб, сравни с историей', 'штаб, покажи итоги'];
   as.say = ['штаб, разбери ход с позиции Ставки', 'штаб, разбери ход с позиции восьмой гвардейской армии'];
   event.say = ['штаб, покажи событие два'];
   narrate.say = ['штаб, расскажи ход связно'];
-  actions = [show, as, event, narrate, read];
+  actions = [show, as, event, narrate, read, retry];
   return actions;
 }
 
@@ -195,6 +213,7 @@ export function parseResults(rest: string, section: string): PhraseHit | null {
   if (section !== 'replay') return null;
   const t = norm(rest);
   let m: RegExpExecArray | null;
+  if (/^(?:повтори|пересчитай)(?: расчет| переигровку)? без вмешательства$/.test(t)) return hitOr('results.baseline.retry');
   if (/^(?:покажи |открой )?итоги хода$/.test(t)) return hitOr('results.show', { part: 'turn' });
   if (/^(?:покажи|открой) итоги(?: операции)?$|^итоги(?: операции)?$/.test(t)) return hitOr('results.show', {});
   if (/^(?:покажи|открой) потери(?: сторон)?$/.test(t)) return hitOr('results.show', { part: 'losses' });

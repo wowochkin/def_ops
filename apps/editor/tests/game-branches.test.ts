@@ -1,7 +1,7 @@
 // Ветви игры: имена, развилка при возврате, переключение без потери, старые записи, квота хранилища.
 import { describe, expect, it } from 'vitest';
 import type { GameRecord, GameTurn, Order } from '@def-ops/sim';
-import { branchName, checkoutBranch, commitGame, deleteBranch, forkBranch, lines, MAIN_LINE, packGame, QUOTA_TEXT, storeGame, switchReply, unpackGame, withRecord, type BranchPayload, type BranchStore, type SavedGame } from '../src/game-branches';
+import { branchName, checkoutBranch, commitGame, deleteBranch, discardSave, forkBranch, lines, sweepBranches, MAIN_LINE, packGame, QUOTA_TEXT, storeGame, switchReply, unpackGame, withRecord, type BranchPayload, type BranchStore, type SavedBranch, type SavedGame } from '../src/game-branches';
 
 const order = (f: string): Order => ({ formation: f, task: 'attack', target: { kind: 'point', at: [14, 52] }, issuedAt: '', source: 'human' } as unknown as Order);
 const at = (k: number) => `1945-04-${String(14 + k).padStart(2, '0')}T06:00`;
@@ -16,6 +16,7 @@ const fakeStore = () => {
     put: async (k, p) => { map.set(k, JSON.parse(JSON.stringify(p))); },
     get: async (k) => map.get(k),
     del: async (k) => { map.delete(k); },
+    keys: async () => [...map.keys()],
   };
   return st;
 };
@@ -84,12 +85,94 @@ describe('checkoutBranch', () => {
     const s = game(seven);
     expect((await checkoutBranch(fakeStore(), s, 'нет', NOW)).game).toBe(s);
   });
-  it('current line is a strict prefix of the chosen one', async () => {
+  it('current line is a strict prefix of the chosen one — not saved again', async () => {
     const st = fakeStore();
     const s = { ...(await forkBranch(st, game(seven), 5, at(5), seven.slice(4), NOW)) }; // текущая — 4 хода, ветвь — 7
     const c = await checkoutBranch(st, s, s.branches![0].id, NOW);
-    expect(c.game.branches![0]).toMatchObject({ from: 5, at: at(5), count: 4 });
+    expect(c.game.branches).toBeUndefined(); // первые 4 хода — начало выбранной линии
     expect(c.game.record.turns).toHaveLength(7);
+    expect(st.map.size).toBe(1); // в хранилище — только выбранная (её уберёт commitGame)
+  });
+  it('empty current line is not saved on checkout', async () => {
+    const st = fakeStore();
+    const s = await forkBranch(st, game(seven), 1, at(1), seven, NOW); // возврат к ходу 1: текущая — 0 ходов
+    expect(s.record.turns).toHaveLength(0);
+    const c = await checkoutBranch(st, s, s.branches![0].id, NOW);
+    expect(c.game.branches).toBeUndefined();
+    expect(c.game.record.turns).toHaveLength(7);
+  });
+  it('checkout: from of other branches — min(own, chosen)', async () => {
+    const st = fakeStore();
+    // ветвь A — от хода 3 (7 ходов «a»), ветвь B — от хода 5 (ходы 1–4 «a», 5–6 «b»), текущая — ходы 1–2 «a», 3 «c»
+    const a = await forkBranch(st, game(seven), 3, at(3), seven.slice(2), NOW);
+    const lineB = [...seven.slice(0, 4), turn(5, 'b'), turn(6, 'b')];
+    const withB: SavedGame = { ...a, branches: [...a.branches!, { id: 'B', name: 'ветвь B', from: 5, at: at(5), created: '2026-10-30T11:00:00.000Z', count: 6, turns: lineB }] };
+    const cur: SavedGame = { ...withB, record: { ...withB.record, turns: [...seven.slice(0, 2), turn(3, 'c')] } };
+    const c = await checkoutBranch(st, cur, a.branches![0].id, NOW); // на ветвь A (from 3)
+    const b = c.game.branches!.find((x) => x.id === 'B')!;
+    expect(b).toMatchObject({ from: 3, at: at(3) }); // с ветвью A она расходится уже с хода 3
+  });
+});
+
+describe('forkBranch: from и повторы', () => {
+  it('fork at n moves from of later branches to n', async () => {
+    const st = fakeStore();
+    const f = await forkBranch(st, game(seven), 5, at(5), seven.slice(4), NOW); // ветвь от 5
+    const cont: SavedGame = { ...f, record: { ...f.record, turns: [...f.record.turns, turn(5, 'b'), turn(6, 'b')] } };
+    const g = await forkBranch(st, cont, 3, at(3), cont.record.turns.slice(2), '2026-10-30T11:00:00.000Z'); // возврат к 3
+    expect(g.record.turns).toHaveLength(2);
+    expect(g.branches!.map((b) => [b.from, b.at])).toEqual([[3, at(3)], [3, at(3)]]);
+  });
+  it('a line that is a strict prefix of an existing branch is not saved', async () => {
+    const st = fakeStore();
+    const f = await forkBranch(st, game(seven), 5, at(5), seven.slice(4), NOW); // ветвь — 7 ходов, текущая — 4
+    // доиграли текущую до 5 ходов теми же ходами ветви и вернулись к ходу 3: линия — 5 первых ходов ветви
+    const cont: SavedGame = { ...f, record: { ...f.record, turns: seven.slice(0, 5) } };
+    const g = await forkBranch(st, cont, 3, at(3), seven.slice(2, 5), NOW);
+    expect(g.branches).toHaveLength(1);
+    expect(st.map.size).toBe(1);
+  });
+  it('duplicate check covers unmigrated branches (turns in the save, no count)', async () => {
+    const st = fakeStore();
+    const legacy = { ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, turns: seven } as unknown as SavedBranch] };
+    const s: SavedGame = { ...legacy, record: { ...legacy.record, turns: seven } };
+    const g = await forkBranch(st, s, 5, at(5), seven.slice(4), NOW);
+    expect(g.branches).toHaveLength(1);
+    expect(st.map.size).toBe(0);
+  });
+  it('store fails — the branch stays in the save, duplicate check still applies', async () => {
+    const broken: BranchStore = { put: async () => { throw new Error('IndexedDB недоступна'); }, get: async () => { throw new Error('IndexedDB недоступна'); }, del: async () => undefined };
+    const errors: string[] = [];
+    const f = await forkBranch(broken, game(seven), 5, at(5), seven.slice(4), NOW, (e) => errors.push(e));
+    expect(errors).toEqual(['IndexedDB недоступна']);
+    expect(f.branches![0].turns).toHaveLength(7);
+    const again = await forkBranch(broken, { ...f, record: { ...f.record, turns: seven } }, 5, at(5), seven.slice(4), NOW, (e) => errors.push(e));
+    expect(again.branches).toHaveLength(1);
+  });
+});
+
+describe('orphan payloads', () => {
+  it('sweepBranches removes payloads the save does not reference', async () => {
+    const st = fakeStore();
+    const f = await forkBranch(st, game(seven), 5, at(5), seven.slice(4), NOW);
+    await st.put('g1:b1', { turns: [] }); // сирота: прежняя игра или неудачная запись
+    await st.put(`${f.gid}:lost`, { turns: [] });
+    await sweepBranches(st, f);
+    expect([...st.map.keys()]).toEqual([`${f.gid}:${f.branches![0].id}`]);
+  });
+  it('sweepBranches without keys() in the store — nothing happens', async () => {
+    const st = fakeStore();
+    await st.put('x:y', { turns: [] });
+    await sweepBranches({ put: st.put, get: st.get, del: st.del }, null);
+    expect(st.map.size).toBe(1);
+  });
+  it('discardSave drops branch payloads and the save', async () => {
+    const st = fakeStore();
+    const f = await forkBranch(st, game(seven), 5, at(5), seven.slice(4), NOW);
+    const removed: string[] = [];
+    await discardSave(st, { removeItem: (k: string) => void removed.push(k) }, 'k', f);
+    expect(st.map.size).toBe(0);
+    expect(removed).toEqual(['k']);
   });
 });
 
@@ -169,7 +252,7 @@ describe('deleteBranch', () => {
 describe('legacy branches', () => {
   it('migrates full turns from the save into the store on first write', async () => {
     const st = fakeStore();
-    const legacy: SavedGame = { ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, count: 7, enemy: 'passive', turns: seven }] };
+    const legacy: SavedGame = { ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, count: 7, turns: seven }] };
     let written = '';
     const r = await commitGame(st, { setItem(_k: string, v: string) { written = v; } }, 'k', { game: legacy, stale: [] });
     expect(r.error).toBeNull();
@@ -181,7 +264,7 @@ describe('legacy branches', () => {
 });
 
 describe('commitGame: хранилище ветвей отказало', () => {
-  const legacy = (): SavedGame => ({ ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, count: 7, enemy: 'passive', turns: seven }] });
+  const legacy = (): SavedGame => ({ ...game(seven.slice(0, 4)), branches: [{ id: 'old', name: 'ветвь', from: 5, at: at(5), created: NOW, count: 7, turns: seven }] });
   const broken = (): BranchStore => ({ put: async () => { throw new Error('IndexedDB недоступна'); }, get: async () => undefined, del: async () => undefined });
   it('commitGame stores inline turns when migration fails', async () => {
     let written = '';

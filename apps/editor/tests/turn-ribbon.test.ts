@@ -55,7 +55,7 @@ describe('ribbonItems', () => {
     expect(items[3].summary).toBe('текущий ход');
   });
   it('ветвь с from: 2 — в развилках хода 2', () => {
-    const b: SavedBranch = { id: 'b1', name: 'ветвь от хода 2 (17 апреля, 05:00)', from: 2, at: '1945-04-17T05:00', created: '2026-10-30T10:00:00Z', count: 5, enemy: 'llm' };
+    const b: SavedBranch = { id: 'b1', name: 'ветвь от хода 2 (17 апреля, 05:00)', from: 2, at: '1945-04-17T05:00', created: '2026-10-30T10:00:00Z', count: 5 };
     const items = ribbonItems(REC, journal, '1945-04-19T05:00', [b]);
     expect(items[1].forks).toEqual([{ id: 'b1', name: b.name }]);
     expect(items.filter((x) => x.forks.length).map((x) => x.n)).toEqual([2]);

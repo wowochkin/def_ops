@@ -37,4 +37,10 @@ describe('вкладка «Штабы»', () => {
     expect(all).toContain('33 А');
     expect(all).not.toContain('data-action="command.staffs.all"');
   });
+  it('«показать все» — состояние окна командования: вкладка открыта снова — переключатель тот же', () => {
+    const html = renderToString(createElement(Staffs, { v: view('agents'), cmds: [], issuer: 'a1', all: true, setAll: () => undefined }));
+    expect(html).toContain('33 А');
+    expect(html).toContain('чужой приказ');
+    expect(html).toContain('только мои');
+  });
 });

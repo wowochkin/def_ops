@@ -785,7 +785,8 @@ describe('туры переигровки и командования', () => {
       const t = tour(id);
       expect(t.section, id).toBe('replay');
       expect(t.steps.length, id).toBeGreaterThanOrEqual(8);
-      expect(t.steps.length, id).toBeLessThanOrEqual(12);
+      // у «Командования» ещё шаг — лента ходов и ветви
+      expect(t.steps.length, id).toBeLessThanOrEqual(id === 'command' ? 13 : 12);
       for (const s of t.steps) expect(sentences(s.text), `${id}: ${s.title}`).toBeLessThanOrEqual(3);
       expect(t.steps.filter((s) => /^Здесь голосом можно/.test(s.text)), id).toHaveLength(1);
     }

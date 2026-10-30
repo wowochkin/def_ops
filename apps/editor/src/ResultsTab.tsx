@@ -145,7 +145,8 @@ function ComparePart({ s, side, baseline, own }: { s: OperationSummary; side: 's
       {rest.total > 0 && <p className="rs-note">Остальные события: {rest.hit} из {rest.total} в пределах ±2 сут от истории.</p>}
       {baseline.state === 'wait' && <p className="rs-note">Переигровка без вмешательства считается…</p>}
       {baseline.state === 'off' && <p className="rs-note">Переигровка без вмешательства для сравнения не считалась.</p>}
-      {baseline.state === 'error' && <p className="rs-note err">Переигровка без вмешательства не посчитана: {baseline.text}</p>}
+      {baseline.state === 'error' && <p className="rs-note err">Переигровка без вмешательства не посчитана: {baseline.text}{' '}
+        <ActButton action="results.baseline.retry" className="link">Повторить</ActButton></p>}
       {!s.over && <p className="rs-note">Игра идёт: учтены сыгранные часы; события впереди — «ещё не наступило».</p>}
       <DistanceChart s={s} baseline={base && baselineAt(base, s)} side={side} />
     </div>
