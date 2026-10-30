@@ -12,9 +12,9 @@ import type { KbStamp } from './kb-stamp';
 import { defaultCatalog, defaultLive, Theatre } from '@def-ops/sim';
 import catalogFile from '../../../../packages/sim/data/scenarios/catalog.json';
 
-const DB = 'def_ops_sim', VER = 5;
-type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure' | 'edits' | 'replays' | 'replay_data';
-const STORES: StoreName[] = ['rules', 'operations', 'theatres', 'infrastructure', 'edits', 'replays', 'replay_data'];
+const DB = 'def_ops_sim', VER = 6;
+type StoreName = 'rules' | 'operations' | 'theatres' | 'infrastructure' | 'edits' | 'replays' | 'replay_data' | 'game_branches';
+const STORES: StoreName[] = ['rules', 'operations', 'theatres', 'infrastructure', 'edits', 'replays', 'replay_data', 'game_branches'];
 
 /** Свой набор правил: правила целиком (без extends), откуда взят, для какой операции подбирался. */
 export interface UserRules { id: string; title: string; note?: string; base: string; scenario?: string; created: string; rules: Rules }
@@ -85,6 +85,11 @@ export async function deleteReplay(id: string) {
   await write('replays', (o) => o.delete(id));
   await write('replay_data', (o) => o.delete(id));
 }
+/** Ходы ветви игры (в записи def_ops.game — только сведения о ветви): id — «игра:ветвь»; доктрина в ходах — номерами таблицы. */
+export interface GameBranchData { id: string; turns: unknown[]; doctrines?: string[] }
+export const getGameBranch = (id: string) => one<GameBranchData>('game_branches', id);
+export const putGameBranch = (d: GameBranchData) => write('game_branches', (o) => o.put(d));
+export const deleteGameBranch = (id: string) => write('game_branches', (o) => o.delete(id));
 export const saveRules = (r: UserRules) => write('rules', (o) => o.put(r));
 export const deleteRules = (id: string) => write('rules', (o) => o.delete(id));
 export const listOperations = () => all<UserOperation>('operations');

@@ -17,6 +17,8 @@ import type { MapEngine } from './engine/types';
 import { BasemapControls, dmy, Popover } from './ui';
 import { basemapDate } from './engine/basemaps';
 import type { Basemaps, Llm } from './shared';
+import { dropGame } from './game-branches';
+import { idbBranchStore } from './game-branch-store';
 import { CommandView, loadSaved, SAVE_KEY, savedGameMode, TakeoverDialog, turnStart, type SavedGame } from './CommandView';
 import { defaultEnemy, fitEnemy, resumeEnemy } from './command-forms';
 import type { EnemyMode, GameStart } from './sim/game-protocol';
@@ -184,6 +186,11 @@ export function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/** Игру сбросили: запись из localStorage и ходы её ветвей из IndexedDB. */
+function discardGame() {
+  void dropGame(idbBranchStore, loadSaved()).catch(() => { /* */ });
+  try { localStorage.removeItem(SAVE_KEY); } catch { /* */ }
+}
 export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm; onOpenInEditor: (d: MapDocument) => void }) {
   // каталог: встроенные операции и подготовленные свои (раздел «Моделирование»), со своими наборами правил
   const [CATALOG, setCatalog] = useState<(CatalogEntry & { custom?: boolean })[]>(BUILTIN_CATALOG);
@@ -551,12 +558,12 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
       setGame({ start: null, saved: r.note ? { ...saved, enemy: r.enemy } : saved, enemy: r.enemy, note: r.note });
       return r.note;
     },
-    stop, discardSaved: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(null); },
+    stop, discardSaved: () => { discardGame(); setSaved(null); },
   };
   useEffect(() => { const get = () => voice.current; const offs = replayActions(get).map(register); return () => { offs.forEach((o) => o()); releaseReplay(get); }; }, []);
   if (game) {
     return <CommandView key={game.saved?.record.takeover ?? game.start?.takeover} bm={bm} llm={llm} start={game.start} saved={game.saved} enemy={game.enemy} note={game.note} onOpenInEditor={onOpenInEditor}
-      onExit={({ discard }) => { if (discard) try { localStorage.removeItem(SAVE_KEY); } catch { /* */ } setSaved(loadSaved()); setGame(null); }} />;
+      onExit={({ discard }) => { if (discard) discardGame(); setSaved(loadSaved()); setGame(null); }} />;
   }
   const takeAt = result && time ? turnStart(time, result.start, result.end, result.turnHours) : null;
   return (

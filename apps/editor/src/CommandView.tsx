@@ -70,7 +70,8 @@ import { speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
-import { storeGame, withRecord, type SavedGame } from './game-branches';
+import { commitGame, unpackGame, withRecord, type SavedGame } from './game-branches';
+import { idbBranchStore } from './game-branch-store';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -84,7 +85,7 @@ function StaffButton({ action, params, children, ...rest }: { action: string; pa
 }
 export type { SavedGame };
 export function loadSaved(): SavedGame | null {
-  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') as SavedGame | null; return s?.record?.version === 1 ? s : null; } catch { return null; }
+  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') as SavedGame | null; return s?.record?.version === 1 ? unpackGame(s) : null; } catch { return null; }
 }
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -341,9 +342,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
         turnsSeen.current = n;
         const next = withRecord(savedRef.current, m.record, enemyRef.current, titleRef.current, m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover);
         savedRef.current = next;
-        let lost: string | null = null;
-        try { lost = storeGame(localStorage, SAVE_KEY, next); } catch { /* хранилища нет — игра идёт без записи */ }
-        if (lost) setNotice(lost);
+        // ветви: ходы — в IndexedDB (старая запись с ходами в localStorage переносится при первой записи); сообщение об ошибке — один раз
+        void commitGame(idbBranchStore, localStorage, SAVE_KEY, { game: next, stale: [] }).then((r) => {
+          if (savedRef.current === next && r.game.branches !== next.branches) savedRef.current = { ...next, branches: r.game.branches, ...(r.game.gid ? { gid: r.game.gid } : {}) };
+          if (r.error && r.error !== lostShown.current) { lostShown.current = r.error; setNotice(r.error); }
+        }).catch(() => { /* хранилища нет — игра идёт без записи */ });
       }
     };
     w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); };
@@ -363,6 +366,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
   /** Запись игры как лежит в хранилище (ветви и имя линии сохраняются при каждой записи хода). */
   const savedRef = useRef<SavedGame | null>(saved);
+  const lostShown = useRef<string | null>(null);
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';
 
   // телефон: выбор места на карте — показать карту, выбрано — вернуться к штабу
