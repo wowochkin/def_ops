@@ -10,7 +10,7 @@
  *   «корпусная группа» с численностью корпуса.
  * - **Подчинение** — на 16.04; приказ армии или корпуса получают соединения, подчинённые ему на дату приказа.
  *   Советские фронтовые корпуса и дивизии без армии подчинены фронту.
- * - **Численность.** Перепись (evals-out/census/census.json); советские — как у Зееловских высот (медиана армии,
+ * - **Численность.** Перепись (evals-out/census/census.json) на дату не позже начала операции или ввода соединения; советские — как у Зееловских высот (медиана армии,
  *   танки и орудия армии поровну); немецкие без числа — остаток численности корпуса из сценария нынешней модели
  *   поровну (C), иначе типовое значение по виду (допущение).
  * - **Исходные положения.** Корпуса 1 БФ утром 16.04 (berlin-1945-seelow-divisions.json); собственное положение из
@@ -255,9 +255,12 @@ for (const [hqId, divs] of byHq) {
   const cposOf = (d: Div) => { const c = subAt(d, '1945-04-16').corps; return d.side === 'su' && c ? seelowCorpsStart.get(`${hqId}_${c.replace(/^su_/, '')}`) : undefined; };
   const slots = hp ? placeSlots(hp, hq.side, divs.filter((d) => !cposOf(d) && !tsDiv(d)?.position && !ownStart(d.id, hp))) : new Map();
   for (const d of divs) {
-    // исходные числа переписи — только на дату не позже начала операции (иначе это остаток после боёв)
+    // исходные числа переписи — только на дату не позже начала операции или ввода соединения в операцию (иначе это
+    // остаток после боёв): у вводимых позже (28 А с 20.04, XX ак) число на день ввода — исходное
     const raw = census.get(d.id);
-    const ini = (v: CensusVal | null | undefined) => (v && (!v.date || v.date <= '1945-04-16') ? v : null);
+    const enter = enterOf(d, hqId)?.slice(0, 10);
+    const startDay = enter && enter > '1945-04-16' ? enter : '1945-04-16';
+    const ini = (v: CensusVal | null | undefined) => (v && (!v.date || v.date <= startDay) ? v : null);
     const c = raw ? { personnel: ini(raw.personnel), tanks: ini(raw.tanks), guns: ini(raw.guns) } : undefined;
     const notes: string[] = [];
     // положение
@@ -279,7 +282,7 @@ for (const [hqId, divs] of byHq) {
     const def = DEFAULTS[d.side === 'su' ? d.type : `de_${d.type}`];
     if (d.side === 'su') {
       const a = f;
-      if (c?.personnel) { personnel = c.personnel.value; notes.push(`численность: ${c.personnel.source} (${c.personnel.reliability})`); }
+      if (c?.personnel) { personnel = Math.round(c.personnel.value); notes.push(`численность: ${c.personnel.source} (${c.personnel.reliability})`); }
       else if (d.type === 'brigade') { personnel = BRIGADE_PERSONNEL; notes.push(`численность: бригада ${BRIGADE_PERSONNEL} (допущение)`); }
       else if (tankArmy && a?.personnel) { personnel = Math.round(a.personnel / Math.max(1, gunN)); notes.push('численность: армия поровну между корпусами (C)'); }
       else if (def) { personnel = def.personnel; notes.push(`численность: типовая для вида ${d.type} (допущение)`); }
@@ -288,7 +291,7 @@ for (const [hqId, divs] of byHq) {
       guns = c?.guns?.value ?? (a?.guns && d.type !== 'brigade' ? Math.round(a.guns / Math.max(1, gunN)) : def?.guns ?? (d.type === 'brigade' ? 0 : 60));
     } else {
       const t = tsDiv(d);
-      if (c?.personnel) { personnel = c.personnel.value; notes.push(`численность: ${c.personnel.source} (${c.personnel.reliability})`); }
+      if (c?.personnel) { personnel = Math.round(c.personnel.value); notes.push(`численность: ${c.personnel.source} (${c.personnel.reliability})`); }
       else if (t?.personnel) { personnel = t.personnel; notes.push('численность: сценарий нынешней модели'); }
       else if (deRest > 0 && deUnknown > 0) { personnel = Math.round(deRest / deUnknown); notes.push('численность: остаток корпуса из сценария нынешней модели поровну (C)'); }
       else { personnel = def?.personnel ?? 3000; notes.push(`численность: типовая для вида ${d.type} (допущение)`); }

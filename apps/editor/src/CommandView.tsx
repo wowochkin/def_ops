@@ -10,7 +10,7 @@ import { confirmAsync } from './dialogs';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Resizer, usePanelWidth } from './panel-resize';
 import { createFeature, migrateDocument, type ArrowFeature, type LngLat, type MapDocument } from '@def-ops/core';
-import { sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
+import { groupManning, sideOf, TASK_RU, UMPIRE_FACTOR_RU, type ActionCheck, type GameRecord, type Order, type StaffAction, type Task, type UnitReport } from '@def-ops/sim';
 import { ADVICE_TREE, type AdviceNode, type AiTurn } from '@def-ops/staff-service/live';
 import type { AdviceView, PlanVariantView, AiStatus, EnemyMode, GameRequest, GameResponse, GameStart, HumanDecision, Place, TurnView } from './sim/game-protocol';
 import { MapView } from './MapView';
@@ -69,6 +69,7 @@ import { dayMonth } from './voice/report';
 import { speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
+import { manningText } from './num-format';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -1072,7 +1073,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки', 
     <div className={`ucard${open ? ' open' : ''}${u.status !== 'active' ? ' dim' : ''}`} data-hl={`unit-${u.id}`}>
       <button className="ucard-h" data-action="command.unit.show" onClick={onToggle}>
         <span className="ucard-n">{short(u.name)}</span>
-        <span className="ucard-bars"><Bar v={u.strength} label={`укомплектованность ${pct(u.strength)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
+        <span className="ucard-bars"><Bar v={u.manning ?? u.strength} label={`укомплектованность ${manningText(u)}`} /><Bar v={u.ammo / 2} label={`боеприпасы ${num(u.ammo)} бк`} /><Bar v={u.fuel / 2} label={`горючее ${num(u.fuel)} запр.`} /></span>
         <span className="ucard-p">{u.status === 'active' ? `${u.posture}, ${u.place}` : u.status === 'reserve' ? `резерв ${topGen}, готова к вводу с ${ddmm(u.reserveFrom!)} — ввести: «Приказы» → «Резервы»` : u.status === 'arriving' ? `вводится в сражение, сосредоточится ${ddmm(u.arrives!)} ${hhmm(u.arrives!)}` : 'уничтожена'}</span>
         {chips.length > 0 && <span className="ucard-chips">{chips.map(([c, t]) => <i key={t} className={c}>{t}</i>)}</span>}
       </button>
@@ -1080,7 +1081,7 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки', 
         <dl>
           <dt>Задача</dt><dd>{u.task ? `${u.task} — ${u.target}` : 'нет'}{u.orderSource && <small> · {u.orderSource === 'script' ? 'по историческому плану' : u.orderSource === 'human' ? 'ваш приказ' : u.orderSource}</small>}</dd>
           {u.pending.length > 0 && <><dt>В пути</dt><dd>{u.pending.map((p, i) => <div key={i}>{p.task} — {p.target} <small>(отдан {ddmm(p.issuedAt)} {hhmm(p.issuedAt)})</small></div>)}</dd></>}
-          <dt>Состав</dt><dd>{pct(u.strength)} — {u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}</dd>
+          <dt>Состав</dt><dd>{manningText(u)} — {u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}</dd>
           <dt>Запасы</dt><dd>боеприпасы {num(u.ammo)} бк, горючее {num(u.fuel)} запр.{u.cutOff ? ' · подвоз прерван' : ''}</dd>
           <dt>Усталость</dt><dd>{pct(u.fatigue)}</dd>
           <dt>За ход</dt><dd>{u.movedKm >= 0.5 ? `переместилась на ${Math.round(u.movedKm)} км` : 'на месте'}{u.combats.map((c, i) => <div key={i}>{c.role === 'attack' ? 'наступала на' : 'отражала'} {c.against.map(short).join(', ')}: {c.outcome}{c.advanceKm ? ` на ${num(c.advanceKm)} км` : ''}, соотношение {num(c.ratio)}:1, потери {c.lossPct} %</div>)}</dd>
@@ -1091,6 +1092,12 @@ function UnitCard({ u, open, onToggle, onOrder, draft, topGen = 'Ставки', 
   );
 }
 
+/** Средняя укомплектованность группы в сводке: крупно — от штата (штата нет — от начала операции), подпись — оба мерила. */
+function ManningKpi({ g }: { g: { strength: number; manning: number | null } | null }) {
+  if (!g) return <div><b>{pct(0)}</b><span>средняя укомплектованность</span></div>;
+  return <div title={`средняя укомплектованность: ${manningText(g)}`}><b>{pct(g.manning ?? g.strength)}</b><span>{g.manning != null ? `от штата; ${pct(g.strength)} от начала операции` : 'от начала операции'}</span></div>;
+}
+
 /** Доклады подчинённых штаба пункта управления: сводка по его дивизиям, донесения о них за ход, доклады подчинённых. */
 function PostReports({ v, issuer, drafts, sel, onUnit, onOrder }: { v: TurnView; issuer: string; drafts: Record<string, Draft>; sel: string | null; onUnit: (id: string) => void; onOrder: (id: string) => void }) {
   const h = v.command!.hqs[issuer];
@@ -1099,14 +1106,13 @@ function PostReports({ v, issuer, drafts, sel, onUnit, onOrder }: { v: TurnView;
   const names = new Set(divs.map((u) => u.name));
   const events = top ? v.events : v.events.filter((e) => [...names].some((n) => e.includes(n)) || e.includes(h.name));
   const subs = postReports(v, issuer);
-  const P = divs.reduce((s, u) => s + u.personnel, 0) || 1;
-  const strength = divs.reduce((s, u) => s + u.strength * u.personnel, 0) / P;
+  const g = groupManning(divs);
   return (
     <div className="cmd-sec">
       <h3>{top ? 'Оперативная сводка' : `Донесения — ${h.name}`} к {hhmm(v.time)} {ddmm(v.time)}</h3>
       <div className="kpis small">
         <div><b>{divs.length}</b><span>дивизий в строю</span></div>
-        <div><b>{pct(strength)}</b><span>средняя укомплектованность</span></div>
+        <ManningKpi g={divs.length ? g : null} />
         <div className={divs.some((u) => u.cutOff) ? 'alarm' : ''}><b>{divs.filter((u) => u.cutOff).length}</b><span>отрезано от подвоза</span></div>
       </div>
       {v.turn > 1 && <div className="dispatch"><h4>Донесения за ход</h4>
@@ -1168,14 +1174,14 @@ function Reports({ v, drafts, onUnit, onOrder, sel }: { v: TurnView; drafts: Rec
   // выбран щелчком на карте — раскрытый доклад прокручивается в поле зрения
   useEffect(() => { if (sel) document.querySelector('.cmd-body .ucard.open')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [sel]);
   const cut = active.filter((u) => u.cutOff).length;
-  const strength = active.length ? active.reduce((s, u) => s + u.strength, 0) / active.length : 0;
+  const g = groupManning(active);
   const reached = v.goals.filter((g) => g.simulated);
   return (
     <div className="cmd-sec">
       <h3>Оперативная сводка к {hhmm(v.time)} {ddmm(v.time)}</h3>
       <div className="kpis small">
         <div><b>{active.length}</b><span>объединений в строю</span></div>
-        <div><b>{pct(strength)}</b><span>средняя укомплектованность</span></div>
+        <ManningKpi g={active.length ? g : null} />
         <div className={cut ? 'alarm' : ''}><b>{cut}</b><span>отрезано от подвоза</span></div>
       </div>
       {v.turn > 1 && <div className="dispatch">
@@ -1848,7 +1854,7 @@ function Reserves({ v, acts, pickMode, setPickMode, onOrder, scope }: {
       {onTheatre.length ? onTheatre.slice(0, more ? undefined : 8).map((u) => (
         <div key={u.id} className="brow">
           <div className="brow-h"><b title={u.name}>{short(u.name)}</b><span className="st">{u.posture}, {u.place}</span><button className="link" onClick={() => onOrder(u.id)}>приказ…</button></div>
-          <div className="muted small">{u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}; укомплектованность {Math.round(u.strength * 100)} %</div>
+          <div className="muted small">{u.personnel.toLocaleString('ru')} чел., танков и САУ {u.tanks}, орудий {u.guns}; укомплектованность {manningText(u)}</div>
         </div>
       )) : <p className="muted">Все соединения на театре заняты в бою или в обороне.</p>}
       {onTheatre.length > 8 && <button className="link" onClick={() => setMore(!more)}>{more ? 'свернуть' : `ещё ${onTheatre.length - 8}`}</button>}

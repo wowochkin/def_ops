@@ -3,7 +3,7 @@
  * разведка — противник ступенью, как у пункта (у Ставки — группы армий, у фронта — армии, у армии — корпуса, у корпуса
  * и дивизии — дивизии), в полосе пункта; документы — штаба и его подчинённых. Без React.
  */
-import type { IntelReport, UnitReport } from '@def-ops/sim';
+import { groupManning, type IntelReport, type UnitReport } from '@def-ops/sim';
 import type { LngLat } from '@def-ops/core';
 import type { HumanDecision, TurnView } from './sim/game-protocol';
 import type { LevelId } from './map-level-scale';
@@ -35,18 +35,19 @@ export function hqCenter(v: TurnView, hq: string): LngLat | null {
   return [l.reduce((s, u) => s + u.at[0] * u.personnel, 0) / P, l.reduce((s, u) => s + u.at[1] * u.personnel, 0) / P];
 }
 
-/** Сводный доклад штаба по его дивизиям (у фронтов своего доклада нет): по численности, как у армий и корпусов. */
+/** Сводный доклад штаба по его дивизиям (у фронтов своего доклада нет): по численности, как у армий и корпусов; от штата — по людям и штатам. */
 function aggregate(id: string, name: string, echelon: string, parent: string | null, l: UnitReport[]): UnitReport | null {
   if (!l.length) return null;
   const P = l.reduce((s, u) => s + u.personnel, 0) || 1;
   const w = (k: (u: UnitReport) => number) => l.reduce((s, u) => s + k(u) * u.personnel, 0) / P;
   const most = (k: (u: UnitReport) => string | null) => { const m = new Map<string, number>(); for (const u of l) { const x = k(u); if (x) m.set(x, (m.get(x) ?? 0) + u.personnel); } return [...m].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null; };
   const task = most((u) => u.task);
+  const g = groupManning(l);
   return {
     id, name, parent, echelon: echelon as UnitReport['echelon'], status: 'active', at: [w((u) => u.at[0]), w((u) => u.at[1])], place: most((u) => u.place) ?? '',
     posture: most((u) => u.posture) ?? '', task, target: task ? most((u) => (u.task === task ? u.target : null)) : null, orderSource: most((u) => u.orderSource),
     personnel: Math.round(P), tanks: l.reduce((s, u) => s + u.tanks, 0), guns: l.reduce((s, u) => s + u.guns, 0),
-    strength: w((u) => u.strength), ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
+    strength: w((u) => u.strength), manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
     cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
   };
 }

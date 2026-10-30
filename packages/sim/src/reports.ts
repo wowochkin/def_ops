@@ -11,6 +11,7 @@ import { commandTerms } from './command';
 import { dist } from './geo';
 import { onMap, profileOf, targetPoint, type SimContext } from './step';
 import PLACES_RU from '../data/places-ru.json';
+import { establishmentOf } from './establishment';
 import type { Theatre } from './theatre';
 import type { Echelon, Formation, JournalEntry, SimState, Target, Task } from './types';
 
@@ -118,8 +119,15 @@ export interface UnitReport {
   personnel: number;
   tanks: number;
   guns: number;
-  /** Укомплектованность, доля начальной численности. */
+  /** Укомплектованность от начала операции: доля численности на начало операции (первый кадр хода). */
   strength: number;
+  /**
+   * Укомплектованность от штата: доля штатной численности по виду соединения (establishment.json); у штаба — люди
+   * соединений со штатом / сумма их штатов; штата нет — null.
+   */
+  manning: number | null;
+  /** Сумма штатов, от которой считается manning (для сводок по группе); штата нет — null. */
+  establishment: number | null;
   ammo: number;
   fuel: number;
   fatigue: number;
@@ -174,6 +182,26 @@ function combatsOf(id: string, journal: JournalEntry[], names: Map<string, strin
   return out;
 }
 
+const manningOf = (personnel: number, e: number | undefined): Pick<UnitReport, 'manning' | 'establishment'> =>
+  e ? { manning: personnel / e, establishment: e } : { manning: null, establishment: null };
+
+/**
+ * Укомплектованность группы по людям, а не среднее долей: от начала операции — сумма людей / сумма людей на начало
+ * (personnel / strength), от штата — люди соединений со штатом / сумма их штатов (нет штата ни у кого — null).
+ * Без суммы штатов (доклад без establishment) штат соединения — personnel / manning.
+ */
+export function groupManning(l: (Pick<UnitReport, 'personnel' | 'strength' | 'manning'> & { establishment?: number | null })[]): { strength: number; manning: number | null; establishment: number | null } {
+  let P = 0, P0 = 0, Ps = 0, E = 0;
+  for (const u of l) {
+    P += u.personnel;
+    P0 += u.strength > 0 ? u.personnel / u.strength : 0;
+    const e = u.establishment ?? (u.manning ? u.personnel / u.manning : 0);
+    if (e > 0) { Ps += u.personnel; E += e; }
+  }
+  const strength = P0 > 0 ? P / P0 : l.length ? l.reduce((s, u) => s + u.strength, 0) / l.length : 1;
+  return { strength, manning: E > 0 ? Ps / E : null, establishment: E > 0 ? Math.round(E) : null };
+}
+
 /** Доклады формирований стороны на утро (state — после хода; prev — до него, для итога суток). */
 export function unitReports(ctx: SimContext, state: SimState, side: string, prev?: SimState | null): UnitReport[] {
   const T = ctx.theatre;
@@ -181,6 +209,7 @@ export function unitReports(ctx: SimContext, state: SimState, side: string, prev
   const before = new Map((prev?.formations ?? []).map((f) => [f.id, f]));
   const last = prev ? state.journal.slice(prev.journal.length) : [];
   const byId = new Map(state.formations.map((f) => [f.id, f]));
+  const est = new Map(ctx.scenario.formations.map((d) => [d.id, establishmentOf(d.side, d.staffKind)?.personnel]));
   return state.formations.filter((f) => f.side === side).map((f) => {
     const b = before.get(f.id);
     const status = f.destroyed ? 'destroyed' : onMap(f, state.time) ? 'active' : f.reserveFrom ? 'reserve' : 'arriving';
@@ -192,6 +221,7 @@ export function unitReports(ctx: SimContext, state: SimState, side: string, prev
       task: o ? TASK_RU[o.task] : null, target: o ? (tp || o.target ? describeTarget(ctx, o.target, names) : 'на месте') : null, orderSource: o?.source ?? null,
       personnel: f.personnel, tanks: f.tanks, guns: f.guns,
       strength: f.initial.personnel ? f.personnel / f.initial.personnel : 1,
+      ...manningOf(f.personnel, est.get(f.id)),
       ammo: f.ammo, fuel: f.fuel, fatigue: f.fatigue, cutOff: !!f.cutOff,
       movedKm: b ? +dist(T.proj.toXY(b.position), T.proj.toXY(f.position)).toFixed(1) : 0,
       combats: combatsOf(f.id, last, names),
@@ -313,7 +343,8 @@ export function orderDelay(ctx: SimContext, f: Pick<Formation, 'side' | 'echelon
 /**
  * Доклады армий и корпусов стороны по докладам их дивизий: в агентной модели действуют дивизии, а приказы удобно
  * отдавать и объединениям (ядро разошлёт приказ всем их дивизиям). Место — центр тяжести, силы — сумма, запасы и
- * укомплектованность — средние по численности, положение и задача — у большинства людей.
+ * укомплектованность от начала операции — средние по численности, от штата — по людям и штатам (groupManning),
+ * положение и задача — у большинства людей.
  */
 export function hqReports(ctx: SimContext, own: UnitReport[], side: string): UnitReport[] {
   const parent = new Map(ctx.scenario.formations.map((f) => [f.id, f.parent ?? null]));
@@ -330,11 +361,12 @@ export function hqReports(ctx: SimContext, own: UnitReport[], side: string): Uni
     const w = (k: (u: UnitReport) => number) => l.reduce((s, u) => s + k(u) * u.personnel, 0) / P;
     const at: LngLat = [w((u) => u.at[0]), w((u) => u.at[1])];
     const task = top(l, (u) => u.task);
+    const g = groupManning(l);
     return {
       id: h.id, name: h.name, parent: h.parent ?? null, echelon: h.echelon, status: 'active', at, place: describePlace(ctx.theatre, at),
       posture: top(l, (u) => u.posture) ?? '', task, target: task ? top(l.filter((u) => u.task === task), (u) => u.target) : null,
       orderSource: top(l, (u) => u.orderSource), personnel: Math.round(P), tanks: l.reduce((s, u) => s + u.tanks, 0), guns: l.reduce((s, u) => s + u.guns, 0),
-      strength: w((u) => u.strength), ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
+      strength: w((u) => u.strength), manning: g.manning, establishment: g.establishment, ammo: +w((u) => u.ammo).toFixed(2), fuel: +w((u) => u.fuel).toFixed(2), fatigue: +w((u) => u.fatigue).toFixed(2),
       cutOff: l.some((u) => u.cutOff), movedKm: +w((u) => u.movedKm).toFixed(1), combats: [], pending: [],
     };
   }).filter((x): x is UnitReport => !!x);

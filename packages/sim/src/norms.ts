@@ -5,6 +5,7 @@
  */
 import { agentNumber } from './agents-params';
 import { dist } from './geo';
+import { establishmentOf, establishmentRow } from './establishment';
 import { interp } from './rules';
 import { ENGINEERING } from './staff';
 import { profileOf, type SimContext } from './step';
@@ -18,7 +19,9 @@ export interface Norm {
     | { kind: 'frontage'; scenario: string; side: string; echelon: string }
     | { kind: 'unmodelled'; why: string }
     /** Допущение модели: правило есть, опоры в опыте войны нет — показывается значение и чего не хватает. */
-    | { kind: 'assumption'; expr: string; why: string };
+    | { kind: 'assumption'; expr: string; why: string }
+    /** Штатная численность вида соединения: значение — personnel строки id в data/rules/establishment.json. */
+    | { kind: 'establishment'; id: string };
   expect?: [number, number]; unit?: string; rules: string[]; note?: string;
   /** Операции, к которым относится норматив (для покрытия), если в замере нет сценария. */
   operations?: string[];
@@ -117,6 +120,9 @@ export function measureParam(ctx: SimContext, expr: string, agents?: unknown): n
       const d = /^orderDelay\.(\w+)$/.exec(expr);
       if (d) return (su.orderDelayHours as Record<string, number>)[d[1]] ?? NaN;
       // множитель режима: нет блока regimes — режимы не включены
+      // штат вида соединения стороны (establishment.json); нет строки — NaN («не включено в правилах»)
+      const es = /^establishment\.(\w+)\.(\w+)$/.exec(expr);
+      if (es) return establishmentOf(es[1], es[2])?.personnel ?? NaN;
       const rg = /^regimes\.(\w+)\.(\w+)$/.exec(expr);
       if (rg) return R.regimes ? (R.regimes as Record<string, Record<string, number>>)[rg[1]]?.[rg[2]] ?? 1 : NaN;
       throw new Error(`неизвестное выражение ${expr}`);
@@ -158,6 +164,7 @@ export function evaluateNorms(t: NormTable, ctxOf: (scenario: string) => SimCont
       values = m.kind === 'pace' ? runsOf(m.scenario).map((r) => measurePace(ctxOf(m.scenario), r, m))
         : m.kind === 'loss' ? runsOf(m.scenario).map((r) => measureLoss(ctxOf(m.scenario), r, m))
         : m.kind === 'frontage' ? measureFrontage(ctxOf(m.scenario), m)
+        : m.kind === 'establishment' ? [establishmentRow(m.id)?.personnel ?? NaN]
         : [measureParam(ctxOf(paramScenario), m.expr, agents)];
     } catch (e) { out.push({ norm: n, values, mean: null, verdict: 'error', text: (e as Error).message }); continue; }
     const ok = values.filter(Number.isFinite);

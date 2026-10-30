@@ -512,11 +512,42 @@ const parts = {
     await shot('journal-enemy.jpg');
     ok('umpire', `журнал — только видимое (показано ${check.shown}, скрыто ${check.hidden}, обнаружено разведкой ${check.intel})`);
   },
+  /** Укомплектованность в игре на агентной модели: «Доклады» пункта фронта — у армий «… % от штата, … % от начала операции», от штата заметно ниже; голос «доложи обстановку» — с «от штата». */
+  async manning() {
+    await page.goto(`${URL_}/`);
+    await page.evaluate(() => localStorage.setItem('def_ops.agents.command', 'commanders'));
+    await replayAgents();
+    await page.locator('.take-btn').click();
+    await page.locator('.modal.take').waitFor();
+    await page.locator('[data-hl="enemy-intent"]').click();
+    await page.locator('.modal.take button.primary').click();
+    await page.locator('.cmd-tabs').waitFor({ timeout: 600000 });
+    await page.locator('.cmd-tabs button', { hasText: 'Штабы' }).waitFor({ timeout: 600000 });
+    const at = async (id, params) => String(await page.evaluate(([i, p]) => window.__act(i, p), [id, params]));
+    await at('command.post', { name: 'su_1bf' });
+    await page.waitForTimeout(1500);
+    await page.locator('.cmd-tabs button', { hasText: 'Доклады' }).click();
+    await page.locator('.cmd-sec .ucard').first().waitFor({ timeout: 60000 });
+    const cards = await page.locator('.cmd-sec .ucard').evaluateAll((l) => l.map((e) => e.getAttribute('data-hl')));
+    if (!cards.includes('unit-su_8gva')) { await shot('manning-reports.jpg'); return fail('manning', `в «Докладах» нет 8 гв. А: ${cards.join(', ')}`); }
+    // подпись полосы укомплектованности в карточке армии — оба мерила
+    const txt = (await page.locator('.cmd-sec .ucard[data-hl="unit-su_8gva"] .ucard-bars .bar').first().getAttribute('title')) ?? '';
+    const m = /(\d+) % от штата, (\d+) % от начала операции/.exec(txt);
+    const kpi = await page.locator('.cmd-sec .kpis').first().innerText();
+    await shot('manning-reports.jpg');
+    if (!m) return fail('manning', `у 8 гв. А нет двух мерил: ${txt}`);
+    if (+m[1] >= 90 || +m[1] >= +m[2] - 20) return fail('manning', `от штата ${m[1]} % не ниже заметно, чем от начала ${m[2]} %`);
+    if (!/от штата/.test(kpi)) return fail('manning', `сводка без «от штата»: ${kpi.replace(/\s+/g, ' ')}`);
+    ok('manning', `доклады — от штата и от начала (8 гв. А: ${m[1]} % от штата, ${m[2]} % от начала; сводка: ${kpi.replace(/\s+/g, ' ')})`);
+    const said = await at('command.report', {});
+    if (!/от штата/.test(said)) return fail('manning', `голос без «от штата»: ${said.slice(0, 200)}`);
+    ok('manning', `голос — от штата (${(/средняя укомплектованность[^;.]*/.exec(said) ?? [''])[0]})`);
+  },
 };
 
 try {
   for (const [name, fn] of Object.entries(parts)) if (want(name)) await fn().catch((e) => fail(name, String(e).split('\n').slice(0, 3).join(' ')));
-  for (const n of ONLY ?? []) if (!parts[n] && !['dock', 'zones', 'staffs', 'orders', 'fly', 'umpire', 'bounds', 'manning'].includes(n)) fail(n, 'неизвестная часть');
+  for (const n of ONLY ?? []) if (!parts[n] && !['dock', 'zones', 'staffs', 'orders', 'fly', 'umpire', 'bounds'].includes(n)) fail(n, 'неизвестная часть');
 } finally {
   await browser.close();
 }

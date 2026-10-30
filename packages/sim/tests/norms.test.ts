@@ -57,6 +57,16 @@ describe('нормативы из базы знаний (сид) для sim:norm
     }
   });
 
+  it('штаты: строки establishment ссылаются на строку establishment.json, ожидаемое — в пределах; у каждой строки штата — норматив', async () => {
+    const { default: est } = await import('../data/rules/establishment.json');
+    const ids = new Set(est.rows.map((r) => r.id));
+    const rows = json.norms.filter((n) => n.measure.kind === 'establishment');
+    expect(rows.length).toBe(est.rows.length);
+    for (const n of rows) expect(ids.has((n.measure as { id: string }).id), n.id).toBe(true);
+    const ctx = loadContext('berlin-1945-tasks');
+    for (const r of evaluateNorms({ norms: rows }, () => ctx, () => [])) expect(r.verdict, r.norm.id).toBe('ok');
+  });
+
   it('выражения нормативов-допущений читаются: нет неизвестных; пороги режима «История как замысел» — числа', () => {
     const ctx = loadContext('berlin-1945-tasks', 'ww2-berlin-cal');
     const agents = loadAgents();

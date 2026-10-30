@@ -3,7 +3,8 @@
  * боевое донесение. Обстановка — штаба пункта управления: его подчинённые, противник в его полосе, документы, которые
  * он отдаёт на этот ход. Тексты — короткие, по-штабному; их правят, а не принимают как есть. Без React.
  */
-import type { IntelReport, UnitReport } from '@def-ops/sim';
+import { groupManning, type IntelReport, type UnitReport } from '@def-ops/sim';
+import { manningText } from './num-format';
 import type { HumanDecision, TurnView } from './sim/game-protocol';
 
 export type DraftField = 'assessment' | 'enemyIntent' | 'intent' | 'risks' | 'report';
@@ -38,11 +39,10 @@ const places = (xs: { place: string }[], n = 3) => [...new Set(xs.map((x) => pl(
 function ownLine(s: DraftScope): string {
   const a = active(s);
   if (!a.length) return `${s.who}: войск в строю нет.`;
-  const avg = a.reduce((x, u) => x + u.strength * u.personnel, 0) / Math.max(1, a.reduce((x, u) => x + u.personnel, 0));
   const by = (p: string) => a.filter((u) => u.posture === p).map((u) => `${nm(u.name)}${u.place ? ` (${pl(u.place)})` : ''}`);
   const parts = [['наступают', by('наступает')], ['обороняются', by('обороняется')], ['на марше', by('на марше')], ['отходят', by('отходит')], ['в резерве', by('в резерве')]]
     .filter(([, x]) => x.length).map(([t, x]) => `${t} — ${list(x as string[], 3)}`);
-  return `${s.who}: в строю ${a.length}, укомплектованность ${pct(avg)}${parts.length ? `; ${parts.join('; ')}` : ''}.`;
+  return `${s.who}: в строю ${a.length}, укомплектованность ${manningText(groupManning(a))}${parts.length ? `; ${parts.join('; ')}` : ''}.`;
 }
 
 function enemyLine(s: DraftScope): string {

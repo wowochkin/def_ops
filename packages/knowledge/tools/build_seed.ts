@@ -969,6 +969,10 @@ for (const e of entries.values()) e.relations = (e.relations ?? []).filter((r) =
       claim = { kind: 'param', param: cleanPath(m.expr), ...(scaleOf(m.expr) ? { scale: scaleOf(m.expr) } : {}), ...rng, ...(unit ? { unit } : {}), ...(side ? { side } : {}) };
     } else if (m.kind === 'assumption') {
       claim = { kind: 'param', param: cleanPath(m.expr), ...(unit ? { unit } : {}), why: m.why };
+    } else if (m.kind === 'establishment') {
+      // штат вида соединения (packages/sim/data/rules/establishment.json) — число правила с источником
+      claim = { kind: 'param', param: `establishment.${m.id}`, ...rng, ...(unit ? { unit } : {}) };
+      extra.establishment = m.id;
     } else if (m.kind === 'pace' || m.kind === 'loss') {
       claim = { kind: 'outcome', measure: m.kind, scenario: m.scenario, subject: m.kind === 'pace' ? m.formation : m.parent, from: m.from, to: m.to, range: range!, unit: unit! };
     } else if (m.kind === 'frontage') {

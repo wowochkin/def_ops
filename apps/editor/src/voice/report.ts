@@ -3,7 +3,8 @@
  * доклад объединения и противника, где находится, день журнала. Чистый модуль (без React); тексты уже готовы к
  * озвучке (speakable: числа словами).
  */
-import type { IntelReport, UnitReport } from '@def-ops/sim';
+import { groupManning, type IntelReport, type UnitReport } from '@def-ops/sim';
+import { manningText } from '../num-format';
 import type { JournalDay, TurnView } from '../sim/game-protocol';
 import { plural, speakable } from './speech';
 
@@ -13,6 +14,8 @@ export const dayMonth = (t: string) => `${+t.slice(8, 10)} ${MONTHS[+t.slice(5, 
 /** «6 часов» / «6:30». */
 const hour = (t: string) => (t.slice(14, 16) === '00' ? `${+t.slice(11, 13)} ${plural(+t.slice(11, 13), ['час', 'часа', 'часов'])}` : t.slice(11, 16));
 const pct = (x: number) => `${Math.round(x * 100)} %`;
+/** Средняя укомплектованность группы — по людям и штатам, двумя мерилами; никого в строю — 0 %. */
+const avgManning = (l: UnitReport[]) => (l.length ? manningText(groupManning(l)) : pct(0));
 /** Название без пояснений в скобках. */
 export const short = (n: string) => n.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 /** Первое предложение текста, с точкой. */
@@ -42,12 +45,11 @@ export const REPORT_MAX_SENTENCES = 7;
  */
 export function situationReport(v: TurnView): { text: string; more: string[] } {
   const active = v.own.filter((u) => u.status === 'active');
-  const avg = active.length ? active.reduce((s, u) => s + u.strength, 0) / active.length : 0;
   const cut = active.filter((u) => u.cutOff).map((u) => short(u.name));
   const head = [
     `Обстановка на ${hour(v.time)} ${dayMonth(v.time)}, ход ${v.turn}.`,
     `Цель — ${v.victory.replace(/[.]+$/, '')}; срок — ${dayMonth(v.deadline)}.`,
-    `В строю ${active.length} ${plural(active.length, ['объединение', 'объединения', 'объединений'])}, средняя укомплектованность ${pct(avg)}; всего войск — ${pct(v.strength)} исходной численности.`,
+    `В строю ${active.length} ${plural(active.length, ['объединение', 'объединения', 'объединений'])}, средняя укомплектованность ${avgManning(active)}; всего войск — ${pct(v.strength)} исходной численности.`,
     cut.length ? `Отрезаны от подвоза: ${list(cut.slice(0, 3))}${cut.length > 3 ? ` и ещё ${cut.length - 3}` : ''}.` : 'Отрезанных от подвоза нет.',
   ];
   const events = v.turn > 1 ? v.events.map(sentence) : [];
@@ -95,7 +97,7 @@ export function whereText(u: UnitReport): string {
 export function unitReport(u: UnitReport): string {
   const parts = [whereText(u)];
   if (u.status === 'destroyed') return say(parts);
-  parts.push(`Укомплектованность ${pct(u.strength)}: ${u.personnel} ${plural(u.personnel, ['человек', 'человека', 'человек'])}, танков и САУ ${u.tanks}, орудий ${u.guns}.`);
+  parts.push(`Укомплектованность ${manningText(u)}: ${u.personnel} ${plural(u.personnel, ['человек', 'человека', 'человек'])}, танков и САУ ${u.tanks}, орудий ${u.guns}.`);
   parts.push(`Боеприпасов ${dec(u.ammo)} боекомплекта, горючего ${dec(u.fuel)} заправки${u.cutOff ? '; подвоз прерван' : ''}.`);
   parts.push(u.task ? `Задача: ${u.task}${u.target ? ` — ${u.target}` : ''}.` : 'Задачи нет.');
   const c = u.combats[0];
@@ -117,10 +119,9 @@ export function enemyReport(e: IntelReport): string {
 export function groupReport(g: { id: string; name: string }, v: TurnView): string {
   const all = v.own.filter((u) => u.parent === g.id);
   const active = all.filter((u) => u.status === 'active');
-  const avg = active.length ? active.reduce((s, u) => s + u.strength, 0) / active.length : 0;
   const cut = active.filter((u) => u.cutOff).length;
   return say([
-    `${short(g.name)}: в строю ${active.length} из ${all.length}, средняя укомплектованность ${pct(avg)}.`,
+    `${short(g.name)}: в строю ${active.length} из ${all.length}, средняя укомплектованность ${avgManning(active)}.`,
     cut ? `Отрезано от подвоза: ${cut}.` : '',
     'Доклады объединений — во вкладке «Доклады».',
   ]);

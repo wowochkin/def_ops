@@ -111,7 +111,7 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
   const defs: FormationDef[] = [
     // верхние инстанции (Ставка, ОКХ/ОКВ) — не формирования карты: фронты и группы армий над картой без старшего
     ...t.hqs.filter((h) => !top.has(h.id)).map((h) => ({ id: h.id, name: h.name, side: h.side, echelon: (ECH.includes(h.echelon as Echelon) ? h.echelon : 'army') as Echelon, parent: h.parent && !top.has(h.parent) ? h.parent : null })),
-    ...t.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division' as Echelon, parent: d.hq, type: typeOf(d.side, d.mobility), note: d.note })),
+    ...t.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division' as Echelon, parent: d.hq, type: typeOf(d.side, d.mobility), staffKind: d.kind, note: d.note })),
   ];
   const ctx: SimContext = { ...base, agentModel: true, scenario: { ...base.scenario, formations: defs, orders: [], end, turnHours: stepHours } };
   if (t.bands?.length) ctx.agentBands = t.bands.map((b) => ({ hq: b.hq, time: time(b.tick), left: b.left, right: b.right }));

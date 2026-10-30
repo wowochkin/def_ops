@@ -306,6 +306,8 @@ export interface FormationDef {
   parent?: string | null;
   /** Тип из профиля стороны (для действующих формирований). */
   type?: string;
+  /** Вид соединения для штатной численности (establishment.json): у дивизий агентной модели — kind сценария. */
+  staffKind?: string;
   position?: LngLat;
   personnel?: number;
   tanks?: number;

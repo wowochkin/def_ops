@@ -21,7 +21,8 @@ export function normRowOf(f: Fact): NormRow | null {
   if (!c) measure = { kind: 'unmodelled', why: n.extra?.why ?? '' };
   else if (c.kind === 'param') {
     const expr = n.expr ?? c.param;
-    measure = c.why != null ? { kind: 'assumption', expr, why: c.why } : { kind: 'param', expr };
+    measure = n.extra?.establishment ? { kind: 'establishment', id: n.extra.establishment }
+      : c.why != null ? { kind: 'assumption', expr, why: c.why } : { kind: 'param', expr };
     expect = c.range ?? (c.value != null ? [c.value, c.value] : undefined);
     unit = c.unit;
   } else if (c.kind === 'outcome') {

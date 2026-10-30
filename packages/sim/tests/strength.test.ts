@@ -3,6 +3,11 @@ import { loadContext, loadHistory } from '../src/data';
 import { compareStrength, runScenario, type History, type StrengthCheckpoint } from '../src/history';
 import { evaluateRules } from '../src/calibrate';
 import { analyze, reportMarkdown } from '../src/report';
+import { establishmentOf } from '../src/establishment';
+import { hqReports, unitReports } from '../src/reports';
+import type { Formation, FormationDef, SimState } from '../src/types';
+import type { SimContext } from '../src/step';
+import rows from '../data/rules/establishment.json';
 
 describe('сверка численности и потерь с документами (History.checkpoints)', () => {
   const ctx = loadContext('berlin-1945');
@@ -90,4 +95,48 @@ describe('сверка потерь выделенного формирован�
     expect(r.n).toBe(1);
     expect(r.medianRel).toBeLessThan(0.001);
   }, 120000);
+});
+
+describe('укомплектованность: от штата и от начала операции', () => {
+  const base = loadContext('berlin-1945');
+  // контекст с одной советской дивизией (и армией над ней) и состояние на час 0
+  const ctxWith = (d: { staffKind?: string; personnel: number; initial: number }[]) => {
+    const defs: FormationDef[] = [{ id: 'a', name: 'армия', side: 'su', echelon: 'army', parent: null },
+      ...d.map((x, i): FormationDef => ({ id: `d${i}`, name: `дивизия ${i}`, side: 'su', echelon: 'division', parent: 'a', type: 'rifle', staffKind: x.staffKind }))];
+    const ctx: SimContext = { ...base, scenario: { ...base.scenario, formations: defs } };
+    const formations = d.map((x, i): Formation => ({ id: `d${i}`, name: `дивизия ${i}`, side: 'su', echelon: 'division', parent: 'a', type: 'rifle', position: [14.3, 52.6], personnel: x.personnel, tanks: 0, guns: 0,
+      initial: { personnel: x.initial, tanks: 0, guns: 0 }, ammo: 1, fuel: 1, fatigue: 0, posture: 'defend', dugInHours: 0, order: null, route: null, destroyed: false, enterAt: null }));
+    const state: SimState = { scenario: ctx.scenario.id, time: base.scenario.start, turn: 0, formations, pending: [], rngState: 0, seed: 1, journal: [] };
+    return { ctx, state };
+  };
+
+  it('штат по виду соединения: у каждой строки — источник; неизвестный вид — null', () => {
+    for (const r of rows.rows) { expect(r.source).not.toBe(''); expect(r.personnel).toBeGreaterThan(0); }
+    const sd = establishmentOf('su', 'sd');
+    expect(sd!.personnel).toBeGreaterThanOrEqual(11000);
+    expect(sd!.personnel).toBeLessThanOrEqual(12500);
+    expect(establishmentOf('su', 'нет такого')).toBeNull();
+    expect(establishmentOf('su', undefined)).toBeNull();
+    expect(establishmentOf('de', 'sd')).toBeNull();
+  });
+
+  it('укомплектованность: от штата и от начала операции — разные мерила', () => {
+    // дивизия sd: 4 920 при 5 000 на начало операции
+    const { ctx, state } = ctxWith([{ staffKind: 'sd', personnel: 4920, initial: 5000 }]);
+    const [u] = unitReports(ctx, state, 'su', null);
+    expect(u.strength).toBeCloseTo(0.984, 3);
+    expect(u.manning).toBeCloseTo(4920 / establishmentOf('su', 'sd')!.personnel, 3);
+  });
+
+  it('без штата — manning null; у штаба — люди со штатом / сумма штатов', () => {
+    const { ctx, state } = ctxWith([{ staffKind: 'sd', personnel: 4000, initial: 5000 }, { staffKind: 'sd', personnel: 6000, initial: 6000 }, { staffKind: 'tk', personnel: 9000, initial: 9000 }]);
+    const own = unitReports(ctx, state, 'su', null);
+    expect(own[2].manning).toBeNull();
+    const [h] = hqReports(ctx, own, 'su');
+    const sd = establishmentOf('su', 'sd')!.personnel;
+    expect(h.manning).toBeCloseTo(10000 / (2 * sd), 4);
+    // без единого штата — null
+    const { ctx: c2, state: s2 } = ctxWith([{ staffKind: 'tk', personnel: 9000, initial: 9000 }]);
+    expect(hqReports(c2, unitReports(c2, s2, 'su', null), 'su')[0].manning).toBeNull();
+  });
 });

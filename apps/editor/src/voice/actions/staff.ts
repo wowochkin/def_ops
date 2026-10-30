@@ -17,7 +17,7 @@
  * Неисполнимое распоряжение — штаб говорит текст проверки расчёта (Worker).
  */
 import type { LngLat } from '@def-ops/core';
-import { TASK_RU, type ActionCheck, type IntelReport, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
+import { groupManning, TASK_RU, type ActionCheck, type IntelReport, type StaffAction, type Target, type Task, type UnitReport } from '@def-ops/sim';
 import type { AdviceView, HumanDecision, Place, PlanVariantView, TurnView } from '../../sim/game-protocol';
 import { ordinalIndex, pickByName } from '../answers';
 import { speakAnswersOn, setSpeakAnswers } from '../advisor-voice';
@@ -29,6 +29,7 @@ import { hl, note as lit, noted, type HlTarget } from '../highlight';
 import { nameCase, numberWords, plural, speakable } from '../speech';
 import { claimMore, inReplay, NO_GAME, type CmdTab } from './command';
 import { SUGGESTIONS } from '../../commander-view';
+import { manningText } from '../../num-format';
 
 // ---------------------------------------------------------------- типы состояния (общие с CommandView)
 
@@ -200,9 +201,8 @@ const ddmm = (t: string) => `${t.slice(8, 10)}.${t.slice(5, 7)}`;
 export function draftReportText(v: TurnView, d: HumanDecision): string {
   const active = v.own.filter((u) => u.status === 'active');
   const cut = active.filter((u) => u.cutOff).map((u) => short(u.name));
-  const pct = Math.round((active.reduce((a, u) => a + u.strength, 0) / Math.max(1, active.length)) * 100);
   return [
-    `К ${hhmm(v.time)} ${ddmm(v.time)}: в строю ${active.length} объединений, средняя укомплектованность ${pct} %.`,
+    `К ${hhmm(v.time)} ${ddmm(v.time)}: в строю ${active.length} объединений, средняя укомплектованность ${manningText(groupManning(active))}.`,
     ...v.events.slice(0, 8),
     cut.length ? `Отрезаны от подвоза: ${cut.join(', ')}.` : '',
     d.intent ? `Решение на ${ddmm(v.time)}: ${d.intent}` : '',

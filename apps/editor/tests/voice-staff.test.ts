@@ -354,6 +354,13 @@ describe('решение голосом', () => {
     expect(decisionMissing(EMPTY)).toEqual(['оценка обстановки', 'решение (замысел)', 'боевое донесение вышестоящему']);
     expect(draftReportText(view(), { ...EMPTY, intent: 'Удар.' })).toMatch(/Решение на 18\.04: Удар\.$/);
   });
+  it('черновик донесения — укомплектованность от штата и от начала операции', () => {
+    const unit = own[0];
+    const t = draftReportText({ ...view(), own: [{ ...unit, status: 'active', strength: 0.97, manning: 0.42 }] } as never, EMPTY);
+    expect(t).toContain('42 % от штата, 97 % от начала операции');
+    const t2 = draftReportText({ ...view(), own: [{ ...unit, status: 'active', strength: 0.97, manning: null }] } as never, EMPTY);
+    expect(t2).toContain('средняя укомплектованность 97 % от начала операции');
+  });
 });
 
 // ---------------------------------------------------------------- тыл, переправы, резервы, полосы
