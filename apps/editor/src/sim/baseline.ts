@@ -1,12 +1,14 @@
 /**
  * «Переигровка без вмешательства» для сравнения итогов: прогон «Истории как замысла» того же сценария и seed на тех
- * же правках базы знаний. Сводка (OperationSummary) кэшируется в localStorage по сценарию, seed и отпечатку правок;
+ * же правках базы знаний. Сводка (OperationSummary) кэшируется в localStorage по сценарию, seed, отпечатку правок и
+ * отпечатку модели (MODEL_STAMP: другая модель — другой ключ);
  * переигровка в режиме «История как замысел» без варианта параметров сама и есть такой прогон — её сводка
  * запоминается (rememberBaseline), отдельный прогон не нужен. Хранилища нет — просто считать.
  */
 import type { AgentHistory, AgentTrace, OperationSummary } from '@def-ops/sim';
 import type { SimRequest, SimResponse } from './protocol';
 import type { ReplayDebriefs } from './replay-debrief';
+import { MODEL_STAMP } from './model-stamp';
 
 export const BASELINE_KEY = 'def_ops.baseline.v1';
 
@@ -17,8 +19,8 @@ function fnv1a(s: string): string {
   return (h >>> 0).toString(16).padStart(8, '0');
 }
 
-export function baselineKey(scenario: string, seed: number, edits: unknown): string {
-  return `${BASELINE_KEY}:${scenario}:${seed}:${fnv1a(JSON.stringify(edits ?? null))}`;
+export function baselineKey(scenario: string, seed: number, edits: unknown, model: string = MODEL_STAMP): string {
+  return `${BASELINE_KEY}:${scenario}:${seed}:${fnv1a(JSON.stringify(edits ?? null))}:${model}`;
 }
 
 const memory = new Map<string, OperationSummary>();
@@ -48,6 +50,8 @@ export interface BaselineDeps {
   summarize?(trace: AgentTrace, history: AgentHistory): Promise<OperationSummary>;
   edits?(scenario: string): Promise<unknown>;
   history?(scenario: string): Promise<AgentHistory>;
+  /** Отпечаток модели (по умолчанию — MODEL_STAMP сборки). */
+  model?: string;
 }
 
 /** Сводка хода фоновым потоком переигровки (summaryOnly): контекст и история сценария — там же, где у расчёта. */
@@ -76,12 +80,13 @@ export async function recomputeInWorker(scenario: string, seed: number, trace: A
 
 /**
  * Сводка переигровки без вмешательства: из кэша, иначе прогон ядра (command: 'intent') и сводка фоновым потоком.
- * Одновременные вызовы с одним ключом — один прогон.
+ * Одновременные вызовы с одним ключом — один прогон. o.edits — поправки ядра, с которыми считана сравниваемая игра
+ * (из её записи; null — без поправок базы): прогон на них же; не заданы — на нынешней сборке базы (coreEditsFor).
  */
-export async function baselineSummary(scenario: string, seed: number, deps: BaselineDeps = {}): Promise<OperationSummary> {
+export async function baselineSummary(scenario: string, seed: number, deps: BaselineDeps = {}, o: { edits?: unknown } = {}): Promise<OperationSummary> {
   const editsOf = deps.edits ?? (async (sc: string) => (await import('./kb-recompile')).coreEditsFor(sc));
-  const edits = await editsOf(scenario);
-  const key = baselineKey(scenario, seed, edits);
+  const edits = 'edits' in o ? o.edits ?? undefined : await editsOf(scenario);
+  const key = baselineKey(scenario, seed, edits, deps.model);
   const hit = read(key);
   if (hit) return hit;
   const running = inflight.get(key);

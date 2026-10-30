@@ -254,7 +254,9 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   useEffect(() => {
     if (!wantBaseline || baseline.state !== 'off' || !baseScen || baseSeed == null) return;
     setBaseline({ state: 'wait' });
-    baselineSummary(baseScen, baseSeed)
+    // на поправках ядра, с которыми игра начата (запись; как у потока игры — gameKbData), записи ещё нет — на нынешних
+    const rec = savedRef.current?.record;
+    baselineSummary(baseScen, baseSeed, {}, rec ? { edits: rec.kb ? rec.kb.core ?? null : null } : {})
       .then((summary) => setBaseline({ state: 'ready', summary }))
       .catch((e) => setBaseline({ state: 'error', text: String((e as Error)?.message ?? e) }));
   }, [wantBaseline, baseScen, baseSeed]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTrace, OperationSummary } from '@def-ops/sim';
 import { BASELINE_KEY, baselineKey, baselineSummary, rememberBaseline } from '../src/sim/baseline';
+import { MODEL_STAMP } from '../src/sim/model-stamp';
 
 const store = new Map<string, string>();
 const ls = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
@@ -50,5 +51,32 @@ describe('переигровка без вмешательства', () => {
     const d = deps({ t: 1 });
     expect((await baselineSummary('b', 5, d)).seed).toBe(5);
     expect(() => rememberBaseline('b', 5, null, S(5))).not.toThrow();
+  });
+
+  it('model stamp in key', async () => {
+    vi.stubGlobal('localStorage', ls);
+    // другая модель (ядро, правила) — другой ключ: старая сводка не выдаётся за новую
+    expect(baselineKey('b', 1, null, 'm1')).not.toBe(baselineKey('b', 1, null, 'm2'));
+    expect(baselineKey('b', 1, null)).toBe(baselineKey('b', 1, null, MODEL_STAMP));
+    const d = deps({ m: 1 });
+    await baselineSummary('b', 2, { ...d, model: 'm1' });
+    await baselineSummary('b', 2, { ...d, model: 'm1' });
+    expect(d.run).toHaveBeenCalledTimes(1);
+    await baselineSummary('b', 2, { ...d, model: 'm2' });
+    expect(d.run).toHaveBeenCalledTimes(2);
+  });
+
+  it('game edits override current', async () => {
+    vi.stubGlobal('localStorage', ls);
+    // игра — на поправках, с которыми начата (запись), а не на нынешней сборке базы
+    const d = deps({ now: 1 });
+    const edits = vi.fn(d.edits);
+    await baselineSummary('b', 4, { ...d, edits }, { edits: { game: 1 } });
+    expect(edits).not.toHaveBeenCalled();
+    expect(d.run.mock.calls[0][1]).toMatchObject({ seed: 4, edits: { game: 1 } });
+    // запись без поправок базы — прогон без поправок
+    await baselineSummary('b', 4, { ...d, edits }, { edits: null });
+    expect(edits).not.toHaveBeenCalled();
+    expect(d.run.mock.calls[1][1]).not.toHaveProperty('edits');
   });
 });

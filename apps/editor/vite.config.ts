@@ -1,9 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+
+/** Отпечаток модели — хеш выжимки кода и нормативов модели (меняется с ядром и моделью; src/sim/model-stamp.ts). */
+const modelStamp = (() => {
+  try { return createHash('sha256').update(readFileSync(resolve(__dirname, '../../packages/knowledge/data/model-index.json'))).digest('hex').slice(0, 12); }
+  catch { return 'dev'; }
+})();
 
 export default defineConfig({
   plugins: [react()],
+  define: { __MODEL_STAMP__: JSON.stringify(modelStamp) },
   server: {
     host: true,
     port: 5173,
