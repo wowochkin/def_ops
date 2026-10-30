@@ -32,6 +32,9 @@ describe('ходатайство о разграничительной лини�
     const s = petitionState(v({ control: { su_1bf: 'player' } }), 'su_1bf', opts);
     expect(s).toMatchObject({ show: true, who: 'rules' });
     expect(s.why).toMatch(/^Рассматривает Ставка на этом ходу по правилу/);
+    // порог ядра: ровно половина — уже отказ (petition.rs share <= min_share)
+    expect(s.why).toMatch(/оставляет ему больше половины прежней полосы/);
+    expect(s.why).not.toMatch(/не меньше половины/);
     expect(s.neighbours.map((n) => n.id)).toEqual(['su_1uf', 'su_2bf']);
   });
   it('скрыто: фронт не взят', () => {
