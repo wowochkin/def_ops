@@ -685,7 +685,9 @@ function fortressFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
  * Разграничительные линии на карте:
  *  - по директивам (hist-bounds) — линии из Scenario.boundaries в сроки их действия, с источником в названии;
  *  - расчётные по ходам — границы полос фронтов (sim-bounds, lvl-st-bounds, lvl-op-bounds) и армий внутри фронта
- *    (lvl-op-bounds) от переднего края в глубину; где действует директива, расчётная линия идёт по ней.
+ *    (lvl-op-bounds) от переднего края в глубину; где действует директива, расчётная линия идёт по ней;
+ *  - агентная модель со следом полос (ctx.agentBands) — вместо расчётных линий армий действующие полосы армий ядра
+ *    (обе границы, lvl-op-bounds и sim-bounds) от часа смены до следующей смены.
  * С туманом войны (visible) — только свои полосы.
  */
 function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => Side, visible?: PublishOptions['visible']): Feature[] {
@@ -720,7 +722,8 @@ function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
           out.push(f);
         }
       }
-      // полосы армий — внутри фронта
+      // полосы армий — внутри фронта (агентная модель со следом полос — полосы ядра, ниже)
+      if (ctx.agentBands) continue;
       const am = sectorMap(T, ctx.scenario, units, sd, sn.time, { level: 'army', groups: army });
       if (am.groups.length > 1) for (const l of sectorLines(T, am, { depthKm: depthKm * 0.6 })) {
         if ((front.get(l.pair[0]) ?? l.pair[0]) !== (front.get(l.pair[1]) ?? l.pair[1])) continue;
@@ -731,6 +734,25 @@ function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
       }
     }
   }
+  // действующие полосы армий агентной модели: по часам смены, до следующей смены той же армии
+  const bands = ctx.agentBands ?? [];
+  bands.forEach((b, k) => {
+    const sd = sideOfF.get(b.hq);
+    if (!sd || !own.includes(sd)) return;
+    // несколько записей одной армии в один час — действует последняя
+    if (bands.slice(k + 1).some((x) => x.hq === b.hq && x.time === b.time)) return;
+    const next = bands.slice(k + 1).find((x) => x.hq === b.hq && x.time > b.time);
+    const nm = names.get(b.hq) ?? b.hq;
+    for (const [line, which] of [[b.right, 'правая'], [b.left, 'левая']] as const) {
+      for (const layerId of ['lvl-op-bounds', 'sim-bounds']) {
+        const f = createFeature('line', 'rkka.boundaryArmy', { points: line, layerId }, 0.7, sideOf(sd));
+        f.name = `Полоса ${nm}: ${which} разграничительная линия`;
+        f.ref = b.hq;
+        f.time = { from: b.time, to: next?.time ?? null };
+        out.push(f);
+      }
+    }
+  });
   return out;
 }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { LineFeature } from '@def-ops/core';
 import { loadHistory, loadProfile, loadRules, loadScenario, loadTheatre } from '../src/data';
 import { contextFrom } from '../src/source';
 import { agentKindOf, agentsHistory, agentsStateAt, agentsToRun, postureOf, type AgentCommander, type AgentTrace } from '../src/agents';
@@ -74,6 +75,20 @@ describe('агентная модель в «Переигровке»', () => {
     const doc = runToDocument(ctx, run, h, { name: 'проба' });
     expect(doc.features.filter((f) => f.layerId === 'sim-own').length).toBeGreaterThan(0);
     expect(doc.timeline?.end).toBe('1945-04-16T17:00');
+  });
+
+  it('линии армий на карте — полосы из следа ядра, по часам их смены', async () => {
+    const { ctx: base, history } = await contextFrom(get, 'berlin-1945-tasks');
+    const t: AgentTrace = { ...trace(), bands: [
+      { hq: 'su_8gva', tick: 0, left: [[14.6, 52.70], [14.2, 52.70]], right: [[14.6, 52.50], [14.2, 52.50]] },
+      { hq: 'su_8gva', tick: 6, left: [[14.6, 52.70], [13.9, 52.70]], right: [[14.6, 52.50], [13.9, 52.50]] },
+    ] };
+    const { ctx, run } = agentsToRun(base, t, 3);
+    const doc = runToDocument(ctx, run, agentsHistory({ divisions: [], events: [] }, history), { name: 'проба' });
+    const lines = doc.features.filter((f) => f.layerId === 'lvl-op-bounds' && f.name?.startsWith('Полоса 8')) as LineFeature[];
+    expect(lines.filter((f) => f.time?.from === '1945-04-16T05:00')).toHaveLength(2);       // левая и правая
+    expect(lines.filter((f) => f.time?.from === '1945-04-16T11:00' && f.points.some((p) => p[0] === 13.9))).toHaveLength(2);
+    expect(lines.find((f) => f.time?.from === '1945-04-16T05:00')!.time?.to).toBe('1945-04-16T11:00');
   });
 
   it('состояние на час для игры: только дивизии, приказ ядра — задача, не введённые и выбывшие', async () => {

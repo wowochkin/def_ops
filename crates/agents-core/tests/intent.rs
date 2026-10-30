@@ -1266,3 +1266,36 @@ fn taken_subtree_no_history_24h() {
     let hist = sim.documents[docs0..].iter().filter(|d| d.hq == f && d.to.iter().any(|t| names.contains(&t.as_str()))).count();
     assert_eq!(hist, 0, "директив фронта армиям нет");
 }
+
+/// Пункт 9 спецификации пакета: у каждой советской армии в часы 24, 72, 144 «Истории как замысла» дивизии не дальше 5 км
+/// за действующей полосой (кроме посланных ядром за полосу — цель приказа вне полосы), а полоса доходит до переднего края
+/// армии и до рубежа ближайшей задачи.
+#[test]
+fn intent_bands_follow_armies() {
+    use agents_core::command::{agent::current_band, band::{outside_km, reach_km}};
+    use agents_core::model::Echelon;
+    let mut sim = intent_sim();
+    for tick in [24, 72, 144] {
+        run_to(&mut sim, tick);
+        for h in 0..sim.world.hqs.len() as u32 {
+            let w = &sim.world.hqs[h as usize];
+            if w.side != Side::Su || w.echelon != Echelon::Army { continue; }
+            let Some((band, base, dir)) = current_band(&sim, h) else { continue };
+            let mut front = 0.0f64;
+            for i in under(&sim, h) {
+                let d = &sim.world.divisions[i];
+                front = front.max((d.vars.pos.x - base.x) * dir.x + (d.vars.pos.y - base.y) * dir.y);
+                let sent_out = d.order.as_ref().is_some_and(|o| outside_km(o.target, &band) > 0.0);
+                assert!(sent_out || outside_km(d.vars.pos, &band) <= 5.0, "{} час {tick}: {} за полосой на {:.1} км", w.id, d.id, outside_km(d.vars.pos, &band));
+            }
+            let task = sim.command.intent[h as usize].as_ref().and_then(|x| x.immediate.as_ref())
+                .map(|l| l.pts.iter().map(|p| (p.x - base.x) * dir.x + (p.y - base.y) * dir.y).fold(0.0, f64::max)).unwrap_or(0.0);
+            let reach = reach_km(&band, base, dir);
+            if std::env::var("BANDS_PRINT").is_ok() { eprintln!("час {tick} {}: полоса до {reach:.1} км, передний край {front:.1}, задача {task:.1}", w.id); }
+            assert!(reach >= front.max(task) - 0.5, "{} час {tick}: полоса до {reach:.1} км, передний край {front:.1}, задача {task:.1}", w.id);
+        }
+    }
+    // след: полосы армий записаны по часам смены
+    if std::env::var("BANDS_PRINT").is_ok() { eprintln!("записей полос: {}", sim.command.bands.len()); }
+    assert!(sim.command.bands.iter().any(|(h, t, _)| sim.world.hqs[*h as usize].id == "su_8gva" && *t > 0), "полосы 8 гв. А в следе");
+}

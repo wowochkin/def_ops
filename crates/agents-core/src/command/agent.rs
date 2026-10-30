@@ -2,7 +2,7 @@
 //! ударе — уже) и отдаёт каждому директиву своей ступени — ближайшая и последующая задачи в пределах задачи старшего
 //! (ПУ-39 ст. 89); дивизии директива становится приказом. Логика ступеней по уставам — этап 2б.
 
-use crate::command::band::{band_of, center, clip_line, point_in_band, split};
+use crate::command::band::{band_of, center, clip_line, extend_back, extend_band, outside_km, point_in_band, reach_km, split, Band};
 use crate::command::control::{active_subs, Control, DocKind, Document};
 use crate::command::directive::{Directive, Form, Line, Target, Task};
 use crate::command::passing::{issue, target_id};
@@ -70,6 +70,80 @@ pub fn frame(sim: &Sim, h: u32, intent: &Directive, subs: &[Target]) -> Frame {
     Frame { band, axis, dir }
 }
 
+/// Живые дивизии поддерева штаба `h`.
+fn subtree_divs(sim: &Sim, h: u32) -> Vec<usize> {
+    let w = &sim.world;
+    let under = |mut k: usize| { for _ in 0..8 { if k == h as usize { return true; } match w.hqs[k].parent { Some(p) => k = p as usize, None => return false } } false };
+    (0..w.divisions.len()).filter(|&i| !w.divisions[i].state.out() && under(w.divisions[i].hq as usize)).collect()
+}
+
+fn along(p: XY, base: XY, dir: XY) -> f64 { (p.x - base.x) * dir.x + (p.y - base.y) * dir.y }
+
+/// Действующая полоса штаба `h` по его замыслу: полоса (назад — до тылов его войск), начало оси и направление;
+/// замысла нет — `None`.
+pub fn current_band(sim: &Sim, h: u32) -> Option<(Band, XY, XY)> {
+    let intent = sim.command.intent.get(h as usize)?.as_ref()?;
+    let subs = subs_of(sim, h);
+    let f = frame(sim, h, intent, &subs);
+    let base = f.axis.first().copied().or_else(|| mid(&subs.iter().map(|&t| place(sim, t)).collect::<Vec<_>>())).unwrap_or_default();
+    let rear = subtree_divs(sim, h).iter().map(|&i| along(sim.world.divisions[i].vars.pos, base, f.dir)).fold(0.0, f64::min);
+    Some((extend_back(&f.band, base, f.dir, rear - 2.0), base, f.dir))
+}
+
+/// Глубина полосы вперёд от переднего края, если ближайшей задачи впереди нет (или она ближе 5 км), км.
+const BAND_DEPTH_KM: f64 = 20.0;
+
+/// Продление полос армий (пункт 9 спецификации пакета команд): армия-агент наступает, а её передний край по оси дальше
+/// конца полосы без половины глубины полосы (или рубеж ближайшей задачи за концом полосы) — границы замысла
+/// продлеваются вперёд по оси до переднего края плюс глубина ближайшей задачи (нет — 20 км); документ — распоряжение
+/// в штабе армии. Новый замысел (директива) границы задаёт заново.
+pub fn extend_bands(sim: &mut Sim, tick: u32) {
+    for h in 0..sim.world.hqs.len() {
+        if sim.world.hqs[h].echelon != Echelon::Army || sim.command.control[h] != Control::Agent { continue; }
+        let Some(intent) = sim.command.intent[h].as_ref() else { continue };
+        if !matches!(intent.task, Task::Attack | Task::Move) || intent.axis.len() < 2 { continue; }
+        let subs = subs_of(sim, h as u32);
+        if subs.is_empty() { continue; }
+        let f = frame(sim, h as u32, intent, &subs);
+        let base = f.axis[0];
+        let divs = subtree_divs(sim, h as u32);
+        if divs.is_empty() { continue; }
+        let front = divs.iter().map(|&i| along(sim.world.divisions[i].vars.pos, base, f.dir)).fold(f64::NEG_INFINITY, f64::max);
+        let task = intent.immediate.as_ref().map(|l| l.pts.iter().map(|&p| along(p, base, f.dir)).fold(f64::NEG_INFINITY, f64::max)).unwrap_or(f64::NEG_INFINITY);
+        let depth = if task - front >= 5.0 { task - front } else { BAND_DEPTH_KM };
+        let reach = reach_km(&f.band, base, f.dir);
+        if front <= reach - 0.5 * depth && task <= reach + 0.5 { continue; }
+        let to = (front + depth).max(task);
+        let band = extend_band(&f.band, base, f.dir, to);
+        let i = sim.command.intent[h].as_mut().unwrap();
+        i.boundaries = vec![(None, band.left), (None, band.right)];
+        // документ — по штабу армии (старший её полосу задал замыслом; директивы старшего — только его замыслы)
+        sim.documents.push(Document { tick, hq: h as u32, kind: DocKind::Instruction, to: Vec::new(),
+            text: format!("продлить полосу до {:.0} км по оси (передний край — {:.0} км)", to, front.max(0.0)),
+            rule: Some("полоса армии — до переднего края и на глубину ближайшей задачи".into()) });
+    }
+}
+
+/// Запись полос армий для следа: при смене замысла или его границ и когда войска армии вышли больше чем на 3 км за
+/// последнюю записанную полосу (полоса без границ растёт вширь по войскам).
+pub fn record_bands(sim: &mut Sim, tick: u32) {
+    for h in 0..sim.world.hqs.len() {
+        if sim.world.hqs[h].echelon != Echelon::Army || sim.command.control[h] != Control::Agent { continue; }
+        let Some(intent) = sim.command.intent[h].as_ref() else { continue };
+        let sig = (intent.id.clone(), intent.issued, intent.boundaries.len(), intent.boundaries.iter().map(|(_, l)| l.len()).sum::<usize>());
+        let same = sim.command.band_sig.get(&(h as u32)) == Some(&sig);
+        let Some((band, _, _)) = current_band(sim, h as u32) else { continue };
+        if same {
+            // тот же замысел: новая запись, только если войска вышли за записанную полосу, а в нынешней они есть
+            let last = sim.command.bands.iter().rev().find(|(k, _, _)| *k == h as u32).map(|(_, _, b)| b);
+            let strayed = last.is_some_and(|b| subtree_divs(sim, h as u32).iter().any(|&i| { let p = sim.world.divisions[i].vars.pos; outside_km(p, b) > 3.0 && outside_km(p, &band) <= 1.0 }));
+            if !strayed { continue; }
+        }
+        sim.command.band_sig.insert(h as u32, sig);
+        sim.command.bands.push((h as u32, tick, band));
+    }
+}
+
 /// Общий раздел полосы: подчинённым `subs` — полосы по весам (`weights` по порядку `subs`; нет — главный удар уже),
 /// ближайшая и последующая задачи — части рубежей старшего. `replan` — по циклу (распоряжением).
 pub fn generic(sim: &Sim, h: u32, intent: &Directive, replan: bool, subs: &[Target], weights: Option<&[f64]>) -> Vec<Directive> {
@@ -124,6 +198,8 @@ fn div_target(d: &Directive, pos: XY) -> XY {
 pub fn phase(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Event>) {
     // история как замысел: задачи цепочек — до командующих и штабов (там, где история кончилась, решают они)
     if sim.intent.any() { crate::intent::step(sim, tick); }
+    // полосы наступающих армий-агентов — до переднего края и на глубину ближайшей задачи
+    extend_bands(sim, tick);
     // командующие решают до штабов: их директивы и роли штабы разбирают в этом же часе
     crate::commander::cycle(sim, tick);
     // готовые к началу директивы доходят до дивизий в тот же час — по ступеням, не больше пяти проходов
@@ -131,6 +207,7 @@ pub fn phase(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Event
         phase_once(sim, next, tick, journal);
         if !sim.command.in_transit.iter().any(|(at, _)| *at <= tick) { break; }
     }
+    record_bands(sim, tick);
 }
 
 fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Event>) {

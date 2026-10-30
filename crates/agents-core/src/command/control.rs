@@ -59,6 +59,10 @@ pub struct CommandState {
     /// Введённые подвижные группы, ещё не получившие задачи на глубину: (получатель, правило) — до ближайшего
     /// распределения полосы фронта (su.rs::commit_mobile).
     pub commits: Vec<(crate::command::directive::Target, String)>,
+    /// Полосы армий для следа: (штаб, час, полоса) — при каждой смене (новый замысел, продление, войска вышли за
+    /// нарисованную полосу); подпись последней записи по штабу — замысел и его границы.
+    pub bands: Vec<(u32, u32, crate::command::band::Band)>,
+    pub band_sig: std::collections::HashMap<u32, (String, u32, usize, usize)>,
 }
 
 /// Запрос корпуса на отход дивизии: ответ — да, нет или ещё нет.
@@ -72,7 +76,7 @@ impl CommandState {
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
         CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], named_hq: vec![false; hqs], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
             role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
-            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new() }
+            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new(), bands: Vec::new(), band_sig: Default::default() }
     }
 }
 

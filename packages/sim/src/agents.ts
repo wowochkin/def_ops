@@ -30,6 +30,8 @@ export interface AgentTrace {
   commanders?: AgentCommander[];
   /** История как замысел (режим `intent`): по штабу — смены статуса «по истории / сдвинут / сам» с причиной. Нет — режима нет. */
   intent?: { hq: string; changes: { tick: number; status: 'history' | 'shifted' | 'own'; reason: string | null }[] }[];
+  /** Действующие полосы армий-агентов: при каждой смене (новый замысел, продление, войска вышли за полосу) — обе границы. */
+  bands?: { hq: string; tick: number; left: LngLat[]; right: LngLat[] }[];
 }
 
 /** Число с пределами и источником (узел commanders.json). */
@@ -112,6 +114,7 @@ export function agentsToRun(base: SimContext, t: AgentTrace, stepHours = 6): { c
     ...t.divisions.map((d) => ({ id: d.id, name: d.name, side: d.side, echelon: 'division' as Echelon, parent: d.hq, type: typeOf(d.side, d.mobility), note: d.note })),
   ];
   const ctx: SimContext = { ...base, agentModel: true, scenario: { ...base.scenario, formations: defs, orders: [], end, turnHours: stepHours } };
+  if (t.bands?.length) ctx.agentBands = t.bands.map((b) => ({ hq: b.hq, time: time(b.tick), left: b.left, right: b.right }));
 
   // снимки: начальный кадр и далее через stepHours (и последний)
   const at = (row: unknown[]) => [row[iLng] as number, row[iLat] as number] as LngLat;

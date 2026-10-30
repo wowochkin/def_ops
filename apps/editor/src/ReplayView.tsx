@@ -409,6 +409,13 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     if (!import.meta.env.DEV) return;
     (window as unknown as { __replayZones?: () => { neg: number; key: string } }).__replayZones = () => zoneProbe.current();
   }, []);
+  // крючок разработки: документ карты, текущий час и ход агентной модели (проверка полос армий, часть bounds)
+  const boundsProbe = useRef<() => unknown>(() => null);
+  boundsProbe.current = () => ({ doc, time, trace: agentRun?.trace ?? null });
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as unknown as { __replayBounds?: () => unknown }).__replayBounds = () => boundsProbe.current();
+  }, []);
   const closeCards = useCallback(() => { setCardSel(null); setAgentSel(null); }, []);
   useEsc(!!(cardSel || agentSel), closeCards);
   /** Карточка выбранного соединения или штаба на момент проигрывания. */

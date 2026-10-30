@@ -47,6 +47,74 @@ async function replayAgents() {
 }
 
 const parts = {
+  /** Полосы армий в «Истории как замысле»: в часы 24/72/144 линии армий — действующие полосы ядра, дивизии армии не дальше 5 км за ними. */
+  async bounds() {
+    await page.goto(`${URL_}/`);
+    await page.evaluate(() => localStorage.setItem('def_ops.agents.command', 'intent'));
+    await replayAgents();
+    await page.locator('.lvl-sw button', { hasText: 'Фронт' }).click();
+    const slider = page.locator('.pl-track input[type=range]');
+    for (const H of [24, 72, 144]) {
+      await slider.evaluate((el, h) => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, String(h));
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }, H);
+      await page.waitForTimeout(500);
+      const r = await page.evaluate((H) => {
+        const { doc, time, trace } = window.__replayBounds();
+        if (!trace) return { err: 'нет хода агентной модели' };
+        const at = (h) => new Date(Date.parse(`${trace.start}:00Z`) + h * 3600000).toISOString().slice(0, 16);
+        const t = at(H);
+        const lines = doc.features.filter((f) => f.layerId === 'lvl-op-bounds' && f.name?.startsWith('Полоса ') && f.time && f.time.from <= t && (f.time.to === null || f.time.to > t));
+        const hq = new Map(trace.hqs.map((h) => [h.id, h]));
+        const armyOf = (id) => { for (let k = id, n = 0; k && n < 8; k = hq.get(k)?.parent, n++) if (hq.get(k)?.echelon === 'army') return k; return null; };
+        const F = (k) => trace.fields.indexOf(k);
+        const [iLng, iLat, iSt] = [F('lng'), F('lat'), F('state')];
+        const lat0 = 52.5, KX = 111.32 * Math.cos(lat0 * Math.PI / 180), KY = 110.57;
+        const xy = (p) => [p[0] * KX, p[1] * KY];
+        const inside = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [ax, ay] = poly[i], [bx, by] = poly[j]; if ((ay > p[1]) !== (by > p[1]) && p[0] < ax + (p[1] - ay) * (bx - ax) / (by - ay)) c = !c; } return c; };
+        const seg = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy; const u = l2 > 0 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0; return Math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy); };
+        const out = (p, poly) => inside(p, poly) ? 0 : Math.min(...poly.map((a, i) => seg(p, a, poly[(i + 1) % poly.length])));
+        const res = [];
+        const polys = new Map();
+        for (const a of new Set(lines.map((f) => f.ref))) {
+          const left = lines.find((f) => f.ref === a && f.name.includes('левая')), right = lines.find((f) => f.ref === a && f.name.includes('правая'));
+          if (left && right && hq.get(a)?.side === 'su') polys.set(a, [...left.points, ...[...right.points].reverse()].map(xy));
+        }
+        for (const [a, poly] of polys) {
+          // подчинение в ходе — на конец прогона: дивизия за своей полосой, но в полосе другой армии — переподчинена по ходу
+          let n = 0, far = 0, worst = 0, other = 0;
+          trace.frames[H].forEach((row, k) => {
+            const d = trace.divisions[k];
+            if (armyOf(d.hq) !== a || /^(не введена|сведена|небоеспособна)/.test(String(row[iSt]))) return;
+            n++;
+            const p = xy([row[iLng], row[iLat]]);
+            const km = out(p, poly);
+            if (km > 5 && [...polys].some(([b, q]) => b !== a && out(p, q) <= 5)) { other++; return; }
+            worst = Math.max(worst, km);
+            if (km > 5) far++;
+          });
+          if (n) res.push({ a, n, far, other, worst: Math.round(worst * 10) / 10 });
+        }
+        // вид — на советские войска этого часа
+        const su = trace.frames[H].filter((row, k) => trace.divisions[k].side === 'su' && !/^(не введена|сведена|небоеспособна)/.test(String(row[iSt])));
+        const c = [su.reduce((x, r) => x + r[iLng], 0) / su.length, su.reduce((x, r) => x + r[iLat], 0) / su.length];
+        const v = window.__replayEngine.getView();
+        if (!window.__boundsZoom) window.__boundsZoom = v.zoom - 0.4;
+        window.__replayEngine.setView({ center: c, zoom: window.__boundsZoom });
+        return { time: time?.slice(0, 16), t, res, sovietArmies: trace.hqs.filter((h) => h.side === 'su' && h.echelon === 'army').length };
+      }, H);
+      if (r.err) return fail('bounds', r.err);
+      await shot(`bounds-h${H}.jpg`);
+      const bad = r.res.filter((x) => x.far > 0);
+      console.log(`  час ${H} (${r.time}): армий с полосами ${r.res.length} из ${r.sovietArmies}; ` + r.res.map((x) => `${x.a} ${x.n - x.far - x.other}/${x.n}${x.worst > 0 ? ` (до ${x.worst} км)` : ''}${x.other ? `, в полосе другой армии ${x.other}` : ''}`).join(', '));
+      if (r.time !== r.t) fail('bounds', `час ${H}: ползунок на ${r.time}, а не ${r.t}`);
+      else if (r.res.length < 10) fail('bounds', `час ${H}: полос армий на карте ${r.res.length}`);
+      else if (bad.length) fail('bounds', `час ${H}: за полосой дальше 5 км — ${bad.map((x) => `${x.a} ${x.far} из ${x.n} (до ${x.worst} км)`).join(', ')}`);
+      else ok('bounds', `час ${H}`);
+    }
+  },
   /** Вкладка «Командующий» не дрожит: ширины колонок картины неизменны при проигрывании по часу. */
   async commander() {
     await replayAgents();

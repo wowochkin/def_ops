@@ -28,6 +28,8 @@ export interface SimContext {
   rules: Rules;
   /** Агентная модель: действуют дивизии, армии и корпуса — узлы подчинения (приказ им ядро доводит до всех их дивизий). */
   agentModel?: boolean;
+  /** Агентная модель: действующие полосы армий из следа ядра — по часам их смены (время смены — момент сценария). */
+  agentBands?: { hq: string; time: string; left: LngLat[]; right: LngLat[] }[];
 }
 
 const HOUR = 3600_000;

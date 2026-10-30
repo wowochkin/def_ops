@@ -72,5 +72,10 @@ pub fn describe(sim: &Sim, meta: &crate::scenario::Meta, frames: Vec<Vec<Value>>
     if let Some(c) = crate::commander::trace::describe(sim) { out["commanders"] = c; }
     // история как замысел: по штабу смены состояния — только если режим включён
     if let Some(v) = crate::intent::describe(sim) { out["intent"] = v; }
+    // полосы армий-агентов по часам смены — только если записаны (ход по приказам сценария прежний байт в байт)
+    if !sim.command.bands.is_empty() {
+        let ll = |l: &[crate::geo::XY]| l.iter().map(|&p| sim.theatre.proj.to_lnglat(p)).collect::<Vec<_>>();
+        out["bands"] = json!(sim.command.bands.iter().map(|(h, t, b)| json!({ "hq": w.hqs[*h as usize].id, "tick": t, "left": ll(&b.left), "right": ll(&b.right) })).collect::<Vec<_>>());
+    }
     out
 }

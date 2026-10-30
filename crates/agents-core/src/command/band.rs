@@ -140,6 +140,56 @@ pub fn clip_line(line: &[XY], band: &Band) -> Vec<XY> {
     vec![nearest(lerp(a, b, 0.5))]
 }
 
+fn seg_dist(p: XY, a: XY, b: XY) -> f64 {
+    let (d, l2) = (sub(b, a), dot(sub(b, a), sub(b, a)));
+    let t = if l2 > 1e-12 { (dot(sub(p, a), d) / l2).clamp(0.0, 1.0) } else { 0.0 };
+    p.dist(add(a, mul(d, t)))
+}
+
+/// Насколько точка за полосой, км: внутри — 0, иначе расстояние до ближайшего края полосы (границы или их концов).
+pub fn outside_km(p: XY, band: &Band) -> f64 {
+    let mut poly = band.left.clone();
+    poly.extend(band.right.iter().rev());
+    if poly.len() < 3 || inside(p, &poly) { return 0.0; }
+    (0..poly.len()).map(|i| seg_dist(p, poly[i], poly[(i + 1) % poly.len()])).fold(f64::INFINITY, f64::min)
+}
+
+/// Докуда по оси доходит полоса, км: проекция на направление `dir` от `base` дальней точки каждой границы, меньшая из двух.
+pub fn reach_km(band: &Band, base: XY, dir: XY) -> f64 {
+    let far = |l: &[XY]| l.iter().map(|p| dot(sub(*p, base), dir)).fold(f64::NEG_INFINITY, f64::max);
+    far(&band.left).min(far(&band.right))
+}
+
+/// Полоса, продлённая вперёд: каждая граница, не доходящая по оси до `to_km` (проекция на `dir` от `base`), продлена
+/// по направлению своего последнего отрезка (уходит от оси назад или вбок — по оси) до этой проекции.
+pub fn extend_band(band: &Band, base: XY, dir: XY, to_km: f64) -> Band {
+    let ext = |l: &[XY]| {
+        let mut l = l.to_vec();
+        let Some(&last) = l.last() else { return l };
+        let have = dot(sub(last, base), dir);
+        if have >= to_km { return l; }
+        let u = match l.as_slice() { [.., a, b] if a.dist(*b) > 1e-6 => mul(sub(*b, *a), 1.0 / a.dist(*b)), _ => dir };
+        let u = if dot(u, dir) < 0.5 { dir } else { u };
+        l.push(add(last, mul(u, (to_km - have) / dot(u, dir))));
+        l
+    };
+    Band { left: ext(&band.left), right: ext(&band.right) }
+}
+
+/// Полоса, продлённая назад: каждая граница, начинающаяся по оси дальше `from_km`, продлена против `dir` до этой
+/// проекции (тылы армии позади начала оси — в её полосе).
+pub fn extend_back(band: &Band, base: XY, dir: XY, from_km: f64) -> Band {
+    let ext = |l: &[XY]| {
+        let Some(&first) = l.first() else { return l.to_vec() };
+        let have = dot(sub(first, base), dir);
+        if have <= from_km { return l.to_vec(); }
+        let mut v = vec![add(first, mul(dir, from_km - have))];
+        v.extend_from_slice(l);
+        v
+    };
+    Band { left: ext(&band.left), right: ext(&band.right) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -190,5 +240,23 @@ mod tests {
         let p = split(&ten(), &[1.0, 1.0]);
         let (a, b) = (clip_line(&short, &p[0]), clip_line(&short, &p[1]));
         assert!(a[0].dist(b[0]) > 4.0, "{a:?} {b:?}");
+    }
+
+    #[test]
+    fn outside_reach_extend() {
+        let b = ten();
+        assert_eq!(outside_km(XY::new(10.0, 2.0), &b), 0.0);
+        assert!((outside_km(XY::new(10.0, 8.0), &b) - 3.0).abs() < 1e-9);
+        assert!((outside_km(XY::new(26.0, 0.0), &b) - 6.0).abs() < 1e-9);
+        let (base, dir) = (XY::new(0.0, 0.0), XY::new(1.0, 0.0));
+        assert!((reach_km(&b, base, dir) - 20.0).abs() < 1e-9);
+        let e = extend_band(&b, base, dir, 35.0);
+        assert!((reach_km(&e, base, dir) - 35.0).abs() < 1e-9);
+        assert_eq!(e.left.len(), 3);
+        assert_eq!(outside_km(XY::new(30.0, 4.0), &e), 0.0);
+        assert_eq!(extend_band(&b, base, dir, 10.0), b, "доходит — без изменений");
+        let r = extend_back(&b, base, dir, -8.0);
+        assert_eq!(outside_km(XY::new(-6.0, 0.0), &r), 0.0);
+        assert_eq!(extend_back(&b, base, dir, 3.0), b);
     }
 }
