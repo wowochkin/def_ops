@@ -5,7 +5,7 @@ import type { LngLat } from '@def-ops/core';
 import type { PlanVariantView, TurnView } from '../src/sim/game-protocol';
 import type { DraftScope } from '../src/decision-drafts';
 import { staffScope } from '../src/post-staff';
-import { completeVariant, dirDraftOf, planHint, fromCore, historyLoss, majorRivers, planFallback, riverFeature, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
+import { completeVariant, dirDraftOf, planBlocked, planHint, fromCore, historyLoss, majorRivers, planFallback, riverFeature, RULES_MARK, ruleActs, variantFeatures, type CoreOrder, type CoreVariant } from '../src/plan-rules';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const rep = (id: string, name: string, echelon: string, parent: string, at: LngLat, x: object = {}) => ({
@@ -165,11 +165,69 @@ describe('реки для переправ — из слоя карты', () => 
   });
 });
 
+describe('кнопки вариантов недоступны без модели и правил', () => {
+  it('«Варианты советника» и «Предложить» в окне советника — одна причина', () => {
+    expect(planBlocked(false, false)).toBe('Советник не на связи; варианты по правилам — в игре на агентной модели');
+    expect(planBlocked(true, false)).toBeNull();
+    expect(planBlocked(false, true)).toBeNull();
+  });
+});
+
 describe('подпись у кнопки «Варианты советника»', () => {
   it('полный вариант с правилами — только где правила действуют; на нынешней модели — приказы тем, чья задача меняется', () => {
     expect(planHint(true, true)).toBe('советник (ИИ) и правила: задачи всем подчинённым, полосы, ось, резервы, тыл, переправы');
     expect(planHint(true, false)).toBe('советник (ИИ): решение и приказы тем, чья задача меняется');
     expect(planHint(false, true)).toBe('советник не на связи — варианты по правилам (варианты командующих)');
     expect(planHint(false, false)).toBe('советник не на связи; варианты по правилам — в игре на агентной модели');
+  });
+});
+
+describe('мелочи советника: немецкая сторона, пробел вариантов, резерв, приказ модели без приказа правила', () => {
+  const llm = (orders: PlanVariantView['orders']): PlanVariantView => ({ title: 'Удар модели', idea: 'суть', decision: { assessment: 'a', enemyIntent: 'e', intent: 'i', report: 'r', risks: 'k' }, orders, acts: [] });
+  /** Пункт группы армий «Висла»: 9-я армия и 3-я танковая армия; ОКХ ведёт игрок. */
+  const de = () => view({
+    human: { id: 'de', name: 'Германия' }, terms: { top: 'ОКХ', topGen: 'ОКХ', topTo: 'в ОКХ', topGen2: 'ОКХ', group: 'группа армий' },
+    own: [rep('de_9a', '9-я армия', 'army', 'de_hgr', [14.3, 52.55]), rep('de_3pza', '3-я танковая армия', 'army', 'de_hgr', [14.2, 53.0]), rep('de_d1', '20-я танково-гренадерская дивизия', 'division', 'de_9a', [14.3, 52.55])],
+    places: [{ id: 'p_zel', title: 'Зелов (Seelow)', at: [14.38, 52.6] }, { id: 'p_ang', title: 'Ангермюнде', at: [14.0, 53.02] }],
+    command: { mode: 'agents', led: [], requests: [], historical: [], documents: [], petitions: [], hqs: Object.fromEntries([
+      hq('de_okh', 'ОКХ', 'high_command', null, 'player'), hq('de_hgr', 'Группа армий «Висла»', 'front', 'de_okh'),
+      hq('de_9a', '9-я армия', 'army', 'de_hgr'), hq('de_3pza', '3-я танковая армия', 'army', 'de_hgr'), hq('de_res', 'Резерв ОКХ', 'army', 'de_okh'),
+    ]) },
+    boundaries: [{ right: 'de_3pza', left: 'de_9a', rightName: '3 ТА', leftName: '9 А', title: '', line: [[14.6, 52.8], [14.0, 52.8]] }],
+  } as never);
+  const deCore = (): CoreVariant => ({
+    kind: 'hold', label: 'Оборона на Одере', rule: 'Держать рубеж.', score: 0.6, axis: [], mainBlow: [], reserve: ['de_res'],
+    orders: [ord('de_9a', 'defend', [[14.3, 52.55], [14.38, 52.6]]), ord('de_3pza', 'defend', [[14.2, 53.0], [14.0, 53.02]])],
+  });
+  it('немецкая сторона: варианты по правилам всем армиям группы армий, на карте — ось, линии, точка цели', () => {
+    const v = de();
+    const p = fromCore(v, scope0, 'de_hgr', deCore(), null);
+    expect(p.dirs!.map((d) => d.to)).toEqual(['de_9a', 'de_3pza']);
+    expect(p.decision.intent).toContain('9 А — оборонять: Зелов');
+    const fs = variantFeatures(p, (id) => id);
+    expect(fs.filter((f) => f.kind === 'line')).toHaveLength(4);
+    expect(fs.filter((f) => f.kind === 'point' && f.name.endsWith('точка цели'))).toHaveLength(2);
+    expect(ruleActs(v, null, p.dirs!).every((a) => !a.action || (a.action as { side?: string }).side === 'de')).toBe(true);
+  });
+  it('резерв варианта ядра — в решении варианта', () => {
+    expect(fromCore(de(), scope0, 'de_hgr', deCore(), null).decision.intent).toContain('Резерв — Резерв ОКХ.');
+    expect(fromCore(de(), scope0, 'de_hgr', { ...deCore(), reserve: [] }, null).decision.intent).not.toContain('Резерв —');
+  });
+  it('модель дала k из n и оборвалась — недостающие варианты по правилам', () => {
+    const rules = [fromCore(view(), scope0, 'su_1bf', core(), null), fromCore(view(), scope0, 'su_1bf', core('continue', 'Продолжать'), null), fromCore(view(), scope0, 'su_1bf', core('x', 'Третий'), null)];
+    const r = planFallback(rules, { done: true, ok: false, error: 'обрыв', count: 1, want: 3 });
+    expect(r.variants.map((x) => x.title)).toEqual(['Прорыв на Зелов', 'Продолжать']);
+    expect(r.warning).toBe('Советник дал 1 вариант из 3 (обрыв) — остальные по правилам.');
+    expect(planFallback(rules, { done: true, ok: true, count: 3, want: 3 }).variants).toEqual([]);
+    expect(planFallback(rules, { done: false, ok: false, count: 1, want: 3 }).variants).toEqual([]);
+  });
+  it('приказ модели получателю без приказа правила — ось к цели от его войск, линии — по его полосе', () => {
+    const v = de();
+    const p = completeVariant(v, 'de_hgr', llm([{ formation: 'de_9a', name: '9-я армия', task: 'attack', target: null, targetText: 'Зелов', at: [14.38, 52.6], why: 'контрудар', ok: true }]), null);
+    const d = p.dirs!.find((x) => x.to === 'de_9a')!;
+    expect(d.axis).toEqual([[14.3, 52.55], [14.38, 52.6]]);
+    // 9-я армия — слева от линии с 3-й танковой: это её правая разграничительная линия
+    expect(d.right).toEqual([[14.6, 52.8], [14.0, 52.8]]);
+    expect(d.left).toEqual([]);
   });
 });

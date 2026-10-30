@@ -651,7 +651,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
     return () => { tourMapRef.current = null; };
   }, [eng]); // eslint-disable-line react-hooks/exhaustive-deps
   const debrief = useDebrief({
-    debrief: dayDebrief, resetKey: `${result?.scenario ?? ''}|${result?.seed ?? ''}|${dayDebrief?.time ?? ''}`,
+    top: result?.debriefs?.terms?.top, debrief: dayDebrief, resetKey: `${result?.scenario ?? ''}|${result?.seed ?? ''}|${dayDebrief?.time ?? ''}`,
     model: () => (llm.check.state === 'ok' ? (system, text, o) => askText(system, text, { settings: llm.settings, signal: o.signal, delays: RETRY_DELAYS_MS }) : null),
     show: (m, tick) => {
       const d = dayDebrief;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LngLat } from '@def-ops/core';
 import { blankDir } from '../src/command-post';
-import { applyObject, findObjects, objectiveMark, postObjects, theatreObjects, type PostObject } from '../src/post-objects';
+import { applyObject, findObjects, labelAt, objectiveMark, postObjects, theatreObjects, type PostObject } from '../src/post-objects';
 
 const ZEL: LngLat = [14.47, 52.52], MUN: LngLat = [14.13, 52.5];
 const v = {
@@ -92,5 +92,17 @@ describe('объекты приказа', () => {
     expect(Object.keys(o).sort()).toEqual(['crossings', 'lines']);
     expect(o.lines).toEqual([{ id: 'l1', name: 'Рубеж', line: [[14, 52], [14.1, 52.1]] }]);
     expect(o.crossings.map((b) => b.name)).toEqual(['Мост A', 'Переправа у Зелова']);
+  });
+});
+
+describe('подпись точки цели — сдвиг в пикселях', () => {
+  it('над точкой на 26 пикселей при любом масштабе: на шаг масштаба крупнее — вдвое меньше градусов', () => {
+    const at: LngLat = [14.5, 52.5];
+    const k = Math.cos((52.5 * Math.PI) / 180);
+    const d8 = labelAt(at, 8)[1] - at[1], d9 = labelAt(at, 9)[1] - at[1];
+    expect(d8 / d9).toBeCloseTo(2, 5);
+    // 26 пикселей при 512 пикселях на мир на масштабе 0 (по широте — с поправкой на широту)
+    expect(d8 * (512 * 2 ** 8) / 360 / k).toBeCloseTo(26, 5);
+    expect(labelAt(at, 8)[0]).toBe(at[0]);
   });
 });

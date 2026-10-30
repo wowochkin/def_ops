@@ -44,7 +44,7 @@ describe('состояние управления в игре на агентн�
     const t = trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
       petitions: [{ from: 'su_8gva', neighbour: 'su_4gsk', tick: 26, accepted: true, why: 'полоса 85 % прежней' },
         { from: 'de_101ak', neighbour: 'de_9a', tick: 26, accepted: false, why: 'главный удар' }] });
-    expect(commandView(t, 'su')!.petitions).toEqual([{ from: 'su_8gva', neighbour: 'su_4gsk', neighbourName: '4 гв. ск', time: '17.04 07:00', accepted: true, why: 'полоса 85 % прежней' }]);
+    expect(commandView(t, 'su')!.petitions).toEqual([{ from: 'su_8gva', neighbour: 'su_4gsk', neighbourName: '4 гв. ск', time: '17.04 07:00', tick: 26, accepted: true, why: 'полоса 85 % прежней' }]);
     // ядро без раздела ходатайств — список пуст
     expect(commandView(trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [] }), 'su')!.petitions).toEqual([]);
   });
@@ -112,6 +112,20 @@ describe('журнал противника в «истории как замы�
     expect(log[0]).toMatchObject({ kind: 'decision', divisions: ['de_d1'] });
     expect(log[0].text).toBe('16.04 07:00 Верховное командование · директива hitler-1504 — CI. AK: оборонять — держать фронт на Одере');
     expect(enemyPlayerText(log[0], new Set(['de_d1']))).toBeNull();
+  });
+});
+
+describe('директивы верховного командования противника — игрок за немецкую сторону', () => {
+  it('директива Ставки — посреднику немецкого игрока; свои директивы (ОКХ) — не противника', () => {
+    const j = { ...trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
+        enemyHistorical: [{ id: 'stavka-1504', at: 2, to: 'su_8gva', task: 'attack', form: 'order', note: 'прорвать оборону на Одере' }] }),
+      hqs: [...trace().hqs, { id: 'de_okh', name: 'ОКХ', side: 'de', echelon: 'high_command', parent: null }] } as never;
+    const log = enemyLog(j, 'de', 0, 27).filter((e) => e.kind === 'decision');
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ hq: 'su_stavka', divisions: ['su_d1'] });
+    expect(log[0].text).toBe('16.04 07:00 Ставка ВГК · директива stavka-1504 — 8 гв. А: наступать — прорвать оборону на Одере');
+    expect(enemyPlayerText(log[0], new Set(['su_d1']))).toBeNull();
+    expect(enemyLog(j, 'de', 0, 27).some((e) => e.hq === 'de_okh')).toBe(false);
   });
 });
 

@@ -61,7 +61,7 @@ export interface CommandView {
   historical: { id: string; time: string; to: string; toName: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean; due: boolean }[];
   documents: { time: string; hq: string; hqName: string; kind: string; to: string[]; text: string; rule: string | null }[];
   /** Ходатайства о разграничительных линиях своей стороны: сосед, время, принято ли и почему. */
-  petitions: { from: string; neighbour: string; neighbourName: string; time: string; accepted: boolean; why: string }[];
+  petitions: { from: string; neighbour: string; neighbourName: string; time: string; tick: number; accepted: boolean; why: string }[];
   /** Противник: штабы (подчинённость) и штаб каждой дивизии — для разведки по ступеням (что видно — решает разведсводка). */
   enemy: { hqs: Record<string, { name: string; echelon: string; parent: string | null }>; divisions: Record<string, string> };
 }
@@ -86,7 +86,7 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
       return { id: h.id, time: at(h.at), to: h.to, toName: hs.map((x) => name.get(x.to) ?? x.to).join(', '), task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour };
     }),
     petitions: (c.petitions ?? []).filter((p) => hq.get(p.from)?.side === side)
-      .map((p) => ({ from: p.from, neighbour: p.neighbour, neighbourName: name.get(p.neighbour) ?? p.neighbour, time: at(p.tick), accepted: p.accepted, why: p.why })),
+      .map((p) => ({ from: p.from, neighbour: p.neighbour, neighbourName: name.get(p.neighbour) ?? p.neighbour, time: at(p.tick), tick: p.tick, accepted: p.accepted, why: p.why })),
     enemy: {
       hqs: Object.fromEntries(t.hqs.filter((h) => h.side !== side).map((h) => [h.id, { name: h.name, echelon: h.echelon, parent: h.parent }])),
       divisions: Object.fromEntries(t.divisions.filter((d) => d.side !== side).map((d) => [d.id, d.hq])),

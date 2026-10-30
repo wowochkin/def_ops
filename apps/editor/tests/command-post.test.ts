@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dirTaskOf, FIELDS, postProjectCount, issuers, missing, postContext, postPrompt, postTitle, recipients, resolveFrom, sender, suggestionToDir, toDirective, type DirDraft } from '../src/command-post';
+import { activeRecipient, blankDir, dirTaskOf, FIELDS, postProjectCount, issuers, missing, postContext, postPrompt, postTitle, recipients, resolveFrom, sender, suggestionToDir, toDirective, type DirDraft } from '../src/command-post';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const v = (taken: string[] = []) => ({
@@ -30,6 +30,13 @@ describe('пункт управления по уровням', () => {
     expect(issuers(v(), 'army').map((x) => x.id)).toEqual(['su_8gva', 'su_1gta']);
     expect(recipients(v(), 'su_8gva').map((x) => x.id)).toEqual(['su_4gsk', 'su_29gsk', 'su_d9']);
     expect(recipients(v(), 'su_4gsk').map((x) => x.id)).toEqual(['su_d1', 'su_d2']);
+  });
+  it('проект выбывшему подчинённому — не действующий (на карте не рисуется)', () => {
+    expect(activeRecipient(v(), 'su_d1')).toBe(true);
+    expect(activeRecipient(v(), 'su_4gsk')).toBe(true);
+    expect(activeRecipient(v(), 'su_dx')).toBe(false);
+    expect(activeRecipient(v(), 'su_gone')).toBe(false);
+    expect(blankDir('su_dx', 'corps').to).toBe('su_dx');
   });
   it('взятый штаб отдаёт сам; не взятый — Ставка через голову', () => {
     expect(sender(v(['su_8gva']), 'su_8gva')).toEqual({ from: 'su_8gva', overHead: false });

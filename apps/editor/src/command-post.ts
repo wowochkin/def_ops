@@ -116,6 +116,12 @@ export function recipients(v: TurnView, issuer: string): Node[] {
   return [...hqs, ...divs];
 }
 
+/** Получатель ещё действует: штаб стороны или дивизия, не выбывшие (проекты выбывшим на карте не рисуются). */
+export function activeRecipient(v: TurnView, id: string): boolean {
+  const u = v.own.find((x) => x.id === id);
+  return u ? u.status !== 'destroyed' : !!v.command?.hqs[id];
+}
+
 /**
  * Штаб под управлением игрока: взят или взятие в очереди этого хода (команды ядро исполняет по порядку — «взять» раньше
  * директивы); «вернуть» в очереди — уже не под управлением.

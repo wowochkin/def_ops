@@ -17,6 +17,9 @@ import { wantsFly } from './post-views';
 import { withNote } from './post-notes';
 import { applyObject, findObjects, OBJ_KIND_RU, postObjects, shortName, type ObjKind } from './post-objects';
 
+/** Вопрос перед «составить указания заново» — у кнопки и у голосовой команды один. */
+const RECOMPOSE_Q = 'Указания будут заменены составленными по задаче и обстановке. Составить заново?';
+
 export type { DirPick };
 const PICK_RU: Record<DirPick, string> = { axis: 'ось', immediate: 'рубеж ближайшей задачи', subsequent: 'рубеж последующей задачи', boundaryR: 'правая разграничительная линия', boundaryL: 'левая разграничительная линия', mainBlow: 'знаки армий главного удара' };
 /** Название выбранного объекта у поля точек: указание щелчками или очистка его снимает. */
@@ -154,7 +157,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   });
   useAction({
     id: 'command.dir.note.compose', section: 'replay', title: 'Составить указания заново', describe: 'Заменяет указания открытого документа составленными по задаче и обстановке; дальше они пересчитываются вместе с задачей, пока их не правят руками.',
-    say: ['штаб, составь указания заново'], irreversible: true, confirm: () => 'Указания будут заменены составленными по задаче и обстановке. Составить заново?',
+    say: ['штаб, составь указания заново'], irreversible: true, confirm: () => RECOMPOSE_Q,
     available: ready, highlight: () => hl('post-form'),
     run: async () => {
       const d = live.current.draft;
@@ -296,12 +299,14 @@ function ObjectPicker({ v, field, from }: { v: TurnView; field: DirPick; from: L
 }
 
 /** Точки поля: сколько указано (или название выбранного объекта), «на карте» / «Готово», «из списка», «очистить». */
-function Points({ v, label, hint, field, pts, title, pick, from }: { v: TurnView; label: string; hint?: string; field: DirPick; pts: LngLat[]; title?: string; pick: DirPick | null; from: LngLat | null }) {
+export function Points({ v, label, hint, field, pts, title, pick, from }: { v: TurnView; label: string; hint?: string; field: DirPick; pts: LngLat[]; title?: string; pick: DirPick | null; from: LngLat | null }) {
   const on = pick === field;
   const [open, setOpen] = useState(false);
-  // объект поставлен (поле изменилось) — список закрывается
+  // объект поставлен (поле изменилось) — список закрывается; разграничительная линия набирается по точкам — список
+  // открыт, пока его не закроют
   const key = JSON.stringify(pts);
-  useEffect(() => { setOpen(false); }, [key]);
+  const multi = field.startsWith('boundary');
+  useEffect(() => { if (!multi) setOpen(false); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="post-pts-w">
     <div className="post-pts">
       <span>{label}{hint && <small className="muted"> — {hint}</small>}: {pts.length ? <b>{title ?? `${pts.length} т.`}</b> : <span className="muted">не указан{field.startsWith('boundary') ? 'а' : ''}</span>}</span>
@@ -374,7 +379,7 @@ export function CommandPost({ v, post, cmds }: { v: TurnView; post: PostState; c
           <ActButton key={k} className={(d.echelon ?? '') === k ? 'on' : ''} action="command.dir.set" params={{ echelon: k }}>{t}</ActButton>)}</div>}
         {has('commit') && /танк/i.test(subs.find((x) => x.id === d.to)?.name ?? '') && <label className="post-chk1"><input type="checkbox" data-action="command.dir.set" checked={!!d.commit} onChange={() => void act('command.dir.set', { commit: !d.commit })} /> {label('commit')} <small className="muted">— {hint('commit')}</small></label>}
         <label>{label('note')} {d.noteAuto ? <small className="muted">составлены по задаче и обстановке — правьте</small>
-          : <button type="button" className="link" data-action="command.dir.note.compose" onClick={() => { void confirmAsync('Указания будут заменены составленными по задаче и обстановке. Составить заново?', { ok: 'Составить' }).then((ok) => { if (ok) void act('command.dir.note.compose', undefined, { by: 'mouse' }); }); }}>составить заново</button>}
+          : <button type="button" className="link" data-action="command.dir.note.compose" onClick={() => { void confirmAsync(RECOMPOSE_Q, { ok: 'Составить' }).then((ok) => { if (ok) void act('command.dir.note.compose', undefined, { by: 'mouse' }); }); }}>составить заново</button>}
           <textarea rows={3} value={d.note} placeholder="Цель, силы, взаимодействие…" onChange={(e) => void act('command.dir.set', { note: e.target.value })} /></label>
         <div className="muted small">{d.immediateBy && `Ближайшая — к ${dm(d.immediateBy)}. `}{d.subsequentBy && `Последующая — к ${dm(d.subsequentBy)}. `}{s.overHead ? 'Через голову: пропущенные штабы получат извещение. ' : ''}До получателя — {d.form === 'order' ? 'около суток' : '1–3 ч'}.</div>
         {miss.length > 0 && <div className="adv-warn">Не хватает: {miss.join(', ')}.</div>}

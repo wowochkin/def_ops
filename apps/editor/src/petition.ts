@@ -77,8 +77,37 @@ export function petitionOp(issuer: string, p: PetitionDraft | undefined): Comman
 
 const km = (a: LngLat, b: LngLat) => Math.hypot((a[0] - b[0]) * Math.cos((a[1] * Math.PI) / 180), a[1] - b[1]) * 111;
 
-/** Текст ходатайства для модели-Ставки (нынешняя модель): сосед и пункты, ближайшие к точкам линии. */
-export function petitionText(p: PetitionDraft, name: (id: string) => string, places: Place[]): string {
+/** Команды ядру от каждого взятого фронта, где ходатайство действует (агентная модель); нынешняя модель — нет команд. */
+export function petitionOps(v: TurnView, posts: Record<string, { petition?: PetitionDraft }>, o: Parameters<typeof petitionState>[2], cmds: CommandOp[] = []): CommandOp[] {
+  if (!v.command) return [];
+  return Object.entries(posts).flatMap(([id, d]) => {
+    const op = petitionState(v, id, o, cmds).show ? petitionOp(id, d.petition) : null;
+    return op ? [op] : [];
+  });
+}
+
+/**
+ * Кто просит (нынешняя модель — игрок ведёт всю сторону): объединение верхнего уровня, к которому восходят по
+ * подчинённости ближайшие к линии свои войска, кроме соседа; точек нет или не нашлось — null.
+ */
+export function petitionAsker(v: TurnView, p: PetitionDraft): string | null {
+  if (!p.line.length) return null;
+  const groups = new Set((v.groups ?? []).map((g) => g.id).filter((id) => id !== p.neighbour));
+  const parent = new Map(v.own.map((u) => [u.id, u.parent]));
+  const groupOf = (id: string | null) => { for (let i = 0; id && i < 12; i++) { if (groups.has(id)) return id; id = parent.get(id) ?? null; } return null; };
+  let best: { g: string; d: number } | null = null;
+  for (const u of v.own) {
+    if (u.status === 'destroyed' || !u.at) continue;
+    const g = groupOf(u.id);
+    if (!g) continue;
+    const d = Math.min(...p.line.map((at) => km(at, u.at)));
+    if (!best || d < best.d) best = { g, d };
+  }
+  return best?.g ?? null;
+}
+
+/** Текст ходатайства для модели-Ставки (нынешняя модель): кто просит, сосед и пункты, ближайшие к точкам линии. */
+export function petitionText(p: PetitionDraft, name: (id: string) => string, places: Place[], from?: string): string {
   const via: string[] = [];
   for (const at of p.line) {
     const near = places.reduce<Place | null>((m, x) => (!m || km(at, x.at) < km(at, m.at) ? x : m), null);
@@ -86,18 +115,15 @@ export function petitionText(p: PetitionDraft, name: (id: string) => string, pla
     if (via.at(-1) !== t) via.push(t);
   }
   const note = p.note.trim();
-  return `Прошу установить разграничительную линию с ${name(p.neighbour)}${via.length ? ` через ${via.join(' — ')}` : ''}.${note ? ` ${note}` : ''}`;
+  return `${from ? `${from} просит` : 'Прошу'} установить разграничительную линию с ${name(p.neighbour)}${via.length ? ` через ${via.join(' — ')}` : ''}.${note ? ` ${note}` : ''}`;
 }
 
-/** «дд.мм чч:мм» — ключ сортировки по времени (месяц, день, час). */
-const timeKey = (t: string) => `${t.slice(3, 5)}${t.slice(0, 2)}${t.slice(6)}`;
-
-/** Последний ответ верхней инстанции на ходатайство пункта: время, принято ли, словами. */
+/** Последний ответ верхней инстанции на ходатайство пункта (по ходу ядра): время, принято ли, словами. */
 export function petitionAnswer(v: TurnView, issuer: string): { time: string; accepted: boolean; text: string } | null {
   const own = (v.command?.petitions ?? []).filter((p) => p.from === issuer);
   if (!own.length) return null;
-  const p = own.reduce((m, x) => (timeKey(x.time) >= timeKey(m.time) ? x : m));
-  return { time: p.time, accepted: p.accepted, text: p.accepted ? (p.why ? `линия принята — ${p.why}` : 'линия принята') : p.why };
+  const p = own.reduce((m, x) => (x.tick >= m.tick ? x : m));
+  return { time: p.time, accepted: p.accepted, text: p.accepted ? (p.why ? `линия принята (${p.why})` : 'линия принята') : p.why };
 }
 
 /** Цвет ходатайства на карте — свой, чтобы линию нельзя было спутать с разграничительными линиями проектов. */

@@ -20,7 +20,8 @@ export type { NarrativeState };
  * ждущий запрос к модели; связный текст — по (ходу, позиции).
  */
 export function useDebrief(o: { debrief: TurnDebrief | null; resetKey: string; model: () => UmpireModel | null; show: (m: TourMap, tick: number) => void;
-  /** Часть «Ход» на экране; ушли с неё — карта возвращается (уровень, время, метка снята: reset). */ active: boolean; reset: () => void }) {
+  /** Часть «Ход» на экране; ушли с неё — карта возвращается (уровень, время, метка снята: reset). */ active: boolean; reset: () => void;
+  /** Верхняя инстанция словом стороны (terms.top) — позиция «с позиции …» без штаба. */ top?: string }) {
   const live = useRef(o); live.current = o;
   const [hq, setHq] = useState<string | null>(null);
   const [open, setOpen] = useState<number | null>(null);
@@ -55,7 +56,7 @@ export function useDebrief(o: { debrief: TurnDebrief | null; resetKey: string; m
       abort.current?.abort();
       const ac = new AbortController();
       abort.current = ac;
-      const input = debriefInput(d, h, {});
+      const input = debriefInput(d, h, {}, live.current.top);
       setNarr({ key: k, s: { state: 'wait' } });
       m(DEBRIEF_SYSTEM, input, { signal: ac.signal })
         .then((text) => { if (!ac.signal.aborted) setNarr({ key: k, s: narrativeFits(text, input) ? { state: 'ready', text: text.trim() } : { state: 'unfit' } }); })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PETITION_COLOR, petitionAnswer, petitionMarks, petitionOp, petitionState, petitionText, type PetitionDraft } from '../src/petition';
+import { PETITION_COLOR, petitionAnswer, petitionAsker, petitionMarks, petitionOp, petitionOps, petitionState, petitionText, type PetitionDraft } from '../src/petition';
 
 const hq = (id: string, name: string, echelon: string, parent: string | null, control = 'agent') => [id, { control, led: false, name, echelon, parent }] as const;
 const div = (id: string, parent: string, status = 'active') => ({ id, name: id, echelon: 'division', parent, status });
@@ -95,14 +95,51 @@ describe('ходатайство о разграничительной лини�
       .toBe('Прошу установить разграничительную линию с 1-й Украинский фронт через Котбус — Луккау. Его войска вышли в нашу полосу.');
     expect(petitionText({ ...p, note: '' }, () => 'сосед', places)).toBe('Прошу установить разграничительную линию с сосед через Котбус — Луккау.');
   });
+  it('petitionAnswer: последний — по ходу ядра, не по «дд.мм чч:мм» без года', () => {
+    const w = v({ control: { su_1bf: 'player' } }) as unknown as { command: { petitions: unknown[] } };
+    // 31.12 (tick 10) раньше 01.01 (tick 34): строка «31.12» сортировалась бы позже
+    w.command.petitions = [
+      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '', time: '01.01 05:00', tick: 34, accepted: false, why: 'позже' },
+      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '', time: '31.12 05:00', tick: 10, accepted: false, why: 'раньше' },
+    ];
+    expect(petitionAnswer(w as never, 'su_1bf')?.text).toBe('позже');
+  });
+  it('petitionAnswer: принятая — без двойного тире', () => {
+    const w = v({ control: { su_1bf: 'player' } }) as unknown as { command: { petitions: unknown[] } };
+    w.command.petitions = [{ from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '', time: '18.04 05:00', tick: 48, accepted: true, why: 'полоса соседа — 128 % прежней' }];
+    expect(petitionAnswer(w as never, 'su_1bf')?.text).toBe('линия принята (полоса соседа — 128 % прежней)');
+  });
+  it('petitionOps: команды ходатайств взятых фронтов — их и считает «команд: N»', () => {
+    const w = v({ control: { su_1bf: 'player' } });
+    const line: [number, number][] = [[14.5, 52.3], [13.9, 52.2]];
+    const posts = { su_1bf: { petition: { neighbour: 'su_1uf', line, note: '' } }, su_1uf: { petition: { neighbour: 'su_1bf', line, note: '' } } } as never;
+    expect(petitionOps(w, posts, opts).map((c) => (c as { from: string }).from)).toEqual(['su_1bf']);
+    expect(petitionOps({ ...(w as object), command: undefined } as never, posts, opts)).toEqual([]);
+  });
+  it('petitionText: от кого — объединение игрока у линии', () => {
+    const places = [{ id: 'a', title: 'Котбус', at: [14.33, 51.76] }] as never;
+    const p: PetitionDraft = { neighbour: 'su_1uf', line: [[14.3, 51.75], [14.34, 51.77]], note: '' };
+    expect(petitionText(p, (id) => (id === 'su_1uf' ? '1-й Украинский фронт' : id), places, '1-й Белорусский фронт'))
+      .toBe('1-й Белорусский фронт просит установить разграничительную линию с 1-й Украинский фронт через Котбус.');
+    // кто просит: объединение верхнего уровня, к которому восходят ближайшие к линии свои войска (кроме соседа)
+    const w = {
+      groups: [{ id: 'su_1bf', name: '1-й Белорусский фронт' }, { id: 'su_1uf', name: '1-й Украинский фронт' }, { id: 'su_2bf', name: '2-й Белорусский фронт' }],
+      own: [
+        { id: 'su_8gva', parent: 'su_1bf', status: 'active', at: [14.6, 52.5] }, { id: 'su_d1', parent: 'su_8gva', status: 'active', at: [14.31, 51.76] },
+        { id: 'su_d9', parent: 'su_1uf', status: 'active', at: [14.3, 51.75] }, { id: 'su_d2', parent: 'su_2bf', status: 'destroyed', at: [14.3, 51.75] },
+      ],
+    } as never;
+    expect(petitionAsker(w, p)).toBe('su_1bf');
+    expect(petitionAsker(w, { ...p, line: [] })).toBeNull();
+  });
   it('petitionAnswer: последний ответ по времени', () => {
     const w = v({ control: { su_1bf: 'player' } }) as unknown as { command: { petitions: unknown[] } };
     w.command.petitions = [
-      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '1-й Украинский фронт', time: '18.04 05:00', accepted: true, why: 'полоса соседа — 80 % прежней' },
-      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '1-й Украинский фронт', time: '17.04 05:00', accepted: false, why: 'отнимает главный удар' },
-      { from: 'su_1uf', neighbour: 'su_1bf', neighbourName: '1-й Белорусский фронт', time: '19.04 05:00', accepted: false, why: 'чужое' },
+      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '1-й Украинский фронт', time: '18.04 05:00', tick: 48, accepted: true, why: 'полоса соседа — 80 % прежней' },
+      { from: 'su_1bf', neighbour: 'su_1uf', neighbourName: '1-й Украинский фронт', time: '17.04 05:00', tick: 24, accepted: false, why: 'отнимает главный удар' },
+      { from: 'su_1uf', neighbour: 'su_1bf', neighbourName: '1-й Белорусский фронт', time: '19.04 05:00', tick: 72, accepted: false, why: 'чужое' },
     ];
-    expect(petitionAnswer(w as never, 'su_1bf')).toEqual({ time: '18.04 05:00', accepted: true, text: 'линия принята — полоса соседа — 80 % прежней' });
+    expect(petitionAnswer(w as never, 'su_1bf')).toEqual({ time: '18.04 05:00', accepted: true, text: 'линия принята (полоса соседа — 80 % прежней)' });
     w.command.petitions.splice(0, 1);
     expect(petitionAnswer(w as never, 'su_1bf')).toEqual({ time: '17.04 05:00', accepted: false, text: 'отнимает главный удар' });
     expect(petitionAnswer(w as never, 'su_2bf')).toBeNull();

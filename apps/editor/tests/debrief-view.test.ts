@@ -86,6 +86,12 @@ describe('разбор хода в окне', () => {
     expect(input).toContain('Позиция: Ставка');
   });
 
+  it('позиция верхней инстанции — словом стороны (terms.top), не «Ставка»/«ОКХ» по стороне', () => {
+    const d = debrief([]);
+    expect(debriefInput(d, null, {}, 'ОКВ')).toContain('Позиция: ОКВ.');
+    expect(debriefInput({ ...d, side: 'de' }, null, {}, 'ОКХ')).toContain('Позиция: ОКХ.');
+  });
+
   it('debrief input with events and perspective', () => {
     const d = debrief([ev({})]);
     const input = debriefInput(d, 'su_8gva', { su_8gva: '8-я гвардейская армия' });

@@ -86,6 +86,15 @@ describe('указания по задаче и обстановке', () => {
     expect(s).toBe('Задача — оборонять: ближайшая — Зелов. Справа — 4-я танковая армия, слева — 3-я танковая армия. Перед фронтом — 8-я гвардейская армия (у Зелов).');
     for (const t of ['Ставк', 'подвижной группы', 'фронта', 'директив']) expect(s).not.toContain(t);
   });
+  it('«Ввод подвижной группы» немецкому получателю — словом стороны', () => {
+    const w = { places: [], intel: [], terms: { top: 'ОКХ', topGen: 'ОКХ', topTo: 'в ОКХ', group: 'группа армий', groupsGen: 'групп армий', directive: 'приказ' },
+      own: [{ id: 'de_3pa', name: '3-я танковая армия', echelon: 'army', parent: 'de_hgw', status: 'active', at: [14.3, 52.9], ammo: 1, fuel: 1, tanks: 50, cutOff: false }],
+      command: { hqs: { de_hgw: { name: 'группа армий «Висла»', echelon: 'front', parent: null }, de_3pa: { name: '3-я танковая армия', echelon: 'army', parent: 'de_hgw' } } } } as never;
+    const s = draftNote(w, { ...blankDir('de_3pa', 'front'), task: 'attack', commit: true }, { issuer: 'de_hgw', name: (id) => id });
+    expect(s).toContain('Ввод в прорыв.');
+    expect(s).not.toContain('подвижной группы');
+    expect(draftNote(view(), { ...blankDir('su_8gva', 'front'), task: 'attack', commit: true }, o)).toContain('Ввод подвижной группы.');
+  });
   it('без цели и соседей — только задача', () => {
     expect(draftNote(view(), { ...blankDir('su_8gva', 'front'), task: 'defend' }, o)).toBe('Задача — оборонять.');
   });

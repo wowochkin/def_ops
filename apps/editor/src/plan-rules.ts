@@ -39,6 +39,11 @@ export function planHint(llmOk: boolean, rulesOk: boolean): string {
   return rulesOk ? 'советник не на связи — варианты по правилам (варианты командующих)' : 'советник не на связи; варианты по правилам — в игре на агентной модели';
 }
 
+/** Почему варианты просить нельзя (нет ни модели, ни правил) — у обеих кнопок вариантов; можно — null. */
+export function planBlocked(llmOk: boolean, rulesOk: boolean): string | null {
+  return !llmOk && !rulesOk ? 'Советник не на связи; варианты по правилам — в игре на агентной модели' : null;
+}
+
 const pts = (x: unknown): LngLat[] => (Array.isArray(x) ? x.filter((p): p is LngLat => Array.isArray(p) && p.length >= 2) : []);
 const plain = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
 const nameOf = (v: TurnView, id: string) => v.command?.hqs[id]?.name ?? v.own.find((u) => u.id === id)?.name ?? id;
@@ -67,7 +72,9 @@ export function fromCore(v: TurnView, s: DraftScope, issuer: string, c: CoreVari
   const dirs: VariantDir[] = c.orders.map(normOrder).filter((o) => !subs.size || subs.has(o.to))
     .map((o) => ({ ...o, name: nameOf(v, o.to), mainBlow: c.mainBlow ?? [] })).map((x) => ({ ...x, target: targetText(v, x) || undefined }));
   const d: HumanDecision = { assessment: '', enemyIntent: '', intent: '', report: '', risks: '' };
-  const intent = `${c.label}. ${dirs.map((x) => dirWords(v, x)).join('; ')}.`;
+  // резерв варианта ядра (резервы в составе пункта) — словами в решении
+  const res = (c.reserve ?? []).map((id) => nameOf(v, id));
+  const intent = `${c.label}. ${dirs.map((x) => dirWords(v, x)).join('; ')}.${res.length ? ` Резерв — ${res.join(', ')}.` : ''}`;
   for (const f of DRAFT_FIELDS) d[f] = f === 'intent' ? intent : draftField(f, v, s, d);
   return { title: c.label, idea: c.rule, source: 'rules', decision: d, orders: [], dirs, acts: ruleActs(v, scope, dirs) };
 }
@@ -93,14 +100,27 @@ export function completeVariant(v: TurnView, issuer: string | null, llm: PlanVar
     const m = orders.find((o) => o.ok && o.formation === r.id);
     const b = byTo.get(r.id);
     if (m) {
+      // приказа правила нет — ось от войск получателя к цели модели, линии — по его полосе
+      const own = hqCenter(v, r.id) ?? v.own.find((u) => u.id === r.id)?.at ?? null;
+      const band = b ? null : bandOf(v, r.id);
       dirs.push({
         to: r.id, name: r.name, task: m.task, form: b?.form ?? (r.echelon === 'division' ? 'instruction' : 'order'),
-        axis: b?.axis ?? [], immediate: m.at ? [m.at] : b?.immediate ?? [], subsequent: b?.subsequent ?? [], right: b?.right ?? [], left: b?.left ?? [],
+        axis: b?.axis ?? (own && m.at ? [own, m.at] : []), immediate: m.at ? [m.at] : b?.immediate ?? [], subsequent: b?.subsequent ?? [],
+        right: b?.right ?? band!.right, left: b?.left ?? band!.left,
         commit: b?.commit, echelon: b?.echelon ?? null, note: m.why ?? '', mainBlow, target: m.targetText || undefined,
       });
     } else if (b) { const x: VariantDir = { ...b, name: r.name, mainBlow, filled: true }; dirs.push({ ...x, target: targetText(v, x) || undefined }); filled.push(r.name); }
   }
   return { ...llm, source: 'llm', orders, dirs, filled };
+}
+
+/**
+ * Полоса получателя по действующим разграничительным линиям стороны: линия, справа от которой он, — его левая, слева —
+ * правая; линии нет — пусто.
+ */
+function bandOf(v: TurnView, id: string): { right: LngLat[]; left: LngLat[] } {
+  const bs = v.boundaries ?? [];
+  return { right: bs.find((b) => b.left === id)?.line ?? [], left: bs.find((b) => b.right === id)?.line ?? [] };
 }
 
 /** Первая точка пересечения ломаной с ломаной (плоско, в градусах — на десятки километров достаточно). */
@@ -219,10 +239,16 @@ export function dirDraftOf(d: VariantDir, level: LevelId): DirDraft {
 
 /**
  * Что показать, если модель вариантов не дала: модель недоступна (не спрашивали) или ответила без вариантов —
- * варианты по правилам; при ошибке модели — с предупреждением. Модель дала варианты — показывать нечего добавлять.
+ * варианты по правилам; при ошибке модели — с предупреждением. Модель дала k из want и закончила — недостающие
+ * варианты по правилам (их добавляют после вариантов модели). Модель дала все — добавлять нечего.
  */
-export function planFallback(rules: PlanVariantView[], llm: { done: boolean; ok: boolean; error?: string; count: number }): { variants: PlanVariantView[]; warning?: string } {
-  if (llm.count) return { variants: [] };
+export function planFallback(rules: PlanVariantView[], llm: { done: boolean; ok: boolean; error?: string; count: number; want?: number }): { variants: PlanVariantView[]; warning?: string } {
+  if (llm.count) {
+    const gap = llm.done && llm.want ? Math.max(0, llm.want - llm.count) : 0;
+    if (!gap || !rules.length) return { variants: [] };
+    const k = llm.count, w = (n: number) => (n % 10 === 1 && n % 100 !== 11 ? 'вариант' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'варианта' : 'вариантов');
+    return { variants: rules.slice(0, gap), warning: `Советник дал ${k} ${w(k)} из ${llm.want}${llm.error ? ` (${llm.error})` : ''} — остальные по правилам.` };
+  }
   if (!llm.done) return { variants: rules };
   return llm.error ? { variants: rules, warning: `Советник не ответил (${llm.error}) — показаны варианты по правилам.` } : { variants: rules };
 }

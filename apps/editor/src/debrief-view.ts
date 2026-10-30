@@ -107,10 +107,13 @@ export const DEBRIEF_SYSTEM = [
   'Скажи, что случилось, где, почему и что это значит для задачи этой позиции. 5–8 фраз, по-русски, обычным текстом без разметки и списков.',
 ].join(' ');
 
-/** Вход модели: позиция, окно хода, оценка позиции, события с местом, причинами и смыслом (или «ключевых событий нет»). */
-export function debriefInput(d: TurnDebrief, hq: string | null, names: Record<string, string>): string {
+/**
+ * Вход модели: позиция, окно хода, оценка позиции, события с местом, причинами и смыслом (или «ключевых событий нет»);
+ * top — верхняя инстанция словом стороны (terms.top).
+ */
+export function debriefInput(d: TurnDebrief, hq: string | null, names: Record<string, string>, top?: string): string {
   const f = debriefFor(d, hq);
-  const who = hq == null ? (d.side === 'de' ? 'ОКХ' : 'Ставка') : names[hq] ?? d.hqs[hq]?.name ?? hq;
+  const who = hq == null ? (top ?? (d.side === 'de' ? 'ОКХ' : 'Ставка')) : names[hq] ?? d.hqs[hq]?.name ?? hq;
   const lines = [`Позиция: ${who}.`, `Ход: ${tickTime(d, d.from)} — ${tickTime(d, d.to)}.`];
   const verdict = verdictLines(d, hq);
   if (verdict.length) lines.push(`Оценка позиции: ${verdict.join('; ')}.`);

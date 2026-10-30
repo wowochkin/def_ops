@@ -35,6 +35,8 @@ export function levelOfScale(d: number): LevelId | null {
 
 /** Уровень карты по ступени штаба: на нём штаб виден вместе с подчинёнными. */
 export const ECHELON_LEVEL: Record<string, LevelId> = { high_command: 'stavka', front: 'front', army: 'army', corps: 'corps', division: 'division' };
+/** «Показать штаб на карте» без keep: уровень — ступень, пунктом которой штаб стал (post.choose), иначе по эшелону, иначе прежний. */
+export const hqMapLevel = (chosen: LevelId | null, echelon: string, level: LevelId): LevelId => chosen ?? ECHELON_LEVEL[echelon] ?? level;
 
 /** Масштаб, который ставится при переключении на уровень. */
 export const levelDefaultScale = (l: LevelId): number => LEVEL_SCALE[l].def;

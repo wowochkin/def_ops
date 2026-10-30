@@ -68,7 +68,8 @@ export function draftNote(v: TurnView, d: DirDraft, o: NoteOpts): string {
   if (me && me.fuel < 0.3 && me.tanks > 0) out.push('Горючее на исходе.');
   if (d.echelon === 'first') out.push('Первый эшелон.');
   if (d.echelon === 'second') out.push('Второй эшелон — ввод по решению.');
-  if (d.commit) out.push('Ввод подвижной группы.');
+  // «подвижная группа» — слово Красной армии; у вермахта — ввод в прорыв
+  if (d.commit) out.push(v.terms?.group === 'группа армий' ? 'Ввод в прорыв.' : 'Ввод подвижной группы.');
   if (d.reserve.length) out.push(`Резерв: ${d.reserve.map(o.name).join(', ')}.`);
   return out.join(' ');
 }

@@ -89,6 +89,16 @@ export function applyObject(d: DirDraft, field: DirPick, o: PostObject, from: Ln
   }
 }
 
+/**
+ * Где ставить подпись знака точки цели: над точкой на 26 пикселей при масштабе карты zoom (512 пикселей на мир на
+ * масштабе 0) — над знаком, на любом масштабе. Сдвиг в градусах заслонял точку на мелком масштабе и отрывал подпись на
+ * крупном.
+ */
+export function labelAt(at: LngLat, zoom: number): LngLat {
+  const deg = 360 / (512 * 2 ** zoom);
+  return [at[0], at[1] + 26 * deg * Math.cos((at[1] * Math.PI) / 180)];
+}
+
 /** Точка цели проекта с подписью: пункт ближайшей задачи, середина её рубежа, иначе конец оси; нет ни того ни другого — null. */
 export function objectiveMark(d: DirDraft, name: string): { at: LngLat; label: string } | null {
   const what = (t?: string) => `${shortName(name)}: ${DIR_TASK_RU[d.task]} — ${t ?? 'указанная точка'}`;
