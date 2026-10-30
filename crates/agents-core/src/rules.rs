@@ -205,6 +205,8 @@ pub struct Command {
     pub coord_recover_h: f64,
     pub coord_effect: f64,
     pub cycle_h: [f64; 3],
+    /// Ходатайство о разграничительной линии: Ставка принимает, если полоса соседа — не меньше этой доли прежней.
+    pub petition_min_share: f64,
     pub su: CommandSu,
     pub de: CommandDe,
 }
@@ -449,6 +451,7 @@ impl Rules {
             coord_recover_h: num(&ag, "command.coordinationRecoverPerHour")?,
             coord_effect: num(&ag, "command.coordinationEffect")?,
             cycle_h: [num(&ag, "command.cycleHours.front")?, num(&ag, "command.cycleHours.army")?, num(&ag, "command.cycleHours.corps")?],
+            petition_min_share: num(&ag, "command.petitionMinShare")?,
             su: CommandSu {
                 division_band_km: num(&ag, "command.su.divisionBandKm")?,
                 second_echelon_behind_km: num(&ag, "command.su.secondEchelonBehindKm")?,

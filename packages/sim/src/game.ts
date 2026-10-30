@@ -96,7 +96,9 @@ export interface AgentGameSpec { path: string; history: string; turnHours: numbe
 /** Команда управления на ход (командование по ступеням): взять штаб, вернуть, ответ на запрос отхода, подать историческую директиву. */
 export type CommandOp = { op: 'take'; hq: string } | { op: 'release'; id: string } | { op: 'permit'; hq: string; yes: boolean } | { op: 'historical'; id: string }
   /** Директива пункта управления (game::PlayerDirective): to, task, form, from, ось, рубежи, границы… */
-  | { op: 'directive'; directive: { to: string; task: string; form: string; from?: string } & Record<string, unknown> };
+  | { op: 'directive'; directive: { to: string; task: string; form: string; from?: string } & Record<string, unknown> }
+  /** Ходатайство взятого фронта в верхнюю инстанцию о разграничительной линии с соседним фронтом (game::petition). */
+  | { op: 'petition'; from: string; neighbour: string; line: [number, number][]; note?: string };
 
 export interface GameState {
   state: SimState;

@@ -121,7 +121,7 @@ export function resumeEnemy(stored: EnemyMode, agents: boolean, mode: GameMode, 
   return { enemy, note: `В сохранённой игре противник «${ENEMY_TITLE[stored].toLowerCase()}», но в режиме «${MODE_TITLE[mode].title}» он недопустим (допустимы: ${enemyNames(enemyOptions(agents, mode))}). Игра продолжена с противником «${ENEMY_TITLE[enemy].toLowerCase()}».` };
 }
 
-const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.id);
+const subject = (c: CommandOp) => (c.op === 'take' ? c.hq : c.op === 'release' ? c.id : c.op === 'permit' ? c.hq : c.op === 'directive' ? `dir:${c.directive.to}` : c.op === 'petition' ? `petition:${c.from}:${c.neighbour}` : c.id);
 /**
  * Команда в очередь хода: повтор не добавляется; «взять» и «вернуть» одного штаба в одном ходе гасят друг друга;
  * ответ на запросы штаба — последний.

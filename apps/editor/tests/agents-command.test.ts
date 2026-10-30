@@ -40,6 +40,14 @@ describe('состояние управления в игре на агентн�
     expect(v.historical.map((h) => [h.id, h.time, h.toName, h.issued, h.due])).toEqual([['stavka-11059', '16.04 05:00', '8 гв. А', true, true], ['stavka-11074', '17.04 11:00', '8 гв. А, 4 гв. ск', false, false]]);
     expect(v.documents.map((d) => [d.time, d.hqName, d.kind])).toEqual([['16.04 07:00', '8 гв. А', 'order'], ['17.04 08:00', '4 гв. ск', 'notice']]);
   });
+  it('ходатайства — по своей стороне, с именем соседа и временем', () => {
+    const t = trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [],
+      petitions: [{ from: 'su_8gva', neighbour: 'su_4gsk', tick: 26, accepted: true, why: 'полоса 85 % прежней' },
+        { from: 'de_101ak', neighbour: 'de_9a', tick: 26, accepted: false, why: 'главный удар' }] });
+    expect(commandView(t, 'su')!.petitions).toEqual([{ from: 'su_8gva', neighbour: 'su_4gsk', neighbourName: '4 гв. ск', time: '17.04 07:00', accepted: true, why: 'полоса 85 % прежней' }]);
+    // ядро без раздела ходатайств — список пуст
+    expect(commandView(trace({ mode: 'intent', hqs: [], led: [], requests: [], historical: [] }), 'su')!.petitions).toEqual([]);
+  });
   it('форма приказа уходит в ядро', () => {
     const o = toAgentOrders({ theatre: null } as never, { state: { formations: [] } } as never, [{ id: 'o1', formation: 'su_8gva', task: 'defend', issuedAt: '1945-04-16T05:00', source: 'human', form: 'order' }]);
     expect(o[0]).toMatchObject({ hq: 'su_8gva', kind: 'defend', form: 'order' });

@@ -42,6 +42,8 @@ export interface TraceCommand {
   /** Директивы верховного командования противника (по истории; одна директива нескольким получателям — строками). */
   enemyHistorical?: { id: string; at: number; from?: string; to: string; task: string; form: 'order' | 'instruction'; note: string }[];
   historical: { id: string; at: number; to: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean }[];
+  /** Ходатайства фронтов своей стороны о разграничительных линиях и ответы на них (command/petition.rs). */
+  petitions?: { from: string; neighbour: string; tick: number; accepted: boolean; why: string }[];
 }
 /** Ход ядра с началом игры и итогом приказов (game_start / game_turn). */
 export type AgentGameTrace = AgentTrace & { control?: string; command?: TraceCommand; game: { takeover: number; turn: number; digest: string; hour: number; over: boolean; applied?: { hq: string; divisions?: number; error?: string }[]; reserves?: { id: string; from: number }[]; staffErrors?: string[]; commandErrors?: string[]; commandResults?: (string | null)[] } };
@@ -58,6 +60,8 @@ export interface CommandView {
   /** due — час директивы уже наступил (подаётся сразу, при передаче командования — уже доведённой). */
   historical: { id: string; time: string; to: string; toName: string; task: string; form: 'order' | 'instruction'; note: string; issued: boolean; due: boolean }[];
   documents: { time: string; hq: string; hqName: string; kind: string; to: string[]; text: string; rule: string | null }[];
+  /** Ходатайства о разграничительных линиях своей стороны: сосед, время, принято ли и почему. */
+  petitions: { from: string; neighbour: string; neighbourName: string; time: string; accepted: boolean; why: string }[];
   /** Противник: штабы (подчинённость) и штаб каждой дивизии — для разведки по ступеням (что видно — решает разведсводка). */
   enemy: { hqs: Record<string, { name: string; echelon: string; parent: string | null }>; divisions: Record<string, string> };
 }
@@ -81,6 +85,8 @@ export function commandView(t: AgentGameTrace, side: string): CommandView | null
       const h = hs[0];
       return { id: h.id, time: at(h.at), to: h.to, toName: hs.map((x) => name.get(x.to) ?? x.to).join(', '), task: h.task, form: h.form, note: h.note, issued: h.issued, due: h.at <= t.game.hour };
     }),
+    petitions: (c.petitions ?? []).filter((p) => hq.get(p.from)?.side === side)
+      .map((p) => ({ from: p.from, neighbour: p.neighbour, neighbourName: name.get(p.neighbour) ?? p.neighbour, time: at(p.tick), accepted: p.accepted, why: p.why })),
     enemy: {
       hqs: Object.fromEntries(t.hqs.filter((h) => h.side !== side).map((h) => [h.id, { name: h.name, echelon: h.echelon, parent: h.parent }])),
       divisions: Object.fromEntries(t.divisions.filter((d) => d.side !== side).map((d) => [d.id, d.hq])),
@@ -228,6 +234,7 @@ export function commandText(c: CommandOp, name: (id: string) => string, hist?: (
     case 'historical': { const h = hist?.(c.id); return `подана историческая директива ${c.id}${h ? ` (${h})` : ''}`; }
     case 'directive': { const t = ({ attack: 'наступать', defend: 'оборонять', delay: 'сдерживать', withdraw: 'отходить', move: 'выдвинуться', reserve: 'в резерв' } as Record<string, string>)[c.directive.task] ?? c.directive.task;
       return `${c.directive.form === 'order' ? 'приказ' : 'распоряжение'} ${c.directive.from ? `от «${name(c.directive.from)}» ` : ''}— ${name(c.directive.to)}: ${t}`; }
+    case 'petition': return `ходатайство о разграничительной линии с соседом — ${name(c.from)} / ${name(c.neighbour)}`;
   }
 }
 

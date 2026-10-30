@@ -942,3 +942,107 @@ fn trace_has_enemy_historical() {
     assert!(h.iter().any(|d| d["id"] == "hitler-1504"), "директива Гитлера 15.04");
     assert!(h.iter().all(|d| d["from"].as_str().unwrap().starts_with("de_")));
 }
+
+/// Ходатайство (этап 4, задача 2): игра «история как замысел» на Берлинской, час 48, взят 1 БФ.
+fn petition_game(side: Side, take: &str) -> Game {
+    use agents_core::game::{CommandOp, Mode};
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 48, side, &[side], None, Mode::Intent);
+    g.command(&CommandOp::Take { hq: take.into() }).unwrap();
+    g
+}
+
+/// Нынешняя граница `from` / `neighbour`, сдвинутая на `km` к соседу, — в долготе и широте.
+fn petition_line(g: &Game, from: &str, neighbour: &str, km: f64) -> Vec<agents_core::geo::LngLat> {
+    use agents_core::command::{agent::place, directive::Target};
+    let (f, n) = (hix(g, from) as u32, hix(g, neighbour) as u32);
+    let line = agents_core::command::petition::boundary(&g.sim, f, n, g.hour());
+    assert!(line.len() >= 2, "граница {from} / {neighbour}");
+    let m = agents_core::command::agent::mid(&line).unwrap();
+    let to = place(&g.sim, Target::Hq(n));
+    let l = m.dist(to).max(1e-9);
+    let (dx, dy) = ((to.x - m.x) / l * km, (to.y - m.y) / l * km);
+    line.iter().map(|p| g.sim.theatre.proj.to_lnglat(agents_core::geo::XY::new(p.x + dx, p.y + dy))).collect()
+}
+
+#[test]
+fn petition_accept_issues_to_both_fronts() {
+    use agents_core::command::control::DocKind;
+    let mut g = petition_game(Side::Su, "su_1bf");
+    let line = petition_line(&g, "su_1bf", "su_1uf", 3.0);
+    assert_eq!(g.petition("su_1bf", "su_1uf", &line, "для обхода Берлина с юга"), Ok(true));
+    let (bf, uf, st) = (hix(&g, "su_1bf") as u32, hix(&g, "su_1uf") as u32, hix(&g, "su_stavka") as u32);
+    assert!(g.sim.documents.iter().any(|d| d.hq == bf && d.kind == DocKind::Report && d.text.starts_with("Ходатайство")), "донесение-ходатайство");
+    assert!(g.sim.documents.iter().any(|d| d.hq == st && d.kind == DocKind::Directive && d.to.contains(&"su_1bf".to_string()) && d.to.contains(&"su_1uf".to_string()) && d.text.contains("удовлетворено")), "директива Ставки обоим фронтам");
+    let st = &g.trace()["command"]["petitions"];
+    assert_eq!(st[0]["accepted"], true);
+    assert_eq!(st[0]["neighbour"], "su_1uf");
+    let h = agents_core::command::passing::passing_hours(&g.sim.rules.command, Some(agents_core::model::Echelon::Front), agents_core::command::directive::Form::Order).round() as u32;
+    g.advance(h + 1);
+    let xy: Vec<_> = line.iter().map(|&p| g.sim.theatre.proj.to_xy(p)).collect();
+    let b = &g.sim.command.intent[uf as usize].as_ref().expect("замысел соседа").boundaries;
+    assert!(b.iter().any(|(_, l)| l.len() == xy.len() && l.iter().zip(&xy).all(|(a, c)| a.dist(*c) < 0.01)), "линия — в границах соседа");
+}
+
+#[test]
+fn petition_reject_explained() {
+    use agents_core::command::control::DocKind;
+    let mut g = petition_game(Side::Su, "su_1bf");
+    let uf = hix(&g, "su_1uf");
+    let before = g.sim.command.intent[uf].clone();
+    let line = petition_line(&g, "su_1bf", "su_1uf", 40.0);
+    assert_eq!(g.petition("su_1bf", "su_1uf", &line, ""), Ok(false));
+    assert!(!g.sim.command.petitions[0].why.is_empty());
+    let st = hix(&g, "su_stavka") as u32;
+    assert!(g.sim.documents.iter().any(|d| d.hq == st && d.kind == DocKind::Notice && d.text.starts_with("Ходатайство") && d.text.contains("отклонено")), "отказ с объяснением");
+    g.advance(30);
+    assert_eq!(g.sim.command.intent[uf].as_ref().map(|d| d.boundaries.clone()), before.map(|d| d.boundaries), "границы соседа прежние");
+}
+
+#[test]
+fn petition_keeps_neighbour_on_history() {
+    use agents_core::intent::Status;
+    let mut g = petition_game(Side::Su, "su_1bf");
+    let uf = hix(&g, "su_1uf");
+    let control = g.sim.command.control[uf];
+    let line = petition_line(&g, "su_1bf", "su_1uf", 3.0);
+    assert_eq!(g.petition("su_1bf", "su_1uf", &line, ""), Ok(true));
+    g.advance(30);
+    assert_eq!(g.sim.intent.hq[uf].status, Status::History, "сосед на истории");
+    assert_eq!(g.sim.command.control[uf], control, "управление соседа прежнее");
+    assert!(!agents_core::intent::off_history(&g.sim, uf as u32));
+}
+
+#[test]
+fn petition_refused_when_player_is_top() {
+    let mut g = seelow_game(Mode::Agents, 0);
+    let e = g.petition("su_1bf", "su_1uf", &[[14.0, 52.0], [14.5, 52.0]], "").unwrap_err();
+    assert!(e.contains("Ставку ведёте вы сами"), "{e}");
+}
+
+#[test]
+fn petition_needs_taken_front() {
+    use agents_core::game::Mode;
+    let (sim, meta) = berlin();
+    let mut g = Game::start_mode(sim, meta, 48, Side::Su, &[Side::Su], None, Mode::Intent);
+    let e = g.petition("su_1bf", "su_1uf", &[[14.0, 52.0], [14.5, 52.0]], "").unwrap_err();
+    assert!(e.contains("не под управлением игрока"), "{e}");
+    g.command(&agents_core::game::CommandOp::Take { hq: "su_1bf".into() }).unwrap();
+    let e = g.petition("su_1bf", "su_61a", &[[14.0, 52.0], [14.5, 52.0]], "").unwrap_err();
+    assert!(e.contains("не соседний фронт той же Ставки"), "{e}");
+    let e = g.petition("su_1bf", "su_1uf", &[[14.0, 52.0]], "").unwrap_err();
+    assert!(e.contains("меньше двух точек"), "{e}");
+    let j = serde_json::json!({ "op": "petition", "from": "su_1bf", "neighbour": "su_1uf", "line": [[14.0, 52.0]] });
+    assert!(g.command_json(&j).unwrap_err().contains("меньше двух точек"), "команда petition");
+}
+
+#[test]
+fn petition_player_de() {
+    let mut g = petition_game(Side::De, "de_hgr_weichsel");
+    let line = petition_line(&g, "de_hgr_weichsel", "de_hgr_mitte", 2.0);
+    let ok = g.petition("de_hgr_weichsel", "de_hgr_mitte", &line, "").expect("ходатайство в ОКХ");
+    let hc = hix(&g, "de_hc") as u32;
+    let kind = if ok { agents_core::command::control::DocKind::Directive } else { agents_core::command::control::DocKind::Notice };
+    assert!(g.sim.documents.iter().any(|d| d.hq == hc && d.kind == kind && d.text.starts_with("Ходатайство")), "ответ — от ОКХ");
+    assert_eq!(g.trace()["command"]["petitions"].as_array().map(|a| a.len()), Some(1));
+}

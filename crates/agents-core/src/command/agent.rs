@@ -225,6 +225,8 @@ fn phase_once(sim: &mut Sim, next: &mut World, tick: u32, journal: &mut Vec<Even
                 if sim.command.intent[hu].as_ref().is_some_and(|o| o.from == d.from && o.issued > d.issued) { continue; }
                 // изъятый через голову штаб директива старшего больше не задаёт (кроме директивы игрока)
                 if sim.command.led_hq[hu] && sim.command.control[d.from as usize] != Control::Player { continue; }
+                // директива по ходатайству о разграничительной линии: только граница, замысел прежний (command/petition.rs)
+                if d.rule.as_deref() == Some(crate::command::petition::PETITION_RULE) { crate::command::petition::arrived(sim, h, &d, tick); continue; }
                 // частное распоряжение (не директива: устное указание): при замысле штаба называет подчинённых на главном
                 // ударе — доводится только до них
                 if d.form == Form::Instruction && sim.command.intent[hu].is_some() && !d.main_blow.is_empty() && d.main_blow.iter().all(|&m| sim.world.hqs[m as usize].parent == Some(h)) {

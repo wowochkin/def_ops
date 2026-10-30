@@ -66,6 +66,8 @@ pub struct CommandState {
     /// Полосы армий следуют за войсками (продление и запись в след) — режимы `intent`, `agents`, `commanders` и игра в
     /// них; прочие режимы (сценарий, фронты и журналы по истории, гибрид) — эталоны мерила, их полосы не трогаются.
     pub follow_bands: bool,
+    /// Ходатайства о разграничительных линиях и ответы на них (command/petition.rs).
+    pub petitions: Vec<crate::command::petition::Petition>,
 }
 
 /// Запрос корпуса на отход дивизии: ответ — да, нет или ещё нет.
@@ -79,7 +81,7 @@ impl CommandState {
     pub fn new(hqs: usize, divisions: usize) -> CommandState {
         CommandState { control: vec![Control::Script; hqs], led_hq: vec![false; hqs], led_div: vec![false; divisions], named_hq: vec![false; hqs], intent: vec![None; hqs], last_cycle: vec![0; hqs], in_transit: Vec::new(), fresh: vec![false; hqs], div_task: vec![None; divisions], sent: Default::default(),
             role_hq: vec![Role::Unset; hqs], role_div: vec![Role::Unset; divisions], start_hq: vec![None; hqs], start_div: vec![None; divisions],
-            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new(), bands: Vec::new(), band_sig: Default::default(), follow_bands: false }
+            since_hq: vec![0; hqs], since_div: vec![0; divisions], replaced_hq: vec![false; hqs], replaced: vec![false; divisions], requests: Vec::new(), pulled: vec![None; hqs], pull_seen: vec![0; hqs], doc_until: vec![0; divisions], commits: Vec::new(), bands: Vec::new(), band_sig: Default::default(), follow_bands: false, petitions: Vec::new() }
     }
 }
 

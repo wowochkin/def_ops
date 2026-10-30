@@ -109,7 +109,7 @@ export function Staffs({ v, cmds, issuer }: { v: TurnView; cmds: CommandOp[]; is
     },
   });
   const hybridLate = c.mode === 'hybrid' && v.turn > 1;
-  const queued = (op: CommandOp['op'], id: string) => cmds.some((x) => x.op === op && (x.op === 'take' ? x.hq : x.op === 'release' ? x.id : x.op === 'permit' ? x.hq : x.op === 'directive' ? x.directive.to : x.id) === id);
+  const queued = (op: CommandOp['op'], id: string) => cmds.some((x) => x.op === op && (x.op === 'take' ? x.hq : x.op === 'release' ? x.id : x.op === 'permit' ? x.hq : x.op === 'directive' ? x.directive.to : x.op === 'petition' ? x.from : x.id) === id);
   const open = c.requests.filter((r) => r.answer === null);
   const byHq = useMemo(() => {
     const m = new Map<string, typeof open>();

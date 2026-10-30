@@ -39,8 +39,9 @@ describe('перечень входов правил и пересчёт кор�
     const ctx = loadContext('berlin-1945-tasks', 'ww2-berlin-cal');
     const prof = { su: ctx.profiles['rkka-1945'], de: ctx.profiles['wehrmacht-1945'] };
     // commanders.* — допущения характера командующих (commanders.json), intent.* — пороги режима «История как замысел»,
-    // establishment.* — штаты видов соединений (establishment.json, мерило докладов): не входы перечня правил
-    const meta = /^(strength|corridor|outcome|plausible|commanders|intent|agents\.intent|establishment)\./;
+    // establishment.* — штаты видов соединений (establishment.json, мерило докладов), agents.command.petitionMinShare —
+    // порог рассмотрения ходатайства (правило игры, не калибруется): не входы перечня правил
+    const meta = /^(strength|corridor|outcome|plausible|commanders|intent|agents\.intent|establishment)\.|^agents\.command\.petitionMinShare$/;
     for (const n of loadNorms().norms) {
       const m = n.measure;
       if (m.kind !== 'param' && m.kind !== 'assumption') continue;

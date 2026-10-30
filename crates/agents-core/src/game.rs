@@ -116,6 +116,8 @@ pub enum CommandOp {
     Historical { id: String },
     /// Директива игрока с полной структурой (пункт управления).
     Directive { directive: PlayerDirective },
+    /// Ходатайство фронта игрока в верхнюю инстанцию о разграничительной линии с соседним фронтом.
+    Petition { from: String, neighbour: String, line: Vec<LngLat>, #[serde(default)] note: String },
 }
 
 pub struct Game {
@@ -623,7 +625,30 @@ impl Game {
             CommandOp::Permit { hq, yes } => self.permit(hq, *yes),
             CommandOp::Historical { id } => self.issue_historical(id),
             CommandOp::Directive { directive } => self.directive(directive),
+            CommandOp::Petition { from, neighbour, line, note } => self.petition(from, neighbour, line, note).map(|_| ()),
         }
+    }
+
+    /// Ходатайство взятого игроком фронта `from` в верхнюю инстанцию о разграничительной линии с соседним фронтом
+    /// `neighbour` (command/petition.rs): рассматривается на этом ходу по правилу. Ok — принято ли.
+    pub fn petition(&mut self, from: &str, neighbour: &str, line: &[LngLat], note: &str) -> Result<bool, String> {
+        use crate::command::control::Control;
+        use crate::model::Echelon;
+        if self.mode == Mode::Legacy { return Err("ходатайство — в режимах агентной модели".into()); }
+        let w = &self.sim.world;
+        let c = &self.sim.command;
+        let top = w.hqs.iter().position(|h| h.side == self.player && h.echelon == Echelon::HighCommand).ok_or("у стороны нет верхней инстанции")?;
+        if c.control[top] == Control::Player { return Err("Ставку ведёте вы сами — ходатайствовать некому: линию задайте директивой фронтам".into()); }
+        let f = w.hqs.iter().position(|h| h.id == from && h.side == self.player).ok_or_else(|| format!("нет штаба {from} стороны игрока"))?;
+        if c.control[f] != Control::Player { return Err(format!("{} не под управлением игрока — сначала взять", w.hqs[f].name)); }
+        let n = w.hqs.iter().position(|h| h.id == neighbour);
+        let front = |k: usize| w.hqs[k].side == self.player && w.hqs[k].echelon == Echelon::Front && w.hqs[k].parent == Some(top as u32);
+        let ok = n.is_some_and(|n| n != f && front(f) && front(n) && !crate::command::agent::subs_of(&self.sim, n as u32).is_empty());
+        if !ok { return Err(format!("{} — не соседний фронт той же Ставки", n.map_or(neighbour.to_string(), |n| w.hqs[n].name.clone()))); }
+        if line.len() < 2 { return Err("в линии меньше двух точек".into()); }
+        let xy = line.iter().map(|&p| self.sim.theatre.proj.to_xy(p)).collect();
+        let tick = self.hour();
+        Ok(crate::command::petition::submit(&mut self.sim, f as u32, n.unwrap() as u32, xy, note.to_string(), tick))
     }
 
     /// Команда управления из JSON: неразборчивая — ошибка этой команды, а не всего хода.
@@ -715,7 +740,10 @@ impl Game {
         let enemy_historical: Vec<Value> = self.sim.historical.iter()
             .filter(|(_, d)| !mine(d.from as usize) && w.hqs[d.from as usize].echelon == crate::model::Echelon::HighCommand)
             .map(|(at, d)| serde_json::json!({ "id": d.id, "at": at, "from": w.hqs[d.from as usize].id, "to": target(d.to), "task": d.task, "form": d.form, "note": d.note })).collect();
-        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "enemyRequests": enemy_requests, "historical": historical, "enemyHistorical": enemy_historical })
+        // ходатайства фронтов своей стороны и ответы на них
+        let petitions: Vec<Value> = c.petitions.iter().filter(|p| mine(p.from as usize))
+            .map(|p| serde_json::json!({ "from": w.hqs[p.from as usize].id, "neighbour": w.hqs[p.neighbour as usize].id, "tick": p.tick, "accepted": p.accepted, "why": p.why })).collect();
+        serde_json::json!({ "mode": mode, "hqs": hqs, "led": led, "requests": requests, "enemyRequests": enemy_requests, "historical": historical, "enemyHistorical": enemy_historical, "petitions": petitions })
     }
 }
 

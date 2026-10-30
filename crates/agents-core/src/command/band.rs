@@ -260,3 +260,31 @@ mod tests {
         assert_eq!(extend_back(&b, base, dir, 3.0), b);
     }
 }
+
+/// Ближайшая к точке `p` точка ломаной и индекс её отрезка.
+fn nearest_on(line: &[XY], p: XY) -> (XY, usize) {
+    if line.len() < 2 { return (line.first().copied().unwrap_or(p), 0); }
+    line.windows(2).enumerate().map(|(k, w)| {
+        let (d, l2) = (sub(w[1], w[0]), dot(sub(w[1], w[0]), sub(w[1], w[0])));
+        let t = if l2 > 1e-12 { (dot(sub(p, w[0]), d) / l2).clamp(0.0, 1.0) } else { 0.0 };
+        (add(w[0], mul(d, t)), k)
+    }).min_by(|a, b| a.0.dist(p).total_cmp(&b.0.dist(p))).unwrap()
+}
+
+/// Ширина полосы, км: среднее расстояние от равномерных точек каждой границы до другой границы (направление
+/// границ не важно).
+pub fn width_km(b: &Band) -> f64 {
+    let one = |a: &[XY], c: &[XY]| sample(a, SAMPLES).iter().map(|&p| nearest_on(c, p).0.dist(p)).sum::<f64>() / SAMPLES as f64;
+    0.5 * (one(&b.left, &b.right) + one(&b.right, &b.left))
+}
+
+/// По какую сторону линии точка: знак векторного произведения направления ближайшего отрезка и направления на точку
+/// (слева — больше нуля).
+pub fn side_of(line: &[XY], p: XY) -> f64 {
+    if line.len() < 2 { return 0.0; }
+    let (_, k) = nearest_on(line, p);
+    cross(sub(line[k + 1], line[k]), sub(p, line[k]))
+}
+
+/// Расстояние от точки до ломаной, км.
+pub fn line_dist(line: &[XY], p: XY) -> f64 { if line.is_empty() { f64::INFINITY } else { nearest_on(line, p).0.dist(p) } }
