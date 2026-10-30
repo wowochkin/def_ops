@@ -70,6 +70,7 @@ import { speakable } from './voice/speech';
 import { flyToHq, showAt } from './engine/free-center';
 import { ECHELON_LEVEL } from './map-level-scale';
 import { manningText } from './num-format';
+import { storeGame, withRecord, type SavedGame } from './game-branches';
 
 export const SAVE_KEY = 'def_ops.game';
 
@@ -81,7 +82,7 @@ const tap = (id: string, params?: unknown) => { void press(id, params, (r) => no
 function StaffButton({ action, params, children, ...rest }: { action: string; params?: unknown; children?: ReactNode } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
   return <button {...rest} data-action={action} onClick={() => tap(action, params)}>{children}</button>;
 }
-export interface SavedGame { record: GameRecord; enemy: EnemyMode; title: string; turn: string }
+export type { SavedGame };
 export function loadSaved(): SavedGame | null {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') as SavedGame | null; return s?.record?.version === 1 ? s : null; } catch { return null; }
 }
@@ -338,7 +339,11 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
             onDone: () => w.postMessage({ kind: 'umpire-done' } satisfies GameRequest) });
         }
         turnsSeen.current = n;
-        try { localStorage.setItem(SAVE_KEY, JSON.stringify({ record: m.record, enemy: enemyRef.current, title: titleRef.current, turn: m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover } satisfies SavedGame)); } catch { /* */ }
+        const next = withRecord(savedRef.current, m.record, enemyRef.current, titleRef.current, m.record.turns.length ? addH(m.record.turns[m.record.turns.length - 1].time, 0) : m.record.takeover);
+        savedRef.current = next;
+        let lost: string | null = null;
+        try { lost = storeGame(localStorage, SAVE_KEY, next); } catch { /* хранилища нет — игра идёт без записи */ }
+        if (lost) setNotice(lost);
       }
     };
     w.onerror = (e) => { setProgress(null); setError(e.message || 'ошибка игры'); };
@@ -356,6 +361,8 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
   const umpireModel = (): UmpireModel | null => (llmRef.current.check.state === 'fail' ? null
     : (system, text, o) => askText(system, text, { settings: llmRef.current.settings, signal: o.signal, delays: RETRY_DELAYS_MS }));
   const enemyRef = useRef(enemy); enemyRef.current = enemy;
+  /** Запись игры как лежит в хранилище (ветви и имя линии сохраняются при каждой записи хода). */
+  const savedRef = useRef<SavedGame | null>(saved);
   const titleRef = useRef(''); titleRef.current = view?.scenarioName ?? saved?.title ?? '';
 
   // телефон: выбор места на карте — показать карту, выбрано — вернуться к штабу
