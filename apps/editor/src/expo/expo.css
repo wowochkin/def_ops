@@ -65,6 +65,24 @@ html.expo-active,
 .expo-header > span:last-child {
   text-align: right;
 }
+.expo-lenses {
+  justify-self: end;
+  display: flex;
+  gap: 4px;
+}
+.expo .expo-lenses button {
+  min-height: 52px;
+  padding: 4px 18px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--expo-muted);
+  font-size: var(--expo-text-min);
+}
+.expo .expo-lenses button[aria-pressed='true'] {
+  border-color: var(--expo-gold);
+  box-shadow: none;
+  color: var(--expo-gold);
+}
 .expo-phase-turn {
   display: flex;
   align-items: baseline;
@@ -784,6 +802,53 @@ html.expo-active,
 .expo-side h2,
 .expo-side .expo-progress h2 {
   font-size: 64px;
+}
+.expo-ai-screen,
+.expo-progress-screen {
+  padding: 36px 48px;
+  border-left-width: 6px;
+  background: linear-gradient(90deg, rgba(12, 20, 18, 0.96) 0%, rgba(12, 20, 18, 0.82) 55%, rgba(12, 20, 18, 0.6) 100%), var(--side-bg, none) center / cover no-repeat;
+}
+.expo-ai-screen .expo-situation {
+  font-size: 60px;
+  max-width: 28ch;
+}
+.expo-ai-screen .expo-ai {
+  font-size: 48px;
+  max-width: 34ch;
+}
+.expo-progress-screen .expo-date {
+  font-size: 96px;
+}
+.expo-progress-screen .expo-scales {
+  gap: 28px;
+  margin: 12px 0 20px;
+}
+.expo-progress-screen .expo-scale {
+  grid-template-columns: 260px 420px 1fr;
+  gap: 32px;
+  font-size: 48px;
+}
+.expo-progress-screen .expo-scale-bar {
+  height: 40px;
+}
+.expo-progress-screen .expo-feed {
+  font-size: 40px;
+  max-width: 44ch;
+}
+.expo-roles-ai-progress .expo-progress-screen .expo-scale {
+  grid-template-columns: 170px 200px 1fr;
+  gap: 20px;
+  font-size: 38px;
+}
+.expo-roles-ai-progress .expo-progress-screen .expo-date {
+  font-size: 72px;
+}
+.expo-roles-ai-progress .expo-ai-screen .expo-situation {
+  font-size: 48px;
+}
+.expo-roles-ai-progress .expo-ai-screen .expo-ai {
+  font-size: 40px;
 }
 .expo-ai-screen .expo-ai {
   flex: 1;

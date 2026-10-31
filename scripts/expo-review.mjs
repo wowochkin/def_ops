@@ -87,6 +87,16 @@ async function run({ cfg, front, scenes, tag = '' }) {
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await shot('15-operator');
   await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+  // один монитор: экраны раскладок на три и на два во весь монитор
+  for (const n of ['1', '2', '3']) {
+    await page.locator('.expo-lenses').getByRole('button', { name: n, exact: true }).click();
+    await shot(`16-screen3-${n}`);
+  }
+  for (const w of [0, 1]) {
+    await page.evaluate((w) => dispatchEvent(new CustomEvent('expo-lens', { detail: { count: 2, window: w } })), w);
+    await shot(`17-screen2-${w + 1}`);
+  }
+  await page.locator('.expo-lenses').getByRole('button', { name: 'Все вместе' }).click();
   await page.getByRole('button', { name: 'Спросить ИИ' }).click();
   await shot('09-ask-menu');
   await page.getByRole('menuitem', { name: 'Какие силы участвуют?' }).click();

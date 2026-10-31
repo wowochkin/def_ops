@@ -17,6 +17,7 @@ import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './s
 import { ExpoMap, historyPaths } from './ExpoMap';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
+import { LENS_EVENT, LENSES, sameLens, stepLens, type Lens } from './lens';
 import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, mainPaths, MAP, type Arrow, type LL } from './map';
@@ -70,8 +71,18 @@ function useFit<T extends HTMLElement>(key: unknown, max: number, min = 32) {
   return ref;
 }
 
-export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, ai = NO_AI, maps = {}, send, children }: ExpoViewProps) {
+export function ExpoView({ window: realIndex, state, settings, count: realCount, model = NO_MODEL, ai = NO_AI, maps = {}, send, children }: ExpoViewProps) {
   const mv = model.view;
+  const [lens, setLensState] = useState<Lens>(null);
+  useEffect(() => {
+    const on = (e: Event) => setLensState((e as CustomEvent<Lens>).detail);
+    addEventListener(LENS_EVENT, on);
+    return () => removeEventListener(LENS_EVENT, on);
+  }, []);
+  // один монитор: экран многомониторной раскладки во весь монитор
+  const single = realCount === 1;
+  const count = single && lens ? lens.count : realCount;
+  const index = single && lens ? lens.window : realIndex;
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
   const controls = roles.includes('map');
@@ -87,9 +98,15 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
     setAsking(false);
   }, [state.session, p.kind, p.kind === 'turn' ? p.n : 0]);
   useEffect(() => {
-    if (!controls || !access.keys || state.paused) return;
+    if (!access.keys || state.paused || !(controls || single)) return;
     const key = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (single && p.kind !== 'welcome' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        setLensState((l) => stepLens(l, e.key === 'ArrowLeft' ? -1 : 1));
+        return;
+      }
+      if (!controls) return;
       if (p.kind === 'welcome' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         setFrontIndex((i) => (i + (e.key === 'ArrowLeft' ? -1 : 1) + settings.fronts.length) % settings.fronts.length);
@@ -103,7 +120,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
     };
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
-  }, [controls, access.keys, state.paused, p, expanded, hover, frontIndex, settings.fronts, send]);
+  }, [controls, access.keys, state.paused, p, expanded, hover, frontIndex, settings.fronts, send, single]);
   const panel = controls || count === 1;
   const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract';
   const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai'));
@@ -149,7 +166,17 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
         <header className="expo-header">
           <span>Штабные игры</span>
           <PhaseTitle state={state} />
-          <span>{count > 1 && `Экран ${index + 1} из ${count}`}</span>
+          {single ? (
+            <span className="expo-lenses" role="group" aria-label="Экраны стенда">
+              {LENSES.map((x) => (
+                <button key={x.label} aria-pressed={sameLens(x.lens, lens)} onClick={() => setLensState(x.lens)}>
+                  {x.label}
+                </button>
+              ))}
+            </span>
+          ) : (
+            <span>{`Экран ${index + 1} из ${count}`}</span>
+          )}
         </header>
         <div className="expo-content">
           {p.kind === 'startup' && <section className="expo-wide" />}
@@ -264,7 +291,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                 </>
               )}
               {!controls && roles.includes('ai') && (
-                <section className="expo-side expo-ai-screen">
+                <section className="expo-side expo-ai-screen" style={TABLE ? { ['--side-bg' as string]: `url(${TABLE})` } : undefined}>
                   <h2>Штаб ИИ</h2>
                   <p className="expo-situation">{def?.situation}</p>
                   <AiPanel ai={ai} />
@@ -281,7 +308,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                 </section>
               )}
               {!controls && roles.includes('progress') && (
-                <section className="expo-side">
+                <section className="expo-side expo-progress-screen" style={CITY ? { ['--side-bg' as string]: `url(${CITY})` } : undefined}>
                   <Progress model={model} feed={4} />
                 </section>
               )}
@@ -668,6 +695,7 @@ function frontArrows(front: string): Arrow[] {
 
 type View = NonNullable<ModelFrame['view']>;
 const TABLE = picturesOf('generated').find((x) => x.file === 'staff-table.jpg')?.src;
+const CITY = picturesOf('generated').find((x) => x.file === 'city-dawn.jpg')?.src;
 const NO_PLAN: StageMapProps = { doc: null, time: null, camera: null };
 /** Театр операции целиком (заставка). */
 const THEATRE: Bbox = [12.2, 51.35, 15.2, 53.05];

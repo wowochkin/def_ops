@@ -3,6 +3,7 @@
  * «Сеанс», «Экраны», «Звук», «Доступ». Настройки сохраняются сразу при изменении (через `normalizeSettings`).
  * `setup` — то же меню на странице «Начало» полного режима: без сводки, вместо действий — включение выставочного режима.
  */
+import { LENSES, setLens, type Lens } from './lens';
 import { useEffect, useRef, useState } from 'react';
 import { normalizeSettings, type ExpoSettings, type FrontId } from './settings';
 import type { DirectorEvent } from './director';
@@ -237,6 +238,14 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
         onValue={(v) => save({ screens: { ...settings.screens, count: v as 1 | 2 | 3 } })}
       />
       <MonitorOrder monitors={found} order={settings.screens.order} onOrder={(order) => save({ screens: { ...settings.screens, order } })} />
+      <fieldset>
+        <legend>Показ на одном мониторе (содержимое экрана раскладки во весь монитор)</legend>
+        {[...LENSES, { label: 'Раскладка на два: 1', lens: { count: 2, window: 0 } as Lens }, { label: 'Раскладка на два: 2', lens: { count: 2, window: 1 } as Lens }].map((x) => (
+          <button key={x.label} onClick={() => setLens(x.lens)}>
+            {x.lens && x.lens.count === 3 ? `Экран ${x.label}` : x.label}
+          </button>
+        ))}
+      </fieldset>
     </>
   );
 

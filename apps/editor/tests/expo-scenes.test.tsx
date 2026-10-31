@@ -100,3 +100,17 @@ it('maps: panorama replay, briefing camera to the front, turn arrows of the expa
   expect(plan(0)?.extra?.map((f) => f.kind)).toEqual(['arrow']);
   expect(plan(0)?.doc).toBe(session.doc);
 });
+
+it('one monitor: header shows any screen of the three-screen layout full-size', () => {
+  const s = at(at(initialState(0), { t: 'ready' }), { t: 'jump', phase: 'turn', n: 1 });
+  const v = show(s, { view: view(), error: null });
+  expect(v.getByRole('button', { name: 'Все вместе' }).getAttribute('aria-pressed')).toBe('true');
+  fireEvent.click(v.getByRole('button', { name: '3' }));
+  expect(v.getByRole('heading', { name: 'Ход операции' })).toBeTruthy();
+  expect(v.queryByRole('heading', { name: 'Карта' })).toBeNull();
+  fireEvent.click(v.getByRole('button', { name: '1' }));
+  expect(v.getByRole('heading', { name: 'Штаб ИИ' })).toBeTruthy();
+  expect(v.queryByRole('heading', { name: 'Ход операции' })).toBeNull();
+  fireEvent.click(v.getByRole('button', { name: 'Все вместе' }));
+  expect(v.getByRole('heading', { name: 'Карта' })).toBeTruthy();
+});
