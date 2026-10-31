@@ -57,6 +57,7 @@
     "sim:demo": "node scripts/sim-demo.mjs",
     "docs:system": "node scripts/gen-doc.mjs",
     "expo:prepare": "tsx scripts/expo-prepare.ts",
+    "expo:voice-studio": "tsx scripts/expo-voice-studio.ts",
     "docs:guide": "node scripts/gen-doc.mjs docs/guide.md docs/guide.pdf",
     "expo:map": "tsx scripts/expo-map.ts"
   },

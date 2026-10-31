@@ -16,8 +16,14 @@ import { join } from 'node:path';
 import { joinGap, stageDomains, voiceTexts, type Clip, type VoiceManifest } from '../apps/editor/src/expo/prerecord';
 import { speakable } from '../apps/editor/src/voice/speech';
 
-export interface ClipCheck extends Clip { said: string; heard: string; wer: number; cer: number; ok: boolean }
-interface Manifest extends VoiceManifest { clips: Record<string, ClipCheck> }
+export interface ClipCheck extends Clip {
+  said: string; heard: string; wer: number; cer: number; ok: boolean;
+  /** Выбран в студии (`npm run expo:voice-studio`): подготовка его не переозвучивает. */
+  manual?: boolean; approved?: boolean; engine?: string;
+  /** Другие дубли студии — на выбор. */
+  takes?: ClipCheck[];
+}
+export interface Manifest extends VoiceManifest { clips: Record<string, ClipCheck> }
 
 const words = (s: string) => s.toLowerCase().replace(/ё/g, 'е').match(/[\p{L}\d]+/gu) ?? [];
 
@@ -67,7 +73,7 @@ export function dataDir(arg?: string): string {
 }
 
 /** Голос начальника штаба: id образца и отпечаток его звука (перезаписанный образец — новые клипы). */
-function chiefVoice(data: string): string {
+export function chiefVoice(data: string): string {
   const roles = JSON.parse(readFileSync(join(data, 'voice/roles.json'), 'utf8')) as Record<string, string>;
   const id = roles.chief;
   if (!id) throw new Error('у начальника штаба нет голоса (voice/roles.json)');
@@ -76,7 +82,7 @@ function chiefVoice(data: string): string {
   return `${id}:${stamp}`;
 }
 
-const clipKey = (said: string, voice: string, engine: string) => createHash('sha256').update(`${said}\n${voice}\n${engine}`).digest('hex').slice(0, 24);
+export const clipKey = (said: string, voice: string, engine: string) => createHash('sha256').update(`${said}\n${voice}\n${engine}`).digest('hex').slice(0, 24);
 
 const FILTER = [
   'silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02', 'areverse',
@@ -84,7 +90,7 @@ const FILTER = [
   'afade=t=in:d=0.01',
 ].join(',');
 
-function encode(wav: string, ogg: string): number {
+export function encode(wav: string, ogg: string): number {
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-af', FILTER, '-ac', '1', '-c:a', 'libopus', '-b:a', '40k', '-f', 'ogg', ogg]);
   return durationMs(ogg);
 }
@@ -93,7 +99,7 @@ const durationMs = (f: string) =>
   Math.round(Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString().trim()) * 1000);
 
 /** Подключение к голосовому сервису: синтез в файл с распознаванием. */
-async function service(url: string) {
+export async function service(url: string) {
   const ws = new WebSocket(url);
   const waits = new Map<number, (m: Record<string, unknown>) => void>();
   let ready: (m: Record<string, unknown>) => void = () => {};
@@ -113,6 +119,8 @@ async function service(url: string) {
   let id = 0;
   return {
     engine: String((h.tts as { current?: string } | undefined)?.current ?? 'unknown'),
+    /** Модели озвучки службы: id, название, пояснение. */
+    engines: ((h.tts as { engines?: { id: string; title: string; note: string }[] } | undefined)?.engines ?? []),
     /** Сменить модель озвучки (загрузка — до нескольких минут); не загрузилась — ошибка с причиной службы. */
     async setEngine(eid: string): Promise<void> {
       const m = await new Promise<Record<string, unknown>>((res, rej) => {
@@ -180,6 +188,10 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
     const said = speakable(text, { full: true });
     const file = `${clipKey(said, voice, engine)}.ogg`;
     const prev = old?.clips[text];
+    if (prev?.manual && prev.said === said && existsSync(join(dir, 'clips', prev.file))) {
+      m.clips[text] = prev;
+      continue;
+    }
     if (prev && prev.file === file && existsSync(join(dir, 'clips', file))) {
       // готовый клип: проверка пересчитывается по сохранённому распознанному (правило проверки могло измениться)
       const heard = heardText(prev.heard);
@@ -214,7 +226,7 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
     writeFileSync(mpath, `${JSON.stringify(m, null, 1)}\n`); // прерванный прогон не теряет сделанное
   }
   if (svc || !old) writeFileSync(mpath, `${JSON.stringify(m, null, 1)}\n`);
-  const used = new Set(Object.values(m.clips).map((c) => c.file));
+  const used = new Set(Object.values(m.clips).flatMap((c) => [c.file, ...(c.takes ?? []).map((t) => t.file)]));
   for (const f of readdirSync(join(dir, 'clips'))) if (!used.has(f)) rmSync(join(dir, 'clips', f), { force: true });
   const failed = auditVoice(texts, svc || !old ? m : old, dir);
   if (o.samples) samples(m, dir);
