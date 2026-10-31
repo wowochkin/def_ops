@@ -135,7 +135,9 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       const onFail = (id: ProbeId) => {
         log(`Нет связи: ${id}`);
         count('failure');
-        host.dispatch({ t: 'jump', phase: id === 'core' || id === 'windows' ? 'startup' : 'attract' });
+        // модель и голос, которыми сеанс уже не пользуется (стенд работает без ИИ), сеанс не прерывают
+        const used = id === 'core' || id === 'windows' || host.snapshot().settings.aiMode === 'ai';
+        if (used) host.dispatch({ t: 'jump', phase: id === 'core' || id === 'windows' ? 'startup' : 'attract' });
         if (id === 'model' || id === 'voice') {
           host.setAiMode('noai');
           publishHealth(states, 'Запуск в режиме без ИИ');

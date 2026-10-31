@@ -76,6 +76,27 @@ try {
   await page.screenshot({ path: 'docs/img/expo-startup.jpg', type: 'jpeg', quality: 85 });
   await page.getByRole('heading', { name: 'Примите командование' }).waitFor({ timeout: 120000 });
   if (!calls.includes('game_start') || !calls.includes('game_stop')) throw Error('Нет пробного запуска ядра');
+  // сеанс с настоящим ядром: три перелома 1-го Белорусского, прокрутки и итог по осям
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();
+  await page.getByRole('button', { name: /1-й Белорусский/ }).click();
+  await page.getByRole('button', { name: 'К решениям' }).click();
+  const shot = (name) => page.screenshot({ path: `docs/img/${name}.jpg`, type: 'jpeg', quality: 85 });
+  for (const n of [1, 2, 3]) {
+    await page.getByRole('heading', { name: new RegExp(`^Перелом ${n} ·`) }).waitFor({ timeout: 60000 });
+    await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 60000 });
+    await page.locator('.expo-card strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 60000 });
+    await page.getByRole('button', { name: 'Подробнее о карточке 1' }).click();
+    if (n === 1) await shot('expo-turn');
+    await page.getByRole('button', { name: `Карточка ${n === 2 ? 2 : 1}`, exact: true }).click();
+    await page.locator('.expo-reveal h3').waitFor({ timeout: 60000 });
+    if (n === 2) await shot('expo-scroll');
+  }
+  await page.locator('.expo-rank').waitFor({ timeout: 60000 });
+  await shot('expo-result');
+  const rank = await page.locator('.expo-rank').innerText();
+  const forecast = await page.locator('.expo-forecast').innerText();
+  if (!calls.includes('game_turn')) throw Error('Нет хода ядра');
   await page.keyboard.press('Control+Alt+Shift+KeyO');
   await page.getByLabel('ПИН', { exact: true }).fill('0000');
   await page.getByRole('button', { name: 'Открыть меню' }).click();
@@ -83,8 +104,11 @@ try {
   await page.waitForTimeout(200);
   if (await page.getByRole('alert').count()) throw Error(await page.getByRole('alert').innerText());
   if (!calls.includes('expo_settings_write')) throw Error('В резервном режиме не сохранились настройки');
-  console.log(JSON.stringify({ ok: true, coreCalls: calls.filter((c) => !c.startsWith('expo')), errors }));
+  console.log(JSON.stringify({ ok: true, rank, forecast, coreCalls: [...new Set(calls.filter((c) => !c.startsWith('expo')))], errors }));
   if (errors.length) process.exitCode = 1;
+} catch (e) {
+  await page.screenshot({ path: '/tmp/expo-core-check-fail.jpg', type: 'jpeg', quality: 70 }).catch(() => {});
+  throw e;
 } finally {
   await browser.close();
   core.stop();
