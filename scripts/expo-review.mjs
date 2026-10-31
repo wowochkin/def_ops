@@ -22,16 +22,18 @@ const errors = [];
 const audit = (page) =>
   page.evaluate(() => {
     const stage = document.querySelector('.expo')?.getBoundingClientRect();
+    const area = document.querySelector('.expo-content')?.getBoundingClientRect();
     const name = (el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')}«${(el.textContent ?? '').trim().slice(0, 30)}»`;
     const bad = [];
     for (const el of document.querySelectorAll('.expo *')) {
-      if (el.closest('svg') || el.closest('.expo-sr') || !el.getClientRects().length) continue;
+      if (el.closest('svg') || el.closest('.expo-sr') || el.closest('.expo-film') || el.closest('.expo-gis') || !el.getClientRects().length) continue;
       const cs = getComputedStyle(el);
       if (cs.overflowY !== 'visible' && el.scrollHeight > el.clientHeight + 2) bad.push(`не влезает по высоте: ${name(el)} ${el.scrollHeight}>${el.clientHeight}`);
       if (cs.overflowX !== 'visible' && el.scrollWidth > el.clientWidth + 2) bad.push(`не влезает по ширине: ${name(el)} ${el.scrollWidth}>${el.clientWidth}`);
       const r = el.getBoundingClientRect(), pr = el.parentElement?.getBoundingClientRect();
       if (pr && el.parentElement.closest('.expo') && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && (r.bottom > pr.bottom + 3 || r.right > pr.right + 3))
         bad.push(`вылезает из ${name(el.parentElement)}: ${name(el)}`);
+      if (area && el.closest('.expo-content') && r.height > 0 && r.bottom > area.bottom + 2) bad.push(`ниже области сцены: ${name(el)}`);
       if (stage && (r.right > stage.right + 1 || r.bottom > stage.bottom + 1 || r.left < stage.left - 1 || r.top < stage.top - 1)) bad.push(`за холстом: ${name(el)}`);
     }
     return [...new Set(bad)];
@@ -40,7 +42,7 @@ const audit = (page) =>
 async function run({ cfg, front, scenes, tag = '' }) {
   const page = await expoPage(browser, { core, cfg, viewport: { width, height }, voiceMs: scenes.includes('startup') ? 8000 : 0, firstOnly: true });
   page.on('pageerror', (e) => errors.push(String(e)));
-  const shot = async (name, settle = 300) => {
+  const shot = async (name, settle = 900) => {
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(settle);
     await page.screenshot({ path: `${out}/${name}${tag}.jpg`, type: 'jpeg', quality: 85 });

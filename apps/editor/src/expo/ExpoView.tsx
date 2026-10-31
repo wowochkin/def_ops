@@ -16,6 +16,7 @@ import { layoutFor, sceneOf } from './layout';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { ExpoMap, historyPaths } from './ExpoMap';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
+import { Cut, Film, flip } from './film';
 import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, mainPaths, MAP, type Arrow, type LL } from './map';
@@ -110,7 +111,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
   const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index }), [state.phase, state.front, mv, maps, lit, count, index]); // eslint-disable-line react-hooks/exhaustive-deps
   const clock = useRef<HTMLSpanElement | null>(null);
   const onTime = useCallback((t: string) => {
-    for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) el.textContent = modelTime(t);
+    for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) flip(el, modelTime(t));
   }, []);
   const mainRef = useRef<HTMLElement>(null);
   const gisRef = useRef<HTMLDivElement>(null);
@@ -363,14 +364,16 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
             )}
           </footer>
         )}
+        <Film />
+        <Cut scene={p.kind === 'turn' ? `turn-${p.n}` : p.kind} />
         {children}
       </main>
     </div>
   );
 }
 
-/** Суть карточки на виду: две первые строки (у карточки ИИ без факта и риска — три), каждая — одной строкой. */
-const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, c.fact ? 2 : 3);
+/** Суть карточки на виду: две первые строки (у карточки ИИ без факта и риска — три; при длинном заголовке — на одну меньше). */
+const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
 /** Знак армии-исполнителя: портрет командующего, если он есть в манифесте картинок, иначе штабной знак армии. */
@@ -502,13 +505,6 @@ function OrderSlip({ c, n }: { c: CardView | null; n: number | 'delay' | null })
       <p className="expo-slip-head">
         <span className="expo-card-n">{(n as number) + 1}</span> <span className="expo-tty">{c.title}</span>
       </p>
-      {gist(c)
-        .slice(0, 1)
-        .map((l) => (
-          <p key={l} className="expo-tty" style={{ ['--i' as string]: 1 }}>
-            {l}
-          </p>
-        ))}
       <span className="expo-stamp" aria-hidden="true">
         Приказ
       </span>
@@ -525,13 +521,21 @@ function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; ful
       {mv?.reveal && !mv.busy ? (
         <>
           <h3>{mv.reveal.text}</h3>
-          <p className="expo-meta">Исторический вариант</p>
-          <p className="expo-hist-title">{mv.reveal.historical.title}</p>
-          <ul className="expo-card-lines">
-            {(full ? mv.reveal.historical.lines : mv.reveal.historical.lines.slice(0, 1)).map((l) => (
-              <li key={l}>{l}</li>
-            ))}
-          </ul>
+          {full ? (
+            <>
+              <p className="expo-meta">Исторический вариант</p>
+              <p className="expo-hist-title">{mv.reveal.historical.title}</p>
+              <ul className="expo-card-lines">
+                {mv.reveal.historical.lines.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="expo-hist-title">
+              <span className="expo-meta">Исторический вариант:</span> {mv.reveal.historical.title}
+            </p>
+          )}
         </>
       ) : (
         !model.error && <p className="expo-status">Решение принято. Модель считает ход операции…</p>
@@ -629,11 +633,12 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     if (!d) return null;
     const w = (THEATRE[2] - THEATRE[0]) / count;
     const part: Bbox = count > 1 ? [THEATRE[0] + w * index, THEATRE[1], THEATRE[0] + w * (index + 1), THEATRE[3]] : THEATRE;
-    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 } };
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   if (p.kind === 'briefing' && hist && state.front) {
     const arrows = frontArrows(state.front);
-    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank) };
+    // 16 апреля, 5:00 — артиллерийская подготовка на переднем крае фронта
+    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank), fx: { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } };
   }
   if (p.kind === 'turn' && mv) {
     const own = sessionDoc(maps.session, mv);
@@ -647,7 +652,8 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят
     const moving = p.step === 'scroll' && own && own.time === mv.time && mv.map.prev && !mv.busy;
     const time = own ? (p.step === 'scroll' && !moving && mv.map.prev ? mv.map.prev.time : mv.time) : start;
-    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, key: `run-${mv.time}` } : null, camera, extra };
+    const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
+    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
     const own = sessionDoc(maps.session, mv);
@@ -657,7 +663,7 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     const hp = historyPaths(mv.front, own.time);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
     const pts = [...Object.values(paths), ...Object.values(history)].flat();
-    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, extra: pathFeatures(own.doc, paths, history, ZOOM) };
+    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, extra: pathFeatures(own.doc, paths, history, ZOOM), fx: { front: [], smoke: [BERLIN], bursts: [] } };
   }
   return null;
 }

@@ -200,9 +200,72 @@ html.expo-active,
   transform: scale(var(--gis-k));
   transform-origin: 0 0;
 }
-.expo-gis-in > * {
+.expo-gis-in > *,
+.expo-stage-map > :first-child {
   width: 100%;
   height: 100%;
+}
+.expo-stage-map {
+  position: relative;
+}
+.expo-gis-in {
+  filter: sepia(0.3) saturate(0.85) contrast(1.04);
+}
+.expo-mapfx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Кинохроника: зерно и виньетка на весь холст, шторка со вспышкой кадра при смене сцены */
+.expo-film {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+.expo-grain {
+  position: absolute;
+  inset: -40%;
+  opacity: 0.075;
+  background-size: 256px 256px;
+}
+.expo-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 58%, rgba(5, 8, 7, 0.55) 100%);
+}
+.expo-cut {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .expo-grain {
+    animation: expo-grain 0.8s steps(6) infinite;
+  }
+  .expo-cut {
+    animation: expo-cut 0.75s ease-in both;
+  }
+}
+@keyframes expo-grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-7%, 4%); }
+  40% { transform: translate(5%, -6%); }
+  60% { transform: translate(-3%, 8%); }
+  80% { transform: translate(8%, 2%); }
+  100% { transform: translate(-5%, -4%); }
+}
+@keyframes expo-cut {
+  0% { opacity: 1; background: #efe6cf; clip-path: inset(0 0 0 0); }
+  8% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 0 0); }
+  35% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 0 0); }
+  100% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 100% 0); }
 }
 .expo-gis .maplibregl-ctrl-bottom-right,
 .expo-gis .maplibregl-ctrl-bottom-left,
@@ -488,11 +551,11 @@ html.expo-active,
   line-height: 1.2;
 }
 .expo-card-body strong {
-  font: normal 36px / 1.1 var(--expo-serif);
+  font: normal 34px / 1.1 var(--expo-serif);
   margin-bottom: 2px;
 }
 .expo-card-body strong .expo-card-n {
-  font-size: 36px;
+  font-size: 34px;
   margin-right: 6px;
 }
 .expo-fact {
@@ -562,6 +625,10 @@ html.expo-active,
 }
 .expo-slip {
   position: relative;
+  min-height: 112px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   padding: 18px 250px 18px 24px;
   border: 2px solid #c9b48a;
   border-radius: 6px;
