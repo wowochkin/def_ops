@@ -8,7 +8,9 @@
  *   npm run expo:prepare -- --voice      — предзапись голоса: все заготовленные тексты и куски склейки голосом
  *                                          начальника штаба (голосовой сервис, :47645), Ogg Opus и манифест — в
  *                                          <папка данных>/expo/voice/ (--data — другая папка данных); озвучивается
- *                                          только новое, каждый клип проходит автопроверку (scripts/expo-voice.ts).
+ *                                          только новое, каждый клип проходит автопроверку (scripts/expo-voice.ts);
+ *                                          модель озвучки — Fish S2 Pro (--engine — другая), живой голос службы
+ *                                          после подготовки возвращается к выбранной модели.
  *                                          Сервиса нет — проверяется готовая предзапись
  *
  * Ручного отбора нет: что не прошло проверку — отбрасывается.
@@ -91,7 +93,7 @@ async function generate(bank: Bank) {
 }
 
 async function voice(): Promise<boolean> {
-  const r = await prepareVoice({ data: args.includes('--data') ? opt('--data', '') : undefined, start: scenario.start, hours: scenario.hours, samples: true });
+  const r = await prepareVoice({ data: args.includes('--data') ? opt('--data', '') : undefined, start: scenario.start, hours: scenario.hours, samples: true, engine: args.includes('--engine') ? opt('--engine', '') : undefined });
   console.log(`Предзапись голоса: ${r.ok} из ${r.total} текстов готовы и прошли проверку, озвучено сейчас ${r.made}; ${r.dir}`);
   for (const e of r.failed.slice(0, 20)) console.log(`  ${e}`);
   return r.failed.length === 0;

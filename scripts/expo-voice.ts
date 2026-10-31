@@ -98,12 +98,14 @@ async function service(url: string) {
   const waits = new Map<number, (m: Record<string, unknown>) => void>();
   let ready: (m: Record<string, unknown>) => void = () => {};
   let fail: (e: Error) => void = () => {};
+  let ttsWait: ((m: Record<string, unknown>) => void) | null = null;
   const hello = new Promise<Record<string, unknown>>((res, rej) => { ready = res; fail = rej; });
   ws.onmessage = (e) => {
     if (typeof e.data !== 'string') return;
     const m = JSON.parse(e.data) as Record<string, unknown>;
     if (m.type === 'ready') ready(m);
     else if (m.type === 'rendered') { waits.get(m.id as number)?.(m); waits.delete(m.id as number); }
+    else if (m.type === 'tts_list' && m.state === 'ready') ttsWait?.(m);
     else if (m.type === 'error') console.error(`  сервис: ${m.text}`);
   };
   ws.onerror = () => fail(new Error(`голосовой сервис не отвечает (${url})`));
@@ -111,6 +113,16 @@ async function service(url: string) {
   let id = 0;
   return {
     engine: String((h.tts as { current?: string } | undefined)?.current ?? 'unknown'),
+    /** Сменить модель озвучки (загрузка — до нескольких минут); не загрузилась — ошибка с причиной службы. */
+    async setEngine(eid: string): Promise<void> {
+      const m = await new Promise<Record<string, unknown>>((res, rej) => {
+        const t = setTimeout(() => rej(new Error(`модель озвучки ${eid} не загрузилась за 10 мин`)), 600_000);
+        ttsWait = (x) => { clearTimeout(t); ttsWait = null; res(x); };
+        ws.send(JSON.stringify({ type: 'tts', op: 'set', id: eid }));
+      });
+      if (m.current !== eid) throw new Error(`модель озвучки ${eid} не загрузилась: ${m.error ?? 'причина не названа'}`);
+      this.engine = eid;
+    },
     render(text: string): Promise<{ path?: string; audio_s?: number; heard?: string; error?: string }> {
       const rid = ++id;
       return new Promise((res) => {
@@ -136,7 +148,10 @@ export function auditVoice(texts: string[], m: Manifest | null, dir: string): st
   return bad;
 }
 
-export async function prepareVoice(o: { data?: string; url?: string; start: string; hours: number; samples?: boolean }): Promise<VoiceReport> {
+/** Модель озвучки предзаписи: лучшая по звучанию; для живой речи тяжела, для подготовки заранее — в самый раз. */
+export const EXPO_VOICE_ENGINE = 'fish-s2-pro';
+
+export async function prepareVoice(o: { data?: string; url?: string; start: string; hours: number; samples?: boolean; engine?: string }): Promise<VoiceReport> {
   const data = dataDir(o.data);
   const dir = join(data, 'expo/voice');
   mkdirSync(join(dir, 'clips'), { recursive: true });
@@ -150,6 +165,14 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
   } catch (e) {
     console.log(`${(e as Error).message} — озвучка не обновлена, проверяю готовую.`);
   }
+  // предзапись — своей моделью (качество важнее скорости), живой голос службы потом возвращается к выбранной
+  const live = svc?.engine;
+  const want = o.engine ?? EXPO_VOICE_ENGINE;
+  if (svc && live !== want) {
+    console.log(`Модель озвучки для предзаписи: ${want} (живой голос — ${live}, вернётся после подготовки).`);
+    try { await svc.setEngine(want); } catch (e) { svc.close(); throw e; }
+  }
+  try {
   const engine = svc?.engine ?? old?.engine ?? 'unknown';
   const m: Manifest = { version: 1, voice, engine, clips: {} };
   let made = 0;
@@ -190,13 +213,16 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
     console.log(`  ${i + 1}/${texts.length} ${best.ok ? '✓' : '✗'} ${(best.ms / 1000).toFixed(1)} с, WER ${best.wer.toFixed(2)}, CER ${best.cer.toFixed(2)} — ${text}`);
     writeFileSync(mpath, `${JSON.stringify(m, null, 1)}\n`); // прерванный прогон не теряет сделанное
   }
-  svc?.close();
   if (svc || !old) writeFileSync(mpath, `${JSON.stringify(m, null, 1)}\n`);
   const used = new Set(Object.values(m.clips).map((c) => c.file));
   for (const f of readdirSync(join(dir, 'clips'))) if (!used.has(f)) rmSync(join(dir, 'clips', f), { force: true });
   const failed = auditVoice(texts, svc || !old ? m : old, dir);
   if (o.samples) samples(m, dir);
   return { total: texts.length, ok: texts.length - failed.length, made, failed, dir };
+  } finally {
+    if (svc && live && svc.engine !== live) await svc.setEngine(live).catch((e) => console.error(`  ${(e as Error).message}`));
+    svc?.close();
+  }
 }
 
 /** Примеры склейки для прослушивания — так же, как склеивает стенд: клипы встык, пауза по знаку. */
