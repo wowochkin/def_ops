@@ -12,7 +12,7 @@ import type { ExpoSettings } from './settings';
 import { layoutFor, panoramaPart, sceneOf } from './layout';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { ExpoMap, historyPaths, Replay, useProgress } from './ExpoMap';
-import { historyAt, MAP, type Arrow } from './map';
+import { historyAt, mainPaths, MAP, type Arrow } from './map';
 import type { ModelFrame } from './model';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
@@ -112,7 +112,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
         )}
         {p.kind === 'briefing' && (
           <section className="expo-wide expo-over">
-            <ExpoMap armies={START} focus={state.front} cameraMs={4000} stagger arrows={state.front ? frontArrows(state.front) : []} className="expo-backdrop" label="Обстановка к 16 апреля 1945" />
+            <ExpoMap armies={START} focus={state.front} cameraMs={4000} shift={0.3} stagger arrows={state.front ? frontArrows(state.front) : []} className="expo-backdrop" label="Обстановка к 16 апреля 1945" />
             <div className="expo-overlay expo-brief">
               <h1>Ввод в обстановку</h1>
               <h2>{state.front && FRONT_NAMES[state.front]}</h2>
@@ -227,28 +227,27 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
           <section className="expo-wide">
             <h1>Сеанс завершён</h1>
             {mv?.final ? (
-              <div className="expo-result">
-                <p className="expo-kicker">{state.front && FRONT_NAMES[state.front]}</p>
-                <h2 className="expo-rank">{mv.final.rank}</h2>
-                <p className="expo-forecast">{mv.final.forecast}</p>
-                <ExpoMap
-                  armies={mv.map.armies}
-                  focus={mv.front}
-                  paths={{ own: mv.map.path, history: historyPaths(mv.front, mv.time) }}
-                  className="expo-result-map"
-                  label="Ваш путь армий (сплошной) поверх исторического (пунктир)"
-                />
-                <p className="expo-legend"><span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span></p>
-                <Scales scales={mv.final.scales} />
-                <p>
-                  Вы выбрали как маршал: {mv.final.matches} из 3
-                </p>
-                <p>Попробуйте другие решения или другой фронт. В полной версии — вся операция и штабы на модели.</p>
+              <div className="expo-result expo-result-grid">
+                <div>
+                  <p className="expo-kicker">{state.front && FRONT_NAMES[state.front]}</p>
+                  <h2 className="expo-rank">{mv.final.rank}</h2>
+                  <p className="expo-forecast">{mv.final.forecast}</p>
+                  <Scales scales={mv.final.scales} />
+                  <p>Вы выбрали как маршал: {mv.final.matches} из 3</p>
+                  <p>Попробуйте другие решения или другой фронт. В полной версии — вся операция и штабы на модели.</p>
+                </div>
+                <div className="expo-result-side">
+                  <ResultMap view={mv} />
+                  <p className="expo-legend"><span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span></p>
+                  {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
+                </div>
               </div>
             ) : (
-              <ModelNote model={model} />
+              <>
+                <ModelNote model={model} />
+                {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
+              </>
             )}
-            {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
           </section>
         )}
       </div>
@@ -338,10 +337,28 @@ function TurnMap({ view, step, choice, expanded }: { view: NonNullable<ModelFram
         arrows={arrows ?? []}
         flashes={moving && t > 0.7 ? m.flashes : []}
         focus={view.front}
+        shift={0.2}
         className="expo-backdrop"
         label="Карта перелома"
       />
       {moving && <p className="expo-replay-date expo-run-date" aria-hidden="true">{modelTime(date)}</p>}
     </>
+  );
+}
+
+/** Итог: пути главных армий фронта — посетителя (сплошной) поверх исторического (пунктир). */
+function ResultMap({ view }: { view: NonNullable<ModelFrame['view']> }) {
+  const own = mainPaths(view.map.path);
+  const hist = historyPaths(view.front, view.time);
+  return (
+    <ExpoMap
+      armies={view.map.armies.filter((a) => a.side === 'de' || a.id in own)}
+      focus={view.front}
+      aspect={0.9}
+      fontScale={2}
+      paths={{ own, history: Object.fromEntries(Object.keys(own).filter((id) => hist[id]).map((id) => [id, hist[id]])) }}
+      className="expo-result-map"
+      label="Ваш путь армий (сплошной) поверх исторического (пунктир)"
+    />
   );
 }

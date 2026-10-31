@@ -781,16 +781,33 @@ html.expo-active,
   color: var(--expo-gold);
   text-shadow: 0 0 12px #0f1a18;
 }
-.expo-map > :not(.expo-backdrop):not(.expo-replay-date) {
+.expo-map > :not(.expo-backdrop):not(.expo-replay-date):not(.expo-timer) {
   position: relative;
   z-index: 1;
 }
+.expo-map > .expo-timer {
+  z-index: 1;
+}
+.expo-map > h2,
+.expo-map > h3,
+.expo-map > p,
+.expo-map > .expo-reveal {
+  width: fit-content;
+  max-width: 55%;
+  padding: 2px 12px;
+  background: rgba(15, 26, 24, 0.82);
+  border-radius: 4px;
+}
 .expo-map {
   overflow: hidden;
+}
+.expo-map:not(:has(.expo-cards)) {
   min-height: 52vh;
 }
 .expo-run-date {
   top: auto;
+  left: auto;
+  right: 24px;
   bottom: 16px;
 }
 .expo-minimap {
@@ -805,10 +822,21 @@ html.expo-active,
 .expo-cards button .expo-task {
   color: var(--expo-text);
 }
+.expo-result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: none;
+  text-align: left;
+  align-items: start;
+}
+.expo-result-grid .expo-rank,
+.expo-result-grid .expo-forecast {
+  margin: 8px 0;
+}
 .expo-result-map {
-  height: 30vh;
+  height: 46vh;
   border-radius: 8px;
-  margin: 12px 0;
 }
 .expo-legend span::before {
   content: '';
@@ -819,4 +847,21 @@ html.expo-active,
 }
 .expo-legend .expo-legend-history::before {
   border-top: 4px dashed var(--expo-muted);
+}
+.expo-map .expo-cards article {
+  background: rgba(15, 26, 24, 0.92);
+  border-radius: 8px;
+}
+.expo-wide:has(.expo-result-grid) h1 {
+  font-size: 56px;
+  margin: 0 0 8px;
+}
+.expo-result-grid p {
+  margin: 8px 0;
+}
+.expo-result-side {
+  text-align: center;
+}
+.expo-result-side .expo-legend {
+  margin: 4px 0 12px;
 }

@@ -56,3 +56,9 @@ describe('карта стенда', () => {
     expect(between(armies, [{ ...armies[0], at: [2, 2] }], 0.5)[0].at).toEqual([1, 1]);
   });
 });
+
+it('главные пути — самые длинные', async () => {
+  const { mainPaths } = await import('../src/expo/map');
+  const p = mainPaths({ a: [[0, 0], [1, 0]], b: [[0, 0], [3, 0]], c: [[0, 0]], d: [[0, 0], [2, 0]] }, 2);
+  expect(Object.keys(p)).toEqual(['b', 'd']);
+});

@@ -107,3 +107,9 @@ export function between(a: ArmyPos[], b: ArmyPos[], t: number): ArmyPos[] {
     return y ? { ...x, at: lerp(y.at, x.at, t) } : x;
   });
 }
+
+/** Пути армий, прошедших дальше всех (не больше `n`): на итоге видны главные удары, а не все армии фронта. */
+export function mainPaths(paths: Record<string, LL[]>, n = 4): Record<string, LL[]> {
+  const km = (l: LL[]) => l.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - l[i][0], p[1] - l[i][1]), 0);
+  return Object.fromEntries(Object.entries(paths).filter(([, l]) => l.length > 1).sort((a, b) => km(b[1]) - km(a[1])).slice(0, n));
+}

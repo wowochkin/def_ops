@@ -89,16 +89,23 @@ export interface ExpoMapProps {
   labels?: boolean;
   part?: { from: number; to: number };
   aspect?: number;
+  /** Сдвиг камеры влево на долю ширины: место под текст слева, предмет карты — правее. */
+  shift?: number;
+  /** Во сколько раз крупнее подписи (карта занимает часть экрана — подписи не мельче 32 px). */
+  fontScale?: number;
   className?: string;
   label?: string;
 }
 
-export function ExpoMap({ armies, from, progress = 1, arrows = [], flashes = [], paths, focus = null, cameraMs = 0, stagger = false, labels = true, part, aspect = 16 / 9, className = '', label = 'Карта операции' }: ExpoMapProps) {
-  const target = useMemo(() => (focus ? frontBox(focus, aspect) : FULL), [focus, aspect]);
-  const cam = useProgress(`${focus}-${aspect}`, cameraMs);
+export function ExpoMap({ armies, from, progress = 1, arrows = [], flashes = [], paths, focus = null, cameraMs = 0, stagger = false, labels = true, part, aspect = 16 / 9, shift = 0, fontScale = 1, className = '', label = 'Карта операции' }: ExpoMapProps) {
+  const target = useMemo((): Box => {
+    const b = focus ? frontBox(focus, aspect) : FULL;
+    return [b[0] - b[2] * shift, b[1], b[2], b[3]];
+  }, [focus, aspect, shift]);
+  const cam = useProgress(`${focus}-${aspect}-${shift}`, cameraMs);
   const startBox = useRef<Box>(FULL);
   const box = slice(cameraMs > 0 ? mix(startBox.current, target, cam) : target, part);
-  const font = box[2] * 0.026;
+  const font = box[2] * 0.026 * fontScale;
   const shown = from ? between(from, armies, ease(progress)) : armies;
   const line = (l: LL[]) => l.map((p) => P.xy(p).map((v) => v.toFixed(1)).join(',')).join(' ');
   const ownFront = (a: ArmyPos) => (focus ? a.front === focus : a.side === 'su');
