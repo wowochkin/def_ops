@@ -1,14 +1,18 @@
 /**
  * Вид одного выставочного окна: области по раскладке (`layoutFor`) и сцена текущей фазы. Управление — только в окне
  * с картой; клавиши — только в профиле «мышь и клавиатура» и не на паузе. Перелом и итог — по виду модели сеанса
- * (карточки банка, раскрытие решения, три шкалы, ход операции, оценка по осям); карта и анимация — этап «Подача».
+ * (карточки банка, раскрытие решения, три шкалы, ход операции, оценка по осям). Карта — `ExpoMap`: заставка по истории
+ * (на нескольких экранах — части одной панорамы), ввод — камера к полосе фронта, перелом — стрелки карточек и движение
+ * армий по ходу ядра, итог — путь посетителя поверх исторического.
  */
 import { useEffect, useState } from 'react';
 import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
-import { layoutFor, sceneOf } from './layout';
-import { FRONT_NAMES, PhaseTitle, Timer } from './scenes';
+import { layoutFor, panoramaPart, sceneOf } from './layout';
+import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
+import { ExpoMap, historyPaths, Replay, useProgress } from './ExpoMap';
+import { historyAt, MAP, type Arrow } from './map';
 import type { ModelFrame } from './model';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
@@ -71,11 +75,19 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
           </section>
         )}
         {p.kind === 'attract' && (
-          <section className="expo-wide">
-            <p className="expo-kicker">Берлинская операция · 1945</p>
-            <h1>Примите командование</h1>
-            <p>Выберите фронт и пройдите три перелома операции.</p>
-            {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Коснитесь, чтобы принять командование</button>}
+          <section className="expo-wide expo-over" onClick={controls ? () => send({ t: 'touch' }) : undefined}>
+            <Replay part={count > 1 ? panoramaPart(index, count) : undefined}>
+              {(iso) => <p className="expo-replay-date" aria-hidden="true">{modelTime(iso)}</p>}
+            </Replay>
+            {(controls || count === 1) && (
+              <div className="expo-overlay">
+                <p className="expo-kicker">16 апреля 1945. Через 17 дней пал Берлин. А как поступили бы вы?</p>
+                <h1>Примите командование</h1>
+                <p>Выберите фронт и пройдите три перелома операции.</p>
+                {/* касание любого места панорамы — то же, что кнопка (событие всплывает к сцене) */}
+                {controls && <button className="expo-primary">Коснитесь, чтобы принять командование</button>}
+              </div>
+            )}
           </section>
         )}
         {p.kind === 'welcome' && (
@@ -89,25 +101,31 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                   disabled={!controls}
                   onClick={() => send({ t: 'pickFront', front: f })}
                 >
+                  <ExpoMap armies={START} focus={f} labels={false} arrows={frontArrows(f)} aspect={2} className="expo-minimap" label={`Задача: ${FRONT_NAMES[f]}`} />
                   <strong>{FRONT_NAMES[f]}</strong>
-                  <span>{f === 'su_1bf' ? 'Георгий Жуков' : 'Иван Конев'}</span>
+                  <span>{FRONT_MARSHALS[f]}</span>
+                  <span className="expo-task">{FRONT_TASKS[f]}</span>
                 </button>
               ))}
             </div>
           </section>
         )}
         {p.kind === 'briefing' && (
-          <section className="expo-wide">
-            <h1>Ввод в обстановку</h1>
-            <h2>{state.front && FRONT_NAMES[state.front]}</h2>
-            <p>Здесь появится карта операции и задача фронта.</p>
-            {controls && <button className="expo-primary" onClick={() => send({ t: 'next' })}>К решениям</button>}
+          <section className="expo-wide expo-over">
+            <ExpoMap armies={START} focus={state.front} cameraMs={4000} stagger arrows={state.front ? frontArrows(state.front) : []} className="expo-backdrop" label="Обстановка к 16 апреля 1945" />
+            <div className="expo-overlay expo-brief">
+              <h1>Ввод в обстановку</h1>
+              <h2>{state.front && FRONT_NAMES[state.front]}</h2>
+              <p className="expo-task">{state.front && FRONT_TASKS[state.front]}</p>
+              {controls && <button className="expo-primary" onClick={() => send({ t: 'next' })}>К решениям</button>}
+            </div>
           </section>
         )}
         {p.kind === 'turn' && (
           <div className={`expo-roles ${count === 1 ? 'expo-single' : ''}`}>
             {roles.includes('map') && (
               <section className="expo-map">
+                {mv && <TurnMap view={mv} step={p.step} choice={p.step === 'scroll' ? p.choice : null} expanded={expanded} />}
                 <h2>Карта</h2>
                 <h3>
                   Перелом {p.n} · {turnDef(state.front, p.n)?.title}
@@ -213,6 +231,14 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                 <p className="expo-kicker">{state.front && FRONT_NAMES[state.front]}</p>
                 <h2 className="expo-rank">{mv.final.rank}</h2>
                 <p className="expo-forecast">{mv.final.forecast}</p>
+                <ExpoMap
+                  armies={mv.map.armies}
+                  focus={mv.front}
+                  paths={{ own: mv.map.path, history: historyPaths(mv.front, mv.time) }}
+                  className="expo-result-map"
+                  label="Ваш путь армий (сплошной) поверх исторического (пунктир)"
+                />
+                <p className="expo-legend"><span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span></p>
                 <Scales scales={mv.final.scales} />
                 <p>
                   Вы выбрали как маршал: {mv.final.matches} из 3
@@ -281,5 +307,41 @@ function AiPanel({ ai, compact = false }: { ai: AiFrame; compact?: boolean }) {
         </p>
       )}
     </div>
+  );
+}
+
+const START = historyAt(MAP.days[0]);
+
+/** Стрелка задачи фронта: армии фронта к своим положениям на конец операции по истории. */
+function frontArrows(front: string): Arrow[] {
+  const end = historyAt(MAP.days[MAP.days.length - 1]);
+  return START.filter((a) => a.front === front && /ТА/.test(a.label)).flatMap((a) => {
+    const b = end.find((x) => x.id === a.id);
+    return b ? [{ army: a.id, from: a.at, to: b.at, kind: 'attack' }] : [];
+  });
+}
+
+/** Карта перелома: стрелки раскрытой карточки; на прокрутке — движение армий от прошлого перелома, дата бежит, события вспыхивают. */
+function TurnMap({ view, step, choice, expanded }: { view: NonNullable<ModelFrame['view']>; step: string; choice: number | 'delay' | null; expanded: number | null }) {
+  const m = view.map;
+  const t = useProgress(step === 'scroll' && !view.busy ? view.time : 'still', step === 'scroll' && m.prev ? 8000 : 0);
+  const moving = step === 'scroll' && !view.busy && m.prev;
+  const picked = typeof choice === 'number' ? view.cards[choice] : null;
+  const arrows = step === 'choose' ? (expanded !== null ? view.cards[expanded]?.arrows : undefined) : step === 'scroll' ? picked?.arrows ?? view.reveal?.historical.arrows : undefined;
+  const date = moving ? new Date(Date.parse(`${m.prev!.time}:00Z`) + (Date.parse(`${view.time}:00Z`) - Date.parse(`${m.prev!.time}:00Z`)) * t).toISOString().slice(0, 16) : view.time;
+  return (
+    <>
+      <ExpoMap
+        armies={moving ? m.armies : view.busy && m.prev ? m.prev.armies : m.armies}
+        from={moving ? m.prev!.armies : null}
+        progress={t}
+        arrows={arrows ?? []}
+        flashes={moving && t > 0.7 ? m.flashes : []}
+        focus={view.front}
+        className="expo-backdrop"
+        label="Карта перелома"
+      />
+      {moving && <p className="expo-replay-date expo-run-date" aria-hidden="true">{modelTime(date)}</p>}
+    </>
   );
 }

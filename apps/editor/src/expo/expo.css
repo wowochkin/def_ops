@@ -630,3 +630,193 @@ html.expo-active,
   color: var(--expo-text);
   margin: 0;
 }
+
+/* Карта стенда (этап «Подача») */
+.expo-mapsvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.expo-rivers polyline {
+  fill: none;
+  stroke: #3f6f8f;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.expo-lines polyline {
+  fill: none;
+  stroke: var(--expo-enemy);
+  stroke-width: 3;
+  stroke-dasharray: 10 6;
+  opacity: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+.expo-cities circle {
+  fill: var(--expo-muted);
+}
+.expo-cities [data-capital] circle {
+  fill: var(--expo-gold);
+}
+.expo-cities text,
+.expo-armies text {
+  fill: var(--expo-text);
+  font-family: var(--expo-sans);
+  paint-order: stroke;
+  stroke: #0f1a18;
+  stroke-width: 0.25em;
+}
+.expo-armies text {
+  text-anchor: middle;
+}
+.expo-armies rect {
+  fill: #0f1a18;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+.expo-armies path {
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.expo-armies [data-side='su'] rect,
+.expo-armies [data-side='su'] path {
+  stroke: var(--expo-own);
+}
+.expo-armies [data-side='su']:not([data-own]) {
+  opacity: 0.55;
+}
+.expo-armies [data-side='de'] rect,
+.expo-armies [data-side='de'] path {
+  stroke: var(--expo-enemy);
+}
+.expo-arrows path,
+.expo-path-own {
+  fill: none;
+  stroke: var(--expo-gold);
+  stroke-width: 6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.expo-path-history {
+  fill: none;
+  stroke: var(--expo-muted);
+  stroke-width: 4;
+  stroke-dasharray: 8 8;
+  vector-effect: non-scaling-stroke;
+}
+.expo-flashes circle {
+  fill: none;
+  stroke: var(--expo-gold);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+.expo-flashes .expo-flash-core {
+  fill: var(--expo-gold);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .expo-arrows path {
+    stroke-dasharray: 2000;
+    animation: expo-draw 1.6s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.25s);
+  }
+  .expo-flashes g circle:first-child {
+    animation: expo-pulse 1.2s ease-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .expo-stagger .expo-armies g,
+  .expo-stagger .expo-lines {
+    animation: expo-appear 0.6s ease-out both;
+    animation-delay: calc(1.5s + var(--i, 0) * 0.35s);
+  }
+}
+@keyframes expo-draw {
+  from { stroke-dashoffset: 2000; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes expo-pulse {
+  from { transform: scale(0.4); opacity: 1; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+@keyframes expo-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.expo-over {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+.expo-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.expo-overlay {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  max-width: 80%;
+  padding: 24px 48px;
+  background: rgba(15, 26, 24, 0.82);
+  border-radius: 8px;
+}
+.expo-brief {
+  align-self: flex-start;
+  margin-left: 24px;
+  max-width: 40%;
+  text-align: left;
+}
+.expo-replay-date {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  left: 24px;
+  margin: 0;
+  font: 56px var(--expo-mono);
+  color: var(--expo-gold);
+  text-shadow: 0 0 12px #0f1a18;
+}
+.expo-map > :not(.expo-backdrop):not(.expo-replay-date) {
+  position: relative;
+  z-index: 1;
+}
+.expo-map {
+  overflow: hidden;
+  min-height: 52vh;
+}
+.expo-run-date {
+  top: auto;
+  bottom: 16px;
+}
+.expo-minimap {
+  height: 160px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.expo-task {
+  color: var(--expo-text);
+  font-size: var(--expo-text-min);
+}
+.expo-cards button .expo-task {
+  color: var(--expo-text);
+}
+.expo-result-map {
+  height: 30vh;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+.expo-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 48px;
+  margin: 0 12px 8px 24px;
+  border-top: 6px solid var(--expo-gold);
+}
+.expo-legend .expo-legend-history::before {
+  border-top: 4px dashed var(--expo-muted);
+}

@@ -59,3 +59,21 @@ it('result shows rank, forecast, axes and matches; core failure is shown', () =>
   const w = show(choose(), { view: null, error: 'Модель недоступна: нет ядра' });
   expect(w.getAllByRole('alert')[0].textContent).toBe('Модель недоступна: нет ядра');
 });
+
+it('maps: panorama replay, briefing camera to the front, turn arrows of the expanded card', () => {
+  const base = at(initialState(0), { t: 'ready' });
+  const r1 = show(base, { view: null, error: null });
+  expect(r1.getByRole('img', { name: 'Переигровка Берлинской операции' })).toBeTruthy();
+  cleanup();
+  const brief = { ...base, front: 'su_1uf', phase: { kind: 'briefing' } } as DirectorState;
+  const r2 = show(brief, { view: null, error: null });
+  expect(r2.getByRole('img', { name: 'Обстановка к 16 апреля 1945' })).toBeTruthy();
+  expect(r2.getByText(/Нейсе и Шпрее/)).toBeTruthy();
+  cleanup();
+  const arrows = [{ army: 'su_8gva', from: [14.6, 52.6] as [number, number], to: [14.1, 52.7] as [number, number], kind: 'attack' }];
+  const v = view();
+  v.cards[0] = { ...v.cards[0], arrows };
+  const r3 = show(choose(), { view: v, error: null });
+  fireEvent.click(r3.getByRole('button', { name: 'Подробнее о карточке 1' }));
+  expect(r3.container.querySelectorAll('.expo-arrows path')).toHaveLength(1);
+});
