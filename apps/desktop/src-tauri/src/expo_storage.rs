@@ -5,6 +5,9 @@
 //! 4096 знаков и без переводов строк. Суммарный объём журнала — не больше `LOG_LIMIT`: сверх него удаляются файлы прошлых
 //! дней, начиная со старых; сегодняшний файл не удаляется, а дорос до предела сам — новые строки дня отбрасываются.
 //! День проверяется по формату, так что путь из него не собрать.
+//!
+//! Предзапись голоса — `expo/voice/manifest.json` и `expo/voice/clips/<хеш>.ogg` (готовит `npm run expo:prepare --
+//! --voice`); окну отдаётся только манифест и клипы с именем из шестнадцатеричного хеша.
 
 use std::{fs, io::Write, path::Path, sync::Mutex};
 use tauri::Manager;
@@ -109,6 +112,33 @@ pub fn expo_log(app: tauri::AppHandle, day: String, line: String) -> Result<(), 
     append_log(&dir, &day, &line, LOG_LIMIT)
 }
 
+fn valid_clip(file: &str) -> bool {
+    file.len() > 4 && file.len() <= 68 && file.ends_with(".ogg") && file[..file.len() - 4].bytes().all(|c| c.is_ascii_hexdigit())
+}
+
+fn voice_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo").join("voice"))
+}
+
+/// Манифест предзаписи голоса или None, если её не готовили.
+#[tauri::command]
+pub fn expo_voice_manifest(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    match fs::read_to_string(voice_dir(&app)?.join("manifest.json")) {
+        Ok(t) => Ok(Some(t)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(format!("не читается манифест предзаписи: {e}")),
+    }
+}
+
+/// Клип предзаписи (Ogg Opus) — двоичным ответом, без перевода в JSON.
+#[tauri::command]
+pub fn expo_voice_clip(app: tauri::AppHandle, file: String) -> Result<tauri::ipc::Response, String> {
+    if !valid_clip(&file) {
+        return Err("Неверное имя клипа".into());
+    }
+    fs::read(voice_dir(&app)?.join("clips").join(&file)).map(tauri::ipc::Response::new).map_err(|e| format!("клип {file}: {e}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -118,6 +148,15 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn clip_name_is_hash_only() {
+        assert!(valid_clip("0123456789abcdef0123.ogg"));
+        assert!(!valid_clip("../manifest.json"));
+        assert!(!valid_clip("../../x.ogg"));
+        assert!(!valid_clip(".ogg"));
+        assert!(!valid_clip("abc.wav"));
     }
 
     #[test]

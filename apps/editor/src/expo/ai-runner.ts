@@ -8,7 +8,7 @@
  */
 import { answer, comment, type Ask, type ChoiceKind, type Said } from './ai';
 import type { DirectorEvent, Effect } from './director';
-import { LINES, pick, type Lines, type Vars } from './lines';
+import { LINES, pick, pickFilled, type Filled, type Lines, type Vars } from './lines';
 import { norm } from '../voice/fuzzy';
 import type { Line, voiceQueue } from './voice-queue';
 
@@ -55,6 +55,8 @@ export interface AiRunnerDeps {
   lines?: Lines;
   /** Учёт: ответ ИИ вовремя или заменён заготовкой. */
   count?: (kind: 'aiOnTime' | 'aiFallback') => void;
+  /** Заготовка озвучена заранее (из таких и выбирается, если они есть). */
+  voiced?: (f: Filled) => boolean;
 }
 
 export function aiRunner(d: AiRunnerDeps) {
@@ -62,7 +64,8 @@ export function aiRunner(d: AiRunnerDeps) {
   let frame: AiFrame = NO_AI;
   let gen = 0;
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
-  const say = (text: string, priority: Line['priority'], source: string) => d.queue.push({ text, priority, source });
+  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback'> = {}) =>
+    d.queue.push({ text, priority, source, ...more });
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
 
   const ask = async (q: string) => {
@@ -75,7 +78,8 @@ export function aiRunner(d: AiRunnerDeps) {
     if (g !== gen) return;
     tally(a);
     set({ answer: { q, text: a.text, source: a.source }, thinking: null });
-    say(a.text, 'action', a.source);
+    // составленное ИИ сейчас — живым голосом; не выйдет — звучит готовый ответ из предзаписи
+    say(a.text, 'action', a.source, a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {});
   };
 
   return {
@@ -84,8 +88,8 @@ export function aiRunner(d: AiRunnerDeps) {
     onLine(l: Line | null) { set({ line: l ? { text: l.text, source: l.source } : null }); },
     handle(e: Effect) {
       if (e.e === 'say') {
-        const t = pick(lines.say[e.key], d.facts().vars);
-        if (t) say(t, e.priority, 'prepared');
+        const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
+        if (f) say(f.text, e.priority, 'prepared', { parts: f.parts });
       } else if (e.e === 'newSession') {
         gen++;
         d.queue.clear();
@@ -112,10 +116,11 @@ export function aiRunner(d: AiRunnerDeps) {
     async decided(kind: ChoiceKind) {
       const g = gen;
       const f = d.facts();
-      const c = await comment(d.ask(), kind, f.text, f.vars, d.commentMs ?? 12000, lines);
+      const c = await comment(d.ask(), kind, f.text, f.vars, d.commentMs ?? 12000, lines, d.voiced);
       if (g !== gen || !c) return;
       tally(c);
-      say(c.text, 'event', c.source);
+      const fallback = c.source === 'now' ? await comment(null, kind, '', f.vars, 0, lines, d.voiced) : null;
+      say(c.text, 'event', c.source, { parts: c.parts, ...(fallback ? { fallback } : {}) });
     },
     /** Ответ на вопрос мимо режиссёра (для проверок). */
     ask,

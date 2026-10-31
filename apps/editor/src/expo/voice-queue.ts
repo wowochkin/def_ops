@@ -4,8 +4,12 @@
  * фоновой фразой (`fill`). Сбой речи очередь не останавливает: фраза считается сказанной, текст остаётся на экране.
  */
 export type Priority = 'action' | 'timer' | 'event' | 'ambient';
-export interface Line { text: string; priority: Priority; source: string }
-export interface Speaker { speak(text: string): { done: Promise<void>; stop(): void } }
+/**
+ * Фраза очереди. `parts` — куски склейки предзаписи (заготовка с подстановками); `fallback` — заготовка на замену
+ * фразы, составленной ИИ сейчас, если живой голос недоступен или не успевает.
+ */
+export interface Line { text: string; priority: Priority; source: string; parts?: string[]; fallback?: { text: string; parts?: string[] } }
+export interface Speaker { speak(text: string, line?: Line): { done: Promise<void>; stop(): void } }
 
 const RANK: Record<Priority, number> = { action: 0, timer: 1, event: 2, ambient: 3 };
 
@@ -22,7 +26,7 @@ export function voiceQueue(speaker: Speaker, o: { ambient?: () => Line | null; o
     const g = ++gen;
     const finish = () => { if (g === gen) next(); };
     try {
-      const h = speaker.speak(line.text);
+      const h = speaker.speak(line.text, line);
       cur = { line, stop: h.stop };
       h.done.then(finish, finish);
     } catch {

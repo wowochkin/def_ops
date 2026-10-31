@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-voice-clip"
+description = "Enables the expo_voice_clip command without any pre-configured scope."
+commands.allow = ["expo_voice_clip"]
+
+[[permission]]
+identifier = "deny-expo-voice-clip"
+description = "Denies the expo_voice_clip command without any pre-configured scope."
+commands.deny = ["expo_voice_clip"]

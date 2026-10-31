@@ -1,5 +1,7 @@
 /** Элементы меню оператора: шаг числа, порядок мониторов, сводка служб и статистики дня. */
-import { PROBE_NAMES, type ProbeState, type ProbeStates } from './health';
+import { useEffect, useState } from 'react';
+import { PRERECORD_MISSING, PROBE_NAMES, type ProbeState, type ProbeStates } from './health';
+import { loadManifest } from './prerecord';
 import type { ExpoStats } from './stats';
 import type { MonitorInfo } from './windows';
 
@@ -90,6 +92,12 @@ export function ServiceSummary({
   stats: ExpoStats;
   screens: { open: number; want: number };
 }) {
+  const [clips, setClips] = useState<number | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    void loadManifest().then((m) => live && setClips(m ? Object.keys(m.clips).length : null));
+    return () => { live = false; };
+  }, []);
   return (
     <section className="expo-summary" aria-label="Состояние стенда">
       <ul>
@@ -100,6 +108,9 @@ export function ServiceSummary({
               : `${PROBE_NAMES[id]} — ${PROBE_WORDS[health[id]]}`}
           </li>
         ))}
+        <li data-state={clips === undefined ? 'wait' : clips ? 'ok' : 'fail'}>
+          {clips === undefined ? 'Предзапись голоса — проверяю…' : clips ? `Предзапись голоса — готово (клипов: ${clips})` : PRERECORD_MISSING}
+        </li>
       </ul>
       <dl>
         <div>

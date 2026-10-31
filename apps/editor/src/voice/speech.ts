@@ -378,8 +378,8 @@ export function speakable(text: string, o: { full?: boolean } = {}): string {
   t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // прочая латиница
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
   // «20 апр.» — месяц целиком
-  t = t.replace(/(?<!\d)(\d{1,2})\s+(янв|февр?|мар|апр|мая|май|июн|июл|авг|сент?|окт|нояб?|дек)\.?(?!\p{L})/giu, (_m, d: string, mo: string) =>
-    `${d} ${MONTHS[MONTH_ABBR.findIndex((a) => mo.toLowerCase().startsWith(a))]}`);
+  t = t.replace(/(?<!\d)(\d{1,2})\s+(янв|февр?|мар|апр|мая|май|июн|июл|авг|сент?|окт|нояб?|дек)(\.?)(?!\p{L})/giu, (_m, d: string, mo: string, dot: string) =>
+    `${d} ${MONTHS[MONTH_ABBR.findIndex((a) => mo.toLowerCase().startsWith(a))]}${dot && /^ма[яй]$/i.test(mo) ? '.' : ''}`); // «2 мая.» — точка конца фразы
   // «в ночь на 16/17 апреля» — «в ночь с шестнадцатого на семнадцатое апреля»
   t = t.replace(new RegExp(`(ночь\\s+)(?:на\\s+)?(\\d{1,2})\\s*[/–-]\\s*(\\d{1,2})\\s+(${MONTHS.join('|')})(?!${L})`, 'giu'), (_m, p: string, a: string, b: string, mo: string) =>
     `${p}с ${ordinalWords(+a, 'го')} на ${ordinalWords(+b, 'е')} ${mo}`);

@@ -6,7 +6,7 @@
  * Карточка ИИ проходит ту же проверку формы, что банк; не прошла — отбрасывается. У каждого текста — источник.
  */
 import type { Card, OrderKind, TurnN } from './bank';
-import { LINES, answerFor, pick, textErrors, type Lines, type Vars } from './lines';
+import { LINES, answerFor, pickFilled, textErrors, type Filled, type Lines, type Vars } from './lines';
 
 /** Запрос к языковой модели: системный текст и запрос → ответ. */
 export type Ask = (system: string, text: string, signal: AbortSignal) => Promise<string>;
@@ -20,7 +20,8 @@ export const SOURCE_LABEL: Record<Source, string> = {
   aiBank: 'вариант, подготовленный ИИ',
   historical: 'исторический вариант',
 };
-export interface Said { text: string; source: Source }
+/** Сказанное: текст, источник и куски склейки предзаписи (у заготовок с подстановками). */
+export interface Said { text: string; source: Source; parts?: string[] }
 
 /** Результат работы или null, если не уложилась в срок или упала; по сроку работа отменяется. */
 export async function within<T>(ms: number, f: (signal: AbortSignal) => Promise<T>): Promise<T | null> {
@@ -142,17 +143,19 @@ export async function answer(ask: Ask | null, question: string, facts: string, m
   }
   const a = answerFor(question, lines);
   if (a) return { text: a.a, source: 'prepared' };
-  return { text: 'На этот вопрос у меня нет готового ответа. Спросите о решениях, силах или ходе операции.', source: 'prepared' };
+  return { text: lines.say['no-answer']?.[0] ?? 'Готового ответа нет.', source: 'prepared' };
 }
 
 export type ChoiceKind = 'historical' | 'own' | 'delay';
 
-/** Комментарий выбора: ИИ по фактам хода в срок, иначе заготовка с подстановками. */
-export async function comment(ask: Ask | null, kind: ChoiceKind, facts: string, vars: Vars, ms: number, lines: Lines = LINES): Promise<Said | null> {
+/** Комментарий выбора: ИИ по фактам хода в срок, иначе заготовка с подстановками (`prefer` — озвученная заранее). */
+export async function comment(
+  ask: Ask | null, kind: ChoiceKind, facts: string, vars: Vars, ms: number, lines: Lines = LINES, prefer?: (f: Filled) => boolean,
+): Promise<Said | null> {
   if (ask) {
     const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nПрокомментируй выбор посетителя и его последствия по этим фактам.`, s));
     if (t?.trim() && !textErrors(t.trim()).length) return { text: t.trim(), source: 'now' };
   }
-  const t = pick(lines.comment[kind], vars);
-  return t ? { text: t, source: 'prepared' } : null;
+  const f = pickFilled(lines.comment[kind], vars, Math.random, prefer);
+  return f ? { ...f, source: 'prepared' } : null;
 }

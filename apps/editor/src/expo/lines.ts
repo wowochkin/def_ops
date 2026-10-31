@@ -29,10 +29,28 @@ export function fillIn(t: string, vars: Vars): string | null {
   return ok ? out : null;
 }
 
+/** Предложения шаблона — куски склейки предзаписи (режутся по тексту шаблона, не по подставленным значениям). */
+export const templateUnits = (t: string) => t.split(/(?<=[.!?…])\s+/).filter(Boolean);
+
+/** Заготовка с подстановками и её куски склейки (`parts.join(' ') === text`). */
+export interface Filled { text: string; parts: string[] }
+
+export function fillParts(t: string, vars: Vars): Filled | null {
+  const parts = templateUnits(t).map((u) => fillIn(u, vars));
+  return parts.every((p): p is string => p !== null) ? { text: parts.join(' '), parts } : null;
+}
+
+/** Случайная годная заготовка; `prefer` — из подходящих (озвученных заранее), если такие есть. */
+export function pickFilled(ts: string[] | undefined, vars: Vars = {}, rnd: () => number = Math.random, prefer?: (f: Filled) => boolean): Filled | null {
+  const ok = (ts ?? []).map((t) => fillParts(t, vars)).filter((f): f is Filled => f !== null);
+  const best = prefer ? ok.filter(prefer) : [];
+  const from = best.length ? best : ok;
+  return from.length ? from[Math.floor(rnd() * from.length)] : null;
+}
+
 /** Случайная годная заготовка из списка. */
 export function pick(ts: string[] | undefined, vars: Vars = {}, rnd: () => number = Math.random): string | null {
-  const ok = (ts ?? []).map((t) => fillIn(t, vars)).filter((t): t is string => t !== null);
-  return ok.length ? ok[Math.floor(rnd() * ok.length)] : null;
+  return pickFilled(ts, vars, rnd)?.text ?? null;
 }
 
 /** Готовый ответ на вопрос: больше всего совпавших ключей (не меньше двух, или один при одном ключе). */

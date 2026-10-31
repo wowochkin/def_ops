@@ -1,8 +1,9 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 
 /** Отпечаток модели — хеш выжимки кода и нормативов модели (меняется с ядром и моделью; src/sim/model-stamp.ts). */
 const modelStamp = (() => {
@@ -10,8 +11,34 @@ const modelStamp = (() => {
   catch { return 'dev'; }
 })();
 
+/**
+ * Предзапись голоса выставочного стенда в браузере разработки: /expo-voice/manifest.json и /expo-voice/clips/<хеш>.ogg —
+ * из папки данных приложения (в приложении их отдаёт команда ядра). Папка — DEFOPS_DATA_DIR или папка данных Tauri.
+ */
+function expoVoice(): Plugin {
+  const dir = join(process.env.DEFOPS_DATA_DIR || join(homedir(), 'Library/Application Support/ru.defops.desktop'), 'expo/voice');
+  return {
+    name: 'expo-voice',
+    configureServer(server) {
+      server.middlewares.use('/expo-voice', (req, res, next) => {
+        const p = (req.url ?? '').split('?')[0];
+        const file = p === '/manifest.json' ? 'manifest.json' : /^\/clips\/[0-9a-f]{8,64}\.ogg$/.test(p) ? p.slice(1) : null;
+        if (!file) return next();
+        try {
+          const body = readFileSync(join(dir, file));
+          res.setHeader('content-type', file.endsWith('.ogg') ? 'audio/ogg' : 'application/json');
+          res.end(body);
+        } catch {
+          res.statusCode = 404;
+          res.end();
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), expoVoice()],
   define: { __MODEL_STAMP__: JSON.stringify(modelStamp) },
   server: {
     host: true,

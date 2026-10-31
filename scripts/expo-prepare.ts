@@ -5,7 +5,11 @@
  *   npm run expo:prepare -- --generate   — дополнить каждый перелом карточками языковой модели (LM Studio, :1234)
  *                                          до --per (по умолчанию 10) своих; кандидат проходит автопроверку формы
  *                                          и текста, отобранное записывается в банк
- *   npm run expo:prepare -- --voice      — заготовить звук всех фраз голосовым сервисом (проверка, что синтез идёт)
+ *   npm run expo:prepare -- --voice      — предзапись голоса: все заготовленные тексты и куски склейки голосом
+ *                                          начальника штаба (голосовой сервис, :47645), Ogg Opus и манифест — в
+ *                                          <папка данных>/expo/voice/ (--data — другая папка данных); озвучивается
+ *                                          только новое, каждый клип проходит автопроверку (scripts/expo-voice.ts).
+ *                                          Сервиса нет — проверяется готовая предзапись
  *
  * Ручного отбора нет: что не прошло проверку — отбрасывается.
  */
@@ -15,6 +19,7 @@ import { BANK, bankErrors, cardErrors, turnCards, type Bank, type Card } from '.
 import { cardPrompt, parseCard, type CardContext } from '../apps/editor/src/expo/ai';
 import { allLines, textErrors } from '../apps/editor/src/expo/lines';
 import type { FrontId } from '../apps/editor/src/expo/settings';
+import { prepareVoice } from './expo-voice';
 
 const ROOT = join(import.meta.dirname, '..');
 const BANK_PATH = join(ROOT, 'apps/editor/src/expo/bank-data/berlin-1945.cards.json');
@@ -22,7 +27,11 @@ const args = process.argv.slice(2);
 const flag = (f: string) => args.includes(f);
 const opt = (f: string, d: string) => (args.includes(f) ? args[args.indexOf(f) + 1] : d);
 
-const scenario = JSON.parse(readFileSync(join(ROOT, BANK.scenario), 'utf8')) as { hqs: { id: string; parent: string | null; echelon: string }[] };
+const scenario = JSON.parse(readFileSync(join(ROOT, BANK.scenario), 'utf8')) as {
+  start: string;
+  hours: number;
+  hqs: { id: string; parent: string | null; echelon: string }[];
+};
 const theatre = JSON.parse(readFileSync(join(ROOT, 'packages/sim/data/theatres/oder-berlin-1945.json'), 'utf8')) as { areas: { id: string }[] };
 const armiesOf = (front: string) => scenario.hqs.filter((h) => h.parent === front && h.echelon === 'army').map((h) => h.id);
 const places = new Set(theatre.areas.map((a) => a.id));
@@ -81,13 +90,11 @@ async function generate(bank: Bank) {
   return added;
 }
 
-async function voice() {
-  const r = await fetch('http://127.0.0.1:47645/api/voice', { signal: AbortSignal.timeout(3000) }).catch(() => null);
-  if (!r?.ok) {
-    console.log('Голосовой сервис не отвечает (:47645) — озвучка пропущена; на стенде фразы скажет синтез при показе.');
-    return;
-  }
-  console.log(`Голосовой сервис: ${JSON.stringify(await r.json()).slice(0, 80)}; фраз к заготовке: ${allLines().length}`);
+async function voice(): Promise<boolean> {
+  const r = await prepareVoice({ data: args.includes('--data') ? opt('--data', '') : undefined, start: scenario.start, hours: scenario.hours, samples: true });
+  console.log(`Предзапись голоса: ${r.ok} из ${r.total} текстов готовы и прошли проверку, озвучено сейчас ${r.made}; ${r.dir}`);
+  for (const e of r.failed.slice(0, 20)) console.log(`  ${e}`);
+  return r.failed.length === 0;
 }
 
 const bank = structuredClone(BANK);
@@ -101,9 +108,9 @@ if (flag('--generate')) {
   if (n) writeFileSync(BANK_PATH, `${JSON.stringify(bank, null, 2)}\n`);
   console.log(`Добавлено карточек модели: ${n}`);
 }
-if (flag('--voice')) await voice();
+const voiced = flag('--voice') ? await voice() : true;
 const errs = check(bank);
 const cards = bank.cards.length;
 console.log(`Банк: ${cards} карточек, заготовок фраз: ${allLines().length}; ошибок: ${errs.length}`);
 for (const e of errs.slice(0, 20)) console.log(`  ${e}`);
-process.exit(errs.length ? 1 : 0);
+process.exit(errs.length || !voiced ? 1 : 0);

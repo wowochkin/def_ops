@@ -238,6 +238,14 @@ class Job:
         self.wake.set()
 
 
+def resample(a: np.ndarray, sr_from: int, sr_to: int) -> np.ndarray:
+    """Линейная передискретизация — для распознавания синтезированной речи (24 кГц → 16 кГц) её хватает."""
+    if sr_from == sr_to or not len(a):
+        return a.astype(np.float32)
+    n = int(round(len(a) * sr_to / sr_from))
+    return np.interp(np.arange(n) * (sr_from / sr_to), np.arange(len(a)), a).astype(np.float32)
+
+
 def audio_frame(jid: int, sr: int, a: np.ndarray) -> bytes:
     return (b"\x01" + int(jid).to_bytes(4, "little") + int(sr).to_bytes(4, "little")
             + (np.clip(a, -1, 1) * 32767).astype("<i2").tobytes())
@@ -603,6 +611,48 @@ class Session:
         except Exception:  # noqa: BLE001 — окно уже закрыто
             pass
 
+    async def on_render(self, d: dict):
+        """Синтез в файл (`render {id, role, text, asr?}`): звук в окно не уходит и нигде не звучит. Фраза целиком —
+        куски и паузы как у заготовки; WAV — `<данные>/render/<id>.wav`; ответ `rendered {id, path, audio_s, heard?}`
+        (heard — распознанное, если asr) или `{id, error}`. Так готовится предзапись голоса выставочного стенда."""
+        rid, role, text = int(d["id"]), d.get("role", "chief"), str(d.get("text", "")).strip()
+        if role not in ROLES:
+            raise ValueError(f"нет такой роли: {role}")
+        if not text:
+            raise ValueError("синтез в файл: пустой текст")
+        ref = self.svc.ref_for(role)
+        if ref is None:
+            await self.send(type="rendered", id=rid, error=NO_REF)
+            return
+        self.render_task = asyncio.create_task(self._render_file(rid, ref, text, bool(d.get("asr")), self.render_task))
+
+    async def _render_file(self, rid: int, ref, text: str, asr: bool, prev: asyncio.Task | None):
+        if prev is not None and not prev.done():
+            await asyncio.wait([prev])
+        sr = self.m.sample_rate
+        try:
+            parts, gap = [], 0.0
+            for piece in whole_pieces(text):
+                a = await self.loop.run_in_executor(
+                    self.m.mlx, lambda p=piece: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(p, ref)]))
+                parts += [np.zeros(int(gap * sr), np.float32), fade_tail(a.astype(np.float32), sr, self.svc.args.tail_fade_ms)]
+                gap = pause_after(piece)
+            audio = np.concatenate(parts) if parts else np.zeros(0, np.float32)
+            path = Path(self.svc.args.data) / "render" / f"{rid}.wav"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            write_wav(path, audio, sr)
+            out = {"path": str(path), "audio_s": round(len(audio) / sr, 2)}
+            if asr and len(audio):
+                out["heard"] = await self.transcribe(resample(audio, sr, SR_IN))
+            await self.send(type="rendered", id=rid, **out)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 — сбой синтеза — в ответ, подключение живёт
+            try:
+                await self.send(type="rendered", id=rid, error=f"{type(e).__name__}: {e}")
+            except Exception:  # noqa: BLE001 — окно уже закрыто
+                pass
+
     async def _synth(self, job: Job, text: str, fade_n: int, lead: np.ndarray) -> np.ndarray | None:
         q: asyncio.Queue = asyncio.Queue()
         cancel = job.cancel
@@ -847,6 +897,8 @@ class Session:
             await self.on_say(d)
         elif t == "prepare":
             await self.on_prepare(d)
+        elif t == "render":
+            await self.on_render(d)
         elif t == "stop":
             await self.stop(int(d["id"]) if d.get("id") is not None else None)
         elif t == "played":
@@ -875,6 +927,8 @@ class Session:
             if r.task and not r.task.done():
                 r.task.cancel()
         self.renders.clear()
+        if self.render_task and not self.render_task.done():
+            self.render_task.cancel()
         self.recording = None
         self.pending = None
         self.pending_path.unlink(missing_ok=True)

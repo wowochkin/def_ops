@@ -819,3 +819,29 @@ def test_prepare_without_sample_reports_error_and_say_still_works(make_client, t
     until(ws, "say-done", seen)
     assert any(isinstance(m, bytes) for m in seen)
     ws.close()
+
+
+def test_render_writes_file_without_sound_to_window(make_client, tmp_path):
+    # синтез в файл: WAV в <данные>/render, звук в окно не уходит; распознавание — по просьбе
+    c = make_client(["Есть, товарищ маршал."])
+    ws, _ = connect(c)
+    text = "Осталось десять секунд. Решайте."
+    ws.send_text(json.dumps({"type": "render", "id": 7, "role": "chief", "text": text, "asr": True}))
+    seen = []
+    r = until(ws, "rendered", seen)
+    assert not any(isinstance(m, bytes) for m in seen)
+    assert r["id"] == 7 and r["heard"] == "Есть, товарищ маршал."
+    from pathlib import Path
+    import wave
+    p = Path(r["path"])
+    assert p.parent == tmp_path / "data" / "render" and p.name == "7.wav"
+    with wave.open(str(p)) as w:
+        assert abs(w.getnframes() / w.getframerate() - r["audio_s"]) < 0.02
+    assert r["audio_s"] > len(text) / 15 * 0.9
+    # без образца — ошибка в ответ, пустой текст — ошибка сообщения
+    c.app.state.service.ref_for = lambda role: None
+    ws.send_text(json.dumps({"type": "render", "id": 8, "role": "chief", "text": "Есть."}))
+    assert until(ws, "rendered") == {"type": "rendered", "id": 8, "error": "нет образца голоса — запишите голос в окне «Голоса»"}
+    ws.send_text(json.dumps({"type": "render", "id": 9, "role": "chief", "text": " "}))
+    assert until(ws, "error")["text"] == "синтез в файл: пустой текст"
+    ws.close()

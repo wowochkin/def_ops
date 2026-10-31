@@ -1,7 +1,8 @@
 /**
  * Голос и ИИ главного окна в сборе: речь (`expoSpeaker`), очередь голоса, карточки ИИ, исполнитель эффектов
  * (`aiRunner`). «С ИИ» — модель LM Studio через `/llm/v1` (как в полном режиме), пока рабочий режим стенда — «С ИИ»;
- * иначе всё — из заготовок. Паузу дольше 6 с в сеансе заполняет фоновый рассказ.
+ * иначе всё — из заготовок. Заготовки звучат из предзаписи; модель и живой синтез работают по очереди (`turnstile`).
+ * Паузу дольше 6 с в сеансе заполняет фоновый рассказ.
  */
 import { askText } from '../voice/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -12,10 +13,11 @@ import { aiRunner, type AiFrame } from './ai-runner';
 import { BANK, cardErrors } from './bank';
 import type { DirectorState, Effect } from './director';
 import { LINES, pick } from './lines';
+import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
-import { expoSpeaker } from './speaker';
+import { expoSpeaker, turnstile } from './speaker';
 import { voiceQueue } from './voice-queue';
 import { FRONT_NAMES } from './scenes';
 
@@ -24,7 +26,6 @@ function llm(): LlmSettings {
   const s = loadLlm();
   return { ...s, model: s.voiceModel || s.model, thinking: 'off' };
 }
-const llmAsk: Ask = (system, text, signal) => askText(system, text, { settings: llm(), signal, maxTokens: 400 });
 
 export interface StageDeps {
   aiOn: () => boolean;
@@ -35,7 +36,9 @@ export interface StageDeps {
 }
 
 export function createStage(d: StageDeps) {
-  const voice = expoSpeaker();
+  const gate = turnstile();
+  const llmAsk: Ask = (system, text, signal) => gate.run(() => (signal.aborted ? Promise.reject(signal.reason) : askText(system, text, { settings: llm(), signal, maxTokens: 400 })));
+  const voice = expoSpeaker({ aiOn: d.aiOn, gate, onSwap: (l) => runner?.onLine(l) });
   let lastBusy = Date.now();
   const ask = () => (d.aiOn() ? llmAsk : null);
   const facts = () => {
@@ -53,8 +56,8 @@ export function createStage(d: StageDeps) {
       date: v ? dayMonth(v.time) : undefined,
       title: picked,
       rank: v?.final?.rank,
-      matches: v?.final?.matches,
-      event: v?.feed.at(-1),
+      matches: v?.final ? MATCH_WORDS[v.final.matches] : undefined,
+      event: v?.feed.at(-1)?.match(/ — (.+?) \(/)?.[1],
     };
     const text = [
       vars.front && `Фронт: ${vars.front}, командующий — маршал ${vars.marshal}.`,
@@ -76,6 +79,7 @@ export function createStage(d: StageDeps) {
   runner = aiRunner({
     queue, ask, facts, dispatch: d.dispatch, onFrame: d.onFrame,
     count: (k) => d.count(k),
+    voiced: voice.voiced,
     listen: () => new Promise<string | null>((res) => {
       if (!d.aiOn()) return res(null);
       let last = '';

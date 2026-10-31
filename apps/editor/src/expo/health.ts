@@ -17,13 +17,18 @@ export interface Probe {
   restart?: () => Promise<void>;
 }
 export const PROBE_NAMES: Record<ProbeId, string> = { core: 'Ядро', voice: 'Голос', model: 'Языковая модель', windows: 'Экраны' };
+export const PRERECORD_MISSING = 'Предзапись голоса не подготовлена: npm run expo:prepare -- --voice';
+/** Предзапись голоса главного окна: известна после загрузки манифеста (`expoSpeaker`). */
+let prerecord: 'unknown' | 'ready' | 'missing' = 'unknown';
+export const setPrerecord = (s: typeof prerecord) => { prerecord = s; };
 export function startupPlan(s: ExpoSettings): ProbeId[] {
   return s.aiMode === 'ai' ? ['core', 'voice', 'model', 'windows'] : ['core', 'windows'];
 }
 export function startupVerdict(states: ProbeStates, s: ExpoSettings): { ready: boolean; aiMode: AiMode; note: string | null } {
   const ready = states.core === 'ok' && states.windows === 'ok' && !startupPlan(s).some((id) => states[id] === 'wait');
   const aiMode = s.aiMode === 'ai' && states.voice === 'ok' && states.model === 'ok' ? 'ai' : 'noai';
-  return { ready, aiMode, note: s.aiMode === 'ai' && aiMode === 'noai' ? 'Запуск в режиме без ИИ' : null };
+  const notes = [s.aiMode === 'ai' && aiMode === 'noai' && 'Запуск в режиме без ИИ', prerecord === 'missing' && PRERECORD_MISSING].filter(Boolean);
+  return { ready, aiMode, note: notes.length ? notes.join('. ') : null };
 }
 export function watchdog(
   probes: Probe[],

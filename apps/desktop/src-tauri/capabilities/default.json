@@ -38,6 +38,8 @@
     "allow-expo-set-guard",
     "allow-expo-log",
     "allow-expo-stats-add",
-    "allow-expo-stats-today"
+    "allow-expo-stats-today",
+    "allow-expo-voice-manifest",
+    "allow-expo-voice-clip"
   ]
 }

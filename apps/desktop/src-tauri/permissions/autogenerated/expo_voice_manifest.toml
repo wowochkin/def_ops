@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expo-voice-manifest"
+description = "Enables the expo_voice_manifest command without any pre-configured scope."
+commands.allow = ["expo_voice_manifest"]
+
+[[permission]]
+identifier = "deny-expo-voice-manifest"
+description = "Denies the expo_voice_manifest command without any pre-configured scope."
+commands.deny = ["expo_voice_manifest"]
