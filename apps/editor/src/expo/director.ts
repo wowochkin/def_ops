@@ -7,11 +7,11 @@
  * в момент последнего тика. Тик с большим скачком часов догоняет все переходы, наступившие за это время, по порядку.
  *
  * Фазы: startup → attract (заставка) → welcome → briefing → три перелома (пояснение, выбор, прокрутка) → result.
- * Сцены этапа 1 — заглушки, пояснение, прокрутка и бриф переходят дальше сами по DURATIONS.
+ * Пояснение, прокрутка и бриф переходят дальше сами по DURATIONS; ход модели ведёт хост по эффектам deal, replace, decide.
  */
 import type { ExpoSettings, FrontId } from './settings';
 
-type TurnN = 1 | 2 | 3;
+export type TurnN = 1 | 2 | 3;
 
 export type Phase =
   | { kind: 'startup' }
@@ -66,6 +66,12 @@ export type Effect =
   | { e: 'say'; key: string; priority: 'action' | 'timer' | 'event' | 'ambient' }
   | { e: 'aiPick'; n: TurnN }
   | { e: 'newSession' }
+  /** Раздать карточки перелома n (вход в перелом). */
+  | { e: 'deal'; n: TurnN; front: FrontId }
+  /** Заменить карточку в слоте. */
+  | { e: 'replace'; n: TurnN; card: number }
+  /** Решение перелома: слот карточки или промедление — прокрутка (после третьего — досчёт). */
+  | { e: 'decide'; n: TurnN; choice: number | 'delay' }
   | { e: 'stat'; kind: 'started' | 'finished' };
 
 /** Длительности фаз-заглушек этапа 1, мс. */
@@ -107,6 +113,7 @@ function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx
   if (phase.kind === 'turn' && phase.step === 'choose' && cfg.timer.on) {
     next = { ...next, phase: { ...phase, deadline: at + cfg.timer.seconds * 1000 } };
   }
+  if (phase.kind === 'turn' && phase.step === 'explain' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
   if (phase.kind === 'briefing') {
     fx.push({ e: 'stat', kind: 'started' });
     next = { ...next, stats: { ...next.stats, sessions: next.stats.sessions + 1 } };
@@ -166,7 +173,7 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
     if (p.step === 'choose' && p.deadline !== null) {
       const dl = p.deadline;
       if (!p.warned) cands.push({ at: dl - WARN_BEFORE, apply: (x) => { fx.push({ e: 'say', key: 'timer-warn', priority: 'timer' }); return { ...x, phase: { ...p, warned: true } }; } });
-      cands.push({ at: dl, apply: (x) => { fx.push({ e: 'say', key: 'delay', priority: 'event' }); return enter(x, { ...p, step: 'scroll', choice: 'delay' }, dl, cfg, fx); } });
+      cands.push({ at: dl, apply: (x) => { fx.push({ e: 'say', key: 'delay', priority: 'event' }, { e: 'decide', n: p.n, choice: 'delay' }); return enter(x, { ...p, step: 'scroll', choice: 'delay' }, dl, cfg, fx); } });
     }
     if (p.step === 'choose' && p.deadline === null && p.choice === null) {
       if (!p.offered) cands.push({ at: t0 + OFFER_AFTER, apply: (x) => { fx.push({ e: 'say', key: 'offer-decide', priority: 'action' }); return { ...x, phase: { ...p, offered: true } }; } });
@@ -223,6 +230,7 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     let next: DirectorState = { ...s, phase, phaseStart: now, lastInput: now };
     if (phase.kind === 'turn' && next.front === null) next = { ...next, front: cfg.fronts[0] ?? null };
     if (phase.kind === 'turn' && phase.step === 'choose' && cfg.timer.on) next = { ...next, phase: { ...phase, deadline: now + cfg.timer.seconds * 1000 } };
+    if (phase.kind === 'turn' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
     return out(next);
   }
   if (ev.t === 'ready') return out(p.kind === 'startup' ? enter(s, { kind: 'attract' }, now, cfg, fx) : s);
@@ -246,11 +254,13 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'choose':
       if (p.kind === 'turn' && p.step === 'choose' && p.choice === null && Number.isInteger(ev.card) && ev.card >= 0) {
+        fx.push({ e: 'decide', n: p.n, choice: ev.card });
         return out(enter(touched, { ...p, step: 'scroll', choice: ev.card }, now, cfg, fx));
       }
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'replace':
       if (p.kind === 'turn' && p.step === 'choose' && p.replacements < cfg.maxReplacements) {
+        fx.push({ e: 'replace', n: p.n, card: ev.card });
         return out({ ...touched, phase: { ...p, replacements: p.replacements + 1 } });
       }
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);

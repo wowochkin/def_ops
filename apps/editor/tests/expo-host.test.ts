@@ -28,6 +28,8 @@ it('host synchronizes views and ignores operator events from visitor bus', async
   b.send({ k: 'input', ev: { t: 'jump', phase: 'result' } });
   expect(host.snapshot().state.phase.kind).toBe('welcome');
   expect(frames.at(-1).state.phase.kind).toBe('welcome');
+  host.setModel({ view: null, error: 'Модель недоступна: нет ядра' });
+  expect(frames.at(-1).model).toEqual({ view: null, error: 'Модель недоступна: нет ядра' });
   await host.stop();
   expect(guarded).toBe(false);
   b.close();

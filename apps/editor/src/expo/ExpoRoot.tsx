@@ -19,17 +19,19 @@ import { settingsStore, EXPO_DEFAULTS, type ExpoSettings } from './settings';
 import { createHost } from './host';
 import { initialState, type DirectorEvent } from './director';
 import { ExpoView } from './ExpoView';
+import { coreEnv, modelRunner, type ModelFrame } from './model';
 import { lockdown } from './lockdown';
 import { cornerHold, operatorCombo } from './operator';
 import { OperatorMenu } from './OperatorMenu';
 import { phaseLabel } from './scenes';
 
 type Host = ReturnType<typeof createHost>;
+const NO_MODEL: ModelFrame = { view: null, error: null };
 
 const VISITOR_KEYS = ['1', '2', '3', 'r', 'R', 'Enter', ' ', 'ArrowLeft', 'ArrowRight'];
 
 export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () => void }) {
-  const [frame, setFrame] = useState({ state: initialState(Date.now()), settings: EXPO_DEFAULTS, count: 1 as 1 | 2 | 3 });
+  const [frame, setFrame] = useState({ state: initialState(Date.now()), settings: EXPO_DEFAULTS, count: 1 as 1 | 2 | 3, model: NO_MODEL as ModelFrame });
   const [error, setError] = useState('');
   const [menu, setMenu] = useState(false);
   const [identify, setIdentify] = useState({ until: 0, names: [] as string[] });
@@ -99,7 +101,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     const offCorner = index === 0 ? cornerHold(document.body, open) : () => {};
 
     const off = bus.on((m) => {
-      if (index > 0 && m.k === 'state') setFrame({ state: m.state, settings: m.settings, count: m.count });
+      if (index > 0 && m.k === 'state') setFrame({ state: m.state, settings: m.settings, count: m.count, model: m.model ?? NO_MODEL });
       if (m.k === 'health') {
         setHealth(m.states);
         setNote(m.note);
@@ -152,6 +154,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
 
     const startHost = async (settings: ExpoSettings) => {
       if (disposed) return;
+      const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f));
       const host = createHost(
         settings,
         bus,
@@ -161,6 +164,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         },
         (e) => {
           if (e.e === 'stat') count(e.kind);
+          if (e.e === 'newSession' || e.e === 'deal' || e.e === 'replace' || e.e === 'decide') void model.handle(e);
         },
       );
       hostRef.current = host;

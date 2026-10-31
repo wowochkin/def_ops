@@ -7,9 +7,10 @@
  */
 import type { ExpoSettings } from './settings';
 import type { DirectorEvent, DirectorState } from './director';
+import type { ModelFrame } from './model';
 
 export type BusMsg =
-  | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3 }
+  | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3; model?: ModelFrame }
   | { k: 'input'; ev: DirectorEvent }
   | { k: 'health'; states: import('./health').ProbeStates; note: string | null }
   | { k: 'identify'; until: number; names: string[] }

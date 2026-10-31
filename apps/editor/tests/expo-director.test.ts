@@ -69,6 +69,21 @@ describe('режиссёр сеанса', () => {
     expect(r.phase.kind).toBe('attract');
   });
 
+  it('model effects: deal on entering a turn, decide on choice and on delay, replace', () => {
+    const r = toChoose();
+    expect(r.effects).toContainEqual({ e: 'deal', n: 1, front: 'su_1bf' });
+    r.send({ t: 'replace', card: 2 });
+    expect(r.effects.at(-1)).toEqual({ e: 'replace', n: 1, card: 2 });
+    r.send({ t: 'choose', card: 1 });
+    expect(r.effects.at(-1)).toEqual({ e: 'decide', n: 1, choice: 1 });
+    r.wait(DURATIONS.scroll);
+    expect(r.effects).toContainEqual({ e: 'deal', n: 2, front: 'su_1bf' });
+    r.wait(DURATIONS.explain + 30_000);
+    expect(r.effects).toContainEqual({ e: 'decide', n: 2, choice: 'delay' });
+    const j = run().send({ t: 'ready' }, { t: 'jump', phase: 'turn', n: 3 });
+    expect(j.effects).toContainEqual({ e: 'deal', n: 3, front: EXPO_DEFAULTS.fronts[0] });
+  });
+
   it('single front skips choice', () => {
     const r = run(cfgWith({ fronts: ['su_1uf'] })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('welcome');
