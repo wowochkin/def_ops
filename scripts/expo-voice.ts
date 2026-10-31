@@ -218,11 +218,27 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
   for (const f of readdirSync(join(dir, 'clips'))) if (!used.has(f)) rmSync(join(dir, 'clips', f), { force: true });
   const failed = auditVoice(texts, svc || !old ? m : old, dir);
   if (o.samples) samples(m, dir);
+  listing(m, dir);
   return { total: texts.length, ok: texts.length - failed.length, made, failed, dir };
   } finally {
     if (svc && live && svc.engine !== live) await svc.setEngine(live).catch((e) => console.error(`  ${(e as Error).message}`));
     svc?.close();
   }
+}
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+/** Страница для прослушивания (`index.html` рядом с клипами): каждая фраза — текст, что сказано, что услышано, проверка. */
+export function listing(m: Manifest, dir: string) {
+  const rows = Object.entries(m.clips).map(([text, c], i) => `<tr class="${c.ok ? '' : 'bad'}"><td>${i + 1}</td>
+<td>${esc(text)}${c.said !== text ? `<div class="said">сказано: ${esc(c.said)}</div>` : ''}<div class="heard">услышано: ${esc(c.heard)}</div></td>
+<td>${(c.ms / 1000).toFixed(1)} с<br>WER ${c.wer}</td><td><audio controls preload="none" src="clips/${c.file}"></audio></td></tr>`);
+  const sm = existsSync(join(dir, 'samples')) ? readdirSync(join(dir, 'samples')).filter((f) => f.endsWith('.ogg')) : [];
+  writeFileSync(join(dir, 'index.html'), `<!doctype html><meta charset="utf-8"><title>Предзапись стенда</title>
+<style>body{font:15px system-ui;margin:24px}td{border-bottom:1px solid #ddd;padding:6px;vertical-align:top}.said,.heard{color:#777;font-size:13px}.bad{background:#fee}</style>
+<h1>Предзапись стенда: ${Object.keys(m.clips).length} фраз, модель ${esc(m.engine)}, голос ${esc(m.voice)}</h1>
+${sm.length ? `<h2>Примеры склейки</h2>${sm.map((f) => `<p>${esc(f)}<br><audio controls preload="none" src="samples/${f}"></audio></p>`).join('')}` : ''}
+<h2>Все фразы</h2><table>${rows.join('\n')}</table>\n`);
 }
 
 /** Примеры склейки для прослушивания — так же, как склеивает стенд: клипы встык, пауза по знаку. */
