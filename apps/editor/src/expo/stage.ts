@@ -95,7 +95,7 @@ export function createStage(d: StageDeps) {
   return {
     hooks,
     handle(e: Effect) {
-      if (e.e === 'say' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen') runner?.handle(e);
+      if (e.e === 'say' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
     },
     /** Тик часов: пауза в сеансе — фоновый рассказ. */
     tick() {

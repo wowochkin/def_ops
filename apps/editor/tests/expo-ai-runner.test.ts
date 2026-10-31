@@ -33,6 +33,8 @@ describe('исполнитель голоса и ИИ', () => {
     await tick();
     expect(s.frames.at(-1)!.answer).toMatchObject({ source: 'prepared' });
     expect(s.said.at(-1)!.priority).toBe('action');
+    s.r.handle({ e: 'deal', n: 2, front: 'su_1bf' });
+    expect(s.frames.at(-1)!.answer).toBeNull();
   });
 
   it('ИИ медлит — мысль на экране, потом заготовка; учёт вовремя/заменено', async () => {

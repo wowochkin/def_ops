@@ -87,7 +87,15 @@ try {
     await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 60000 });
     await page.locator('.expo-card strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 60000 });
     await page.getByRole('button', { name: 'Подробнее о карточке 1' }).click();
-    if (n === 1) await shot('expo-turn');
+    if (n === 1) {
+      await shot('expo-turn');
+      // «Спросить ИИ» без модели: готовый ответ с источником
+      await page.getByRole('button', { name: 'Спросить ИИ' }).click();
+      await page.getByRole('menuitem', { name: 'Какой вариант лучше?' }).click();
+      await page.locator('.expo-answer .expo-source').waitFor({ timeout: 10000 });
+      await page.locator('.expo-answer').scrollIntoViewIfNeeded();
+      await shot('expo-ask');
+    }
     await page.getByRole('button', { name: `Карточка ${n === 2 ? 2 : 1}`, exact: true }).click();
     await page.locator('.expo-reveal h3').waitFor({ timeout: 60000 });
     if (n === 2) await shot('expo-scroll');

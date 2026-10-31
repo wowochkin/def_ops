@@ -91,6 +91,9 @@ export function aiRunner(d: AiRunnerDeps) {
         d.queue.clear();
         frame = NO_AI;
         d.onFrame(frame);
+      } else if (e.e === 'deal') {
+        gen++;
+        set({ answer: null, thinking: null });
       } else if (e.e === 'ask') {
         void ask(e.q);
       } else if (e.e === 'listen') {
