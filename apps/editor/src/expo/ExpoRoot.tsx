@@ -19,6 +19,7 @@ import { settingsStore, EXPO_DEFAULTS, type ExpoSettings } from './settings';
 import { createHost } from './host';
 import { initialState, type DirectorEvent } from './director';
 import { ExpoView } from './ExpoView';
+import { cuesFor, soundEngine } from './sound';
 import { coreEnv, modelRunner, type ModelFrame } from './model';
 import { createStage } from './stage';
 import { NO_AI } from './ai-runner';
@@ -47,6 +48,27 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
   const menuRef = useRef(false);
   const frameRef = useRef(frame);
   frameRef.current = frame;
+  const sound = useRef<ReturnType<typeof soundEngine> | null>(null);
+  const heard = useRef<{ state: typeof frame.state; flashes: string } | null>(null);
+  useEffect(() => {
+    if (index !== 0) return;
+    const s = (sound.current = soundEngine());
+    const unlock = () => s.resume();
+    document.addEventListener('pointerdown', unlock);
+    return () => {
+      document.removeEventListener('pointerdown', unlock);
+      s.close();
+      sound.current = null;
+    };
+  }, [index]);
+  useEffect(() => sound.current?.set(frame.settings.volume), [frame.settings.volume]);
+  useEffect(() => {
+    if (index !== 0) return;
+    const flashes = (frame.model.view?.map?.flashes ?? []).map((f) => f.id).join();
+    const prev = heard.current;
+    heard.current = { state: frame.state, flashes };
+    for (const c of cuesFor(prev?.state ?? null, frame.state, prev && flashes && flashes !== prev.flashes ? 1 : 0)) sound.current?.play(c);
+  }, [index, frame.state, frame.model]);
 
   const send = (ev: DirectorEvent) => (index === 0 ? hostRef.current?.dispatch(ev) : busRef.current?.send({ k: 'input', ev }));
   const close = () => {
