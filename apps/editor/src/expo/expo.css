@@ -226,8 +226,13 @@ html.expo-active,
 .expo-stage-map {
   position: relative;
 }
-.expo-gis-in {
-  filter: sepia(0.3) saturate(0.85) contrast(1.04);
+/* тон архивной карты — неподвижный слой поверх (фильтр на всей карте перерастеризовал бы её на каждом кадре камеры) */
+.expo-gis::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(112, 82, 36, 0.12);
+  pointer-events: none;
 }
 .expo-mapfx {
   position: absolute;
@@ -280,10 +285,10 @@ html.expo-active,
   100% { transform: translate(-5%, -4%); }
 }
 @keyframes expo-cut {
-  0% { opacity: 1; background: #efe6cf; clip-path: inset(0 0 0 0); }
-  8% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 0 0); }
-  35% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 0 0); }
-  100% { opacity: 1; background: #0b0f0d; clip-path: inset(0 0 100% 0); }
+  0% { opacity: 0.85; background: #efe6cf; transform: none; }
+  8% { opacity: 1; background: #0b0f0d; transform: none; }
+  35% { opacity: 1; background: #0b0f0d; transform: none; }
+  100% { opacity: 1; background: #0b0f0d; transform: translateY(-101%); }
 }
 .expo-gis .maplibregl-ctrl-bottom-right,
 .expo-gis .maplibregl-ctrl-bottom-left,

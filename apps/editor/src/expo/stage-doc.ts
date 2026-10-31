@@ -22,6 +22,8 @@ export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHist
   return {
     ...doc,
     paper: '#efe4c8',
+    // знаки — «как на местности»: смена зума при пролёте камеры не требует перерисовки всех знаков
+    sizing: { min: 0, max: null },
     layers: [
       ...doc.layers.filter((l) => keep.has(l.id)).map((l) => ({ ...l, visible: !HIDDEN.has(l.id), locked: true })),
       { id: ORDERS_LAYER, name: 'Приказ', role: 'custom', visible: true, locked: true, opacity: 1 },

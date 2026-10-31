@@ -127,6 +127,10 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
   const lit = expanded ?? hover;
   const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index }), [state.phase, state.front, mv, maps, lit, count, index]); // eslint-disable-line react-hooks/exhaustive-deps
+  // сцена без карты: карта скрыта, но не размонтирована — один экземпляр на окно, без пересоздания
+  const lastPlan = useRef<StageMapProps>(NO_PLAN);
+  if (plan) lastPlan.current = plan;
+  const shownPlan = plan ?? { ...lastPlan.current, run: null, fx: null };
   const clock = useRef<HTMLSpanElement | null>(null);
   const onTime = useCallback((t: string) => {
     for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) flip(el, modelTime(t));
@@ -160,7 +164,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
       >
         <div ref={gisRef} className="expo-gis" aria-hidden="true">
           <div className="expo-gis-in">
-            <StageMap {...(plan ?? NO_PLAN)} onTime={onTime} />
+            <StageMap {...shownPlan} onTime={onTime} />
           </div>
         </div>
         <header className="expo-header">
@@ -714,8 +718,10 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     if (!d) return null;
     const w = (THEATRE[2] - THEATRE[0]) / count;
     const part: Bbox = count > 1 ? [THEATRE[0] + w * index, THEATRE[1], THEATRE[0] + w * (index + 1), THEATRE[3]] : THEATRE;
-    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
+  // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
+  if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null };
   if (p.kind === 'briefing' && hist && state.front) {
     const arrows = frontArrows(state.front);
     // 16 апреля, 5:00 — артиллерийская подготовка на переднем крае фронта
@@ -734,7 +740,7 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     const moving = p.step === 'scroll' && own && own.time === mv.time && mv.map.prev && !mv.busy;
     const time = own ? (p.step === 'scroll' && !moving && mv.map.prev ? mv.map.prev.time : mv.time) : start;
     const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
-    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, key: `run-${mv.time}` } : null, camera, extra, fx };
+    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, delay: 500, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
     const own = sessionDoc(maps.session, mv);

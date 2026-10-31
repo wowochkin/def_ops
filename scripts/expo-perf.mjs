@@ -53,6 +53,8 @@ try {
   await page.waitForTimeout(2000);
   out.attract = await measure(6000);
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();
+  // на выборе фронта посетитель читает карточки — пара секунд, как у человека
+  await page.waitForTimeout(2000);
   await page.getByRole('button', { name: /1-й Белорусский/ }).click();
   await page.waitForTimeout(500);
   out.briefing = await measure(4000);
