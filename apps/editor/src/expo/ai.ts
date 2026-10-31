@@ -11,12 +11,13 @@ import { LINES, answerFor, pick, textErrors, type Lines, type Vars } from './lin
 /** Запрос к языковой модели: системный текст и запрос → ответ. */
 export type Ask = (system: string, text: string, signal: AbortSignal) => Promise<string>;
 
-export type Source = 'now' | 'prepared' | 'kb' | 'bank' | 'historical';
+export type Source = 'now' | 'prepared' | 'kb' | 'bank' | 'historical' | 'aiBank';
 export const SOURCE_LABEL: Record<Source, string> = {
   now: 'составлено ИИ сейчас',
   prepared: 'из подготовленных ответов',
   kb: 'ИИ, по базе знаний',
   bank: 'вариант из банка',
+  aiBank: 'вариант, подготовленный ИИ',
   historical: 'исторический вариант',
 };
 export interface Said { text: string; source: Source }

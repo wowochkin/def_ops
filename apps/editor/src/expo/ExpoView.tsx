@@ -131,7 +131,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                         <button disabled={state.paused || !mv?.cards[card]} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
                           <span className="expo-card-n">{card + 1}</span>
                           <strong>{mv?.cards[card]?.title ?? 'Карточка готовится'}</strong>
-                          {mv?.cards[card]?.source && <small className="expo-source">{SOURCE_LABEL[mv.cards[card].source!]}</small>}
+                          {mv?.cards[card]?.source && <small className="expo-source">{SOURCE_LABEL[mv.cards[card].source === 'prepared' ? 'aiBank' : mv.cards[card].source!]}</small>}
                         </button>
                         <button className="expo-secondary" onClick={() => setExpanded(expanded === card ? null : card)}>
                           Подробнее о карточке {card + 1}

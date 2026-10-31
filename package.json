@@ -56,6 +56,7 @@
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",
     "sim:demo": "node scripts/sim-demo.mjs",
     "docs:system": "node scripts/gen-doc.mjs",
+    "expo:prepare": "tsx scripts/expo-prepare.ts",
     "docs:guide": "node scripts/gen-doc.mjs docs/guide.md docs/guide.pdf"
   },
   "devDependencies": {

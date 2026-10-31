@@ -17,6 +17,8 @@ export interface Card {
   front: FrontId;
   turn: TurnN;
   historical?: boolean;
+  /** Карточку составила языковая модель при подготовке (отобрана автопроверкой). */
+  prepared?: 'ai';
   title: string;
   lines: string[];
   orders: CardOrder[];

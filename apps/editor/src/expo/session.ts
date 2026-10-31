@@ -35,7 +35,7 @@ export function measureTrace(env: ModelEnv, t: AgentTrace, front: FrontId) {
 }
 
 /** source: 'now' — карточка составлена ИИ во время сеанса, 'bank' — замена из банка. */
-export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' }
+export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared' }
 export interface Decision { n: TurnN; choice: string | 'delay'; historical: string }
 export interface Scales { axes: AxesDetail; notes: { speed: string; cost: string; intent: string } }
 export interface ModelView {
@@ -58,7 +58,10 @@ export interface ModelView {
 
 type Trace = AgentTrace & { game?: { hour: number } };
 
-const view = (c: Card, source?: CardView['source']): CardView => ({ id: c.id, title: c.title, lines: c.lines, ...(source ? { source } : {}) });
+const view = (c: Card, source?: CardView['source']): CardView => {
+  const s = c.prepared === 'ai' ? 'prepared' : source;
+  return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}) };
+};
 
 export function timeAt(start: string, hour: number): string {
   return new Date(Date.parse(`${start.slice(0, 16)}:00Z`) + hour * 3_600_000).toISOString().slice(0, 16);
