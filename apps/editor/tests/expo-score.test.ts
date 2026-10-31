@@ -27,6 +27,11 @@ describe('оценка по трём осям', () => {
     expect(d.cost).toBeCloseTo(0.5);
   });
 
+  it('cost is per task done: saving on undone tasks is not cheaper', () => {
+    const d = axes([ev('a', '1945-04-19', '1945-04-19', 0), ev('b', '1945-04-20', null, null)], keys, '1945-04-22T05:00', 600, 1000);
+    expect(d.lossRatio).toBeCloseTo(1.2);
+  });
+
   it('rank by sum of axes', () => {
     expect(rankOf({ speed: 1, cost: 0.5, intent: 1 })).toBe('Маршал Советского Союза');
     expect(rankOf({ speed: 0, cost: 0, intent: 0 })).toBe('Генерал-полковник');

@@ -3,7 +3,8 @@
  *
  * Скорость — средний сдвиг ключевых событий фронта против исторических дат: несостоявшееся событие, чья дата в истории
  * уже прошла, считается опоздавшим на всё прошедшее время. Цена — потери фронта (личный состав) против эталона —
- * потерь того же фронта в ходе «как было» на тот же час. Замысел — доля состоявшихся ключевых событий из тех, что к
+ * потерь того же фронта в ходе «как было» на тот же час, деленные на долю выполненных задач (экономия на невыполненном
+ * не в счёт). Замысел — доля состоявшихся ключевых событий из тех, что к
  * этому часу уже случились в истории (или случились в ходе). Каждая ось — от −1 (много хуже истории) до +1.
  */
 import type { EventResult } from '@def-ops/sim';
@@ -48,7 +49,8 @@ export function axes(events: EventResult[], keys: string[], now: string, loss: n
     }
   }
   const days = shifts.length ? shifts.reduce((a, b) => a + b, 0) / shifts.length : null;
-  const lossRatio = refLoss && refLoss > 0 ? loss / refLoss : null;
+  // цена — за выполненное: меньше потерь за счёт невыполненных задач — не дешевле
+  const lossRatio = refLoss && refLoss > 0 ? loss / refLoss / (due ? Math.max(done / due, 0.25) : 1) : null;
   return {
     speed: days === null ? 0 : clamp(-days / SPEED_FULL_DAYS),
     cost: lossRatio === null ? 0 : clamp((1 - lossRatio) / COST_FULL_SHARE),
