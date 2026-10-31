@@ -17,7 +17,7 @@ const shot = async (name) => {
 mkdirSync('docs/img', { recursive: true });
 try {
   await page.goto(`${url}/?expo=0`);
-  await page.getByRole('heading', { name: 'Примите командование' }).waitFor();
+  await page.getByRole('heading', { name: /Приказ — за вами/ }).waitFor();
   await shot('expo-attract');
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();

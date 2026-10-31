@@ -71,8 +71,10 @@ it('result shows rank, forecast, axes and matches; core failure is shown', () =>
   const s = at(at(initialState(0), { t: 'ready' }), { t: 'jump', phase: 'result' });
   const v = show(s, { view: view({ final: { scales, rank: 'Генерал армии', matches: 2, forecast: 'Берлин пал бы 29 апреля — на день раньше истории' } }), error: null });
   expect(v.getByText('Генерал армии')).toBeTruthy();
-  expect(v.getByText('Берлин пал бы 29 апреля — на день раньше истории')).toBeTruthy();
-  expect(v.getByText('Вы выбрали как маршал: 2 из 3')).toBeTruthy();
+  expect(v.getByText('Берлин пал бы 29 апреля')).toBeTruthy();
+  expect(v.getByText('на день раньше истории')).toBeTruthy();
+  expect(v.getByText('Совпало с историческим решением: 2 из 3')).toBeTruthy();
+  expect(v.getByText(/Сыграйте за .* фронт/)).toBeTruthy();
   cleanup();
   const w = show(choose(), { view: null, error: 'Модель недоступна: нет ядра' });
   expect(w.getAllByRole('alert')[0].textContent).toBe('Модель недоступна: нет ядра');

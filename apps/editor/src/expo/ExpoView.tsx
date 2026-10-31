@@ -26,7 +26,8 @@ import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
-import { portraitOf } from './pictures';
+import { picturesOf, portraitOf } from './pictures';
+import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
   window: number;
@@ -135,8 +136,9 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
       <main
         ref={mainRef}
         className="expo"
-        style={{ ['--expo-target' as string]: `${access.minTarget}px`, ['--expo-scale' as string]: scale }}
+        style={{ ['--expo-target' as string]: `${access.minTarget}px`, ['--expo-scale' as string]: scale, ...(TABLE ? { ['--table' as string]: `url(${TABLE})` } : {}) }}
         data-scene={sceneOf(p)}
+        data-phase={p.kind}
         data-count={count}
       >
         <div ref={gisRef} className="expo-gis" aria-hidden="true">
@@ -152,14 +154,17 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
         <div className="expo-content">
           {p.kind === 'startup' && <section className="expo-wide" />}
           {p.kind === 'attract' && (
-            <section className={`expo-split ${panel ? '' : 'expo-bleed'}`} onClick={controls ? () => send({ t: 'touch' }) : undefined}>
+            <section className={`expo-split expo-attract ${panel ? '' : 'expo-bleed'}`} onClick={controls ? () => send({ t: 'touch' }) : undefined}>
               {panel && (
                 <div className="expo-panel expo-intro">
-                  <p className="expo-kicker">16 апреля 1945. Через 17 дней пал Берлин. А как поступили бы вы?</p>
-                  <h1>Примите командование</h1>
+                  <p className="expo-kicker">Апрель 1945. Берлинская операция</p>
+                  <h1>
+                    Ваш штаб — искусственный интеллект. <span>Приказ — за вами</span>
+                  </h1>
                   <p>Выберите фронт и пройдите три перелома операции.</p>
                   {/* касание любого места панорамы — то же, что кнопка (событие всплывает к сцене) */}
                   {controls && <button className="expo-primary">Коснитесь, чтобы принять командование</button>}
+                  <Newsreel />
                 </div>
               )}
               <div className="expo-replay">
@@ -286,14 +291,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
             <section className="expo-result">
               {mv?.final ? (
                 <>
-                  <div className="expo-result-text">
-                    <p className="expo-kicker">Сеанс завершён: {state.front && FRONT_NAMES[state.front]}</p>
-                    <h1 className="expo-rank">{mv.final.rank}</h1>
-                    <p className="expo-forecast">{mv.final.forecast}</p>
-                    <Scales scales={mv.final.scales} />
-                    <p>Вы выбрали как маршал: {mv.final.matches} из 3</p>
-                    <p className="expo-muted">Попробуйте другие решения или другой фронт. В полной версии — вся операция и штабы на модели.</p>
-                  </div>
+                  <Newspaper final={mv.final} front={state.front} fronts={settings.fronts} />
                   <div className="expo-result-side">
                     <div className="expo-mapframe">
                       <div className="expo-mapslot" role="img" aria-label="Ваш путь армий (сплошная стрелка) поверх исторического (полая)" />
@@ -512,6 +510,60 @@ function OrderSlip({ c, n }: { c: CardView | null; n: number | 'delay' | null })
   );
 }
 
+const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
+/** Кадры хроники на заставке: архивные снимки сменяют друг друга (CSS), подпись — у каждого. */
+function Newsreel() {
+  const frames = picturesOf('archive');
+  if (!frames.length) return null;
+  return (
+    <figure className="expo-reel" style={{ ['--n' as string]: frames.length }}>
+      {frames.map((f, i) => (
+        <div key={f.file} className="expo-reel-frame" style={{ ['--i' as string]: i }}>
+          <img src={f.src} alt={f.caption} />
+          <figcaption>{f.caption}</figcaption>
+        </div>
+      ))}
+    </figure>
+  );
+}
+
+/** Итог — газетная полоса: заголовок о Берлине в этой переигровке, звание, три шкалы, совпадения с историей, рекорд дня. */
+function Newspaper({ final, front, fronts }: { final: NonNullable<View['final']>; front: FrontId | null; fronts: FrontId[] }) {
+  const [head, deck] = final.forecast.split(' — ');
+  const rec = recordLines(readRecord());
+  const other = fronts.find((f) => f !== front);
+  const city = picturesOf('generated').find((x) => x.file === 'city-dawn.jpg');
+  return (
+    <article className="expo-paper">
+      <header className="expo-paper-mast">
+        <span>Фронтовая сводка</span>
+        <span>{front && FRONT_NAMES[front]} · ваша переигровка</span>
+      </header>
+      <h1 className="expo-paper-head">{head}</h1>
+      {deck && <p className="expo-paper-deck">{deck}</p>}
+      {city && <img className="expo-paper-pic" src={city.src} alt="" />}
+      <div className="expo-paper-cols">
+        <div>
+          <p className="expo-paper-rank">
+            Звание по итогам: <b className="expo-rank">{final.rank}</b>
+          </p>
+          <Scales scales={final.scales} />
+        </div>
+        <div className="expo-paper-side">
+          <p>Совпало с историческим решением: {final.matches} из 3</p>
+          {(rec.speed || rec.cost) && (
+            <p>
+              Рекорд дня среди посетителей: {[rec.speed, rec.cost].filter(Boolean).join('; ')}
+            </p>
+          )}
+          {other && <p className="expo-paper-invite">Сыграйте за {FRONT_NAMES[other]} — {FRONT_MARSHALS[other].replace('Маршал', 'маршал')}, {lowerFirst(FRONT_TASKS[other].split(' — ')[0])}.</p>}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 /** После выбора: как поступил маршал и исторический вариант (целиком или сутью, когда рядом ход операции). */
 function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; full: boolean }) {
   const mv = model.view;
@@ -615,6 +667,7 @@ function frontArrows(front: string): Arrow[] {
 }
 
 type View = NonNullable<ModelFrame['view']>;
+const TABLE = picturesOf('generated').find((x) => x.file === 'staff-table.jpg')?.src;
 const NO_PLAN: StageMapProps = { doc: null, time: null, camera: null };
 /** Театр операции целиком (заставка). */
 const THEATRE: Bbox = [12.2, 51.35, 15.2, 53.05];

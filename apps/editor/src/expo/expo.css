@@ -329,8 +329,58 @@ html.expo-active,
   gap: 32px;
 }
 .expo-intro h1 {
-  font-size: 92px;
-  line-height: 1;
+  font-size: 60px;
+  line-height: 1.05;
+}
+.expo-intro h1 span {
+  display: block;
+  margin-top: 10px;
+  color: var(--expo-gold);
+}
+.expo[data-phase='attract'] {
+  background: linear-gradient(90deg, rgba(12, 20, 18, 0.95) 0%, rgba(12, 20, 18, 0.88) 32%, rgba(12, 20, 18, 0.5) 100%), var(--table, none) center / cover no-repeat, var(--expo-bg);
+}
+.expo-reel {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  margin: 8px 0 0;
+}
+.expo-reel-frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.expo-reel-frame:first-child {
+  opacity: 1;
+}
+.expo-reel img {
+  display: block;
+  width: 100%;
+  height: 168px;
+  object-fit: cover;
+  box-sizing: border-box;
+  border: 6px solid #e8dfc8;
+  filter: sepia(0.45) contrast(1.08);
+  transform: rotate(-1.2deg);
+}
+.expo-reel figcaption {
+  margin-top: 10px;
+  color: var(--expo-muted);
+  font-size: var(--expo-text-min);
+  line-height: 1.2;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .expo-reel-frame {
+    animation: expo-reel calc(var(--n) * 8s) calc(var(--i) * 8s - 0.5s) infinite;
+  }
+}
+@keyframes expo-reel {
+  0% { opacity: 0; }
+  4% { opacity: 1; }
+  31% { opacity: 1; }
+  35% { opacity: 0; }
+  100% { opacity: 0; }
 }
 .expo-intro button,
 .expo-brief button {
@@ -746,11 +796,88 @@ html.expo-active,
   gap: 8px;
 }
 
-/* Итог: оценка слева, карта пути справа */
+/* Итог: газетная полоса слева, карта пути справа */
+.expo-paper {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 30px 20px;
+  border-radius: 4px;
+  background: #ece2c6;
+  color: #231d14;
+  box-shadow: 0 18px 50px #000a;
+  font-family: var(--expo-serif);
+}
+.expo-paper-mast {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 4px double #231d14;
+  font: 32px var(--expo-sans);
+  color: #4b3f2c;
+}
+.expo-paper-mast > :first-child {
+  font: 700 40px var(--expo-serif);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #231d14;
+}
+.expo .expo-paper-head {
+  font: 700 56px / 1.04 var(--expo-serif);
+  color: #1a140c;
+}
+.expo-paper-deck {
+  font: italic 40px / 1.15 var(--expo-serif);
+  color: #3b3123;
+}
+.expo-paper-pic {
+  width: 100%;
+  height: 92px;
+  object-fit: cover;
+  object-position: 50% 70%;
+  filter: sepia(0.4) contrast(1.05);
+}
+.expo-paper-cols {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 28px;
+  font: 32px / 1.25 var(--expo-sans);
+}
+.expo-paper-cols > div + div {
+  border-left: 1px solid #8f7f61;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.expo-paper-rank {
+  margin-bottom: 8px;
+}
+.expo-paper .expo-rank {
+  display: block;
+  font: 700 40px / 1.1 var(--expo-serif);
+  color: #7a1f1a;
+}
+.expo-paper .expo-scale {
+  grid-template-columns: 112px 84px 1fr;
+  gap: 12px;
+}
+.expo-paper .expo-scale-note {
+  color: #4b3f2c;
+}
+.expo-paper .expo-scale-bar {
+  border-color: #8f7f61;
+}
+.expo-paper-invite {
+  font-style: italic;
+  color: #3b3123;
+}
 .expo-result {
   display: grid;
-  grid-template-columns: 820px 1fr;
-  gap: 48px;
+  grid-template-columns: 900px 1fr;
+  gap: 40px;
 }
 .expo-result-text {
   display: flex;
@@ -758,9 +885,9 @@ html.expo-active,
   justify-content: center;
   gap: 20px;
 }
-.expo-rank {
-  color: var(--expo-gold) !important;
-  font-size: 88px !important;
+.expo-result-text .expo-rank {
+  color: var(--expo-gold);
+  font-size: 88px;
 }
 .expo-forecast {
   font: 44px / 1.25 var(--expo-serif);
@@ -782,13 +909,15 @@ html.expo-active,
   display: inline-block;
   width: 56px;
   margin: 0 14px 8px 0;
-  border-top: 6px solid var(--expo-gold);
+  border-top: 8px solid #d9604f;
 }
 .expo-legend .expo-legend-history {
   margin-left: 40px;
 }
 .expo-legend .expo-legend-history::before {
-  border-top: 4px dashed var(--expo-muted);
+  height: 4px;
+  border: 2px solid #d9604f;
+  background: #fff;
 }
 
 /* Шкалы, строки хода, ИИ */
@@ -1267,4 +1396,7 @@ html.expo-active,
 @keyframes expo-draw {
   from { stroke-dashoffset: 2000; }
   to { stroke-dashoffset: 0; }
+}
+.expo-intro {
+  gap: 22px;
 }

@@ -14,7 +14,7 @@ try {
   await page.goto(`${process.env.EXPO_URL ?? 'http://localhost:5173'}/?expo=0`);
   await page.locator('.expo-startup').waitFor();
   await page.screenshot({ path: 'docs/img/expo-startup.jpg', type: 'jpeg', quality: 85 });
-  await page.getByRole('heading', { name: 'Примите командование' }).waitFor({ timeout: 120000 });
+  await page.getByRole('heading', { name: /Приказ — за вами/ }).waitFor({ timeout: 120000 });
   if (!calls.includes('game_start') || !calls.includes('game_stop')) throw Error('Нет пробного запуска ядра');
   // сеанс с настоящим ядром: три перелома 1-го Белорусского, прокрутки и итог по осям
   await page.waitForTimeout(500);
@@ -42,7 +42,7 @@ try {
   await page.locator('.expo-rank').waitFor({ timeout: 60000 });
   await shot('expo-result');
   const rank = await page.locator('.expo-rank').innerText();
-  const forecast = await page.locator('.expo-forecast').innerText();
+  const forecast = await page.locator('.expo-paper-head').innerText();
   if (!calls.includes('game_turn')) throw Error('Нет хода ядра');
   await page.keyboard.press('Control+Alt+Shift+KeyO');
   await page.getByLabel('ПИН', { exact: true }).fill('0000');

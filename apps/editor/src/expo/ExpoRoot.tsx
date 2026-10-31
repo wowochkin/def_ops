@@ -30,6 +30,7 @@ import { OperatorMenu } from './OperatorMenu';
 import { phaseLabel } from './scenes';
 import { docsSig, stageMaps, type StageDocs } from './stage-maps';
 import { axesSum } from './score';
+import { noteSession } from './records';
 
 type Host = ReturnType<typeof createHost>;
 const NO_MODEL: ModelFrame = { view: null, error: null };
@@ -209,7 +210,10 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       document.addEventListener('pointerdown', stage.resume);
       const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f), undefined, undefined, {
         ...stage.hooks,
-        traced: (trace, env, s, final) => void mapsRef.session(trace, env.history, s.front, final ? axesSum(s.view.scales.axes) : undefined),
+        traced: (trace, env, s, final) => {
+          if (final) noteSession(s.view.scales.axes, s.front);
+          void mapsRef.session(trace, env.history, s.front, final ? axesSum(s.view.scales.axes) : undefined);
+        },
       });
       historyRun = () =>
         void model.history().then((r) => {

@@ -54,7 +54,7 @@ async function run({ cfg, front, scenes, tag = '' }) {
     await page.locator('.expo-startup').waitFor();
     await shot('01-startup', 0);
   }
-  await page.getByRole('heading', { name: 'Примите командование' }).waitFor({ timeout: 120000 });
+  await page.getByRole('heading', { name: /Приказ — за вами/ }).waitFor({ timeout: 120000 });
   // карта заставки — после переигровки «как было» в ядре и сборки её документа
   await page.locator('.expo-gis svg').first().waitFor({ state: 'attached', timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(2500);
