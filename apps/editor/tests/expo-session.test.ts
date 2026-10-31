@@ -107,4 +107,23 @@ describe('сеанс модели', () => {
     expect(refAt([0, 100], 100)).toBe(100);
     expect(refAt(undefined, 10)).toBeNull();
   });
+
+  it('map: armies before and after the scroll, new events flash, front path grows; cards carry arrows', async () => {
+    const core = fakeCore();
+    const s = new ExpoSession(env(core), BANK, 'su_1bf', first);
+    await s.start();
+    expect(s.view.map.armies.some((a) => a.id === 'su_8gva')).toBe(true);
+    s.deal(1);
+    const hist = s.view.cards.find((c) => c.id === 'bf1-hist')!;
+    expect(hist.arrows!.length).toBeGreaterThan(0);
+    s.view.cards = [{ id: 'bf1-north', title: '', lines: [] }, ...s.view.cards.slice(1)];
+    await s.decide(1, 0);
+    const m = s.view.map;
+    expect(m.prev?.time).toBe('1945-04-16T05:00');
+    expect(m.prev!.armies.find((a) => a.id === 'su_8gva')!.at).not.toEqual(m.armies.find((a) => a.id === 'su_8gva')!.at);
+    expect(m.flashes.map((f) => f.id)).toEqual(['seelow']);
+    expect(m.path.su_8gva).toHaveLength(2);
+    expect(m.path.su_13a).toBeUndefined();
+    expect(s.view.reveal?.historical.arrows?.length).toBeGreaterThan(0);
+  });
 });

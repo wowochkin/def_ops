@@ -11,6 +11,7 @@ import { agentsEvents, lossSeries, type AgentHistory, type AgentTrace, type Even
 import { deal, replacement, type Bank, type Card, type TurnN } from './bank';
 import { axes, axisNote, feedLines, forecast, rankOf, type AxesDetail } from './score';
 import type { FrontId } from './settings';
+import { cardArrows, historyAt, MAP, traceArmies, type Arrow, type ArmyPos, type LL } from './map';
 
 export type CoreCall = (cmd: string, args: Record<string, unknown>) => Promise<unknown>;
 export interface ModelEnv {
@@ -35,7 +36,14 @@ export function measureTrace(env: ModelEnv, t: AgentTrace, front: FrontId) {
 }
 
 /** source: 'now' — карточка составлена ИИ во время сеанса, 'bank' — замена из банка. */
-export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared' }
+export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared'; arrows?: Arrow[] }
+/** Карта хода: армии сейчас и до прокрутки, новые события с точкой, путь армий фронта по переломам. */
+export interface MapView {
+  armies: ArmyPos[];
+  prev: { armies: ArmyPos[]; time: string } | null;
+  flashes: { id: string; title: string; at: LL }[];
+  path: Record<string, LL[]>;
+}
 export interface Decision { n: TurnN; choice: string | 'delay'; historical: string }
 export interface Scales { axes: AxesDetail; notes: { speed: string; cost: string; intent: string } }
 export interface ModelView {
@@ -52,6 +60,7 @@ export interface ModelView {
   /** Строки хода операции (события расчёта), новые в конце. */
   feed: string[];
   final: { scales: Scales; rank: string; matches: number; forecast: string } | null;
+  map: MapView;
   busy: boolean;
   error: string | null;
 }
@@ -96,6 +105,7 @@ export class ExpoSession {
     const start = this.start0();
     this.view = {
       front, turn: 1, time: start, hour: 0, cards: [], decisions: [], reveal: null, feed: [], final: null, busy: false, error: null,
+      map: { armies: historyAt(start), prev: null, flashes: [], path: {} },
       scales: this.scales([], start, 0),
     };
   }
@@ -112,13 +122,45 @@ export class ExpoSession {
   async start() {
     const sc = this.bank.scenario;
     this.trace = (await this.env.call('game_start', { scenario: sc, seed: 1, takeover: 0, player: 'su', enemy: 'intent', mode: 'intent' })) as Trace;
+    const armies = this.armiesNow(this.start0());
+    this.view.map = { armies, prev: null, flashes: [], path: this.extend({}, armies) };
+  }
+
+  /** Армии по последнему кадру ядра; армии без дивизий в кадре — по истории на это время. */
+  private armiesNow(time: string): ArmyPos[] {
+    const own = this.trace?.divisions ? traceArmies(this.trace) : [];
+    return historyAt(time).map((h) => own.find((a) => a.id === h.id) ?? h);
+  }
+
+  private extend(path: Record<string, LL[]>, armies: ArmyPos[]) {
+    const next = { ...path };
+    for (const a of armies.filter((x) => x.front === this.front)) next[a.id] = [...(next[a.id] ?? []), a.at];
+    return next;
+  }
+
+  /** Стрелки карточки: распоряжения — к объектам театра; историческая — куда армии фронта дошли по истории к следующему перелому. */
+  private arrows(c: Card): Arrow[] {
+    const armies = this.view.map.armies;
+    if (!c.historical) return cardArrows(c.orders, armies, this.env.placeAt);
+    const t = this.def.turns.find((x) => x.n === c.turn);
+    const next = this.def.turns.find((x) => x.n === c.turn + 1)?.hour ?? this.bank.end;
+    if (!t) return [];
+    const to = historyAt(timeAt(this.start0(), next));
+    return armies.flatMap((a) => {
+      const b = to.find((x) => x.id === a.id);
+      return a.front === this.front && b && Math.hypot(b.at[0] - a.at[0], b.at[1] - a.at[1]) > 0.05 ? [{ army: a.id, from: a.at, to: b.at, kind: 'attack' }] : [];
+    });
+  }
+
+  private show(c: Card, source?: CardView['source']): CardView {
+    return { ...view(c, source), arrows: this.arrows(c) };
   }
 
   /** Раздать карточки перелома n (ход модели должен стоять на его часе). */
   deal(n: TurnN) {
     const ids = deal(this.bank, this.front, n, this.rnd);
     this.shown = [...ids];
-    Object.assign(this.view, { turn: n, cards: ids.map((id) => view(this.card(id))), reveal: null });
+    Object.assign(this.view, { turn: n, cards: ids.map((id) => this.show(this.card(id))), reveal: null });
   }
 
   /** Заменить карточку в слоте; false — заменить нечем (или историческая). */
@@ -129,7 +171,7 @@ export class ExpoSession {
     const r = ai?.id ?? replacement(this.bank, this.shown, cur.id, this.rnd);
     if (!r) return false;
     this.shown.push(r);
-    this.view.cards = this.view.cards.map((c, i) => (i === slot ? view(this.card(r), ai ? 'now' : 'bank') : c));
+    this.view.cards = this.view.cards.map((c, i) => (i === slot ? this.show(this.card(r), ai ? 'now' : 'bank') : c));
     return true;
   }
 
@@ -183,12 +225,21 @@ export class ExpoSession {
       const time = timeAt(this.start0(), upTo);
       const m = this.def.marshal;
       const decision: Decision = { n, choice: picked?.id ?? 'delay', historical: hist.id };
+      const was = new Set(before.filter((e) => e.simulated).map((e) => e.id));
+      const armies = this.armiesNow(time);
+      const histView = this.show(hist);
       Object.assign(this.view, {
         time, hour: upTo,
         decisions: [...this.view.decisions, decision],
         reveal: {
           text: picked?.historical ? `Именно так поступил ${m}` : picked ? `${m} решил иначе — вот как` : `Промедление: новых распоряжений нет. ${m} решил так`,
-          historical: view(hist),
+          historical: histView,
+        },
+        map: {
+          armies,
+          prev: { armies: this.view.map.armies, time: this.view.time },
+          flashes: this.events.filter((e) => e.simulated && !was.has(e.id)).flatMap((e) => MAP.events.filter((m) => m.id === e.id).map((m) => ({ id: e.id, title: e.title, at: m.at }))),
+          path: this.extend(this.view.map.path, armies),
         },
         feed: [...this.view.feed, ...feedLines(before, this.events)],
         scales: this.scales(this.events, time, upTo, loss),
