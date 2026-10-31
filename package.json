@@ -57,7 +57,8 @@
     "sim:demo": "node scripts/sim-demo.mjs",
     "docs:system": "node scripts/gen-doc.mjs",
     "expo:prepare": "tsx scripts/expo-prepare.ts",
-    "docs:guide": "node scripts/gen-doc.mjs docs/guide.md docs/guide.pdf"
+    "docs:guide": "node scripts/gen-doc.mjs docs/guide.md docs/guide.pdf",
+    "expo:map": "tsx scripts/expo-map.ts"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.3",
