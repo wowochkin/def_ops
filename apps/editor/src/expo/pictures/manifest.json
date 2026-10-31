@@ -1,1 +1,40 @@
-{ "pictures": [] }
+{
+  "pictures": [
+    {
+      "file": "elbe-day-1945.jpg",
+      "kind": "archive",
+      "caption": "Встреча на Эльбе: советские и американские солдаты, Торгау, 25 апреля 1945",
+      "author": "Pfc. William E. Poulson, U.S. Army Signal Corps",
+      "url": "https://commons.wikimedia.org/wiki/File:ElbeDay1945_(NARA_ww2-121).jpg",
+      "pd": "PD-USGov-Military-Army: снимок военнослужащего армии США при исполнении обязанностей (NARA, Pictures of World War II, ww2-121)"
+    },
+    {
+      "file": "elbe-patrol-boat-1945.jpg",
+      "kind": "archive",
+      "caption": "Патруль лейтенанта Коцебу переправляется через Эльбу к советским войскам, 25 апреля 1945",
+      "author": "U.S. Army Signal Corps (автор не указан)",
+      "url": "https://commons.wikimedia.org/wiki/File:Kotzebue_Boot.jpg",
+      "pd": "PD-USGov-Military-Army: снимок армии США (National Archives, Washington D.C.)"
+    },
+    {
+      "file": "allied-commanders-berlin-1945.jpg",
+      "kind": "archive",
+      "caption": "Берлин, 5 июня 1945: Эйзенхауэр, Жуков, Монтгомери и де Латр де Тассиньи после подписания декларации о поражении Германии",
+      "author": "U.S. Department of Defense (The U.S. Army in the Occupation of Germany, 1944–1946)",
+      "url": "https://commons.wikimedia.org/wiki/File:Zhukov_Eisenhower_Montgomery_de_Lattre.jpg",
+      "pd": "PD-USGov-Military-Army: иллюстрация из материалов Министерства обороны США"
+    },
+    {
+      "file": "staff-table.jpg",
+      "kind": "generated",
+      "generated": true,
+      "caption": "Штабной стол 1945 года: карта со стрелками, компас, телефон (гравюра, сгенерировано, людей нет)"
+    },
+    {
+      "file": "city-dawn.jpg",
+      "kind": "generated",
+      "generated": true,
+      "caption": "Город в дыму на рассвете (литография, сгенерировано, людей и символики нет)"
+    }
+  ]
+}
