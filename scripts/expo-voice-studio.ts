@@ -5,8 +5,10 @@
  * Нужна запущенная голосовая служба (её поднимает приложение). Служба общая: сменённая здесь модель — и у живого
  * голоса приложения; при выходе из студии (Ctrl+C) возвращается прежняя.
  */
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, msOk, service, wer, type ClipCheck, type Manifest,
@@ -16,6 +18,8 @@ const PORT = Number(process.env.PORT ?? 47700);
 const data = dataDir(process.argv.includes('--data') ? process.argv[process.argv.indexOf('--data') + 1] : undefined);
 const dir = join(data, 'expo/voice');
 const mpath = join(dir, 'manifest.json');
+const cache = join(tmpdir(), 'expo-voice-studio');
+mkdirSync(cache, { recursive: true });
 if (!existsSync(mpath)) throw new Error(`нет предзаписи (${mpath}) — сначала npm run expo:prepare -- --voice`);
 
 const load = () => JSON.parse(readFileSync(mpath, 'utf8')) as Manifest;
@@ -81,10 +85,14 @@ createServer(async (req, res) => {
   try {
     if (url.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(PAGE); return; }
     if (url.pathname.startsWith('/clips/')) {
-      const f = join(dir, 'clips', url.pathname.slice(7).replace(/[^0-9a-f.]/g, ''));
-      if (!existsSync(f)) { res.writeHead(404); res.end(); return; }
-      res.writeHead(200, { 'content-type': 'audio/ogg', 'cache-control': 'no-store' });
-      res.end(readFileSync(f));
+      // браузеру — M4A: Safari не играет Ogg Opus в <audio>; клипы стенда остаются Ogg
+      const name = url.pathname.slice(7);
+      const f = join(dir, 'clips', name);
+      if (!/^[0-9a-f]{8,64}\.ogg$/.test(name) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
+      const m4a = join(cache, name.replace(/\.ogg$/, '.m4a'));
+      if (!existsSync(m4a)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', f, '-c:a', 'aac', '-b:a', '96k', m4a]);
+      res.writeHead(200, { 'content-type': 'audio/mp4', 'cache-control': 'no-store' });
+      res.end(readFileSync(m4a));
       return;
     }
     if (url.pathname === '/api/state') { json({ engine: svc.engine, live, engines: svc.engines, busy, clips: load().clips }); return; }
