@@ -11,6 +11,8 @@ import { layoutFor, sceneOf } from './layout';
 import { FRONT_NAMES, PhaseTitle, Timer } from './scenes';
 import type { ModelFrame } from './model';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
+import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
+import { SOURCE_LABEL } from './ai';
 import './expo.css';
 export interface ExpoViewProps {
   window: number;
@@ -18,10 +20,11 @@ export interface ExpoViewProps {
   settings: ExpoSettings;
   count: 1 | 2 | 3;
   model?: ModelFrame;
+  ai?: AiFrame;
   send: (ev: DirectorEvent) => void;
 }
 const NO_MODEL: ModelFrame = { view: null, error: null };
-export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, send }: ExpoViewProps) {
+export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, ai = NO_AI, send }: ExpoViewProps) {
   const mv = model.view;
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
@@ -29,10 +32,10 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
   const access = affordances(settings.input, settings.voiceInput, settings.aiMode);
   const [expanded, setExpanded] = useState<number | null>(null),
     [frontIndex, setFrontIndex] = useState(0),
-    [notice, setNotice] = useState('');
+    [asking, setAsking] = useState(false);
   useEffect(() => {
     setExpanded(null);
-    setNotice('');
+    setAsking(false);
   }, [state.session, p.kind, p.kind === 'turn' ? p.n : 0]);
   useEffect(() => {
     if (!controls || !access.keys || state.paused) return;
@@ -128,6 +131,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                         <button disabled={state.paused || !mv?.cards[card]} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
                           <span className="expo-card-n">{card + 1}</span>
                           <strong>{mv?.cards[card]?.title ?? 'Карточка готовится'}</strong>
+                          {mv?.cards[card]?.source && <small className="expo-source">{SOURCE_LABEL[mv.cards[card].source!]}</small>}
                         </button>
                         <button className="expo-secondary" onClick={() => setExpanded(expanded === card ? null : card)}>
                           Подробнее о карточке {card + 1}
@@ -146,7 +150,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                             disabled={state.paused || p.replacements >= settings.maxReplacements}
                             onClick={() => send({ t: 'replace', card })}
                           >
-                            Сгенерировать альтернативу с помощью ИИ
+                            {settings.aiMode === 'ai' ? 'Сгенерировать альтернативу с помощью ИИ' : 'Другой вариант'}
                           </button>
                         )}
                       </article>
@@ -175,6 +179,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
               <section className="expo-side">
                 <h2>Штаб ИИ</h2>
                 <p>{turnDef(state.front, p.n)?.situation}</p>
+                <AiPanel ai={ai} />
                 {p.step === 'scroll' && mv?.reveal && !mv.busy && (
                   <ul className="expo-card-lines">
                     {mv.reveal.historical.lines.map((l) => (
@@ -223,16 +228,32 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
       </div>
       <footer className="expo-footer">
         {controls && access.voiceButton && (
-          <button
-            onClick={() => {
-              send({ t: 'speak' });
-              setNotice('Голосовой ввод появится на этапе «ИИ и голос».');
-            }}
-          >
+          <button disabled={state.paused} onClick={() => send({ t: 'speak' })}>
             Говорить
           </button>
         )}
-        {notice && <span role="status">{notice}</span>}
+        {controls && p.kind !== 'startup' && p.kind !== 'attract' && (
+          <button className="expo-secondary" disabled={state.paused} aria-expanded={asking} onClick={() => setAsking(!asking)}>
+            Спросить ИИ
+          </button>
+        )}
+        {asking && (
+          <div className="expo-questions" role="menu">
+            {QUESTIONS.map((q) => (
+              <button
+                key={q}
+                role="menuitem"
+                onClick={() => {
+                  send({ t: 'ask', q });
+                  setAsking(false);
+                }}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+        {!roles.includes('ai') && <AiPanel ai={ai} compact />}
         {controls && p.kind !== 'startup' && p.kind !== 'attract' && (
           <button className="expo-secondary" disabled={state.paused} onClick={() => send({ t: 'restart' })}>
             Начать заново
@@ -240,5 +261,25 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
         )}
       </footer>
     </main>
+  );
+}
+
+/** Что говорит ИИ: ответ на вопрос (с источником), мысль, пока он думает, и субтитр звучащей фразы. */
+function AiPanel({ ai, compact = false }: { ai: AiFrame; compact?: boolean }) {
+  return (
+    <div className={`expo-ai ${compact ? 'expo-ai-compact' : ''}`} aria-live="polite">
+      {ai.answer && (
+        <div className="expo-answer">
+          <p className="expo-q">{ai.answer.q}</p>
+          {ai.answer.text ? <p>{ai.answer.text}</p> : ai.thinking && <p className="expo-thinking">{ai.thinking}</p>}
+          {ai.answer.source && <small className="expo-source">{SOURCE_LABEL[ai.answer.source]}</small>}
+        </div>
+      )}
+      {ai.line && ai.line.text !== ai.answer?.text && (
+        <p className="expo-subtitle">
+          {ai.line.text}
+        </p>
+      )}
+    </div>
   );
 }

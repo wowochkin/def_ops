@@ -13,9 +13,10 @@ import { initialState, step, type DirectorEvent, type Effect } from './director'
 import type { ExpoSettings } from './settings';
 import type { ExpoBus } from './bus';
 import type { ModelFrame } from './model';
+import { NO_AI, type AiFrame } from './ai-runner';
 import { plan, type Windows, type MonitorInfo } from './windows';
 
-const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'speak', 'restart'];
+const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'speak', 'ask', 'restart'];
 
 const sameScreens = (a: ExpoSettings['screens'], b: ExpoSettings['screens']) =>
   a.count === b.count && a.order.length === b.order.length && a.order.every((id, i) => id === b.order[i]);
@@ -33,6 +34,7 @@ export function createHost(
   let stopped = false;
   let aiMode = initial.aiMode;
   let model: ModelFrame = { view: null, error: null };
+  let ai: AiFrame = NO_AI;
   let offMonitors = () => {};
   let queue = Promise.resolve();
   const beats = new Map<number, number>();
@@ -42,7 +44,7 @@ export function createHost(
       const at = beats.get(i) ?? 0;
       return at > 0 && Date.now() - at <= 10000;
     });
-  const snapshot = () => ({ state, settings: { ...settings, aiMode }, count, model });
+  const snapshot = () => ({ state, settings: { ...settings, aiMode }, count, model, ai });
   const publish = () => {
     if (stopped) return;
     bus.send({ k: 'state', ...snapshot(), settings: { ...settings, aiMode, pin: '' } });
@@ -88,6 +90,11 @@ export function createHost(
     /** Вид модели сеанса (карточки, шкалы, ход, итог) — рассылается вместе с кадром. */
     setModel(f: ModelFrame) {
       model = f;
+      publish();
+    },
+    /** Кадр ИИ: что звучит, ответ на вопрос, мысль. */
+    setAi(f: AiFrame) {
+      ai = f;
       publish();
     },
     setAiMode(mode: ExpoSettings['aiMode']) {

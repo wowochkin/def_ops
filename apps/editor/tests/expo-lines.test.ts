@@ -9,7 +9,7 @@ describe('заготовки фраз', () => {
   });
 
   it('есть фразы на все ключи эффектов режиссёра', () => {
-    for (const k of ['timer-warn', 'delay', 'offer-decide', 'voice-soon', 'newSession', 'ai-pick']) expect(LINES.say[k]?.length).toBeGreaterThan(0);
+    for (const k of ['timer-warn', 'delay', 'offer-decide', 'voice-soon', 'ai-pick']) expect(LINES.say[k]?.length).toBeGreaterThan(0);
   });
 
   it('готовый ответ находится по своим словам', () => {

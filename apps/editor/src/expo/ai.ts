@@ -99,7 +99,7 @@ export function parseCard(reply: string, c: CardContext, id: string, check: (car
  * Карточки ИИ перелома: `prefetch` заранее составляет до `want` карточек (по одной, модель параллельно не работает),
  * `take` отдаёт готовую или ждёт текущую не дольше `wait` мс; ничего — null (тогда замена из банка).
  */
-export function cardSmith(o: { ask: () => Ask | null; check: (card: Card) => string[]; perCardMs: number; wait: number }) {
+export function cardSmith(o: { ask: () => Ask | null; check: (card: Card, c: CardContext) => string[]; perCardMs: number; wait: number }) {
   let key = '';
   let ready: Card[] = [];
   let running: Promise<void> | null = null;
@@ -109,7 +109,7 @@ export function cardSmith(o: { ask: () => Ask | null; check: (card: Card) => str
     if (!ask) return;
     const reply = await within(o.perCardMs, (s) => ask(SYSTEM, cardPrompt(c), s));
     if (k !== key || !reply) return;
-    const card = parseCard(reply, c, `ai-${c.front}-${c.n}-${++seq}`, o.check);
+    const card = parseCard(reply, c, `ai-${c.front}-${c.n}-${++seq}`, (card) => o.check(card, c));
     if (card) ready.push(card);
   };
   return {

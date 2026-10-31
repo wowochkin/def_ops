@@ -20,6 +20,9 @@ import { createHost } from './host';
 import { initialState, type DirectorEvent } from './director';
 import { ExpoView } from './ExpoView';
 import { coreEnv, modelRunner, type ModelFrame } from './model';
+import { createStage } from './stage';
+import { NO_AI } from './ai-runner';
+import type { StatKind } from './stats';
 import { lockdown } from './lockdown';
 import { cornerHold, operatorCombo } from './operator';
 import { OperatorMenu } from './OperatorMenu';
@@ -31,7 +34,7 @@ const NO_MODEL: ModelFrame = { view: null, error: null };
 const VISITOR_KEYS = ['1', '2', '3', 'r', 'R', 'Enter', ' ', 'ArrowLeft', 'ArrowRight'];
 
 export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () => void }) {
-  const [frame, setFrame] = useState({ state: initialState(Date.now()), settings: EXPO_DEFAULTS, count: 1 as 1 | 2 | 3, model: NO_MODEL as ModelFrame });
+  const [frame, setFrame] = useState({ state: initialState(Date.now()), settings: EXPO_DEFAULTS, count: 1 as 1 | 2 | 3, model: NO_MODEL as ModelFrame, ai: NO_AI });
   const [error, setError] = useState('');
   const [menu, setMenu] = useState(false);
   const [identify, setIdentify] = useState({ until: 0, names: [] as string[] });
@@ -56,6 +59,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     let disposed = false;
     const abort = new AbortController();
     let stopWatch = () => {};
+    let stopStage = () => {};
     let timer: ReturnType<typeof setInterval> | undefined;
     const metrics = telemetry();
     const log = (s: string) => {
@@ -69,7 +73,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         })
         .catch(() => {});
     };
-    const count = (kind: 'started' | 'finished' | 'failure') => {
+    const count = (kind: StatKind) => {
       void metrics
         .add(kind)
         .then(refreshStats)
@@ -101,7 +105,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     const offCorner = index === 0 ? cornerHold(document.body, open) : () => {};
 
     const off = bus.on((m) => {
-      if (index > 0 && m.k === 'state') setFrame({ state: m.state, settings: m.settings, count: m.count, model: m.model ?? NO_MODEL });
+      if (index > 0 && m.k === 'state') setFrame({ state: m.state, settings: m.settings, count: m.count, model: m.model ?? NO_MODEL, ai: m.ai ?? NO_AI });
       if (m.k === 'health') {
         setHealth(m.states);
         setNote(m.note);
@@ -156,7 +160,19 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
 
     const startHost = async (settings: ExpoSettings) => {
       if (disposed) return;
-      const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f));
+      const stage = createStage({
+        aiOn: () => hostRef.current?.snapshot().settings.aiMode === 'ai',
+        snapshot: () => hostRef.current?.snapshot() ?? { state: initialState(Date.now()), model: NO_MODEL },
+        dispatch: (ev) => hostRef.current?.dispatch(ev),
+        onFrame: (f) => hostRef.current?.setAi(f),
+        count,
+      });
+      stopStage = () => {
+        document.removeEventListener('pointerdown', stage.resume);
+        stage.dispose();
+      };
+      document.addEventListener('pointerdown', stage.resume);
+      const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f), undefined, undefined, stage.hooks);
       const host = createHost(
         settings,
         bus,
@@ -167,12 +183,16 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         (e) => {
           if (e.e === 'stat') count(e.kind);
           if (e.e === 'newSession' || e.e === 'deal' || e.e === 'replace' || e.e === 'decide') void model.handle(e);
+          stage.handle(e);
         },
       );
       hostRef.current = host;
       await host.start();
       if (disposed) return;
-      timer = setInterval(() => host.dispatch({ t: 'tick', now: Date.now() }), 250);
+      timer = setInterval(() => {
+        host.dispatch({ t: 'tick', now: Date.now() });
+        stage.tick();
+      }, 250);
       const probes = localProbes(host.ready);
       const required = probes.filter((p) => startupPlan(settings).includes(p.id));
       const states = await runProbes(required, publishHealth, abort.signal);
@@ -205,6 +225,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       disposed = true;
       abort.abort();
       stopWatch();
+      stopStage();
       off();
       offCorner();
       offLock();

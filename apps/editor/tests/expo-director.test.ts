@@ -278,3 +278,17 @@ describe('режиссёр сеанса', () => {
     expect(JSON.stringify(s)).toBe(snap);
   });
 });
+
+describe('голос и ИИ в режиссёре', () => {
+  const s0 = (phase: Phase): DirectorState => ({ ...initialState(0), phase, front: 'su_1bf', phaseStart: -10_000, now: 0 });
+  it('вопрос — эффект ask, «Говорить» — фраза и listen; в заставке — ничего', () => {
+    const turn: Phase = { kind: 'turn', n: 1, step: 'choose', deadline: null, warned: false, offered: false, choice: null, replacements: 0 };
+    expect(step(s0(turn), { t: 'ask', q: ' Почему высоты? ' }, EXPO_DEFAULTS).effects).toEqual([{ e: 'ask', q: 'Почему высоты?' }]);
+    expect(step(s0(turn), { t: 'speak' }, EXPO_DEFAULTS).effects.map((e) => e.e)).toEqual(['say', 'listen']);
+    expect(step(s0({ kind: 'attract' }), { t: 'ask', q: 'x' }, EXPO_DEFAULTS).effects).toEqual([]);
+  });
+  it('вход в фазу сопровождается фразой', () => {
+    const r = step(s0({ kind: 'attract' }), { t: 'touch' }, EXPO_DEFAULTS);
+    expect(r.effects).toContainEqual({ e: 'say', key: 'welcome', priority: 'event' });
+  });
+});

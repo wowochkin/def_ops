@@ -591,3 +591,42 @@ html.expo-active,
 .expo-forecast {
   font-size: 1.2em;
 }
+.expo-source {
+  display: block;
+  margin-top: 6px;
+  color: var(--expo-gold);
+  font-size: var(--expo-text-small);
+  font-weight: normal;
+}
+.expo-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.expo-ai {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.expo-ai-compact {
+  flex: 1;
+  min-width: 0;
+}
+.expo-answer {
+  border-left: 4px solid var(--expo-gold);
+  padding-left: 12px;
+}
+.expo-q {
+  color: var(--expo-muted);
+  margin: 0 0 6px;
+}
+.expo-thinking {
+  color: var(--expo-muted);
+  font-style: italic;
+}
+.expo-subtitle {
+  font-family: var(--expo-serif);
+  color: var(--expo-text);
+  margin: 0;
+}

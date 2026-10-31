@@ -15,6 +15,7 @@ vi.mock('../src/expo/host', async () => {
       ready: () => true,
       configuration: () => EXPO_DEFAULTS,
       setAiMode: () => {},
+      setAi: () => {},
       checkWindows: async () => {},
       start: async () => {},
       configure: async () => {},
@@ -24,6 +25,9 @@ vi.mock('../src/expo/host', async () => {
     }),
   };
 });
+vi.mock('../src/expo/stage', () => ({
+  createStage: () => ({ hooks: {}, handle() {}, tick() {}, resume() {}, dispose() {} }),
+}));
 vi.mock('../src/expo/probes', () => ({
   localProbes: () => [],
   runProbes: async () => ({ core: 'ok', voice: 'ok', model: 'ok', windows: 'ok' }),

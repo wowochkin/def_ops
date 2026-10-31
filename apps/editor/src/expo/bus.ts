@@ -8,9 +8,10 @@
 import type { ExpoSettings } from './settings';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ModelFrame } from './model';
+import type { AiFrame } from './ai-runner';
 
 export type BusMsg =
-  | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3; model?: ModelFrame }
+  | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3; model?: ModelFrame; ai?: AiFrame }
   | { k: 'input'; ev: DirectorEvent }
   | { k: 'health'; states: import('./health').ProbeStates; note: string | null }
   | { k: 'identify'; until: number; names: string[] }

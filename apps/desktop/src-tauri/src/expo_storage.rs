@@ -15,7 +15,7 @@ static LOCK: Mutex<()> = Mutex::new(());
 const LOG_LIMIT: u64 = 50 * 1024 * 1024;
 
 fn blank_day() -> serde_json::Value {
-    serde_json::json!({ "sessions": 0, "finished": 0, "failures": 0 })
+    serde_json::json!({ "sessions": 0, "finished": 0, "failures": 0, "aiOnTime": 0, "aiFallback": 0 })
 }
 
 fn valid_day(day: &str) -> bool {
@@ -34,6 +34,8 @@ fn add_stat(path: &Path, day: &str, kind: &str) -> Result<serde_json::Value, Str
         "started" => "sessions",
         "finished" => "finished",
         "failure" => "failures",
+        "aiOnTime" => "aiOnTime",
+        "aiFallback" => "aiFallback",
         _ => return Err("Неизвестный счётчик".into()),
     };
     let mut data = read_json(path);

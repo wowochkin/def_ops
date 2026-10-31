@@ -57,6 +57,8 @@ export type DirectorEvent =
   | { t: 'choose'; card: number }
   | { t: 'replace'; card: number }
   | { t: 'speak' }
+  /** Вопрос к ИИ (готовый или своими словами). */
+  | { t: 'ask'; q: string }
   | { t: 'restart' }
   | { t: 'pause' }
   | { t: 'resume' }
@@ -65,6 +67,10 @@ export type DirectorEvent =
 export type Effect =
   | { e: 'say'; key: string; priority: 'action' | 'timer' | 'event' | 'ambient' }
   | { e: 'aiPick'; n: TurnN }
+  /** Ответить на вопрос посетителя. */
+  | { e: 'ask'; q: string }
+  /** Слушать посетителя (кнопка «Говорить»): команда сеанса или вопрос. */
+  | { e: 'listen' }
   | { e: 'newSession' }
   /** Раздать карточки перелома n (вход в перелом). */
   | { e: 'deal'; n: TurnN; front: FrontId }
@@ -79,6 +85,9 @@ export const DURATIONS = { welcome: 20_000, briefing: 35_000, explain: 10_000, s
 
 /** Касание, продвигающее фазу, в первые столько мс после входа в неё — дребезг или касание вместе с мышью; не продвигает. */
 export const DEBOUNCE_MS = 300;
+
+/** Фразы входа в фазу (ключи заготовок). */
+const SAY_ON_ENTER: Record<string, string | undefined> = { welcome: 'welcome', briefing: 'briefing', explain: 'explain', result: 'result' };
 
 /** Предупреждение до конца таймера, мс. */
 const WARN_BEFORE = 10_000;
@@ -105,7 +114,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -114,6 +123,8 @@ function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx
     next = { ...next, phase: { ...phase, deadline: at + cfg.timer.seconds * 1000 } };
   }
   if (phase.kind === 'turn' && phase.step === 'explain' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
+  const say = SAY_ON_ENTER[phase.kind === 'turn' ? (phase.step === 'explain' ? 'explain' : '') : phase.kind];
+  if (say) fx.push({ e: 'say', key: say, priority: 'event' });
   if (phase.kind === 'briefing') {
     fx.push({ e: 'stat', kind: 'started' });
     next = { ...next, stats: { ...next.stats, sessions: next.stats.sessions + 1 } };
@@ -179,7 +190,7 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
       if (!p.offered) cands.push({ at: t0 + OFFER_AFTER, apply: (x) => { fx.push({ e: 'say', key: 'offer-decide', priority: 'action' }); return { ...x, phase: { ...p, offered: true } }; } });
       const aiAt = t0 + AI_PICK_AFTER;
       // Выбор ИИ — один раз: в момент, когда часы переходят отметку (выбор выставит последующий choose от оболочки).
-      if (!aiFired.v && aiAt > prevNow) cands.push({ at: aiAt, apply: (x) => { aiFired.v = true; fx.push({ e: 'aiPick', n: p.n }); return x; } });
+      if (!aiFired.v && aiAt > prevNow) cands.push({ at: aiAt, apply: (x) => { aiFired.v = true; fx.push({ e: 'say', key: 'ai-pick', priority: 'action' }, { e: 'aiPick', n: p.n }); return x; } });
     }
   }
   if (!cands.length) return null;
@@ -266,7 +277,11 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'speak':
       if (p.kind === 'startup' || p.kind === 'attract') return out(s);
-      fx.push({ e: 'say', key: 'voice-soon', priority: 'action' });
+      fx.push({ e: 'say', key: 'voice-soon', priority: 'action' }, { e: 'listen' });
+      return out(touched);
+    case 'ask':
+      if (p.kind === 'startup' || p.kind === 'attract' || !ev.q.trim()) return out(s);
+      fx.push({ e: 'ask', q: ev.q.trim().slice(0, 300) });
       return out(touched);
   }
   return out(s);

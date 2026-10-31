@@ -6,8 +6,12 @@ export interface ExpoStats {
   sessions: number;
   finished: number;
   failures: number;
+  /** Ответы ИИ вовремя и заменённые заготовкой (цель — не меньше 90 % вовремя). */
+  aiOnTime?: number;
+  aiFallback?: number;
 }
-export type StatKind = 'started' | 'finished' | 'failure';
+export type StatKind = 'started' | 'finished' | 'failure' | 'aiOnTime' | 'aiFallback';
+const FIELD: Record<StatKind, keyof ExpoStats> = { started: 'sessions', finished: 'finished', failure: 'failures', aiOnTime: 'aiOnTime', aiFallback: 'aiFallback' };
 const blank = (): ExpoStats => ({ sessions: 0, finished: 0, failures: 0 });
 const day = () => new Date().toLocaleDateString('sv-SE');
 const inApp = () => '__TAURI_INTERNALS__' in window;
@@ -32,7 +36,7 @@ export function telemetry() {
             return;
           }
           const s = await today();
-          s[kind === 'started' ? 'sessions' : kind === 'finished' ? 'finished' : 'failures']++;
+          s[FIELD[kind]] = (s[FIELD[kind]] ?? 0) + 1;
           localStorage.setItem(`def_ops.expo.stats.${day()}`, JSON.stringify(s));
         });
       return queue;

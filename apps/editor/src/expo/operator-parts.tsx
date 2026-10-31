@@ -114,8 +114,19 @@ export function ServiceSummary({
           <dt>Сбоев</dt>
           <dd>{stats.failures}</dd>
         </div>
+        <div>
+          <dt>ИИ вовремя</dt>
+          <dd>{aiShare(stats)}</dd>
+        </div>
       </dl>
       {note && <p className="expo-note">{note}</p>}
     </section>
   );
+}
+
+/** Доля ответов ИИ вовремя: «92 % (46 из 50)»; ответов не было — «—». */
+export function aiShare(s: ExpoStats): string {
+  const on = s.aiOnTime ?? 0;
+  const all = on + (s.aiFallback ?? 0);
+  return all ? `${Math.round((on / all) * 100)} % (${on} из ${all})` : '—';
 }
