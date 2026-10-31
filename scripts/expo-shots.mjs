@@ -78,8 +78,6 @@ await page.getByRole('button', { name: 'Подробнее о карточке 2
 await page.screenshot({ path: 'docs/img/expo-turn.jpg', type: 'jpeg', quality: 85 });
 await page.getByRole('button', { name: 'Карточка 2', exact: true }).click();
 await page.getByText(/Именно так поступил|решил иначе/).waitFor({ timeout: 60000 });
-await page.waitForTimeout(800);
-await page.screenshot({ path: 'docs/img/expo-scroll.jpg', type: 'jpeg', quality: 85 });
 await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 90000 });
 await page.keyboard.press('Control+Alt+Shift+KeyO');
 await page.getByLabel('ПИН', { exact: true }).fill('0000');
@@ -94,9 +92,8 @@ for (const n of [2, 3]) {
   await page.getByRole('button', { name: 'Карточка 1', exact: true }).click();
   if (n === 2) await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 90000 });
 }
-await page.locator('.expo-rank').waitFor({ timeout: 120000 });
-await page.waitForTimeout(500);
-await page.screenshot({ path: 'docs/img/expo-result.jpg', type: 'jpeg', quality: 85 });
+// прокрутку, итог и ответ ИИ снимает expo-core-check.mjs; здесь — что итог с картой собирается
+await page.locator('.expo-result-map').waitFor({ timeout: 120000 });
 await page.keyboard.press('Control+Alt+Shift+KeyO');
 await page.getByLabel('ПИН', { exact: true }).fill('0000');
 await page.getByRole('button', { name: 'Открыть меню' }).click();
