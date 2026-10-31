@@ -123,6 +123,9 @@ export class VoiceClient {
    */
   private ctx: AudioContext | null = null;
   private bus: GainNode | null = null;
+  /** Громкость штаба в динамиках: после `bus`, так что опора подавления эха от неё не зависит. */
+  private out: GainNode | null = null;
+  private volume = 1;
   private node: AudioWorkletNode | null = null;
   private nodeReady: Promise<AudioWorkletNode> | null = null;
   private stream: MediaStream | null = null;
@@ -169,6 +172,12 @@ export class VoiceClient {
   onPlayed(cb: (id: number) => void): () => void {
     this.playedCbs.add(cb);
     return () => { this.playedCbs.delete(cb); };
+  }
+
+  /** Громкость звука штаба (0–1), сразу — и для звучащей фразы. */
+  setVolume(v: number) {
+    this.volume = Math.min(1, Math.max(0, v));
+    if (this.out && this.ctx) this.out.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.03);
   }
 
   /** Возобновить звук после действия человека (браузер может держать AudioContext приостановленным). */
@@ -348,9 +357,13 @@ export class VoiceClient {
       const ctx = new AudioContext();
       if (this.outId && this.outSupported()) void (ctx as unknown as { setSinkId(v: string): Promise<void> }).setSinkId(this.outId).catch(() => {});
       const bus = ctx.createGain();
-      bus.connect(ctx.destination);
+      const out = ctx.createGain();
+      out.gain.value = this.volume;
+      bus.connect(out);
+      out.connect(ctx.destination);
       this.ctx = ctx;
       this.bus = bus;
+      this.out = out;
     }
     return { ctx: this.ctx, bus: this.bus };
   }
@@ -418,7 +431,7 @@ export class VoiceClient {
     this.closeMic();
     this.node?.disconnect();
     void this.ctx?.close();
-    this.ctx = null; this.bus = null; this.node = null; this.nodeReady = null;
+    this.ctx = null; this.bus = null; this.out = null; this.node = null; this.nodeReady = null;
     this.ready = false;
     this.failed = false;
     this.fails = 0;

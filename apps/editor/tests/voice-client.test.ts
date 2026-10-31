@@ -31,7 +31,7 @@ describe('VoiceClient', () => {
     const started: number[] = [];
     class FakeCtx {
       currentTime = 0; destination = {};
-      createGain() { return { connect: () => {} }; }
+      createGain() { return { connect: () => {}, gain: { value: 1, setTargetAtTime() {} } }; }
       createBuffer(_c: number, n: number) { const d = new Float32Array(n); return { duration: n / 24000, getChannelData: () => d }; }
       createBufferSource() { return { buffer: null, connect: () => {}, start: (t: number) => started.push(t), onended: null }; }
       resume() { return Promise.resolve(); }

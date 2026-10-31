@@ -42,7 +42,9 @@ export interface ClipAudio {
  * фраза ставится в звук, когда готовы буферы всех её кусков, — встык, без зазоров. Буфера нет (вытеснен или не дошёл)
  * — он декодируется тут же (миллисекунды); давно не звучавшие вытесняются сверх бюджета.
  */
-export function clipPlayer(audio: () => ClipAudio, load: (file: string) => Promise<ArrayBuffer> = loadClip, budgetS = 420) {
+export function clipPlayer(
+  audio: () => ClipAudio, load: (file: string) => Promise<ArrayBuffer> = loadClip, budgetS = 420, out?: () => unknown,
+) {
   const bufs = new Map<string, Promise<AudioBuffer>>();
   const secs = new Map<string, number>();
   let total = 0;
@@ -93,7 +95,7 @@ export function clipPlayer(audio: () => ClipAudio, load: (file: string) => Promi
           bs.forEach((b, i) => {
             const s = a.createBufferSource();
             s.buffer = b;
-            s.connect(a.destination as AudioNode);
+            s.connect((out?.() ?? a.destination) as AudioNode);
             s.start(t);
             t += b.duration + (i < bs.length - 1 ? gaps[i] ?? 0 : 0);
             srcs.push(s);
@@ -246,6 +248,8 @@ function liveVoice(client: VoiceClient): LiveVoice & { dispose(): void } {
 
 export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: (l: Line) => void }): {
   speaker: Speaker;
+  /** Громкость голоса (0–1): предзапись и живой голос, сразу. */
+  setVolume(v: number): void;
   /** Заготовка озвучена заранее. */
   voiced(f: { text: string; parts?: string[] }): boolean;
   resume(): void;
@@ -255,9 +259,19 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   void client.refreshApi();
   client.connect();
   let ctx: AudioContext | null = null;
+  let gain: GainNode | null = null;
+  let volume = 1;
   // 24 кГц — частота синтеза: буферы вдвое меньше, чем на 48 кГц
-  const audio = () => (ctx ??= new AudioContext({ latencyHint: 'playback', sampleRate: 24000 }));
-  const player = clipPlayer(audio);
+  const audio = () => {
+    if (!ctx) {
+      ctx = new AudioContext({ latencyHint: 'playback', sampleRate: 24000 });
+      gain = ctx.createGain();
+      gain.gain.value = volume;
+      gain.connect(ctx.destination);
+    }
+    return ctx;
+  };
+  const player = clipPlayer(audio, loadClip, 420, () => (audio(), gain));
   let manifest: VoiceManifest | null = null;
   let disposed = false;
   void loadManifest().then((m) => {
@@ -271,6 +285,11 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   return {
     speaker,
     voiced: (f) => clipPlan(manifest, f.text, f.parts) !== null,
+    setVolume(v) {
+      volume = Math.min(1, Math.max(0, v));
+      if (gain && ctx) gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.03);
+      client.setVolume(volume);
+    },
     resume: () => { client.resume(); void ctx?.resume(); },
     dispose: () => { disposed = true; live.dispose(); client.close(); void ctx?.close(); },
   };

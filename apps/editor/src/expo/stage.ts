@@ -15,6 +15,7 @@ import type { DirectorState, Effect } from './director';
 import { LINES, pick } from './lines';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
+import type { ExpoSettings } from './settings';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
@@ -29,7 +30,8 @@ function llm(): LlmSettings {
 
 export interface StageDeps {
   aiOn: () => boolean;
-  snapshot: () => { state: DirectorState; model: ModelFrame };
+  /** Настройки — громкость голоса (меню оператора, вкладка «Звук»); нет — полная громкость. */
+  snapshot: () => { state: DirectorState; model: ModelFrame; settings?: Pick<ExpoSettings, 'volume'> };
   dispatch: Parameters<typeof aiRunner>[0]['dispatch'];
   onFrame: (f: AiFrame) => void;
   count: (k: StatKind) => void;
@@ -40,6 +42,7 @@ export function createStage(d: StageDeps) {
   const llmAsk: Ask = (system, text, signal) => gate.run(() => (signal.aborted ? Promise.reject(signal.reason) : askText(system, text, { settings: llm(), signal, maxTokens: 400 })));
   const voice = expoSpeaker({ aiOn: d.aiOn, gate, onSwap: (l) => runner?.onLine(l) });
   let lastBusy = Date.now();
+  let volume: number | null = null;
   const ask = () => (d.aiOn() ? llmAsk : null);
   const facts = () => {
     const { state, model } = d.snapshot();
@@ -106,9 +109,12 @@ export function createStage(d: StageDeps) {
     handle(e: Effect) {
       if (e.e === 'say' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
     },
-    /** Тик часов: пауза в сеансе — фоновый рассказ. */
+    /** Тик часов: громкость голоса из настроек (смена — сразу); пауза в сеансе — фоновый рассказ. */
     tick() {
-      const k = d.snapshot().state.phase.kind;
+      const snap = d.snapshot();
+      const v = snap.settings?.volume.voice ?? 1;
+      if (v !== volume) voice.setVolume((volume = v));
+      const k = snap.state.phase.kind;
       if (queue.busy()) lastBusy = Date.now();
       else if ((k === 'briefing' || k === 'turn') && Date.now() - lastBusy > 6000) queue.fill();
     },
