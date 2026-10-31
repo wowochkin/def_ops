@@ -8,7 +8,7 @@
  * Прокрутка — ход ядра до следующего перелома; после третьего — досчёт до конца операции и итог по осям.
  */
 import { agentsEvents, lossSeries, type AgentHistory, type AgentTrace, type EventResult, type History, type SimContext } from '@def-ops/sim';
-import { deal, replacement, type Bank, type Card, type TurnN } from './bank';
+import { deal, replacement, type Bank, type Card, type CardFact, type TurnN } from './bank';
 import { axes, axisNote, feedLines, forecast, rankOf, type AxesDetail } from './score';
 import type { FrontId } from './settings';
 import { cardArrows, historyAt, MAP, traceArmies, type Arrow, type ArmyPos, type LL } from './map';
@@ -36,7 +36,7 @@ export function measureTrace(env: ModelEnv, t: AgentTrace, front: FrontId) {
 }
 
 /** source: 'now' — карточка составлена ИИ во время сеанса, 'bank' — замена из банка. */
-export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared'; arrows?: Arrow[] }
+export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared'; arrows?: Arrow[]; fact?: CardFact; risk?: string; army?: string }
 /** Карта хода: армии сейчас и до прокрутки, новые события с точкой, путь армий фронта по переломам. */
 export interface MapView {
   armies: ArmyPos[];
@@ -69,7 +69,8 @@ type Trace = AgentTrace & { game?: { hour: number } };
 
 const view = (c: Card, source?: CardView['source']): CardView => {
   const s = c.prepared === 'ai' ? 'prepared' : source;
-  return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}) };
+  const army = c.fact?.army ?? c.orders[0]?.army;
+  return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}), ...(c.fact ? { fact: c.fact } : {}), ...(c.risk ? { risk: c.risk } : {}), ...(army ? { army } : {}) };
 };
 
 export function timeAt(start: string, hour: number): string {

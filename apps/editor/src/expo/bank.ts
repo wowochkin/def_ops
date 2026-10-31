@@ -23,7 +23,12 @@ export interface Card {
   lines: string[];
   orders: CardOrder[];
   basis: { source: string } | { assumption: string };
+  /** Цифра-факт на лицевой стороне: значение, пояснение, армия, о которой факт (её знак на карточке), источник. */
+  fact?: CardFact;
+  /** Риск решения одной строкой. */
+  risk?: string;
 }
+export interface CardFact { value: string; text: string; army: string; source: string }
 export interface TurnDef { n: TurnN; hour: number; title: string; situation: string }
 export interface FrontDef { name: string; marshal: string; keyEvents: string[]; turns: TurnDef[] }
 /** Эталон по истории: потери фронта (личный состав) нарастающим итогом по суткам. */
@@ -53,7 +58,12 @@ export function bankErrors(bank: Bank, armiesOf: (front: FrontId) => string[], p
       if (cs.filter((c) => c.historical).length !== 1) out.push(`${front} перелом ${t.n}: нужна одна историческая карточка`);
       if (cs.filter((c) => !c.historical).length < 3) out.push(`${front} перелом ${t.n}: меньше трёх своих карточек`);
     }
-    for (const c of bank.cards.filter((x) => x.front === front)) out.push(...cardErrors(c, armies, places));
+    for (const c of bank.cards.filter((x) => x.front === front)) {
+      out.push(...cardErrors(c, armies, places));
+      // у авторских карточек лицевая сторона полная: факт с источником и риск (у подготовленных ИИ — по возможности)
+      if (!c.prepared && !c.fact) out.push(`${c.id}: нет цифры-факта`);
+      if (!c.prepared && !c.risk) out.push(`${c.id}: нет риска`);
+    }
   }
   return out;
 }
@@ -68,6 +78,13 @@ export function cardErrors(c: Card, armies: Set<string>, places: Set<string>): s
   if (!c.title?.trim()) out.push(`${c.id}: нет заголовка`);
   if (!Array.isArray(c.lines) || c.lines.length < 4 || c.lines.length > 5) out.push(`${c.id}: строк должно быть 4–5`);
   for (const l of [c.title ?? '', ...(c.lines ?? [])]) if (l.length > 60) out.push(`${c.id}: строка длиннее 60 знаков — «${l}»`);
+  if (c.fact) {
+    if (!/\d/.test(c.fact.value) || c.fact.value.length > 8) out.push(`${c.id}: факт — число до 8 знаков`);
+    if (!c.fact.text?.trim() || c.fact.text.length > 44) out.push(`${c.id}: пояснение факта — до 44 знаков`);
+    if (!c.fact.source?.trim()) out.push(`${c.id}: у факта нет источника`);
+    if (!armies.has(c.fact.army)) out.push(`${c.id}: факт о ${c.fact.army} — не армии фронта ${c.front}`);
+  }
+  if (c.risk !== undefined && (!c.risk.trim() || c.risk.length > 34)) out.push(`${c.id}: риск — одна строка до 34 знаков`);
   for (const o of c.orders ?? []) {
     if (!KINDS.includes(o.kind)) out.push(`${c.id}: неизвестное распоряжение ${o.kind}`);
     if (!armies.has(o.army)) out.push(`${c.id}: ${o.army} — не армия фронта ${c.front}`);

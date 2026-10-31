@@ -24,6 +24,8 @@ import type { CardView } from './session';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
+import type { FrontId } from './settings';
+import { portraitOf } from './pictures';
 import './expo.css';
 export interface ExpoViewProps {
   window: number;
@@ -229,6 +231,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                     {p.step === 'choose' ? (
                       <Cards
                         cards={mv?.cards ?? []}
+                        front={state.front ?? 'su_1bf'}
                         disabled={state.paused}
                         canReplace={!state.paused && p.replacements < settings.maxReplacements}
                         replaceLabel={settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
@@ -246,8 +249,9 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                       </>
                     ) : (
                       <>
+                        <OrderSlip c={typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice} />
                         <Reveal model={model} delay={p.choice === 'delay'} full={!roles.includes('progress')} />
-                        {roles.includes('progress') && <Progress model={model} feed={2} date={false} />}
+                        {roles.includes('progress') && <Progress model={model} feed={1} date={false} />}
                       </>
                     )}
                   </aside>
@@ -365,13 +369,45 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
   );
 }
 
-/** Суть карточки на виду: первая строка и вторая, если обе короткие (карточка не выше соседних). */
-const gist = (lines: string[]) => (lines.length > 1 && lines[0].length <= 34 && lines[1].length <= 34 ? lines.slice(0, 2) : lines.slice(0, 1));
+/** Суть карточки на виду: две первые строки (у карточки ИИ без факта и риска — три), каждая — одной строкой. */
+const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, c.fact ? 2 : 3);
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
-/** Три карточки решения одной высоты: выбор — нажатием на карточку; подробнее и замена — в полосе справа. */
+/** Знак армии-исполнителя: портрет командующего, если он есть в манифесте картинок, иначе штабной знак армии. */
+function ArmyMark({ army }: { army?: string }) {
+  const a = MAP.armies.find((x) => x.id === army);
+  const pic = army ? portraitOf(army) : null;
+  if (pic) return <img className="expo-portrait" src={pic.src} alt={pic.caption} />;
+  return (
+    <svg className="expo-emblem" viewBox="0 0 160 100" role="img" aria-label={a ? `Знак армии ${a.label}` : 'Знак армии'}>
+      <ellipse cx="80" cy="50" rx="74" ry="40" />
+      <path d="M80 10 V90" className="expo-emblem-half" />
+      <text x="80" y="62">{a?.label ?? '—'}</text>
+    </svg>
+  );
+}
+
+/** Мини-карта решения: схема полосы фронта и стрелки этой карточки. */
+function CardMini({ c, front }: { c: CardView; front: FrontId }) {
+  const arrows = c.arrows ?? [];
+  return <ExpoMap armies={START.filter((a) => a.front === front)} focus={front} labels={false} arrows={arrows} include={arrows.map((x) => x.to)} className="expo-cardmap" label={`Схема: ${c.title}`} />;
+}
+
+/** Цифра-факт с источником. */
+function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
+  if (!c.fact) return null;
+  return (
+    <p className="expo-fact">
+      <b>{c.fact.value}</b> {c.fact.text}
+      {source && <small className="expo-fact-src"> Источник: {c.fact.source}</small>}
+    </p>
+  );
+}
+
+/** Три карточки-приказа одной высоты: выбор — нажатием на карточку; подробнее и замена — в полосе справа. */
 function Cards(props: {
   cards: CardView[];
+  front: FrontId;
   disabled: boolean;
   canReplace: boolean;
   replaceLabel: string;
@@ -382,7 +418,7 @@ function Cards(props: {
   setHover: (n: number | null) => void;
   send: (ev: DirectorEvent) => void;
 }) {
-  const { cards, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
+  const { cards, front, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
   const open = expanded !== null ? cards[expanded] : undefined;
   if (expanded !== null && open)
     return (
@@ -391,11 +427,16 @@ function Cards(props: {
           <span className="expo-card-n">{expanded + 1}</span>
           <h3>{open.title}</h3>
         </header>
+        <div className="expo-sheet-media">
+          <ArmyMark army={open.army} />
+          <CardMini c={open} front={front} />
+        </div>
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
             <li key={l}>{l}</li>
           ))}
         </ul>
+        <Fact c={open} source />
         {cardSource(open) && <small className="expo-source">{cardSource(open)}</small>}
         <div className="expo-sheet-actions">
           <button className="expo-primary" disabled={disabled} onClick={() => send({ t: 'choose', card: expanded })}>
@@ -423,11 +464,18 @@ function Cards(props: {
             onPointerLeave={props.hoverLights ? () => setHover(null) : undefined}
           >
             <button className="expo-card-main" disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
-              <span className="expo-card-n">{card + 1}</span>
+              <span className="expo-card-media">
+                {c && <ArmyMark army={c.army} />}
+                {c && <CardMini c={c} front={front} />}
+              </span>
               <span className="expo-card-body">
-                <strong>{c?.title ?? 'Карточка готовится'}</strong>
-                {c && gist(c.lines).map((l) => <span key={l}>{l}</span>)}
-                {c && cardSource(c) && <small className="expo-source">{cardSource(c)}</small>}
+                <strong>
+                  <span className="expo-card-n">{card + 1}</span> {c?.title ?? 'Карточка готовится'}
+                </strong>
+                {c && gist(c).map((l) => <span key={l}>{l}</span>)}
+                {c && <Fact c={c} />}
+                {c?.risk && <span className="expo-risk">Риск: {c.risk.toLowerCase()}</span>}
+                {c && !c.fact && cardSource(c) && <small className="expo-source">{cardSource(c)}</small>}
               </span>
             </button>
             {/* историческая карточка до выбора не отличается от прочих: кнопка замены есть у каждой */}
@@ -446,6 +494,28 @@ function Cards(props: {
   );
 }
 
+/** Отданный приказ: бланк выбранной карточки со штампом «ПРИКАЗ», текст — телетайпом. */
+function OrderSlip({ c, n }: { c: CardView | null; n: number | 'delay' | null }) {
+  if (n === 'delay' || !c) return null;
+  return (
+    <article className="expo-slip" aria-label="Отданный приказ">
+      <p className="expo-slip-head">
+        <span className="expo-card-n">{(n as number) + 1}</span> <span className="expo-tty">{c.title}</span>
+      </p>
+      {gist(c)
+        .slice(0, 1)
+        .map((l) => (
+          <p key={l} className="expo-tty" style={{ ['--i' as string]: 1 }}>
+            {l}
+          </p>
+        ))}
+      <span className="expo-stamp" aria-hidden="true">
+        Приказ
+      </span>
+    </article>
+  );
+}
+
 /** После выбора: как поступил маршал и исторический вариант (целиком или сутью, когда рядом ход операции). */
 function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; full: boolean }) {
   const mv = model.view;
@@ -458,7 +528,7 @@ function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; ful
           <p className="expo-meta">Исторический вариант</p>
           <p className="expo-hist-title">{mv.reveal.historical.title}</p>
           <ul className="expo-card-lines">
-            {(full ? mv.reveal.historical.lines : mv.reveal.historical.lines.slice(0, 2)).map((l) => (
+            {(full ? mv.reveal.historical.lines : mv.reveal.historical.lines.slice(0, 1)).map((l) => (
               <li key={l}>{l}</li>
             ))}
           </ul>

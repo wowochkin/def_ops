@@ -24,6 +24,13 @@ describe('банк карточек', () => {
     expect(errs.some((e) => e.includes('Nowhere'))).toBe(true);
   });
 
+  it('bank card face: fact with a source about an army of the front, risk in one line', () => {
+    for (const c of BANK.cards) expect(c.fact?.source && c.risk).toBeTruthy();
+    const bad = { ...BANK, cards: BANK.cards.map((c) => (c.id === 'bf1-north' ? { ...c, fact: { ...c.fact!, army: 'su_3gta', source: '' }, risk: undefined } : c)) };
+    const errs = bankErrors(bad, armiesOf, places);
+    expect(errs).toEqual(expect.arrayContaining(['bf1-north: нет риска', 'bf1-north: у факта нет источника', 'bf1-north: факт о su_3gta — не армии фронта su_1bf']));
+  });
+
   it('every card has a source or an assumption', () => {
     for (const c of BANK.cards) expect('source' in c.basis ? c.basis.source : c.basis.assumption).toBeTruthy();
   });
