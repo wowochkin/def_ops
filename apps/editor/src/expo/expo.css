@@ -97,8 +97,8 @@ html.expo-active,
   display: flex;
   align-items: center;
   gap: 24px;
-  height: 96px;
-  padding-top: 16px;
+  height: 124px;
+  padding-top: 12px;
   border-top: 1px solid var(--expo-line);
 }
 .expo-fill {
@@ -177,7 +177,43 @@ html.expo-active,
   color: var(--expo-muted);
 }
 
-/* Карта в своей области: рамка, дата хода в углу */
+/* Карта полного режима — один слой под сценой; сцена оставляет под неё «окно» (.expo-mapslot) */
+.expo-gis {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  pointer-events: none;
+  background: #efe4c8;
+}
+/* карта рисуется в окне в --gis-k раз меньше и растягивается: знаки и подписи штабной карты — крупные, как для стенда */
+.expo-gis {
+  --gis-k: 1.5;
+}
+.expo-gis-in {
+  width: calc(100% / var(--gis-k));
+  height: calc(100% / var(--gis-k));
+  transform: scale(var(--gis-k));
+  transform-origin: 0 0;
+}
+.expo-gis-in > * {
+  width: 100%;
+  height: 100%;
+}
+.expo-gis .maplibregl-ctrl-bottom-right,
+.expo-gis .maplibregl-ctrl-bottom-left,
+.expo-gis .maplibregl-ctrl-top-right,
+.expo-gis .scalebar {
+  display: none;
+}
+.expo > :is(header, .expo-content, footer) {
+  position: relative;
+  z-index: 1;
+}
 .expo-mapframe {
   position: relative;
   min-width: 0;
@@ -185,11 +221,11 @@ html.expo-active,
   overflow: hidden;
   border: 1px solid var(--expo-line);
   border-radius: 6px;
-  background: #14231f;
 }
-.expo-backdrop {
+.expo-mapslot {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 .expo-map-date {
   font: 52px / 1.1 var(--expo-mono);
@@ -344,34 +380,22 @@ html.expo-active,
 .expo-timer.urgent {
   color: var(--expo-own);
 }
-.expo-band {
-  flex: none;
-  height: 224px;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  align-items: start;
-  gap: 24px;
-  padding: 18px 28px;
-  border-left: 4px solid var(--expo-gold);
-  border-radius: 0 6px 6px 0;
-  background: var(--expo-panel);
-}
-.expo-band h2 {
-  font-size: 40px;
-}
-.expo-band .expo-source {
-  margin-top: 8px;
-}
-.expo-band-text {
+.expo-subs {
+  flex: 1;
+  min-width: 0;
   align-self: stretch;
-}
-.expo-band-text {
-  min-height: 0;
-  overflow: auto;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+}
+.expo-subs-text {
+  max-height: 124px;
+  overflow: auto;
+  text-align: center;
+  font-family: var(--expo-serif);
+  line-height: 1.3;
+}
+.expo-subs .expo-source {
+  display: inline;
 }
 .expo-decision {
   min-height: 0;
@@ -651,7 +675,7 @@ html.expo-active,
 .expo-ai-compact {
   flex: 1;
   min-width: 0;
-  max-height: 96px;
+  max-height: 124px;
   overflow: auto;
   gap: 0;
 }
@@ -1037,29 +1061,12 @@ html.expo-active,
 .expo-armies [data-side='de'] path {
   stroke: var(--expo-enemy);
 }
-.expo-arrows path,
-.expo-path-own {
+.expo-arrows path {
   fill: none;
   stroke: var(--expo-gold);
   stroke-width: 6;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-}
-.expo-path-history {
-  fill: none;
-  stroke: var(--expo-muted);
-  stroke-width: 4;
-  stroke-dasharray: 8 8;
-  vector-effect: non-scaling-stroke;
-}
-.expo-flashes circle {
-  fill: none;
-  stroke: var(--expo-gold);
-  stroke-width: 3;
-  vector-effect: non-scaling-stroke;
-}
-.expo-flashes .expo-flash-core {
-  fill: var(--expo-gold);
 }
 @media (prefers-reduced-motion: no-preference) {
   .expo-arrows path {
@@ -1067,27 +1074,8 @@ html.expo-active,
     animation: expo-draw 1.6s ease-out both;
     animation-delay: calc(var(--i, 0) * 0.25s);
   }
-  .expo-flashes g circle:first-child {
-    animation: expo-pulse 1.2s ease-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-  .expo-stagger .expo-armies > g,
-  .expo-stagger .expo-labels [data-army],
-  .expo-stagger .expo-lines {
-    animation: expo-appear 0.6s ease-out both;
-    animation-delay: calc(1.5s + var(--i, 0) * 0.35s);
-  }
 }
 @keyframes expo-draw {
   from { stroke-dashoffset: 2000; }
   to { stroke-dashoffset: 0; }
-}
-@keyframes expo-pulse {
-  from { transform: scale(0.4); opacity: 1; }
-  to { transform: scale(1.6); opacity: 0; }
-}
-@keyframes expo-appear {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }

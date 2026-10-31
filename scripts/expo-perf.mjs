@@ -48,6 +48,8 @@ const out = {};
 try {
   await page.goto(`${url}/?expo=0`);
   await page.getByRole('heading', { name: 'Примите командование' }).waitFor({ timeout: 120000 });
+  // карта заставки — когда её документ собран (переигровка «как было» в ядре и воркер карты)
+  await page.locator('.expo-gis [data-id]').first().waitFor({ state: 'attached', timeout: 90000 });
   await page.waitForTimeout(2000);
   out.attract = await measure(6000);
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();

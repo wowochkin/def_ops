@@ -28,6 +28,8 @@ import { lockdown } from './lockdown';
 import { cornerHold, operatorCombo } from './operator';
 import { OperatorMenu } from './OperatorMenu';
 import { phaseLabel } from './scenes';
+import { docsSig, stageMaps, type StageDocs } from './stage-maps';
+import { axesSum } from './score';
 
 type Host = ReturnType<typeof createHost>;
 const NO_MODEL: ModelFrame = { view: null, error: null };
@@ -42,6 +44,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
   const [health, setHealth] = useState<ProbeStates>({ core: 'wait', voice: 'wait', model: 'wait', windows: 'wait' });
   const [note, setNote] = useState<string | null>(null);
   const [stats, setStats] = useState<ExpoStats>({ sessions: 0, finished: 0, failures: 0 });
+  const [maps, setMaps] = useState<StageDocs>({});
   const hostRef = useRef<Host | null>(null);
   const busRef = useRef<ExpoBus | null>(null);
   const windowsRef = useRef<Windows | null>(null);
@@ -82,6 +85,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     const abort = new AbortController();
     let stopWatch = () => {};
     let stopStage = () => {};
+    let historyRun = () => {};
     let timer: ReturnType<typeof setInterval> | undefined;
     const metrics = telemetry();
     const log = (s: string) => {
@@ -105,6 +109,12 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
 
     const bus = expoBus();
     busRef.current = bus;
+    let mine: StageDocs = {};
+    const mapsRef = stageMaps((key, d) => {
+      if (disposed) return;
+      setMaps((x) => ({ ...x, [key]: d }));
+      bus.send({ k: 'map', key, d });
+    });
     const windows = expoWindows();
     windowsRef.current = windows;
 
@@ -133,6 +143,9 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         setNote(m.note);
       }
       if (m.k === 'identify') setIdentify({ until: m.until, names: m.names });
+      if (index > 0 && m.k === 'map') setMaps((x) => (mine = { ...x, [m.key]: m.d }));
+      // окно без нынешних документов карты (новое или перезапущенное) — дослать
+      if (index === 0 && m.k === 'hello' && m.has !== docsSig(mapsRef.docs)) for (const [key, d] of Object.entries(mapsRef.docs)) if (d) bus.send({ k: 'map', key: key as keyof StageDocs, d });
     });
 
     const publishHealth = (states: ProbeStates, reason: string | null = null) => {
@@ -194,7 +207,14 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         stage.dispose();
       };
       document.addEventListener('pointerdown', stage.resume);
-      const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f), undefined, undefined, stage.hooks);
+      const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f), undefined, undefined, {
+        ...stage.hooks,
+        traced: (trace, env, s, final) => void mapsRef.session(trace, env.history, s.front, final ? axesSum(s.view.scales.axes) : undefined),
+      });
+      historyRun = () =>
+        void model.history().then((r) => {
+          if (r && !disposed) void mapsRef.history(r.trace, r.env.history);
+        });
       const host = createHost(
         settings,
         bus,
@@ -222,7 +242,10 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       const verdict = startupVerdict(states, settings);
       publishHealth(states, verdict.note);
       host.setAiMode(verdict.aiMode);
-      if (verdict.ready) host.dispatch({ t: 'ready' });
+      if (verdict.ready) {
+        host.dispatch({ t: 'ready' });
+        historyRun();
+      }
       else setError('Обязательные службы не готовы. Проверьте ядро и экраны в меню оператора.');
       log(verdict.ready ? 'Стенд готов' : 'Стенд не готов');
       stopWatch = watch(host, probes, states);
@@ -236,9 +259,9 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           if (!disposed) setError(String(e));
         });
     } else {
-      bus.send({ k: 'hello', window: index });
+      bus.send({ k: 'hello', window: index, has: '' });
       timer = setInterval(() => {
-        bus.send({ k: 'hello', window: index });
+        bus.send({ k: 'hello', window: index, has: docsSig(mine) });
         bus.send({ k: 'beat', window: index, at: Date.now() });
       }, 2000);
     }
@@ -248,6 +271,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       abort.abort();
       stopWatch();
       stopStage();
+      mapsRef.dispose();
       off();
       offCorner();
       offLock();
@@ -298,7 +322,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           Не удалось запустить стенд: {error}
         </div>
       )}
-      <ExpoView window={index} {...frame} send={send}>
+      <ExpoView window={index} {...frame} maps={maps} send={send}>
         {frame.state.phase.kind === 'startup' && <StartupScene states={health} note={note} />}
         {identify.until > frame.state.now && (
           <div className="expo-identify">

@@ -29,7 +29,7 @@ try {
       // «Спросить ИИ» без модели: готовый ответ с источником — в полосе «Штаб ИИ» под картой
       await page.getByRole('button', { name: 'Спросить ИИ' }).click();
       await page.getByRole('menuitem', { name: 'Какой вариант лучше?' }).click();
-      await page.locator('.expo-band .expo-source').waitFor({ timeout: 10000 });
+      await page.locator('.expo-subs .expo-source').waitFor({ timeout: 10000 });
       await shot('expo-ask');
     }
     await page.getByRole('button', { name: `Карточка ${n === 2 ? 2 : 1}`, exact: true }).click();

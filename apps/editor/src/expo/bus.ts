@@ -15,8 +15,11 @@ export type BusMsg =
   | { k: 'input'; ev: DirectorEvent }
   | { k: 'health'; states: import('./health').ProbeStates; note: string | null }
   | { k: 'identify'; until: number; names: string[] }
-  | { k: 'hello'; window: number }
-  | { k: 'beat'; window: number; at: number };
+  /** has — подпись документов карты, которые у окна уже есть (главное окно досылает недостающие). */
+  | { k: 'hello'; window: number; has?: string }
+  | { k: 'beat'; window: number; at: number }
+  /** Документ карты стенда (рассылается только при смене). */
+  | { k: 'map'; key: import('./stage-maps').StageKey; d: import('./stage-maps').StageDoc };
 
 export interface ExpoBus {
   send(m: BusMsg): void;

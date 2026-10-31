@@ -4,16 +4,20 @@
  * при любом размере окна. Управление — только в окне с картой; клавиши — только в профиле «мышь и клавиатура»
  * и не на паузе. Карта и текст занимают разные области холста: на переломе карта слева, решения — колонкой справа.
  * Перелом и итог — по виду модели сеанса (карточки банка, раскрытие решения, три шкалы, ход операции, оценка по осям).
- * Карта — `ExpoMap`: заставка по истории (на нескольких экранах — части одной панорамы), ввод — камера к полосе фронта,
- * перелом — стрелки подсвеченной карточки и движение армий по ходу ядра, итог — путь посетителя поверх исторического.
+ * Карта — `StageMap` (карта полного режима), один экземпляр на окно: сцена задаёт ей «окно» (`.expo-mapslot`),
+ * документ, момент, приказ поверх и кадр камеры. Заставка — переигровка лучшего сеанса дня (или «как было»), ввод —
+ * пролёт к полосе фронта, перелом — стрелки подсвеченной карточки и движение армий по ходу ядра, итог — пути армий.
  */
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
-import { layoutFor, panoramaPart, sceneOf } from './layout';
+import { layoutFor, sceneOf } from './layout';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
-import { ExpoMap, historyPaths, Replay, useProgress } from './ExpoMap';
+import { ExpoMap, historyPaths } from './ExpoMap';
+import { StageMap, type Bbox, type StageMapProps } from './StageMap';
+import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
+import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, mainPaths, MAP, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
@@ -29,6 +33,8 @@ export interface ExpoViewProps {
   model?: ModelFrame;
   ai?: AiFrame;
   send: (ev: DirectorEvent) => void;
+  /** Документы карты стенда (у главного окна — свои, у прочих — по шине). */
+  maps?: StageDocs;
   /** Слои поверх сцены на том же холсте: подготовка стенда, номера экранов. */
   children?: ReactNode;
 }
@@ -60,7 +66,7 @@ function useFit<T extends HTMLElement>(key: unknown, max: number, min = 32) {
   return ref;
 }
 
-export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, ai = NO_AI, send, children }: ExpoViewProps) {
+export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, ai = NO_AI, maps = {}, send, children }: ExpoViewProps) {
   const mv = model.view;
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
@@ -98,15 +104,43 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
   const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract';
   const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai'));
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
-  const motion = useTurnMotion(mv, p.kind === 'turn' ? p.step : null);
+  const lit = expanded ?? hover;
+  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index }), [state.phase, state.front, mv, maps, lit, count, index]); // eslint-disable-line react-hooks/exhaustive-deps
+  const clock = useRef<HTMLSpanElement | null>(null);
+  const onTime = useCallback((t: string) => {
+    for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) el.textContent = modelTime(t);
+  }, []);
+  const mainRef = useRef<HTMLElement>(null);
+  const gisRef = useRef<HTMLDivElement>(null);
+  // карта — под «окно» сцены: одна и та же, сцена задаёт только рамку
+  useLayoutEffect(() => {
+    const main = mainRef.current, gis = gisRef.current;
+    if (!main || !gis) return;
+    const slot = main.querySelector<HTMLElement>('.expo-mapslot');
+    if (!slot || !plan) {
+      gis.style.visibility = 'hidden';
+      return;
+    }
+    const m = main.getBoundingClientRect(), r = slot.getBoundingClientRect(), k = m.width / STAGE.width || 1;
+    const box = [(r.left - m.left) / k, (r.top - m.top) / k, r.width / k, r.height / k].map((v) => `${Math.round(v)}px`);
+    const resized = gis.style.width !== box[2] || gis.style.height !== box[3];
+    Object.assign(gis.style, { visibility: 'visible', left: box[0], top: box[1], width: box[2], height: box[3] });
+    if (resized) dispatchEvent(new Event('resize'));
+  });
   return (
     <div className="expo-stage">
       <main
+        ref={mainRef}
         className="expo"
         style={{ ['--expo-target' as string]: `${access.minTarget}px`, ['--expo-scale' as string]: scale }}
         data-scene={sceneOf(p)}
         data-count={count}
       >
+        <div ref={gisRef} className="expo-gis" aria-hidden="true">
+          <div className="expo-gis-in">
+            <StageMap {...(plan ?? NO_PLAN)} onTime={onTime} />
+          </div>
+        </div>
         <header className="expo-header">
           <span>Штабные игры</span>
           <PhaseTitle state={state} />
@@ -125,9 +159,12 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                   {controls && <button className="expo-primary">Коснитесь, чтобы принять командование</button>}
                 </div>
               )}
-              <Replay part={count > 1 ? panoramaPart(index, count) : undefined}>
-                {(iso) => <p className="expo-map-date" aria-hidden="true">{modelTime(iso)}</p>}
-              </Replay>
+              <div className="expo-replay">
+                <p className="expo-map-date" aria-hidden="true" data-clock />
+                <div className="expo-mapframe">
+                  <div className="expo-mapslot" role="img" aria-label="Переигровка Берлинской операции" />
+                </div>
+              </div>
             </section>
           )}
           {p.kind === 'welcome' && (
@@ -158,16 +195,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                 )}
               </div>
               <div className="expo-mapframe">
-                <ExpoMap
-                  armies={START}
-                  focus={state.front}
-                  include={state.front ? frontArrows(state.front).map((a) => a.to) : []}
-                  cameraMs={4000}
-                  stagger
-                  arrows={state.front ? frontArrows(state.front) : []}
-                  className="expo-backdrop"
-                  label="Обстановка к 16 апреля 1945"
-                />
+                <div className="expo-mapslot" role="img" aria-label="Обстановка к 16 апреля 1945" />
               </div>
             </section>
           )}
@@ -183,16 +211,19 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                         <p className="expo-meta">
                           {state.front && FRONT_NAMES[state.front]}
                           {mv && ', '}
-                          {mv && <span className={motion.moving ? 'expo-run-date' : undefined}>{modelTime(motion.moving ? motion.date : mv.time)}</span>}
+                          {mv && (
+                            <span className={p.step === 'scroll' ? 'expo-run-date' : undefined} ref={clock} data-clock>
+                              {modelTime(mv.time)}
+                            </span>
+                          )}
                         </p>
                       </div>
                       <Timer state={state} total={settings.timer.seconds} />
                     </div>
                     <div className="expo-mapframe">
-                      {mv && <TurnMap view={mv} step={p.step} choice={p.step === 'scroll' ? p.choice : null} lit={expanded ?? hover} motion={motion} />}
+                      <div className="expo-mapslot" role="img" aria-label="Карта перелома" />
                       {!mv && <ModelNote model={model} />}
                     </div>
-                    {roles.includes('ai') && <AiBand ai={ai} rest={p.step === 'explain' ? state.front && FRONT_TASKS[state.front] : def?.situation} />}
                   </section>
                   <aside className="expo-decision">
                     {p.step === 'choose' ? (
@@ -260,7 +291,7 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                   </div>
                   <div className="expo-result-side">
                     <div className="expo-mapframe">
-                      <ResultMap view={mv} />
+                      <div className="expo-mapslot" role="img" aria-label="Ваш путь армий (сплошная стрелка) поверх исторического (полая)" />
                     </div>
                     <p className="expo-legend">
                       <span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span>
@@ -298,7 +329,13 @@ export function ExpoView({ window: index, state, settings, count, model = NO_MOD
                 Спросить ИИ
               </button>
             )}
-            {subtitles ? <AiPanel ai={ai} compact /> : <span className="expo-fill" />}
+            {p.kind === 'turn' && roles.includes('ai') ? (
+              <AiBand ai={ai} rest={p.step === 'explain' ? state.front && FRONT_TASKS[state.front] : def?.situation} />
+            ) : subtitles ? (
+              <AiPanel ai={ai} compact />
+            ) : (
+              <span className="expo-fill" />
+            )}
             {buttons && (
               <button className="expo-secondary" disabled={state.paused} onClick={() => send({ t: 'restart' })}>
                 Начать заново
@@ -452,19 +489,17 @@ function Progress({ model, feed, date = true }: { model: ModelFrame; feed: numbe
   );
 }
 
-/** Полоса «Штаб ИИ» под картой (один экран): ответ, мысль или звучащая фраза; в тишине — `rest` (обстановка, задача). */
+/** «Штаб ИИ» на одном экране — субтитром в подвале: ответ, мысль или звучащая фраза; в тишине — `rest` (обстановка, задача). */
 function AiBand({ ai, rest }: { ai: AiFrame; rest?: string | null }) {
   const text = ai.answer ? (ai.answer.text || ai.thinking) : ai.line?.text ?? rest;
-  const ref = useFit<HTMLDivElement>(`${ai.answer?.q}|${text}`, 36);
+  const ref = useFit<HTMLDivElement>(`${ai.answer?.q}|${text}`, 34);
   return (
-    <section className="expo-band" aria-live="polite">
-      <div>
-        <h2>Штаб ИИ</h2>
-        {ai.answer?.source && <small className="expo-source">{SOURCE_LABEL[ai.answer.source]}</small>}
-      </div>
-      <div ref={ref} className="expo-band-text">
-        {ai.answer && <p className="expo-q">{ai.answer.q}</p>}
-        <p className={ai.answer && !ai.answer.text ? 'expo-thinking' : ''}>{text}</p>
+    <section className="expo-subs" aria-live="polite">
+      <h2 className="expo-sr">Штаб ИИ</h2>
+      <div ref={ref} className="expo-subs-text">
+        {ai.answer && <span className="expo-q">{ai.answer.q} </span>}
+        <span className={ai.answer && !ai.answer.text ? 'expo-thinking' : ''}>{text}</span>
+        {ai.answer?.source && <small className="expo-source"> {SOURCE_LABEL[ai.answer.source]}</small>}
       </div>
     </section>
   );
@@ -506,56 +541,58 @@ function frontArrows(front: string): Arrow[] {
 }
 
 type View = NonNullable<ModelFrame['view']>;
-type Motion = { t: number; moving: boolean; date: string };
+const NO_PLAN: StageMapProps = { doc: null, time: null, camera: null };
+/** Театр операции целиком (заставка). */
+const THEATRE: Bbox = [12.2, 51.35, 15.2, 53.05];
+const BERLIN = MAP.cities.find((c) => c.capital)!.at;
+const tank = (army: string) => /ТА/.test(MAP.armies.find((a) => a.id === army)?.label ?? '');
+const ZOOM = 8;
 
-/** Прокрутка: доля пути армий от прошлого перелома (8 с) и бегущая дата хода. */
-function useTurnMotion(view: View | null, step: string | null): Motion {
-  const prev = view?.map.prev;
-  const run = step === 'scroll' && !!view && !view.busy;
-  const t = useProgress(run ? view.time : 'still', run && prev ? 8000 : 0);
-  if (!view || !run || !prev) return { t, moving: false, date: view?.time ?? '' };
-  const a = Date.parse(`${prev.time}:00Z`), b = Date.parse(`${view.time}:00Z`);
-  return { t, moving: true, date: new Date(a + (b - a) * t).toISOString().slice(0, 16) };
+/** Что показывает карта стенда в сцене: документ, момент или бег времени, кадр камеры и знаки поверх; null — карты нет. */
+export function mapPlan({ state, mv, maps, lit, count, index }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number }): StageMapProps | null {
+  const p = state.phase;
+  const hist = maps.history;
+  const start = hist?.doc.timeline?.start ?? MAP.days[0];
+  const sector = (front: string, extra: LL[]) => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
+  if (p.kind === 'attract') {
+    const d = maps.best ?? hist;
+    if (!d) return null;
+    const w = (THEATRE[2] - THEATRE[0]) / count;
+    const part: Bbox = count > 1 ? [THEATRE[0] + w * index, THEATRE[1], THEATRE[0] + w * (index + 1), THEATRE[3]] : THEATRE;
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 } };
+  }
+  if (p.kind === 'briefing' && hist && state.front) {
+    const arrows = frontArrows(state.front);
+    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank) };
+  }
+  if (p.kind === 'turn' && mv) {
+    const own = sessionDoc(maps.session, mv);
+    const d = own ?? hist;
+    if (!d) return null;
+    const arrowsAll = [...mv.cards, ...(mv.reveal ? [mv.reveal.historical] : [])].flatMap((c) => (c.arrows ?? []).flatMap((a) => [a.from, a.to]));
+    const camera = { bbox: sector(mv.front, [...mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at), ...arrowsAll]), key: `turn-${mv.front}-${p.n}` };
+    const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
+    const arrows = p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? mv.reveal?.historical.arrows : undefined;
+    const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;
+    // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят
+    const moving = p.step === 'scroll' && own && own.time === mv.time && mv.map.prev && !mv.busy;
+    const time = own ? (p.step === 'scroll' && !moving && mv.map.prev ? mv.map.prev.time : mv.time) : start;
+    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, key: `run-${mv.time}` } : null, camera, extra };
+  }
+  if (p.kind === 'result' && mv?.final) {
+    const own = sessionDoc(maps.session, mv);
+    if (!own) return null;
+    const ids = Object.keys(mainPaths(mv.map.path));
+    const paths = dailyPaths(own.doc, ids, own.time);
+    const hp = historyPaths(mv.front, own.time);
+    const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
+    const pts = [...Object.values(paths), ...Object.values(history)].flat();
+    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, extra: pathFeatures(own.doc, paths, history, ZOOM) };
+  }
+  return null;
 }
 
-/**
- * Карта перелома: стрелки подсвеченной или раскрытой карточки; на прокрутке — движение армий от прошлого перелома,
- * события вспыхивают. Кадр держит концы стрелок всех карточек — подсветка не двигает камеру.
- */
-function TurnMap({ view, step, choice, lit, motion }: { view: View; step: string; choice: number | 'delay' | null; lit: number | null; motion: Motion }) {
-  const m = view.map;
-  const { t, moving } = motion;
-  const picked = typeof choice === 'number' ? view.cards[choice] : null;
-  const arrows = step === 'choose' ? (lit !== null ? view.cards[lit]?.arrows : undefined) : step === 'scroll' ? picked?.arrows ?? view.reveal?.historical.arrows : undefined;
-  const include: LL[] = [...view.cards, ...(view.reveal ? [view.reveal.historical] : [])].flatMap((c) => (c.arrows ?? []).flatMap((a) => [a.from, a.to]));
-  return (
-    <ExpoMap
-      armies={moving ? m.armies : view.busy && m.prev ? m.prev.armies : m.armies}
-      from={moving ? m.prev!.armies : null}
-      progress={t}
-      arrows={arrows ?? []}
-      flashes={moving && t > 0.7 ? m.flashes : []}
-      focus={view.front}
-      include={include}
-      className="expo-backdrop"
-      label="Карта перелома"
-    />
-  );
-}
-
-/** Итог: пути главных армий фронта — посетителя (сплошной) поверх исторического (пунктир). */
-function ResultMap({ view }: { view: View }) {
-  const own = mainPaths(view.map.path);
-  const hist = historyPaths(view.front, view.time);
-  const history = Object.fromEntries(Object.keys(own).filter((id) => hist[id]).map((id) => [id, hist[id]]));
-  return (
-    <ExpoMap
-      armies={view.map.armies.filter((a) => a.side === 'de' || a.id in own)}
-      focus={view.front}
-      include={[...Object.values(own), ...Object.values(history)].flat()}
-      paths={{ own, history }}
-      className="expo-backdrop"
-      label="Ваш путь армий (сплошной) поверх исторического (пунктир)"
-    />
-  );
+/** Документ сеанса, если он этого сеанса (фронт) и не новее его хода. */
+function sessionDoc(d: StageDoc | undefined, mv: View): StageDoc | null {
+  return d && d.front === mv.front && d.time <= mv.time ? d : null;
 }

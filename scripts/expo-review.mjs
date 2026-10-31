@@ -53,7 +53,9 @@ async function run({ cfg, front, scenes, tag = '' }) {
     await shot('01-startup', 0);
   }
   await page.getByRole('heading', { name: 'Примите командование' }).waitFor({ timeout: 120000 });
-  await page.waitForTimeout(800);
+  // карта заставки — после переигровки «как было» в ядре и сборки её документа
+  await page.locator('.expo-gis svg').first().waitFor({ state: 'attached', timeout: 60000 }).catch(() => {});
+  await page.waitForTimeout(2500);
   if (scenes.includes('attract')) await shot('02-attract');
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();
   await page.getByRole('heading', { name: 'Выберите фронт' }).waitFor();
@@ -86,7 +88,7 @@ async function run({ cfg, front, scenes, tag = '' }) {
   await page.getByRole('button', { name: 'Спросить ИИ' }).click();
   await shot('09-ask-menu');
   await page.getByRole('menuitem', { name: 'Какие силы участвуют?' }).click();
-  await page.locator('.expo-band .expo-source').waitFor({ timeout: 15000 });
+  await page.locator('.expo-subs .expo-source').waitFor({ timeout: 15000 });
   await shot('10-ask-answer');
   await page.getByRole('button', { name: 'Карточка 2', exact: true }).click();
   await page.locator('.expo-reveal h3').waitFor({ timeout: 60000 });

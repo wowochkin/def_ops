@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, it } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { ExpoView } from '../src/expo/ExpoView';
+import { ExpoView, mapPlan } from '../src/expo/ExpoView';
+import { emptyDocument } from '@def-ops/core';
 import { EXPO_DEFAULTS } from '../src/expo/settings';
 import { initialState, step, type DirectorState } from '../src/expo/director';
 import type { ModelView } from '../src/expo/session';
@@ -90,8 +91,10 @@ it('maps: panorama replay, briefing camera to the front, turn arrows of the expa
   const arrows = [{ army: 'su_8gva', from: [14.6, 52.6] as [number, number], to: [14.1, 52.7] as [number, number], kind: 'attack' }];
   const v = view();
   v.cards[0] = { ...v.cards[0], arrows };
-  const r3 = show(choose(), { view: v, error: null });
-  expect(r3.container.querySelectorAll('.expo-arrows path')).toHaveLength(0);
-  fireEvent.click(r3.getByRole('button', { name: 'Подробнее о карточке 1' }));
-  expect(r3.container.querySelectorAll('.expo-arrows path')).toHaveLength(1);
+  // карта перелома — документ сеанса, стрелки приказа подсвеченной карточки — знаками атласа поверх
+  const session = { doc: emptyDocument(), front: 'su_1bf' as const, time: v.time };
+  const plan = (lit: number | null) => mapPlan({ state: choose(), mv: v, maps: { session }, lit, count: 1, index: 0 });
+  expect(plan(null)?.extra).toBeUndefined();
+  expect(plan(0)?.extra?.map((f) => f.kind)).toEqual(['arrow']);
+  expect(plan(0)?.doc).toBe(session.doc);
 });

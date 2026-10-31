@@ -8,12 +8,15 @@ import type { Effect } from './director';
 import { ExpoSession, type ModelEnv, type ModelView } from './session';
 import type { cardSmith } from './ai';
 import type { TurnN } from './bank';
+import type { AgentTrace } from '@def-ops/sim';
 
 /** ИИ при ходе модели: карточки заранее и по замене, отклик на решение (комментарий — снаружи). */
 export interface ModelHooks {
   smith?: ReturnType<typeof cardSmith>;
   want?: number;
   decided?: (s: ExpoSession, n: TurnN, choice: number | 'delay') => void;
+  /** Новый ход ядра сеанса (после начала и после каждого решения) — для карты; `final` — после третьего решения. */
+  traced?: (trace: AgentTrace, env: ModelEnv, s: ExpoSession, final: boolean) => void;
 }
 
 export interface ModelFrame { view: ModelView | null; error: string | null }
@@ -55,6 +58,7 @@ export function modelRunner(makeEnv: () => Promise<ModelEnv>, onFrame: (f: Model
             await s.start();
             if (g !== gen) return;
             session = s;
+            if (s.lastTrace) hooks.traced?.(s.lastTrace, await env!, s, false);
           }
           session.deal(e.n);
           publish();
@@ -77,9 +81,23 @@ export function modelRunner(makeEnv: () => Promise<ModelEnv>, onFrame: (f: Model
           await session.decide(e.n, e.choice);
           publish();
           hooks.decided?.(session, e.n, e.choice);
+          if (session.lastTrace) hooks.traced?.(session.lastTrace, await env!, session, e.n === 3);
         });
       }
       return queue;
+    },
+    /**
+     * Переигровка операции «как было» на заставку: весь ход ядра в режиме сеанса без решений посетителя. Только между
+     * сеансами (идёт сеанс — null): она занимает ядро, следующий сеанс начинается с чистого мира.
+     */
+    history(): Promise<{ trace: AgentTrace; env: ModelEnv } | null> {
+      let out: { trace: AgentTrace; env: ModelEnv } | null = null;
+      return run(async () => {
+        if (session) return;
+        const e = await (env ??= makeEnv());
+        await e.call('game_start', { scenario: bank.scenario, seed: 1, takeover: 0, player: 'su', enemy: 'intent', mode: 'intent' });
+        out = { trace: (await e.call('game_turn', { orders: [], hours: bank.end })) as AgentTrace, env: e };
+      }).then(() => out);
     },
     /** Дождаться конца начатой работы (для проверок). */
     idle: () => queue,
