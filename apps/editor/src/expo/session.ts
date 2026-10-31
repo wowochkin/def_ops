@@ -34,7 +34,8 @@ export function measureTrace(env: ModelEnv, t: AgentTrace, front: FrontId) {
   };
 }
 
-export interface CardView { id: string; title: string; lines: string[] }
+/** source: 'now' — карточка составлена ИИ во время сеанса, 'bank' — замена из банка. */
+export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' }
 export interface Decision { n: TurnN; choice: string | 'delay'; historical: string }
 export interface Scales { axes: AxesDetail; notes: { speed: string; cost: string; intent: string } }
 export interface ModelView {
@@ -57,7 +58,7 @@ export interface ModelView {
 
 type Trace = AgentTrace & { game?: { hour: number } };
 
-const view = (c: Card): CardView => ({ id: c.id, title: c.title, lines: c.lines });
+const view = (c: Card, source?: CardView['source']): CardView => ({ id: c.id, title: c.title, lines: c.lines, ...(source ? { source } : {}) });
 
 export function timeAt(start: string, hour: number): string {
   return new Date(Date.parse(`${start.slice(0, 16)}:00Z`) + hour * 3_600_000).toISOString().slice(0, 16);
@@ -77,6 +78,8 @@ export class ExpoSession {
   private events: EventResult[] = [];
   private shown: string[] = [];
   private returned: string[] = [];
+  /** Карточки ИИ этого сеанса. */
+  private extra: Card[] = [];
   readonly view: ModelView;
   /** Последний ход ядра (для проверок и эталона). */
   get lastTrace(): AgentTrace | null { return this.trace; }
@@ -96,7 +99,7 @@ export class ExpoSession {
 
   private start0() { return (this.trace?.start ?? this.env.ctx.scenario.start).slice(0, 16); }
   private get def() { return this.bank.fronts[this.front]; }
-  private card(id: string) { return this.bank.cards.find((c) => c.id === id)!; }
+  private card(id: string) { return (this.bank.cards.find((c) => c.id === id) ?? this.extra.find((c) => c.id === id))!; }
 
   private scales(events: EventResult[], time: string, hour: number, loss = 0): Scales {
     const a = axes(events, this.def.keyEvents, time, loss, refAt(this.bank.reference[this.front]?.losses, hour));
@@ -116,14 +119,31 @@ export class ExpoSession {
   }
 
   /** Заменить карточку в слоте; false — заменить нечем (или историческая). */
-  replace(slot: number): boolean {
+  replace(slot: number, ai?: Card | null): boolean {
     const cur = this.view.cards[slot];
-    if (!cur) return false;
-    const r = replacement(this.bank, this.shown, cur.id, this.rnd);
+    if (!cur || this.card(cur.id)?.historical) return false;
+    if (ai) this.extra.push(ai);
+    const r = ai?.id ?? replacement(this.bank, this.shown, cur.id, this.rnd);
     if (!r) return false;
     this.shown.push(r);
-    this.view.cards = this.view.cards.map((c, i) => (i === slot ? view(this.card(r)) : c));
+    this.view.cards = this.view.cards.map((c, i) => (i === slot ? view(this.card(r), ai ? 'now' : 'bank') : c));
     return true;
+  }
+
+  /** В слоте — историческая карточка (её не заменяют). */
+  isHistorical(slot: number) { const c = this.view.cards[slot]; return !c || !!this.card(c.id)?.historical; }
+
+  /** Что знает ИИ для карточки перелома: армии фронта, объекты театра из банка фронта, показанные варианты. */
+  cardContext(n: TurnN) {
+    const t = this.def.turns.find((x) => x.n === n)!;
+    const armies = (this.trace?.hqs ?? []).filter((h) => h.parent === this.front && h.echelon === 'army').map((h) => h.id);
+    const own = this.bank.cards.filter((c) => c.front === this.front);
+    return {
+      front: this.front, frontName: this.def.name, marshal: this.def.marshal, n, turnTitle: t.title, situation: t.situation,
+      armies: armies.length ? armies : [...new Set(own.flatMap((c) => c.orders.map((o) => o.army)))],
+      places: [...new Set(own.flatMap((c) => c.orders.map((o) => o.place)).filter((p): p is string => !!p))],
+      shownTitles: this.view.cards.map((c) => c.title),
+    };
   }
 
   /** Решение на переломе n: слот карточки или промедление; прокрутка до следующего перелома (после третьего — до конца). */

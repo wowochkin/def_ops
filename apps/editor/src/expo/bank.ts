@@ -51,17 +51,26 @@ export function bankErrors(bank: Bank, armiesOf: (front: FrontId) => string[], p
       if (cs.filter((c) => c.historical).length !== 1) out.push(`${front} перелом ${t.n}: нужна одна историческая карточка`);
       if (cs.filter((c) => !c.historical).length < 3) out.push(`${front} перелом ${t.n}: меньше трёх своих карточек`);
     }
-    for (const c of bank.cards.filter((x) => x.front === front)) {
-      if (c.historical && c.orders.length) out.push(`${c.id}: у исторической карточки нет распоряжений`);
-      if (!c.historical && !c.orders.length) out.push(`${c.id}: нет распоряжений`);
-      if (c.lines.length < 4 || c.lines.length > 5) out.push(`${c.id}: строк должно быть 4–5`);
-      for (const l of [c.title, ...c.lines]) if (l.length > 60) out.push(`${c.id}: строка длиннее 60 знаков — «${l}»`);
-      for (const o of c.orders) {
-        if (!armies.has(o.army)) out.push(`${c.id}: ${o.army} — не армия фронта ${front}`);
-        if (o.place !== null && !places.has(o.place)) out.push(`${c.id}: ${o.place} — нет среди объектов театра`);
-        if (o.place === null && o.kind !== 'hold' && o.kind !== 'defend') out.push(`${c.id}: ${o.kind} без цели`);
-      }
-    }
+    for (const c of bank.cards.filter((x) => x.front === front)) out.push(...cardErrors(c, armies, places));
+  }
+  return out;
+}
+
+const KINDS: OrderKind[] = ['attack', 'defend', 'hold', 'withdraw', 'move'];
+
+/** Ошибки формы одной карточки (банк и карточки ИИ): армии своего фронта, объекты театра, текст в пределах карточки. */
+export function cardErrors(c: Card, armies: Set<string>, places: Set<string>): string[] {
+  const out: string[] = [];
+  if (c.historical && c.orders.length) out.push(`${c.id}: у исторической карточки нет распоряжений`);
+  if (!c.historical && !c.orders.length) out.push(`${c.id}: нет распоряжений`);
+  if (!c.title?.trim()) out.push(`${c.id}: нет заголовка`);
+  if (!Array.isArray(c.lines) || c.lines.length < 4 || c.lines.length > 5) out.push(`${c.id}: строк должно быть 4–5`);
+  for (const l of [c.title ?? '', ...(c.lines ?? [])]) if (l.length > 60) out.push(`${c.id}: строка длиннее 60 знаков — «${l}»`);
+  for (const o of c.orders ?? []) {
+    if (!KINDS.includes(o.kind)) out.push(`${c.id}: неизвестное распоряжение ${o.kind}`);
+    if (!armies.has(o.army)) out.push(`${c.id}: ${o.army} — не армия фронта ${c.front}`);
+    if (o.place !== null && !places.has(o.place)) out.push(`${c.id}: ${o.place} — нет среди объектов театра`);
+    if (o.place === null && o.kind !== 'hold' && o.kind !== 'defend') out.push(`${c.id}: ${o.kind} без цели`);
   }
   return out;
 }
