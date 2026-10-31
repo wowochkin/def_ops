@@ -1,4 +1,4 @@
-/* Тема выставочного стенда: цвета, шрифты, кегль (80″ с 2–4 м — текст не меньше 32 px). */
+/* Тема выставочного стенда: цвета, шрифты, кегль в пикселях холста 1920×1080 (80″ с 2–4 м — текст не меньше 32 px). */
 :root {
   --expo-bg: #0f1a18;
   --expo-panel: #16231f;
@@ -16,5 +16,5 @@
   --expo-sans: 'PT Sans Narrow', sans-serif;
   --expo-mono: 'PT Mono', monospace;
   --expo-text-min: 32px;
-  --expo-text-small: 28px;
+  --expo-text-body: 34px;
 }

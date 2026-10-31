@@ -2,72 +2,12 @@
 // Сначала: cargo build --release -p agents-core --bin agents-game. Затем EXPO_URL=… node scripts/expo-core-check.mjs
 import { chromium } from 'playwright';
 import { agentsProcess } from './agents-bridge.mjs';
+import { EXPO_CFG, expoPage } from './expo-mock.mjs';
 const core = agentsProcess();
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 const calls = [];
-const cfg = {
-  version: 1,
-  autostart: false,
-  aiMode: 'ai',
-  input: 'touch',
-  voiceInput: false,
-  timer: { on: true, seconds: 30 },
-  fronts: ['su_1bf', 'su_1uf'],
-  idleSeconds: 90,
-  resultSeconds: 20,
-  volume: { voice: 0.8, ambient: 0.3, ambientOn: false },
-  screens: { count: 1, order: [] },
-  pin: '0000',
-  maxReplacements: 2,
-};
-await page.exposeFunction('__expoNative', async (cmd, args) => {
-  calls.push(cmd);
-  if (cmd === 'expo_settings_read') return JSON.stringify(cfg);
-  if (cmd === 'expo_monitors') return [{ id: 'one', name: 'Экран проверки', x: 0, y: 0, width: 1440, height: 900, scale: 1 }];
-  if (cmd === 'expo_stats_today') return { sessions: 0, finished: 0, failures: 0 };
-  if (cmd.startsWith('expo_')) return null;
-  if (cmd === 'list_models') throw Error('Модель отключена для проверки резервного режима');
-  try {
-    return await core.call(cmd, args);
-  } catch (e) {
-    console.error(cmd, String(e));
-    throw e;
-  }
-});
-await page.addInitScript(() => {
-  let n = 0;
-  const listeners = new Map();
-  window.__TAURI_INTERNALS__ = {
-    metadata: { currentWindow: { label: 'main' }, currentWebview: { windowLabel: 'main', label: 'main' } },
-    transformCallback: (f) => {
-      const id = ++n;
-      window[`_${id}`] = f;
-      return id;
-    },
-    invoke: async (cmd, args) => {
-      if (cmd === 'plugin:event|listen') {
-        const id = ++n;
-        listeners.set(id, args);
-        return id;
-      }
-      if (cmd === 'plugin:event|unlisten') {
-        listeners.delete(args.eventId);
-        return;
-      }
-      if (cmd === 'plugin:event|emit') {
-        for (const [id, l] of listeners)
-          if (l.event === args.event) window[`_${l.handler}`]?.({ event: args.event, id, payload: args.payload });
-        return;
-      }
-      return window.__expoNative(cmd, args);
-    },
-  };
-});
-await page.route('**/api/voice', async (route) => {
-  await new Promise((r) => setTimeout(r, 1000));
-  await route.fulfill({ json: { state: 'off' } });
-});
+const cfg = { ...EXPO_CFG, aiMode: 'ai', input: 'touch' };
+const page = await expoPage(browser, { core, cfg, calls, voice: 'off', voiceMs: 1000 });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 try {
@@ -83,22 +23,21 @@ try {
   await page.getByRole('button', { name: 'К решениям' }).click();
   const shot = (name) => page.screenshot({ path: `docs/img/${name}.jpg`, type: 'jpeg', quality: 85 });
   for (const n of [1, 2, 3]) {
-    await page.getByRole('heading', { name: new RegExp(`^Перелом ${n} ·`) }).waitFor({ timeout: 60000 });
     await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 60000 });
-    await page.locator('.expo-card strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 60000 });
-    await page.getByRole('button', { name: 'Подробнее о карточке 1' }).click();
+    await page.locator('.expo-card-main strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 60000 });
     if (n === 1) {
-      await shot('expo-turn');
-      // «Спросить ИИ» без модели: готовый ответ с источником
+      // «Спросить ИИ» без модели: готовый ответ с источником — в полосе «Штаб ИИ» под картой
       await page.getByRole('button', { name: 'Спросить ИИ' }).click();
       await page.getByRole('menuitem', { name: 'Какой вариант лучше?' }).click();
-      await page.locator('.expo-answer .expo-source').waitFor({ timeout: 10000 });
-      await page.locator('.expo-answer').scrollIntoViewIfNeeded();
+      await page.locator('.expo-band .expo-source').waitFor({ timeout: 10000 });
       await shot('expo-ask');
     }
     await page.getByRole('button', { name: `Карточка ${n === 2 ? 2 : 1}`, exact: true }).click();
     await page.locator('.expo-reveal h3').waitFor({ timeout: 60000 });
-    if (n === 2) await shot('expo-scroll');
+    if (n === 2) {
+      await page.waitForTimeout(3000);
+      await shot('expo-scroll');
+    }
   }
   await page.locator('.expo-rank').waitFor({ timeout: 60000 });
   await shot('expo-result');

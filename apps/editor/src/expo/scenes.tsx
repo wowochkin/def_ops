@@ -19,16 +19,32 @@ export function phaseLabel(state: DirectorState): string {
   const p = state.phase;
   return p.kind === 'turn' ? `Перелом ${p.n} из 3 · ${STEP_TITLES[p.step]}` : PHASE_TITLES[p.kind];
 }
+/** Заголовок фазы в шапке; на переломе — номер перелома и его шаги, текущий выделен. */
 export function PhaseTitle({ state }: { state: DirectorState }) {
-  return <span>{phaseLabel(state)}</span>;
-}
-export function Timer({ state }: { state: DirectorState }) {
   const p = state.phase;
-  if (p.kind !== 'turn' || p.step !== 'choose') return null;
-  const remaining = p.deadline === null ? null : Math.max(0, Math.ceil((p.deadline - (state.pausedAt ?? state.now)) / 1000));
+  if (p.kind !== 'turn') return <span>{phaseLabel(state)}</span>;
   return (
-    <div className={`expo-timer ${remaining !== null && remaining <= 10 ? 'urgent' : ''}`} role="timer">
-      {remaining === null ? 'Без ограничения времени' : `${remaining} с`}
+    <span className="expo-phase-turn">
+      <span>Перелом {p.n} из 3</span>
+      <span className="expo-steps">
+        {(['explain', 'choose', 'scroll'] as const).map((k) => (
+          <span key={k} aria-current={p.step === k ? 'step' : undefined}>
+            {STEP_TITLES[k]}
+          </span>
+        ))}
+      </span>
+    </span>
+  );
+}
+/** Время на выбор: число секунд и убывающая полоса; без ограничения времени таймера нет. */
+export function Timer({ state, total }: { state: DirectorState; total: number }) {
+  const p = state.phase;
+  if (p.kind !== 'turn' || p.step !== 'choose' || p.deadline === null) return null;
+  const remaining = Math.max(0, Math.ceil((p.deadline - (state.pausedAt ?? state.now)) / 1000));
+  return (
+    <div className={`expo-timer ${remaining <= 10 ? 'urgent' : ''}`}>
+      <span role="timer">{remaining} с</span>
+      <i style={{ width: `${Math.min(100, (remaining / Math.max(1, total)) * 100)}%` }} />
     </div>
   );
 }

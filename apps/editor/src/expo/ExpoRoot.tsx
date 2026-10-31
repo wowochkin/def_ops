@@ -298,8 +298,15 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           Не удалось запустить стенд: {error}
         </div>
       )}
-      <ExpoView window={index} {...frame} send={send} />
-      {frame.state.phase.kind === 'startup' && <StartupScene states={health} note={note} />}
+      <ExpoView window={index} {...frame} send={send}>
+        {frame.state.phase.kind === 'startup' && <StartupScene states={health} note={note} />}
+        {identify.until > frame.state.now && (
+          <div className="expo-identify">
+            <strong>Экран {index + 1}</strong>
+            <span>{identify.names[index]}</span>
+          </div>
+        )}
+      </ExpoView>
       {index === 0 && (
         <OperatorMenu
           open={menu}
@@ -330,12 +337,6 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
             close();
           }}
         />
-      )}
-      {identify.until > frame.state.now && (
-        <div className="expo-identify">
-          <strong>Экран {index + 1}</strong>
-          <span>{identify.names[index]}</span>
-        </div>
       )}
     </>
   );

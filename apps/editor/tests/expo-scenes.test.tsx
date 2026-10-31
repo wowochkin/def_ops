@@ -26,18 +26,35 @@ const choose = () => {
 const show = (state: DirectorState, model: ModelFrame, sent: unknown[] = []) =>
   render(<ExpoView window={0} state={state} settings={EXPO_DEFAULTS} count={1} model={model} send={(e) => sent.push(e)} />);
 
-it('turn shows bank cards, details expand, choice is sent', () => {
+it('turn shows bank cards with gist, details open in place, choice is sent', () => {
   const sent: unknown[] = [];
   const v = show(choose(), { view: view(), error: null }, sent);
-  expect(v.getByText('Перелом 1 · Зееловские высоты')).toBeTruthy();
+  expect(v.getByRole('heading', { name: 'Зееловские высоты' })).toBeTruthy();
   expect(v.getByText('Обход высот с севера')).toBeTruthy();
-  expect(v.queryByText('Танковые армии — севернее, через Врицен')).toBeNull();
-  fireEvent.click(v.getByText('Подробнее о карточке 1'));
   expect(v.getByText('Танковые армии — севернее, через Врицен')).toBeTruthy();
+  expect(v.queryByText('г')).toBeNull();
+  expect(v.queryByRole('timer')).toBeNull();
+  fireEvent.click(v.getByRole('button', { name: 'Подробнее о карточке 1' }));
+  expect(v.getByText('г')).toBeTruthy();
+  fireEvent.click(v.getByRole('button', { name: 'Свернуть' }));
+  expect(v.queryByText('г')).toBeNull();
   fireEvent.click(v.getByRole('button', { name: 'Карточка 2' }));
   expect(sent).toContainEqual({ t: 'choose', card: 1 });
+  fireEvent.click(v.getByRole('button', { name: 'Подробнее о карточке 3' }));
+  fireEvent.click(v.getByRole('button', { name: 'Выбрать вариант 3' }));
+  expect(sent).toContainEqual({ t: 'choose', card: 2 });
+});
+
+it('explain shows situation and the three scales; timer shows seconds only with a limit', () => {
+  const s = at(at(initialState(0), { t: 'ready' }), { t: 'jump', phase: 'turn', n: 1 });
+  const v = show(s, { view: view(), error: null });
+  expect(v.getAllByText(/Зееловские высоты, главная полоса обороны/).length).toBeGreaterThan(0);
   expect(v.getAllByRole('meter')).toHaveLength(3);
   expect(v.getByText('быстрее истории на 1,5 сут')).toBeTruthy();
+  cleanup();
+  const c = choose();
+  const w = show({ ...c, phase: { ...c.phase, deadline: c.now + 25_000 } } as DirectorState, { view: view(), error: null });
+  expect(w.getByRole('timer').textContent).toBe('25 с');
 });
 
 it('scroll reveals the marshal decision and the course of operation', () => {
@@ -74,6 +91,7 @@ it('maps: panorama replay, briefing camera to the front, turn arrows of the expa
   const v = view();
   v.cards[0] = { ...v.cards[0], arrows };
   const r3 = show(choose(), { view: v, error: null });
+  expect(r3.container.querySelectorAll('.expo-arrows path')).toHaveLength(0);
   fireEvent.click(r3.getByRole('button', { name: 'Подробнее о карточке 1' }));
   expect(r3.container.querySelectorAll('.expo-arrows path')).toHaveLength(1);
 });
