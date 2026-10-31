@@ -1,8 +1,10 @@
 /**
- * Чем говорит стенд: голосовой сервис системы (голос начальника штаба, `VoiceClient`), пока он на связи; иначе синтез
- * речи окна; нет и его — молча (фраза «звучит» столько, сколько её читать, текст — на экране).
+ * Чем говорит стенд: только голосовой сервис системы (голос начальника штаба, `VoiceClient`), пока он на связи;
+ * иначе молча — фраза «звучит» столько, сколько её читать, текст на экране. Синтез речи окна не берём:
+ * чужой голос на стенде хуже тишины с субтитрами.
  */
 import { VoiceClient } from '../voice/client';
+import { speakable } from '../voice/speech';
 import type { Speaker } from './voice-queue';
 
 /** Сколько читать фразу вслух, мс. */
@@ -19,48 +21,27 @@ export function silentSpeaker(): Speaker {
   };
 }
 
-function windowSpeaker(): Speaker | null {
-  const ss = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
-  if (!ss) return null;
-  return {
-    speak(text) {
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ru-RU';
-      const ru = ss.getVoices().find((v) => v.lang.toLowerCase().startsWith('ru'));
-      if (ru) u.voice = ru;
-      let finish = () => {};
-      const done = new Promise<void>((r) => {
-        finish = r;
-        u.onend = () => r();
-        u.onerror = () => r();
-        setTimeout(r, readMs(text) * 2);
-      });
-      ss.speak(u);
-      return { done, stop: () => { ss.cancel(); finish(); } };
-    },
-  };
-}
-
 export function expoSpeaker(): { speaker: Speaker; resume(): void; dispose(): void } {
   const client = new VoiceClient();
   void client.refreshApi();
   client.connect();
-  const fallback = windowSpeaker() ?? silentSpeaker();
+  const fallback = silentSpeaker();
   const waits = new Map<number, () => void>();
   const off = client.onPlayed((id) => { waits.get(id)?.(); waits.delete(id); });
   return {
     speaker: {
       speak(text) {
         if (client.status !== 'ready') return fallback.speak(text);
+        const said = speakable(text, { full: true });
         const id = client.newSayId();
         let finish = () => {};
         const done = new Promise<void>((r) => {
           finish = r;
           waits.set(id, r);
           // сервис не доложил о конце — очередь не встаёт
-          setTimeout(r, readMs(text) * 2 + 5000);
+          setTimeout(r, readMs(said) * 2 + 5000);
         });
-        client.say(id, 'chief', text);
+        client.say(id, 'chief', said);
         return { done, stop: () => { client.stop(id); waits.delete(id); finish(); } };
       },
     },

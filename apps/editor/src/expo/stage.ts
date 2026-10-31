@@ -5,6 +5,7 @@
  */
 import { askText } from '../voice/llm';
 import type { LlmSettings } from '../sim/game-protocol';
+import { loadLlm } from '../shared';
 import { dictate } from '../voice/standalone';
 import { cardSmith, type Ask } from './ai';
 import { aiRunner, type AiFrame } from './ai-runner';
@@ -18,8 +19,12 @@ import { expoSpeaker } from './speaker';
 import { voiceQueue } from './voice-queue';
 import { FRONT_NAMES } from './scenes';
 
-const LLM: LlmSettings = { url: '/llm/v1', model: '', thinking: 'off' } as unknown as LlmSettings;
-const llmAsk: Ask = (system, text, signal) => askText(system, text, { settings: LLM, signal, maxTokens: 400 });
+/** Модель — та, что выбрана в разделе «ИИ» для голоса штаба (иначе основная); рассуждения выключены — ответ нужен вовремя. */
+function llm(): LlmSettings {
+  const s = loadLlm();
+  return { ...s, model: s.voiceModel || s.model, thinking: 'off' };
+}
+const llmAsk: Ask = (system, text, signal) => askText(system, text, { settings: llm(), signal, maxTokens: 400 });
 
 export interface StageDeps {
   aiOn: () => boolean;

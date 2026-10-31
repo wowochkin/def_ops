@@ -89,6 +89,7 @@ export function ordinalWords(n: number, suf = 'й'): string {
 const L = '\\p{L}';
 const word = (w: string) => new RegExp(`(?<!${L})${w}(?!${L})`, 'gu');
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+const MONTH_ABBR = ['янв', 'фев', 'мар', 'апр', 'ма', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 /** Единицы при числе: формы для 1 / 2–4 / 5+; дробное число — форма «few». fem — женский род числа. */
 const UNITS: [RegExp, [string, string, string], boolean][] = [
   [/^км$/, ['километр', 'километра', 'километров'], false],
@@ -376,10 +377,22 @@ export function speakable(text: string, o: { full?: boolean } = {}): string {
   t = t.replace(FORM_RE, (...a) => formationText(a[0], a[1], a[2], a[3], a[4], a[5], (a[a.length - 1] as string).slice(0, a[a.length - 2] as number)));
   t = t.replace(/(?<![\p{L}\d])[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9_]|(?<![\p{L}\d])[A-Za-z](?![\p{L}\d])/gu, ''); // прочая латиница
   t = t.replace(/(\d)[\s ](?=\d{3}(?!\d))/g, '$1'); // «1 250»
+  // «20 апр.» — месяц целиком
+  t = t.replace(/(?<!\d)(\d{1,2})\s+(янв|февр?|мар|апр|мая|май|июн|июл|авг|сент?|окт|нояб?|дек)\.?(?!\p{L})/giu, (_m, d: string, mo: string) =>
+    `${d} ${MONTHS[MONTH_ABBR.findIndex((a) => mo.toLowerCase().startsWith(a))]}`);
+  // «в ночь на 16/17 апреля» — «в ночь с шестнадцатого на семнадцатое апреля»
+  t = t.replace(new RegExp(`(ночь\\s+)(?:на\\s+)?(\\d{1,2})\\s*[/–-]\\s*(\\d{1,2})\\s+(${MONTHS.join('|')})(?!${L})`, 'giu'), (_m, p: string, a: string, b: string, mo: string) =>
+    `${p}с ${ordinalWords(+a, 'го')} на ${ordinalWords(+b, 'е')} ${mo}`);
+  // «2/3», «2 из 3» — «два из трёх»
+  t = t.replace(/(?<![\d.,])(\d{1,4})\s*(?:\/|\s+из\s+)(\d{1,4})(?![\d.,])/g, (_m, a: string, b: string) => `${numberWords(+a)} из ${cardinalGen(+b) ?? numberWords(+b)}`);
+  t = t.replace(/\s*[·•|]\s*/g, ', ').replace(/\s*\/\s*/g, ', ');
   // даты: «16.04», «16.04.1945», «16 апреля»
   t = t.replace(/(?<![\d.,])(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?![\d.,]\d)(?!\s*(?:(?:км|м|кг|т|л|ч|мин|раз)(?!\p{L})|%|чел\.|тыс\.|метр|километр|процент|тонн|час|минут))/gu, (m, d, mo, y) =>
     +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31 ? `${ordinalWords(+d, 'го')} ${MONTHS[+mo - 1]}${y ? ` ${ordinalWords(+y, 'го')} года` : ''}` : m);
   t = t.replace(new RegExp(`(?<!\\d)(\\d{1,2})\\s+(${MONTHS.join('|')})(?!${L})`, 'gu'), (_m, d, mo) => `${ordinalWords(+d, 'го')} ${mo}`);
+  // «к первого мая» — «к первому мая»
+  t = t.replace(new RegExp(`(?<!${L})([Кк])\\s+(${L}+?)(ого|его)\\s+(${MONTHS.join('|')})(?!${L})`, 'gu'), (_m, p: string, w: string, e: string, mo: string) =>
+    `${p} ${w}${e === 'ого' ? 'ому' : 'ему'} ${mo}`);
   // годы: «в 1945 году», «1945 года», «1945 г.»
   t = t.replace(new RegExp(`(?<!\\d)(\\d{3,4})\\s*(года|году|годом|год|г\\.)(?!${L})`, 'gu'), (_m, y, g) => {
     const noun = g === 'г.' ? 'года' : g;
