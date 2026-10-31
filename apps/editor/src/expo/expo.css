@@ -511,3 +511,83 @@ html.expo-active,
   color: #ff9e8e;
   text-align: center;
 }
+
+/* Сеанс: карточки перелома, раскрытие, шкалы хода операции, итог */
+.expo-card-n {
+  font-family: var(--expo-mono);
+  color: var(--expo-gold);
+  margin-right: 0.5em;
+}
+.expo-card-lines {
+  margin: 0.4em 0;
+  padding-left: 1.1em;
+  font-size: var(--expo-text-small);
+  color: var(--expo-text);
+}
+.expo-reveal h3 {
+  color: var(--expo-gold);
+  margin: 0.4em 0;
+}
+.expo-date {
+  font-family: var(--expo-mono);
+  font-size: 1.4em;
+  color: var(--expo-gold);
+  margin: 0.2em 0 0.6em;
+}
+.expo-scales {
+  display: grid;
+  gap: 0.5em;
+  margin: 0.6em 0;
+}
+.expo-scale {
+  display: grid;
+  grid-template-columns: 7em 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.6em;
+  align-items: center;
+}
+.expo-scale-label {
+  grid-row: span 2;
+}
+.expo-scale-bar {
+  position: relative;
+  height: 0.8em;
+  border: 1px solid var(--expo-line);
+  background: linear-gradient(to right, transparent calc(50% - 1px), var(--expo-muted) calc(50% - 1px), var(--expo-muted) calc(50% + 1px), transparent calc(50% + 1px));
+}
+.expo-scale-bar > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.expo-scale-up {
+  background: var(--expo-ok);
+}
+.expo-scale-down {
+  background: var(--expo-own);
+}
+.expo-scale-note {
+  font-size: var(--expo-text-small);
+  color: var(--expo-muted);
+}
+.expo-feed {
+  list-style: none;
+  padding: 0;
+  margin: 0.6em 0 0;
+  font-size: var(--expo-text-small);
+}
+.expo-feed li {
+  border-top: 1px solid var(--expo-line);
+  padding: 0.25em 0;
+}
+.expo-result {
+  max-width: 60em;
+  margin: 0 auto;
+}
+.expo-rank {
+  color: var(--expo-gold);
+  font-family: var(--expo-serif);
+}
+.expo-forecast {
+  font-size: 1.2em;
+}

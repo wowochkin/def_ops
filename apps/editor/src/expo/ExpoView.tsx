@@ -1,7 +1,7 @@
 /**
  * Вид одного выставочного окна: области по раскладке (`layoutFor`) и сцена текущей фазы. Управление — только в окне
- * с картой; клавиши — только в профиле «мышь и клавиатура» и не на паузе. Сцены этапа «Каркас» — подписи и учебные
- * карточки без расчёта операции.
+ * с картой; клавиши — только в профиле «мышь и клавиатура» и не на паузе. Перелом и итог — по виду модели сеанса
+ * (карточки банка, раскрытие решения, три шкалы, ход операции, оценка по осям); карта и анимация — этап «Подача».
  */
 import { useEffect, useState } from 'react';
 import { affordances, keyToEvent } from './input';
@@ -9,15 +9,20 @@ import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { FRONT_NAMES, PhaseTitle, Timer } from './scenes';
+import type { ModelFrame } from './model';
+import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
 import './expo.css';
 export interface ExpoViewProps {
   window: number;
   state: DirectorState;
   settings: ExpoSettings;
   count: 1 | 2 | 3;
+  model?: ModelFrame;
   send: (ev: DirectorEvent) => void;
 }
-export function ExpoView({ window: index, state, settings, count, send }: ExpoViewProps) {
+const NO_MODEL: ModelFrame = { view: null, error: null };
+export function ExpoView({ window: index, state, settings, count, model = NO_MODEL, send }: ExpoViewProps) {
+  const mv = model.view;
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
   const controls = roles.includes('map');
@@ -101,25 +106,41 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
             {roles.includes('map') && (
               <section className="expo-map">
                 <h2>Карта</h2>
-                <p>{state.front && FRONT_NAMES[state.front]}</p>
+                <h3>
+                  Перелом {p.n} · {turnDef(state.front, p.n)?.title}
+                </h3>
+                <p>
+                  {state.front && FRONT_NAMES[state.front]}
+                  {mv && ` · ${modelTime(mv.time)}`}
+                </p>
                 <Timer state={state} />
+                <ModelNote model={model} />
                 {p.step === 'choose' ? (
                   <div className="expo-cards">
                     {[0, 1, 2].map((card) => (
                       <article
                         key={card}
+                        className="expo-card"
                         onPointerEnter={() => {
                           if (access.hoverExpand) setExpanded(card);
                         }}
                       >
-                        <button disabled={state.paused} onClick={() => send({ t: 'choose', card })}>
-                          Карточка {card + 1}
+                        <button disabled={state.paused || !mv?.cards[card]} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
+                          <span className="expo-card-n">{card + 1}</span>
+                          <strong>{mv?.cards[card]?.title ?? 'Карточка готовится'}</strong>
                         </button>
                         <button className="expo-secondary" onClick={() => setExpanded(expanded === card ? null : card)}>
                           Подробнее о карточке {card + 1}
                         </button>
-                        {expanded === card && <p>Учебная карточка. Приказы и последствия появятся после подключения модели.</p>}
-                        {card > 0 && (
+                        {expanded === card && mv?.cards[card] && (
+                          <ul className="expo-card-lines">
+                            {mv.cards[card].lines.map((l) => (
+                              <li key={l}>{l}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {/* историческая карточка до выбора не отличается от прочих: кнопка замены есть у каждой */}
+                        {(
                           <button
                             className="expo-secondary"
                             disabled={state.paused || p.replacements >= settings.maxReplacements}
@@ -131,28 +152,50 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
                       </article>
                     ))}
                   </div>
+                ) : p.step === 'explain' ? (
+                  <p className="expo-status">{turnDef(state.front, p.n)?.situation}</p>
                 ) : (
-                  <p className="expo-status">
-                    {p.step === 'explain'
-                      ? 'Изучите обстановку. Скоро откроется выбор решения.'
-                      : p.choice === 'delay'
-                        ? 'Промедление: армии продолжают прежние задачи.'
-                        : 'Решение принято. Операция продолжается.'}
-                  </p>
+                  <div className="expo-reveal">
+                    {p.choice === 'delay' && <p className="expo-status">Промедление: новых распоряжений нет, армии закрепляются на достигнутом.</p>}
+                    {mv?.reveal && !mv.busy ? (
+                      <>
+                        <h3>{mv.reveal.text}</h3>
+                        <p>
+                          <strong>{mv.reveal.historical.title}</strong> — исторический вариант
+                        </p>
+                      </>
+                    ) : (
+                      !model.error && <p className="expo-status">Решение принято. Модель считает ход операции…</p>
+                    )}
+                  </div>
                 )}
               </section>
             )}
             {roles.includes('ai') && (
               <section className="expo-side">
                 <h2>Штаб ИИ</h2>
-                <p>Пояснения к обстановке и решениям появятся на следующем этапе.</p>
+                <p>{turnDef(state.front, p.n)?.situation}</p>
+                {p.step === 'scroll' && mv?.reveal && !mv.busy && (
+                  <ul className="expo-card-lines">
+                    {mv.reveal.historical.lines.map((l) => (
+                      <li key={l}>{l}</li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
             {roles.includes('progress') && (
               <section className="expo-side">
                 <h2>Ход операции</h2>
-                <p>Скорость · Цена · Замысел</p>
-                <p>Оценка будет доступна после подключения модели.</p>
+                {mv ? (
+                  <>
+                    <p className="expo-date">{modelTime(mv.time)}</p>
+                    <Scales scales={mv.scales} />
+                    <Feed lines={mv.feed} />
+                  </>
+                ) : (
+                  <ModelNote model={model} />
+                )}
               </section>
             )}
           </div>
@@ -160,7 +203,20 @@ export function ExpoView({ window: index, state, settings, count, send }: ExpoVi
         {p.kind === 'result' && (
           <section className="expo-wide">
             <h1>Сеанс завершён</h1>
-            <p>Три перелома пройдены. Расчёт итогов появится после подключения модели.</p>
+            {mv?.final ? (
+              <div className="expo-result">
+                <p className="expo-kicker">{state.front && FRONT_NAMES[state.front]}</p>
+                <h2 className="expo-rank">{mv.final.rank}</h2>
+                <p className="expo-forecast">{mv.final.forecast}</p>
+                <Scales scales={mv.final.scales} />
+                <p>
+                  Вы выбрали как маршал: {mv.final.matches} из 3
+                </p>
+                <p>Попробуйте другие решения или другой фронт. В полной версии — вся операция и штабы на модели.</p>
+              </div>
+            ) : (
+              <ModelNote model={model} />
+            )}
             {controls && <button className="expo-primary" onClick={() => send({ t: 'touch' })}>Ещё раз</button>}
           </section>
         )}
