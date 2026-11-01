@@ -63,6 +63,13 @@ export function expand(t: string, d: Domains): string[] {
   return [...out];
 }
 
+/** Тексты к озвучке, которых нет в манифесте. Нет манифеста — все тексты. */
+export function missingClips(m: VoiceManifest | null, d: Domains, lines: Lines = LINES): string[] {
+  const texts = voiceTexts(d, lines);
+  if (!m) return texts;
+  return texts.filter((t) => !m.clips[t]);
+}
+
 /** Тексты к озвучке: целые фразы и куски склейки. */
 export function voiceTexts(d: Domains, lines: Lines = LINES): string[] {
   const out = new Set<string>();

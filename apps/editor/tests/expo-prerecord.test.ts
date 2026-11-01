@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LINES, allLines, fillParts, pickFilled, templateUnits, type Vars } from '../src/expo/lines';
-import { WHOLE_MAX, clipPlan, expand, joinGap, parseManifest, stageDomains, voiceTexts, type Domains, type VoiceManifest } from '../src/expo/prerecord';
+import { LINES, allLines, fillParts, pickFilled, templateUnits, type Lines, type Vars } from '../src/expo/lines';
+import { WHOLE_MAX, clipPlan, expand, joinGap, missingClips, parseManifest, stageDomains, voiceTexts, type Domains, type VoiceManifest } from '../src/expo/prerecord';
 import { clipPlayer, stageSpeaker, turnstile, type ClipAudio, type LiveVoice } from '../src/expo/speaker';
 import { PRERECORD_MISSING, setPrerecord, startupVerdict } from '../src/expo/health';
 import { aiRunner } from '../src/expo/ai-runner';
@@ -52,6 +52,12 @@ describe('предзапись: тексты и склейка', () => {
   it('куски склейки — предложения шаблона; подставленные «гв.» шаблон не режут', () => {
     expect(templateUnits('Вы выбрали: «{title}». Маршал {marshal} решил иначе.')).toEqual(['Вы выбрали: «{title}».', 'Маршал {marshal} решил иначе.']);
     expect(fillParts('В ходе операции: {event}. Дальше.', { event: '3 гв. ТА у Цоссена' })!.parts).toEqual(['В ходе операции: 3 гв. ТА у Цоссена.', 'Дальше.']);
+  });
+
+  it('в списке неозвученного только фразы без клипа', () => {
+    const lines: Lines = { ...LINES, say: { only: ['Есть клип.', 'Нет клипа.'] }, comment: { historical: [], own: [], delay: [], event: [] }, answers: [] };
+    expect(missingClips(manifestOf(['Есть клип.']), D, lines)).toEqual(['Нет клипа.']);
+    expect(missingClips(null, D, lines)).toEqual(['Есть клип.', 'Нет клипа.']);
   });
 
   it('нет клипа одного куска — фраза не озвучена; пауза по знаку', () => {

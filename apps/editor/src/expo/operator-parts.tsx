@@ -1,7 +1,9 @@
 /** Элементы меню оператора: шаг числа, порядок мониторов, сводка служб и статистики дня. */
 import { useEffect, useState } from 'react';
-import { PRERECORD_MISSING, PROBE_NAMES, type ProbeState, type ProbeStates } from './health';
-import { loadManifest } from './prerecord';
+import { BANK } from './bank';
+import { PRERECORD_MISSING, PROBE_NAMES, voiceGapNote, type ProbeState, type ProbeStates } from './health';
+import { MAP } from './map';
+import { loadManifest, missingClips, stageDomains } from './prerecord';
 import type { ExpoStats } from './stats';
 import type { MonitorInfo } from './windows';
 
@@ -93,9 +95,14 @@ export function ServiceSummary({
   screens: { open: number; want: number };
 }) {
   const [clips, setClips] = useState<number | null | undefined>(undefined);
+  const [gap, setGap] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    void loadManifest().then((m) => live && setClips(m ? Object.keys(m.clips).length : null));
+    void loadManifest().then((m) => {
+      if (!live) return;
+      setClips(m ? Object.keys(m.clips).length : null);
+      setGap(m ? voiceGapNote(missingClips(m, stageDomains(MAP.days[0], BANK.end))) : null);
+    });
     return () => { live = false; };
   }, []);
   return (
@@ -110,6 +117,7 @@ export function ServiceSummary({
         ))}
         <li data-state={clips === undefined ? 'wait' : clips ? 'ok' : 'fail'}>
           {clips === undefined ? 'Предзапись голоса — проверяю…' : clips ? `Предзапись голоса — готово (клипов: ${clips})` : PRERECORD_MISSING}
+          {gap && <div>{gap}</div>}
         </li>
       </ul>
       <dl>

@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { startupPlan, startupVerdict, watchdog, missingWindows } from '../src/expo/health';
+import { setPrerecord, setVoiceGaps, startupPlan, startupVerdict, voiceGapNote, watchdog, missingWindows } from '../src/expo/health';
 import { EXPO_DEFAULTS } from '../src/expo/settings';
 afterEach(() => vi.useRealTimers());
 it('startup all ok and fallback when model fails', () => {
@@ -15,6 +15,14 @@ it('startup all ok and fallback when model fails', () => {
   });
   expect(startupVerdict({ core: 'fail', windows: 'ok', voice: 'ok', model: 'ok' }, EXPO_DEFAULTS).ready).toBe(false);
   expect(startupPlan({ ...EXPO_DEFAULTS, aiMode: 'noai' })).not.toContain('model');
+});
+it('startup names phrases that have no clip', () => {
+  setPrerecord('ready');
+  setVoiceGaps(['Это стенд штабных игр.']);
+  expect(startupVerdict({ core: 'ok', windows: 'ok', voice: 'ok', model: 'ok' }, EXPO_DEFAULTS).note).toMatch(/Это стенд штабных игр/);
+  expect(voiceGapNote(['Раз.', 'Два.', 'Три.', 'Четыре.', 'Пять.'])).toMatch(/Не озвучено \(5\).*и ещё 1/);
+  setVoiceGaps([]);
+  setPrerecord('unknown');
 });
 it('watchdog restarts once per outage and recovers', async () => {
   vi.useFakeTimers();

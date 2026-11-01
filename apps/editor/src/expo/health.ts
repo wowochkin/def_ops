@@ -21,13 +21,22 @@ export const PRERECORD_MISSING = 'Предзапись голоса не под�
 /** Предзапись голоса главного окна: известна после загрузки манифеста (`expoSpeaker`). */
 let prerecord: 'unknown' | 'ready' | 'missing' = 'unknown';
 export const setPrerecord = (s: typeof prerecord) => { prerecord = s; };
+let gaps: string[] = [];
+export const setVoiceGaps = (xs: string[]) => { gaps = xs; };
+/** Коротко назвать неозвученные фразы: первые четыре и сколько ещё. */
+export function voiceGapNote(xs: string[] = gaps): string | null {
+  if (!xs.length) return null;
+  const shown = xs.slice(0, 4).map((t) => `«${t.length > 70 ? `${t.slice(0, 67)}…` : t}»`).join('; ');
+  const more = xs.length > 4 ? ` и ещё ${xs.length - 4}` : '';
+  return `Не озвучено (${xs.length}): ${shown}${more}`;
+}
 export function startupPlan(s: ExpoSettings): ProbeId[] {
   return s.aiMode === 'ai' ? ['core', 'voice', 'model', 'windows'] : ['core', 'windows'];
 }
 export function startupVerdict(states: ProbeStates, s: ExpoSettings): { ready: boolean; aiMode: AiMode; note: string | null } {
   const ready = states.core === 'ok' && states.windows === 'ok' && !startupPlan(s).some((id) => states[id] === 'wait');
   const aiMode = s.aiMode === 'ai' && states.voice === 'ok' && states.model === 'ok' ? 'ai' : 'noai';
-  const notes = [s.aiMode === 'ai' && aiMode === 'noai' && 'Запуск в режиме без ИИ', prerecord === 'missing' && PRERECORD_MISSING].filter(Boolean);
+  const notes = [s.aiMode === 'ai' && aiMode === 'noai' && 'Запуск в режиме без ИИ', prerecord === 'missing' && PRERECORD_MISSING, prerecord === 'ready' && voiceGapNote()].filter(Boolean);
   return { ready, aiMode, note: notes.length ? notes.join('. ') : null };
 }
 export function watchdog(

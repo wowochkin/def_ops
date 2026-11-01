@@ -7,8 +7,10 @@
  */
 import { VoiceClient } from '../voice/client';
 import { speakable } from '../voice/speech';
-import { setPrerecord } from './health';
-import { clipPlan, joinGap, loadClip, loadManifest, type Clip, type VoiceManifest } from './prerecord';
+import { setPrerecord, setVoiceGaps } from './health';
+import { BANK } from './bank';
+import { MAP } from './map';
+import { clipPlan, joinGap, loadClip, loadManifest, missingClips, stageDomains, type Clip, type VoiceManifest } from './prerecord';
 import type { Line, Speaker } from './voice-queue';
 
 /** Затухание оборванной фразы, с. */
@@ -293,6 +295,7 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
     if (disposed) return;
     manifest = m;
     setPrerecord(m ? 'ready' : 'missing');
+    setVoiceGaps(m ? missingClips(m, stageDomains(MAP.days[0], BANK.end)) : []);
     if (m) void player.preload(Object.values(m.clips));
   });
   const live = liveVoice(client);
