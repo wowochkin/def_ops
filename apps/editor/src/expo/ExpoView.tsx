@@ -24,7 +24,7 @@ import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, historyPaths, mainPaths, MAP, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
-import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
+import { ModelNote, modelTime, OpSummary, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
@@ -281,13 +281,13 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     ) : p.step === 'explain' ? (
                       <>
                         <p className="expo-situation">{def?.situation}</p>
-                        {roles.includes('progress') && <Progress model={model} feed={3} />}
+                        {roles.includes('progress') && <Progress model={model} size="compact" />}
                       </>
                     ) : (
                       <>
                         <OrderSlip c={typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice} />
                         <Reveal model={model} delay={p.choice === 'delay'} full={!roles.includes('progress')} />
-                        {roles.includes('progress') && <Progress model={model} feed={1} date={false} />}
+                        {roles.includes('progress') && <Progress model={model} size="compact" date={false} />}
                       </>
                     )}
                   </aside>
@@ -312,7 +312,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               )}
               {!controls && roles.includes('progress') && (
                 <section className="expo-side expo-progress-screen" style={CITY ? { ['--side-bg' as string]: `url(${CITY})` } : undefined}>
-                  <Progress model={model} feed={4} />
+                  <Progress model={model} size="full" />
                 </section>
               )}
             </div>
@@ -700,17 +700,16 @@ function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; ful
   );
 }
 
-/** Ход операции: дата хода (если её нет над картой), три шкалы против истории, последние события. */
-function Progress({ model, feed, date = true }: { model: ModelFrame; feed: number; date?: boolean }) {
+/** Ход операции: дата хода (если её нет над картой) и оперативная сводка (`OpSummary`). */
+function Progress({ model, size, date = true }: { model: ModelFrame; size: 'full' | 'compact'; date?: boolean }) {
   const mv = model.view;
   return (
-    <div className="expo-progress">
+    <div className={`expo-progress expo-progress-${size}`}>
       <h2>Ход операции</h2>
       {mv ? (
         <>
           {date && <p className="expo-date">{modelTime(mv.time)}</p>}
-          <Scales scales={mv.scales} />
-          {feed > 0 && <Feed lines={mv.feed.slice(-feed)} />}
+          <OpSummary mv={mv} size={size} />
         </>
       ) : (
         <ModelNote model={model} />

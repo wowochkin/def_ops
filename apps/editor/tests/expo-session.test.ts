@@ -1,7 +1,8 @@
+import { historyAt } from '../src/expo/map';
 import { describe, expect, it } from 'vitest';
 import type { EventResult, SimContext } from '@def-ops/sim';
 import { BANK } from '../src/expo/bank';
-import { ExpoSession, refAt, timeAt, type ModelEnv } from '../src/expo/session';
+import { ExpoSession, refAt, timeAt, type ModelEnv, berlinDistance, tasksOf } from '../src/expo/session';
 
 /** Поддельное ядро: запоминает вызовы, ход — кадры по часам. */
 function fakeCore() {
@@ -125,5 +126,17 @@ describe('сеанс модели', () => {
     expect(m.path.su_8gva).toHaveLength(2);
     expect(m.path.su_13a).toBeUndefined();
     expect(s.view.reveal?.historical.arrows?.length).toBeGreaterThan(0);
+  });
+});
+
+describe('сводка хода', () => {
+  it('задачи фронта — из событий хода, без них — по истории; до Берлина — сейчас и по истории', () => {
+    const t = tasksOf(['seelow', 'ring'], [{ id: 'seelow', title: 'Прорыв', historical: '1945-04-19T12:00', simulated: '1945-04-18T09:00', days: -1, at: null }]);
+    expect(t[0]).toMatchObject({ simulated: '1945-04-18', days: -1, historical: '1945-04-19' });
+    expect(t[1]).toMatchObject({ id: 'ring', simulated: null, historical: '1945-04-25' });
+    const d = berlinDistance('su_1bf', historyAt('1945-04-16T05:00'), '1945-04-16T05:00');
+    expect(d!.now).toBe(d!.history);
+    expect(d!.now).toBeGreaterThan(40);
+    expect(d!.now).toBeLessThan(90);
   });
 });

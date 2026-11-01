@@ -892,6 +892,138 @@ html.expo-active,
   color: var(--expo-gold);
 }
 
+/* Оперативная сводка: лента операции, крупные цифры против истории, задачи с отметками */
+.expo-tl {
+  position: relative;
+  height: 92px;
+  margin: 6px 0 4px;
+}
+.expo-tl-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44px;
+  height: 4px;
+  background: var(--expo-line);
+}
+.expo-tl-turn,
+.expo-tl-hist,
+.expo-tl-own,
+.expo-tl-now {
+  position: absolute;
+  transform: translateX(-50%);
+}
+.expo-tl-turn {
+  top: 0;
+  font: 30px / 1 var(--expo-mono);
+  color: var(--expo-muted);
+}
+.expo-tl-turn::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 34px;
+  width: 2px;
+  height: 24px;
+  background: currentColor;
+}
+.expo-tl-done {
+  color: var(--expo-text);
+}
+.expo-tl-hist {
+  top: 52px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--expo-muted);
+  border-radius: 50%;
+}
+.expo-tl-own {
+  top: 30px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--expo-own);
+}
+.expo-tl-now {
+  top: 26px;
+  width: 6px;
+  height: 40px;
+  background: var(--expo-gold);
+}
+.expo-tl-from,
+.expo-tl-to {
+  position: absolute;
+  bottom: -2px;
+  color: var(--expo-muted);
+  font-size: 26px;
+}
+.expo-tl-to {
+  right: 0;
+}
+.expo-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0;
+}
+.expo-figures[data-n='4'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.expo-figures dt {
+  font: 54px / 1 var(--expo-serif);
+  color: var(--expo-gold);
+  white-space: nowrap;
+}
+.expo-figures dd {
+  margin: 6px 0 0;
+  font-size: 28px;
+  line-height: 1.12;
+  color: var(--expo-muted);
+}
+.expo-sum-h {
+  margin: 4px 0 0;
+  font: var(--expo-text-body) var(--expo-serif);
+}
+.expo-tasks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.expo-tasks li {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 14px;
+  align-items: baseline;
+  font-size: var(--expo-text-min);
+  line-height: 1.15;
+}
+.expo-task-mark {
+  font-family: var(--expo-mono);
+  color: var(--expo-muted);
+}
+.expo-tasks li[data-state='done'] .expo-task-mark {
+  color: var(--expo-ok);
+}
+.expo-tasks li[data-state='late'] .expo-task-mark {
+  color: var(--expo-own);
+}
+.expo-tasks li[data-state='ahead'] .expo-task-title {
+  color: var(--expo-muted);
+}
+.expo-task-when {
+  color: var(--expo-muted);
+  font-size: 26px;
+  white-space: nowrap;
+}
+.expo-progress-compact .expo-figures dt {
+  font-size: 44px;
+}
+.expo-progress-compact .expo-figures dd {
+  font-size: 24px;
+}
+
 /* Отдельные экраны «Штаб ИИ» и «Ход операции» (два и три экрана) */
 .expo-side {
   min-width: 0;
@@ -922,23 +1054,21 @@ html.expo-active,
   max-width: 34ch;
 }
 .expo-progress-screen .expo-date {
-  font-size: 96px;
+  font-size: 60px;
 }
 .expo-progress-screen .expo-scales {
-  gap: 28px;
-  margin: 12px 0 20px;
+  gap: 14px;
 }
 .expo-progress-screen .expo-scale {
-  grid-template-columns: 260px 420px 1fr;
-  gap: 32px;
-  font-size: 48px;
+  grid-template-columns: 200px 360px 1fr;
+  gap: 28px;
+  font-size: 36px;
 }
 .expo-progress-screen .expo-scale-bar {
-  height: 40px;
+  height: 28px;
 }
 .expo-progress-screen .expo-feed {
-  font-size: 40px;
-  max-width: 44ch;
+  font-size: var(--expo-text-min);
 }
 .expo-roles-ai-progress .expo-progress-screen .expo-scale {
   grid-template-columns: 170px 200px 1fr;
@@ -946,7 +1076,7 @@ html.expo-active,
   font-size: 38px;
 }
 .expo-roles-ai-progress .expo-progress-screen .expo-date {
-  font-size: 72px;
+  font-size: 56px;
 }
 .expo-roles-ai-progress .expo-ai-screen .expo-situation {
   font-size: 48px;

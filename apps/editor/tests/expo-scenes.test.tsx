@@ -12,6 +12,7 @@ afterEach(cleanup);
 const scales = { axes: { speed: 0.5, cost: -0.2, intent: 1, days: -1.5, lossRatio: 1.06, done: 2, due: 2 }, notes: { speed: 'быстрее истории на 1,5 сут', cost: 'потери больше истории на 6 %', intent: 'выполнено 2 из 2' } };
 const view = (patch: Partial<ModelView> = {}): ModelView => ({
   front: 'su_1bf', turn: 1, time: '1945-04-16T05:00', hour: 0, decisions: [], reveal: null, feed: [], final: null, busy: false, error: null, scales, map: { armies: [], prev: null, flashes: [], path: {} },
+  tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 },
   cards: [
     { id: 'bf1-north', title: 'Обход высот с севера', lines: ['Танковые армии — севернее, через Врицен', 'б', 'в', 'г'] },
     { id: 'bf1-hist', title: 'Ночной штурм с прожекторами', lines: ['а', 'б', 'в', 'г'] },
@@ -46,12 +47,15 @@ it('turn shows bank cards with gist, details open in place, choice is sent', () 
   expect(sent).toContainEqual({ t: 'choose', card: 2 });
 });
 
-it('explain shows situation and the three scales; timer shows seconds only with a limit', () => {
+it('explain shows situation and the opening forces; scales only after a decision; timer shows seconds only with a limit', () => {
   const s = at(at(initialState(0), { t: 'ready' }), { t: 'jump', phase: 'turn', n: 1 });
   const v = show(s, { view: view(), error: null });
   expect(v.getAllByText(/Зееловские высоты, главная полоса обороны/).length).toBeGreaterThan(0);
-  expect(v.getAllByRole('meter')).toHaveLength(3);
-  expect(v.getByText('быстрее истории на 1,5 сут')).toBeTruthy();
+  // до первого решения — обстановка на начало (силы из доклада), без пустых шкал и служебных фраз
+  expect(v.getAllByText('Обстановка на начало').length).toBeGreaterThan(0);
+  expect(v.getAllByText('908 500').length).toBeGreaterThan(0);
+  expect(v.queryAllByRole('meter')).toHaveLength(0);
+  expect(v.queryByText(/нет эталона|события ещё впереди|задачи впереди/)).toBeNull();
   cleanup();
   const c = choose();
   const w = show({ ...c, phase: { ...c.phase, deadline: c.now + 25_000 } } as DirectorState, { view: view(), error: null });
@@ -60,11 +64,15 @@ it('explain shows situation and the three scales; timer shows seconds only with 
 
 it('scroll reveals the marshal decision and the course of operation', () => {
   const s = at(choose(), { t: 'choose', card: 0 });
-  const v = show(s, { view: view({ time: '1945-04-20T05:00', reveal: { text: 'Жуков решил иначе — вот как', historical: view().cards[1] }, feed: ['18 апреля — Прорыв Зееловских высот (в истории — 19 апреля)'] }), error: null });
+  const v = show(s, { view: view({ time: '1945-04-20T05:00', decisions: [{ n: 1, choice: 'bf1-north', historical: 'bf1-hist' }], loss: { own: 23_400, ref: 21_600 }, berlinKm: { now: 41, history: 52 }, reveal: { text: 'Жуков решил иначе — вот как', historical: view().cards[1] }, feed: ['18 апреля — Прорыв Зееловских высот (в истории — 19 апреля)'] }), error: null });
   expect(v.getByText('Жуков решил иначе — вот как')).toBeTruthy();
   expect(v.getByText('Ночной штурм с прожекторами')).toBeTruthy();
   expect(v.getAllByText('20 апреля, 05:00').length).toBeGreaterThan(0);
   expect(v.getByText('18 апреля — Прорыв Зееловских высот (в истории — 19 апреля)')).toBeTruthy();
+  // сводка против истории: до Берлина, потери, темп; шкалы — с данными
+  expect(v.getByText('41 км')).toBeTruthy();
+  expect(v.getByText('потери; в истории к этому часу — 21 600')).toBeTruthy();
+  expect(v.getAllByRole('meter')).toHaveLength(3);
 });
 
 it('result shows rank, forecast, axes and matches; core failure is shown', () => {

@@ -46,6 +46,8 @@ export interface MapView {
 }
 export interface Decision { n: TurnN; choice: string | 'delay'; historical: string }
 export interface Scales { axes: AxesDetail; notes: { speed: string; cost: string; intent: string } }
+/** Задача фронта — ключевое событие: дата по истории и в ходе (null — ещё не случилось). */
+export interface Task { id: string; title: string; historical: string; simulated: string | null; days: number | null }
 export interface ModelView {
   front: FrontId;
   turn: TurnN;
@@ -60,6 +62,12 @@ export interface ModelView {
   /** Строки хода операции (события расчёта), новые в конце. */
   feed: string[];
   final: { scales: Scales; rank: string; matches: number; forecast: string } | null;
+  /** Задачи фронта по порядку ключевых событий. */
+  tasks: Task[];
+  /** Потери фронта (личный состав) к часу хода и потери того же фронта «как было» на тот же час. */
+  loss: { own: number; ref: number | null };
+  /** Ближайшая армия фронта до центра Берлина, км: в ходе и по истории на тот же момент. */
+  berlinKm: { now: number; history: number } | null;
   map: MapView;
   busy: boolean;
   error: string | null;
@@ -72,6 +80,26 @@ const view = (c: Card, source?: CardView['source']): CardView => {
   const army = c.fact?.army ?? c.orders[0]?.army;
   return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}), ...(c.fact ? { fact: c.fact } : {}), ...(c.risk ? { risk: c.risk } : {}), ...(army ? { army } : {}) };
 };
+
+/** Расстояние, км (равнопромежуточно по широте места). */
+const km = (a: LL, b: LL) => Math.hypot((a[0] - b[0]) * 111.3 * Math.cos((a[1] * Math.PI) / 180), (a[1] - b[1]) * 111.3);
+const BERLIN: LL = MAP.cities.find((c) => c.capital)?.at ?? [13.4, 52.52];
+
+/** До Берлина от ближайшей армии фронта: в ходе (`armies`) и по истории на момент `time`, км. */
+export function berlinDistance(front: FrontId, armies: ArmyPos[], time: string): { now: number; history: number } | null {
+  const near = (xs: ArmyPos[]) => Math.min(...xs.filter((a) => a.front === front).map((a) => km(a.at, BERLIN)));
+  const now = near(armies), history = near(historyAt(time));
+  return Number.isFinite(now) && Number.isFinite(history) ? { now: Math.round(now), history: Math.round(history) } : null;
+}
+
+/** Задачи фронта по ключевым событиям: из событий хода, без них — по истории (дата и название). */
+export function tasksOf(keys: string[], events: EventResult[]): Task[] {
+  return keys.map((id) => {
+    const e = events.find((x) => x.id === id);
+    const h = MAP.events.find((x) => x.id === id);
+    return { id, title: e?.title ?? h?.title ?? id, historical: (e?.historical ?? h?.date ?? '').slice(0, 10), simulated: e?.simulated?.slice(0, 10) ?? null, days: e?.days ?? null };
+  });
+}
 
 export function timeAt(start: string, hour: number): string {
   return new Date(Date.parse(`${start.slice(0, 16)}:00Z`) + hour * 3_600_000).toISOString().slice(0, 16);
@@ -106,6 +134,7 @@ export class ExpoSession {
     const start = this.start0();
     this.view = {
       front, turn: 1, time: start, hour: 0, cards: [], decisions: [], reveal: null, feed: [], final: null, busy: false, error: null,
+      tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start),
       map: { armies: historyAt(start), prev: null, flashes: [], path: {} },
       scales: this.scales([], start, 0),
     };
@@ -125,6 +154,11 @@ export class ExpoSession {
     this.trace = (await this.env.call('game_start', { scenario: sc, seed: 1, takeover: 0, player: 'su', enemy: 'intent', mode: 'intent' })) as Trace;
     const armies = this.armiesNow(this.start0());
     this.view.map = { armies, prev: null, flashes: [], path: this.extend({}, armies) };
+    this.view.berlinKm = berlinDistance(this.front, armies, this.start0());
+    try {
+      // названия и даты задач — из событий операции («как было»), пока своих событий нет
+      this.view.tasks = tasksOf(this.def.keyEvents, measureTrace(this.env, this.trace, this.front).events.map((e) => ({ ...e, simulated: null, days: null, at: null })));
+    } catch { /* остаются названия по истории */ }
   }
 
   /** Армии по последнему кадру ядра; армии без дивизий в кадре — по истории на это время. */
@@ -244,6 +278,9 @@ export class ExpoSession {
         },
         feed: [...this.view.feed, ...feedLines(before, this.events)],
         scales: this.scales(this.events, time, upTo, loss),
+        tasks: tasksOf(this.def.keyEvents, this.events),
+        loss: { own: loss, ref: refAt(this.bank.reference[this.front]?.losses, upTo) },
+        berlinKm: berlinDistance(this.front, armies, time),
       });
       if (n === 3) {
         const s = this.view.scales;

@@ -115,6 +115,10 @@ async function run({ cfg, front, scenes, tag = '' }) {
   await shot('11-scroll');
   await page.waitForTimeout(6000);
   await shot('12-scroll-end');
+  // экран «Ход операции» после первого решения: сводка с задачами, журналом и шкалами
+  await page.locator('.expo-lenses').getByRole('button', { name: '3', exact: true }).click();
+  await shot('12-progress-after');
+  await page.locator('.expo-lenses').getByRole('button', { name: 'Все вместе' }).click();
   for (const n of [2, 3]) {
     await ready();
     if (n === 3) await shot('13-choose-turn3');
