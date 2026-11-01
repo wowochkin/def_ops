@@ -3,15 +3,17 @@
  */
 import type { ReactNode } from 'react';
 import type { DirectorEvent } from './director';
+import { EXCURSION, EXCURSION_SOURCE } from './excursion';
 import { KB_STATS } from './kb-stats';
+import { picturesOf } from './pictures';
 import { readRecord, recordLines } from './records';
 import type { Role } from './settings';
 
 const shots = import.meta.glob('./shots/*.jpg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const shot = (name: string) => shots[`./shots/${name}.jpg`];
 
-/** Какой экран заставки рисовать по ролям окна. */
-export function attractLayout(roles: Role[]): 'all' | 'map' | 'ai' | 'app' | 'pair' {
+/** Какой вид рисовать по ролям окна: вместе, только карта, только ИИ, только ход, ИИ и ход рядом. */
+export function roleLayout(roles: Role[]): 'all' | 'map' | 'ai' | 'app' | 'pair' {
   const map = roles.includes('map');
   const ai = roles.includes('ai');
   const progress = roles.includes('progress');
@@ -96,6 +98,37 @@ export function FullVersion({ foot }: { foot?: ReactNode }) {
       </div>
       <p className="expo-record">{day ? `Рекорд дня: ${day}.` : 'Рекорда дня ещё нет: он появится после первого сеанса.'}</p>
       {foot}
+    </section>
+  );
+}
+
+/** Справка-экскурс: факты статьи, архивный кадр с его подписью. */
+export function Excursion({ point }: { point: number }) {
+  const beat = EXCURSION[point] ?? EXCURSION[0];
+  const pic = picturesOf('archive').find((p) => p.file === beat.photo);
+  return (
+    <section className="expo-board expo-note">
+      <p className="expo-kicker">Справка</p>
+      <h1>{beat.title}</h1>
+      <dl className="expo-brief-facts" data-n={beat.facts.length}>
+        {beat.facts.map((f) => (
+          <div key={f.value + f.label}>
+            <dt>{f.value}</dt>
+            <dd>{f.label}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="expo-lead">{beat.text}</p>
+      {pic && (
+        <figure className="expo-note-photo">
+          <img src={pic.src} alt={pic.caption} style={pic.focus ? { objectPosition: pic.focus } : undefined} />
+          <figcaption>
+            {pic.caption}
+            <small>{pic.author}</small>
+          </figcaption>
+        </figure>
+      )}
+      <p className="expo-record">Источник: {EXCURSION_SOURCE}.</p>
     </section>
   );
 }

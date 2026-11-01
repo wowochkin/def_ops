@@ -13,7 +13,7 @@ import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
-import { AttractActions, FullVersion, HowStaff, attractLayout } from './stand';
+import { AttractActions, Excursion, FullVersion, HowStaff, roleLayout } from './stand';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { StageMini } from './StageMini';
 import { BRIEFING, briefFeatures } from './briefing';
@@ -192,7 +192,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
           {p.kind === 'startup' && <section className="expo-wide" />}
           {p.kind === 'attract' && (
             <section className="expo-attract-root" onClick={() => send({ t: 'touch' })}>
-              {attractLayout(roles) === 'all' && (
+              {roleLayout(roles) === 'all' && (
                 <div className="expo-split expo-attract">
                   <div className="expo-panel expo-intro">
                     <p className="expo-kicker">Апрель 1945. Берлинская операция</p>
@@ -211,7 +211,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   </div>
                 </div>
               )}
-              {attractLayout(roles) === 'map' && (
+              {roleLayout(roles) === 'map' && (
                 <div className="expo-attract-map">
                   <AttractActions voice={state.voice} send={send} />
                   <div className="expo-replay">
@@ -222,9 +222,9 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   </div>
                 </div>
               )}
-              {attractLayout(roles) === 'ai' && <HowStaff foot={<AttractActions voice={state.voice} send={send} />} />}
-              {attractLayout(roles) === 'app' && <FullVersion foot={<AttractActions voice={state.voice} send={send} />} />}
-              {attractLayout(roles) === 'pair' && (
+              {roleLayout(roles) === 'ai' && <HowStaff foot={<AttractActions voice={state.voice} send={send} />} />}
+              {roleLayout(roles) === 'app' && <FullVersion foot={<AttractActions voice={state.voice} send={send} />} />}
+              {roleLayout(roles) === 'pair' && (
                 <div className="expo-attract-side">
                   <HowStaff />
                   <FullVersion />
@@ -248,12 +248,36 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               </div>
             </section>
           )}
-          {p.kind === 'briefing' && state.front && (
+          {p.kind === 'briefing' && state.front && roleLayout(roles) === 'all' && (
             <section className="expo-split expo-briefing">
-              <Briefing front={state.front} point={p.point} controls={controls} send={send} />
+              <Briefing front={state.front} point={p.point} steer={controls} send={send} />
               <div className="expo-mapframe">
                 <div className="expo-mapslot" role="img" aria-label={`Обстановка к 16 апреля 1945: ${BRIEFING[state.front][p.point]?.title ?? ''}`} />
               </div>
+            </section>
+          )}
+          {p.kind === 'briefing' && state.front && roleLayout(roles) === 'map' && (
+            <section className="expo-brief-map">
+              <BriefBar front={state.front} point={p.point} send={send} />
+              <div className="expo-mapframe">
+                <div className="expo-mapslot" role="img" aria-label={`Обстановка к 16 апреля 1945: ${BRIEFING[state.front][p.point]?.title ?? ''}`} />
+              </div>
+            </section>
+          )}
+          {p.kind === 'briefing' && state.front && roleLayout(roles) === 'ai' && (
+            <section className="expo-brief-solo">
+              <Briefing front={state.front} point={p.point} steer send={send} />
+            </section>
+          )}
+          {p.kind === 'briefing' && state.front && roleLayout(roles) === 'app' && (
+            <section className="expo-brief-solo">
+              <Excursion point={p.point} />
+            </section>
+          )}
+          {p.kind === 'briefing' && state.front && roleLayout(roles) === 'pair' && (
+            <section className="expo-brief-pair">
+              <Briefing front={state.front} point={p.point} steer send={send} />
+              <Excursion point={p.point} />
             </section>
           )}
           {p.kind === 'turn' && (
@@ -424,8 +448,40 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
 /** Краткие названия пунктов доклада — для строки пунктов. */
 const BRIEF_STEPS = ['Задача', 'Силы', 'Противник', 'Местность', 'Соседи', 'Соотношение'];
 
+/** Строка пункта на экране карты: название, пункты доклада, переход дальше. Цифры — на соседнем экране. */
+function BriefBar({ front, point, send }: { front: FrontId; point: number; send: (ev: DirectorEvent) => void }) {
+  const points = BRIEFING[front];
+  const cur = points[point];
+  if (!cur) return null;
+  const last = point + 1 >= points.length;
+  return (
+    <div className="expo-brief-bar">
+      <h2>{cur.title}</h2>
+      <ol className="expo-brief-steps" aria-label="Пункты доклада">
+        {points.map((x, i) => (
+          <li key={x.title}>
+            <button aria-current={i === point ? 'step' : undefined} onClick={() => send({ t: 'brief', point: i })}>
+              <span>{i + 1}</span> {BRIEF_STEPS[i] ?? x.title}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <div className="expo-brief-go">
+        {!last && (
+          <button className="expo-secondary" onClick={() => send({ t: 'brief', point: point + 1 })}>
+            Дальше
+          </button>
+        )}
+        <button className="expo-primary" onClick={() => send({ t: 'next' })}>
+          К решениям
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Ввод в обстановку: доклад начальника штаба по пунктам — заголовок, крупные цифры с источником, доводы. */
-function Briefing({ front, point, controls, send }: { front: FrontId; point: number; controls: boolean; send: (ev: DirectorEvent) => void }) {
+function Briefing({ front, point, steer, send }: { front: FrontId; point: number; steer: boolean; send: (ev: DirectorEvent) => void }) {
   const points = BRIEFING[front];
   const cur = points[point];
   if (!cur) return null;
@@ -438,7 +494,7 @@ function Briefing({ front, point, controls, send }: { front: FrontId; point: num
       <ol className="expo-brief-steps" aria-label="Пункты доклада">
         {points.map((x, i) => (
           <li key={x.title}>
-            <button aria-current={i === point ? 'step' : undefined} disabled={!controls} onClick={() => send({ t: 'brief', point: i })}>
+            <button aria-current={i === point ? 'step' : undefined} disabled={!steer} onClick={() => send({ t: 'brief', point: i })}>
               <span>{i + 1}</span> {BRIEF_STEPS[i] ?? x.title}
             </button>
           </li>
@@ -461,7 +517,7 @@ function Briefing({ front, point, controls, send }: { front: FrontId; point: num
           <li key={l}>{l}</li>
         ))}
       </ul>
-      {controls && (
+      {steer && (
         <div className="expo-brief-go">
           {!last && (
             <button className="expo-secondary" onClick={() => send({ t: 'brief', point: point + 1 })}>
@@ -808,15 +864,16 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
   const hist = maps.history;
   const start = hist?.doc.timeline?.start ?? MAP.days[0];
   const sector = sectorBox;
+  const roles = layoutFor(count === 2 || count === 3 ? count : 1).find((s) => s.window === index)?.roles ?? [];
   if (p.kind === 'attract') {
     const d = maps.best ?? hist;
-    const roles = layoutFor(count === 2 || count === 3 ? count : 1).find((s) => s.window === index)?.roles ?? [];
     if (!d || !roles.includes('map')) return null;
     return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: THEATRE, key: `attract-${index}`, ms: 0 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
   if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'corps', zones: hist.zones };
   if (p.kind === 'briefing' && hist && state.front) {
+    if (!roles.includes('map')) return null;
     const pt = BRIEFING[state.front][p.point];
     if (!pt) return null;
     // кадр пункта доклада; на первом — артиллерийская подготовка 16 апреля, 5:00, на переднем крае фронта

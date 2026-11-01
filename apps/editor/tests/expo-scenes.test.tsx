@@ -126,6 +126,24 @@ it('one monitor: header shows any screen of the three-screen layout full-size', 
   expect(v.getByRole('heading', { name: 'Карта' })).toBeTruthy();
 });
 
+it('briefing: map, figures and excursion are different screens', () => {
+  const s = { ...at(initialState(0), { t: 'ready' }), front: 'su_1bf' as const, phase: { kind: 'briefing' as const, point: 2 } };
+  const model = { view: null, error: null };
+  const facts = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(facts.getByRole('heading', { name: 'Противник' })).toBeTruthy();
+  expect(facts.queryByRole('heading', { name: 'Одерско-нейсенский рубеж' })).toBeNull();
+  cleanup();
+  const map = render(<ExpoView window={1} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(map.getByRole('img', { name: /Обстановка к 16 апреля 1945/ })).toBeTruthy();
+  expect(map.queryByText('20–40 км')).toBeNull();
+  cleanup();
+  const note = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(note.getByRole('heading', { name: 'Одерско-нейсенский рубеж' })).toBeTruthy();
+  expect(note.getByText('20–40 км')).toBeTruthy();
+  expect(note.getByText(/с\. 246–248/)).toBeTruthy();
+  expect(note.queryByRole('img', { name: /Обстановка к 16 апреля 1945/ })).toBeNull();
+});
+
 it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the full app', () => {
   const s = at(initialState(0), { t: 'ready' });
   const model = { view: null, error: null } as const;
