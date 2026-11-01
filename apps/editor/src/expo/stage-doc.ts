@@ -1,35 +1,85 @@
 /**
  * Карта стенда — документ полного режима по ходу ядра сеанса: те же `agentsToRun` → `runToDocument`, что у переигровки
- * агентной модели, но только слои уровня фронта (армии, линия фронта, театр) — документ в разы легче и не перегружает
- * окна стенда. Поверх — стрелки приказа карточки и пути армий на итоге (знаки атласа), кадр камеры по рамке.
+ * агентной модели, и те же слои, что у экрана «Командование» (реки театра, линии фронта, войска уровней «Фронт»
+ * и «Корпус», бои, котлы, крепости, полосы), без слоёв истории и тыла. Уровень знаков сцена выбирает `withLevel`,
+ * как в полном режиме. Зоны влияния сторон — снимками по суткам (`zonesOf`), картинкой под знаками.
+ * Поверх — стрелки приказа карточки и пути армий на итоге (знаки атласа), кадр камеры по рамке.
  */
-import { createFeature, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
-import { agentsHistory, agentsToRun, runToDocument, type AgentHistory, type AgentTrace, type History, type SimContext } from '@def-ops/sim';
+import { createFeature, DEFAULT_SIZING, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
+import { agentsHistory, agentsToRun, runToDocument, snapshotZones, type AgentHistory, type AgentTrace, type History, type SimContext, type ZoneGrid } from '@def-ops/sim';
 import type { Arrow } from './map';
 
-/** Слои карты стенда; видимые сразу — все, кроме исторической линии фронта (она — на итоге). */
-export const STAGE_LAYERS = ['theatre', 'sim-front-start', 'sim-front', 'sim-pockets', 'hist-front', 'lvl-op-hist', 'lvl-op-units'];
-const HIDDEN = new Set(['hist-front', 'lvl-op-hist', 'sim-front-start']);
+/** Слои карты стенда (как у «Командования»); историческая линия фронта и положения армий по истории — скрыты. */
+export const STAGE_LAYERS = [
+  'rivers', 'theatre', 'sim-front-start', 'sim-front-prev', 'sim-front', 'sim-pockets', 'sim-fortress', 'sim-corps', 'sim-enemy', 'sim-own',
+  'sim-combat', 'sim-bounds', 'hist-front', 'lvl-op-hist', 'lvl-op-units', 'lvl-op-moves', 'lvl-op-bounds',
+];
+const HIDDEN = new Set(['hist-front', 'lvl-op-hist']);
 export const ORDERS_LAYER = 'expo-orders';
+
+/** Рамка [запад, юг, восток, север]. */
+export type Bbox4 = [number, number, number, number];
 
 /** Шаг снимков карты, ч: армии идут по положениям ядра через столько часов (между ними — плавно). */
 export const STAGE_STEP_H = 3;
 
-export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null): MapDocument {
+/** Зоны влияния на момент `time`: снимок хода ядра; значения — обычным массивом (документ идёт окнам через JSON). */
+export interface ZoneFrame { time: string; grid: ZoneGrid }
+
+/** Знак реки театра (большие — толще), как на карте «Командования». */
+const river = (rv: { name?: string; major?: boolean; line: LngLat[] }): Feature => {
+  const f = createFeature('line', 'inf.river', { points: rv.line, layerId: 'rivers' }, rv.major ? 1.3 : 0.7);
+  f.name = rv.name;
+  return f;
+};
+
+export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHistory, baseHistory: History | null): { doc: MapDocument; zones: ZoneFrame[] } {
   const { ctx, run } = agentsToRun(base, trace, STAGE_STEP_H);
   const doc = runToDocument(ctx, run, agentsHistory(history, baseHistory), { name: 'Стенд', frontCombine: 'max' });
   const keep = new Set(STAGE_LAYERS);
+  const rivers = ctx.theatre.data.rivers.filter((rv) => rv.line.length > 1).map(river);
+  const layers = [{ id: 'rivers', name: 'Театр: реки', role: 'base' as const, visible: true, locked: true, opacity: 0.85 }, ...doc.layers];
   return {
-    ...doc,
-    paper: '#efe4c8',
-    // знаки — «как на местности»: смена зума при пролёте камеры не требует перерисовки всех знаков
-    sizing: { min: 0, max: null },
-    layers: [
-      ...doc.layers.filter((l) => keep.has(l.id)).map((l) => ({ ...l, visible: !HIDDEN.has(l.id), locked: true })),
-      { id: ORDERS_LAYER, name: 'Приказ', role: 'custom', visible: true, locked: true, opacity: 1 },
-    ],
-    features: doc.features.filter((f) => keep.has(f.layerId)),
+    doc: {
+      ...doc,
+      paper: '#efe4c8',
+      // размер знаков — как у карты полного режима по умолчанию: растут с картой не больше чем в полтора раза
+      sizing: DEFAULT_SIZING,
+      declutter: true,
+      layers: [
+        ...layers.filter((l) => keep.has(l.id)).map((l) => ({ ...l, visible: l.visible && !HIDDEN.has(l.id), locked: true })),
+        { id: ORDERS_LAYER, name: 'Приказ', role: 'custom', visible: true, locked: true, opacity: 1 },
+      ],
+      features: [...rivers, ...doc.features.filter((f) => keep.has(f.layerId)).map(quiet)],
+    },
+    zones: zonesOf(ctx, run.snapshots),
   };
+}
+
+/** Дивизии на уровне «Корпус» — без номеров: подписи у контуров корпусов, на экране стенда номера дивизий слипаются. */
+const UNNAMED = new Set(['sim-own', 'sim-enemy']);
+const quiet = (f: Feature): Feature => (f.kind === 'symbol' && UNNAMED.has(f.layerId) && f.style.text ? { ...f, style: { ...f.style, text: '' } } : f);
+
+/** Зоны влияния советской стороны по снимкам хода: раз в сутки от начала и последний снимок (как у «Переигровки»). */
+function zonesOf(ctx: SimContext, sn: ReturnType<typeof agentsToRun>['run']['snapshots']): ZoneFrame[] {
+  try {
+    if (!sn.length) return [];
+    const side = (ctx.scenario.sides.find((x) => x.id === 'su') ?? ctx.scenario.sides[0]).id;
+    const t0 = Date.parse(`${sn[0].time}Z`);
+    const picked: typeof sn = [];
+    for (let k = 0; ; k++) {
+      const s = sn.find((x) => Date.parse(`${x.time}Z`) >= t0 + k * 86_400_000);
+      if (!s) break;
+      if (!picked.includes(s)) picked.push(s);
+    }
+    if (!picked.includes(sn[sn.length - 1])) picked.push(sn[sn.length - 1]);
+    return picked.map((s) => {
+      const g = snapshotZones(ctx, s, side);
+      return { time: s.time, grid: { ...g, v: Array.from(g.v, (x) => Math.round(x)) } };
+    });
+  } catch {
+    return [];
+  }
 }
 
 /** Положение армии (знака уровня фронта) по ключевым кадрам на момент `t` (ISO); null — знака нет. */

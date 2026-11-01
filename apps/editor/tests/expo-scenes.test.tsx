@@ -94,7 +94,7 @@ it('maps: panorama replay, briefing camera to the front, turn arrows of the expa
   const v = view();
   v.cards[0] = { ...v.cards[0], arrows };
   // карта перелома — документ сеанса, стрелки приказа подсвеченной карточки — знаками атласа поверх
-  const session = { doc: emptyDocument(), front: 'su_1bf' as const, time: v.time };
+  const session = { doc: emptyDocument(), front: 'su_1bf' as const, time: v.time, zones: [] };
   const plan = (lit: number | null) => mapPlan({ state: choose(), mv: v, maps: { session }, lit, count: 1, index: 0 });
   expect(plan(null)?.extra).toBeUndefined();
   expect(plan(0)?.extra?.map((f) => f.kind)).toEqual(['arrow']);

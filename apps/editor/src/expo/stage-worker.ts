@@ -10,7 +10,7 @@ self.onmessage = async (e: MessageEvent<{ id: number; trace: AgentTrace; history
   try {
     base ??= contextFrom((kind, file) => getData(kind, file), BANK.context);
     const { ctx, history: baseHistory } = await base;
-    postMessage({ id, doc: stageDoc(ctx, trace, history, baseHistory) });
+    postMessage({ id, ...stageDoc(ctx, trace, history, baseHistory) });
   } catch (err) {
     postMessage({ id, error: String((err as Error)?.message ?? err) });
   }

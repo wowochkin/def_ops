@@ -1,19 +1,17 @@
 /**
- * Подложка карты выставочного режима: `npm run expo:map` → apps/editor/src/expo/bank-data/berlin-1945.map.json.
- * Из театра — большие реки (упрощённые), укреплённые полосы, населённые пункты; из истории сценария — положения армий
- * по суткам и события с точкой. Окна стенда рисуют заставку и ввод в обстановку по ней, не дожидаясь ядра.
+ * История операции для стенда: `npm run expo:history` → apps/editor/src/expo/bank-data/berlin-1945.armies.json.
+ * Из истории сценария — положения армий по суткам и события с точкой, из театра — центры главных пунктов. По ним —
+ * стрелки карточек, кадры камеры и сводка хода «где фронт был по истории»; сама карта — карта полного режима.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BANK } from '../apps/editor/src/expo/bank';
-import { shortArmy, simplify, type ExpoMapData } from '../apps/editor/src/expo/map';
+import { shortArmy, type ExpoMapData } from '../apps/editor/src/expo/map';
 
 const ROOT = join(import.meta.dirname, '..');
 const read = (p: string) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
 type LL = [number, number];
 const theatre = read('packages/sim/data/theatres/oder-berlin-1945.json') as {
-  rivers: { name: string; line: LL[]; major: boolean }[];
-  lines: { id: string; side: string; line: LL[] }[];
   areas: { id: string; name: string; ring: LL[] }[];
 };
 const scenario = read(BANK.scenario) as { hqs: { id: string; name: string; side: string; echelon: string; parent: string | null }[] };
@@ -23,7 +21,6 @@ const history = read(BANK.history) as {
 };
 
 const BBOX: [number, number, number, number] = [11.8, 51.1, 15.4, 53.1];
-const inBox = ([x, y]: LL) => x >= BBOX[0] - 0.3 && x <= BBOX[2] + 0.3 && y >= BBOX[1] - 0.3 && y <= BBOX[3] + 0.3;
 const r3 = (p: LL): LL => [Math.round(p[0] * 1000) / 1000, Math.round(p[1] * 1000) / 1000];
 const CITIES: [string, string][] = [
   ['berlin', 'Берлин'], ['Frankfurt', 'Франкфурт'], ['Seelow', 'Зелов'], ['Cottbus', 'Котбус'], ['Spremberg', 'Шпремберг'],
@@ -37,11 +34,6 @@ const days = [...new Set(history.armies.map((a) => a.time))].sort();
 
 const data: ExpoMapData = {
   bbox: BBOX,
-  rivers: theatre.rivers
-    .filter((r) => r.major && r.line.some(inBox))
-    .map((r) => simplify(r.line, 0.01).map(r3))
-    .filter((l) => l.length > 1),
-  lines: theatre.lines.map((l) => ({ side: l.side, line: simplify(l.line, 0.005).map(r3) })),
   cities: CITIES.flatMap(([id, name]) => {
     const a = theatre.areas.find((x) => x.id === id);
     if (!a) return [];
@@ -63,5 +55,5 @@ const data: ExpoMapData = {
     .filter((a) => a.track.some(Boolean)),
   events: history.events.filter((e) => e.at).map((e) => ({ id: e.id, title: e.title, date: e.date, at: r3(e.at!) })),
 };
-writeFileSync(join(ROOT, 'apps/editor/src/expo/bank-data/berlin-1945.map.json'), JSON.stringify(data) + '\n');
-console.log(`рек ${data.rivers.length}, полос ${data.lines.length}, пунктов ${data.cities.length}, армий ${data.armies.length}, суток ${days.length}, событий ${data.events.length}`);
+writeFileSync(join(ROOT, 'apps/editor/src/expo/bank-data/berlin-1945.armies.json'), JSON.stringify(data) + '\n');
+console.log(`пунктов ${data.cities.length}, армий ${data.armies.length}, суток ${days.length}, событий ${data.events.length}`);

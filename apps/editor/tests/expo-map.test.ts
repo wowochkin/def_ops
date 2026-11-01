@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { between, cardArrows, historyAt, MAP, projection, shortArmy, simplify, traceArmies, type ExpoMapData } from '../src/expo/map';
+import { between, cardArrows, historyAt, MAP, shortArmy, traceArmies, type ExpoMapData } from '../src/expo/map';
 
 describe('карта стенда', () => {
   it('подписи армий кратко', () => {
@@ -7,17 +7,6 @@ describe('карта стенда', () => {
     expect(shortArmy('1-я гвардейская танковая армия')).toBe('1 гв. ТА');
     expect(shortArmy('3-я ударная армия')).toBe('3 уд. А');
     expect(shortArmy('1-я армия Войска Польского')).toBe('1 А ВП');
-  });
-
-  it('упрощение сохраняет концы и изгиб', () => {
-    expect(simplify([[0, 0], [1, 0.001], [2, 0]], 0.01)).toEqual([[0, 0], [2, 0]]);
-    expect(simplify([[0, 0], [1, 1], [2, 0]], 0.01)).toHaveLength(3);
-  });
-
-  it('проекция: углы рамки — углы рисунка', () => {
-    const p = projection([10, 50, 12, 52]);
-    expect(p.xy([10, 52])).toEqual([0, 0]);
-    expect(p.xy([12, 50])).toEqual([1000, p.height]);
   });
 
   it('армии по истории — между сутками по прямой, без положения — ближайшее', () => {
@@ -30,9 +19,8 @@ describe('карта стенда', () => {
     expect(at.find((x) => x.id === 'b')!.at).toEqual([5, 5]);
   });
 
-  it('подложка: Берлин, реки и армии обоих фронтов', () => {
+  it('история: Берлин и армии обоих фронтов', () => {
     expect(MAP.cities.find((c) => c.capital)?.name).toBe('Берлин');
-    expect(MAP.rivers.length).toBeGreaterThan(50);
     expect(MAP.armies.filter((a) => a.front === 'su_1bf').length).toBeGreaterThan(5);
     expect(MAP.armies.filter((a) => a.front === 'su_1uf').length).toBeGreaterThan(5);
   });

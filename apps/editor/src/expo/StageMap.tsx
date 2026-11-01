@@ -7,12 +7,15 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { Feature, MapDocument } from '@def-ops/core';
 import { MapView } from '../MapView';
-import type { BasemapSpec, MapEngine } from '../engine/types';
-import { localBasemapSpec } from '../engine/basemaps';
-import { cartography } from '../MapsPanel';
-import { fitView } from './stage-doc';
-import { reducedMotion } from './ExpoMap';
-import { MapFx, type MapFxSpec } from './film';
+import type { MapEngine } from '../engine/types';
+import { basemapDate } from '../engine/basemaps';
+import { useBasemaps } from '../shared';
+import { withLevel } from '../map-levels';
+import type { LevelId } from '../map-level-scale';
+import { zoneOverlays, zonesAt, zonesKey, zoneUrl } from '../zones-overlay';
+import type { ZoneGrid } from '@def-ops/sim';
+import { fitView, type ZoneFrame } from './stage-doc';
+import { MapFx, reducedMotion, type MapFxSpec } from './film';
 
 /** Бег времени: от `from` до `to` за `ms`; `loop` — по кругу с паузой `hold`; `step` — мс между кадрами карты; `delay` — пауза до старта. */
 export interface TimeRun { from: string; to: string; ms: number; key: string; loop?: boolean; hold?: number; step?: number; delay?: number }
@@ -22,24 +25,13 @@ const iso = (t: number) => new Date(t).toISOString().slice(0, 16);
 const ms = (s: string) => Date.parse(`${s.slice(0, 16)}:00Z`);
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
-/** Подложка стенда без сети: своя карта службы картографии (векторная «на дату» лучше), иначе «Бумага». */
-function useStageBasemap(): BasemapSpec | null {
-  const [spec, setSpec] = useState<BasemapSpec | null>(null);
-  useEffect(() => {
-    let alive = true;
-    cartography
-      .list()
-      .then((maps) => {
-        const m = maps.find((x) => x.kind === 'vector') ?? maps[0];
-        if (alive && m) setSpec(localBasemapSpec(m, { tiles: cartography.tileTemplate(m), style: cartography.styleUrl(m) }));
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return spec;
-}
+/** Картинки зон влияния — по сетке один раз (сетки документа не меняются). */
+const zoneUrls = new WeakMap<ZoneGrid, string | null>();
+const urlOf = (g: ZoneGrid | null) => {
+  if (!g) return null;
+  if (!zoneUrls.has(g)) zoneUrls.set(g, zoneUrl(g));
+  return zoneUrls.get(g) ?? null;
+};
 
 /** Момент карты: стоит на `time` или бежит по `run`; сообщает дату наружу через `onTime` (табло без перерисовки сцены). */
 function useClock(time: string | null, run: TimeRun | null, onTime?: (t: string) => void): string | null {
@@ -87,15 +79,27 @@ export interface StageMapProps {
   extra?: Feature[];
   /** Вспышки артиллерии и дым поверх карты. */
   fx?: MapFxSpec | null;
+  /** Уровень знаков, как переключатель уровня полного режима: обзор — армии («Фронт»), участок — «Корпус». */
+  level?: LevelId;
+  /** Зоны влияния сторон по суткам: на время карты — переход от зон суток к зонам следующих. */
+  zones?: ZoneFrame[] | null;
   onTime?: (t: string) => void;
   onEngine?: (e: MapEngine | null) => void;
 }
 
-export const StageMap = memo(function StageMap({ doc, time, run = null, camera, extra, fx = null, onTime, onEngine }: StageMapProps) {
-  const basemap = useStageBasemap();
+export const StageMap = memo(function StageMap({ doc, time, run = null, camera, extra, fx = null, level = 'front', zones = null, onTime, onEngine }: StageMapProps) {
+  // подложка — та, что выбрана в полном режиме (вид «Подложка»), с той же прозрачностью и датой начала операции
+  const bm = useBasemaps();
   const [engine, setEngine] = useState<MapEngine | null>(null);
   const t = useClock(time, run, onTime);
-  const shown = useMemo(() => (doc && extra?.length ? { ...doc, features: [...doc.features, ...extra] } : doc), [doc, extra]);
+  const zAt = useMemo(() => (zones?.length && t ? zonesAt(zones, t) : null), [zones, t]);
+  const zOv = zAt && t ? zoneOverlays({ cur: zAt.cur, prev: zAt.prev, urls: { cur: urlOf(zAt.cur), prev: urlOf(zAt.prev) }, from: zAt.from, to: zAt.to, time: t, on: true }) : [];
+  const zKey = zonesKey(zAt, { own: true, enemy: true }, zOv);
+  const shown = useMemo(() => {
+    if (!doc) return null;
+    const d = withLevel(extra?.length ? { ...doc, features: [...doc.features, ...extra] } : doc, level);
+    return zOv.length ? { ...d, overlays: [...d.overlays, ...zOv] } : d;
+  }, [doc, extra, level, zKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     onEngine?.(engine);
   }, [engine, onEngine]);
@@ -121,9 +125,9 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
         tool={{ mode: 'select' }}
         setTool={() => {}}
         activeLayer={null}
-        basemap={basemap}
-        basemapOpacity={0.85}
-        basemapDate={basemap?.dated ? t ?? doc?.timeline?.start ?? '1945-04-16' : null}
+        basemap={bm.current}
+        basemapOpacity={bm.opacity}
+        basemapDate={basemapDate(bm.current, doc?.timeline?.start ?? null, bm.year)}
         onEngineReady={setEngine}
         onStatus={() => {}}
         time={t}

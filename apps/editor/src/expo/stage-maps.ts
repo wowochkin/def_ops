@@ -6,10 +6,11 @@
 import type { MapDocument } from '@def-ops/core';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { FrontId } from './settings';
+import type { ZoneFrame } from './stage-doc';
 
 export type StageKey = 'history' | 'session' | 'best';
-/** Документ и чей он: фронт сеанса и момент конца хода (по нему вид сеанса узнаёт свой документ). */
-export interface StageDoc { doc: MapDocument; front: FrontId | null; time: string }
+/** Документ и чей он: фронт сеанса и момент конца хода (по нему вид сеанса узнаёт свой документ); зоны влияния по суткам. */
+export interface StageDoc { doc: MapDocument; front: FrontId | null; time: string; zones: ZoneFrame[] }
 export type StageDocs = Partial<Record<StageKey, StageDoc>>;
 
 /** Подпись набора документов: какие есть и на какой момент. */
@@ -19,15 +20,16 @@ export function stageMaps(onDoc: (key: StageKey, d: StageDoc) => void) {
   let worker: Worker | null = null;
   let seq = 0;
   let best = -Infinity;
-  const pending = new Map<number, (doc: MapDocument | null) => void>();
+  type Built = { doc: MapDocument; zones: ZoneFrame[] };
+  const pending = new Map<number, (b: Built | null) => void>();
   const docs: StageDocs = {};
   const build = (trace: AgentTrace, history: AgentHistory) =>
-    new Promise<MapDocument | null>((resolve) => {
+    new Promise<Built | null>((resolve) => {
       if (!worker) {
         worker = new Worker(new URL('./stage-worker.ts', import.meta.url), { type: 'module' });
-        worker.onmessage = (e: MessageEvent<{ id: number; doc?: MapDocument; error?: string }>) => {
+        worker.onmessage = (e: MessageEvent<{ id: number; doc?: MapDocument; zones?: ZoneFrame[]; error?: string }>) => {
           if (e.data.error) console.warn('карта стенда:', e.data.error);
-          pending.get(e.data.id)?.(e.data.doc ?? null);
+          pending.get(e.data.id)?.(e.data.doc ? { doc: e.data.doc, zones: e.data.zones ?? [] } : null);
           pending.delete(e.data.id);
         };
       }
@@ -45,17 +47,17 @@ export function stageMaps(onDoc: (key: StageKey, d: StageDoc) => void) {
     /** Ход сеанса; `score` — сумма осей завершённого сеанса (лучший за день — на заставку). */
     async session(trace: AgentTrace, history: AgentHistory, front: FrontId, score?: number) {
       const time = end(trace);
-      const doc = await build(trace, history);
-      if (!doc) return;
-      put('session', { doc, front, time });
+      const b = await build(trace, history);
+      if (!b) return;
+      put('session', { ...b, front, time });
       if (score !== undefined && score > best) {
         best = score;
-        put('best', { doc, front, time });
+        put('best', { ...b, front, time });
       }
     },
     async history(trace: AgentTrace, history: AgentHistory) {
-      const doc = await build(trace, history);
-      if (doc) put('history', { doc, front: null, time: end(trace) });
+      const b = await build(trace, history);
+      if (b) put('history', { ...b, front: null, time: end(trace) });
     },
     dispose() {
       worker?.terminate();

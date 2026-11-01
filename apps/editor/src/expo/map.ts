@@ -1,15 +1,13 @@
 /**
- * Карта стенда без тайлов: подложка (реки, рубежи, пункты, армии по истории — `bank-data/*.map.json`, готовит
- * `npm run expo:map`) и положения армий по ходу ядра сеанса (среднее дивизий армии в кадре).
+ * История операции для стенда: пункты, армии по суткам истории и события (`bank-data/*.armies.json`, готовит
+ * `npm run expo:history`), положения армий по ходу ядра сеанса (среднее дивизий армии в кадре).
  */
-import raw from './bank-data/berlin-1945.map.json';
+import raw from './bank-data/berlin-1945.armies.json';
 import type { FrontId } from './settings';
 
 export type LL = [number, number];
 export interface ExpoMapData {
   bbox: [number, number, number, number];
-  rivers: LL[][];
-  lines: { side: string; line: LL[] }[];
   cities: { name: string; at: LL; capital: boolean }[];
   /** Сутки истории (ISO), к ним — положения армий в `track` (null — положения нет). */
   days: string[];
@@ -28,28 +26,6 @@ export function shortArmy(name: string): string {
   const gv = /гвардейск/.test(name) ? 'гв. ' : /ударн/.test(name) ? 'уд. ' : '';
   const kind = /танков/.test(name) ? 'ТА' : 'А';
   return `${n} ${gv}${kind}${/Польск/.test(name) ? ' ВП' : ''}`;
-}
-
-/** Упрощение линии (Дуглас — Пекер), допуск в градусах. */
-export function simplify(line: LL[], tol: number): LL[] {
-  if (line.length < 3) return line;
-  const [a, b] = [line[0], line[line.length - 1]];
-  let best = -1, at = 0;
-  for (let i = 1; i < line.length - 1; i++) {
-    const p = line[i], dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1e-9;
-    const d = Math.abs(dy * p[0] - dx * p[1] + b[0] * a[1] - b[1] * a[0]) / len;
-    if (d > best) [best, at] = [d, i];
-  }
-  if (best <= tol) return [a, b];
-  return [...simplify(line.slice(0, at + 1), tol).slice(0, -1), ...simplify(line.slice(at), tol)];
-}
-
-/** Проекция рамки в координаты рисунка шириной 1000 (высота — по широте середины). */
-export function projection(bbox: ExpoMapData['bbox']) {
-  const [w, s, e, n] = bbox;
-  const k = Math.cos((((s + n) / 2) * Math.PI) / 180);
-  const width = 1000, height = Math.round((width * (n - s)) / ((e - w) * k));
-  return { width, height, xy: ([lng, lat]: LL): LL => [((lng - w) / (e - w)) * width, ((n - lat) / (n - s)) * height] };
 }
 
 const lerp = (a: LL, b: LL, t: number): LL => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
@@ -112,4 +88,14 @@ export function between(a: ArmyPos[], b: ArmyPos[], t: number): ArmyPos[] {
 export function mainPaths(paths: Record<string, LL[]>, n = 4): Record<string, LL[]> {
   const km = (l: LL[]) => l.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - l[i][0], p[1] - l[i][1]), 0);
   return Object.fromEntries(Object.entries(paths).filter(([, l]) => l.length > 1).sort((a, b) => km(b[1]) - km(a[1])).slice(0, n));
+}
+
+/** Исторические пути армий фронта (по суткам истории) — полой стрелкой на итоге. */
+export function historyPaths(front: string, until?: string): Record<string, LL[]> {
+  const out: Record<string, LL[]> = {};
+  for (const a of MAP.armies.filter((x) => x.front === front)) {
+    const l = a.track.filter((p, i): p is LL => !!p && (!until || MAP.days[i] <= until));
+    if (l.length > 1) out[a.id] = l;
+  }
+  return out;
 }

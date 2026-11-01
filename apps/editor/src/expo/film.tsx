@@ -6,7 +6,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MapEngine } from '../engine/types';
 import type { LL } from './map';
-import { reducedMotion } from './ExpoMap';
+
+/** Системная настройка «уменьшить движение»: анимация сразу показывает конечный кадр. */
+export const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Текстура зерна: шум 256×256, один раз на окно. */
 let grainUrl: string | null = null;

@@ -14,13 +14,13 @@ import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
-import { ExpoMap, historyPaths } from './ExpoMap';
+import { StageMini } from './StageMini';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
 import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
 import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
-import { historyAt, mainPaths, MAP, type Arrow, type ArmyPos, type LL } from './map';
+import { historyAt, historyPaths, mainPaths, MAP, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
@@ -217,7 +217,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               <div className="expo-fronts">
                 {settings.fronts.map((f) => (
                   <button key={f} aria-pressed={settings.fronts[frontIndex] === f} disabled={!controls} onClick={() => send({ t: 'pickFront', front: f })}>
-                    <ExpoMap armies={START} focus={f} labels="places" arrows={frontArrows(f)} include={frontArrows(f).map((a) => a.to)} className="expo-minimap" label={`Задача: ${FRONT_NAMES[f]}`} />
+                    <FrontMini front={f} d={maps.history} />
                     <strong>{FRONT_NAMES[f]}</strong>
                     <span className="expo-marshal">{FRONT_MARSHALS[f]}</span>
                     <span className="expo-task">{FRONT_TASKS[f]}</span>
@@ -274,7 +274,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                       <Cards
                         cards={mv?.cards ?? []}
                         front={state.front ?? 'su_1bf'}
-                        armies={mv?.map.armies.length ? mv.map.armies : START}
+                        doc={(mv && sessionDoc(maps.session, mv)) ?? maps.history ?? null}
+                        time={mv?.time ?? MAP.days[0]}
                         disabled={state.paused}
                         canReplace={!state.paused && p.replacements < settings.maxReplacements}
                         replaceLabel={settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
@@ -425,11 +426,27 @@ function ArmyMark({ army }: { army?: string }) {
   );
 }
 
-/** Мини-карта решения: схема полосы фронта и стрелки этой карточки. */
-function CardMini({ c, front, armies }: { c: CardView; front: FrontId; armies: ArmyPos[] }) {
+/** Мини-карта решения: участок фронта на карте полного режима и стрелки распоряжений этой карточки. */
+function CardMini({ c, front, d, time, big = false }: { c: CardView; front: FrontId; d: StageDoc | null; time: string; big?: boolean }) {
   const arrows = c.arrows ?? [];
-  return <ExpoMap armies={armies.filter((a) => a.front === front)} focus={front} labels={false} arrows={arrows} include={arrows.map((x) => x.to)} className="expo-cardmap" label={`Схема: ${c.title}`} />;
+  const extra = useMemo(() => (d && arrows.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined), [d, arrows]);
+  const bbox = useMemo(() => (arrows.length ? bboxOf(arrows.flatMap((a) => [a.from, a.to])) : sectorBox(front, [])), [arrows, front]);
+  return <StageMini doc={d?.doc ?? null} time={time} bbox={pad(bbox, 0.12)} extra={extra} width={big ? 560 : 172} height={big ? 300 : 150} className="expo-cardmap" label={`Схема: ${c.title}`} />;
 }
+
+/** Мини-карта выбора фронта: полоса фронта на 16 апреля и стрелки задачи танковых армий. */
+function FrontMini({ front, d }: { front: FrontId; d: StageDoc | undefined }) {
+  const arrows = useMemo(() => frontArrows(front), [front]);
+  const extra = useMemo(() => (d ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined), [d, arrows]);
+  const bbox = useMemo(() => pad(sectorBox(front, arrows.map((a) => a.to)), 0.05), [front, arrows]);
+  return <StageMini doc={d?.doc ?? null} time={MAP.days[0]} bbox={bbox} extra={extra} width={860} height={400} className="expo-minimap" label={`Задача: ${FRONT_NAMES[front]}`} />;
+}
+
+/** Рамка с запасом `k` от размера по каждой оси. */
+const pad = (b: Bbox, k: number): Bbox => {
+  const dx = (b[2] - b[0]) * k + 0.05, dy = (b[3] - b[1]) * k + 0.03;
+  return [b[0] - dx, b[1] - dy, b[2] + dx, b[3] + dy];
+};
 
 /** Цифра-факт с источником. */
 function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
@@ -446,7 +463,8 @@ function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
 function Cards(props: {
   cards: CardView[];
   front: FrontId;
-  armies: ArmyPos[];
+  doc: StageDoc | null;
+  time: string;
   disabled: boolean;
   canReplace: boolean;
   replaceLabel: string;
@@ -457,7 +475,7 @@ function Cards(props: {
   setHover: (n: number | null) => void;
   send: (ev: DirectorEvent) => void;
 }) {
-  const { cards, front, armies, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
+  const { cards, front, doc, time, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
   const open = expanded !== null ? cards[expanded] : undefined;
   if (expanded !== null && open)
     return (
@@ -468,7 +486,7 @@ function Cards(props: {
         </header>
         <div className="expo-sheet-media">
           <ArmyMark army={open.army} />
-          <CardMini c={open} front={front} armies={armies} />
+          <CardMini c={open} front={front} d={doc} time={time} big />
         </div>
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
@@ -505,7 +523,7 @@ function Cards(props: {
             <button className="expo-card-main" disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
               <span className="expo-card-media">
                 {c && <ArmyMark army={c.army} />}
-                {c && <CardMini c={c} front={front} armies={armies} />}
+                {c && <CardMini c={c} front={front} d={doc} time={time} />}
               </span>
               <span className="expo-card-body">
                 <strong>
@@ -713,26 +731,28 @@ const THEATRE: Bbox = [12.2, 51.35, 15.2, 53.05];
 const BERLIN = MAP.cities.find((c) => c.capital)!.at;
 const tank = (army: string) => /ТА/.test(MAP.armies.find((a) => a.id === army)?.label ?? '');
 const ZOOM = 8;
+/** Участок фронта: армии фронта на 16 апреля, Берлин и точки `extra`. */
+const sectorBox = (front: string, extra: LL[]): Bbox => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
 
 /** Что показывает карта стенда в сцене: документ, момент или бег времени, кадр камеры и знаки поверх; null — карты нет. */
 export function mapPlan({ state, mv, maps, lit, count, index }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number }): StageMapProps | null {
   const p = state.phase;
   const hist = maps.history;
   const start = hist?.doc.timeline?.start ?? MAP.days[0];
-  const sector = (front: string, extra: LL[]) => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
+  const sector = sectorBox;
   if (p.kind === 'attract') {
     const d = maps.best ?? hist;
     if (!d) return null;
     const w = (THEATRE[2] - THEATRE[0]) / count;
     const part: Bbox = count > 1 ? [THEATRE[0] + w * index, THEATRE[1], THEATRE[0] + w * (index + 1), THEATRE[3]] : THEATRE;
-    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
-  if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null };
+  if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'corps', zones: hist.zones };
   if (p.kind === 'briefing' && hist && state.front) {
     const arrows = frontArrows(state.front);
     // 16 апреля, 5:00 — артиллерийская подготовка на переднем крае фронта
-    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank), fx: { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } };
+    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank), level: 'corps', zones: hist.zones, fx: { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } };
   }
   if (p.kind === 'turn' && mv) {
     const own = sessionDoc(maps.session, mv);
@@ -749,7 +769,7 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     const moving = p.step === 'scroll' && own && own.time === mv.time && mv.map.prev && !mv.busy;
     const time = own ? (p.step === 'scroll' && !moving && mv.map.prev ? mv.map.prev.time : mv.time) : start;
     const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
-    return { doc: d.doc, time, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, delay: 500, key: `run-${mv.time}` } : null, camera, extra, fx };
+    return { doc: d.doc, time, level: 'corps', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, delay: 500, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
     const own = sessionDoc(maps.session, mv);
@@ -759,7 +779,7 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     const hp = historyPaths(mv.front, own.time);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
     const pts = [...Object.values(paths), ...Object.values(history)].flat();
-    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, extra: pathFeatures(own.doc, paths, history, ZOOM), fx: { front: [], smoke: [BERLIN], bursts: [] } };
+    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, level: 'front', zones: own.zones, extra: pathFeatures(own.doc, paths, history, ZOOM), fx: { front: [], smoke: [BERLIN], bursts: [] } };
   }
   return null;
 }
