@@ -46,7 +46,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   volume: { voice: 0.8, ambient: 0.3, ambientOn: false },
   screens: { count: 3, order: [] },
   pin: '0000',
-  maxReplacements: 2,
+  maxReplacements: 4,
   attractCall: { on: true, minutes: 3 },
 }) as ExpoSettings;
 

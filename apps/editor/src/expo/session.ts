@@ -8,7 +8,7 @@
  * Прокрутка — ход ядра до следующего перелома; после третьего — досчёт до конца операции и итог по осям.
  */
 import { agentsEvents, lossSeries, type AgentHistory, type AgentTrace, type EventResult, type History, type SimContext } from '@def-ops/sim';
-import { deal, replacement, type Bank, type Card, type CardFact, type TurnN } from './bank';
+import { deal, replacement, spares, type Bank, type Card, type CardFact, type TurnN } from './bank';
 import { axes, axisNote, feedLines, forecast, rankOf, type AxesDetail } from './score';
 import type { FrontId } from './settings';
 import { cardArrows, historyAt, MAP, traceArmies, type Arrow, type ArmyPos, type LL } from './map';
@@ -62,6 +62,8 @@ export interface ModelView {
   /** Строки хода операции (события расчёта), новые в конце. */
   feed: string[];
   final: { scales: Scales; rank: string; matches: number; forecast: string } | null;
+  /** Сколько своих карточек перелома можно поставить взамен показанных. */
+  spare: number;
   /** Задачи фронта по порядку ключевых событий. */
   tasks: Task[];
   /** Потери фронта (личный состав) к часу хода и потери того же фронта «как было» на тот же час. */
@@ -134,7 +136,7 @@ export class ExpoSession {
     const start = this.start0();
     this.view = {
       front, turn: 1, time: start, hour: 0, cards: [], decisions: [], reveal: null, feed: [], final: null, busy: false, error: null,
-      tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start),
+      spare: 0, tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start),
       map: { armies: historyAt(start), prev: null, flashes: [], path: {} },
       scales: this.scales([], start, 0),
     };
@@ -196,6 +198,12 @@ export class ExpoSession {
     const ids = deal(this.bank, this.front, n, this.rnd);
     this.shown = [...ids];
     Object.assign(this.view, { turn: n, cards: ids.map((id) => this.show(this.card(id))), reveal: null });
+    this.view.spare = this.spareCount();
+  }
+
+  /** Сколько своих карточек перелома можно поставить взамен (их нет на экране). */
+  private spareCount() {
+    return spares(this.bank, this.front, this.view.turn, this.view.cards.map((c) => c.id), this.extra).length;
   }
 
   /** Заменить карточку в слоте; false — заменить нечем (или историческая). */
@@ -203,10 +211,12 @@ export class ExpoSession {
     const cur = this.view.cards[slot];
     if (!cur || this.card(cur.id)?.historical) return false;
     if (ai) this.extra.push(ai);
-    const r = ai?.id ?? replacement(this.bank, this.shown, cur.id, this.rnd);
+    const r = ai?.id ?? replacement(this.bank, this.shown, cur.id, this.rnd, this.view.cards.map((c) => c.id), this.extra);
     if (!r) return false;
-    this.shown.push(r);
-    this.view.cards = this.view.cards.map((c, i) => (i === slot ? this.show(this.card(r), ai ? 'now' : 'bank') : c));
+    if (!this.shown.includes(r)) this.shown.push(r);
+    const again = this.extra.find((c) => c.id === r);
+    this.view.cards = this.view.cards.map((c, i) => (i === slot ? this.show(this.card(r), ai || again ? 'now' : 'bank') : c));
+    this.view.spare = this.spareCount();
     return true;
   }
 

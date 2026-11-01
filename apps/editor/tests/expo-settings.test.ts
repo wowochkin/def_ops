@@ -11,7 +11,7 @@ describe('настройки стенда', () => {
     const r = normalizeSettings(EXPO_DEFAULTS);
     expect(r.problems).toEqual([]);
     expect(r.settings).toEqual(EXPO_DEFAULTS);
-    expect(EXPO_DEFAULTS).toMatchObject({ autostart: false, aiMode: 'ai', input: 'touch', voiceInput: false, pin: '0000', maxReplacements: 2, idleSeconds: 90, resultSeconds: 20, timer: { on: true, seconds: 30 }, fronts: ['su_1bf', 'su_1uf'], volume: { voice: 0.8, ambient: 0.3, ambientOn: false }, screens: { count: 3, order: [] } });
+    expect(EXPO_DEFAULTS).toMatchObject({ autostart: false, aiMode: 'ai', input: 'touch', voiceInput: false, pin: '0000', maxReplacements: 4, idleSeconds: 90, resultSeconds: 20, timer: { on: true, seconds: 30 }, fronts: ['su_1bf', 'su_1uf'], volume: { voice: 0.8, ambient: 0.3, ambientOn: false }, screens: { count: 3, order: [] } });
   });
 
   it('corrupt settings fall back', async () => {

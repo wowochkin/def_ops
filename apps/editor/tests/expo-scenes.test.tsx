@@ -12,7 +12,7 @@ afterEach(cleanup);
 const scales = { axes: { speed: 0.5, cost: -0.2, intent: 1, days: -1.5, lossRatio: 1.06, done: 2, due: 2 }, notes: { speed: 'быстрее истории на 1,5 сут', cost: 'потери больше истории на 6 %', intent: 'выполнено 2 из 2' } };
 const view = (patch: Partial<ModelView> = {}): ModelView => ({
   front: 'su_1bf', turn: 1, time: '1945-04-16T05:00', hour: 0, decisions: [], reveal: null, feed: [], final: null, busy: false, error: null, scales, map: { armies: [], prev: null, flashes: [], path: {} },
-  tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 },
+  spare: 1, tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 },
   cards: [
     { id: 'bf1-north', title: 'Обход высот с севера', lines: ['Танковые армии — севернее, через Врицен', 'б', 'в', 'г'] },
     { id: 'bf1-hist', title: 'Ночной штурм с прожекторами', lines: ['а', 'б', 'в', 'г'] },

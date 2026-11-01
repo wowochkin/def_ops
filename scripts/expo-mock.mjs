@@ -12,7 +12,7 @@ export const EXPO_CFG = {
   volume: { voice: 0.8, ambient: 0.3, ambientOn: false },
   screens: { count: 1, order: [] },
   pin: '0000',
-  maxReplacements: 2,
+  maxReplacements: 4,
 };
 
 /** Новая страница с макетом Tauri; `calls` — журнал команд, `voice` — ответ голосовой службы (с задержкой `voiceMs`, при `firstOnly` — только первый). */

@@ -99,7 +99,12 @@ describe('сеанс модели', () => {
     const before = s.view.cards.map((c) => c.id);
     expect(s.replace(own)).toBe(true);
     expect(before).not.toContain(s.view.cards[own].id);
-    expect(s.replace(own)).toBe(false);
+    // новых нет — по кругу из уже показанных, которых нет на экране: «Другой вариант» работает снова
+    expect(s.view.spare).toBeGreaterThan(0);
+    const second = s.view.cards[own].id;
+    expect(s.replace(own)).toBe(true);
+    expect(s.view.cards[own].id).not.toBe(second);
+    expect(s.view.cards.map((c) => c.id).filter((id) => id === s.view.cards[own].id)).toHaveLength(1);
   });
 
   it('time and reference helpers', () => {

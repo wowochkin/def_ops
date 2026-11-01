@@ -269,8 +269,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         doc={(mv && sessionDoc(maps.session, mv)) ?? maps.history ?? null}
                         time={mv?.time ?? MAP.days[0]}
                         disabled={state.paused}
-                        canReplace={!state.paused && p.replacements < settings.maxReplacements}
-                        replaceLabel={settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
+                        canReplace={!state.paused && p.replacements < settings.maxReplacements && (settings.aiMode === 'ai' || (mv?.spare ?? 0) > 0)}
+                        replaceLabel={p.replacements >= settings.maxReplacements ? 'Замен больше нет' : settings.aiMode !== 'ai' && mv && mv.spare === 0 ? 'Вариантов больше нет' : settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
                         hoverLights={access.hoverExpand}
                         expanded={expanded}
                         lit={expanded ?? hover}
