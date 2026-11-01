@@ -5,7 +5,7 @@
  * Нужна запущенная голосовая служба (её поднимает приложение). Служба общая: сменённая здесь модель — и у живого
  * голоса приложения; при выходе из студии (Ctrl+C) возвращается прежняя.
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,7 +25,24 @@ if (!existsSync(mpath)) throw new Error(`нет предзаписи (${mpath}) 
 const load = () => JSON.parse(readFileSync(mpath, 'utf8')) as Manifest;
 const save = (m: Manifest) => { writeFileSync(`${mpath}.tmp`, `${JSON.stringify(m, null, 1)}\n`); renameSync(`${mpath}.tmp`, mpath); };
 
-const svc = await service(process.env.VOICE_URL ?? 'ws://127.0.0.1:47645/ws');
+const VOICE_URL = process.env.VOICE_URL ?? 'ws://127.0.0.1:47645/ws';
+/** Служба не запущена (приложение закрыто) — студия поднимает её сама и гасит при выходе. */
+let own: ChildProcess | null = null;
+async function connect() {
+  try { return await service(VOICE_URL); } catch { /* запускаем свою */ }
+  const vdir = join(import.meta.dirname, '../services/voice');
+  const py = join(vdir, '.venv/bin/python');
+  if (!existsSync(py)) throw new Error(`голосовой службы нет и запустить её нечем (${py}) — services/voice/setup.sh`);
+  console.log('Голосовая служба не запущена — запускаю (загрузка моделей 1–3 мин)…');
+  own = spawn(py, ['server.py', '--data', join(data, 'voice')], { cwd: vdir, stdio: ['ignore', 'ignore', 'inherit'] });
+  own.on('exit', (c) => { if (c) console.error(`голосовая служба завершилась (код ${c})`); own = null; });
+  const until = Date.now() + 300_000;
+  for (;;) {
+    await new Promise((r) => setTimeout(r, 3000));
+    try { return await service(VOICE_URL); } catch (e) { if (!own || Date.now() > until) throw e; }
+  }
+}
+const svc = await connect();
 const live = svc.engine;
 const voice = chiefVoice(data);
 let busy: string | null = null;
@@ -112,6 +129,11 @@ createServer(async (req, res) => {
   } catch (e) {
     json({ error: (e as Error).message }, 500);
   }
+}).on('error', (e: NodeJS.ErrnoException) => {
+  console.error(e.code === 'EADDRINUSE' ? `Порт ${PORT} занят — студия, видимо, уже запущена: http://127.0.0.1:${PORT} (другой порт — PORT=…)` : e.message);
+  svc.close();
+  own?.kill('SIGTERM');
+  process.exit(1);
 }).listen(PORT, '127.0.0.1', () => console.log(`Студия предзаписи: http://127.0.0.1:${PORT} (модель сейчас ${svc.engine}; Ctrl+C — выход)`));
 
 process.on('SIGINT', async () => {
@@ -120,6 +142,7 @@ process.on('SIGINT', async () => {
     await svc.setEngine(live).catch((e) => console.error((e as Error).message));
   }
   svc.close();
+  own?.kill('SIGTERM');
   process.exit(0);
 });
 
