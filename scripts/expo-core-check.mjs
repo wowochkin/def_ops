@@ -26,7 +26,9 @@ try {
     await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 60000 });
     await page.locator('.expo-card-main strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 60000 });
     if (n === 1) {
-      // «Спросить ИИ» без модели: готовый ответ с источником — в полосе «Штаб ИИ» под картой
+      // «Спросить ИИ» без модели: готовый ответ с источником — в субтитрах внизу
+      await page.locator('.expo-gis [data-id]').first().waitFor({ state: 'attached', timeout: 90000 });
+      await page.waitForTimeout(3000);
       await page.getByRole('button', { name: 'Спросить ИИ' }).click();
       await page.getByRole('menuitem', { name: 'Какой вариант лучше?' }).click();
       await page.locator('.expo-subs .expo-source').waitFor({ timeout: 10000 });
@@ -40,6 +42,8 @@ try {
     }
   }
   await page.locator('.expo-rank').waitFor({ timeout: 60000 });
+  // после шторки смены сцены и пролёта камеры к путям армий
+  await page.waitForTimeout(3000);
   await shot('expo-result');
   const rank = await page.locator('.expo-rank').innerText();
   const forecast = await page.locator('.expo-paper-head').innerText();

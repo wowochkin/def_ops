@@ -96,7 +96,9 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
   const [engine, setEngine] = useState<MapEngine | null>(null);
   const t = useClock(time, run, onTime);
   const shown = useMemo(() => (doc && extra?.length ? { ...doc, features: [...doc.features, ...extra] } : doc), [doc, extra]);
-  useEffect(() => onEngine?.(engine), [engine, onEngine]);
+  useEffect(() => {
+    onEngine?.(engine);
+  }, [engine, onEngine]);
   useEffect(() => {
     if (!engine || !camera) return;
     engine.setPanEnabled(false);

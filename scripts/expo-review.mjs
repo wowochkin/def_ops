@@ -26,7 +26,7 @@ const audit = (page) =>
     const name = (el) => `${el.tagName.toLowerCase()}.${[...el.classList].join('.')}«${(el.textContent ?? '').trim().slice(0, 30)}»`;
     const bad = [];
     for (const el of document.querySelectorAll('.expo *')) {
-      if (el.closest('svg') || el.closest('.expo-sr') || el.closest('.expo-film') || el.closest('.expo-gis') || !el.getClientRects().length) continue;
+      if (el.closest('svg') || el.closest('.expo-sr') || el.closest('.expo-film') || el.closest('.expo-gis') || el.closest('.expo-cut') || !el.getClientRects().length) continue;
       const cs = getComputedStyle(el);
       if (cs.overflowY !== 'visible' && el.scrollHeight > el.clientHeight + 2) bad.push(`не влезает по высоте: ${name(el)} ${el.scrollHeight}>${el.clientHeight}`);
       if (cs.overflowX !== 'visible' && el.scrollWidth > el.clientWidth + 2) bad.push(`не влезает по ширине: ${name(el)} ${el.scrollWidth}>${el.clientWidth}`);

@@ -18,6 +18,10 @@ mkdirSync('docs/img', { recursive: true });
 try {
   await page.goto(`${url}/?expo=0`);
   await page.getByRole('heading', { name: /Приказ — за вами/ }).waitFor();
+  // карта заставки — после переигровки «как было» в ядре и сборки её документа
+  const mapReady = () => page.locator('.expo-gis [data-id]').first().waitFor({ state: 'attached', timeout: 90000 });
+  await mapReady();
+  await page.waitForTimeout(1500);
   await shot('expo-attract');
   await page.waitForTimeout(500);
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();
@@ -28,6 +32,8 @@ try {
   await shot('expo-briefing');
   await page.getByRole('button', { name: 'К решениям' }).click();
   await page.locator('.expo-card-main strong').first().filter({ hasNotText: 'Карточка готовится' }).waitFor({ timeout: 30000 });
+  await mapReady();
+  await page.waitForTimeout(1500);
   // подсвечена первая карточка с распоряжениями — её стрелки на карте
   let lit = 0;
   for (; lit < 2; lit++) {
@@ -38,6 +44,10 @@ try {
   await shot('expo-turn');
   await page.getByRole('button', { name: `Подробнее о карточке ${lit + 1}` }).click();
   await shot('expo-turn-open');
+  // один монитор: второй экран раскладки на два («Штаб ИИ» и «Ход операции») во весь монитор
+  await page.evaluate(() => dispatchEvent(new CustomEvent('expo-lens', { detail: { count: 2, window: 1 } })));
+  await shot('expo-screens');
+  await page.locator('.expo-lenses').getByRole('button', { name: 'Все вместе' }).click();
   await page.getByRole('button', { name: `Выбрать вариант ${lit + 1}` }).click();
   await page.getByText(/Именно так поступил|решил иначе/).waitFor({ timeout: 60000 });
   await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 90000 });

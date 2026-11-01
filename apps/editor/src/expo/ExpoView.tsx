@@ -17,10 +17,10 @@ import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './s
 import { ExpoMap, historyPaths } from './ExpoMap';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
-import { LENS_EVENT, LENSES, sameLens, stepLens, type Lens } from './lens';
+import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
 import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
-import { historyAt, mainPaths, MAP, type Arrow, type LL } from './map';
+import { historyAt, mainPaths, MAP, type Arrow, type ArmyPos, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
 import { Feed, ModelNote, modelTime, Scales, turnDef } from './session-scenes';
@@ -137,6 +137,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   }, []);
   const mainRef = useRef<HTMLElement>(null);
   const gisRef = useRef<HTMLDivElement>(null);
+  /** Размер окна карты: сменился — кадр камеры ставится заново. */
+  const [gisSize, setGisSize] = useState('');
   // карта — под «окно» сцены: одна и та же, сцена задаёт только рамку
   useLayoutEffect(() => {
     const main = mainRef.current, gis = gisRef.current;
@@ -150,7 +152,10 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     const box = [(r.left - m.left) / k, (r.top - m.top) / k, r.width / k, r.height / k].map((v) => `${Math.round(v)}px`);
     const resized = gis.style.width !== box[2] || gis.style.height !== box[3];
     Object.assign(gis.style, { visibility: 'visible', left: box[0], top: box[1], width: box[2], height: box[3] });
-    if (resized) dispatchEvent(new Event('resize'));
+    if (resized) {
+      dispatchEvent(new Event('resize'));
+      setGisSize(`${box[2]}x${box[3]}`);
+    }
   });
   return (
     <div className="expo-stage">
@@ -164,7 +169,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
       >
         <div ref={gisRef} className="expo-gis" aria-hidden="true">
           <div className="expo-gis-in">
-            <StageMap {...shownPlan} onTime={onTime} />
+            <StageMap {...shownPlan} camera={shownPlan.camera && { ...shownPlan.camera, key: `${shownPlan.camera.key}@${gisSize}` }} onTime={onTime} />
           </div>
         </div>
         <header className="expo-header">
@@ -172,7 +177,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
           <PhaseTitle state={state} />
           {single ? (
             <span className="expo-lenses" role="group" aria-label="Экраны стенда">
-              {LENSES.map((x) => (
+              {lensesFor(lens).map((x) => (
                 <button key={x.label} aria-pressed={sameLens(x.lens, lens)} onClick={() => setLensState(x.lens)}>
                   {x.label}
                 </button>
@@ -269,6 +274,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                       <Cards
                         cards={mv?.cards ?? []}
                         front={state.front ?? 'su_1bf'}
+                        armies={mv?.map.armies.length ? mv.map.armies : START}
                         disabled={state.paused}
                         canReplace={!state.paused && p.replacements < settings.maxReplacements}
                         replaceLabel={settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
@@ -420,9 +426,9 @@ function ArmyMark({ army }: { army?: string }) {
 }
 
 /** Мини-карта решения: схема полосы фронта и стрелки этой карточки. */
-function CardMini({ c, front }: { c: CardView; front: FrontId }) {
+function CardMini({ c, front, armies }: { c: CardView; front: FrontId; armies: ArmyPos[] }) {
   const arrows = c.arrows ?? [];
-  return <ExpoMap armies={START.filter((a) => a.front === front)} focus={front} labels={false} arrows={arrows} include={arrows.map((x) => x.to)} className="expo-cardmap" label={`Схема: ${c.title}`} />;
+  return <ExpoMap armies={armies.filter((a) => a.front === front)} focus={front} labels={false} arrows={arrows} include={arrows.map((x) => x.to)} className="expo-cardmap" label={`Схема: ${c.title}`} />;
 }
 
 /** Цифра-факт с источником. */
@@ -440,6 +446,7 @@ function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
 function Cards(props: {
   cards: CardView[];
   front: FrontId;
+  armies: ArmyPos[];
   disabled: boolean;
   canReplace: boolean;
   replaceLabel: string;
@@ -450,7 +457,7 @@ function Cards(props: {
   setHover: (n: number | null) => void;
   send: (ev: DirectorEvent) => void;
 }) {
-  const { cards, front, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
+  const { cards, front, armies, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
   const open = expanded !== null ? cards[expanded] : undefined;
   if (expanded !== null && open)
     return (
@@ -461,7 +468,7 @@ function Cards(props: {
         </header>
         <div className="expo-sheet-media">
           <ArmyMark army={open.army} />
-          <CardMini c={open} front={front} />
+          <CardMini c={open} front={front} armies={armies} />
         </div>
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
@@ -498,7 +505,7 @@ function Cards(props: {
             <button className="expo-card-main" disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
               <span className="expo-card-media">
                 {c && <ArmyMark army={c.army} />}
-                {c && <CardMini c={c} front={front} />}
+                {c && <CardMini c={c} front={front} armies={armies} />}
               </span>
               <span className="expo-card-body">
                 <strong>
@@ -732,7 +739,9 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     const d = own ?? hist;
     if (!d) return null;
     const arrowsAll = [...mv.cards, ...(mv.reveal ? [mv.reveal.historical] : [])].flatMap((c) => (c.arrows ?? []).flatMap((a) => [a.from, a.to]));
-    const camera = { bbox: sector(mv.front, [...mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at), ...arrowsAll]), key: `turn-${mv.front}-${p.n}` };
+    // со второго перелома — армии у Берлина (дальние фланги, как у Штеттина, кадр не растягивают)
+    const near = mv.map.armies.filter((a) => a.front === mv.front && (p.n === 1 || Math.hypot(a.at[0] - BERLIN[0], (a.at[1] - BERLIN[1]) * 1.6) < 1.5));
+    const camera = { bbox: p.n === 1 ? sector(mv.front, [...near.map((a) => a.at), ...arrowsAll]) : bboxOf([BERLIN, ...near.map((a) => a.at), ...arrowsAll]), key: `turn-${mv.front}-${p.n}` };
     const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
     const arrows = p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? mv.reveal?.historical.arrows : undefined;
     const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;
