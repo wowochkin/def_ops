@@ -15,17 +15,23 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { joinGap, stageDomains, voiceTexts, type Clip, type VoiceManifest } from '../apps/editor/src/expo/prerecord';
 import { speakable } from '../apps/editor/src/voice/speech';
+import { plainStress, stressed, type StressData } from '../apps/editor/src/expo/stress';
 
 export interface ClipCheck extends Clip {
   said: string; heard: string; wer: number; cer: number; ok: boolean;
   /** Выбран в студии (`npm run expo:voice-studio`): подготовка его не переозвучивает. */
   manual?: boolean; approved?: boolean; engine?: string;
+  /** Текст для озвучки с «+» перед ударной гласной; override — задан вручную в студии. */
+  say?: string; override?: boolean;
   /** Другие дубли студии — на выбор. */
   takes?: ClipCheck[];
 }
 export interface Manifest extends VoiceManifest { clips: Record<string, ClipCheck> }
 
-const words = (s: string) => s.toLowerCase().replace(/ё/g, 'е').match(/[\p{L}\d]+/gu) ?? [];
+const words = (s: string) => plainStress(s).toLowerCase().replace(/ё/g, 'е').match(/[\p{L}\d]+/gu) ?? [];
+
+export const STRESS_PATH = join(import.meta.dirname, '../apps/editor/src/expo/bank-data/stress.json');
+export const loadStress = (): StressData => JSON.parse(readFileSync(STRESS_PATH, 'utf8')) as StressData;
 
 /** Доля ошибок по словам — как `wer` сервиса голоса (services/voice/voices.py). */
 export function wer(expected: string, heard: string): number {
@@ -184,11 +190,13 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
   const engine = svc?.engine ?? old?.engine ?? 'unknown';
   const m: Manifest = { version: 1, voice, engine, clips: {} };
   let made = 0;
+  const stress = loadStress();
   for (const [i, text] of texts.entries()) {
-    const said = speakable(text, { full: true });
+    const { say, said } = stressed(speakable(text, { full: true }), engine, stress);
     const file = `${clipKey(said, voice, engine)}.ogg`;
     const prev = old?.clips[text];
-    if (prev?.manual && prev.said === said && existsSync(join(dir, 'clips', prev.file))) {
+    // выбранный в студии дубль: тот же текст для озвучки или свой, заданный вручную
+    if (prev?.manual && (prev.said === said || prev.override) && existsSync(join(dir, 'clips', prev.file))) {
       m.clips[text] = prev;
       continue;
     }
@@ -212,7 +220,7 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
       rmSync(r.path, { force: true });
       const heard = heardText(r.heard ?? '');
       const w = Math.round(wer(said, heard) * 100) / 100, ce = Math.round(cer(said, heard) * 100) / 100;
-      const c: ClipCheck = { file, ms, said, heard: r.heard ?? '', wer: w, cer: ce, ok: msOk(said, ms) && heardOk(said, w, ce) };
+      const c: ClipCheck = { file, ms, said, say, heard: r.heard ?? '', wer: w, cer: ce, ok: msOk(said, ms) && heardOk(said, w, ce) };
       if (!c.ok) console.log(`    попытка ${attempt + 1}: ${ms} мс, WER ${c.wer}, CER ${c.cer} — слышно «${c.heard}»`);
       if (!best || (c.ok && !best.ok) || (c.ok === best.ok && c.wer < best.wer)) {
         if (attempt) execFileSync('mv', ['-f', out, join(dir, 'clips', file)]);

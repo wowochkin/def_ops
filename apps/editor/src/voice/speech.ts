@@ -214,6 +214,9 @@ const PREPS = `${GEN_PREP}|${DAT_PREP}|${PREP_PREP}|${INS_PREP}|${ACC_PREP}|${LO
 const FORM_RE = new RegExp(String.raw`(?<![\p{L}\d])(?:(${PREPS})\s+)?(?:(\d+)(?:-([а-яё]{1,4}))?\s*)?((?:(?:гв|уд)\.\s*)*)(\p{L}{1,5})(?![\p{L}\d])`, 'giu');
 const SUFFIX_CLS: Record<string, Cls> = { й: 'nom', я: 'nom', е: 'nom', го: 'gen', му: 'dat', м: 'prep', ым: 'ins', ю: 'acc' };
 
+/** Существительные, после которых соединение — в родительном: «остатки 9 А», «удар 1 гв. ТА», «штаб 8 гв. А». */
+const GOV_GEN = /^(?:остатк|част|удар|контрудар|окружени|наступлени|отступлени|продвижени|штаб|командующ|полос|фланг|войск|сил|отход|прорыв|выход|состав|тыл|резерв|группировк|разгром|позици|рубеж|направлени|участ|соединени|оборон|переправ|потер|отряд|корпус|дивизи|бригад)\p{L}*$/u;
+
 function prepClass(p: string | undefined, g: Gender): Cls | null {
   if (!p) return null;
   const w = p.toLowerCase();
@@ -235,6 +238,7 @@ function formationText(m: string, prep: string | undefined, num: string | undefi
   const prev = !prep ? /(\p{L}+)\s+$/u.exec(before)?.[1].toLowerCase() : undefined;
   const same = prev !== undefined && noun.forms.includes(prev);
   if (same && suf === undefined) c = NOUN_FORM.get(prev!)![1];
+  else if (!pc && suf === undefined && prev && GOV_GEN.test(prev)) c = 'gen'; // «остатки 9 А» — «остатки девятой армии»
   if (suf !== undefined) {
     const k = caseKey(suf);
     const sc = SUFFIX_CLS[k];

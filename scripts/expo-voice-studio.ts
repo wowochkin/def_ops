@@ -11,8 +11,10 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, msOk, service, wer, type ClipCheck, type Manifest,
+  cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, loadStress, msOk, service, STRESS_PATH, wer, type ClipCheck, type Manifest,
 } from './expo-voice';
+import { markFor, markStress, plainStress, stressed, type StressMark } from '../apps/editor/src/expo/stress';
+import { speakable } from '../apps/editor/src/voice/speech';
 
 const PORT = Number(process.env.PORT ?? 47700);
 const data = dataDir(process.argv.includes('--data') ? process.argv[process.argv.indexOf('--data') + 1] : undefined);
@@ -47,26 +49,57 @@ const live = svc.engine;
 const voice = chiefVoice(data);
 let busy: string | null = null;
 
-/** Ещё один дубль текущей моделью: в takes; лучше прежнего по проверке — не выбирается сам, выбирает человек. */
-async function regen(text: string): Promise<ClipCheck> {
-  const m = load();
-  const c = m.clips[text];
+/** Текст для озвучки по словарю ударений — как у подготовки. */
+const sayOf = (text: string) => stressed(speakable(text, { full: true }), svc.engine, loadStress());
+
+/**
+ * Ещё один дубль текущей моделью. own — свой текст для озвучки (с «+» перед ударной), иначе по словарю.
+ * Дубль — в takes, выбирает человек; main — сразу основным (переозвучка по словарю).
+ */
+async function regen(text: string, own?: string, main = false): Promise<ClipCheck> {
+  const c = load().clips[text];
   if (!c) throw new Error('нет такой фразы');
-  const n = (c.takes?.length ?? 0) + 1;
-  const file = `${clipKey(c.said, voice, `${svc.engine}#${Date.now()}`)}.ogg`;
-  const r = await svc.render(c.said);
+  const { say, said } = own ? { say: own, said: markStress(own, markFor(svc.engine, loadStress())) } : sayOf(text);
+  const file = `${clipKey(said, voice, `${svc.engine}#${Date.now()}`)}.ogg`;
+  const r = await svc.render(said);
   if (r.error || !r.path) throw new Error(`синтез: ${r.error ?? 'нет файла'}`);
   const ms = encode(r.path, join(dir, 'clips', file));
   rmSync(r.path, { force: true });
   const heard = heardText(r.heard ?? '');
-  const w = Math.round(wer(c.said, heard) * 100) / 100, ce = Math.round(cer(c.said, heard) * 100) / 100;
-  const take: ClipCheck = { file, ms, said: c.said, heard: r.heard ?? '', wer: w, cer: ce, ok: msOk(c.said, ms) && heardOk(c.said, w, ce), engine: svc.engine };
+  const w = Math.round(wer(said, heard) * 100) / 100, ce = Math.round(cer(said, heard) * 100) / 100;
+  const take: ClipCheck = {
+    file, ms, said, say, heard: r.heard ?? '', wer: w, cer: ce, ok: msOk(said, ms) && heardOk(said, w, ce), engine: svc.engine,
+    ...(own ? { override: true } : {}),
+  };
   const fresh = load(); // за время синтеза манифест мог измениться
   const fc = fresh.clips[text];
-  fc.takes = [...(fc.takes ?? []), take];
+  if (main) {
+    const { takes, ...prev } = fc;
+    fresh.clips[text] = { ...take, approved: fc.approved, manual: fc.manual, takes: [...(takes ?? []), prev] };
+  } else fc.takes = [...(fc.takes ?? []), take];
   save(fresh);
-  console.log(`дубль ${n}: ${take.ok ? '✓' : '✗'} WER ${w} — ${text}`);
+  console.log(`${main ? 'по словарю' : 'дубль'}: ${take.ok ? '✓' : '✗'} WER ${w} — ${say}`);
   return take;
+}
+
+/** Фразы, у которых текст для озвучки по словарю изменился (кроме заданных вручную). */
+function affected(): string[] {
+  const m = load();
+  return Object.entries(m.clips).filter(([t, c]) => !c.override && sayOf(t).said !== c.said).map(([t]) => t);
+}
+
+/** Добавить ударения из текста с «+» в словарь: каждое слово с «+» — как есть. */
+function addStress(say: string): string[] {
+  const d = loadStress();
+  const added: string[] = [];
+  for (const w of say.match(/[\p{L}+]*\+[\p{L}+]*/gu) ?? []) {
+    const plain = plainStress(w);
+    if (!plain || !/\+[аеёиоуыэюя]/i.test(w)) continue;
+    d.words[plain[0].toUpperCase() + plain.slice(1)] = w[0].toUpperCase() + w.slice(1);
+    added.push(w);
+  }
+  writeFileSync(STRESS_PATH, `${JSON.stringify(d, null, 1)}\n`);
+  return added;
 }
 
 /** Выбрать дубль: он становится основным, прежний основной — среди дублей. */
@@ -112,7 +145,20 @@ createServer(async (req, res) => {
       res.end(readFileSync(m4a));
       return;
     }
-    if (url.pathname === '/api/state') { json({ engine: svc.engine, live, engines: svc.engines, busy, clips: load().clips }); return; }
+    if (url.pathname === '/api/state') {
+      const st = loadStress();
+      json({ engine: svc.engine, live, engines: svc.engines, busy, clips: load().clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/stress/word') { json({ added: addStress(String((await body(req)).say)) }); return; }
+    if (req.method === 'POST' && url.pathname === '/api/stress/mark') {
+      const b = await body(req);
+      const d = loadStress();
+      d.mark[svc.engine] = String(b.mark) as StressMark;
+      writeFileSync(STRESS_PATH, `${JSON.stringify(d, null, 1)}\n`);
+      json({ ok: true });
+      return;
+    }
     if (req.method !== 'POST') { json({ error: 'нет такого адреса' }, 404); return; }
     const b = await body(req);
     if (busy) { json({ error: `служба занята: ${busy}` }, 409); return; }
@@ -122,7 +168,16 @@ createServer(async (req, res) => {
       json({ engine: svc.engine });
     } else if (url.pathname === '/api/regen') {
       busy = `дубль «${String(b.text).slice(0, 40)}…»`;
-      try { json(await regen(String(b.text))); } finally { busy = null; }
+      try { json(await regen(String(b.text), typeof b.say === 'string' && b.say.trim() ? b.say.trim() : undefined)); } finally { busy = null; }
+    } else if (url.pathname === '/api/restress') {
+      // переозвучка затронутых словарём — в фоне, ход виден в шапке
+      const list = affected();
+      json({ count: list.length });
+      void (async () => {
+        try {
+          for (const [i, t] of list.entries()) { busy = `по словарю ${i + 1} из ${list.length}`; await regen(t, undefined, true); }
+        } catch (e) { console.error((e as Error).message); } finally { busy = null; }
+      })();
     } else if (url.pathname === '/api/pick') { pick(String(b.text), String(b.file)); json({ ok: true }); }
     else if (url.pathname === '/api/approve') { approve(String(b.text), !!b.on); json({ ok: true }); }
     else json({ error: 'нет такого адреса' }, 404);
@@ -136,7 +191,8 @@ createServer(async (req, res) => {
   process.exit(1);
 }).listen(PORT, '127.0.0.1', () => console.log(`Студия предзаписи: http://127.0.0.1:${PORT} (модель сейчас ${svc.engine}; Ctrl+C — выход)`));
 
-process.on('SIGINT', async () => {
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, quit);
+async function quit() {
   if (svc.engine !== live) {
     console.log(`Возвращаю модель живого голоса: ${live}…`);
     await svc.setEngine(live).catch((e) => console.error((e as Error).message));
@@ -144,7 +200,7 @@ process.on('SIGINT', async () => {
   svc.close();
   own?.kill('SIGTERM');
   process.exit(0);
-});
+}
 
 const PAGE = `<!doctype html><meta charset="utf-8"><title>Студия предзаписи</title>
 <style>
@@ -156,11 +212,14 @@ main{padding:12px 20px}
 .row.bad{background:#fdecec}.row.ok-approved{background:#eaf6ea}
 .meta{color:#777;font-size:13px}.take{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
 .take.main{font-weight:600}audio{height:32px;width:220px}
+.say{display:flex;gap:6px;margin:6px 0}.say input{flex:1;font:inherit;padding:3px 6px}
 button{cursor:pointer}#status{margin-left:auto;font-size:14px;color:#cfc}
 </style>
 <header>
  <b>Студия предзаписи</b>
  <label>Модель озвучки <select id="engine"></select></label><button id="setEngine">Сменить</button>
+ <label title="Как модель понимает ударение — проверьте на слух и выберите">Ударение для модели <select id="mark"><option value="acute">знак над гласной (а́)</option><option value="plus">плюс перед гласной (+а)</option><option value="upper">заглавная гласная (А)</option></select></label>
+ <button id="restress">Переозвучить по словарю</button>
  <label>Показать <select id="filter"><option value="all">все</option><option value="bad">не прошли проверку</option><option value="todo">не одобренные</option></select></label>
  <span id="count"></span><span id="status"></span>
 </header>
@@ -168,7 +227,7 @@ button{cursor:pointer}#status{margin-left:auto;font-size:14px;color:#cfc}
 <script>
 const $ = (s) => document.querySelector(s);
 let st = null;
-const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 async function api(p, b) {
   const r = await fetch(p, b ? { method: 'POST', body: JSON.stringify(b) } : undefined);
   const j = await r.json();
@@ -176,6 +235,8 @@ async function api(p, b) {
   return j;
 }
 function status(t) { $('#status').textContent = t || ''; }
+const toPlus = (s) => String(s).replace(/([аеёиоуыэюя])\\u0301/gi, '+$1');
+const sayOf = (text) => document.querySelector('[data-say="' + CSS.escape(text) + '"]').value;
 function take(text, t, main) {
   return '<div class="take' + (main ? ' main' : '') + '"><audio controls preload="none" src="/clips/' + t.file + '"></audio>'
     + (t.ok ? '✓' : '✗') + ' ' + (t.ms / 1000).toFixed(1) + ' с · WER ' + t.wer + (t.engine ? ' · ' + esc(t.engine) : '')
@@ -189,6 +250,8 @@ function render() {
     + '<div>' + (i + 1) + '</div><div>' + esc(text)
     + (c.said !== text ? '<div class="meta">сказано: ' + esc(c.said) + '</div>' : '')
     + '<div class="meta">услышано: ' + esc(c.heard) + '</div>'
+    + '<div class="say"><input data-say="' + esc(text) + '" value="' + esc(c.say || toPlus(c.said)) + '" title="«+» перед ударной гласной: Х+альбе">'
+    + '<button data-own="' + esc(text) + '">Озвучить этот текст</button><button data-dict="' + esc(text) + '">Ударения → в словарь</button></div>'
     + '<label class="meta"><input type="checkbox" data-approve="' + esc(text) + '"' + (c.approved ? ' checked' : '') + '> одобрено</label></div>'
     + '<div>' + take(text, c, true) + (c.takes || []).map((t) => take(text, t, false)).join('')
     + '<button data-regen="' + esc(text) + '">Ещё дубль (' + esc(st.engine) + ')</button></div></div>').join('');
@@ -196,15 +259,27 @@ function render() {
 async function load() {
   st = await api('/api/state');
   $('#engine').innerHTML = st.engines.map((e) => '<option value="' + e.id + '"' + (e.id === st.engine ? ' selected' : '') + ' title="' + esc(e.note) + '">' + esc(e.title) + '</option>').join('');
+  $('#mark').value = st.mark;
+  $('#restress').textContent = 'Переозвучить по словарю (' + st.affected + ')';
+  $('#restress').disabled = !st.affected || !!st.busy;
   status(st.busy || ('сейчас: ' + st.engine + (st.engine !== st.live ? ' (живой голос вернётся к ' + st.live + ' при выходе)' : '')));
   render();
+  if (st.busy) setTimeout(load, 3000);
 }
+$('#mark').onchange = async () => { await api('/api/stress/mark', { mark: $('#mark').value }); load(); };
+$('#restress').onclick = async () => { await api('/api/restress', {}); load(); };
 $('#filter').onchange = render;
 $('#setEngine').onclick = async () => { status('загружаю модель… (до нескольких минут)'); await api('/api/engine', { id: $('#engine').value }).catch(() => {}); load(); };
 document.addEventListener('click', async (e) => {
   const b = e.target;
   if (b.dataset.regen) { b.disabled = true; b.textContent = 'озвучиваю…'; await api('/api/regen', { text: b.dataset.regen }).catch(() => {}); load(); }
   if (b.dataset.pick) { await api('/api/pick', { text: b.dataset.text, file: b.dataset.pick }); load(); }
+  if (b.dataset.own) { b.disabled = true; b.textContent = 'озвучиваю…'; await api('/api/regen', { text: b.dataset.own, say: sayOf(b.dataset.own) }).catch(() => {}); load(); }
+  if (b.dataset.dict) {
+    const r = await api('/api/stress/word', { say: sayOf(b.dataset.dict) });
+    alert(r.added.length ? 'В словарь: ' + r.added.join(', ') + '. «Переозвучить по словарю» — все фразы с этими словами.' : 'Нет слов с «+» перед гласной');
+    load();
+  }
 });
 document.addEventListener('change', async (e) => {
   const b = e.target;
