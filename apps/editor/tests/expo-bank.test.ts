@@ -17,6 +17,15 @@ describe('банк карточек', () => {
     expect(bankErrors(BANK, armiesOf, places)).toEqual([]);
   });
 
+  it('снимок карточки — только свой и не повторяется на переломе; Зеелов без чужого кадра', () => {
+    for (const c of turnCards(BANK, 'su_1bf', 1)) expect(c.photo).toBeUndefined();
+    expect(BANK.cards.find((c) => c.id === 'uf3-elbe')?.photo).toBe('elbe-day-1945.jpg');
+    const dup = { ...BANK, cards: BANK.cards.map((c) => (c.id === 'uf3-hist' ? { ...c, photo: 'elbe-day-1945.jpg' } : c)) };
+    expect(bankErrors(dup, armiesOf, places).some((e) => e.includes('снимок повторяется'))).toBe(true);
+    const missing = { ...BANK, cards: BANK.cards.map((c) => (c.id === 'bf1-hist' ? { ...c, photo: 'нет.jpg' } : c)) };
+    expect(bankErrors(missing, armiesOf, places).some((e) => e.includes('нет снимка'))).toBe(true);
+  });
+
   it('form errors are caught', () => {
     const bad = { ...BANK, cards: BANK.cards.map((c) => (c.id === 'bf1-north' ? { ...c, orders: [{ army: 'su_3gta', kind: 'attack' as const, place: 'Nowhere' }] } : c)) };
     const errs = bankErrors(bad, armiesOf, places);

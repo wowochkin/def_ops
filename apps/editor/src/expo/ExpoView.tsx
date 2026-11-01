@@ -29,7 +29,7 @@ import { ModelNote, modelTime, MoveAdvance, OpSummary, Scales, turnDef } from '.
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
-import { photoFor, picturesOf } from './pictures';
+import { pictureByFile, picturesOf } from './pictures';
 import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
@@ -310,7 +310,6 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     {p.step === 'choose' ? (
                       <Cards
                         cards={mv?.cards ?? []}
-                        front={state.front ?? 'su_1bf'}
                         doc={(mv && sessionDoc(maps.session, mv)) ?? maps.history ?? null}
                         time={mv?.time ?? MAP.days[0]}
                         disabled={state.paused}
@@ -525,13 +524,13 @@ function Briefing({ front, point, steer, send }: { front: FrontId; point: number
 const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
-/** Архивный снимок по теме карточки: подпись и автор видны на кадре. */
-function CardPhoto({ c, front, big = false }: { c: CardView; front: FrontId; big?: boolean }) {
-  const pic = photoFor(`${c.title} ${c.lines.join(' ')}`, front);
+/** Снимок карточки, если он назначен в банке. Подпись — что на кадре и когда. */
+function CardPhoto({ file, big = false }: { file: string; big?: boolean }) {
+  const pic = pictureByFile(file);
   if (!pic) return null;
   return (
     <figure className={big ? 'expo-card-photo expo-card-photo-big' : 'expo-card-photo'}>
-      <img src={pic.src} alt="" style={{ objectPosition: pic.focus ?? '50% 40%' }} />
+      <img src={pic.src} alt={pic.caption} style={{ objectPosition: pic.focus ?? '50% 40%' }} />
       <figcaption>
         {pic.caption}
         <small>{pic.author}</small>
@@ -568,7 +567,6 @@ function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
 /** Три карточки-приказа одной высоты: выбор — нажатием на карточку; подробнее и замена — в полосе справа. */
 function Cards(props: {
   cards: CardView[];
-  front: FrontId;
   doc: StageDoc | null;
   time: string;
   disabled: boolean;
@@ -581,7 +579,7 @@ function Cards(props: {
   setHover: (n: number | null) => void;
   send: (ev: DirectorEvent) => void;
 }) {
-  const { cards, front, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
+  const { cards, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
   const open = expanded !== null ? cards[expanded] : undefined;
   if (expanded !== null && open)
     return (
@@ -590,7 +588,7 @@ function Cards(props: {
           <span className="expo-card-n">{expanded + 1}</span>
           <h3>{open.title}</h3>
         </header>
-        <CardPhoto c={open} front={front} big />
+        {open.photo && <CardPhoto file={open.photo} big />}
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
             <li key={l}>{l}</li>
@@ -623,10 +621,12 @@ function Cards(props: {
             onPointerEnter={props.hoverLights ? () => setHover(card) : undefined}
             onPointerLeave={props.hoverLights ? () => setHover(null) : undefined}
           >
-            <button className="expo-card-main" disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
-              <span className="expo-card-media">
-                {c && <CardPhoto c={c} front={front} />}
-              </span>
+            <button className={`expo-card-main${c?.photo ? '' : ' expo-card-nophoto'}`} disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
+              {c?.photo && (
+                <span className="expo-card-media">
+                  <CardPhoto file={c.photo} />
+                </span>
+              )}
               <span className="expo-card-body">
                 <strong>
                   <span className="expo-card-n">{card + 1}</span> {c?.title ?? 'Карточка готовится'}

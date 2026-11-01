@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { photoFor, PICTURES } from '../src/expo/pictures';
+import { pictureByFile, PICTURES } from '../src/expo/pictures';
 
 const DIR = join(__dirname, '../src/expo/pictures');
 
@@ -21,9 +21,7 @@ it('every picture of the stand has a public-domain source or is marked generated
   }
 });
 
-it('card photo follows the title: the Elbe, the city, otherwise the front fallback', () => {
-  expect(photoFor('Исходная задача — Эльба')?.file).toBe('elbe-day-1945.jpg');
-  expect(photoFor('Танковые армии — в город')?.file).toBe('berlin-column-1945.jpg');
-  expect(photoFor('Обход высот с севера', 'su_1bf')?.file).toBe('allied-commanders-berlin-1945.jpg');
-  expect(photoFor('Дымовая завеса и широкий фронт', 'su_1uf')?.file).toBe('berlin-column-1945.jpg');
+it('снимок берётся только по имени файла', () => {
+  expect(pictureByFile('elbe-day-1945.jpg')?.caption).toMatch(/25 апреля 1945/);
+  expect(pictureByFile('нет-такого.jpg')).toBeNull();
 });

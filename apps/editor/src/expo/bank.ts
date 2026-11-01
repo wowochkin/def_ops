@@ -6,6 +6,7 @@
  * историческую и две случайные карточки в случайном порядке; замена берёт свою карточку перелома, которой нет на экране: сначала не показанную, затем уже показанную раньше.
  */
 import bankJson from './bank-data/berlin-1945.cards.json';
+import { PICTURES } from './pictures';
 import type { FrontId } from './settings';
 
 export type TurnN = 1 | 2 | 3;
@@ -27,6 +28,8 @@ export interface Card {
   fact?: CardFact;
   /** Риск решения одной строкой. */
   risk?: string;
+  /** Файл снимка из манифеста картинок. Нет подходящего кадра — поля нет. */
+  photo?: string;
 }
 export interface CardFact { value: string; text: string; army: string; source: string }
 export interface TurnDef { n: TurnN; hour: number; title: string; situation: string }
@@ -64,6 +67,10 @@ export function bankErrors(bank: Bank, armiesOf: (front: FrontId) => string[], p
       if (!c.prepared && !c.fact) out.push(`${c.id}: нет цифры-факта`);
       if (!c.prepared && !c.risk) out.push(`${c.id}: нет риска`);
     }
+    for (const t of f.turns) {
+      const photos = turnCards(bank, front, t.n).map((c) => c.photo).filter((p): p is string => !!p);
+      if (new Set(photos).size !== photos.length) out.push(`${front} перелом ${t.n}: снимок повторяется`);
+    }
   }
   return out;
 }
@@ -85,6 +92,7 @@ export function cardErrors(c: Card, armies: Set<string>, places: Set<string>): s
     if (!armies.has(c.fact.army)) out.push(`${c.id}: факт о ${c.fact.army} — не армии фронта ${c.front}`);
   }
   if (c.risk !== undefined && (!c.risk.trim() || c.risk.length > 34)) out.push(`${c.id}: риск — одна строка до 34 знаков`);
+  if (c.photo && !PICTURES.some((p) => p.file === c.photo)) out.push(`${c.id}: нет снимка ${c.photo}`);
   for (const o of c.orders ?? []) {
     if (!KINDS.includes(o.kind)) out.push(`${c.id}: неизвестное распоряжение ${o.kind}`);
     if (!armies.has(o.army)) out.push(`${c.id}: ${o.army} — не армия фронта ${c.front}`);

@@ -660,6 +660,9 @@ html.expo-active,
 .expo-card[data-lit] {
   border-color: var(--expo-gold);
 }
+.expo .expo-card-main.expo-card-nophoto {
+  grid-template-columns: 1fr;
+}
 .expo .expo-card-main {
   min-height: 0;
   display: grid;

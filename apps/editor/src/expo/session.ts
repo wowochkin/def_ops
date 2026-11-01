@@ -36,7 +36,7 @@ export function measureTrace(env: ModelEnv, t: AgentTrace, front: FrontId) {
 }
 
 /** source: 'now' — карточка составлена ИИ во время сеанса, 'bank' — замена из банка. */
-export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared'; arrows?: Arrow[]; fact?: CardFact; risk?: string; army?: string }
+export interface CardView { id: string; title: string; lines: string[]; source?: 'now' | 'bank' | 'prepared'; arrows?: Arrow[]; fact?: CardFact; risk?: string; army?: string; photo?: string }
 /** Карта хода: армии сейчас и до прокрутки, новые события с точкой, путь армий фронта по переломам. */
 export interface MapView {
   armies: ArmyPos[];
@@ -82,7 +82,7 @@ type Trace = AgentTrace & { game?: { hour: number } };
 const view = (c: Card, source?: CardView['source']): CardView => {
   const s = c.prepared === 'ai' ? 'prepared' : source;
   const army = c.fact?.army ?? c.orders[0]?.army;
-  return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}), ...(c.fact ? { fact: c.fact } : {}), ...(c.risk ? { risk: c.risk } : {}), ...(army ? { army } : {}) };
+  return { id: c.id, title: c.title, lines: c.lines, ...(s ? { source: s } : {}), ...(c.fact ? { fact: c.fact } : {}), ...(c.risk ? { risk: c.risk } : {}), ...(army ? { army } : {}), ...(c.photo ? { photo: c.photo } : {}) };
 };
 
 /** Расстояние, км (равнопромежуточно по широте места). */
