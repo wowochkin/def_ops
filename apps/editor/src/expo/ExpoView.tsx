@@ -15,6 +15,7 @@ import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { StageMini } from './StageMini';
+import { BRIEFING, briefFeatures } from './briefing';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
 import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
@@ -101,7 +102,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     if (!access.keys || state.paused || !(controls || single)) return;
     const key = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
-      if (single && p.kind !== 'welcome' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      if (single && p.kind !== 'welcome' && p.kind !== 'briefing' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         setLensState((l) => stepLens(l, e.key === 'ArrowLeft' ? -1 : 1));
         return;
@@ -226,20 +227,11 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               </div>
             </section>
           )}
-          {p.kind === 'briefing' && (
-            <section className="expo-split">
-              <div className="expo-panel expo-brief">
-                <h1>{state.front && FRONT_NAMES[state.front]}</h1>
-                <p className="expo-marshal">{state.front && FRONT_MARSHALS[state.front]}</p>
-                <p className="expo-task">{state.front && FRONT_TASKS[state.front]}</p>
-                {controls && (
-                  <button className="expo-primary" onClick={() => send({ t: 'next' })}>
-                    К решениям
-                  </button>
-                )}
-              </div>
+          {p.kind === 'briefing' && state.front && (
+            <section className="expo-split expo-briefing">
+              <Briefing front={state.front} point={p.point} controls={controls} send={send} />
               <div className="expo-mapframe">
-                <div className="expo-mapslot" role="img" aria-label="Обстановка к 16 апреля 1945" />
+                <div className="expo-mapslot" role="img" aria-label={`Обстановка к 16 апреля 1945: ${BRIEFING[state.front][p.point]?.title ?? ''}`} />
               </div>
             </section>
           )}
@@ -404,6 +396,62 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
         <Cut scene={p.kind === 'turn' ? `turn-${p.n}` : p.kind} />
         {children}
       </main>
+    </div>
+  );
+}
+
+/** Краткие названия пунктов доклада — для строки пунктов. */
+const BRIEF_STEPS = ['Задача', 'Силы', 'Противник', 'Местность', 'Соседи', 'Соотношение'];
+
+/** Ввод в обстановку: доклад начальника штаба по пунктам — заголовок, крупные цифры с источником, доводы. */
+function Briefing({ front, point, controls, send }: { front: FrontId; point: number; controls: boolean; send: (ev: DirectorEvent) => void }) {
+  const points = BRIEFING[front];
+  const cur = points[point];
+  if (!cur) return null;
+  const last = point + 1 >= points.length;
+  return (
+    <div className="expo-panel expo-brief">
+      <p className="expo-brief-who">
+        {FRONT_NAMES[front]}, доклад начальника штаба
+      </p>
+      <ol className="expo-brief-steps" aria-label="Пункты доклада">
+        {points.map((x, i) => (
+          <li key={x.title}>
+            <button aria-current={i === point ? 'step' : undefined} disabled={!controls} onClick={() => send({ t: 'brief', point: i })}>
+              <span>{i + 1}</span> {BRIEF_STEPS[i] ?? x.title}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <h1>{cur.title}</h1>
+      <dl className="expo-brief-facts" data-n={cur.facts.length}>
+        {cur.facts.map((f) => (
+          <div key={f.value + f.label}>
+            <dt>{f.value}</dt>
+            <dd>
+              {f.label}
+              <small>{f.source}</small>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <ul className="expo-brief-lines">
+        {cur.lines.map((l) => (
+          <li key={l}>{l}</li>
+        ))}
+      </ul>
+      {controls && (
+        <div className="expo-brief-go">
+          {!last && (
+            <button className="expo-secondary" onClick={() => send({ t: 'brief', point: point + 1 })}>
+              Дальше
+            </button>
+          )}
+          <button className="expo-primary" onClick={() => send({ t: 'next' })}>
+            К решениям
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -750,9 +798,11 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
   if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'corps', zones: hist.zones };
   if (p.kind === 'briefing' && hist && state.front) {
-    const arrows = frontArrows(state.front);
-    // 16 апреля, 5:00 — артиллерийская подготовка на переднем крае фронта
-    return { doc: hist.doc, time: start, camera: { bbox: sector(state.front, arrows.map((a) => a.to)), key: `brief-${state.front}`, ms: 4000 }, extra: orderFeatures(hist.doc, arrows, ZOOM, tank), level: 'corps', zones: hist.zones, fx: { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } };
+    const pt = BRIEFING[state.front][p.point];
+    if (!pt) return null;
+    // кадр пункта доклада; на первом — артиллерийская подготовка 16 апреля, 5:00, на переднем крае фронта
+    const fx = p.point === 0 ? { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } : null;
+    return { doc: hist.doc, time: start, camera: { bbox: pt.map.bbox, key: `brief-${state.front}-${p.point}`, ms: 2600 }, extra: briefFeatures(hist.doc, pt.map, ZOOM), level: pt.map.level, zones: hist.zones, fx };
   }
   if (p.kind === 'turn' && mv) {
     const own = sessionDoc(maps.session, mv);

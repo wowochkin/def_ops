@@ -5,7 +5,7 @@ import type { DirectorEvent } from '../src/expo/director';
 
 function setup(ask: (() => Promise<string>) | null, listen?: () => Promise<string | null>) {
   const said: Line[] = [];
-  const queue = { push: (l: Line) => said.push(l), clear: () => (said.length = 0), fill() {}, current: () => null, busy: () => false } as unknown as ReturnType<typeof voiceQueue>;
+  const queue = { push: (l: Line) => said.push(l), clear: () => (said.length = 0), scene() {}, sceneNow: () => 'turn-1-scroll', current: () => null, busy: () => false } as unknown as ReturnType<typeof voiceQueue>;
   const frames: AiFrame[] = [];
   const events: DirectorEvent[] = [];
   const counts: string[] = [];
@@ -62,6 +62,6 @@ describe('исполнитель голоса и ИИ', () => {
   it('комментарий выбора без ИИ — заготовка события', async () => {
     const s = setup(null);
     await s.r.decided('own');
-    expect(s.said.at(-1)).toMatchObject({ priority: 'event', source: 'prepared' });
+    expect(s.said.at(-1)).toMatchObject({ priority: 'action', source: 'prepared', scene: 'turn-1-scroll' });
   });
 });

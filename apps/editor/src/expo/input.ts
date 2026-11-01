@@ -3,7 +3,7 @@
  * голоса (только с ИИ). `keyToEvent` переводит клавишу в событие режиссёра с учётом фазы.
  */
 import type { AiMode, FrontId, InputProfile } from './settings';
-import type { DirectorEvent, Phase } from './director';
+import { BRIEF_POINTS, type DirectorEvent, type Phase } from './director';
 export function affordances(p: InputProfile, voiceInput: boolean, aiMode: AiMode) {
   return {
     hoverExpand: p !== 'touch',
@@ -16,6 +16,10 @@ export function keyToEvent(key: string, phase: Phase, context: { expanded?: numb
   if (phase.kind === 'turn' && phase.step === 'choose') {
     if (/^[1-3]$/.test(key)) return { t: 'choose', card: Number(key) - 1 };
     if (key.toLowerCase() === 'r' && context.expanded != null && context.expanded > 0) return { t: 'replace', card: context.expanded };
+  }
+  if (phase.kind === 'briefing') {
+    if (key === 'ArrowRight' || key === 'Enter' || key === ' ') return phase.point + 1 < BRIEF_POINTS ? { t: 'brief', point: phase.point + 1 } : { t: 'next' };
+    if (key === 'ArrowLeft' && phase.point > 0) return { t: 'brief', point: phase.point - 1 };
   }
   if (key === 'Enter' || key === ' ') {
     if (phase.kind === 'welcome' && context.front) return { t: 'pickFront', front: context.front };

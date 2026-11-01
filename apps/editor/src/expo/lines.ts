@@ -10,7 +10,6 @@ export interface Lines {
   say: Record<string, string[]>;
   comment: Record<'historical' | 'own' | 'delay' | 'event', string[]>;
   answers: Answer[];
-  ambient: string[];
   thinking: string[];
   stop: string[];
 }
@@ -75,13 +74,11 @@ export function textErrors(t: string, lines: Lines = LINES): string[] {
   return out;
 }
 
-/** Все заготовки (для проверки и предозвучки). */
+/** Все заготовки, что звучат (для проверки и предозвучки); «мысли» ИИ — только на экране. */
 export function allLines(lines: Lines = LINES): string[] {
   return [
     ...Object.values(lines.say).flat(),
     ...Object.values(lines.comment).flat(),
     ...lines.answers.map((a) => a.a),
-    ...lines.ambient,
-    ...lines.thinking,
   ];
 }

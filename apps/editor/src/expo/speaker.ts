@@ -11,6 +11,9 @@ import { setPrerecord } from './health';
 import { clipPlan, joinGap, loadClip, loadManifest, type Clip, type VoiceManifest } from './prerecord';
 import type { Line, Speaker } from './voice-queue';
 
+/** Затухание оборванной фразы, с. */
+export const FADE_S = 0.3;
+
 /** Сколько читать фразу вслух, мс. */
 export const readMs = (text: string) => 1500 + text.length * 65;
 
@@ -33,6 +36,8 @@ export interface ClipAudio {
   destination: unknown;
   decodeAudioData(b: ArrayBuffer): Promise<AudioBuffer>;
   createBufferSource(): AudioBufferSourceNode;
+  /** Есть — обрыв фразы с затуханием (`FADE_S`), нет — сразу. */
+  createGain?(): GainNode;
   state?: string;
   resume?(): Promise<void>;
 }
@@ -82,6 +87,7 @@ export function clipPlayer(
     /** Сыграть клипы встык; `gaps[i]` — пауза после i-го, с. */
     play(clips: Clip[], gaps: number[]): Handle {
       const srcs: AudioBufferSourceNode[] = [];
+      let gain: GainNode | null = null;
       let stopped = false;
       let safety: ReturnType<typeof setTimeout> | undefined;
       let finish = () => {};
@@ -92,10 +98,13 @@ export function clipPlayer(
           const a = audio();
           if (a.state === 'suspended') void a.resume?.();
           let t = a.currentTime + 0.02;
+          const dest = (out?.() ?? a.destination) as AudioNode;
+          gain = a.createGain?.() ?? null;
+          gain?.connect(dest);
           bs.forEach((b, i) => {
             const s = a.createBufferSource();
             s.buffer = b;
-            s.connect((out?.() ?? a.destination) as AudioNode);
+            s.connect(gain ?? dest);
             s.start(t);
             t += b.duration + (i < bs.length - 1 ? gaps[i] ?? 0 : 0);
             srcs.push(s);
@@ -110,9 +119,15 @@ export function clipPlayer(
         done,
         stop: () => {
           stopped = true;
+          const a = audio();
+          const at = gain ? a.currentTime + FADE_S : undefined;
+          if (gain) {
+            gain.gain.setValueAtTime(gain.gain.value, a.currentTime);
+            gain.gain.linearRampToValueAtTime(0, at!);
+          }
           for (const s of srcs) {
             s.onended = null;
-            try { s.stop(); } catch { /* уже кончился */ }
+            try { s.stop(at); } catch { /* уже кончился */ }
           }
           finish();
         },

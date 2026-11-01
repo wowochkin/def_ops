@@ -66,6 +66,13 @@ async function run({ cfg, front, scenes, tag = '' }) {
   await page.getByRole('img', { name: 'Обстановка к 16 апреля 1945' }).waitFor();
   await page.waitForTimeout(scenes.includes('motion') ? 4500 : 500);
   await shot('04-briefing');
+  // доклад по пунктам: каждый пункт — свой кадр карты и свои цифры
+  if (scenes.includes('briefing'))
+    for (let i = 2; i <= 6; i++) {
+      await page.locator('.expo-brief-steps button').nth(i - 1).click();
+      await page.waitForTimeout(3200);
+      await shot(`04-briefing-${i}`, 0);
+    }
   await page.getByRole('button', { name: 'К решениям' }).click();
   await page.locator('.expo-roles').waitFor();
   await page.waitForTimeout(1500);
@@ -120,8 +127,8 @@ async function run({ cfg, front, scenes, tag = '' }) {
 }
 
 try {
-  await run({ cfg: { ...EXPO_CFG, timer: { on: true, seconds: 90 } }, front: '1-й Белорусский', scenes: ['startup', 'attract', 'welcome', 'motion', 'session'] });
-  await run({ cfg: { ...EXPO_CFG, input: 'touch', timer: { on: false, seconds: 30 } }, front: '1-й Украинский', scenes: [], tag: '-1uf-touch-notimer' });
+  await run({ cfg: { ...EXPO_CFG, timer: { on: true, seconds: 90 } }, front: '1-й Белорусский', scenes: ['startup', 'attract', 'welcome', 'motion', 'briefing', 'session'] });
+  await run({ cfg: { ...EXPO_CFG, input: 'touch', timer: { on: false, seconds: 30 } }, front: '1-й Украинский', scenes: ['briefing'], tag: '-1uf-touch-notimer' });
 } finally {
   await browser.close();
   core.stop();

@@ -144,7 +144,7 @@ describe('предзапись: звук', () => {
 
   it('заготовка — всегда из предзаписи, даже когда живой голос готов', () => {
     const s = speakerWith();
-    s.sp.speak('Готовая фраза.', { text: 'Готовая фраза.', priority: 'event', source: 'prepared' });
+    s.sp.speak('Готовая фраза.', { text: 'Готовая фраза.', priority: 'scene', source: 'prepared' });
     expect(s.played).toHaveLength(1);
     expect(s.said).toEqual([]);
   });
@@ -187,7 +187,7 @@ describe('предзапись: звук', () => {
     vi.useFakeTimers();
     const s = speakerWith({ manifest: null, live: null });
     let done = false;
-    void s.sp.speak('Готовая фраза.', { text: 'Готовая фраза.', priority: 'event', source: 'prepared' }).done.then(() => (done = true));
+    void s.sp.speak('Готовая фраза.', { text: 'Готовая фраза.', priority: 'scene', source: 'prepared' }).done.then(() => (done = true));
     await vi.advanceTimersByTimeAsync(1000);
     expect(done).toBe(false);
     await vi.advanceTimersByTimeAsync(2000);
@@ -203,12 +203,12 @@ describe('предзапись: звук', () => {
 describe('исполнитель: куски склейки и замена для текста ИИ', () => {
   it('say — с кусками; ответ ИИ — с заменой из готовых ответов', async () => {
     const said: Line[] = [];
-    const queue = { push: (l: Line) => said.push(l), clear() {}, fill() {}, current: () => null, busy: () => false } as unknown as ReturnType<typeof voiceQueue>;
+    const queue = { push: (l: Line) => said.push(l), clear() {}, scene() {}, sceneNow: () => null, current: () => null, busy: () => false } as unknown as ReturnType<typeof voiceQueue>;
     const r = aiRunner({
       queue, ask: () => async () => 'Высоты прикрывали Берлин.', facts: () => ({ text: '', vars: { turn: 'Нейсе' } }),
       dispatch() {}, onFrame() {}, answerMs: 50, voiced: (f) => clipPlan(FULL, f.text, f.parts) !== null,
     });
-    r.handle({ e: 'say', key: 'explain', priority: 'event' });
+    r.handle({ e: 'say', key: 'explain', priority: 'scene' });
     expect(said[0]).toMatchObject({ text: expect.stringMatching(/^Перелом: Нейсе\./), parts: expect.any(Array) });
     await r.ask('Почему Зееловские высоты так важны?');
     expect(said.at(-1)).toMatchObject({ source: 'now', fallback: { text: LINES.answers[0].a } });

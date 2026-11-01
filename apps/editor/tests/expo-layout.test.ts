@@ -33,7 +33,7 @@ describe('раскладки экранов', () => {
     expect(effectiveCount(1, 3)).toBe(1);
     expect(effectiveCount(3, 3)).toBe(3);
 
-    const state = { ...initialState(0), phase: { kind: 'briefing' } as Phase };
+    const state = { ...initialState(0), phase: { kind: 'briefing', point: 0 } as Phase };
     const [main, view] = memoryBus();
     const got: BusMsg[] = [];
     view.on((m) => got.push(m));
@@ -41,7 +41,7 @@ describe('раскладки экранов', () => {
     main.send({ k: 'state', state, settings: EXPO_DEFAULTS, count: effectiveCount(3, 2) });
     const states = got.filter((m): m is Extract<BusMsg, { k: 'state' }> => m.k === 'state');
     expect(states.map((m) => m.count)).toEqual([3, 2]);
-    expect(states.map((m) => m.state.phase)).toEqual([{ kind: 'briefing' }, { kind: 'briefing' }]);
+    expect(states.map((m) => m.state.phase)).toEqual([{ kind: 'briefing', point: 0 }, { kind: 'briefing', point: 0 }]);
     expect(layoutFor(states[1].count)).toHaveLength(2);
   });
 
@@ -50,7 +50,7 @@ describe('раскладки экранов', () => {
       [{ kind: 'startup' }, 'startup'],
       [{ kind: 'attract' }, 'panorama'],
       [{ kind: 'welcome' }, 'panorama'],
-      [{ kind: 'briefing' }, 'map-wide'],
+      [{ kind: 'briefing', point: 0 }, 'map-wide'],
       [{ kind: 'turn', n: 1, step: 'choose', deadline: null, warned: false, offered: false, choice: null, replacements: 0 }, 'roles'],
       [{ kind: 'result' }, 'result-wide'],
     ];

@@ -8,7 +8,7 @@ const choose = (deadline: number, now: number) => st({ kind: 'turn', n: 1, step:
 describe('звук стенда', () => {
   it('звуки на смену фаз', () => {
     expect(cuesFor(st({ kind: 'attract' }), st({ kind: 'welcome' }))).toEqual(['touch']);
-    expect(cuesFor(st({ kind: 'welcome' }), st({ kind: 'briefing' }))).toEqual(['choose']);
+    expect(cuesFor(st({ kind: 'welcome' }), st({ kind: 'briefing', point: 0 }))).toEqual(['choose']);
     expect(cuesFor(choose(10_000, 0), st({ kind: 'turn', n: 1, step: 'scroll', choice: 0 } as DirectorState['phase']))).toEqual(['choose']);
     expect(cuesFor(st({ kind: 'turn', n: 3, step: 'scroll', choice: 0 } as DirectorState['phase']), st({ kind: 'result' }))).toEqual(['reveal']);
     expect(cuesFor(null, st({ kind: 'attract' }))).toEqual([]);

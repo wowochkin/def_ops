@@ -1,22 +1,28 @@
 /**
- * Очередь голоса выставочного сеанса: ответ на действие посетителя > предупреждение таймера > комментарий события >
- * фоновый рассказ. Голос не говорит поверх себя; новая важная фраза мягко прерывает фоновую. Пауза заполняется
- * фоновой фразой (`fill`). Сбой речи очередь не останавливает: фраза считается сказанной, текст остаётся на экране.
+ * Очередь голоса выставочного сеанса. Голос звучит только: на входе в сцену (или пункт брифинга) — о том, что на
+ * экране (`scene`); в ответ на действие посетителя (`action`); одно предупреждение таймера (`timer`). Фонового рассказа
+ * нет. Начатую фразу не перебивает ничто, кроме ответа на действие. Сцена сменилась — фраза ушедшей сцены обрывается
+ * (с затуханием — его делает проигрыватель), фразы ушедшей сцены из очереди выбрасываются, фразы для другой сцены
+ * не принимаются. Фраза без сцены (переходная, «решаю за вас») живёт до конца. Сбой речи очередь не останавливает:
+ * фраза считается сказанной, текст остаётся на экране.
  */
-export type Priority = 'action' | 'timer' | 'event' | 'ambient';
+export type Priority = 'action' | 'timer' | 'scene';
 /**
- * Фраза очереди. `parts` — куски склейки предзаписи (заготовка с подстановками); `fallback` — заготовка на замену
- * фразы, составленной ИИ сейчас, если живой голос недоступен или не успевает.
+ * Фраза очереди. `scene` — ключ сцены (`sceneKey` режиссёра), к которой фраза относится; `parts` — куски склейки
+ * предзаписи (заготовка с подстановками); `fallback` — заготовка на замену фразы, составленной ИИ сейчас, если
+ * живой голос недоступен или не успевает.
  */
-export interface Line { text: string; priority: Priority; source: string; parts?: string[]; fallback?: { text: string; parts?: string[] } }
+export interface Line { text: string; priority: Priority; source: string; scene?: string; parts?: string[]; fallback?: { text: string; parts?: string[] } }
 export interface Speaker { speak(text: string, line?: Line): { done: Promise<void>; stop(): void } }
 
-const RANK: Record<Priority, number> = { action: 0, timer: 1, event: 2, ambient: 3 };
+const RANK: Record<Priority, number> = { action: 0, timer: 1, scene: 2 };
 
-export function voiceQueue(speaker: Speaker, o: { ambient?: () => Line | null; onLine?: (l: Line | null) => void } = {}) {
+export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => void; onDone?: (l: Line) => void } = {}) {
   let queue: Line[] = [];
   let cur: { line: Line; stop(): void } | null = null;
   let gen = 0;
+  let scene: string | null = null;
+  const foreign = (l: Line) => l.scene !== undefined && scene !== null && l.scene !== scene;
 
   const next = () => {
     const line = queue.shift() ?? null;
@@ -24,7 +30,11 @@ export function voiceQueue(speaker: Speaker, o: { ambient?: () => Line | null; o
     o.onLine?.(line);
     if (!line) return;
     const g = ++gen;
-    const finish = () => { if (g === gen) next(); };
+    const finish = () => {
+      if (g !== gen) return;
+      o.onDone?.(line);
+      next();
+    };
     try {
       const h = speaker.speak(line.text, line);
       cur = { line, stop: h.stop };
@@ -33,39 +43,56 @@ export function voiceQueue(speaker: Speaker, o: { ambient?: () => Line | null; o
       queueMicrotask(finish);
     }
   };
+  /** Оборвать звучащую фразу (без onDone: она не договорена). */
+  const cut = () => {
+    const c = cur;
+    gen++;
+    cur = null;
+    c?.stop();
+  };
 
-  const api = {
+  return {
     push(line: Line) {
-      // такая же фраза уже в очереди — второй раз не нужна
-      if (queue.some((l) => l.text === line.text)) return;
+      if (foreign(line)) return;
+      // такая же фраза уже звучит или ждёт — второй раз не нужна
+      if (cur?.line.text === line.text || queue.some((l) => l.text === line.text)) return;
+      if (line.priority === 'action') {
+        // ответ на действие — сразу: прежний ответ и звучащая фраза обрываются
+        queue = queue.filter((l) => l.priority !== 'action');
+        queue.unshift(line);
+        if (cur) cut();
+        return next();
+      }
       const at = queue.findIndex((l) => RANK[l.priority] > RANK[line.priority]);
       if (at < 0) queue.push(line);
       else queue.splice(at, 0, line);
-      if (!cur) return next();
-      if (cur.line.priority === 'ambient' && line.priority !== 'ambient') {
-        queue = queue.filter((l) => l.priority !== 'ambient' || l === line);
-        const c = cur;
-        gen++;
-        c.stop();
+      if (!cur) next();
+    },
+    /** Смена сцены: фразы прежней сцены — прочь, звучащая — обрывается. */
+    scene(key: string) {
+      if (key === scene) return;
+      scene = key;
+      queue = queue.filter((l) => !foreign(l));
+      if (cur && foreign(cur.line)) {
+        cut();
         next();
       }
     },
-    /** Пауза: голос молчит и очередь пуста — фоновая фраза. */
-    fill() {
-      if (cur || queue.length) return;
-      const l = o.ambient?.();
-      if (l) api.push({ ...l, priority: 'ambient' });
-    },
     clear() {
       queue = [];
-      gen++;
-      const c = cur;
-      cur = null;
-      c?.stop();
+      cut();
       o.onLine?.(null);
     },
     current: () => cur?.line ?? null,
+    /** Текущая сцена (ключ). */
+    sceneNow: () => scene,
     busy: () => !!cur || queue.length > 0,
   };
-  return api;
+}
+
+/** Пора ли призыву на заставке: включён, голос молчит, с входа в заставку и с прошлого призыва прошло не меньше `minutes`. */
+export function attractCallDue(o: { now: number; since: number; last: number; call?: { on: boolean; minutes: number }; busy: boolean }): boolean {
+  if (!o.call?.on || o.busy) return false;
+  const every = o.call.minutes * 60_000;
+  return o.now - o.since >= every && o.now - o.last >= every;
 }

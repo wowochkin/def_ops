@@ -1,9 +1,10 @@
 /**
  * Исполнитель голосовых эффектов режиссёра и вопросов к ИИ (главное окно).
  *
- * say — заготовка по ключу с подстановками из хода; newSession — тишина и чистый экран ИИ; ask — ответ (ИИ в срок или
- * заготовка; пока ИИ думает — его «мысль» на экране и фоновая фраза голосом); listen — одна реплика с микрофона:
- * команда сеанса («выбираю второй», «расскажи подробнее», «начать заново») или вопрос. После решения — комментарий.
+ * say — заготовка по ключу с подстановками из хода (со сценой, к которой она относится); scene — смена сцены (голос
+ * обрывает фразу ушедшей); newSession — тишина и чистый экран ИИ; ask — ответ (ИИ в срок или заготовка; пока ИИ думает —
+ * его «мысль» на экране, голос молчит); listen — одна реплика с микрофона: команда сеанса («выбираю второй»,
+ * «расскажи подробнее», «начать заново») или вопрос. После решения — комментарий как ответ на действие посетителя.
  * Кадр ИИ (что звучит, ответ, мысль) уходит в `onFrame` и рассылается окнам.
  */
 import { answer, comment, type Ask, type ChoiceKind, type Said } from './ai';
@@ -64,22 +65,23 @@ export function aiRunner(d: AiRunnerDeps) {
   let frame: AiFrame = NO_AI;
   let gen = 0;
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
-  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback'> = {}) =>
+  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene'> = {}) =>
     d.queue.push({ text, priority, source, ...more });
+  const here = () => d.queue.sceneNow() ?? undefined;
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
 
   const ask = async (q: string) => {
     const g = ++gen;
     const thinking = pick(lines.thinking) ?? 'Думаю…';
     set({ answer: { q, text: '', source: null }, thinking: d.ask() ? thinking : null });
-    if (d.ask()) say(thinking, 'ambient', 'ИИ думает');
+    const scene = here();
     const f = d.facts();
     const a = await answer(d.ask(), q, f.text, d.answerMs ?? 8000, lines);
     if (g !== gen) return;
     tally(a);
     set({ answer: { q, text: a.text, source: a.source }, thinking: null });
     // составленное ИИ сейчас — живым голосом; не выйдет — звучит готовый ответ из предзаписи
-    say(a.text, 'action', a.source, a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {});
+    say(a.text, 'action', a.source, { scene, ...(a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {}) });
   };
 
   return {
@@ -89,7 +91,9 @@ export function aiRunner(d: AiRunnerDeps) {
     handle(e: Effect) {
       if (e.e === 'say') {
         const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
-        if (f) say(f.text, e.priority, 'prepared', { parts: f.parts });
+        if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}) });
+      } else if (e.e === 'scene') {
+        d.queue.scene(e.key);
       } else if (e.e === 'newSession') {
         gen++;
         d.queue.clear();
@@ -115,12 +119,13 @@ export function aiRunner(d: AiRunnerDeps) {
     /** После решения перелома: комментарий выбора по фактам хода. */
     async decided(kind: ChoiceKind) {
       const g = gen;
+      const scene = here();
       const f = d.facts();
       const c = await comment(d.ask(), kind, f.text, f.vars, d.commentMs ?? 12000, lines, d.voiced);
       if (g !== gen || !c) return;
       tally(c);
       const fallback = c.source === 'now' ? await comment(null, kind, '', f.vars, 0, lines, d.voiced) : null;
-      say(c.text, 'event', c.source, { parts: c.parts, ...(fallback ? { fallback } : {}) });
+      say(c.text, 'action', c.source, { parts: c.parts, scene, ...(fallback ? { fallback } : {}) });
     },
     /** Ответ на вопрос мимо режиссёра (для проверок). */
     ask,

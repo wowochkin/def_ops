@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPO_DEFAULTS, type ExpoSettings } from '../src/expo/settings';
-import { DEBOUNCE_MS, DURATIONS, initialState, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
+import { BRIEF_POINTS, briefKey, DEBOUNCE_MS, DURATIONS, initialState, sceneKey, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
 
 const cfgWith = (patch: Partial<ExpoSettings>): ExpoSettings => ({ ...JSON.parse(JSON.stringify(EXPO_DEFAULTS)), ...patch });
 
@@ -75,7 +75,7 @@ describe('режиссёр сеанса', () => {
     r.send({ t: 'replace', card: 2 });
     expect(r.effects.at(-1)).toEqual({ e: 'replace', n: 1, card: 2 });
     r.send({ t: 'choose', card: 1 });
-    expect(r.effects.at(-1)).toEqual({ e: 'decide', n: 1, choice: 1 });
+    expect(r.effects).toContainEqual({ e: 'decide', n: 1, choice: 1 });
     r.wait(DURATIONS.scroll);
     expect(r.effects).toContainEqual({ e: 'deal', n: 2, front: 'su_1bf' });
     r.wait(DURATIONS.explain + 30_000);
@@ -112,7 +112,7 @@ describe('режиссёр сеанса', () => {
     r.wait(19_750);
     expect(says(r.since(mark), 'timer-warn')).toBe(false);
     r.wait(250);
-    expect(r.since(mark)).toContainEqual({ e: 'say', key: 'timer-warn', priority: 'timer' });
+    expect(r.since(mark)).toContainEqual({ e: 'say', key: 'timer-warn', priority: 'timer', scene: 'turn-1-choose' });
     expect(turn(r.phase)?.warned).toBe(true);
     expect(r.since(mark).filter((e) => e.e === 'say' && e.key === 'timer-warn')).toHaveLength(1);
     r.wait(10_000);
@@ -266,7 +266,7 @@ describe('режиссёр сеанса', () => {
     r.send({ t: 'speak' });
     expect(r.since(mark)).toEqual([]);
     const c = toChoose().wait(5_000).send({ t: 'speak' });
-    expect(c.effects).toContainEqual({ e: 'say', key: 'voice-soon', priority: 'action' });
+    expect(c.effects).toContainEqual(expect.objectContaining({ e: 'say', key: 'voice-soon', priority: 'action' }));
     expect(c.state.lastInput).toBe(c.now);
     expect(c.phase).toMatchObject({ kind: 'turn', step: 'choose' });
   });
@@ -289,6 +289,38 @@ describe('голос и ИИ в режиссёре', () => {
   });
   it('вход в фазу сопровождается фразой', () => {
     const r = step(s0({ kind: 'attract' }), { t: 'touch' }, EXPO_DEFAULTS);
-    expect(r.effects).toContainEqual({ e: 'say', key: 'welcome', priority: 'event' });
+    expect(r.effects).toContainEqual({ e: 'say', key: 'welcome', priority: 'scene', scene: 'welcome' });
+    // смена сцены — до фразы входа: голос обрывает фразу ушедшей сцены
+    expect(r.effects.findIndex((e) => e.e === 'scene')).toBeLessThan(r.effects.findIndex((e) => e.e === 'say'));
+  });
+});
+
+describe('ввод в обстановку — доклад по пунктам', () => {
+  const toBrief = () => run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+  it('каждый пункт — своя сцена и своя фраза; пункт меняется по концу фразы', () => {
+    const r = toBrief();
+    expect(r.phase).toEqual({ kind: 'briefing', point: 0 });
+    expect(says(r.effects, briefKey('su_1bf', 0))).toBe(true);
+    r.send({ t: 'briefDone', point: 0 });
+    expect(r.phase).toEqual({ kind: 'briefing', point: 1 });
+    expect(r.effects).toContainEqual({ e: 'scene', key: sceneKey(r.state) });
+    expect(says(r.effects, 'brief-su_1bf-2')).toBe(true);
+    // запоздалый конец фразы прежнего пункта ничего не меняет
+    r.send({ t: 'briefDone', point: 0 });
+    expect(r.phase).toEqual({ kind: 'briefing', point: 1 });
+  });
+  it('посетитель листает и пропускает доклад; без голоса пункты идут по сроку', () => {
+    const r = toBrief();
+    r.send({ t: 'brief', point: 4 });
+    expect(r.phase).toEqual({ kind: 'briefing', point: 4 });
+    r.wait(DURATIONS.briefPoint);
+    expect(r.phase).toEqual({ kind: 'briefing', point: 5 });
+    // последний пункт по концу фразы не уходит — ждёт срока или «К решениям»
+    r.send({ t: 'briefDone', point: BRIEF_POINTS - 1 });
+    expect(r.phase).toEqual({ kind: 'briefing', point: 5 });
+    r.send({ t: 'next' });
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'explain' });
+    // статистика: сеанс начат один раз, а не на каждом пункте
+    expect(r.effects.filter((e) => e.e === 'stat' && e.kind === 'started')).toHaveLength(1);
   });
 });

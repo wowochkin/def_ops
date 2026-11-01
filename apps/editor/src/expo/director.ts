@@ -8,6 +8,9 @@
  *
  * Фазы: startup → attract (заставка) → welcome → briefing → три перелома (пояснение, выбор, прокрутка) → result.
  * Пояснение, прокрутка и бриф переходят дальше сами по DURATIONS; ход модели ведёт хост по эффектам deal, replace, decide.
+ * Бриф — доклад по пунктам (`BRIEF_POINTS`): пункт меняется по концу его фразы (`briefDone` от голоса) или по сроку,
+ * посетитель листает пункты (`brief`) или пропускает доклад («К решениям»). Каждая смена сцены — эффект `scene`
+ * (по нему голос обрывает фразу ушедшей сцены); фразы входа в сцену несут её ключ (`sceneKey`).
  */
 import type { ExpoSettings, FrontId } from './settings';
 
@@ -17,7 +20,8 @@ export type Phase =
   | { kind: 'startup' }
   | { kind: 'attract' }
   | { kind: 'welcome' }
-  | { kind: 'briefing' }
+  /** Ввод в обстановку: пункт доклада (0…BRIEF_POINTS−1). */
+  | { kind: 'briefing'; point: number }
   | {
       kind: 'turn';
       n: TurnN;
@@ -59,13 +63,20 @@ export type DirectorEvent =
   | { t: 'speak' }
   /** Вопрос к ИИ (готовый или своими словами). */
   | { t: 'ask'; q: string }
+  /** Посетитель открыл пункт брифинга. */
+  | { t: 'brief'; point: number }
+  /** Голос договорил фразу пункта брифинга (от главного окна, не ввод посетителя). */
+  | { t: 'briefDone'; point: number }
   | { t: 'restart' }
   | { t: 'pause' }
   | { t: 'resume' }
   | { t: 'jump'; phase: Phase['kind']; n?: TurnN };
 
 export type Effect =
-  | { e: 'say'; key: string; priority: 'action' | 'timer' | 'event' | 'ambient' }
+  /** Фраза-заготовка; `scene` — сцена, к которой она относится (нет — переходная, живёт до конца). */
+  | { e: 'say'; key: string; priority: 'action' | 'timer' | 'scene'; scene?: string }
+  /** Смена сцены (ключ `sceneKey`): голос обрывает фразу ушедшей сцены. */
+  | { e: 'scene'; key: string }
   | { e: 'aiPick'; n: TurnN }
   /** Ответить на вопрос посетителя. */
   | { e: 'ask'; q: string }
@@ -80,14 +91,29 @@ export type Effect =
   | { e: 'decide'; n: TurnN; choice: number | 'delay' }
   | { e: 'stat'; kind: 'started' | 'finished' };
 
-/** Длительности фаз-заглушек этапа 1, мс. */
-export const DURATIONS = { welcome: 20_000, briefing: 35_000, explain: 10_000, scroll: 20_000 } as const;
+/** Пунктов в докладе брифинга. */
+export const BRIEF_POINTS = 6;
+/** Срок пункта брифинга, мс: голос договорил раньше — пункт меняется раньше. */
+const BRIEF_POINT_MS = 18_000;
+/** Длительности фаз, мс; briefing — весь доклад, если голос молчит. */
+export const DURATIONS = { welcome: 20_000, briefPoint: BRIEF_POINT_MS, briefing: BRIEF_POINT_MS * BRIEF_POINTS, explain: 10_000, scroll: 20_000 } as const;
+
+/** Ключ сцены: фаза, пункт брифинга, перелом и его шаг. */
+export function sceneKey(s: Pick<DirectorState, 'phase'>): string {
+  const p = s.phase;
+  return p.kind === 'turn' ? `turn-${p.n}-${p.step}` : p.kind === 'briefing' ? `briefing-${p.point ?? 0}` : p.kind;
+}
+
+/** Ключ фразы пункта брифинга: `brief-<фронт>-<номер с 1>`. */
+export const briefKey = (front: FrontId, point: number) => `brief-${front}-${point + 1}`;
+
+const briefing = (point = 0): Phase => ({ kind: 'briefing', point });
 
 /** Касание, продвигающее фазу, в первые столько мс после входа в неё — дребезг или касание вместе с мышью; не продвигает. */
 export const DEBOUNCE_MS = 300;
 
 /** Фразы входа в фазу (ключи заготовок). */
-const SAY_ON_ENTER: Record<string, string | undefined> = { welcome: 'welcome', briefing: 'briefing', explain: 'explain', result: 'result' };
+const SAY_ON_ENTER: Record<string, string | undefined> = { welcome: 'welcome', explain: 'explain', result: 'result' };
 
 /** Предупреждение до конца таймера, мс. */
 const WARN_BEFORE = 10_000;
@@ -114,7 +140,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -123,9 +149,11 @@ function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx
     next = { ...next, phase: { ...phase, deadline: at + cfg.timer.seconds * 1000 } };
   }
   if (phase.kind === 'turn' && phase.step === 'explain' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
-  const say = SAY_ON_ENTER[phase.kind === 'turn' ? (phase.step === 'explain' ? 'explain' : '') : phase.kind];
-  if (say) fx.push({ e: 'say', key: say, priority: 'event' });
-  if (phase.kind === 'briefing') {
+  const scene = sceneKey(next);
+  fx.push({ e: 'scene', key: scene });
+  const say = phase.kind === 'briefing' ? (next.front ? briefKey(next.front, phase.point) : undefined) : SAY_ON_ENTER[phase.kind === 'turn' ? (phase.step === 'explain' ? 'explain' : '') : phase.kind];
+  if (say) fx.push({ e: 'say', key: say, priority: 'scene', scene });
+  if (phase.kind === 'briefing' && s.phase.kind !== 'briefing') {
     fx.push({ e: 'stat', kind: 'started' });
     next = { ...next, stats: { ...next.stats, sessions: next.stats.sessions + 1 } };
   }
@@ -173,7 +201,10 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
     const at = idleFrom + cfg.idleSeconds * 1000;
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
   }
-  if (p.kind === 'briefing') cands.push({ at: t0 + DURATIONS.briefing, apply: (x) => enter(x, turnPhase(1), t0 + DURATIONS.briefing, cfg, fx) });
+  if (p.kind === 'briefing') {
+    const at = t0 + DURATIONS.briefPoint;
+    cands.push({ at, apply: (x) => enter(x, p.point + 1 < BRIEF_POINTS ? briefing(p.point + 1) : turnPhase(1), at, cfg, fx) });
+  }
   if (p.kind === 'result') {
     const at = t0 + cfg.resultSeconds * 1000;
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
@@ -183,14 +214,19 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
     if (p.step === 'scroll') cands.push({ at: t0 + DURATIONS.scroll, apply: (x) => enter(x, afterScroll(p.n), t0 + DURATIONS.scroll, cfg, fx) });
     if (p.step === 'choose' && p.deadline !== null) {
       const dl = p.deadline;
-      if (!p.warned) cands.push({ at: dl - WARN_BEFORE, apply: (x) => { fx.push({ e: 'say', key: 'timer-warn', priority: 'timer' }); return { ...x, phase: { ...p, warned: true } }; } });
-      cands.push({ at: dl, apply: (x) => { fx.push({ e: 'say', key: 'delay', priority: 'event' }, { e: 'decide', n: p.n, choice: 'delay' }); return enter(x, { ...p, step: 'scroll', choice: 'delay' }, dl, cfg, fx); } });
+      if (!p.warned) cands.push({ at: dl - WARN_BEFORE, apply: (x) => { fx.push({ e: 'say', key: 'timer-warn', priority: 'timer', scene: sceneKey(x) }); return { ...x, phase: { ...p, warned: true } }; } });
+      cands.push({ at: dl, apply: (x) => {
+        fx.push({ e: 'decide', n: p.n, choice: 'delay' });
+        const y = enter(x, { ...p, step: 'scroll', choice: 'delay' }, dl, cfg, fx);
+        fx.push({ e: 'say', key: 'delay', priority: 'scene', scene: sceneKey(y) });
+        return y;
+      } });
     }
     if (p.step === 'choose' && p.deadline === null && p.choice === null) {
-      if (!p.offered) cands.push({ at: t0 + OFFER_AFTER, apply: (x) => { fx.push({ e: 'say', key: 'offer-decide', priority: 'action' }); return { ...x, phase: { ...p, offered: true } }; } });
+      if (!p.offered) cands.push({ at: t0 + OFFER_AFTER, apply: (x) => { fx.push({ e: 'say', key: 'offer-decide', priority: 'timer', scene: sceneKey(x) }); return { ...x, phase: { ...p, offered: true } }; } });
       const aiAt = t0 + AI_PICK_AFTER;
       // Выбор ИИ — один раз: в момент, когда часы переходят отметку (выбор выставит последующий choose от оболочки).
-      if (!aiFired.v && aiAt > prevNow) cands.push({ at: aiAt, apply: (x) => { aiFired.v = true; fx.push({ e: 'say', key: 'ai-pick', priority: 'action' }, { e: 'aiPick', n: p.n }); return x; } });
+      if (!aiFired.v && aiAt > prevNow) cands.push({ at: aiAt, apply: (x) => { aiFired.v = true; fx.push({ e: 'say', key: 'ai-pick', priority: 'scene' }, { e: 'aiPick', n: p.n }); return x; } });
     }
   }
   if (!cands.length) return null;
@@ -237,12 +273,18 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     return out(enter({ ...fresh(s, fx), lastInput: now }, { kind: 'welcome' }, now, cfg, fx));
   }
   if (ev.t === 'jump') {
-    const phase: Phase = ev.phase === 'turn' ? turnPhase(ev.n ?? 1) : ({ kind: ev.phase } as Phase);
+    const phase: Phase = ev.phase === 'turn' ? turnPhase(ev.n ?? 1) : ev.phase === 'briefing' ? briefing() : ({ kind: ev.phase } as Phase);
     let next: DirectorState = { ...s, phase, phaseStart: now, lastInput: now };
     if (phase.kind === 'turn' && next.front === null) next = { ...next, front: cfg.fronts[0] ?? null };
     if (phase.kind === 'turn' && phase.step === 'choose' && cfg.timer.on) next = { ...next, phase: { ...phase, deadline: now + cfg.timer.seconds * 1000 } };
     if (phase.kind === 'turn' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
+    fx.push({ e: 'scene', key: sceneKey(next) });
     return out(next);
+  }
+  // голос договорил пункт брифинга — следующий пункт (последний ждёт своего срока)
+  if (ev.t === 'briefDone') {
+    if (s.paused || p.kind !== 'briefing' || p.point !== ev.point || p.point + 1 >= BRIEF_POINTS) return out(s);
+    return out(enter(s, briefing(p.point + 1), now, cfg, fx));
   }
   if (ev.t === 'ready') return out(p.kind === 'startup' ? enter(s, { kind: 'attract' }, now, cfg, fx) : s);
 
@@ -254,11 +296,11 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     case 'touch':
       if (now - s.phaseStart < DEBOUNCE_MS) return out(touched);
       if (p.kind === 'attract') return out(enter(touched, { kind: 'welcome' }, now, cfg, fx));
-      if (p.kind === 'welcome' && cfg.fronts.length === 1) return out(enter({ ...touched, front: cfg.fronts[0] }, { kind: 'briefing' }, now, cfg, fx));
+      if (p.kind === 'welcome' && cfg.fronts.length === 1) return out(enter({ ...touched, front: cfg.fronts[0] }, briefing(), now, cfg, fx));
       if (p.kind === 'result') return out(enter(fresh(touched, fx), { kind: 'welcome' }, now, cfg, fx));
       return out(p.kind === 'startup' ? s : touched);
     case 'pickFront':
-      if (p.kind === 'welcome' && cfg.fronts.includes(ev.front)) return out(enter({ ...touched, front: ev.front }, { kind: 'briefing' }, now, cfg, fx));
+      if (p.kind === 'welcome' && cfg.fronts.includes(ev.front)) return out(enter({ ...touched, front: ev.front }, briefing(), now, cfg, fx));
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'next':
       if (p.kind === 'briefing') return out(enter(touched, turnPhase(1), now, cfg, fx));
@@ -277,8 +319,11 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'speak':
       if (p.kind === 'startup' || p.kind === 'attract') return out(s);
-      fx.push({ e: 'say', key: 'voice-soon', priority: 'action' }, { e: 'listen' });
+      fx.push({ e: 'say', key: 'voice-soon', priority: 'action', scene: sceneKey(s) }, { e: 'listen' });
       return out(touched);
+    case 'brief':
+      if (p.kind === 'briefing' && Number.isInteger(ev.point) && ev.point >= 0 && ev.point < BRIEF_POINTS && ev.point !== p.point) return out(enter(touched, briefing(ev.point), now, cfg, fx));
+      return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'ask':
       if (p.kind === 'startup' || p.kind === 'attract' || !ev.q.trim()) return out(s);
       fx.push({ e: 'ask', q: ev.q.trim().slice(0, 300) });

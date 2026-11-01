@@ -85,10 +85,12 @@ it('maps: panorama replay, briefing camera to the front, turn arrows of the expa
   const r1 = show(base, { view: null, error: null });
   expect(r1.getByRole('img', { name: 'Переигровка Берлинской операции' })).toBeTruthy();
   cleanup();
-  const brief = { ...base, front: 'su_1uf', phase: { kind: 'briefing' } } as DirectorState;
+  const brief = { ...base, front: 'su_1uf', phase: { kind: 'briefing', point: 0 } } as DirectorState;
   const r2 = show(brief, { view: null, error: null });
-  expect(r2.getByRole('img', { name: 'Обстановка к 16 апреля 1945' })).toBeTruthy();
-  expect(r2.getByText(/Нейсе и Шпрее/)).toBeTruthy();
+  expect(r2.getByRole('img', { name: /^Обстановка к 16 апреля 1945/ })).toBeTruthy();
+  // доклад по пунктам: первый пункт — задача по директиве, цифры с источником
+  expect(r2.getByRole('heading', { name: 'Задача фронта' })).toBeTruthy();
+  expect(r2.getByText(/директива Ставки № 11060/)).toBeTruthy();
   cleanup();
   const arrows = [{ army: 'su_8gva', from: [14.6, 52.6] as [number, number], to: [14.1, 52.7] as [number, number], kind: 'attack' }];
   const v = view();

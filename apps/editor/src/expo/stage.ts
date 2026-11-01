@@ -2,7 +2,8 @@
  * Голос и ИИ главного окна в сборе: речь (`expoSpeaker`), очередь голоса, карточки ИИ, исполнитель эффектов
  * (`aiRunner`). «С ИИ» — модель LM Studio через `/llm/v1` (как в полном режиме), пока рабочий режим стенда — «С ИИ»;
  * иначе всё — из заготовок. Заготовки звучат из предзаписи; модель и живой синтез работают по очереди (`turnstile`).
- * Паузу дольше 6 с в сеансе заполняет фоновый рассказ.
+ * Фонового рассказа нет: голос — только о сцене на экране и в ответ посетителю (`voiceQueue`). Договорён пункт брифинга —
+ * режиссёру `briefDone` (следующий пункт). На заставке — редкий призыв (`attractCall` в настройках) или тишина.
  */
 import { askText } from '../voice/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -12,14 +13,13 @@ import { cardSmith, type Ask } from './ai';
 import { aiRunner, type AiFrame } from './ai-runner';
 import { BANK, cardErrors } from './bank';
 import type { DirectorState, Effect } from './director';
-import { LINES, pick } from './lines';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import type { ExpoSettings } from './settings';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
-import { voiceQueue } from './voice-queue';
+import { attractCallDue, voiceQueue } from './voice-queue';
 import { FRONT_NAMES } from './scenes';
 
 /** Модель — та, что выбрана в разделе «ИИ» для голоса штаба (иначе основная); рассуждения выключены — ответ нужен вовремя. */
@@ -28,10 +28,13 @@ function llm(): LlmSettings {
   return { ...s, model: s.voiceModel || s.model, thinking: 'off' };
 }
 
+/** Пауза после фразы пункта брифинга до следующего пункта, мс. */
+const BRIEF_GAP_MS = 1200;
+
 export interface StageDeps {
   aiOn: () => boolean;
   /** Настройки — громкость голоса (меню оператора, вкладка «Звук»); нет — полная громкость. */
-  snapshot: () => { state: DirectorState; model: ModelFrame; settings?: Pick<ExpoSettings, 'volume'> };
+  snapshot: () => { state: DirectorState; model: ModelFrame; settings?: Pick<ExpoSettings, 'volume'> & Partial<Pick<ExpoSettings, 'attractCall'>> };
   dispatch: Parameters<typeof aiRunner>[0]['dispatch'];
   onFrame: (f: AiFrame) => void;
   count: (k: StatKind) => void;
@@ -41,7 +44,8 @@ export function createStage(d: StageDeps) {
   const gate = turnstile();
   const llmAsk: Ask = (system, text, signal) => gate.run(() => (signal.aborted ? Promise.reject(signal.reason) : askText(system, text, { settings: llm(), signal, maxTokens: 400 })));
   const voice = expoSpeaker({ aiOn: d.aiOn, gate, onSwap: (l) => runner?.onLine(l) });
-  let lastBusy = Date.now();
+  let attractSince: number | null = null;
+  let lastCall = 0;
   let volume: number | null = null;
   const ask = () => (d.aiOn() ? llmAsk : null);
   const facts = () => {
@@ -76,8 +80,12 @@ export function createStage(d: StageDeps) {
   };
   let runner: ReturnType<typeof aiRunner> | null = null;
   const queue = voiceQueue(voice.speaker, {
-    ambient: () => { const t = pick(LINES.ambient); return t ? { text: t, priority: 'ambient', source: 'база знаний' } : null; },
     onLine: (l) => runner?.onLine(l),
+    onDone: (l) => {
+      const m = l.scene?.match(/^briefing-(\d+)$/);
+      // пауза между пунктами доклада — чтобы цифры на экране успели прочитать
+      if (m) setTimeout(() => d.dispatch({ t: 'briefDone', point: Number(m[1]) }), BRIEF_GAP_MS);
+    },
   });
   runner = aiRunner({
     queue, ask, facts, dispatch: d.dispatch, onFrame: d.onFrame,
@@ -107,16 +115,20 @@ export function createStage(d: StageDeps) {
   return {
     hooks,
     handle(e: Effect) {
-      if (e.e === 'say' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
+      if (e.e === 'say' || e.e === 'scene' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
     },
-    /** Тик часов: громкость голоса из настроек (смена — сразу); пауза в сеансе — фоновый рассказ. */
+    /** Тик часов: громкость голоса из настроек (смена — сразу); на заставке — редкий призыв, если он включён. */
     tick() {
       const snap = d.snapshot();
       const v = snap.settings?.volume.voice ?? 1;
       if (v !== volume) voice.setVolume((volume = v));
-      const k = snap.state.phase.kind;
-      if (queue.busy()) lastBusy = Date.now();
-      else if ((k === 'briefing' || k === 'turn') && Date.now() - lastBusy > 6000) queue.fill();
+      const now = Date.now();
+      if (snap.state.phase.kind !== 'attract') { attractSince = null; return; }
+      attractSince ??= now;
+      if (attractCallDue({ now, since: attractSince, last: lastCall, call: snap.settings?.attractCall, busy: queue.busy() })) {
+        lastCall = now;
+        runner?.handle({ e: 'say', key: 'attract-call', priority: 'scene', scene: 'attract' });
+      }
     },
     resume: () => voice.resume(),
     dispose() { queue.clear(); voice.dispose(); },

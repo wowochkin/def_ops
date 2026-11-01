@@ -405,18 +405,108 @@ html.expo-active,
   35% { opacity: 0; }
   100% { opacity: 0; }
 }
-.expo-intro button,
-.expo-brief button {
+.expo-intro button {
   margin-top: 16px;
   min-height: 112px;
   font-size: 40px;
 }
-.expo-brief h1 {
-  font-size: 88px;
-  line-height: 1.02;
+/* Ввод в обстановку: доклад по пунктам слева, кадр пункта на карте справа */
+.expo-split.expo-briefing {
+  grid-template-columns: 900px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 40px;
 }
-.expo-brief .expo-task {
-  font: 44px / 1.3 var(--expo-serif);
+.expo-brief {
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+.expo-brief-who {
+  margin: 0;
+  color: var(--expo-muted);
+}
+.expo-brief-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 10px;
+  list-style: none;
+  border-bottom: 1px solid var(--expo-line);
+}
+.expo .expo-brief-steps button {
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--expo-muted);
+  font: var(--expo-text-min) / 1.15 var(--expo-sans);
+  text-align: left;
+}
+.expo .expo-brief-steps button span {
+  font-family: var(--expo-mono);
+  color: var(--expo-line);
+}
+.expo .expo-brief-steps button[aria-current='step'] {
+  color: var(--expo-text);
+  border-bottom-color: var(--expo-gold);
+}
+.expo .expo-brief-steps button[aria-current='step'] span {
+  color: var(--expo-gold);
+}
+.expo-brief h1 {
+  margin: 0;
+  font: 60px / 1.02 var(--expo-serif);
+}
+.expo-brief-facts {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), 1fr);
+  gap: 28px;
+  width: 100%;
+  margin: 0;
+}
+.expo-brief-facts[data-n='1'] { --n: 1; }
+.expo-brief-facts[data-n='2'] { --n: 2; }
+.expo-brief-facts dt {
+  font: 58px / 1 var(--expo-serif);
+  color: var(--expo-gold);
+  white-space: nowrap;
+}
+.expo-brief-facts dd {
+  margin: 8px 0 0;
+  font-size: var(--expo-text-min);
+  line-height: 1.12;
+}
+.expo-brief-facts small {
+  display: block;
+  margin-top: 8px;
+  color: var(--expo-muted);
+  font: italic 26px / 1.15 var(--expo-serif);
+}
+.expo-brief-lines {
+  margin: 0;
+  padding: 0 0 0 1em;
+  font: var(--expo-text-min) / 1.2 var(--expo-serif);
+}
+.expo-brief-lines li + li {
+  margin-top: 4px;
+}
+.expo-brief-go {
+  display: flex;
+  gap: 20px;
+  margin-top: auto;
+}
+.expo .expo-brief-go button {
+  margin: 0;
+  min-height: 84px;
+  padding: 0 40px;
+  font-size: 36px;
 }
 .expo-marshal {
   color: var(--expo-muted);

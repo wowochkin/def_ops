@@ -27,6 +27,8 @@ export interface ExpoSettings {
   screens: { count: 1 | 2 | 3; order: string[] };
   pin: string;
   maxReplacements: number;
+  /** Призыв голосом на заставке: включён и не чаще раза в столько минут (2–30). */
+  attractCall: { on: boolean; minutes: number };
 }
 
 const ALL_FRONTS: readonly FrontId[] = ['su_1bf', 'su_1uf'];
@@ -45,6 +47,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   screens: { count: 3, order: [] },
   pin: '0000',
   maxReplacements: 2,
+  attractCall: { on: true, minutes: 3 },
 }) as ExpoSettings;
 
 const copyDefaults = (): ExpoSettings => JSON.parse(JSON.stringify(EXPO_DEFAULTS)) as ExpoSettings;
@@ -84,6 +87,8 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
   const timer = sub('timer');
   const volume = sub('volume');
   const screens = sub('screens');
+  // поле появилось позже: в прежних настройках его нет — это не порча
+  const call = r.attractCall === undefined ? d.attractCall : sub('attractCall');
   const fronts = (v: unknown): v is FrontId[] =>
     Array.isArray(v) && v.length > 0 && new Set(v).size === v.length && v.every((f) => (ALL_FRONTS as unknown[]).includes(f));
   const order = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
@@ -113,6 +118,10 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
     },
     pin: pick('pin', r.pin, (v): v is string => typeof v === 'string' && /^\d{4,8}$/.test(v), d.pin),
     maxReplacements: pick('maxReplacements', r.maxReplacements, inRange(0, 5), d.maxReplacements),
+    attractCall: {
+      on: pick('attractCall.on', call.on, isBool, d.attractCall.on),
+      minutes: pick('attractCall.minutes', call.minutes, inRange(2, 30), d.attractCall.minutes),
+    },
   };
   return { settings, problems };
 }
