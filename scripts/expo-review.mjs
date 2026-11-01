@@ -58,7 +58,15 @@ async function run({ cfg, front, scenes, tag = '' }) {
   // карта заставки — после переигровки «как было» в ядре и сборки её документа
   await page.locator('.expo-gis svg').first().waitFor({ state: 'attached', timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(2500);
-  if (scenes.includes('attract')) await shot('02-attract');
+  if (scenes.includes('attract')) {
+    await shot('02-attract');
+    for (const n of ['1', '2', '3']) {
+      await page.locator('.expo-lenses').getByRole('button', { name: n, exact: true }).click();
+      await shot(`02-attract-${n}`);
+    }
+    await page.locator('.expo-lenses').getByRole('button', { name: 'Все вместе' }).click();
+    await page.getByRole('heading', { name: /Приказ — за вами/ }).waitFor();
+  }
   await page.getByRole('button', { name: 'Коснитесь, чтобы принять командование' }).click();
   await page.getByRole('heading', { name: 'Выберите фронт' }).waitFor();
   if (scenes.includes('welcome')) await shot('03-welcome');

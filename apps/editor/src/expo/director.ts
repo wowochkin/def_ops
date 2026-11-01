@@ -50,6 +50,8 @@ export interface DirectorState {
   stats: { sessions: number; finished: number };
   /** Часы режиссёра — время последнего тика (дополнение к интерфейсу плана: события, кроме тика, времени не несут). */
   now: number;
+  /** Голос стенда включён. Кнопка на заставке; держится до перезапуска. Старт — из настроек. */
+  voice: boolean;
 }
 
 export type DirectorEvent =
@@ -61,6 +63,8 @@ export type DirectorEvent =
   | { t: 'choose'; card: number }
   | { t: 'replace'; card: number }
   | { t: 'speak' }
+  /** Включить или выключить голос стенда (кнопка на заставке). */
+  | { t: 'voice' }
   /** Вопрос к ИИ (готовый или своими словами). */
   | { t: 'ask'; q: string }
   /** Посетитель открыл пункт брифинга. */
@@ -132,6 +136,7 @@ export function initialState(now: number): DirectorState {
     session: 0,
     stats: { sessions: 0, finished: 0 },
     now,
+    voice: true,
   };
 }
 
@@ -255,6 +260,7 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
 
   if (ev.t === 'tick') return out(advance(s, ev.now, cfg, fx));
 
+  if (ev.t === 'voice') return out({ ...s, voice: !s.voice });
   if (ev.t === 'pause') return out(s.paused ? s : { ...s, paused: true, pausedAt: s.now });
   if (ev.t === 'resume') {
     if (!s.paused) return out(s);

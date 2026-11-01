@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, it } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
+import { KB_STATS } from '../src/expo/kb-stats';
 import { ExpoView, mapPlan } from '../src/expo/ExpoView';
 import { emptyDocument } from '@def-ops/core';
 import { EXPO_DEFAULTS } from '../src/expo/settings';
@@ -123,4 +124,25 @@ it('one monitor: header shows any screen of the three-screen layout full-size', 
   expect(v.queryByRole('heading', { name: 'Ход операции' })).toBeNull();
   fireEvent.click(v.getByRole('button', { name: 'Все вместе' }));
   expect(v.getByRole('heading', { name: 'Карта' })).toBeTruthy();
+});
+
+it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the full app', () => {
+  const s = at(initialState(0), { t: 'ready' });
+  const model = { view: null, error: null } as const;
+  const sent: unknown[] = [];
+  const a = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={(e) => sent.push(e)} />);
+  expect(a.getByRole('heading', { name: 'Как работает штаб ИИ' })).toBeTruthy();
+  expect(a.getByText(new RegExp(`${KB_STATS.sources} источник`))).toBeTruthy();
+  expect(a.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();
+  fireEvent.click(a.getByRole('button', { name: 'Голос: вкл' }));
+  expect(sent).toEqual([{ t: 'voice' }]);
+  cleanup();
+  const b = render(<ExpoView window={1} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(b.getByRole('img', { name: 'Переигровка Берлинской операции' })).toBeTruthy();
+  expect(b.queryByRole('heading', { name: 'Как работает штаб ИИ' })).toBeNull();
+  cleanup();
+  const c = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(c.getByRole('heading', { name: 'Полная версия' })).toBeTruthy();
+  expect(c.getByRole('img', { name: 'Карта операции' })).toBeTruthy();
+  expect(c.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();
 });

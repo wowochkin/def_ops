@@ -254,16 +254,16 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
       {flag('Фоновый звук', settings.volume.ambientOn, (v) => save({ volume: { ...settings.volume, ambientOn: v } }))}
       {volume('Громкость голоса', settings.volume.voice, (v) => save({ volume: { ...settings.volume, voice: v } }))}
       {volume('Громкость фона', settings.volume.ambient, (v) => save({ volume: { ...settings.volume, ambient: v } }))}
-      {flag('Призыв голосом на заставке', settings.attractCall.on, (v) => save({ attractCall: { ...settings.attractCall, on: v } }))}
+      {flag('Голос на заставке по умолчанию', settings.attractCall.on, (v) => save({ attractCall: { ...settings.attractCall, on: v } }))}
       <label>
-        Призыв не чаще, мин
+        Пауза между фразами, с
         <input
           type="number"
-          min="2"
+          min="4"
           max="30"
           disabled={!settings.attractCall.on}
-          value={settings.attractCall.minutes}
-          onChange={(e) => save({ attractCall: { ...settings.attractCall, minutes: Math.min(30, Math.max(2, Math.round(Number(e.target.value) || 2))) } })}
+          value={settings.attractCall.pause}
+          onChange={(e) => save({ attractCall: { ...settings.attractCall, pause: Math.min(30, Math.max(4, Math.round(Number(e.target.value) || 4))) } })}
         />
       </label>
     </>

@@ -380,7 +380,7 @@ html.expo-active,
 .expo-reel img {
   display: block;
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: cover;
   box-sizing: border-box;
   border: 6px solid #e8dfc8;
@@ -1706,4 +1706,121 @@ html.expo-active,
 }
 .expo-roles-ai-progress .expo-task-when {
   display: none;
+}
+
+/* Заставка: у каждого экрана своё; кнопка голоса не начинает сеанс */
+.expo-attract-root {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.expo-attract-root > .expo-split,
+.expo-attract-root > .expo-attract-map,
+.expo-attract-root > .expo-attract-side,
+.expo-attract-root > .expo-board {
+  flex: 1;
+  min-height: 0;
+}
+.expo-attract-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+.expo-attract-actions .expo-primary {
+  flex: 1 1 420px;
+}
+.expo-voice-toggle {
+  flex: 0 0 auto;
+  min-width: 280px;
+  border-color: var(--expo-gold);
+  color: var(--expo-gold);
+}
+.expo-attract-map {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+.expo-attract-map > .expo-replay {
+  flex: 1;
+}
+.expo-attract-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 24px 40px;
+  min-height: 0;
+}
+.expo-attract-side > .expo-attract-actions {
+  grid-column: 1 / -1;
+}
+.expo-board {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+.expo-board h1 {
+  font-size: 56px;
+  line-height: 1.05;
+}
+.expo-board-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font: 34px / 1.25 var(--expo-serif);
+}
+.expo-board-list b {
+  color: var(--expo-gold);
+  font-weight: normal;
+}
+.expo-lead,
+.expo-record {
+  margin: 0;
+  font: 32px / 1.25 var(--expo-serif);
+}
+.expo-record {
+  color: var(--expo-muted);
+}
+.expo-full {
+  flex: 1;
+}
+.expo-shots {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.expo-shots figure {
+  margin: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.expo-shots img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border: 1px solid var(--expo-line);
+}
+.expo-shots figcaption {
+  flex: none;
+  font-size: 28px;
+  line-height: 1.15;
+}
+.expo-shots figcaption small {
+  display: block;
+  margin-top: 4px;
+  color: var(--expo-muted);
+  font-size: 24px;
 }

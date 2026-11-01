@@ -3,7 +3,8 @@
  * (`aiRunner`). «С ИИ» — модель LM Studio через `/llm/v1` (как в полном режиме), пока рабочий режим стенда — «С ИИ»;
  * иначе всё — из заготовок. Заготовки звучат из предзаписи; модель и живой синтез работают по очереди (`turnstile`).
  * Фонового рассказа нет: голос — только о сцене на экране и в ответ посетителю (`voiceQueue`). Договорён пункт брифинга —
- * режиссёру `briefDone` (следующий пункт). На заставке — редкий призыв (`attractCall` в настройках) или тишина.
+ * режиссёру `briefDone` (следующий пункт). На заставке голос говорит по кругу, с паузой между фразами
+ * (`attractCall` в настройках — значение по умолчанию и длина паузы); кнопка на заставке глушит его до перезапуска.
  */
 import { askText } from '../voice/llm';
 import type { LlmSettings } from '../sim/game-protocol';
@@ -19,7 +20,7 @@ import type { ExpoSettings } from './settings';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
-import { attractCallDue, voiceQueue } from './voice-queue';
+import { attractLoopDue, voiceQueue } from './voice-queue';
 import { FRONT_NAMES } from './scenes';
 
 /** Модель — та, что выбрана в разделе «ИИ» для голоса штаба (иначе основная); рассуждения выключены — ответ нужен вовремя. */
@@ -44,8 +45,11 @@ export function createStage(d: StageDeps) {
   const gate = turnstile();
   const llmAsk: Ask = (system, text, signal) => gate.run(() => (signal.aborted ? Promise.reject(signal.reason) : askText(system, text, { settings: llm(), signal, maxTokens: 400 })));
   const voice = expoSpeaker({ aiOn: d.aiOn, gate, onSwap: (l) => runner?.onLine(l) });
-  let attractSince: number | null = null;
-  let lastCall = 0;
+  /** Фразы заставки по кругу: призыв, стенд, штаб ИИ. */
+  const ATTRACT_KEYS = ['attract-call', 'attract-stand', 'attract-ai'];
+  let attractOn = false;
+  let attractI = 0;
+  let quietSince: number | null = null;
   let volume: number | null = null;
   const ask = () => (d.aiOn() ? llmAsk : null);
   const facts = () => {
@@ -117,18 +121,33 @@ export function createStage(d: StageDeps) {
     handle(e: Effect) {
       if (e.e === 'say' || e.e === 'scene' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
     },
-    /** Тик часов: громкость голоса из настроек (смена — сразу); на заставке — редкий призыв, если он включён. */
+    /** Тик часов: громкость голоса из настроек (смена — сразу); на заставке — круг фраз, если голос включён. */
     tick() {
       const snap = d.snapshot();
       const v = snap.settings?.volume.voice ?? 1;
       if (v !== volume) voice.setVolume((volume = v));
-      const now = Date.now();
-      if (snap.state.phase.kind !== 'attract') { attractSince = null; return; }
-      attractSince ??= now;
-      if (attractCallDue({ now, since: attractSince, last: lastCall, call: snap.settings?.attractCall, busy: queue.busy() })) {
-        lastCall = now;
-        runner?.handle({ e: 'say', key: 'attract-call', priority: 'scene', scene: 'attract' });
+      const want = snap.state.phase.kind === 'attract' && snap.state.voice;
+      if (!want) {
+        // уход со заставки сцену не трогает: режиссёр уже поставил новую. Глушим только кнопку на самой заставке.
+        if (attractOn && snap.state.phase.kind === 'attract') runner?.handle({ e: 'scene', key: 'attract-quiet' });
+        attractOn = false;
+        quietSince = null;
+        attractI = 0;
+        return;
       }
+      if (!attractOn) {
+        attractOn = true;
+        runner?.handle({ e: 'scene', key: 'attract' });
+        quietSince = Date.now();
+      }
+      if (queue.busy()) { quietSince = null; return; }
+      quietSince ??= Date.now();
+      const pause = attractI === 0 ? 1_500 : (snap.settings?.attractCall?.pause ?? 8) * 1000;
+      if (!attractLoopDue({ now: Date.now(), quietSince, pauseMs: pause, on: true, busy: false })) return;
+      const key = ATTRACT_KEYS[attractI % ATTRACT_KEYS.length];
+      attractI += 1;
+      quietSince = null;
+      runner?.handle({ e: 'say', key, priority: 'scene', scene: 'attract' });
     },
     resume: () => voice.resume(),
     dispose() { queue.clear(); voice.dispose(); },

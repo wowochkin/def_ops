@@ -233,8 +233,8 @@ describe('режиссёр сеанса', () => {
   });
 
   it('replace limited', () => {
-    const r = toChoose().send({ t: 'replace', card: 0 }, { t: 'replace', card: 1 }, { t: 'replace', card: 2 });
-    expect(turn(r.phase)?.replacements).toBe(2);
+    const r = toChoose().send({ t: 'replace', card: 0 }, { t: 'replace', card: 1 }, { t: 'replace', card: 2 }, { t: 'replace', card: 0 }, { t: 'replace', card: 1 });
+    expect(turn(r.phase)?.replacements).toBe(EXPO_DEFAULTS.maxReplacements);
     r.send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ n: 2, step: 'choose', replacements: 0 });
   });
@@ -323,4 +323,14 @@ describe('ввод в обстановку — доклад по пунктам'
     // статистика: сеанс начат один раз, а не на каждом пункте
     expect(r.effects.filter((e) => e.e === 'stat' && e.kind === 'started')).toHaveLength(1);
   });
+});
+
+it('кнопка голоса переключает флаг и не двигает сеанс', () => {
+  const s = initialState(0);
+  expect(s.voice).toBe(true);
+  const r = step(s, { t: 'voice' }, EXPO_DEFAULTS);
+  expect(r.state.voice).toBe(false);
+  expect(r.state.phase).toEqual(s.phase);
+  expect(r.effects).toEqual([]);
+  expect(step(r.state, { t: 'voice' }, EXPO_DEFAULTS).state.voice).toBe(true);
 });

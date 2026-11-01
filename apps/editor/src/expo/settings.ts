@@ -27,8 +27,11 @@ export interface ExpoSettings {
   screens: { count: 1 | 2 | 3; order: string[] };
   pin: string;
   maxReplacements: number;
-  /** Призыв голосом на заставке: включён и не чаще раза в столько минут (2–30). */
-  attractCall: { on: boolean; minutes: number };
+  /**
+   * Голос на заставке. `on` — значение по умолчанию при запуске стенда (кнопка на заставке помнит своё до перезапуска).
+   * `pause` — пауза между фразами круга, секунды (4–30).
+   */
+  attractCall: { on: boolean; pause: number };
 }
 
 const ALL_FRONTS: readonly FrontId[] = ['su_1bf', 'su_1uf'];
@@ -47,7 +50,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   screens: { count: 3, order: [] },
   pin: '0000',
   maxReplacements: 4,
-  attractCall: { on: true, minutes: 3 },
+  attractCall: { on: true, pause: 8 },
 }) as ExpoSettings;
 
 const copyDefaults = (): ExpoSettings => JSON.parse(JSON.stringify(EXPO_DEFAULTS)) as ExpoSettings;
@@ -120,7 +123,8 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
     maxReplacements: pick('maxReplacements', r.maxReplacements, inRange(0, 5), d.maxReplacements),
     attractCall: {
       on: pick('attractCall.on', call.on, isBool, d.attractCall.on),
-      minutes: pick('attractCall.minutes', call.minutes, inRange(2, 30), d.attractCall.minutes),
+      // прежнее поле minutes — интервал в минутах, к паузе в секундах не относится: без pause берём умолчание
+      pause: call.pause === undefined ? d.attractCall.pause : pick('attractCall.pause', call.pause, inRange(4, 30), d.attractCall.pause),
     },
   };
   return { settings, problems };

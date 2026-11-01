@@ -13,6 +13,7 @@ import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
+import { AttractActions, FullVersion, HowStaff, attractLayout } from './stand';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { StageMini } from './StageMini';
 import { BRIEFING, briefFeatures } from './briefing';
@@ -122,7 +123,6 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
   }, [controls, access.keys, state.paused, p, expanded, hover, frontIndex, settings.fronts, send, single]);
-  const panel = controls || count === 1;
   const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract';
   const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai'));
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
@@ -191,25 +191,46 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
         <div className="expo-content">
           {p.kind === 'startup' && <section className="expo-wide" />}
           {p.kind === 'attract' && (
-            <section className={`expo-split expo-attract ${panel ? '' : 'expo-bleed'}`} onClick={controls ? () => send({ t: 'touch' }) : undefined}>
-              {panel && (
-                <div className="expo-panel expo-intro">
-                  <p className="expo-kicker">Апрель 1945. Берлинская операция</p>
-                  <h1>
-                    Ваш штаб — искусственный интеллект. <span>Приказ — за вами</span>
-                  </h1>
-                  <p>Выберите фронт и пройдите три перелома операции.</p>
-                  {/* касание любого места панорамы — то же, что кнопка (событие всплывает к сцене) */}
-                  {controls && <button className="expo-primary">Коснитесь, чтобы принять командование</button>}
-                  <Newsreel />
+            <section className="expo-attract-root" onClick={() => send({ t: 'touch' })}>
+              {attractLayout(roles) === 'all' && (
+                <div className="expo-split expo-attract">
+                  <div className="expo-panel expo-intro">
+                    <p className="expo-kicker">Апрель 1945. Берлинская операция</p>
+                    <h1>
+                      Ваш штаб — искусственный интеллект. <span>Приказ — за вами</span>
+                    </h1>
+                    <p>Выберите фронт и пройдите три перелома операции.</p>
+                    <AttractActions voice={state.voice} send={send} />
+                    <Newsreel />
+                  </div>
+                  <div className="expo-replay">
+                    <p className="expo-map-date" aria-hidden="true" data-clock />
+                    <div className="expo-mapframe">
+                      <div className="expo-mapslot" role="img" aria-label="Переигровка Берлинской операции" />
+                    </div>
+                  </div>
                 </div>
               )}
-              <div className="expo-replay">
-                <p className="expo-map-date" aria-hidden="true" data-clock />
-                <div className="expo-mapframe">
-                  <div className="expo-mapslot" role="img" aria-label="Переигровка Берлинской операции" />
+              {attractLayout(roles) === 'map' && (
+                <div className="expo-attract-map">
+                  <AttractActions voice={state.voice} send={send} />
+                  <div className="expo-replay">
+                    <p className="expo-map-date" aria-hidden="true" data-clock />
+                    <div className="expo-mapframe">
+                      <div className="expo-mapslot" role="img" aria-label="Переигровка Берлинской операции" />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+              {attractLayout(roles) === 'ai' && <HowStaff foot={<AttractActions voice={state.voice} send={send} />} />}
+              {attractLayout(roles) === 'app' && <FullVersion foot={<AttractActions voice={state.voice} send={send} />} />}
+              {attractLayout(roles) === 'pair' && (
+                <div className="expo-attract-side">
+                  <HowStaff />
+                  <FullVersion />
+                  <AttractActions voice={state.voice} send={send} />
+                </div>
+              )}
             </section>
           )}
           {p.kind === 'welcome' && (
@@ -624,7 +645,7 @@ function Newsreel() {
     <figure className="expo-reel" style={{ ['--n' as string]: frames.length }}>
       {frames.map((f, i) => (
         <div key={f.file} className="expo-reel-frame" style={{ ['--i' as string]: i }}>
-          <img src={f.src} alt={f.caption} />
+          <img src={f.src} alt={f.caption} style={f.focus ? { objectPosition: f.focus } : undefined} />
           <figcaption>{f.caption}</figcaption>
         </div>
       ))}
@@ -789,10 +810,9 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
   const sector = sectorBox;
   if (p.kind === 'attract') {
     const d = maps.best ?? hist;
-    if (!d) return null;
-    const w = (THEATRE[2] - THEATRE[0]) / count;
-    const part: Bbox = count > 1 ? [THEATRE[0] + w * index, THEATRE[1], THEATRE[0] + w * (index + 1), THEATRE[3]] : THEATRE;
-    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: part, key: `attract-${index}`, ms: 0 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
+    const roles = layoutFor(count === 2 || count === 3 ? count : 1).find((s) => s.window === index)?.roles ?? [];
+    if (!d || !roles.includes('map')) return null;
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: THEATRE, key: `attract-${index}`, ms: 0 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
   if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'corps', zones: hist.zones };

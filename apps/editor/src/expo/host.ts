@@ -16,7 +16,7 @@ import type { ModelFrame } from './model';
 import { NO_AI, type AiFrame } from './ai-runner';
 import { plan, type Windows, type MonitorInfo } from './windows';
 
-const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'speak', 'ask', 'restart'];
+const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'next', 'choose', 'replace', 'speak', 'ask', 'restart', 'voice', 'brief'];
 
 const sameScreens = (a: ExpoSettings['screens'], b: ExpoSettings['screens']) =>
   a.count === b.count && a.order.length === b.order.length && a.order.every((id, i) => id === b.order[i]);
@@ -29,7 +29,7 @@ export function createHost(
   effect: (e: Effect) => void = () => {},
 ) {
   let settings = initial;
-  let state = initialState(Date.now());
+  let state = { ...initialState(Date.now()), voice: initial.attractCall.on };
   let count: 1 | 2 | 3 = 1;
   let stopped = false;
   let aiMode = initial.aiMode;
@@ -118,6 +118,7 @@ export function createHost(
     async configure(next: ExpoSettings) {
       const rearrange = !sameScreens(next.screens, settings.screens);
       if (next.aiMode !== settings.aiMode) aiMode = next.aiMode;
+      if (next.attractCall.on !== settings.attractCall.on) state = { ...state, voice: next.attractCall.on };
       settings = next;
       if (rearrange) await arrange(await windows.monitors());
       publish();

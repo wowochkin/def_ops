@@ -51,7 +51,7 @@ describe('настройки стенда', () => {
     const r = normalizeSettings({ ...clone(), fronts: [], pin: '12a4', maxReplacements: 9, volume: { voice: 2, ambient: 0.5, ambientOn: true }, screens: { count: 4, order: ['A', 'B'] } });
     expect(r.settings.fronts).toEqual(EXPO_DEFAULTS.fronts);
     expect(r.settings.pin).toBe('0000');
-    expect(r.settings.maxReplacements).toBe(2);
+    expect(r.settings.maxReplacements).toBe(EXPO_DEFAULTS.maxReplacements);
     expect(r.settings.volume).toEqual({ voice: 0.8, ambient: 0.5, ambientOn: true });
     expect(r.settings.screens).toEqual({ count: 3, order: ['A', 'B'] });
     expect(r.problems).toHaveLength(5);

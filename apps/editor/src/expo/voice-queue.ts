@@ -90,9 +90,8 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
   };
 }
 
-/** Пора ли призыву на заставке: включён, голос молчит, с входа в заставку и с прошлого призыва прошло не меньше `minutes`. */
-export function attractCallDue(o: { now: number; since: number; last: number; call?: { on: boolean; minutes: number }; busy: boolean }): boolean {
-  if (!o.call?.on || o.busy) return false;
-  const every = o.call.minutes * 60_000;
-  return o.now - o.since >= every && o.now - o.last >= every;
+/** Пора следующей фразе заставки: голос включён, очередь пуста, с начала тишины прошла пауза. */
+export function attractLoopDue(o: { now: number; quietSince: number; pauseMs: number; on: boolean; busy: boolean }): boolean {
+  if (!o.on || o.busy) return false;
+  return o.now - o.quietSince >= o.pauseMs;
 }

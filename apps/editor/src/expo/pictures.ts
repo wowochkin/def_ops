@@ -15,6 +15,8 @@ export interface Picture {
   /** Основание общественного достояния (шаблон Wikimedia Commons). */
   pd?: string;
   generated?: boolean;
+  /** Кадрирование `object-position`, чтобы в обрезке остались лица. */
+  focus?: string;
 }
 
 export const PICTURES = (manifest as { pictures: Picture[] }).pictures;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attractCallDue, voiceQueue, type Speaker } from '../src/expo/voice-queue';
+import { attractLoopDue, voiceQueue, type Speaker } from '../src/expo/voice-queue';
 
 function fakeSpeaker() {
   const said: string[] = [];
@@ -92,15 +92,16 @@ describe('очередь голоса', () => {
   });
 });
 
-describe('призыв на заставке', () => {
-  const call = { on: true, minutes: 2 };
-  it('не чаще раза в заданные минуты и не сразу после входа в заставку', () => {
-    expect(attractCallDue({ now: 60_000, since: 0, last: 0, call, busy: false })).toBe(false);
-    expect(attractCallDue({ now: 120_000, since: 0, last: 0, call, busy: false })).toBe(true);
-    expect(attractCallDue({ now: 180_000, since: 0, last: 120_000, call, busy: false })).toBe(false);
+describe('круг фраз на заставке', () => {
+  const pauseMs = 8_000;
+  it('первая фраза — после короткой паузы, следующая — после заданной', () => {
+    expect(attractLoopDue({ now: 1_000, quietSince: 0, pauseMs: 1_500, on: true, busy: false })).toBe(false);
+    expect(attractLoopDue({ now: 1_500, quietSince: 0, pauseMs: 1_500, on: true, busy: false })).toBe(true);
+    expect(attractLoopDue({ now: 7_000, quietSince: 0, pauseMs, on: true, busy: false })).toBe(false);
+    expect(attractLoopDue({ now: 8_000, quietSince: 0, pauseMs, on: true, busy: false })).toBe(true);
   });
   it('выключен или голос занят — молчит', () => {
-    expect(attractCallDue({ now: 999_000, since: 0, last: 0, call: { on: false, minutes: 2 }, busy: false })).toBe(false);
-    expect(attractCallDue({ now: 999_000, since: 0, last: 0, call, busy: true })).toBe(false);
+    expect(attractLoopDue({ now: 99_000, quietSince: 0, pauseMs, on: false, busy: false })).toBe(false);
+    expect(attractLoopDue({ now: 99_000, quietSince: 0, pauseMs, on: true, busy: true })).toBe(false);
   });
 });
