@@ -164,12 +164,42 @@ export function Opening({ mv, tasks = true }: { mv: ModelView; tasks?: boolean }
   );
 }
 
+/** Продвижение за последний ход: километры, взятые пункты, переправы. Потери и противник — на других экранах. */
+export function MoveAdvance({ mv }: { mv: ModelView }) {
+  const m = mv.move;
+  if (!m) return null;
+  const closer = m.closerKm > 0 ? `${m.closerKm} км` : m.closerKm < 0 ? `${Math.abs(m.closerKm)} км` : '0';
+  const closerText = m.closerKm > 0 ? 'ближе к Берлину, чем в начале хода' : m.closerKm < 0 ? 'дальше от Берлина, чем в начале хода' : 'до Берлина как в начале хода';
+  return (
+    <div className="expo-move">
+      <h3 className="expo-sum-h">За этот ход</h3>
+      <dl className="expo-figures" data-n="2">
+        <div>
+          <dt>{m.advanceKm} км</dt>
+          <dd>дальше всех прошла армия фронта</dd>
+        </div>
+        <div>
+          <dt>{closer}</dt>
+          <dd>{closerText}</dd>
+        </div>
+      </dl>
+      <h3 className="expo-sum-h">Пункты и переправы</h3>
+      <ul className="expo-move-list">
+        {m.crossings.map((t) => <li key={t}>Переправа: {t}</li>)}
+        {m.taken.map((t) => <li key={t}>{t}</li>)}
+        {!m.taken.length && !m.crossings.length && <li>Новых пунктов и переправ в ключевых событиях хода нет.</li>}
+      </ul>
+    </div>
+  );
+}
+
 /** Оперативная сводка хода: `full` — экран «Ход операции», `compact` — колонка рядом с решением. */
 export function OpSummary({ mv, size }: { mv: ModelView; size: 'full' | 'compact' }) {
   if (!mv.decisions.length) return size === 'full' ? <><Timeline mv={mv} /><Opening mv={mv} /></> : <Opening mv={mv} tasks={false} />;
   return (
     <>
       {size === 'full' && <Timeline mv={mv} />}
+      {size === 'full' && <h3 className="expo-sum-h">Потери и сравнение с этим днём</h3>}
       <Figures mv={mv} tempo={size === 'full'} />
       {size === 'full' && <Tasks mv={mv} />}
       <Scales scales={mv.scales} />

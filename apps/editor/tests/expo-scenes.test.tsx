@@ -13,7 +13,7 @@ afterEach(cleanup);
 const scales = { axes: { speed: 0.5, cost: -0.2, intent: 1, days: -1.5, lossRatio: 1.06, done: 2, due: 2 }, notes: { speed: 'быстрее истории на 1,5 сут', cost: 'потери больше истории на 6 %', intent: 'выполнено 2 из 2' } };
 const view = (patch: Partial<ModelView> = {}): ModelView => ({
   front: 'su_1bf', turn: 1, time: '1945-04-16T05:00', hour: 0, decisions: [], reveal: null, feed: [], final: null, busy: false, error: null, scales, map: { armies: [], prev: null, flashes: [], path: {} },
-  spare: 1, tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 },
+  spare: 1, tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 }, move: null,
   cards: [
     { id: 'bf1-north', title: 'Обход высот с севера', lines: ['Танковые армии — севернее, через Врицен', 'б', 'в', 'г'] },
     { id: 'bf1-hist', title: 'Ночной штурм с прожекторами', lines: ['а', 'б', 'в', 'г'] },
@@ -142,6 +142,27 @@ it('briefing: map, figures and excursion are different screens', () => {
   expect(note.getByText('20–40 км')).toBeTruthy();
   expect(note.getByText(/с\. 246–248/)).toBeTruthy();
   expect(note.queryByRole('img', { name: /Обстановка к 16 апреля 1945/ })).toBeNull();
+});
+
+it('after a move the map shows the advance and the staff shows the enemy', () => {
+  const s = at(choose(), { t: 'choose', card: 0 });
+  const move = {
+    advanceKm: 18, closerKm: 12, taken: ['Прорыв Зееловских высот'], crossings: ['1 УФ форсировал Шпрее'], enemyKm: 9,
+    enemy: 'Противник сдвинулся: дальше всех его армия прошла 9 км.',
+  };
+  const model = { view: view({ decisions: [{ n: 1, choice: 'bf1-north', historical: 'bf1-hist' }], move, reveal: { text: 'Жуков решил иначе — вот как', historical: view().cards[1] } }), error: null };
+  const map = render(<ExpoView window={1} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(map.getByText('18 км')).toBeTruthy();
+  expect(map.getByText('Прорыв Зееловских высот')).toBeTruthy();
+  expect(map.getByText('Переправа: 1 УФ форсировал Шпрее')).toBeTruthy();
+  expect(map.queryByText(/Противник сдвинулся/)).toBeNull();
+  cleanup();
+  const ai = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(ai.getByText(/Противник сдвинулся/)).toBeTruthy();
+  expect(ai.queryByText('18 км')).toBeNull();
+  cleanup();
+  const progress = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
+  expect(progress.getByText('Потери и сравнение с этим днём')).toBeTruthy();
 });
 
 it('ai screen offers questions and the balance, not a bare situation line', () => {

@@ -25,7 +25,7 @@ import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, historyPaths, mainPaths, MAP, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
-import { ModelNote, modelTime, OpSummary, Scales, turnDef } from './session-scenes';
+import { ModelNote, modelTime, MoveAdvance, OpSummary, Scales, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
@@ -326,12 +326,14 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     ) : p.step === 'explain' ? (
                       <>
                         <p className="expo-situation">{def?.situation}</p>
+                        {mv?.move && !roles.includes('progress') && <MoveAdvance mv={mv} />}
                         {roles.includes('progress') && <Progress model={model} size="compact" />}
                       </>
                     ) : (
                       <>
                         <OrderSlip c={typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice} />
                         <Reveal model={model} delay={p.choice === 'delay'} full={!roles.includes('progress')} />
+                        {mv?.move && !roles.includes('progress') && <MoveAdvance mv={mv} />}
                         {roles.includes('progress') && <Progress model={model} size="compact" date={false} />}
                       </>
                     )}

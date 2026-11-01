@@ -70,6 +70,8 @@ export interface ModelView {
   loss: { own: number; ref: number | null };
   /** Ближайшая армия фронта до центра Берлина, км: в ходе и по истории на тот же момент. */
   berlinKm: { now: number; history: number } | null;
+  /** Что изменилось за последний ход; null — хода ещё не было. */
+  move: MoveDigest | null;
   map: MapView;
   busy: boolean;
   error: string | null;
@@ -85,6 +87,38 @@ const view = (c: Card, source?: CardView['source']): CardView => {
 
 /** Расстояние, км (равнопромежуточно по широте места). */
 const km = (a: LL, b: LL) => Math.hypot((a[0] - b[0]) * 111.3 * Math.cos((a[1] * Math.PI) / 180), (a[1] - b[1]) * 111.3);
+
+export interface MoveDigest {
+  /** На сколько километров дальше всех сдвинулась армия фронта. */
+  advanceKm: number;
+  /** На сколько километров ближе к Берлину стала ближайшая армия (отрицательное — дальше). */
+  closerKm: number;
+  taken: string[];
+  crossings: string[];
+  enemyKm: number;
+  enemy: string;
+}
+
+/** Сводка изменений за ход: продвижение, взятые пункты, переправы, сдвиг противника. */
+export function moveDigest(front: FrontId, prev: ArmyPos[], now: ArmyPos[], prevBerlin: number | null, berlin: number | null, fresh: { title: string }[]): MoveDigest {
+  let advance = 0;
+  for (const a of now.filter((x) => x.front === front)) {
+    const b = prev.find((x) => x.id === a.id);
+    if (b) advance = Math.max(advance, km(a.at, b.at));
+  }
+  let enemyKm = 0;
+  for (const a of now.filter((x) => x.side === 'de')) {
+    const b = prev.find((x) => x.id === a.id);
+    if (b) enemyKm = Math.max(enemyKm, km(a.at, b.at));
+  }
+  const crossings = fresh.filter((e) => /форсир|переправ/i.test(e.title)).map((e) => e.title).slice(0, 2);
+  const taken = fresh.filter((e) => !crossings.includes(e.title)).map((e) => e.title).slice(0, 4);
+  const closer = prevBerlin !== null && berlin !== null ? prevBerlin - berlin : 0;
+  const enemy = enemyKm >= 8
+    ? `Противник сдвинулся: дальше всех его армия прошла ${Math.round(enemyKm)} км. Замысел противника в этой переигровке — исторический.`
+    : 'Противник держит исторический замысел: заметного отхода его армий за ход нет.';
+  return { advanceKm: Math.round(advance), closerKm: Math.round(closer), taken, crossings, enemyKm: Math.round(enemyKm), enemy };
+}
 const BERLIN: LL = MAP.cities.find((c) => c.capital)?.at ?? [13.4, 52.52];
 
 /** До Берлина от ближайшей армии фронта: в ходе (`armies`) и по истории на момент `time`, км. */
@@ -136,7 +170,7 @@ export class ExpoSession {
     const start = this.start0();
     this.view = {
       front, turn: 1, time: start, hour: 0, cards: [], decisions: [], reveal: null, feed: [], final: null, busy: false, error: null,
-      spare: 0, tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start),
+      spare: 0, tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start), move: null,
       map: { armies: historyAt(start), prev: null, flashes: [], path: {} },
       scales: this.scales([], start, 0),
     };
@@ -273,6 +307,8 @@ export class ExpoSession {
       const was = new Set(before.filter((e) => e.simulated).map((e) => e.id));
       const armies = this.armiesNow(time);
       const histView = this.show(hist);
+      const berlin = berlinDistance(this.front, armies, time);
+      const fresh = this.events.filter((e) => e.simulated && !was.has(e.id));
       Object.assign(this.view, {
         time, hour: upTo,
         decisions: [...this.view.decisions, decision],
@@ -283,14 +319,15 @@ export class ExpoSession {
         map: {
           armies,
           prev: { armies: this.view.map.armies, time: this.view.time },
-          flashes: this.events.filter((e) => e.simulated && !was.has(e.id)).flatMap((e) => MAP.events.filter((m) => m.id === e.id).map((m) => ({ id: e.id, title: e.title, at: m.at }))),
+          flashes: fresh.flatMap((e) => MAP.events.filter((m) => m.id === e.id).map((m) => ({ id: e.id, title: e.title, at: m.at }))),
           path: this.extend(this.view.map.path, armies),
         },
         feed: [...this.view.feed, ...feedLines(before, this.events)],
         scales: this.scales(this.events, time, upTo, loss),
         tasks: tasksOf(this.def.keyEvents, this.events),
         loss: { own: loss, ref: refAt(this.bank.reference[this.front]?.losses, upTo) },
-        berlinKm: berlinDistance(this.front, armies, time),
+        berlinKm: berlin,
+        move: moveDigest(this.front, this.view.map.armies, armies, this.view.berlinKm?.now ?? null, berlin?.now ?? null, fresh),
       });
       if (n === 3) {
         const s = this.view.scales;

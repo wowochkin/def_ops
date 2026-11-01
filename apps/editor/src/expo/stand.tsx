@@ -192,6 +192,12 @@ export function StaffBoard({
         <span className="expo-chip">{coreLine(model)}</span>
       </p>
       <p className="expo-lead">{FOCUS[`${front}-${n}`]}</p>
+      {model.view?.move && (
+        <>
+          <h3 className="expo-sum-h">Противник за ход</h3>
+          <p className="expo-lead">{model.view.move.enemy}</p>
+        </>
+      )}
       {!!facts.length && (
         <>
           <h3 className="expo-sum-h">Соотношение на 16 апреля</h3>

@@ -1945,3 +1945,11 @@ html.expo-active,
   color: var(--expo-gold);
   margin: 0 0 4px;
 }
+.expo-move-list {
+  margin: 0;
+  padding: 0 0 0 1.1em;
+  font: 28px / 1.25 var(--expo-serif);
+}
+.expo-move .expo-figures dt {
+  font-size: 48px;
+}

@@ -2,7 +2,7 @@ import { historyAt } from '../src/expo/map';
 import { describe, expect, it } from 'vitest';
 import type { EventResult, SimContext } from '@def-ops/sim';
 import { BANK } from '../src/expo/bank';
-import { ExpoSession, refAt, timeAt, type ModelEnv, berlinDistance, tasksOf } from '../src/expo/session';
+import { ExpoSession, moveDigest, refAt, timeAt, type ModelEnv, berlinDistance, tasksOf } from '../src/expo/session';
 
 /** Поддельное ядро: запоминает вызовы, ход — кадры по часам. */
 function fakeCore() {
@@ -143,5 +143,25 @@ describe('сводка хода', () => {
     expect(d!.now).toBe(d!.history);
     expect(d!.now).toBeGreaterThan(40);
     expect(d!.now).toBeLessThan(90);
+  });
+
+  it('сводка хода делит продвижение, переправы и сдвиг противника', () => {
+    const prev = [
+      { id: 'a', label: '8 гв. А', side: 'su' as const, front: 'su_1bf' as const, at: [14.5, 52.5] as [number, number] },
+      { id: 'e', label: '9 А', side: 'de' as const, front: null, at: [14.2, 52.5] as [number, number] },
+    ];
+    const now = [
+      { ...prev[0], at: [14.3, 52.5] as [number, number] },
+      { ...prev[1], at: [14.2, 52.55] as [number, number] },
+    ];
+    const d = moveDigest('su_1bf', prev, now, 70, 58, [
+      { title: '1 УФ форсировал Шпрее у Шпремберга' },
+      { title: 'Прорыв Зееловских высот: советские войска у Мюнхеберга' },
+    ]);
+    expect(d.advanceKm).toBeGreaterThan(5);
+    expect(d.closerKm).toBe(12);
+    expect(d.crossings).toEqual(['1 УФ форсировал Шпрее у Шпремберга']);
+    expect(d.taken).toEqual(['Прорыв Зееловских высот: советские войска у Мюнхеберга']);
+    expect(d.enemy).toMatch(/исторический замысел/);
   });
 });
