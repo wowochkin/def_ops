@@ -173,7 +173,7 @@ export function OpSummary({ mv, size }: { mv: ModelView; size: 'full' | 'compact
       <Figures mv={mv} tempo={size === 'full'} />
       {size === 'full' && <Tasks mv={mv} />}
       <Scales scales={mv.scales} />
-      <Feed lines={mv.feed.slice(size === 'full' ? -3 : -1)} />
+      <Feed lines={mv.feed.slice(size === 'full' ? -2 : -1)} />
     </>
   );
 }

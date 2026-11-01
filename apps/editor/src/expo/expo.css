@@ -885,7 +885,7 @@ html.expo-active,
 .expo-progress {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 .expo-date {
   font: 48px / 1.1 var(--expo-mono);
@@ -895,7 +895,7 @@ html.expo-active,
 /* Оперативная сводка: лента операции, крупные цифры против истории, задачи с отметками */
 .expo-tl {
   position: relative;
-  height: 92px;
+  height: 84px;
   margin: 6px 0 4px;
 }
 .expo-tl-axis {
@@ -970,7 +970,7 @@ html.expo-active,
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .expo-figures dt {
-  font: 54px / 1 var(--expo-serif);
+  font: 48px / 1 var(--expo-serif);
   color: var(--expo-gold);
   white-space: nowrap;
 }
@@ -986,7 +986,7 @@ html.expo-active,
 }
 .expo-tasks {
   display: grid;
-  gap: 6px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1041,7 +1041,7 @@ html.expo-active,
 }
 .expo-ai-screen,
 .expo-progress-screen {
-  padding: 36px 48px;
+  padding: 28px 48px;
   border-left-width: 6px;
   background: linear-gradient(90deg, rgba(12, 20, 18, 0.96) 0%, rgba(12, 20, 18, 0.82) 55%, rgba(12, 20, 18, 0.6) 100%), var(--side-bg, none) center / cover no-repeat;
 }
@@ -1698,4 +1698,12 @@ html.expo-active,
 }
 .expo-intro {
   gap: 22px;
+}
+.expo-roles-ai-progress .expo-figures,
+.expo-roles-ai-progress .expo-figures[data-n='4'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 14px;
+}
+.expo-roles-ai-progress .expo-task-when {
+  display: none;
 }

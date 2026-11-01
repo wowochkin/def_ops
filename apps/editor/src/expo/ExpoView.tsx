@@ -479,7 +479,7 @@ function CardMini({ c, front, d, time, big = false }: { c: CardView; front: Fron
   const arrows = c.arrows ?? [];
   const extra = useMemo(() => (d && arrows.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined), [d, arrows]);
   const bbox = useMemo(() => (arrows.length ? bboxOf(arrows.flatMap((a) => [a.from, a.to])) : sectorBox(front, [])), [arrows, front]);
-  return <StageMini doc={d?.doc ?? null} time={time} bbox={pad(bbox, 0.12)} extra={extra} width={big ? 560 : 172} height={big ? 300 : 150} className="expo-cardmap" label={`Схема: ${c.title}`} />;
+  return <StageMini doc={d?.doc ?? null} time={time} bbox={pad(bbox, 0.12)} extra={extra} width={big ? 780 : 172} height={big ? 124 : 150} className="expo-cardmap" label={`Схема: ${c.title}`} />;
 }
 
 /** Мини-карта выбора фронта: полоса фронта на 16 апреля и стрелки задачи танковых армий. */
@@ -487,7 +487,7 @@ function FrontMini({ front, d }: { front: FrontId; d: StageDoc | undefined }) {
   const arrows = useMemo(() => frontArrows(front), [front]);
   const extra = useMemo(() => (d ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined), [d, arrows]);
   const bbox = useMemo(() => pad(sectorBox(front, arrows.map((a) => a.to)), 0.05), [front, arrows]);
-  return <StageMini doc={d?.doc ?? null} time={MAP.days[0]} bbox={bbox} extra={extra} width={860} height={400} className="expo-minimap" label={`Задача: ${FRONT_NAMES[front]}`} />;
+  return <StageMini doc={d?.doc ?? null} time={MAP.days[0]} bbox={bbox} extra={extra} width={860} height={400} symbols={1.5} className="expo-minimap" label={`Задача: ${FRONT_NAMES[front]}`} />;
 }
 
 /** Рамка с запасом `k` от размера по каждой оси. */
