@@ -7,7 +7,8 @@
       "author": "Pfc. William E. Poulson, U.S. Army Signal Corps",
       "url": "https://commons.wikimedia.org/wiki/File:ElbeDay1945_(NARA_ww2-121).jpg",
       "pd": "PD-USGov-Military-Army: снимок военнослужащего армии США при исполнении обязанностей (NARA, Pictures of World War II, ww2-121)",
-      "focus": "50% 22%"
+      "focus": "50% 22%",
+      "topics": ["эльб", "торгау"]
     },
     {
       "file": "elbe-patrol-boat-1945.jpg",
@@ -23,7 +24,18 @@
       "caption": "Берлин, 5 июня 1945: маршал Жуков с командующими союзников",
       "author": "U.S. Department of Defense (The U.S. Army in the Occupation of Germany, 1944–1946)",
       "url": "https://commons.wikimedia.org/wiki/File:Zhukov_Eisenhower_Montgomery_de_Lattre.jpg",
-      "pd": "PD-USGov-Military-Army: иллюстрация из материалов Министерства обороны США"
+      "pd": "PD-USGov-Military-Army: иллюстрация из материалов Министерства обороны США",
+      "topics": ["жуков"]
+    },
+    {
+      "file": "berlin-column-1945.jpg",
+      "kind": "card",
+      "caption": "Берлин, июль 1945: советская колонна уходит из американского сектора",
+      "author": "U.S. Army",
+      "url": "https://commons.wikimedia.org/wiki/File:Soviets_leave_the_US_sector_of_Berlin_1945.jpg",
+      "pd": "PD-USGov: снимок из официального издания Центра военной истории армии США (Earl F. Ziemke, The U.S. Army in the Occupation of Germany, 1944–1946, 1975)",
+      "focus": "50% 42%",
+      "topics": ["берлин", "город", "рейхстаг", "шпандау", "потсдам", "окраин", "центр", "кольц"]
     },
     {
       "file": "staff-table.jpg",

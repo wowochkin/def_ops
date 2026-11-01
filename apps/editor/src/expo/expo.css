@@ -663,21 +663,73 @@ html.expo-active,
 .expo .expo-card-main {
   min-height: 0;
   display: grid;
-  grid-template-columns: 172px 1fr;
-  gap: 20px;
-  align-items: start;
-  padding: 14px 18px;
+  grid-template-columns: 176px 1fr;
+  gap: 14px;
+  align-items: stretch;
+  padding: 10px 14px;
   border: 0;
   border-radius: 0;
   background: transparent;
   text-align: left;
 }
 .expo-card-media {
-  display: grid;
-  grid-template-rows: 104px 1fr;
-  gap: 8px;
+  display: block;
   height: 100%;
   min-height: 0;
+}
+.expo-card-photo {
+  position: relative;
+  width: 176px;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+}
+.expo-card-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.expo-card-photo figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 4px 8px 6px;
+  background: rgba(12, 20, 18, 0.84);
+  color: #f4ecd8;
+  font-size: 15px;
+  line-height: 1.15;
+}
+.expo-card-photo figcaption small {
+  display: block;
+  margin-top: 1px;
+  color: #d5cbb4;
+  font-size: 13px;
+}
+.expo-card-photo-big {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  gap: 18px;
+  width: auto;
+  height: auto;
+  align-items: center;
+}
+.expo-card-photo-big img {
+  width: 440px;
+  height: 240px;
+}
+.expo-card-photo-big figcaption {
+  position: static;
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: 28px;
+}
+.expo-card-photo-big figcaption small {
+  font-size: 24px;
+  color: var(--expo-muted);
 }
 .expo-emblem,
 .expo-portrait {

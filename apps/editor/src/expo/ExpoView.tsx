@@ -29,7 +29,7 @@ import { ModelNote, modelTime, MoveAdvance, OpSummary, Scales, turnDef } from '.
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
-import { picturesOf, portraitOf } from './pictures';
+import { photoFor, picturesOf } from './pictures';
 import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
@@ -525,26 +525,19 @@ function Briefing({ front, point, steer, send }: { front: FrontId; point: number
 const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
-/** Знак армии-исполнителя: портрет командующего, если он есть в манифесте картинок, иначе штабной знак армии. */
-function ArmyMark({ army }: { army?: string }) {
-  const a = MAP.armies.find((x) => x.id === army);
-  const pic = army ? portraitOf(army) : null;
-  if (pic) return <img className="expo-portrait" src={pic.src} alt={pic.caption} />;
+/** Архивный снимок по теме карточки: подпись и автор видны на кадре. */
+function CardPhoto({ c, front, big = false }: { c: CardView; front: FrontId; big?: boolean }) {
+  const pic = photoFor(`${c.title} ${c.lines.join(' ')}`, front);
+  if (!pic) return null;
   return (
-    <svg className="expo-emblem" viewBox="0 0 160 100" role="img" aria-label={a ? `Знак армии ${a.label}` : 'Знак армии'}>
-      <ellipse cx="80" cy="50" rx="74" ry="40" />
-      <path d="M80 10 V90" className="expo-emblem-half" />
-      <text x="80" y="62">{a?.label ?? '—'}</text>
-    </svg>
+    <figure className={big ? 'expo-card-photo expo-card-photo-big' : 'expo-card-photo'}>
+      <img src={pic.src} alt="" style={{ objectPosition: pic.focus ?? '50% 40%' }} />
+      <figcaption>
+        {pic.caption}
+        <small>{pic.author}</small>
+      </figcaption>
+    </figure>
   );
-}
-
-/** Мини-карта решения: участок фронта на карте полного режима и стрелки распоряжений этой карточки. */
-function CardMini({ c, front, d, time, big = false }: { c: CardView; front: FrontId; d: StageDoc | null; time: string; big?: boolean }) {
-  const arrows = c.arrows ?? [];
-  const extra = useMemo(() => (d && arrows.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined), [d, arrows]);
-  const bbox = useMemo(() => (arrows.length ? bboxOf(arrows.flatMap((a) => [a.from, a.to])) : sectorBox(front, [])), [arrows, front]);
-  return <StageMini doc={d?.doc ?? null} time={time} bbox={pad(bbox, 0.12)} extra={extra} width={big ? 780 : 172} height={big ? 124 : 150} className="expo-cardmap" label={`Схема: ${c.title}`} />;
 }
 
 /** Мини-карта выбора фронта: полоса фронта на 16 апреля и стрелки задачи танковых армий. */
@@ -588,7 +581,7 @@ function Cards(props: {
   setHover: (n: number | null) => void;
   send: (ev: DirectorEvent) => void;
 }) {
-  const { cards, front, doc, time, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
+  const { cards, front, disabled, canReplace, replaceLabel, expanded, lit, setExpanded, setHover, send } = props;
   const open = expanded !== null ? cards[expanded] : undefined;
   if (expanded !== null && open)
     return (
@@ -597,10 +590,7 @@ function Cards(props: {
           <span className="expo-card-n">{expanded + 1}</span>
           <h3>{open.title}</h3>
         </header>
-        <div className="expo-sheet-media">
-          <ArmyMark army={open.army} />
-          <CardMini c={open} front={front} d={doc} time={time} big />
-        </div>
+        <CardPhoto c={open} front={front} big />
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
             <li key={l}>{l}</li>
@@ -635,8 +625,7 @@ function Cards(props: {
           >
             <button className="expo-card-main" disabled={disabled || !c} aria-label={`Карточка ${card + 1}`} onClick={() => send({ t: 'choose', card })}>
               <span className="expo-card-media">
-                {c && <ArmyMark army={c.army} />}
-                {c && <CardMini c={c} front={front} d={doc} time={time} />}
+                {c && <CardPhoto c={c} front={front} />}
               </span>
               <span className="expo-card-body">
                 <strong>
