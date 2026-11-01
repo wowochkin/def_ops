@@ -122,12 +122,12 @@ export function orderFeatures(doc: MapDocument, arrows: Arrow[], zoom: number, t
   });
 }
 
-/** Пути армий на итоге: сеанса — сплошной стрелкой атласа, исторический — полой. */
+/** Пути армий на итоге: сеанса — тонкой стрелкой атласа, исторический — контурной (полой). */
 export function pathFeatures(doc: MapDocument, own: Record<string, LngLat[]>, history: Record<string, LngLat[]>, zoom: number): Feature[] {
-  const s = k(doc, zoom) * 0.28;
+  const s = k(doc, zoom) * 0.18;
   return [
     ...Object.entries(history).map(([id, pts]) => ({ ...createFeature('arrow', 'atlas.hollow', { points: pts, layerId: ORDERS_LAYER }, s, 'own'), id: `hist-${id}` })),
-    ...Object.entries(own).map(([id, pts]) => ({ ...createFeature('arrow', 'atlas.p1', { points: pts, layerId: ORDERS_LAYER }, s, 'own'), id: `path-${id}` })),
+    ...Object.entries(own).map(([id, pts]) => ({ ...createFeature('arrow', 'atlas.thin', { points: pts, layerId: ORDERS_LAYER }, k(doc, zoom) * 0.8, 'own'), id: `path-${id}` })),
   ];
 }
 

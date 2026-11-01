@@ -49,7 +49,7 @@ try {
   await shot('expo-screens');
   await page.locator('.expo-lenses').getByRole('button', { name: 'Все вместе' }).click();
   await page.getByRole('button', { name: `Выбрать вариант ${lit + 1}` }).click();
-  await page.getByText(/Именно так поступил|решил иначе/).waitFor({ timeout: 60000 });
+  await page.getByText(/Именно так поступил|решил иначе/).first().waitFor({ timeout: 60000 });
   await page.getByRole('button', { name: 'Карточка 1', exact: true }).waitFor({ timeout: 90000 });
   await page.keyboard.press('Control+Alt+Shift+KeyO');
   await page.getByLabel('ПИН', { exact: true }).fill('0000');
