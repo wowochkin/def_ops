@@ -144,6 +144,19 @@ it('briefing: map, figures and excursion are different screens', () => {
   expect(note.queryByRole('img', { name: /Обстановка к 16 апреля 1945/ })).toBeNull();
 });
 
+it('ai screen offers questions and the balance, not a bare situation line', () => {
+  const s = at(at(initialState(0), { t: 'ready' }), { t: 'jump', phase: 'turn', n: 1 });
+  const sent: unknown[] = [];
+  const v = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={{ view: view(), error: null }} send={(e) => sent.push(e)} />);
+  expect(v.getByRole('heading', { name: 'Штаб ИИ' })).toBeTruthy();
+  expect(v.getByRole('button', { name: 'Какие силы участвуют?' })).toBeTruthy();
+  expect(v.getByText('8 : 1')).toBeTruthy();
+  expect(v.getByText(/Голос: Молчит/)).toBeTruthy();
+  expect(v.queryByText(/Плацдарм за Одером/)).toBeNull();
+  fireEvent.click(v.getByRole('button', { name: 'Какие силы участвуют?' }));
+  expect(sent).toContainEqual({ t: 'ask', q: 'Какие силы участвуют?' });
+});
+
 it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the full app', () => {
   const s = at(initialState(0), { t: 'ready' });
   const model = { view: null, error: null } as const;

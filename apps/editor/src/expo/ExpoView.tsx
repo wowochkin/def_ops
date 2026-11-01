@@ -13,7 +13,7 @@ import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
-import { AttractActions, Excursion, FullVersion, HowStaff, roleLayout } from './stand';
+import { AttractActions, Excursion, FullVersion, HowStaff, StaffBoard, roleLayout } from './stand';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { StageMini } from './StageMini';
 import { BRIEFING, briefFeatures } from './briefing';
@@ -338,22 +338,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   </aside>
                 </>
               )}
-              {!controls && roles.includes('ai') && (
-                <section className="expo-side expo-ai-screen" style={TABLE ? { ['--side-bg' as string]: `url(${TABLE})` } : undefined}>
-                  <h2>Штаб ИИ</h2>
-                  <p className="expo-situation">{def?.situation}</p>
-                  <AiPanel ai={ai} />
-                  {p.step === 'scroll' && mv?.reveal && !mv.busy && (
-                    <div className="expo-hist">
-                      <p className="expo-meta">Исторический вариант: {mv.reveal.historical.title}</p>
-                      <ul className="expo-card-lines">
-                        {mv.reveal.historical.lines.map((l) => (
-                          <li key={l}>{l}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </section>
+              {!controls && roles.includes('ai') && state.front && p.kind === 'turn' && (
+                <StaffBoard front={state.front} n={p.n} model={model} ai={ai} send={send} />
               )}
               {!controls && roles.includes('progress') && (
                 <section className="expo-side expo-progress-screen" style={CITY ? { ['--side-bg' as string]: `url(${CITY})` } : undefined}>

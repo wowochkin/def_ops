@@ -1893,3 +1893,55 @@ html.expo-active,
   color: var(--expo-muted);
   font-size: 24px;
 }
+
+/* Штаб ИИ: вопросы, соотношение, голос и ядро — без простыни обстановки */
+.expo-staff {
+  gap: 12px;
+  overflow: hidden;
+}
+.expo-staff h2 {
+  margin: 0;
+}
+.expo-staff-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+.expo-chip {
+  border: 1px solid var(--expo-line);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+.expo-chip[data-on] {
+  border-color: var(--expo-gold);
+  color: var(--expo-gold);
+}
+.expo-staff .expo-brief-facts dt {
+  font-size: 48px;
+}
+.expo-staff .expo-lead,
+.expo-staff .expo-record {
+  font-size: 28px;
+}
+.expo-staff-q {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.expo .expo-staff-q button {
+  min-height: 64px;
+  padding: 8px 12px;
+  font-size: 26px;
+  line-height: 1.15;
+}
+.expo-staff .expo-answer {
+  font-size: 30px;
+  line-height: 1.25;
+}
+.expo-staff .expo-q {
+  color: var(--expo-gold);
+  margin: 0 0 4px;
+}

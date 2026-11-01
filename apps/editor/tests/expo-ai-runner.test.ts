@@ -24,7 +24,7 @@ describe('исполнитель голоса и ИИ', () => {
     expect(s.said).toHaveLength(4);
     s.r.handle({ e: 'newSession' });
     expect(s.said).toHaveLength(0);
-    expect(s.frames.at(-1)).toEqual({ line: null, answer: null, thinking: null });
+    expect(s.frames.at(-1)).toEqual({ line: null, answer: null, thinking: null, ear: 'idle' });
   });
 
   it('вопрос без ИИ — готовый ответ с источником', async () => {

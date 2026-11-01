@@ -13,13 +13,16 @@ import { LINES, pick, pickFilled, type Filled, type Lines, type Vars } from './l
 import { norm } from '../voice/fuzzy';
 import type { Line, voiceQueue } from './voice-queue';
 
+export type Ear = 'idle' | 'listen' | 'speak';
 export interface AiFrame {
   /** Что сейчас звучит (субтитр) и откуда. */
   line: { text: string; source: string } | null;
   answer: { q: string; text: string; source: Said['source'] | null } | null;
   thinking: string | null;
+  /** Слушаю посетителя, отвечаю или молчу. */
+  ear: Ear;
 }
-export const NO_AI: AiFrame = { line: null, answer: null, thinking: null };
+export const NO_AI: AiFrame = { line: null, answer: null, thinking: null, ear: 'idle' };
 
 /** Готовые вопросы кнопки «Спросить ИИ». */
 export const QUESTIONS = LINES.answers.map((a) => a.q);
@@ -87,7 +90,12 @@ export function aiRunner(d: AiRunnerDeps) {
   return {
     frame: () => frame,
     /** Сказанная очередью фраза (субтитр). */
-    onLine(l: Line | null) { set({ line: l ? { text: l.text, source: l.source } : null }); },
+    onLine(l: Line | null) {
+      set({
+        line: l ? { text: l.text, source: l.source } : null,
+        ...(l ? { ear: 'speak' as const } : frame.ear === 'speak' ? { ear: 'idle' as const } : {}),
+      });
+    },
     handle(e: Effect) {
       if (e.e === 'say') {
         const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
@@ -107,13 +115,16 @@ export function aiRunner(d: AiRunnerDeps) {
       } else if (e.e === 'listen') {
         if (!d.listen) return;
         const g = gen;
+        set({ ear: 'listen' });
         void d.listen().then((text) => {
-          if (g !== gen || !text) return;
+          if (g !== gen) return;
+          if (frame.ear === 'listen') set({ ear: 'idle' });
+          if (!text) return;
           const r = parseSpeech(text);
           if (!r) return;
           if ('ask' in r) void ask(r.ask);
           else d.dispatch(r);
-        }, () => {});
+        }, () => { if (g === gen && frame.ear === 'listen') set({ ear: 'idle' }); });
       }
     },
     /** После решения перелома: комментарий выбора по фактам хода. */
