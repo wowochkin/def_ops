@@ -29,7 +29,7 @@ import { ModelNote, modelTime, MoveAdvance, OpSummary, Scales, turnDef } from '.
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
-import { pictureByFile, picturesOf } from './pictures';
+import { cardCaption, pictureByFile, picturesOf } from './pictures';
 import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
@@ -524,17 +524,15 @@ function Briefing({ front, point, steer, send }: { front: FrontId; point: number
 const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
-/** Снимок карточки, если он назначен в банке. Подпись — что на кадре и когда. */
+/** Снимок карточки, если он назначен в банке. Подпись — что на кадре, без автора и даты. */
 function CardPhoto({ file, big = false }: { file: string; big?: boolean }) {
   const pic = pictureByFile(file);
   if (!pic) return null;
+  const caption = cardCaption(pic.caption);
   return (
     <figure className={big ? 'expo-card-photo expo-card-photo-big' : 'expo-card-photo'}>
-      <img src={pic.src} alt={pic.caption} style={{ objectPosition: pic.focus ?? '50% 40%' }} />
-      <figcaption>
-        {pic.caption}
-        <small>{pic.author}</small>
-      </figcaption>
+      <img src={pic.src} alt={caption} style={{ objectPosition: pic.focus ?? '50% 40%' }} />
+      <figcaption>{caption}</figcaption>
     </figure>
   );
 }

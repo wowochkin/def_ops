@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { pictureByFile, PICTURES } from '../src/expo/pictures';
+import { cardCaption, pictureByFile, PICTURES } from '../src/expo/pictures';
 
 const DIR = join(__dirname, '../src/expo/pictures');
 
@@ -25,4 +25,11 @@ it('every picture of the stand has a public-domain source or is marked generated
 it('снимок берётся только по имени файла', () => {
   expect(pictureByFile('elbe-day-1945.jpg')?.caption).toMatch(/25 апреля 1945/);
   expect(pictureByFile('нет-такого.jpg')).toBeNull();
+});
+
+it('на карточке варианта нет автора и даты, в хронике подпись целая', () => {
+  expect(cardCaption('Встреча на Эльбе: советские и американские солдаты, 25 апреля 1945')).toBe('Встреча на Эльбе: советские и американские солдаты');
+  expect(cardCaption('Берлин, 5 июня 1945: маршал Жуков с командующими союзников')).toBe('Берлин: маршал Жуков с командующими союзников');
+  expect(cardCaption('Выход к Берлину, 20 апреля: артиллерия на позициях')).toBe('Выход к Берлину: артиллерия на позициях');
+  expect(cardCaption('Ночной штурм: прожектор')).toBe('Ночной штурм: прожектор');
 });

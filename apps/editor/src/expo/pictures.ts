@@ -38,6 +38,20 @@ export function picturesOf(kind: Picture['kind']): (Picture & { src: string })[]
   return PICTURES.filter((p) => p.kind === kind && src(p)).map((p) => ({ ...p, src: src(p) }));
 }
 
+/**
+ * Подпись на карточке варианта: что на кадре. Автор и дата остаются в хронике и в справке.
+ * «Автор не указан» и календарная дата из подписи на карточку не попадают.
+ */
+export function cardCaption(text: string): string {
+  return text
+    .replace(/\.\s*Автор\b[^.]*\.?/gi, '')
+    .replace(/,?\s*\d{1,2}\s+[а-яё]+(?:\s+\d{4})?/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,:.])/g, '$1')
+    .replace(/:\s*$/g, '')
+    .trim();
+}
+
 /** Снимок по имени файла из манифеста; нет файла — null, чужой кадр не подставляется. */
 export function pictureByFile(file: string): (Picture & { src: string }) | null {
   const p = PICTURES.find((x) => x.file === file);
