@@ -15,6 +15,10 @@ export interface Picture {
   /** Основание общественного достояния (шаблон Wikimedia Commons). */
   pd?: string;
   generated?: boolean;
+  /** Кадр прислан для стенда: автор и основание общественного достояния ещё не указаны. */
+  supplied?: boolean;
+  /** Что известно об источнике, пока нет автора и ссылки. */
+  note?: string;
   /** Кадрирование `object-position`, чтобы в обрезке остались лица. */
   focus?: string;
 }

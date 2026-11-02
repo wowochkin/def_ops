@@ -366,8 +366,10 @@ html.expo-active,
 .expo-reel {
   position: relative;
   width: 100%;
-  height: 230px;
+  height: 160px;
   margin: 0;
+  overflow: hidden;
+  flex: none;
 }
 .expo-reel-frame {
   position: absolute;
@@ -380,7 +382,7 @@ html.expo-active,
 .expo-reel img {
   display: block;
   width: 100%;
-  height: 140px;
+  height: 108px;
   object-fit: cover;
   box-sizing: border-box;
   border: 6px solid #e8dfc8;
@@ -388,10 +390,38 @@ html.expo-active,
   transform: rotate(-1.2deg);
 }
 .expo-reel figcaption {
-  margin-top: 10px;
+  margin-top: 6px;
   color: var(--expo-muted);
   font-size: var(--expo-text-min);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.expo-split.expo-attract {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+.expo-attract .expo-intro {
+  min-height: 0;
+  overflow: hidden;
+  justify-content: flex-start;
+  gap: 16px;
+}
+.expo-attract .expo-intro h1 {
+  font-size: 48px;
+}
+.expo-attract .expo-replay {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.expo-attract .expo-mapframe {
+  flex: 1;
+  min-height: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
   .expo-reel-frame {

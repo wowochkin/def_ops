@@ -13,6 +13,7 @@ it('every picture of the stand has a public-domain source or is marked generated
     expect(statSync(join(DIR, p.file)).size).toBeLessThanOrEqual(310_000);
     expect(p.caption).toBeTruthy();
     if (p.generated) expect(p.kind).toBe('generated');
+    else if (p.supplied) expect(p.note).toMatch(/автор/);
     else {
       expect(p.author && p.url && p.pd).toBeTruthy();
       expect(p.url).toMatch(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);

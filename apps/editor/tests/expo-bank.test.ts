@@ -18,7 +18,10 @@ describe('банк карточек', () => {
   });
 
   it('снимок карточки — только свой и не повторяется на переломе; Зеелов без чужого кадра', () => {
-    for (const c of turnCards(BANK, 'su_1bf', 1)) expect(c.photo).toBeUndefined();
+    const bf1 = turnCards(BANK, 'su_1bf', 1);
+    expect(bf1.find((c) => c.id === 'bf1-hist')?.photo).toBe('seelow-searchlight.jpg');
+    expect(bf1.find((c) => c.id === 'bf1-wait-tanks')?.photo).toBe('seelow-trench.jpg');
+    expect(bf1.filter((c) => c.id !== 'bf1-hist' && c.id !== 'bf1-wait-tanks').every((c) => c.photo === undefined)).toBe(true);
     expect(BANK.cards.find((c) => c.id === 'uf3-elbe')?.photo).toBe('elbe-day-1945.jpg');
     const dup = { ...BANK, cards: BANK.cards.map((c) => (c.id === 'uf3-hist' ? { ...c, photo: 'elbe-day-1945.jpg' } : c)) };
     expect(bankErrors(dup, armiesOf, places).some((e) => e.includes('снимок повторяется'))).toBe(true);
