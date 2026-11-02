@@ -97,7 +97,11 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
   const zKey = zonesKey(zAt, { own: true, enemy: true }, zOv);
   const shown = useMemo(() => {
     if (!doc) return null;
-    const d = withLevel(extra?.length ? { ...doc, features: [...doc.features, ...extra] } : doc, level);
+    const base = withLevel(extra?.length ? { ...doc, features: [...doc.features, ...extra] } : doc, level);
+    // на участке (корпус) удары армий иначе выключены — на переломе без них карта без линий хода
+    const d = level === 'corps'
+      ? { ...base, layers: base.layers.map((l) => (l.id === 'lvl-op-moves' ? { ...l, visible: true } : l)) }
+      : base;
     return zOv.length ? { ...d, overlays: [...d.overlays, ...zOv] } : d;
   }, [doc, extra, level, zKey]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -105,13 +109,22 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
   }, [engine, onEngine]);
   useEffect(() => {
     if (!engine || !camera) return;
-    engine.setPanEnabled(false);
-    const { width, height } = engine.size();
-    if (!width || !height) return;
-    const v = fitView(camera.bbox, width, height);
-    const d = reducedMotion() ? 0 : camera.ms ?? 2400;
-    if (d && engine.flyTo) engine.flyTo(v, d);
-    else engine.setView(v);
+    let alive = true;
+    // окно карты часто ещё нулевое в момент смены сцены: без повтора кадр остаётся прежним (широкий доклад, его левый край — Магдебург)
+    const apply = (fly: boolean) => {
+      if (!alive) return;
+      const { width, height } = engine.size();
+      if (!width || !height) return;
+      engine.setPanEnabled(false);
+      const v = fitView(camera.bbox, width, height);
+      const d = reducedMotion() ? 0 : camera.ms ?? 2400;
+      if (fly && d && engine.flyTo) engine.flyTo(v, d);
+      else engine.setView(v);
+    };
+    apply(true);
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => apply(false));
+    ro?.observe(engine.getContainer());
+    return () => { alive = false; ro?.disconnect(); };
   }, [engine, camera?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!shown) return null;
   return (

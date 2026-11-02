@@ -8,6 +8,7 @@
  * Кадр ИИ (что звучит, ответ, мысль) уходит в `onFrame` и рассылается окнам.
  */
 import { answer, comment, type Ask, type ChoiceKind, type Said } from './ai';
+import { debriefSentences } from './debrief';
 import type { DirectorEvent, Effect } from './director';
 import { LINES, pick, pickFilled, type Filled, type Lines, type Vars } from './lines';
 import { norm } from '../voice/fuzzy';
@@ -61,6 +62,8 @@ export interface AiRunnerDeps {
   count?: (kind: 'aiOnTime' | 'aiFallback') => void;
   /** Заготовка озвучена заранее (из таких и выбирается, если они есть). */
   voiced?: (f: Filled) => boolean;
+  /** Разбор итога голосом маршала, абзацами. Нет итога — обычная заготовка `result`. */
+  debrief?: () => { paragraphs: string[]; voice: string } | null;
 }
 
 export function aiRunner(d: AiRunnerDeps) {
@@ -68,7 +71,7 @@ export function aiRunner(d: AiRunnerDeps) {
   let frame: AiFrame = NO_AI;
   let gen = 0;
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
-  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene'> = {}) =>
+  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs'> = {}) =>
     d.queue.push({ text, priority, source, ...more });
   const here = () => d.queue.sceneNow() ?? undefined;
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
@@ -98,8 +101,23 @@ export function aiRunner(d: AiRunnerDeps) {
     },
     handle(e: Effect) {
       if (e.e === 'say') {
-        const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
-        if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}) });
+        const brief = e.key === 'result' ? d.debrief?.() : null;
+        if (brief) {
+          const f = pickFilled(lines.say.result, d.facts().vars, Math.random, d.voiced);
+          const sentences = debriefSentences(brief.paragraphs);
+          sentences.forEach((text, i) => {
+            const last = i === sentences.length - 1;
+            say(text, e.priority, 'now', {
+              voice: brief.voice,
+              ...(e.scene ? { scene: e.scene } : {}),
+              ...(!last ? { gapMs: 800 } : {}),
+              ...(i === 0 && f ? { fallback: { text: f.text, parts: f.parts } } : {}),
+            });
+          });
+        } else {
+          const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
+          if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}) });
+        }
       } else if (e.e === 'scene') {
         d.queue.scene(e.key);
       } else if (e.e === 'newSession') {

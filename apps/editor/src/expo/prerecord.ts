@@ -81,6 +81,23 @@ export function voiceTexts(d: Domains, lines: Lines = LINES): string[] {
   return [...out];
 }
 
+/**
+ * Обстановка второго и третьего перелома говорит голосом командующего: Жуков — архивный образец,
+ * Конев — образец `konev-12s`. Ключ — id образца в голосовой службе.
+ */
+export const SITUATION_VOICE: Record<string, string> = {
+  'situation-su_1bf-2': 'zhukov-14s',
+  'situation-su_1bf-3': 'zhukov-14s',
+  'situation-su_1uf-2': 'konev-12s',
+  'situation-su_1uf-3': 'konev-12s',
+};
+
+/** Каким образцом озвучивать заготовку; нет — голосом начальника штаба. */
+export function situationVoice(text: string, lines: Lines = LINES): string | null {
+  for (const [key, id] of Object.entries(SITUATION_VOICE)) if (lines.say[key]?.includes(text)) return id;
+  return null;
+}
+
 /** Клипы фразы: целая фраза, иначе её куски склейки; чего-то нет — null. */
 export function clipPlan(m: VoiceManifest | null, text: string, parts?: string[]): Clip[] | null {
   if (!m) return null;

@@ -104,3 +104,8 @@ def test_whole_pieces_first_like_planner_rest_grouped():
     assert " ".join(ps) == long
     assert len(ps) > 2 and all(len(p) <= PIECE_MAX_CHARS for p in ps[1:])
     assert whole_pieces("  ") == []
+    # точка в сокращении армии не режет фразу
+    assert whole_pieces("3-я гв. танковая штурмует юг Берлина. 47 А и 4 гв. ТА у Кетцина.") == [
+        "3-я гв. танковая штурмует юг Берлина.",
+        "47 А и 4 гв. ТА у Кетцина.",
+    ]

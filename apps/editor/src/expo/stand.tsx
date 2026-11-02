@@ -49,25 +49,51 @@ export function AttractActions({ voice, send, start = true }: { voice: boolean; 
   );
 }
 
-/** Экран «Как работает штаб ИИ». */
+/** Экран «Как работает штаб ИИ»: четыре крупные карточки, у каждой своя схема. */
 export function HowStaff({ foot }: { foot?: ReactNode }) {
   const n = KB_STATS.entries.toLocaleString('ru-RU');
   return (
-    <section className="expo-board">
-      <p className="expo-kicker">Четыре части одного штаба</p>
-      <h1>Как работает штаб ИИ</h1>
-      <ul className="expo-board-list">
+    <section className="expo-board expo-how">
+      <header className="expo-how-head">
+        <p className="expo-kicker">Четыре части одного штаба</p>
+        <h1>Как работает штаб ИИ</h1>
+      </header>
+      <ul className="expo-parts">
         <li>
-          <b>Модель.</b> Ядро ведёт армии по часам: движение, бой, потери и снабжение. Противник идёт по историческому замыслу.
+          <div className="expo-part-art expo-part-hours" aria-hidden="true">
+            <span>16</span>
+            <span>20</span>
+            <span>24</span>
+            <em>апрель, по часам</em>
+          </div>
+          <strong>Модель</strong>
+          <p>Ядро ведёт армии по часам. Противник идёт по замыслу.</p>
         </li>
         <li>
-          <b>База знаний.</b> {n} записей и {KB_STATS.sources} источников. У цифры на стенде подписан источник.
+          <div className="expo-part-art expo-part-nums" aria-hidden="true">
+            <p><b>{n}</b><small>записей</small></p>
+            <p><b>{KB_STATS.sources}</b> <small>источников</small></p>
+          </div>
+          <strong>База знаний</strong>
+          <p>{KB_STATS.sources} источников: на вопрос штаб берёт запись и называет, откуда она.</p>
         </li>
         <li>
-          <b>Переигровка.</b> Три решения меняют ход вашего фронта. Соседи остаются на истории.
+          <div className="expo-part-art expo-part-turns" aria-hidden="true">
+            <b>1</b>
+            <b>2</b>
+            <b>3</b>
+          </div>
+          <strong>Переигровка</strong>
+          <p>Три решения ведут ваш фронт. Соседний идёт своим ходом, как в операции.</p>
         </li>
         <li>
-          <b>Голос.</b> Фразы стенда записаны заранее. Ответ на вопрос штаб может сказать живым голосом.
+          <div className="expo-part-art expo-part-chain" aria-hidden="true">
+            <span>Вопрос</span>
+            <span>Ядро</span>
+            <span>Карта</span>
+          </div>
+          <strong>ИИ в ходе</strong>
+          <p>Спросили — штаб отвечает, ядро считает, армии сдвигаются на карте.</p>
         </li>
       </ul>
       {foot}
@@ -76,24 +102,32 @@ export function HowStaff({ foot }: { foot?: ReactNode }) {
 }
 
 const APP_SHOTS = [
-  { file: 'map', title: 'Карта операции', text: 'Армии, удары за сутки, рубежи обороны и разграничительные линии.' },
+  { file: 'map', title: 'Карта операции', text: 'Армии и удары за сутки, рубежи обороны и разграничительные линии.' },
   { file: 'staff', title: 'Штаб', text: 'Сводка, доклады фронтов, приказы и ветви переигровки.' },
-  { file: 'kb', title: 'База знаний', text: 'Запись операции: факты, источники и вопросы к модели.' },
+  { file: 'modeling', title: 'Моделирование', text: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам.' },
+  { file: 'kb', title: 'База знаний', text: 'Факты операции с источником и вопросы, на которые модель отвечает по базе.' },
 ];
 
-/** Экран «Полная версия»: что умеет основное приложение, снимки и рекорд дня. */
-export function FullVersion({ foot }: { foot?: ReactNode }) {
+/** Строка рекорда дня: лучшие скорость и потери среди сеансов за сутки. */
+export function DayRecordLine() {
   const rec = recordLines(readRecord());
   const day = [rec.speed, rec.cost].filter(Boolean).join('; ');
+  return <p className="expo-record">{day ? `Рекорд дня: ${day}.` : 'Рекорд дня появится после первого сеанса.'}</p>;
+}
+
+/** Экран «Полная версия»: что умеет основное приложение, четыре равные плашки. */
+export function FullVersion({ foot }: { foot?: ReactNode }) {
   return (
     <section className="expo-board expo-full">
       <p className="expo-kicker">Основное приложение</p>
       <h1>Полная версия</h1>
-      <p className="expo-lead">Та же операция целиком: карта, штаб, база знаний и сравнение с историей.</p>
+      <p className="expo-lead">Та же операция целиком: карта, штаб, моделирование и база знаний.</p>
       <div className="expo-shots">
         {APP_SHOTS.map((s) => (
           <figure key={s.file}>
-            <img src={shot(s.file)} alt={s.title} />
+            <div className="expo-shot">
+              <img src={shot(s.file)} alt={s.title} />
+            </div>
             <figcaption>
               {s.title}
               <small>{s.text}</small>
@@ -101,7 +135,6 @@ export function FullVersion({ foot }: { foot?: ReactNode }) {
           </figure>
         ))}
       </div>
-      <p className="expo-record">{day ? `Рекорд дня: ${day}.` : 'Рекорда дня ещё нет: он появится после первого сеанса.'}</p>
       {foot}
     </section>
   );
@@ -133,7 +166,7 @@ export function Excursion({ point }: { point: number }) {
           </figcaption>
         </figure>
       )}
-      <p className="expo-record">Источник: {EXCURSION_SOURCE}.</p>
+      <p className="expo-source">Источник: {EXCURSION_SOURCE}.</p>
     </section>
   );
 }

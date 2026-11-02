@@ -154,7 +154,7 @@ export type Turnstile = ReturnType<typeof turnstile>;
 export interface LiveVoice {
   ready(): boolean;
   /** Сказать фразу: `synthDone` — сервис договорил (синтез свободен), `done` — окно доиграло. */
-  say(text: string): { synthDone: Promise<void>; done: Promise<void>; stop(): void };
+  say(text: string, voiceId?: string): { synthDone: Promise<void>; done: Promise<void>; stop(): void };
 }
 
 export interface SpeakerDeps {
@@ -195,7 +195,7 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
     let release = () => {};
     const turn = d.gate.run(() => {
       if (stopped || !lv.ready()) return Promise.resolve();
-      said = lv.say(speakable(text, { full: true }));
+      said = lv.say(speakable(text, { full: true }), line.voice);
       said.done.then(finish, finish);
       return new Promise<void>((r) => { release = r; said!.synthDone.then(r, r); });
     });
@@ -227,11 +227,24 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
   };
   return {
     speak(text, line) {
-      if (line?.source === 'now') {
-        if (d.aiOn() && d.live?.ready()) return live(text, line);
-        return swap(line) ?? fromClips(text, line.parts) ?? silent.speak(text);
-      }
-      return fromClips(text, line?.parts) ?? silent.speak(text);
+      // разбор итога — голос маршала, даже без режима «С ИИ»; сервиса нет — короткая заготовка
+      const h = line?.voice && d.live?.ready()
+        ? live(text, line)
+        : line?.source === 'now'
+          ? (d.aiOn() && d.live?.ready() ? live(text, line) : swap(line) ?? fromClips(text, line.parts) ?? silent.speak(text))
+          : fromClips(text, line?.parts) ?? silent.speak(text);
+      const gap = line?.gapMs ?? 0;
+      if (!gap) return h;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let finish = () => {};
+      const done = new Promise<void>((r) => {
+        finish = r;
+        void h.done.then(() => { timer = setTimeout(r, gap); });
+      });
+      return {
+        done,
+        stop: () => { if (timer) clearTimeout(timer); h.stop(); finish(); },
+      };
     },
   };
 }
@@ -246,7 +259,7 @@ function liveVoice(client: VoiceClient): LiveVoice & { dispose(): void } {
   return {
     dispose: () => offs.forEach((f) => f()),
     ready: () => client.status === 'ready',
-    say(text) {
+    say(text, voiceId) {
       const id = client.newSayId();
       let synth = () => {};
       let played = () => {};
@@ -257,7 +270,7 @@ function liveVoice(client: VoiceClient): LiveVoice & { dispose(): void } {
         setTimeout(() => { synth(); r(); }, readMs(text) * 2 + 5000);
       });
       waits.set(id, { synth, played });
-      client.say(id, 'chief', text);
+      client.say(id, 'chief', text, undefined, voiceId);
       return { synthDone, done, stop: () => { client.stop(id); waits.delete(id); synth(); played(); } };
     },
   };

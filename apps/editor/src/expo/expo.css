@@ -98,6 +98,22 @@ html.expo-active,
   color: var(--expo-gold);
   box-shadow: inset 0 -3px 0 var(--expo-gold);
 }
+.expo .expo-steps button {
+  min-height: 0;
+  padding: 0 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.expo .expo-steps button:hover:not(:disabled) {
+  background: transparent;
+  color: var(--expo-text);
+}
+.expo .expo-steps button:disabled {
+  opacity: 1;
+}
 .expo-content {
   flex: 1;
   min-height: 0;
@@ -364,36 +380,31 @@ html.expo-active,
   background: linear-gradient(90deg, rgba(12, 20, 18, 0.95) 0%, rgba(12, 20, 18, 0.88) 32%, rgba(12, 20, 18, 0.5) 100%), var(--table, none) center / cover no-repeat, var(--expo-bg);
 }
 .expo-reel {
-  position: relative;
   width: 100%;
-  height: 160px;
+  height: 176px;
   margin: 0;
   overflow: hidden;
   flex: none;
-}
-.expo-reel-frame {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-}
-.expo-reel-frame:first-child {
-  opacity: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .expo-reel img {
   display: block;
+  flex: 0 0 112px;
   width: 100%;
-  height: 108px;
+  height: 112px;
   object-fit: cover;
   box-sizing: border-box;
   border: 6px solid #e8dfc8;
   filter: sepia(0.45) contrast(1.08);
-  transform: rotate(-1.2deg);
 }
 .expo-reel figcaption {
-  margin-top: 6px;
+  flex: 0 0 48px;
+  margin: 0;
   color: var(--expo-muted);
   font-size: var(--expo-text-min);
-  line-height: 1.2;
+  line-height: 48px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -422,18 +433,6 @@ html.expo-active,
 .expo-attract .expo-mapframe {
   flex: 1;
   min-height: 0;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .expo-reel-frame {
-    animation: expo-reel calc(var(--n) * 8s) calc(var(--i) * 8s - 0.5s) infinite;
-  }
-}
-@keyframes expo-reel {
-  0% { opacity: 0; }
-  4% { opacity: 1; }
-  31% { opacity: 1; }
-  35% { opacity: 0; }
-  100% { opacity: 0; }
 }
 .expo-intro button {
   margin-top: 16px;
@@ -598,9 +597,52 @@ html.expo-active,
 .expo-roles {
   display: grid;
   gap: 40px;
+  flex: 1;
+  align-self: stretch;
+  min-height: 0;
+  overflow: hidden;
 }
 .expo-roles:has(> .expo-decision) {
   grid-template-columns: 700px 1fr;
+}
+.expo-explain.expo-roles:has(> .expo-decision) {
+  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+}
+.expo-content > .expo-explain {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+.expo-explain .expo-map,
+.expo-explain .expo-decision {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.expo-explain .expo-sit {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  gap: 10px;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.expo-explain .expo-situation {
+  font-size: 36px;
+  line-height: 1.22;
+}
+.expo-explain .expo-sit-lines {
+  font-size: 30px;
+  line-height: 1.2;
+  gap: 4px;
+}
+.expo-explain .expo-figures dt {
+  font-size: 40px;
+}
+.expo-explain .expo-sum-h {
+  margin: 2px 0 0;
 }
 .expo-roles-ai-progress {
   grid-template-columns: 1fr 1fr;
@@ -664,12 +706,28 @@ html.expo-active,
 }
 .expo-decision {
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 18px;
 }
 .expo-situation {
   font: 48px / 1.3 var(--expo-serif);
+}
+.expo-sit {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 0;
+  overflow: hidden;
+}
+.expo-sit-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  font: 34px / 1.25 var(--expo-serif);
 }
 .expo-cards {
   flex: 1;
@@ -677,6 +735,26 @@ html.expo-active,
   display: grid;
   grid-template-rows: repeat(3, 1fr);
   gap: 16px;
+}
+.expo-cards:has(.expo-confirm) {
+  grid-template-rows: repeat(3, 1fr) auto;
+}
+.expo-confirm {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border: 2px solid var(--expo-gold);
+  border-radius: 8px;
+  background: #1a2e28;
+}
+.expo-confirm p {
+  margin: 0;
+  font: 32px / 1.2 var(--expo-serif);
+}
+.expo .expo-confirm button {
+  min-height: 84px;
 }
 .expo-card {
   min-height: 0;
@@ -687,7 +765,8 @@ html.expo-active,
   background: var(--expo-panel);
   overflow: hidden;
 }
-.expo-card[data-lit] {
+.expo-card[data-lit],
+.expo-card:has([aria-pressed='true']) {
   border-color: var(--expo-gold);
 }
 .expo .expo-card-main.expo-card-nophoto {
@@ -960,9 +1039,9 @@ html.expo-active,
   gap: 8px;
 }
 .expo-reveal h3 {
-  font: normal 48px / 1.12 var(--expo-serif);
+  font: normal 40px / 1.12 var(--expo-serif);
   color: var(--expo-gold);
-  margin: 0 0 8px;
+  margin: 0;
 }
 .expo-hist-title {
   font: 38px / 1.15 var(--expo-serif);
@@ -1182,7 +1261,9 @@ html.expo-active,
 
 /* Итог: газетная полоса слева, карта пути справа */
 .expo-paper {
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1218,7 +1299,7 @@ html.expo-active,
 }
 .expo-paper-pic {
   width: 100%;
-  height: 92px;
+  height: 56px;
   object-fit: cover;
   object-position: 50% 70%;
   filter: sepia(0.4) contrast(1.05);
@@ -1247,6 +1328,17 @@ html.expo-active,
 .expo-paper .expo-scale {
   grid-template-columns: 112px 84px 1fr;
   gap: 12px;
+}
+.expo-paper-story {
+  flex: 1 1 160px;
+  margin: 4px 0 0;
+  min-height: 140px;
+  overflow: auto;
+  font: 28px / 1.4 var(--expo-serif);
+  color: #231d14;
+}
+.expo-paper-story p {
+  margin: 0 0 14px;
 }
 .expo-paper .expo-scale-note {
   color: #4b3f2c;
@@ -1869,6 +1961,160 @@ html.expo-active,
   color: var(--expo-gold);
   font-weight: normal;
 }
+.expo-how {
+  gap: 28px;
+}
+.expo-how-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.expo-parts {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+}
+.expo-parts li {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  padding: 22px 28px 20px;
+  background: rgba(15, 26, 24, 0.9);
+  border: 1px solid var(--expo-line);
+}
+.expo-parts strong {
+  font: 40px / 1.1 var(--expo-serif);
+  font-weight: normal;
+  color: var(--expo-gold);
+}
+.expo-parts p {
+  font: 32px / 1.25 var(--expo-serif);
+}
+.expo-part-art {
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 18px 8px 8px;
+}
+.expo-part-hours {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  background: linear-gradient(#c9a227, #c9a227) 8px calc(100% - 46px) / calc(100% - 16px) 3px no-repeat;
+}
+.expo-part-hours span {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 18px;
+  border-bottom: 3px solid var(--expo-own);
+  font: 72px / 1 var(--expo-serif);
+  color: var(--expo-text);
+}
+.expo-part-hours em {
+  grid-column: 1 / -1;
+  align-self: end;
+  font: 28px / 1 var(--expo-sans);
+  font-style: normal;
+  letter-spacing: 0.04em;
+  color: var(--expo-muted);
+}
+.expo-part-nums {
+  align-items: center;
+  justify-content: space-around;
+}
+.expo-part-nums p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+.expo-part-nums b {
+  font: 84px / 0.9 var(--expo-serif);
+  font-weight: normal;
+  color: var(--expo-gold);
+}
+.expo-part-nums small {
+  font: 28px / 1 var(--expo-sans);
+  color: var(--expo-muted);
+}
+.expo-part-turns {
+  align-items: center;
+  justify-content: space-around;
+}
+.expo-part-turns b {
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--expo-gold);
+  font: 64px / 1 var(--expo-serif);
+  font-weight: normal;
+  color: var(--expo-gold);
+}
+.expo-part-turns b:nth-child(2) {
+  background: var(--expo-gold);
+  color: #1a1408;
+}
+.expo-part-chain {
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  background: linear-gradient(#c9a227, #c9a227) 8px 50% / calc(100% - 16px) 3px no-repeat;
+}
+.expo-part-chain span {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 88px;
+  padding: 8px;
+  background: #141c1a;
+  border: 3px solid var(--expo-gold);
+  font: 32px / 1.1 var(--expo-serif);
+  color: var(--expo-gold);
+  text-align: center;
+}
+.expo-attract-side .expo-parts {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.expo-attract-side .expo-parts li {
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  padding: 12px 16px;
+}
+.expo-attract-side .expo-part-art {
+  grid-row: 1 / span 2;
+}
+.expo-attract-side .expo-part-chain {
+  flex-direction: column;
+  background: none;
+  gap: 8px;
+}
+.expo-attract-side .expo-part-chain span {
+  min-height: 0;
+}
+.expo-attract-side .expo-part-hours span,
+.expo-attract-side .expo-part-nums b,
+.expo-attract-side .expo-part-turns b {
+  font-size: 40px;
+}
+.expo-attract-side .expo-part-turns b {
+  width: 56px;
+  height: 56px;
+}
 .expo-lead,
 .expo-record {
   margin: 0;
@@ -1877,6 +2123,11 @@ html.expo-active,
 .expo-record {
   color: var(--expo-muted);
 }
+.expo-source {
+  margin: 0;
+  color: var(--expo-muted);
+  font: italic 22px / 1.35 var(--expo-serif);
+}
 .expo-full {
   flex: 1;
 }
@@ -1884,34 +2135,52 @@ html.expo-active,
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 .expo-shots figure {
   margin: 0;
+  min-width: 0;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.expo-shots img {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  object-fit: cover;
-  object-position: top center;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 16px 20px;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(15, 26, 24, 0.92);
   border: 1px solid var(--expo-line);
 }
+.expo-shot {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: #efe6cf;
+}
+.expo-shots img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
 .expo-shots figcaption {
-  flex: none;
-  font-size: 28px;
+  min-width: 0;
+  font-size: 32px;
   line-height: 1.15;
+  color: var(--expo-gold);
 }
 .expo-shots figcaption small {
   display: block;
-  margin-top: 4px;
+  margin-top: 8px;
   color: var(--expo-muted);
-  font-size: 24px;
+  font-size: 26px;
+  line-height: 1.3;
 }
 
 /* Ввод: на трёх экранах карта, цифры и справка не повторяют друг друга */
@@ -2034,10 +2303,19 @@ html.expo-active,
   color: var(--expo-gold);
   margin: 0 0 4px;
 }
+.expo-move {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .expo-move-list {
+  min-height: 0;
   margin: 0;
   padding: 0 0 0 1.1em;
-  font: 28px / 1.25 var(--expo-serif);
+  font: 28px / 1.2 var(--expo-serif);
+  overflow: hidden;
 }
 .expo-move .expo-figures dt {
   font-size: 48px;

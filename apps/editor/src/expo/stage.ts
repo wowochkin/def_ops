@@ -17,6 +17,8 @@ import type { DirectorState, Effect } from './director';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import type { ExpoSettings } from './settings';
+import { debriefSentences, operationDebrief } from './debrief';
+import { readMs } from './speaker';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
@@ -45,8 +47,14 @@ export function createStage(d: StageDeps) {
   const gate = turnstile();
   const llmAsk: Ask = (system, text, signal) => gate.run(() => (signal.aborted ? Promise.reject(signal.reason) : askText(system, text, { settings: llm(), signal, maxTokens: 400 })));
   const voice = expoSpeaker({ aiOn: d.aiOn, gate, onSwap: (l) => runner?.onLine(l) });
-  /** Фразы заставки по кругу: призыв, стенд, штаб ИИ. */
-  const ATTRACT_KEYS = ['attract-call', 'attract-stand', 'attract-ai'];
+  /** Фразы заставки по кругу. Рассказ об операции — несколько фраз подряд, без паузы между ними. */
+  const ATTRACT_BEATS = [
+    ['attract-call'],
+    ['attract-berlin-1', 'attract-berlin-2', 'attract-berlin-3', 'attract-berlin-4', 'attract-berlin-5', 'attract-berlin-6', 'attract-berlin-7', 'attract-berlin-8', 'attract-berlin-9'],
+    ['attract-stand'],
+    ['attract-ai'],
+    ['attract-app'],
+  ];
   let attractOn = false;
   let attractI = 0;
   let quietSince: number | null = null;
@@ -95,6 +103,15 @@ export function createStage(d: StageDeps) {
     queue, ask, facts, dispatch: d.dispatch, onFrame: d.onFrame,
     count: (k) => d.count(k),
     voiced: voice.voiced,
+    debrief: () => {
+      const v = d.snapshot().model.view;
+      const brief = v ? operationDebrief(v) : null;
+      if (brief) {
+        const ms = debriefSentences(brief.paragraphs).reduce((s, p) => s + readMs(p) + 800, 0) + 8_000;
+        d.dispatch({ t: 'hold', ms });
+      }
+      return brief;
+    },
     listen: () => new Promise<string | null>((res) => {
       if (!d.aiOn()) return res(null);
       let last = '';
@@ -144,10 +161,10 @@ export function createStage(d: StageDeps) {
       quietSince ??= Date.now();
       const pause = attractI === 0 ? 1_500 : (snap.settings?.attractCall?.pause ?? 8) * 1000;
       if (!attractLoopDue({ now: Date.now(), quietSince, pauseMs: pause, on: true, busy: false })) return;
-      const key = ATTRACT_KEYS[attractI % ATTRACT_KEYS.length];
+      const beat = ATTRACT_BEATS[attractI % ATTRACT_BEATS.length];
       attractI += 1;
       quietSince = null;
-      runner?.handle({ e: 'say', key, priority: 'scene', scene: 'attract' });
+      for (const key of beat) runner?.handle({ e: 'say', key, priority: 'scene', scene: 'attract' });
     },
     resume: () => voice.resume(),
     dispose() { queue.clear(); voice.dispose(); },

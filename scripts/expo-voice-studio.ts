@@ -7,12 +7,14 @@
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, loadStress, msOk, service, STRESS_PATH, wer, type ClipCheck, type Manifest,
 } from './expo-voice';
+import { BANK } from '../apps/editor/src/expo/bank';
+import { situationVoice, stageDomains, voiceTexts } from '../apps/editor/src/expo/prerecord';
 import { markFor, markStress, plainStress, stressed, type StressMark } from '../apps/editor/src/expo/stress';
 import { speakable } from '../apps/editor/src/voice/speech';
 
@@ -44,6 +46,17 @@ async function connect() {
     try { return await service(VOICE_URL); } catch (e) { if (!own || Date.now() > until) throw e; }
   }
 }
+const scenario = JSON.parse(readFileSync(join(import.meta.dirname, '..', BANK.scenario), 'utf8')) as { start: string; hours: number };
+/** Фразы каталога, которых нет в манифесте: в студии их тоже видно и можно озвучить. */
+const missingTexts = () => {
+  const have = new Set(Object.keys(load().clips));
+  return voiceTexts(stageDomains(scenario.start, scenario.hours)).filter((t) => !have.has(t));
+};
+const sampleFiles = () => {
+  const s = join(dir, 'samples');
+  return existsSync(s) ? readdirSync(s).filter((f) => f.endsWith('.ogg')) : [];
+};
+
 const svc = await connect();
 const live = svc.engine;
 const voice = chiefVoice(data);
@@ -57,8 +70,7 @@ const sayOf = (text: string) => stressed(speakable(text, { full: true }), svc.en
  * Дубль — в takes, выбирает человек; main — сразу основным (переозвучка по словарю).
  */
 async function regen(text: string, own?: string, main = false): Promise<ClipCheck> {
-  const c = load().clips[text];
-  if (!c) throw new Error('нет такой фразы');
+  if (!load().clips[text] && !missingTexts().includes(text)) throw new Error('нет такой фразы');
   const { say, said } = own ? { say: own, said: markStress(own, markFor(svc.engine, loadStress())) } : sayOf(text);
   const file = `${clipKey(said, voice, `${svc.engine}#${Date.now()}`)}.ogg`;
   const r = await svc.render(said);
@@ -73,7 +85,8 @@ async function regen(text: string, own?: string, main = false): Promise<ClipChec
   };
   const fresh = load(); // за время синтеза манифест мог измениться
   const fc = fresh.clips[text];
-  if (main) {
+  if (!fc) fresh.clips[text] = take;
+  else if (main) {
     const { takes, ...prev } = fc;
     fresh.clips[text] = { ...take, approved: fc.approved, manual: fc.manual, takes: [...(takes ?? []), prev] };
   } else fc.takes = [...(fc.takes ?? []), take];
@@ -134,6 +147,16 @@ createServer(async (req, res) => {
   const json = (v: unknown, code = 200) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(v)); };
   try {
     if (url.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(PAGE); return; }
+    if (url.pathname.startsWith('/samples/')) {
+      const name = decodeURIComponent(url.pathname.slice(9));
+      const f = join(dir, 'samples', name);
+      if (!/^[\w.-]+\.ogg$/.test(name) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
+      const m4a = join(cache, `sample-${name.replace(/\.ogg$/, '.m4a')}`);
+      if (!existsSync(m4a)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', f, '-c:a', 'aac', '-b:a', '96k', m4a]);
+      res.writeHead(200, { 'content-type': 'audio/mp4', 'cache-control': 'no-store' });
+      res.end(readFileSync(m4a));
+      return;
+    }
     if (url.pathname.startsWith('/clips/')) {
       // браузеру — M4A: Safari не играет Ogg Opus в <audio>; клипы стенда остаются Ogg
       const name = url.pathname.slice(7);
@@ -147,7 +170,13 @@ createServer(async (req, res) => {
     }
     if (url.pathname === '/api/state') {
       const st = loadStress();
-      json({ engine: svc.engine, live, engines: svc.engines, busy, clips: load().clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length });
+      const clips = load().clips;
+      const voiceOf: Record<string, string> = {};
+      for (const t of Object.keys(clips)) {
+        const v = situationVoice(t);
+        if (v) voiceOf[t] = v;
+      }
+      json({ engine: svc.engine, live, engines: svc.engines, busy, clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length, missing: missingTexts(), samples: sampleFiles(), voiceOf });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/stress/word') { json({ added: addStress(String((await body(req)).say)) }); return; }
@@ -245,9 +274,13 @@ function take(text, t, main) {
 function render() {
   const f = $('#filter').value;
   const items = Object.entries(st.clips).filter(([, c]) => f === 'all' || (f === 'bad' ? !c.ok : !c.approved));
-  $('#count').textContent = items.length + ' из ' + Object.keys(st.clips).length;
-  $('#list').innerHTML = items.map(([text, c], i) => '<div class="row ' + (!c.ok ? 'bad' : c.approved ? 'ok-approved' : '') + '">'
+  const missing = f === 'all' ? (st.missing || []) : [];
+  $('#count').textContent = (items.length + missing.length) + ' из ' + (Object.keys(st.clips).length + missing.length);
+  const samples = (st.samples || []).map((name) => '<p>' + esc(name) + '<br><audio controls preload="none" src="/samples/' + encodeURIComponent(name) + '"></audio></p>').join('');
+  const gap = missing.map((text) => '<div class="row bad"><div>—</div><div>' + esc(text) + '<div class="meta">записи нет</div></div><div><button data-regen="' + esc(text) + '">Озвучить</button></div></div>').join('');
+  $('#list').innerHTML = (samples ? '<h2>Склейки</h2>' + samples : '') + gap + items.map(([text, c], i) => '<div class="row ' + (!c.ok ? 'bad' : c.approved ? 'ok-approved' : '') + '">'
     + '<div>' + (i + 1) + '</div><div>' + esc(text)
+    + (st.voiceOf && st.voiceOf[text] ? '<div class="meta">голос ' + esc(st.voiceOf[text]) + '</div>' : '')
     + (c.said !== text ? '<div class="meta">сказано: ' + esc(c.said) + '</div>' : '')
     + '<div class="meta">услышано: ' + esc(c.heard) + '</div>'
     + '<div class="say"><input data-say="' + esc(text) + '" value="' + esc(c.say || toPlus(c.said)) + '" title="«+» перед ударной гласной: Х+альбе">'

@@ -156,3 +156,4 @@ def test_seed_names_in_russian():
     assert _seed_name("zhukov-10s") == "Жуков, 10 с"
     assert _seed_name("zhukov-14s-raw") == "Жуков, 14 с (без обработки)"
     assert _seed_name("zhukov-14s-dfn") == "Жуков, 14 с (с шумоподавлением)"
+    assert _seed_name("konev-12s") == "Конев, 12 с"

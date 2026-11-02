@@ -24,7 +24,13 @@ export interface Picture {
 }
 
 export const PICTURES = (manifest as { pictures: Picture[] }).pictures;
-const urls = import.meta.glob('./pictures/*.{jpg,webp}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+// В сборке Vite подставляет адреса файлов. Скрипт подготовки голоса идёт без Vite — картинки ему не нужны.
+let urls: Record<string, string> = {};
+try {
+  urls = import.meta.glob('./pictures/*.{jpg,webp}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+} catch {
+  urls = {};
+}
 const src = (p: Picture) => urls[`./pictures/${p.file}`];
 
 /** Портрет командующего армией (или фронтом): адрес и подпись; нет — null. */

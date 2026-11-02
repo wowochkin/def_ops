@@ -1,0 +1,70 @@
+/**
+ * Разбор итога голосом командующего выбранного фронта. Текст собирается из фактов этого сеанса,
+ * поэтому заранее не записывается: его читает живой голос Жукова или Конева.
+ * Абзацы звучат по очереди, с паузой между ними: один кусок синтеза не склеивает их в одну скороговорку.
+ */
+import { BANK, type Card } from './bank';
+import { templateUnits } from './lines';
+import type { Decision, ModelView } from './session';
+import { FRONT_NAMES } from './scenes';
+import type { FrontId } from './settings';
+
+const VOICE: Record<string, string> = { su_1bf: 'zhukov-14s', su_1uf: 'konev-12s' };
+
+const spoken = (note: string) => note.replace(/сут(?![\p{L}])/gu, 'суток');
+
+/** Суть решения: первые строки карточки, без «риска» и «расчёта». */
+function gist(c: Card | undefined): string {
+  const lines = (c?.lines ?? []).filter((l) => !/^Риск:|^Расчёт:/.test(l)).slice(0, 3);
+  if (!lines.length) return c?.title ?? '';
+  return lines.join('. ').replace(/\.\s*$/, '');
+}
+
+/** Что вышло на переломе — как ход операции, от обстановки, а не «я решил иначе». */
+function turnStory(front: FrontId, d: Decision): string {
+  const turn = BANK.fronts[front]?.turns.find((t) => t.n === d.n);
+  const sit = turn?.situation ?? '';
+  const card = d.choice === 'delay' ? undefined : BANK.cards.find((c) => c.id === d.choice);
+  const hist = BANK.cards.find((c) => c.id === d.historical);
+  const done = d.choice === 'delay'
+    ? 'Нового приказа не отдали: армии остались на достигнутом и ждали следующего решения.'
+    : `${gist(card)}.`;
+  const aside = d.choice !== d.historical && hist ? ` В истории на этом участке вышло иначе: ${gist(hist)}.` : '';
+  return [sit, done].filter(Boolean).join(' ') + aside;
+}
+
+/** С чего командующий начинает разбор: что сейчас будет, а не сразу частность перелома. */
+function opening(v: ModelView): string {
+  return `Операция ${FRONT_NAMES[v.front]} закончена. Разбираю, как она прошла по вашим приказам: что стояло перед войсками и чем каждый перелом закончился.`;
+}
+
+function outcome(v: ModelView): string {
+  const f = v.final!;
+  const head = f.forecast.replace(' — ', ', ');
+  const sentence = head ? `${head[0].toUpperCase()}${head.slice(1)}.` : '';
+  return [
+    sentence,
+    `По темпу ${spoken(f.scales.notes.speed)}.`,
+    `По цене операции ${spoken(f.scales.notes.cost)}.`,
+    `Замысел: ${f.scales.notes.intent}.`,
+    `По такому ходу звание — ${f.rank}.`,
+  ].filter(Boolean).join(' ');
+}
+
+/** Предложения разбора по отдельности: каждое звучит своим куском, с паузой после. Сокращения армий не режутся. */
+export function debriefSentences(paragraphs: string[]): string[] {
+  return paragraphs.flatMap((p) => templateUnits(p));
+}
+
+/** Рассказ о проведённой операции с точки зрения получившейся обстановки. Пусто — итога ещё нет. */
+export function operationDebrief(v: ModelView): { paragraphs: string[]; voice: string } | null {
+  const f = v.final;
+  if (!f) return null;
+  const paragraphs = [
+    opening(v),
+    ...v.decisions.map((d) => turnStory(v.front, d)),
+    outcome(v),
+  ].map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  if (!paragraphs.length) return null;
+  return { paragraphs, voice: VOICE[v.front] ?? 'zhukov-14s' };
+}
