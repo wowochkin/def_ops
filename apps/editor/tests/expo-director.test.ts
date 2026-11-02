@@ -137,6 +137,50 @@ describe('режиссёр сеанса', () => {
     expect(r.phase).toMatchObject({ step: 'scroll', choice: 2 });
   });
 
+  it('the result stays while the account is still being spoken', () => {
+    const r = run().send({ t: 'jump', phase: 'result' }).send({ t: 'hold', ms: 60_000 });
+    r.wait(25_000);
+    expect(r.phase.kind).toBe('result');
+    r.wait(40_000);
+    expect(r.phase.kind).toBe('attract');
+  });
+
+  it('back from the front choice returns to the attract screen', () => {
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    expect(r.phase.kind).toBe('welcome');
+    r.send({ t: 'back' });
+    expect(r.phase.kind).toBe('attract');
+    expect(r.state.front).toBeNull();
+    r.send({ t: 'back' });
+    expect(r.phase.kind).toBe('attract');
+  });
+
+  it('situation and decision tabs switch without dealing again', () => {
+    const r = toChoose();
+    expect(r.phase).toMatchObject({ step: 'choose' });
+    const mark = r.effects.length;
+    r.send({ t: 'step', step: 'explain' });
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'explain', choice: null });
+    expect(r.since(mark).some((e) => e.e === 'deal' || e.e === 'say')).toBe(false);
+    expect(r.since(mark)).toContainEqual({ e: 'scene', key: 'turn-1-explain' });
+    r.send({ t: 'step', step: 'choose' });
+    expect(r.phase).toMatchObject({ step: 'choose' });
+    if (r.phase.kind === 'turn') expect(r.phase.deadline).not.toBeNull();
+    r.send({ t: 'choose', card: 0 });
+    expect(r.phase).toMatchObject({ step: 'scroll' });
+    r.send({ t: 'step', step: 'explain' });
+    expect(r.phase).toMatchObject({ step: 'scroll' });
+  });
+
+  it('situation after a decision is the marshal line', () => {
+    const r = toChoose().send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
+    expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-2', priority: 'scene', scene: 'turn-2-explain' });
+    r.wait(DURATIONS.explain).send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll);
+    expect(r.phase).toMatchObject({ n: 3, step: 'explain' });
+    expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-3', priority: 'scene', scene: 'turn-3-explain' });
+  });
+
   it('idle returns to attract', () => {
     // Таймер выключен, оболочка не ответила на aiPick: бездействие считается от отметки выбора ИИ.
     const off = cfgWith({ timer: { on: false, seconds: 30 } });

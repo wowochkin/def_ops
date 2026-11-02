@@ -43,7 +43,8 @@ it('lockdown blocks quit keys and releases listeners on cleanup', () => {
   expect(e.defaultPrevented).toBe(false);
 });
 it('view shows roles of window', () => {
-  const state = step(initialState(0), { t: 'jump', phase: 'turn' }, EXPO_DEFAULTS).state;
+  // со второго перелома: на первом пояснении сводка хода уступает колонке обстановки
+  const state = step(initialState(0), { t: 'jump', phase: 'turn', n: 2 }, EXPO_DEFAULTS).state;
   for (const [window, title] of [
     [0, 'Штаб ИИ'],
     [1, 'Карта'],

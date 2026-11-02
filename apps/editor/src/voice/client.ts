@@ -523,10 +523,10 @@ export class VoiceClient {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(m));
   }
 
-  say(id: number, role: VoiceRole, text: string, more?: boolean) {
+  say(id: number, role: VoiceRole, text: string, more?: boolean, voiceId?: string) {
     if (this.muted) return;
     this.cancelled.revive(id);
-    this.send(more === undefined ? { type: 'say', id, role, text } : { type: 'say', id, role, text, more });
+    this.send({ type: 'say', id, role, text, ...(more !== undefined ? { more } : {}), ...(voiceId ? { voice_id: voiceId } : {}) });
   }
 
   /**

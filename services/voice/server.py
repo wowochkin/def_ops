@@ -477,14 +477,22 @@ class Session:
         """Фраза разговора. Во время калибровки и записи голоса не звучит (испортила бы замер или образец): say-done
         stopped без звука. Проба голоса и звук калибровки (id 0) идут не через say — они звучат."""
         jid, role, more = int(d["id"]), d.get("role", "chief"), bool(d.get("more"))
+        vid = str(d.get("voice_id") or "")
         job = self.jobs.get(jid)
         if job is None and (self.calib_on or self.recording is not None):
             await self.send(type="say-done", id=jid, stopped=True)
             return
         if job is None:
-            if role not in ROLES:
-                raise ValueError(f"нет такой роли: {role}")
-            job = Job(jid, self.svc.ref_for(role))
+            if vid:
+                ref = self.svc.store.ref(vid)
+                if ref is None:
+                    await self.send(type="say-done", id=jid, stopped=True, error=f"нет образца {vid}")
+                    return
+                job = Job(jid, ref)
+            else:
+                if role not in ROLES:
+                    raise ValueError(f"нет такой роли: {role}")
+                job = Job(jid, self.svc.ref_for(role))
             job.role = role
             if not more:
                 job.whole = str(d.get("text", ""))
@@ -612,15 +620,23 @@ class Session:
             pass
 
     async def on_render(self, d: dict):
-        """Синтез в файл (`render {id, role, text, asr?}`): звук в окно не уходит и нигде не звучит. Фраза целиком —
+        """Синтез в файл (`render {id, role, text, asr?, voice_id?}`): звук в окно не уходит и нигде не звучит. Фраза целиком —
         куски и паузы как у заготовки; WAV — `<данные>/render/<id>.wav`; ответ `rendered {id, path, audio_s, heard?}`
         (heard — распознанное, если asr) или `{id, error}`. Так готовится предзапись голоса выставочного стенда."""
         rid, role, text = int(d["id"]), d.get("role", "chief"), str(d.get("text", "")).strip()
-        if role not in ROLES:
+        vid = str(d.get("voice_id") or "")
+        if vid:
+            try:
+                ref = self.svc.store.ref(vid)
+            except KeyError:
+                await self.send(type="rendered", id=rid, error=f"нет образца {vid}")
+                return
+        elif role not in ROLES:
             raise ValueError(f"нет такой роли: {role}")
+        else:
+            ref = self.svc.ref_for(role)
         if not text:
             raise ValueError("синтез в файл: пустой текст")
-        ref = self.svc.ref_for(role)
         if ref is None:
             await self.send(type="rendered", id=rid, error=NO_REF)
             return

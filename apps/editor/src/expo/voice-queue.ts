@@ -12,7 +12,7 @@ export type Priority = 'action' | 'timer' | 'scene';
  * предзаписи (заготовка с подстановками); `fallback` — заготовка на замену фразы, составленной ИИ сейчас, если
  * живой голос недоступен или не успевает.
  */
-export interface Line { text: string; priority: Priority; source: string; scene?: string; parts?: string[]; fallback?: { text: string; parts?: string[] } }
+export interface Line { text: string; priority: Priority; source: string; scene?: string; parts?: string[]; fallback?: { text: string; parts?: string[] }; /** Образец живого голоса (Жуков, Конев); нет — как обычно, из предзаписи. */ voice?: string; /** Пауза после фразы, мс: между абзацами разбора. */ gapMs?: number }
 export interface Speaker { speak(text: string, line?: Line): { done: Promise<void>; stop(): void } }
 
 const RANK: Record<Priority, number> = { action: 0, timer: 1, scene: 2 };

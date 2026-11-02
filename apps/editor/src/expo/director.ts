@@ -37,7 +37,7 @@ export type Phase =
       /** Сколько раз заменили карточку на этом переломе. */
       replacements: number;
     }
-  | { kind: 'result' };
+  | { kind: 'result'; /** Не уходить на заставку раньше этого момента: пока звучит разбор. */ until?: number };
 
 export interface DirectorState {
   phase: Phase;
@@ -72,6 +72,12 @@ export type DirectorEvent =
   /** Голос договорил фразу пункта брифинга (от главного окна, не ввод посетителя). */
   | { t: 'briefDone'; point: number }
   | { t: 'restart' }
+  /** С выбора фронта — обратно на заставку. */
+  | { t: 'back' }
+  /** Продлить итог, пока не дозвучит разбор. */
+  | { t: 'hold'; ms: number }
+  /** Перелом: перейти между обстановкой и решением, не раздавая карточки заново. */
+  | { t: 'step'; step: 'explain' | 'choose' }
   | { t: 'pause' }
   | { t: 'resume' }
   | { t: 'jump'; phase: Phase['kind']; n?: TurnN };
@@ -111,6 +117,9 @@ export function sceneKey(s: Pick<DirectorState, 'phase'>): string {
 /** Ключ фразы пункта брифинга: `brief-<фронт>-<номер с 1>`. */
 export const briefKey = (front: FrontId, point: number) => `brief-${front}-${point + 1}`;
 
+/** Обстановка перелома после уже принятого решения: говорит командующий этого фронта. */
+export const situationKey = (front: FrontId, n: TurnN) => `situation-${front}-${n}`;
+
 const briefing = (point = 0): Phase => ({ kind: 'briefing', point });
 
 /** Касание, продвигающее фазу, в первые столько мс после входа в неё — дребезг или касание вместе с мышью; не продвигает. */
@@ -145,7 +154,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -156,7 +165,7 @@ function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx
   if (phase.kind === 'turn' && phase.step === 'explain' && next.front) fx.push({ e: 'deal', n: phase.n, front: next.front });
   const scene = sceneKey(next);
   fx.push({ e: 'scene', key: scene });
-  const say = phase.kind === 'briefing' ? (next.front ? briefKey(next.front, phase.point) : undefined) : SAY_ON_ENTER[phase.kind === 'turn' ? (phase.step === 'explain' ? 'explain' : '') : phase.kind];
+  const say = phase.kind === 'briefing' ? (next.front ? briefKey(next.front, phase.point) : undefined) : phase.kind === 'turn' && phase.step === 'explain' ? (phase.n > 1 && next.front ? situationKey(next.front, phase.n) : 'explain') : SAY_ON_ENTER[phase.kind];
   if (say) fx.push({ e: 'say', key: say, priority: 'scene', scene });
   if (phase.kind === 'briefing' && s.phase.kind !== 'briefing') {
     fx.push({ e: 'stat', kind: 'started' });
@@ -203,7 +212,8 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
   const t0 = s.phaseStart;
   const idleFrom = idleStart(s, cfg);
   if (idleFrom !== null) {
-    const at = idleFrom + cfg.idleSeconds * 1000;
+    let at = idleFrom + cfg.idleSeconds * 1000;
+    if (p.kind === 'result' && p.until) at = Math.max(at, p.until);
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
   }
   if (p.kind === 'briefing') {
@@ -211,7 +221,7 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
     cands.push({ at, apply: (x) => enter(x, p.point + 1 < BRIEF_POINTS ? briefing(p.point + 1) : turnPhase(1), at, cfg, fx) });
   }
   if (p.kind === 'result') {
-    const at = t0 + cfg.resultSeconds * 1000;
+    const at = Math.max(t0 + cfg.resultSeconds * 1000, p.until ?? 0);
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
   }
   if (p.kind === 'turn') {
@@ -266,7 +276,7 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     if (!s.paused) return out(s);
     const shift = s.now - (s.pausedAt ?? s.now);
     const p = s.phase;
-    const phase: Phase = p.kind === 'turn' && p.deadline !== null ? { ...p, deadline: p.deadline + shift } : p;
+    const phase: Phase = p.kind === 'turn' && p.deadline !== null ? { ...p, deadline: p.deadline + shift } : p.kind === 'result' && p.until ? { ...p, until: p.until + shift } : p;
     return out({ ...s, paused: false, pausedAt: null, phase, phaseStart: s.phaseStart + shift, lastInput: s.lastInput + shift });
   }
 
@@ -288,6 +298,12 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     return out(next);
   }
   // голос договорил пункт брифинга — следующий пункт (последний ждёт своего срока)
+  if (ev.t === 'hold') {
+    if (p.kind !== 'result') return out(s);
+    const until = now + ev.ms;
+    if (p.until !== undefined && p.until >= until) return out(s);
+    return out({ ...s, phase: { ...p, until } });
+  }
   if (ev.t === 'briefDone') {
     if (s.paused || p.kind !== 'briefing' || p.point !== ev.point || p.point + 1 >= BRIEF_POINTS) return out(s);
     return out(enter(s, briefing(p.point + 1), now, cfg, fx));
@@ -305,6 +321,9 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
       if (p.kind === 'welcome' && cfg.fronts.length === 1) return out(enter({ ...touched, front: cfg.fronts[0] }, briefing(), now, cfg, fx));
       if (p.kind === 'result') return out(enter(fresh(touched, fx), { kind: 'welcome' }, now, cfg, fx));
       return out(p.kind === 'startup' ? s : touched);
+    case 'back':
+      if (p.kind === 'welcome') return out(enter({ ...touched, front: null }, { kind: 'attract' }, now, cfg, fx));
+      return out(touched);
     case 'pickFront':
       if (p.kind === 'welcome' && cfg.fronts.includes(ev.front)) return out(enter({ ...touched, front: ev.front }, briefing(), now, cfg, fx));
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
@@ -330,6 +349,20 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     case 'brief':
       if (p.kind === 'briefing' && Number.isInteger(ev.point) && ev.point >= 0 && ev.point < BRIEF_POINTS && ev.point !== p.point) return out(enter(touched, briefing(ev.point), now, cfg, fx));
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
+    case 'step': {
+      // между обстановкой и решением; после приказа (ход операции) карточки уже не листаются
+      if (p.kind !== 'turn' || p.choice !== null || (ev.step !== 'explain' && ev.step !== 'choose') || ev.step === p.step) return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
+      const phase: Phase = {
+        ...p,
+        step: ev.step,
+        deadline: ev.step === 'choose' && cfg.timer.on ? now + cfg.timer.seconds * 1000 : null,
+        warned: false,
+        offered: false,
+      };
+      const next: DirectorState = { ...touched, phase, phaseStart: now };
+      fx.push({ e: 'scene', key: sceneKey(next) });
+      return out(next);
+    }
     case 'ask':
       if (p.kind === 'startup' || p.kind === 'attract' || !ev.q.trim()) return out(s);
       fx.push({ e: 'ask', q: ev.q.trim().slice(0, 300) });

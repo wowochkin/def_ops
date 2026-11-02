@@ -60,11 +60,11 @@ def _slug(name: str) -> str:
 _SEED_VARIANT = {"raw": "без обработки", "dfn": "с шумоподавлением"}
 
 
-_SEED_SPEAKER = {"zhukov": "Жуков", "chief": "Начальник штаба"}
+_SEED_SPEAKER = {"zhukov": "Жуков", "chief": "Начальник штаба", "konev": "Конев"}
 
 
 def _seed_name(vid: str) -> str:
-    m = re.fullmatch(r"(zhukov|chief)-(\d+)s(?:-(.+))?", vid)
+    m = re.fullmatch(r"(zhukov|chief|konev)-(\d+)s(?:-(.+))?", vid)
     if m:
         v = m.group(3)
         return f"{_SEED_SPEAKER[m.group(1)]}, {m.group(2)} с" + (f" ({_SEED_VARIANT.get(v, v)})" if v else "")

@@ -19,19 +19,26 @@ export function phaseLabel(state: DirectorState): string {
   const p = state.phase;
   return p.kind === 'turn' ? `Перелом ${p.n} из 3 · ${STEP_TITLES[p.step]}` : PHASE_TITLES[p.kind];
 }
-/** Заголовок фазы в шапке; на переломе — номер перелома и его шаги, текущий выделен. */
-export function PhaseTitle({ state }: { state: DirectorState }) {
+/** Заголовок фазы в шапке; на переломе — номер и шаги. Обстановка и решение переключаются, пока приказ не отдан. */
+export function PhaseTitle({ state, onStep }: { state: DirectorState; onStep?: (step: 'explain' | 'choose') => void }) {
   const p = state.phase;
   if (p.kind !== 'turn') return <span>{phaseLabel(state)}</span>;
+  const open = p.choice === null;
   return (
     <span className="expo-phase-turn">
       <span>Перелом {p.n} из 3</span>
       <span className="expo-steps">
-        {(['explain', 'choose', 'scroll'] as const).map((k) => (
-          <span key={k} aria-current={p.step === k ? 'step' : undefined}>
-            {STEP_TITLES[k]}
-          </span>
-        ))}
+        {(['explain', 'choose', 'scroll'] as const).map((k) => {
+          const current = p.step === k;
+          if ((k === 'explain' || k === 'choose') && onStep) {
+            return (
+              <button key={k} type="button" aria-current={current ? 'step' : undefined} disabled={!open || current} onClick={() => onStep(k)}>
+                {STEP_TITLES[k]}
+              </button>
+            );
+          }
+          return <span key={k} aria-current={current ? 'step' : undefined}>{STEP_TITLES[k]}</span>;
+        })}
       </span>
     </span>
   );

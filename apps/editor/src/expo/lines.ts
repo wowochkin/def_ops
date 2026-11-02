@@ -28,8 +28,25 @@ export function fillIn(t: string, vars: Vars): string | null {
   return ok ? out : null;
 }
 
-/** Предложения шаблона — куски склейки предзаписи (режутся по тексту шаблона, не по подставленным значениям). */
-export const templateUnits = (t: string) => t.split(/(?<=[.!?…])\s+/).filter(Boolean);
+/**
+ * Предложения шаблона — куски склейки предзаписи (режутся по тексту шаблона, не по подставленным значениям).
+ * Точка сокращения («гв.», «А», «км») предложение не кончает: иначе «3-я гв. танковая» рвётся на две записи.
+ */
+export function templateUnits(t: string): string[] {
+  const out: string[] = [];
+  let start = 0;
+  for (const m of t.matchAll(/[.!?…](?=\s+|$)/gu)) {
+    const i = m.index ?? 0;
+    const word = /([\p{L}\d]+)$/u.exec(t.slice(0, i))?.[1] ?? '';
+    const rest = t.slice(i + m[0].length).trimStart();
+    if (m[0] === '.' && word.length > 0 && word.length <= 3 && rest) continue;
+    out.push(t.slice(start, i + m[0].length).trim());
+    start = i + m[0].length;
+  }
+  const tail = t.slice(start).trim();
+  if (tail) out.push(tail);
+  return out.filter(Boolean);
+}
 
 /** Заготовка с подстановками и её куски склейки (`parts.join(' ') === text`). */
 export interface Filled { text: string; parts: string[] }

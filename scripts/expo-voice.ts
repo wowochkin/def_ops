@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { joinGap, stageDomains, voiceTexts, type Clip, type VoiceManifest } from '../apps/editor/src/expo/prerecord';
+import { joinGap, situationVoice, stageDomains, voiceTexts, type Clip, type VoiceManifest } from '../apps/editor/src/expo/prerecord';
 import { speakable } from '../apps/editor/src/voice/speech';
 import { plainStress, stressed, type StressData } from '../apps/editor/src/expo/stress';
 
@@ -78,14 +78,19 @@ export function dataDir(arg?: string): string {
   return join(process.env.XDG_DATA_HOME ?? join(homedir(), '.local/share'), 'ru.defops.desktop');
 }
 
-/** Голос начальника штаба: id образца и отпечаток его звука (перезаписанный образец — новые клипы). */
+/** Образец и отпечаток его звука: перезаписанный образец даёт новые клипы. */
+export function voiceStamp(data: string, id: string): string {
+  const ref = join(data, 'voice/voices', id, 'ref.wav');
+  const stamp = existsSync(ref) ? createHash('sha256').update(readFileSync(ref)).digest('hex').slice(0, 12) : 'встроенный';
+  return `${id}:${stamp}`;
+}
+
+/** Голос начальника штаба: id образца и отпечаток его звука. */
 export function chiefVoice(data: string): string {
   const roles = JSON.parse(readFileSync(join(data, 'voice/roles.json'), 'utf8')) as Record<string, string>;
   const id = roles.chief;
   if (!id) throw new Error('у начальника штаба нет голоса (voice/roles.json)');
-  const ref = join(data, 'voice/voices', id, 'ref.wav');
-  const stamp = existsSync(ref) ? createHash('sha256').update(readFileSync(ref)).digest('hex').slice(0, 12) : 'встроенный';
-  return `${id}:${stamp}`;
+  return voiceStamp(data, id);
 }
 
 export const clipKey = (said: string, voice: string, engine: string) => createHash('sha256').update(`${said}\n${voice}\n${engine}`).digest('hex').slice(0, 24);
@@ -137,11 +142,11 @@ export async function service(url: string) {
       if (m.current !== eid) throw new Error(`модель озвучки ${eid} не загрузилась: ${m.error ?? 'причина не названа'}`);
       this.engine = eid;
     },
-    render(text: string): Promise<{ path?: string; audio_s?: number; heard?: string; error?: string }> {
+    render(text: string, voiceId?: string): Promise<{ path?: string; audio_s?: number; heard?: string; error?: string }> {
       const rid = ++id;
       return new Promise((res) => {
         waits.set(rid, res as never);
-        ws.send(JSON.stringify({ type: 'render', id: rid, role: 'chief', text, asr: true }));
+        ws.send(JSON.stringify({ type: 'render', id: rid, role: 'chief', text, asr: true, ...(voiceId ? { voice_id: voiceId } : {}) }));
       });
     },
     close: () => ws.close(),
@@ -193,7 +198,9 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
   const stress = loadStress();
   for (const [i, text] of texts.entries()) {
     const { say, said } = stressed(speakable(text, { full: true }), engine, stress);
-    const file = `${clipKey(said, voice, engine)}.ogg`;
+    const sample = situationVoice(text);
+    const clipVoice = sample ? voiceStamp(data, sample) : voice;
+    const file = `${clipKey(said, clipVoice, engine)}.ogg`;
     const prev = old?.clips[text];
     // выбранный в студии дубль: тот же текст для озвучки или свой, заданный вручную
     if (prev?.manual && (prev.said === said || prev.override) && existsSync(join(dir, 'clips', prev.file))) {
@@ -213,7 +220,7 @@ export async function prepareVoice(o: { data?: string; url?: string; start: stri
     if (!svc) continue;
     let best: ClipCheck | null = null;
     for (let attempt = 0; attempt < 3 && !best?.ok; attempt++) {
-      const r = await svc.render(said);
+      const r = await svc.render(said, sample ?? undefined);
       if (r.error || !r.path) { console.error(`  синтез: ${r.error}`); continue; }
       const out = join(dir, 'clips', attempt ? `${file}.try` : file);
       const ms = encode(r.path, out);
