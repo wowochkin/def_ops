@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attractLoopDue, voiceQueue, type Speaker } from '../src/expo/voice-queue';
+import { attractLoopDue, voiceQueue, type Line, type Speaker } from '../src/expo/voice-queue';
 
 function fakeSpeaker() {
   const said: string[] = [];
@@ -89,6 +89,49 @@ describe('очередь голоса', () => {
     q.push({ text: 'b', priority: 'scene', source: 's' });
     await new Promise((r) => setTimeout(r, 0));
     expect(said).toEqual(['a', 'b']);
+  });
+
+  it('фраза с голосом начинает синтез следующей, пока сама ещё звучит', async () => {
+    const said: string[] = [];
+    let releaseSynth = () => {};
+    const pending: (() => void)[] = [];
+    const q = voiceQueue({
+      speak(text) {
+        said.push(text);
+        let finish = () => {};
+        let synth = () => {};
+        if (text === 'первая') releaseSynth = () => synth();
+        const done = new Promise<void>((r) => (finish = r));
+        pending.push(finish);
+        return { done, stop() { finish(); }, synth: new Promise<void>((r) => (synth = r)) };
+      },
+    });
+    q.scene('result');
+    const line = (text: string): Line => ({ text, priority: 'scene', source: 's', scene: 'result', voice: 'zhukov' });
+    q.push(line('первая'));
+    q.push(line('вторая'));
+    expect(said).toEqual(['первая']);
+    releaseSynth();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(said).toEqual(['первая', 'вторая']);
+    pending[0]?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(q.current()?.text).toBe('вторая');
+  });
+
+  it('смена выбора обрывает фразу этой сцены и сразу говорит новую', () => {
+    const f = fakeSpeaker();
+    const lines: (string | null)[] = [];
+    const q = voiceQueue(f.speaker, { onLine: (l) => lines.push(l?.text ?? null) });
+    q.scene('welcome');
+    q.push({ text: 'приглашение', priority: 'scene', source: 'prepared', scene: 'welcome' });
+    q.push({ text: 'Жуков', priority: 'scene', source: 'prepared', scene: 'welcome', replace: true });
+    expect(f.stopped).toEqual(['приглашение']);
+    expect(f.said).toEqual(['приглашение', 'Жуков']);
+    expect(lines.at(-1)).toBe('Жуков');
+    q.push({ text: 'Конев', priority: 'scene', source: 'prepared', scene: 'welcome', replace: true });
+    expect(f.said).toEqual(['приглашение', 'Жуков', 'Конев']);
+    expect(lines.at(-1)).toBe('Конев');
   });
 });
 

@@ -217,7 +217,7 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
       </fieldset>
       <Stepper label="Бездействие, с" value={settings.idleSeconds} min={30} max={600} step={10} onValue={(v) => save({ idleSeconds: v })} />
       <Stepper
-        label="Возврат после итога, с"
+        label="Предупреждение перед заставкой, с"
         value={settings.resultSeconds}
         min={5}
         max={120}

@@ -37,7 +37,15 @@ export type Phase =
       /** Сколько раз заменили карточку на этом переломе. */
       replacements: number;
     }
-  | { kind: 'result'; /** Не уходить на заставку раньше этого момента: пока звучит разбор. */ until?: number };
+  | {
+      kind: 'result';
+      /** Не показывать предупреждение раньше этого момента: пока звучит разбор. */
+      until?: number;
+      /** Конец предупреждения: в этот момент сеанс уходит на заставку. Нет — предупреждение ещё не показано. */
+      leave?: number;
+      /** «Остаться»: следующее предупреждение только после бездействия. */
+      quiet?: boolean;
+    };
 
 export interface DirectorState {
   phase: Phase;
@@ -74,8 +82,14 @@ export type DirectorEvent =
   | { t: 'restart' }
   /** С выбора фронта — обратно на заставку. */
   | { t: 'back' }
+  /** Итог: не уходить на заставку, предупреждение погашено. */
+  | { t: 'stay' }
   /** Продлить итог, пока не дозвучит разбор. */
   | { t: 'hold'; ms: number }
+  /** Разбор итога дослушан: теперь можно предупреждать об уходе на заставку. */
+  | { t: 'spoken' }
+  /** Выбор фронта отмечен, сеанс ещё не начат. */
+  | { t: 'markFront'; front: FrontId }
   /** Перелом: перейти между обстановкой и решением, не раздавая карточки заново. */
   | { t: 'step'; step: 'explain' | 'choose' }
   | { t: 'pause' }
@@ -154,7 +168,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'markFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step' || ev.t === 'stay';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -211,9 +225,8 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
   const p = s.phase;
   const t0 = s.phaseStart;
   const idleFrom = idleStart(s, cfg);
-  if (idleFrom !== null) {
-    let at = idleFrom + cfg.idleSeconds * 1000;
-    if (p.kind === 'result' && p.until) at = Math.max(at, p.until);
+  if (idleFrom !== null && p.kind !== 'result') {
+    const at = idleFrom + cfg.idleSeconds * 1000;
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
   }
   if (p.kind === 'briefing') {
@@ -221,8 +234,17 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
     cands.push({ at, apply: (x) => enter(x, p.point + 1 < BRIEF_POINTS ? briefing(p.point + 1) : turnPhase(1), at, cfg, fx) });
   }
   if (p.kind === 'result') {
-    const at = Math.max(t0 + cfg.resultSeconds * 1000, p.until ?? 0);
-    cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
+    const warn = cfg.resultSeconds * 1000;
+    if (p.leave !== undefined) {
+      const at = p.leave;
+      cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
+    } else if (p.quiet) {
+      const at = (idleFrom ?? t0) + cfg.idleSeconds * 1000;
+      cands.push({ at, apply: (x) => (x.phase.kind === 'result' ? { ...x, phase: { ...x.phase, quiet: false, leave: at + warn } } : x) });
+    } else {
+      const at = Math.max(t0 + warn, p.until ?? 0);
+      cands.push({ at, apply: (x) => (x.phase.kind === 'result' ? { ...x, phase: { ...x.phase, leave: at + warn } } : x) });
+    }
   }
   if (p.kind === 'turn') {
     if (p.step === 'explain') cands.push({ at: t0 + DURATIONS.explain, apply: (x) => enter(x, { ...p, step: 'choose' }, t0 + DURATIONS.explain, cfg, fx) });
@@ -276,7 +298,11 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     if (!s.paused) return out(s);
     const shift = s.now - (s.pausedAt ?? s.now);
     const p = s.phase;
-    const phase: Phase = p.kind === 'turn' && p.deadline !== null ? { ...p, deadline: p.deadline + shift } : p.kind === 'result' && p.until ? { ...p, until: p.until + shift } : p;
+    const phase: Phase = p.kind === 'turn' && p.deadline !== null
+      ? { ...p, deadline: p.deadline + shift }
+      : p.kind === 'result'
+        ? { ...p, ...(p.until !== undefined ? { until: p.until + shift } : {}), ...(p.leave !== undefined ? { leave: p.leave + shift } : {}) }
+        : p;
     return out({ ...s, paused: false, pausedAt: null, phase, phaseStart: s.phaseStart + shift, lastInput: s.lastInput + shift });
   }
 
@@ -302,7 +328,12 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     if (p.kind !== 'result') return out(s);
     const until = now + ev.ms;
     if (p.until !== undefined && p.until >= until) return out(s);
-    return out({ ...s, phase: { ...p, until } });
+    const leave = p.leave !== undefined && until > p.leave ? undefined : p.leave;
+    return out({ ...s, phase: { ...p, until, leave } });
+  }
+  if (ev.t === 'spoken') {
+    if (p.kind !== 'result' || p.quiet) return out(s);
+    return out({ ...s, phase: { ...p, until: now, leave: undefined } });
   }
   if (ev.t === 'briefDone') {
     if (s.paused || p.kind !== 'briefing' || p.point !== ev.point || p.point + 1 >= BRIEF_POINTS) return out(s);
@@ -324,8 +355,17 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     case 'back':
       if (p.kind === 'welcome') return out(enter({ ...touched, front: null }, { kind: 'attract' }, now, cfg, fx));
       return out(touched);
+    case 'stay':
+      if (p.kind !== 'result') return out(touched);
+      return out({ ...touched, phase: { ...p, leave: undefined, quiet: true } });
     case 'pickFront':
       if (p.kind === 'welcome' && cfg.fronts.includes(ev.front)) return out(enter({ ...touched, front: ev.front }, briefing(), now, cfg, fx));
+      return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
+    case 'markFront':
+      if (p.kind === 'welcome' && cfg.fronts.includes(ev.front)) {
+        if (s.front !== ev.front) fx.push({ e: 'say', key: `marshal-${ev.front}`, priority: 'scene', scene: 'welcome' });
+        return out({ ...touched, front: ev.front });
+      }
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'next':
       if (p.kind === 'briefing') return out(enter(touched, turnPhase(1), now, cfg, fx));

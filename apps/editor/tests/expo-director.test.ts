@@ -66,6 +66,9 @@ describe('режиссёр сеанса', () => {
     r.wait(19_000);
     expect(r.phase.kind).toBe('result');
     r.wait(1_000);
+    expect(r.phase.kind).toBe('result');
+    expect(r.phase.kind === 'result' && r.phase.leave).toBeTypeOf('number');
+    r.wait(20_000);
     expect(r.phase.kind).toBe('attract');
   });
 
@@ -137,12 +140,31 @@ describe('режиссёр сеанса', () => {
     expect(r.phase).toMatchObject({ step: 'scroll', choice: 2 });
   });
 
-  it('the result stays while the account is still being spoken', () => {
+  it('the result stays while the account is still being spoken, then warns before the attract screen', () => {
     const r = run().send({ t: 'jump', phase: 'result' }).send({ t: 'hold', ms: 60_000 });
     r.wait(25_000);
     expect(r.phase.kind).toBe('result');
     r.wait(40_000);
+    expect(r.phase).toMatchObject({ kind: 'result', leave: 80_000 });
+    r.send({ t: 'stay' });
+    expect(r.phase).toMatchObject({ kind: 'result', quiet: true });
+    expect(r.phase.kind === 'result' && r.phase.leave).toBeUndefined();
+    r.wait(20_000);
+    expect(r.phase.kind).toBe('result');
+    r.wait(70_000);
+    expect(r.phase).toMatchObject({ kind: 'result', leave: 175_000 });
+    r.wait(20_000);
     expect(r.phase.kind).toBe('attract');
+  });
+
+  it('marking a front does not start the briefing; the launch does', () => {
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    r.send({ t: 'markFront', front: 'su_1uf' });
+    expect(r.phase.kind).toBe('welcome');
+    expect(r.state.front).toBe('su_1uf');
+    expect(r.effects).toContainEqual({ e: 'say', key: 'marshal-su_1uf', priority: 'scene', scene: 'welcome' });
+    r.send({ t: 'pickFront', front: 'su_1uf' });
+    expect(r.phase.kind).toBe('briefing');
   });
 
   it('back from the front choice returns to the attract screen', () => {

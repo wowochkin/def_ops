@@ -11,6 +11,8 @@ import { setPrerecord, setVoiceGaps } from './health';
 import { BANK } from './bank';
 import { MAP } from './map';
 import { clipPlan, joinGap, loadClip, loadManifest, missingClips, stageDomains, type Clip, type VoiceManifest } from './prerecord';
+import { stressed, type StressData } from './stress';
+import STRESS from './bank-data/stress.json';
 import type { Line, Speaker } from './voice-queue';
 
 /** Затухание оборванной фразы, с. */
@@ -55,6 +57,16 @@ export function clipPlayer(
   const bufs = new Map<string, Promise<AudioBuffer>>();
   const secs = new Map<string, number>();
   let total = 0;
+  const active = new Set<AudioBufferSourceNode>();
+  let epoch = 0;
+  const hush = () => {
+    epoch += 1;
+    for (const s of active) {
+      s.onended = null;
+      try { s.stop(); } catch { /* уже кончился */ }
+    }
+    active.clear();
+  };
   const evict = () => {
     for (const [f, s] of secs) {
       if (total <= budgetS) break;
@@ -88,15 +100,29 @@ export function clipPlayer(
     },
     /** Сыграть клипы встык; `gaps[i]` — пауза после i-го, с. */
     play(clips: Clip[], gaps: number[]): Handle {
+      const mine = epoch;
       const srcs: AudioBufferSourceNode[] = [];
       let gain: GainNode | null = null;
       let stopped = false;
-      let safety: ReturnType<typeof setTimeout> | undefined;
       let finish = () => {};
-      const done = new Promise<void>((r) => (finish = r)).finally(() => clearTimeout(safety));
+      const done = new Promise<void>((r) => (finish = r));
+      const halt = () => {
+        stopped = true;
+        for (const s of srcs) {
+          s.onended = null;
+          active.delete(s);
+          try { s.stop(); } catch { /* ещё не стартовал или уже кончился */ }
+        }
+        finish();
+      };
       void Promise.all(clips.map((c) => buffer(c.file))).then(
         (bs) => {
-          if (stopped) return;
+          if (stopped || mine !== epoch || (typeof document !== 'undefined' && document.hidden)) return finish();
+          for (const s of active) {
+            s.onended = null;
+            try { s.stop(); } catch { /* уже кончился */ }
+          }
+          active.clear();
           const a = audio();
           if (a.state === 'suspended') void a.resume?.();
           let t = a.currentTime + 0.02;
@@ -110,31 +136,17 @@ export function clipPlayer(
             s.start(t);
             t += b.duration + (i < bs.length - 1 ? gaps[i] ?? 0 : 0);
             srcs.push(s);
+            active.add(s);
           });
-          srcs[srcs.length - 1].onended = () => finish();
-          // звук не пошёл (окно ещё не разрешило звук) — очередь всё равно не встаёт
-          safety = setTimeout(finish, (t - a.currentTime) * 1000 + 1500);
+          const last = srcs[srcs.length - 1];
+          last.onended = () => { active.delete(last); finish(); };
         },
         () => finish(),
       );
-      return {
-        done,
-        stop: () => {
-          stopped = true;
-          const a = audio();
-          const at = gain ? a.currentTime + FADE_S : undefined;
-          if (gain) {
-            gain.gain.setValueAtTime(gain.gain.value, a.currentTime);
-            gain.gain.linearRampToValueAtTime(0, at!);
-          }
-          for (const s of srcs) {
-            s.onended = null;
-            try { s.stop(at); } catch { /* уже кончился */ }
-          }
-          finish();
-        },
-      };
+      return { done, stop: halt };
     },
+    /** Оборвать всё, что ещё звучит: уход со заставки, сворачивание и закрытие окна. */
+    stopAll: hush,
   };
 }
 
@@ -192,16 +204,19 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
     const done = new Promise<void>((r) => (finish = r));
     const lv = d.live!;
     let said: ReturnType<LiveVoice['say']> | null = null;
-    let release = () => {};
+    let markSynth = () => {};
+    const synth = new Promise<void>((r) => (markSynth = r));
     const turn = d.gate.run(() => {
-      if (stopped || !lv.ready()) return Promise.resolve();
-      said = lv.say(speakable(text, { full: true }), line.voice);
+      if (stopped || !lv.ready()) { markSynth(); return Promise.resolve(); }
+      said = lv.say(stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said, line.voice);
       said.done.then(finish, finish);
-      return new Promise<void>((r) => { release = r; said!.synthDone.then(r, r); });
+      void said.synthDone.then(markSynth, markSynth);
+      return said.synthDone;
     });
     const timer = setTimeout(() => {
       if (stopped || said) return;
       stopped = true; // не успел — замена; синтез, если ещё встанет в очередь, не начнётся
+      markSynth();
       cur = swap(line) ?? silent.speak(text);
       cur.done.then(finish, finish);
     }, d.liveStartMs ?? 4000);
@@ -209,6 +224,7 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
       if (!said && !stopped) {
         clearTimeout(timer);
         stopped = true;
+        markSynth();
         cur = swap(line) ?? silent.speak(text);
         cur.done.then(finish, finish);
       }
@@ -219,10 +235,11 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
         stopped = true;
         clearTimeout(timer);
         (said as ReturnType<LiveVoice['say']> | null)?.stop();
-        release();
         cur?.stop();
+        markSynth();
         finish();
       },
+      synth,
     };
   };
   return {
@@ -243,6 +260,7 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
       });
       return {
         done,
+        synth: h.synth,
         stop: () => { if (timer) clearTimeout(timer); h.stop(); finish(); },
       };
     },
@@ -283,6 +301,8 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   /** Заготовка озвучена заранее. */
   voiced(f: { text: string; parts?: string[] }): boolean;
   resume(): void;
+  /** Оборвать уже звучащее: окно скрыто или закрыто. */
+  silence(): void;
   dispose(): void;
 } {
   const client = new VoiceClient();
@@ -313,6 +333,14 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   });
   const live = liveVoice(client);
   const speaker = stageSpeaker({ manifest: () => manifest, player, aiOn: o.aiOn, live, gate: o.gate, onSwap: o.onSwap });
+  const silence = () => {
+    player.stopAll();
+    client.stop();
+    void ctx?.suspend();
+  };
+  const onHide = () => { if (document.visibilityState === 'hidden') silence(); };
+  window.addEventListener('pagehide', silence);
+  document.addEventListener('visibilitychange', onHide);
   return {
     speaker,
     voiced: (f) => clipPlan(manifest, f.text, f.parts) !== null,
@@ -322,6 +350,15 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
       client.setVolume(volume);
     },
     resume: () => { client.resume(); void ctx?.resume(); },
-    dispose: () => { disposed = true; live.dispose(); client.close(); void ctx?.close(); },
+    silence,
+    dispose: () => {
+      disposed = true;
+      window.removeEventListener('pagehide', silence);
+      document.removeEventListener('visibilitychange', onHide);
+      silence();
+      live.dispose();
+      client.close();
+      void ctx?.close();
+    },
   };
 }

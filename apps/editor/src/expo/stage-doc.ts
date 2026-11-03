@@ -5,7 +5,7 @@
  * как в полном режиме. Зоны влияния сторон — снимками по суткам (`zonesOf`), картинкой под знаками.
  * Поверх — стрелки приказа карточки и пути армий на итоге (знаки атласа), кадр камеры по рамке.
  */
-import { createFeature, DEFAULT_SIZING, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
+import { createFeature, DEFAULT_SIZING, type AreaFeature, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
 import { agentsHistory, agentsToRun, runToDocument, snapshotZones, type AgentHistory, type AgentTrace, type History, type SimContext, type ZoneGrid } from '@def-ops/sim';
 import type { Arrow } from './map';
 
@@ -120,6 +120,15 @@ export function orderFeatures(doc: MapDocument, arrows: Arrow[], zoom: number, t
     const preset = a.kind === 'hold' || a.kind === 'defend' ? 'atlas.reached' : tanks(a.army) ? 'atlas.tank' : 'atlas.p2';
     return { ...createFeature('arrow', preset, { points: [a.from, mid, a.to], layerId: ORDERS_LAYER }, k(doc, zoom), 'own'), id: `order-${a.army}` };
   });
+}
+
+/** Подсветка участка, о котором сейчас речь: заливка рамки перелома. */
+export function sectorShade(bbox: [number, number, number, number]): Feature {
+  const [w, s, e, n] = bbox;
+  const area = createFeature('area', 'atlas.encircled', { points: [[w, s], [e, s], [e, n], [w, n]], layerId: ORDERS_LAYER }, 1, 'own') as AreaFeature;
+  area.id = 'result-sector';
+  area.style = { ...area.style, fill: '#e2b657', fillOpacity: 0.28, hatch: null, cross: null, edge: [{ offset: 0, width: 2.2, color: '#e2b657', opacity: 0.95 }] };
+  return area;
 }
 
 /** Пути армий на итоге: сеанса — тонкой стрелкой атласа, исторический — контурной (полой). */

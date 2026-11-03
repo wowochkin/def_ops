@@ -1,7 +1,7 @@
 /**
  * Экраны заставки, у каждого своё: как устроен штаб ИИ, переигровка на карте, полная версия приложения.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { SOURCE_LABEL } from './ai';
 import { QUESTIONS, type AiFrame } from './ai-runner';
 import { BRIEFING } from './briefing';
@@ -9,7 +9,7 @@ import type { DirectorEvent } from './director';
 import { EXCURSION, EXCURSION_SOURCE } from './excursion';
 import { KB_STATS } from './kb-stats';
 import type { ModelFrame } from './model';
-import { picturesOf } from './pictures';
+import { pictureByFile, picturesOf } from './pictures';
 import { readRecord, recordLines } from './records';
 import { modelTime } from './session-scenes';
 import type { FrontId, Role } from './settings';
@@ -101,11 +101,34 @@ export function HowStaff({ foot }: { foot?: ReactNode }) {
   );
 }
 
+const demos = import.meta.glob('./demos/*.{webm,mp4}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const demoOf = (name: string) => demos[`./demos/${name}.webm`] ?? demos[`./demos/${name}.mp4`];
+
 const APP_SHOTS = [
-  { file: 'map', title: 'Карта операции', text: 'Армии и удары за сутки, рубежи обороны и разграничительные линии.' },
-  { file: 'staff', title: 'Штаб', text: 'Сводка, доклады фронтов, приказы и ветви переигровки.' },
-  { file: 'modeling', title: 'Моделирование', text: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам.' },
-  { file: 'kb', title: 'База знаний', text: 'Факты операции с источником и вопросы, на которые модель отвечает по базе.' },
+  {
+    file: 'map',
+    title: 'Карта операции',
+    text: 'Армии и удары за сутки, рубежи обороны и разграничительные линии.',
+    body: 'Та же карта, что на стенде, без сокращения. Армии, удары за сутки, рубежи и разграничительные линии. Уровень знаков — от фронта до дивизии, время хода двигает знаки и линию фронта. Подложка та, что выбрана в полном режиме.',
+  },
+  {
+    file: 'staff',
+    title: 'Штаб',
+    text: 'Сводка, доклады фронтов, приказы и ветви переигровки.',
+    body: 'Сводка хода, доклады фронтов и приказы соединениям. Ветвь переигровки хранит, что было отдано и чем ход закончился. На стенде из этого остаются три карточки и голос командующего.',
+  },
+  {
+    file: 'modeling',
+    title: 'Моделирование',
+    text: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам.',
+    body: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам. Здесь видно, из каких чисел собраны скорость, цена и замысел — на стенде они сжаты в три шкалы итога.',
+  },
+  {
+    file: 'kb',
+    title: 'База знаний',
+    text: 'Факты операции с источником и вопросы, на которые модель отвечает по базе.',
+    body: 'Факты операции, у каждого источник. Вопрос к модели идёт по этим записям: ответ называет, откуда взят факт. На стенде тот же приём — у цифры доклада и у ответа штаба виден источник.',
+  },
 ];
 
 /** Строка рекорда дня: лучшие скорость и потери среди сеансов за сутки. */
@@ -115,8 +138,58 @@ export function DayRecordLine() {
   return <p className="expo-record">{day ? `Рекорд дня: ${day}.` : 'Рекорд дня появится после первого сеанса.'}</p>;
 }
 
-/** Экран «Полная версия»: что умеет основное приложение, четыре равные плашки. */
+const MARSHAL_PLATE = {
+  su_1bf: {
+    name: 'Георгий Жуков',
+    rank: 'Маршал Советского Союза',
+    photo: 'zhukov-portrait.jpg',
+    focus: '50% 18%',
+    lines: [
+      '1-й Белорусский фронт.',
+      'С кюстринского плацдарма через Зееловские высоты на Берлин и к Эльбе.',
+      'Ставка дала на это двенадцать–пятнадцать суток.',
+    ],
+  },
+  su_1uf: {
+    name: 'Иван Конев',
+    rank: 'Маршал Советского Союза',
+    photo: 'konev-portrait.jpg',
+    focus: '50% 16%',
+    lines: [
+      '1-й Украинский фронт.',
+      'С Нейсе на Котбус и Шпремберг, затем поворот на Берлин с юга.',
+      'Выход к Эльбе у Торгау.',
+    ],
+  },
+} as const;
+
+/** Портретная карточка командующего на боковом экране выбора фронта. */
+export function MarshalPortrait({ id, on }: { id: keyof typeof MARSHAL_PLATE; on: boolean }) {
+  const m = MARSHAL_PLATE[id];
+  const pic = m.photo ? pictureByFile(m.photo) : null;
+  const mark = m.name.split(' ')[1]?.[0] ?? '';
+  return (
+    <section className={`expo-marshal${on ? ' on' : ''}`} aria-label={m.name}>
+      <div className={`expo-marshal-frame${on ? ' on' : ''}`} aria-hidden="true">
+        <i /><i /><i /><i />
+        <div className="expo-marshal-photo">
+          {pic ? <img src={pic.src} alt="" style={{ objectPosition: m.focus }} /> : <span className="expo-marshal-mark">{mark}</span>}
+        </div>
+      </div>
+      <div className="expo-marshal-copy">
+        <p className="expo-kicker">{m.rank}</p>
+        <h1>{m.name}</h1>
+        {m.lines.map((l) => <p key={l}>{l}</p>)}
+      </div>
+    </section>
+  );
+}
+
+/** Экран «Полная версия»: четыре плашки, каждая открывает описание и демонстрацию. */
 export function FullVersion({ foot }: { foot?: ReactNode }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const cur = APP_SHOTS.find((s) => s.file === open);
+  const clip = cur ? demoOf(cur.file) : undefined;
   return (
     <section className="expo-board expo-full">
       <p className="expo-kicker">Основное приложение</p>
@@ -124,18 +197,35 @@ export function FullVersion({ foot }: { foot?: ReactNode }) {
       <p className="expo-lead">Та же операция целиком: карта, штаб, моделирование и база знаний.</p>
       <div className="expo-shots">
         {APP_SHOTS.map((s) => (
-          <figure key={s.file}>
-            <div className="expo-shot">
-              <img src={shot(s.file)} alt={s.title} />
-            </div>
-            <figcaption>
+          <button key={s.file} type="button" className="expo-shot-card" onClick={(e) => { e.stopPropagation(); setOpen(s.file); }}>
+            <span className="expo-shot" role="img" aria-label={s.title}>
+              {demoOf(s.file)
+                ? <video src={demoOf(s.file)} poster={shot(s.file)} autoPlay muted loop playsInline />
+                : <img src={shot(s.file)} alt="" />}
+            </span>
+            <span className="expo-shot-cap">
               {s.title}
               <small>{s.text}</small>
-            </figcaption>
-          </figure>
+            </span>
+          </button>
         ))}
       </div>
       {foot}
+      {cur && (
+        <div className="expo-shot-sheet" role="dialog" aria-label={cur.title} onClick={(e) => e.stopPropagation()}>
+          <div>
+            <p className="expo-kicker">Полная версия</p>
+            <h2>{cur.title}</h2>
+            <p className="expo-lead">{cur.body}</p>
+            <button type="button" className="expo-secondary" onClick={() => setOpen(null)}>Закрыть</button>
+          </div>
+          <div className="expo-shot-play">
+            {clip
+              ? <video src={clip} autoPlay muted loop playsInline />
+              : <img src={shot(cur.file)} alt="" />}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -39,7 +39,8 @@ describe('громкость голоса стенда', () => {
       const buf = new ArrayBuffer(11);
       const v = new DataView(buf);
       v.setUint8(0, 1); v.setUint32(1, 7, true); v.setUint32(5, 24000, true); v.setInt16(9, 1000, true);
-      (c as unknown as { onAudio(b: ArrayBuffer): void }).onAudio(buf);
+      (c as unknown as { onAudio(b: ArrayBuffer): void; phraseDone(id: number): void }).onAudio(buf);
+      (c as unknown as { phraseDone(id: number): void }).phraseDone(7);
       // bus (опора эхоподавления) — без громкости, выход — 0,4
       expect(gains.map((g) => g.value)).toEqual([1, 0.4]);
       c.setVolume(0.9);

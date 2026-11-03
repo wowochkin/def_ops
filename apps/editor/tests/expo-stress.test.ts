@@ -20,6 +20,10 @@ describe('ударения для озвучки стенда', () => {
     expect(stressed('у Хальбе', 'x', { mark: {}, words: { Хальбе: 'Х+альбе' } }).said).toBe('у Ха\u0301льбе');
     expect(stressed('у Хальбе', 'x', { mark: { x: 'upper' }, words: { Хальбе: 'Х+альбе' } })).toEqual({ say: 'у Х+альбе', said: 'у ХАльбе' });
   });
+  it('формы из разбора, которые распознавание слышало иначе, помечены', () => {
+    const said = stressed('у Кетцина, на Эльбе, у Хальбе', 'fish-s2-pro', STRESS).said;
+    expect(said).toBe('у Ке\u0301тцина, на Э\u0301льбе, у Ха\u0301льбе');
+  });
   it('в словаре у каждого слова одна пометка перед гласной и то же слово без неё', () => {
     for (const [w, s] of Object.entries(STRESS.words)) {
       expect(plainStress(s), w).toBe(w);
