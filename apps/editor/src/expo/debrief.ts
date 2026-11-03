@@ -3,9 +3,9 @@
  * поэтому заранее не записывается: его читает живой голос Жукова или Конева.
  * Абзацы звучат по очереди, с паузой между ними: один кусок синтеза не склеивает их в одну скороговорку.
  */
-import { BANK, type Card } from './bank';
+import { BANK, type Card, type TurnN } from './bank';
 import { templateUnits } from './lines';
-import type { Decision, ModelView } from './session';
+import { timeAt, type Decision, type ModelView } from './session';
 import { FRONT_NAMES } from './scenes';
 import type { FrontId } from './settings';
 
@@ -51,9 +51,51 @@ function outcome(v: ModelView): string {
   ].filter(Boolean).join(' ');
 }
 
+/** Заголовок прогноза и сравнение с историей. Тире внутри скобок («в истории — 2 мая») не режется. */
+export function forecastParts(forecast: string): { head: string; deck: string } {
+  const cut = forecast.match(/^(.*?) — ([^()]*)\s*$/);
+  return cut ? { head: cut[1], deck: cut[2] } : { head: forecast, deck: '' };
+}
+
 /** Предложения разбора по отдельности: каждое звучит своим куском, с паузой после. Сокращения армий не режутся. */
 export function debriefSentences(paragraphs: string[]): string[] {
   return paragraphs.flatMap((p) => templateUnits(p));
+}
+
+const START = '1945-04-16T05:00';
+
+/** Куда смотрит итог вместе с речью: вступление, перелом или общий исход. */
+export interface ResultBeat {
+  phase: 'open' | 'turn' | 'close';
+  turn: TurnN | null;
+  /** Момент карты: начало операции, конец рассказанного перелома или конец хода. */
+  until: string;
+}
+
+/** Конец хода перелома — час следующего; у последнего — конец операции. */
+function turnEnd(front: FrontId, n: TurnN, end: string): string {
+  const turns = BANK.fronts[front].turns;
+  const next = turns[turns.findIndex((t) => t.n === n) + 1];
+  return next ? timeAt(START, next.hour) : end;
+}
+
+/**
+ * Какой кусок разбора сейчас звучит. Нет фразы — вступление.
+ * Фраза не из разбора (короткая заготовка) — общий исход, карта на всём пути.
+ */
+export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
+  const d = operationDebrief(v);
+  const end = v.time || START;
+  const open = (): ResultBeat => ({ phase: 'open', turn: null, until: START });
+  const close = (): ResultBeat => ({ phase: 'close', turn: null, until: end });
+  if (!d) return close();
+  if (!spoken) return open();
+  const loc = d.paragraphs.flatMap((p, i) => templateUnits(p).map((s) => ({ s, i }))).find((x) => x.s === spoken);
+  if (!loc) return close();
+  if (loc.i === 0) return open();
+  if (loc.i >= d.paragraphs.length - 1) return close();
+  const turn = v.decisions[loc.i - 1]?.n ?? null;
+  return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end) } : close();
 }
 
 /** Рассказ о проведённой операции с точки зрения получившейся обстановки. Пусто — итога ещё нет. */

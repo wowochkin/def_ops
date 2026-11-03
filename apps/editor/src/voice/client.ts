@@ -2,7 +2,7 @@
 // Все браузерные API — здесь; разбор протокола и состояние — в protocol.ts.
 import {
   CancelledIds, VOICE_SAY_IDS, micConstraints, micFrame, parseAudio, reconnectDelay, voiceStatus,
-  type CalibStep, type ClientMsg, type ServerMsg, type VoiceRole, type VoiceSettings, type VoiceStatus, type WsState,
+  type AudioChunk, type CalibStep, type ClientMsg, type ServerMsg, type VoiceRole, type VoiceSettings, type VoiceStatus, type WsState,
 } from './protocol';
 
 export { VOICE_SAY_IDS } from './protocol';
@@ -143,6 +143,10 @@ export class VoiceClient {
   private prepId = 0;
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
   private phrases = new Map<number, { done: boolean }>();
+  /** Куски фразы до `say-done`: играем целиком, когда синтез закончился. */
+  private held = new Map<number, AudioChunk[]>();
+  /** Синтез закончен, звук ждёт, пока доиграет более ранняя фраза. */
+  private buffered = new Map<number, AudioChunk[]>();
 
   get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready, this.failed, this.serviceError !== null); }
 
@@ -581,21 +585,36 @@ export class VoiceClient {
   // --- воспроизведение ---
 
   private onAudio(buf: ArrayBuffer) {
-    // граф звука — и без микрофона: управление голосом выключено с запуска, а штаб, посредник и экскурсии говорят
     if (typeof AudioContext === 'undefined') return;
-    const { ctx, bus } = this.audio();
-    let a;
+    let a: AudioChunk;
     try { a = parseAudio(buf); } catch { return; }
-    // id 0 — тестовая фраза калибровки: не фраза `say`, отмены и `played` её не касаются
     if (!a.pcm.length || (a.id !== 0 && this.cancelled.has(a.id)) || (a.id === 0 && !this.calibSound)) return;
+    // фразу копим до конца синтеза; играем, когда договорила предыдущая
+    if (a.id !== 0 && !this.phrases.get(a.id)?.done) {
+      const q = this.held.get(a.id) ?? [];
+      q.push(a);
+      this.held.set(a.id, q);
+      if (!this.phrases.has(a.id)) this.phrases.set(a.id, { done: false });
+      return;
+    }
+    if (a.id !== 0 && this.sources.some((x) => x.id !== a.id)) {
+      const q = this.buffered.get(a.id) ?? [];
+      q.push(a);
+      this.buffered.set(a.id, q);
+      return;
+    }
+    this.playChunk(a);
+  }
+
+  private playChunk(a: AudioChunk) {
+    const { ctx, bus } = this.audio();
     void ctx.resume();
     const ab = ctx.createBuffer(1, a.pcm.length, a.rate);
     const ch = ab.getChannelData(0);
     for (let i = 0; i < a.pcm.length; i++) ch[i] = a.pcm[i] / 32768;
     const src = ctx.createBufferSource();
     src.buffer = ab;
-    src.connect(bus);  // в динамики и опорой — в ворклет микрофона
-    // куски идут встык: каждый начинается там, где кончился предыдущий
+    src.connect(bus);
     const t = Math.max(ctx.currentTime + 0.03, this.nextT);
     src.start(t);
     this.nextT = t + ab.duration;
@@ -609,10 +628,27 @@ export class VoiceClient {
   }
 
   private phraseDone(id: number) {
-    if (this.cancelled.has(id)) return;  // остановленную фразу не «доигрываем»
+    if (this.cancelled.has(id)) return;
+    const held = this.held.get(id) ?? [];
+    this.held.delete(id);
+    this.buffered.set(id, [...(this.buffered.get(id) ?? []), ...held]);
     const p = this.phrases.get(id);
     if (p) p.done = true;
     else this.phrases.set(id, { done: true });
+    this.pump();
+  }
+
+  /** Следующая готовая фраза — только когда сейчас никто не звучит. Более ранний номер ждёт своего синтеза. */
+  private pump() {
+    if (this.sources.length) return;
+    const ids = [...this.phrases.keys()].sort((a, b) => a - b);
+    const id = ids[0];
+    if (id === undefined) return;
+    const p = this.phrases.get(id);
+    if (!p?.done) return;
+    const chunks = this.buffered.get(id) ?? [];
+    this.buffered.delete(id);
+    for (const a of chunks) this.playChunk(a);
     this.checkPlayed(id);
   }
 
@@ -623,6 +659,7 @@ export class VoiceClient {
     this.phrases.delete(id);
     this.send({ type: 'played', id });
     this.playedCbs.forEach((cb) => cb(id));
+    this.pump();
   }
 
   /** Остановить звук: одной фразы или всего. Для остановленных `played` не шлётся. */
@@ -633,9 +670,11 @@ export class VoiceClient {
       else keep.push(x);
     }
     this.sources = keep;
-    if (id === undefined) { this.phrases.clear(); this.nextT = 0; }
+    if (id === undefined) { this.phrases.clear(); this.held.clear(); this.buffered.clear(); this.nextT = 0; }
     else {
       this.phrases.delete(id);
+      this.held.delete(id);
+      this.buffered.delete(id);
       if (!keep.length) this.nextT = 0;
     }
   }

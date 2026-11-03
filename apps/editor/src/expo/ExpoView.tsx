@@ -6,31 +6,35 @@
  * Перелом и итог — по виду модели сеанса (карточки банка, раскрытие решения, три шкалы, ход операции, оценка по осям).
  * Карта — `StageMap` (карта полного режима), один экземпляр на окно: сцена задаёт ей «окно» (`.expo-mapslot`),
  * документ, момент, приказ поверх и кадр камеры. Заставка — переигровка лучшего сеанса дня (или «как было»), ввод —
- * пролёт к полосе фронта, перелом — стрелки подсвеченной карточки и движение армий по ходу ядра, итог — пути армий.
+ * пролёт к полосе фронта, перелом — стрелки подсвеченной карточки и движение армий по ходу ядра.
+ * Итог на трёх экранах разный: разбор фразами, карта прыгает на участок звучащей фразы, расчёт модели доезжает вместе с ней.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { affordances, keyToEvent } from './input';
 import type { DirectorEvent, DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
-import { AttractActions, DayRecordLine, Excursion, FullVersion, HowStaff, StaffBoard, roleLayout } from './stand';
+import { AttractActions, DayRecordLine, Excursion, FullVersion, HowStaff, MarshalPortrait, StaffBoard, roleLayout } from './stand';
 import { FRONT_MARSHALS, FRONT_NAMES, FRONT_TASKS, PhaseTitle, Timer } from './scenes';
 import { StageMini } from './StageMini';
 import { BRIEFING, briefFeatures } from './briefing';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
 import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
-import { bboxOf, dailyPaths, orderFeatures, pathFeatures } from './stage-doc';
+import { bboxOf, dailyPaths, orderFeatures, pathFeatures, sectorShade } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, historyPaths, mainPaths, MAP, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
-import { operationDebrief } from './debrief';
-import { ModelNote, modelTime, MoveAdvance, OpSummary, Scales, turnDef } from './session-scenes';
+import { timeAt } from './session';
+import { debriefSentences, forecastParts, operationDebrief, resultBeat } from './debrief';
+import { Figures, ModelNote, modelTime, MoveAdvance, OpSummary, Scales, Tasks, Timeline, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
-import { cardCaption, pictureByFile, picturesOf } from './pictures';
+import { pictureByFile, picturesOf } from './pictures';
+import { EXCURSION } from './excursion';
+import { BANK } from './bank';
 import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
@@ -89,6 +93,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
   const controls = roles.includes('map');
+  const face = roleLayout(roles);
   const access = affordances(settings.input, settings.voiceInput, settings.aiMode);
   const scale = useStageScale();
   const [expanded, setExpanded] = useState<number | null>(null),
@@ -117,7 +122,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
         setFrontIndex((i) => (i + (e.key === 'ArrowLeft' ? -1 : 1) + settings.fronts.length) % settings.fronts.length);
         return;
       }
-      const ev = keyToEvent(e.key, p, { expanded: expanded ?? hover, front: settings.fronts[frontIndex] ?? settings.fronts[0] });
+      const ev = keyToEvent(e.key, p, { expanded: expanded ?? hover, front: p.kind === 'welcome' ? state.front ?? undefined : settings.fronts[frontIndex] ?? settings.fronts[0] });
       if (ev) {
         e.preventDefault();
         send(ev);
@@ -125,12 +130,13 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     };
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
-  }, [controls, access.keys, state.paused, p, expanded, hover, frontIndex, settings.fronts, send, single]);
+  }, [controls, access.keys, state.paused, state.front, p, expanded, hover, frontIndex, settings.fronts, send, single]);
   const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract';
-  const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai'));
+  const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai')) && p.kind !== 'result';
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
   const lit = expanded ?? pending ?? hover;
-  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index }), [state.phase, state.front, mv, maps, lit, count, index]); // eslint-disable-line react-hooks/exhaustive-deps
+  const spoken = p.kind === 'result' ? ai.line?.text ?? ai.said : null;
+  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken }), [state.phase, state.front, mv, maps, lit, count, index, spoken]); // eslint-disable-line react-hooks/exhaustive-deps
   // сцена без карты: карта скрыта, но не размонтирована — один экземпляр на окно, без пересоздания
   const lastPlan = useRef<StageMapProps>(NO_PLAN);
   if (plan) lastPlan.current = plan;
@@ -237,12 +243,12 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               )}
             </section>
           )}
-          {p.kind === 'welcome' && (
+          {p.kind === 'welcome' && (face === 'all' || face === 'map') && (
             <section className="expo-welcome">
               <h1>Выберите фронт</h1>
               <div className="expo-fronts">
-                {settings.fronts.map((f) => (
-                  <button key={f} aria-pressed={settings.fronts[frontIndex] === f} disabled={!controls} onClick={() => send({ t: 'pickFront', front: f })}>
+                {[...settings.fronts].sort((a, b) => Number(a !== 'su_1bf') - Number(b !== 'su_1bf')).map((f) => (
+                  <button key={f} aria-pressed={state.front === f} disabled={!controls} onClick={() => send({ t: 'markFront', front: f })}>
                     <FrontMini front={f} d={maps.history} />
                     <strong>{FRONT_NAMES[f]}</strong>
                     <span className="expo-marshal">{FRONT_MARSHALS[f]}</span>
@@ -250,6 +256,14 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   </button>
                 ))}
               </div>
+            </section>
+          )}
+          {p.kind === 'welcome' && face === 'ai' && <MarshalPortrait id="su_1bf" on={state.front === 'su_1bf'} />}
+          {p.kind === 'welcome' && face === 'app' && <MarshalPortrait id="su_1uf" on={state.front === 'su_1uf'} />}
+          {p.kind === 'welcome' && face === 'pair' && (
+            <section className="expo-marshal-pair">
+              <MarshalPortrait id="su_1bf" on={state.front === 'su_1bf'} />
+              <MarshalPortrait id="su_1uf" on={state.front === 'su_1uf'} />
             </section>
           )}
           {p.kind === 'briefing' && state.front && roleLayout(roles) === 'all' && (
@@ -270,7 +284,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
           )}
           {p.kind === 'briefing' && state.front && roleLayout(roles) === 'ai' && (
             <section className="expo-brief-solo">
-              <Briefing front={state.front} point={p.point} steer send={send} />
+              <Briefing front={state.front} point={p.point} steer={false} send={send} steps={false} />
             </section>
           )}
           {p.kind === 'briefing' && state.front && roleLayout(roles) === 'app' && (
@@ -318,7 +332,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         time={mv?.time ?? MAP.days[0]}
                         disabled={state.paused}
                         canReplace={!state.paused && p.replacements < settings.maxReplacements && (settings.aiMode === 'ai' || (mv?.spare ?? 0) > 0)}
-                        replaceLabel={p.replacements >= settings.maxReplacements ? 'Замен больше нет' : settings.aiMode !== 'ai' && mv && mv.spare === 0 ? 'Вариантов больше нет' : settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
+                        replaceLabel={p.replacements >= settings.maxReplacements ? 'Нет замен' : settings.aiMode !== 'ai' && mv && mv.spare === 0 ? 'Вариантов больше нет' : settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
                         hoverLights={access.hoverExpand}
                         expanded={expanded}
                         pending={pending}
@@ -360,24 +374,31 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
             </div>
           )}
           {p.kind === 'result' && (
-            <section className="expo-result">
+            <section className={`expo-result expo-result-${face}`}>
               {mv?.final ? (
-                <>
-                  <Newspaper final={mv.final} front={state.front} fronts={settings.fronts} story={operationDebrief(mv)?.paragraphs ?? []} />
-                  <div className="expo-result-side">
-                    <div className="expo-mapframe">
-                      <div className="expo-mapslot" role="img" aria-label="Ваш путь армий (сплошная стрелка) поверх исторического (полая)" />
+                <div className="expo-result-body">
+                  {(face === 'all' || face === 'ai' || face === 'pair') && (
+                    <DebriefBoard mv={mv} spoken={spoken} fronts={settings.fronts} />
+                  )}
+                  {(face === 'all' || face === 'map') && (
+                    <div className="expo-result-side">
+                      <div className="expo-mapframe">
+                        <div className="expo-mapslot" role="img" aria-label="Участок, о котором говорит командующий: ваш путь сплошной стрелкой, история — полой" />
+                      </div>
+                      <p className="expo-legend">
+                        <span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span>
+                      </p>
+                      {controls && (
+                        <button className="expo-primary" onClick={() => send({ t: 'touch' })}>
+                          Ещё раз
+                        </button>
+                      )}
                     </div>
-                    <p className="expo-legend">
-                      <span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span>
-                    </p>
-                    {controls && (
-                      <button className="expo-primary" onClick={() => send({ t: 'touch' })}>
-                        Ещё раз
-                      </button>
-                    )}
-                  </div>
-                </>
+                  )}
+                  {(face === 'all' || face === 'app' || face === 'pair') && (
+                    <ResultCalc mv={mv} spoken={spoken} verdict={face === 'app'} />
+                  )}
+                </div>
               ) : (
                 <div className="expo-result-text">
                   <h1>Сеанс завершён</h1>
@@ -389,6 +410,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   )}
                 </div>
               )}
+              {p.leave !== undefined && <LeaveBar leave={p.leave} now={state.now} send={send} />}
             </section>
           )}
         </div>
@@ -410,6 +432,11 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               <AiPanel ai={ai} compact />
             ) : (
               <span className="expo-fill" />
+            )}
+            {buttons && p.kind === 'welcome' && state.front && (
+              <button className="expo-primary" disabled={state.paused} onClick={() => send({ t: 'pickFront', front: state.front! })}>
+                Начать операцию
+              </button>
             )}
             {buttons && (p.kind === 'welcome' ? (
               <button className="expo-secondary" disabled={state.paused} onClick={() => send({ t: 'back' })}>
@@ -481,26 +508,29 @@ function BriefBar({ front, point, send }: { front: FrontId; point: number; send:
   );
 }
 
-/** Ввод в обстановку: доклад начальника штаба по пунктам — заголовок, крупные цифры с источником, доводы. */
-function Briefing({ front, point, steer, send }: { front: FrontId; point: number; steer: boolean; send: (ev: DirectorEvent) => void }) {
+/** Ввод в обстановку: на экране штаба — текст пункта и кадр, без повтора пунктов 1–6 (они над картой). */
+function Briefing({ front, point, steer, send, steps = true }: { front: FrontId; point: number; steer: boolean; send: (ev: DirectorEvent) => void; steps?: boolean }) {
   const points = BRIEFING[front];
   const cur = points[point];
   if (!cur) return null;
   const last = point + 1 >= points.length;
+  const pic = steps ? null : pictureByFile(EXCURSION[point]?.photo ?? '');
   return (
     <div className="expo-panel expo-brief">
       <p className="expo-brief-who">
         {FRONT_NAMES[front]}, доклад начальника штаба
       </p>
-      <ol className="expo-brief-steps" aria-label="Пункты доклада">
-        {points.map((x, i) => (
-          <li key={x.title}>
-            <button aria-current={i === point ? 'step' : undefined} disabled={!steer} onClick={() => send({ t: 'brief', point: i })}>
-              <span>{i + 1}</span> {BRIEF_STEPS[i] ?? x.title}
-            </button>
-          </li>
-        ))}
-      </ol>
+      {steps && (
+        <ol className="expo-brief-steps" aria-label="Пункты доклада">
+          {points.map((x, i) => (
+            <li key={x.title}>
+              <button aria-current={i === point ? 'step' : undefined} disabled={!steer} onClick={() => send({ t: 'brief', point: i })}>
+                <span>{i + 1}</span> {BRIEF_STEPS[i] ?? x.title}
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
       <h1>{cur.title}</h1>
       <dl className="expo-brief-facts" data-n={cur.facts.length}>
         {cur.facts.map((f) => (
@@ -518,6 +548,15 @@ function Briefing({ front, point, steer, send }: { front: FrontId; point: number
           <li key={l}>{l}</li>
         ))}
       </ul>
+      {pic && (
+        <figure className="expo-brief-photo">
+          <img src={pic.src} alt={pic.caption} style={pic.focus ? { objectPosition: pic.focus } : undefined} />
+          <figcaption>
+            {pic.caption}
+            {pic.author && <small>{pic.author}</small>}
+          </figcaption>
+        </figure>
+      )}
       {steer && (
         <div className="expo-brief-go">
           {!last && (
@@ -537,19 +576,6 @@ function Briefing({ front, point, steer, send }: { front: FrontId; point: number
 /** Суть карточки на виду: две первые строки (у карточки ИИ без факта и риска — три; при длинном заголовке — на одну меньше). */
 const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
-
-/** Снимок карточки, если он назначен в банке. Подпись — что на кадре, без автора и даты. */
-function CardPhoto({ file, big = false }: { file: string; big?: boolean }) {
-  const pic = pictureByFile(file);
-  if (!pic) return null;
-  const caption = cardCaption(pic.caption);
-  return (
-    <figure className={big ? 'expo-card-photo expo-card-photo-big' : 'expo-card-photo'}>
-      <img src={pic.src} alt={caption} style={{ objectPosition: pic.focus ?? '50% 40%' }} />
-      <figcaption>{caption}</figcaption>
-    </figure>
-  );
-}
 
 /** Мини-карта выбора фронта: полоса фронта на 16 апреля и стрелки задачи танковых армий. */
 function FrontMini({ front, d }: { front: FrontId; d: StageDoc | undefined }) {
@@ -602,7 +628,6 @@ function Cards(props: {
           <span className="expo-card-n">{expanded + 1}</span>
           <h3>{open.title}</h3>
         </header>
-        {open.photo && <CardPhoto file={open.photo} big />}
         <ul className="expo-card-lines">
           {open.lines.map((l) => (
             <li key={l}>{l}</li>
@@ -635,12 +660,7 @@ function Cards(props: {
             onPointerEnter={props.hoverLights ? () => setHover(card) : undefined}
             onPointerLeave={props.hoverLights ? () => setHover(null) : undefined}
           >
-            <button className={`expo-card-main${c?.photo ? '' : ' expo-card-nophoto'}`} disabled={disabled || !c} aria-pressed={pending === card} aria-label={`Карточка ${card + 1}`} onClick={() => setPending(card)}>
-              {c?.photo && (
-                <span className="expo-card-media">
-                  <CardPhoto file={c.photo} />
-                </span>
-              )}
+            <button className="expo-card-main expo-card-nophoto" disabled={disabled || !c} aria-pressed={pending === card} aria-label={`Карточка ${card + 1}`} onClick={() => setPending(card)}>
               <span className="expo-card-body">
                 <strong>
                   <span className="expo-card-n">{card + 1}</span> {c?.title ?? 'Карточка готовится'}
@@ -714,44 +734,95 @@ function Newsreel() {
   );
 }
 
-/** Итог — газетная полоса: заголовок о Берлине в этой переигровке, звание, три шкалы, совпадения с историей, рекорд дня. */
-function Newspaper({ final, front, fronts, story }: { final: NonNullable<View['final']>; front: FrontId | null; fronts: FrontId[]; story: string[] }) {
-  const [head, deck] = final.forecast.split(' — ');
+/** Разбор на экране штаба: звучащая фраза крупно, уже сказанные мельче. Шапка — прогноз и звание. */
+function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null; fronts: FrontId[] }) {
+  const final = mv.final!;
+  const { head, deck } = forecastParts(final.forecast);
+  const brief = operationDebrief(mv);
+  const units = brief ? debriefSentences(brief.paragraphs) : [];
+  const found = spoken ? units.indexOf(spoken) : 0;
+  const at = found < 0 ? units.length - 1 : found;
   const rec = recordLines(readRecord());
-  const other = fronts.find((f) => f !== front);
-  const city = picturesOf('generated').find((x) => x.file === 'city-dawn.jpg');
+  const other = fronts.find((f) => f !== mv.front);
+  const linesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    linesRef.current?.querySelector('[data-state="now"]')?.scrollIntoView({ block: 'nearest' });
+  }, [at]);
   return (
-    <article className="expo-paper">
-      <header className="expo-paper-mast">
-        <span>Фронтовая сводка</span>
-        <span>{front && FRONT_NAMES[front]} · ваша переигровка</span>
+    <article className="expo-debrief">
+      <header>
+        <p className="expo-kicker">{FRONT_NAMES[mv.front]}</p>
+        <h1 className="expo-paper-head">{head}</h1>
+        {deck && <p className="expo-paper-deck">{deck}</p>}
+        <p className="expo-paper-rank">
+          Звание по итогам: <b className="expo-rank">{final.rank}</b>
+        </p>
       </header>
-      <h1 className="expo-paper-head">{head}</h1>
-      {deck && <p className="expo-paper-deck">{deck}</p>}
-      {city && <img className="expo-paper-pic" src={city.src} alt="" />}
-      <div className="expo-paper-cols">
-        <div>
-          <p className="expo-paper-rank">
-            Звание по итогам: <b className="expo-rank">{final.rank}</b>
-          </p>
-          <Scales scales={final.scales} />
-        </div>
-        <div className="expo-paper-side">
-          <p>Совпало с историческим решением: {final.matches} из 3</p>
-          {(rec.speed || rec.cost) && (
-            <p>
-              Рекорд дня среди посетителей: {[rec.speed, rec.cost].filter(Boolean).join('; ')}
-            </p>
-          )}
-          {other && <p className="expo-paper-invite">Сыграйте за {FRONT_NAMES[other]} — {FRONT_MARSHALS[other].replace('Маршал', 'маршал')}, {lowerFirst(FRONT_TASKS[other].split(' — ')[0])}.</p>}
-        </div>
+      <div className="expo-debrief-lines" ref={linesRef}>
+        {units.slice(0, at + 1).map((s, i) => (
+          <p key={s.slice(0, 48)} data-state={i === at ? 'now' : 'said'}>{s}</p>
+        ))}
       </div>
-      {story.length > 0 && (
-        <div className="expo-paper-story">
-          {story.map((p) => <p key={p.slice(0, 48)}>{p}</p>)}
-        </div>
-      )}
+      <footer>
+        <p>Совпало с историческим решением: {final.matches} из 3</p>
+        {(rec.speed || rec.cost) && <p>Рекорд дня среди посетителей: {[rec.speed, rec.cost].filter(Boolean).join('; ')}</p>}
+        {other && <p className="expo-paper-invite">Сыграйте за {FRONT_NAMES[other]} — {FRONT_MARSHALS[other].replace('Маршал', 'маршал')}, {lowerFirst(FRONT_TASKS[other].split(' — ')[0])}.</p>}
+      </footer>
     </article>
+  );
+}
+
+/** Расчёт полной версии на экране хода: лента, задачи и шкалы доезжают до фразы разбора. */
+function ResultCalc({ mv, spoken, verdict }: { mv: View; spoken: string | null; verdict: boolean }) {
+  const beat = resultBeat(mv, spoken);
+  const shown: View = {
+    ...mv,
+    time: beat.until,
+    decisions: beat.phase === 'close' ? mv.decisions : mv.decisions.filter((d) => beat.turn !== null && d.n <= beat.turn),
+    tasks: mv.tasks.map((t) => (beat.phase === 'close' || (t.simulated && t.simulated <= beat.until.slice(0, 10)) ? t : { ...t, simulated: null, days: null })),
+  };
+  const turn = beat.turn ? turnDef(mv.front, beat.turn) : null;
+  const { head, deck } = forecastParts(mv.final?.forecast ?? '');
+  const calcRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (beat.phase === 'close') calcRef.current?.querySelector('[data-final]')?.scrollIntoView({ block: 'nearest' });
+  }, [beat.phase]);
+  return (
+    <div className="expo-calc" ref={calcRef}>
+      <h2>Расчёт модели</h2>
+      <p className="expo-date">{modelTime(shown.time)}</p>
+      <Timeline mv={shown} />
+      {turn && <h3 className="expo-sum-h">{turn.title}</h3>}
+      {beat.phase === 'open' && <p className="expo-status">Разбор идёт по переломам. Задачи и шкалы появятся вместе с речью.</p>}
+      <Tasks mv={shown} />
+      {beat.phase === 'close' && (
+        <>
+          <h3 className="expo-sum-h" data-final>Итог расчёта</h3>
+          <Figures mv={mv} />
+          {mv.final && <Scales scales={mv.final.scales} />}
+        </>
+      )}
+      {verdict && mv.final && (
+        <>
+          <h1 className="expo-paper-head">{head}</h1>
+          {deck && <p className="expo-paper-deck">{deck}</p>}
+          <p className="expo-paper-rank">Звание по итогам: <b className="expo-rank">{mv.final.rank}</b></p>
+          <p>Совпало с историческим решением: {mv.final.matches} из 3</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Перед заставкой: отсчёт и «Остаться». Не нажали — сеанс уходит сам. */
+function LeaveBar({ leave, now, send }: { leave: number; now: number; send: (ev: DirectorEvent) => void }) {
+  const sec = Math.max(0, Math.ceil((leave - now) / 1000));
+  return (
+    <div className="expo-leave" role="status">
+      <p>Сейчас вернёмся на заставку</p>
+      <strong>{sec} с</strong>
+      <button type="button" className="expo-primary" onClick={() => send({ t: 'stay' })}>Остаться</button>
+    </div>
   );
 }
 
@@ -930,7 +1001,7 @@ const ZOOM = 8;
 const sectorBox = (front: string, extra: LL[]): Bbox => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
 
 /** Что показывает карта стенда в сцене: документ, момент или бег времени, кадр камеры и знаки поверх; null — карты нет. */
-export function mapPlan({ state, mv, maps, lit, count, index }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number }): StageMapProps | null {
+export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number; spoken?: string | null }): StageMapProps | null {
   const p = state.phase;
   const hist = maps.history;
   const start = hist?.doc.timeline?.start ?? MAP.days[0];
@@ -969,14 +1040,29 @@ export function mapPlan({ state, mv, maps, lit, count, index }: { state: Directo
     return { doc: d.doc, time, level: 'corps', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, delay: 500, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
+    if (!roles.includes('map')) return null;
     const own = sessionDoc(maps.session, mv);
     if (!own) return null;
+    const beat = resultBeat(mv, spoken);
+    const until = beat.until < own.time ? beat.until : own.time;
     const ids = Object.keys(mainPaths(mv.map.path));
-    const paths = dailyPaths(own.doc, ids, own.time);
-    const hp = historyPaths(mv.front, own.time);
+    const paths = dailyPaths(own.doc, ids, until);
+    const hp = historyPaths(mv.front, until);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
+    const frame = beat.phase === 'turn' && beat.turn ? turnBbox(mv.front, beat.turn) : null;
     const pts = [...Object.values(paths), ...Object.values(history)].flat();
-    return { doc: own.doc, time: own.time, camera: { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-${own.time}` }, level: 'front', zones: own.zones, extra: pathFeatures(own.doc, paths, history, ZOOM), fx: { front: [], smoke: [BERLIN], bursts: [] } };
+    const turn = beat.turn ? BANK.fronts[mv.front].turns.find((t) => t.n === beat.turn) : undefined;
+    const from = beat.phase === 'close' || !turn ? start : timeAt(start, turn.hour);
+    const run = beat.phase !== 'open' && from < until
+      ? { from, to: until, ms: beat.phase === 'close' ? 18000 : 10000, key: `result-move-${beat.phase}-${beat.turn ?? 0}-${until}` }
+      : null;
+    const camera = frame
+      ? { bbox: frame, key: `result-turn-${beat.turn}`, ms: 800 }
+      : beat.phase === 'open'
+        ? { bbox: THEATRE, key: 'result-open', ms: 800 }
+        : { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: 'result-close', ms: 800 };
+    const extra = [...(frame ? [sectorShade(frame)] : []), ...pathFeatures(own.doc, paths, history, ZOOM)];
+    return { doc: own.doc, time: run ? null : until, run, camera, level: frame ? 'corps' : 'front', zones: own.zones, extra, fx: { front: [], smoke: beat.phase === 'close' ? [BERLIN] : [], bursts: [] } };
   }
   return null;
 }

@@ -17,8 +17,7 @@ import type { DirectorState, Effect } from './director';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import type { ExpoSettings } from './settings';
-import { debriefSentences, operationDebrief } from './debrief';
-import { readMs } from './speaker';
+import { operationDebrief } from './debrief';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
@@ -91,8 +90,18 @@ export function createStage(d: StageDeps) {
     return { text, vars };
   };
   let runner: ReturnType<typeof aiRunner> | null = null;
+  let resultSpeaking = false;
   const queue = voiceQueue(voice.speaker, {
-    onLine: (l) => runner?.onLine(l),
+    onLine: (l) => {
+      runner?.onLine(l);
+      if (l?.scene === 'result') {
+        resultSpeaking = true;
+        d.dispatch({ t: 'hold', ms: 240_000 });
+      } else if (!l && resultSpeaking) {
+        resultSpeaking = false;
+        d.dispatch({ t: 'spoken' });
+      }
+    },
     onDone: (l) => {
       const m = l.scene?.match(/^briefing-(\d+)$/);
       // пауза между пунктами доклада — чтобы цифры на экране успели прочитать
@@ -106,10 +115,7 @@ export function createStage(d: StageDeps) {
     debrief: () => {
       const v = d.snapshot().model.view;
       const brief = v ? operationDebrief(v) : null;
-      if (brief) {
-        const ms = debriefSentences(brief.paragraphs).reduce((s, p) => s + readMs(p) + 800, 0) + 8_000;
-        d.dispatch({ t: 'hold', ms });
-      }
+      if (brief) d.dispatch({ t: 'hold', ms: 240_000 });
       return brief;
     },
     listen: () => new Promise<string | null>((res) => {
@@ -144,9 +150,12 @@ export function createStage(d: StageDeps) {
       const v = snap.settings?.volume.voice ?? 1;
       if (v !== volume) voice.setVolume((volume = v));
       const want = snap.state.phase.kind === 'attract' && snap.state.voice;
-      if (!want) {
-        // уход со заставки сцену не трогает: режиссёр уже поставил новую. Глушим только кнопку на самой заставке.
-        if (attractOn && snap.state.phase.kind === 'attract') runner?.handle({ e: 'scene', key: 'attract-quiet' });
+      if (!want || (typeof document !== 'undefined' && document.hidden)) {
+        // уход со заставки и скрытое окно: оборвать уже звучащее, не копить фразы
+        if (attractOn) {
+          voice.silence();
+          if (snap.state.phase.kind === 'attract') runner?.handle({ e: 'scene', key: 'attract-quiet' });
+        }
         attractOn = false;
         quietSince = null;
         attractI = 0;

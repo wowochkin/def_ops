@@ -403,6 +403,12 @@ export function speakable(text: string, o: { full?: boolean } = {}): string {
     return `${ordinalWords(+y, { года: 'го', году: 'м', годом: 'ым', год: 'й' }[noun as 'года'])} ${noun}`;
   });
   t = t.replace(/(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])/g, (_m, h, mm) => `${numberWords(+h)} ${minutes(mm)}`); // время
+  // «8-я гв.» без рода войск — до замены порядковых, иначе «гв.» звучит отдельным обрывком
+  t = t.replace(/(\d+)-(я|й|е)\s+(гв|уд)\.(?!\s*\p{L})/giu, (_, n: string, suf: string, k: string) => {
+    const fem = suf.toLowerCase() === 'я' || suf.toLowerCase() === 'е';
+    const guard = k.toLowerCase() === 'гв' ? (fem ? 'гвардейская' : 'гвардейский') : (fem ? 'ударная' : 'ударный');
+    return `${ordinalWords(+n, suf.toLowerCase())} ${guard}`;
+  });
   t = t.replace(new RegExp(`(\\d+)-(ый|ий|ой|ая|ое|ье|ья|ого|его|ому|ему|ым|ом|ем|ых|их|ую|ыми|й|я|е|го|му|м|х|ю|ми)(?!${L})`, 'gu'), (_m, n, s) => ordinalWords(+n, s));
   // число с единицей: «10 км», «30%», «5 тыс.»
   t = t.replace(UNIT_RE, (_m, prep: string | undefined, n: string, u: string) => {

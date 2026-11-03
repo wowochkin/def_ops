@@ -45,8 +45,18 @@ describe('VoiceClient', () => {
       const v = new DataView(buf);
       v.setUint8(0, 1); v.setUint32(1, 7, true); v.setUint32(5, 24000, true); v.setInt16(9, 1000, true); v.setInt16(11, -1000, true);
       x.onAudio(buf);
+      expect(started.length).toBe(0); // кусок ждёт конца синтеза
+      x.phraseDone(7);
       expect(started.length).toBe(1);
       expect(x.ctx).not.toBeNull();
+      x.phraseDone(8);
+      const later = new ArrayBuffer(9 + 2);
+      const w = new DataView(later);
+      w.setUint8(0, 1); w.setUint32(1, 8, true); w.setUint32(5, 24000, true); w.setInt16(9, 500, true);
+      x.onAudio(later);
+      expect(started.length).toBe(1);
+      x.sources[0].src.onended();
+      expect(started.length).toBe(2);
     } finally { vi.unstubAllGlobals(); }
   });
 

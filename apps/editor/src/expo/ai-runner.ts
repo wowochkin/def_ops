@@ -18,12 +18,14 @@ export type Ear = 'idle' | 'listen' | 'speak';
 export interface AiFrame {
   /** Что сейчас звучит (субтитр) и откуда. */
   line: { text: string; source: string } | null;
+  /** Последняя звучавшая фраза: остаётся, когда очередь замолкает. */
+  said: string | null;
   answer: { q: string; text: string; source: Said['source'] | null } | null;
   thinking: string | null;
   /** Слушаю посетителя, отвечаю или молчу. */
   ear: Ear;
 }
-export const NO_AI: AiFrame = { line: null, answer: null, thinking: null, ear: 'idle' };
+export const NO_AI: AiFrame = { line: null, said: null, answer: null, thinking: null, ear: 'idle' };
 
 /** Готовые вопросы кнопки «Спросить ИИ». */
 export const QUESTIONS = LINES.answers.map((a) => a.q);
@@ -71,7 +73,7 @@ export function aiRunner(d: AiRunnerDeps) {
   let frame: AiFrame = NO_AI;
   let gen = 0;
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
-  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs'> = {}) =>
+  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs' | 'replace'> = {}) =>
     d.queue.push({ text, priority, source, ...more });
   const here = () => d.queue.sceneNow() ?? undefined;
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
@@ -96,11 +98,15 @@ export function aiRunner(d: AiRunnerDeps) {
     onLine(l: Line | null) {
       set({
         line: l ? { text: l.text, source: l.source } : null,
-        ...(l ? { ear: 'speak' as const } : frame.ear === 'speak' ? { ear: 'idle' as const } : {}),
+        ...(l ? { said: l.text, ear: 'speak' as const } : frame.ear === 'speak' ? { ear: 'idle' as const } : {}),
       });
     },
     handle(e: Effect) {
       if (e.e === 'say') {
+        if (e.key === 'marshal-su_1bf' || e.key === 'marshal-su_1uf') {
+          const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
+          if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, replace: true, ...(e.scene ? { scene: e.scene } : {}) });
+        } else {
         const brief = e.key === 'result' ? d.debrief?.() : null;
         if (brief) {
           const f = pickFilled(lines.say.result, d.facts().vars, Math.random, d.voiced);
@@ -117,6 +123,7 @@ export function aiRunner(d: AiRunnerDeps) {
         } else {
           const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
           if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}) });
+        }
         }
       } else if (e.e === 'scene') {
         d.queue.scene(e.key);
