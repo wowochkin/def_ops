@@ -35,7 +35,7 @@ export function startupPlan(s: ExpoSettings): ProbeId[] {
 }
 export function startupVerdict(states: ProbeStates, s: ExpoSettings): { ready: boolean; aiMode: AiMode; note: string | null } {
   const ready = states.core === 'ok' && states.windows === 'ok' && !startupPlan(s).some((id) => states[id] === 'wait');
-  const aiMode = s.aiMode === 'ai' && states.voice === 'ok' && states.model === 'ok' ? 'ai' : 'noai';
+  const aiMode = s.aiMode === 'ai' && states.model === 'ok' ? 'ai' : 'noai';
   const notes = [s.aiMode === 'ai' && aiMode === 'noai' && 'Запуск в режиме без ИИ', prerecord === 'missing' && PRERECORD_MISSING, prerecord === 'ready' && voiceGapNote()].filter(Boolean);
   return { ready, aiMode, note: notes.length ? notes.join('. ') : null };
 }

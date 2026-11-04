@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { between, cardArrows, historyAt, MAP, shortArmy, traceArmies, type ExpoMapData } from '../src/expo/map';
+import { between, cardArrows, historyAt, MAP, shortArmy, spokenFocus, traceArmies, type ExpoMapData } from '../src/expo/map';
 
 describe('карта стенда', () => {
   it('подписи армий кратко', () => {
@@ -36,6 +36,15 @@ describe('карта стенда', () => {
     expect(a[0]).toMatchObject({ id: 'su_8gva', label: '8 гв. А', at: [14.5, 52.5] });
   });
 
+  it('фраза разбора называет армии и пункт', () => {
+    expect(spokenFocus('3-я и 4-я гв. танковые поворачивают на север.', 'su_1uf').armies.sort()).toEqual(['su_3gta', 'su_4gta']);
+    const one = spokenFocus('3-я гв. танковая — на Цоссен.', 'su_1uf');
+    expect(one.armies).toEqual(['su_3gta']);
+    expect(one.places).toEqual([MAP.cities.find((c) => c.name === 'Цоссен')!.at]);
+    const elbe = spokenFocus('4-я гв. танковая — к Эльбе, на Торгау.', 'su_1uf');
+    expect(elbe.armies).toEqual(['su_4gta']);
+    expect(elbe.places).toContainEqual(MAP.cities.find((c) => c.name === 'Торгау')!.at);
+  });
   it('стрелки карточки и промежуточные положения', () => {
     const armies = [{ id: 'a', label: 'A', side: 'su' as const, front: null, at: [0, 0] as [number, number] }];
     expect(cardArrows([{ army: 'a', kind: 'attack', place: 'X' }, { army: 'a', kind: 'hold', place: null }], armies, () => [1, 1])).toEqual([

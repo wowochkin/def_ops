@@ -5,7 +5,7 @@ import { VoiceClient } from '../src/voice/client';
 const setVolume = vi.fn();
 vi.mock('../src/expo/speaker', async (orig) => ({
   ...(await orig<typeof import('../src/expo/speaker')>()),
-  expoSpeaker: () => ({ speaker: { speak: () => ({ done: Promise.resolve(), stop() {} }) }, voiced: () => false, setVolume, resume() {}, dispose() {} }),
+  expoSpeaker: () => ({ speaker: { speak: () => ({ done: Promise.resolve(), stop() {} }) }, voiced: () => false, setVolume, resume() {}, silence() {}, dispose() {} }),
 }));
 
 describe('громкость голоса стенда', () => {

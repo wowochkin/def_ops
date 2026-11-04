@@ -284,10 +284,11 @@ function liveVoice(client: VoiceClient): LiveVoice & { dispose(): void } {
       const synthDone = new Promise<void>((r) => (synth = r));
       const done = new Promise<void>((r) => {
         played = r;
-        // сервис не доложил о конце — очередь не встаёт
-        setTimeout(() => { synth(); r(); }, readMs(text) * 2 + 5000);
+        // если сервис так и не доложил конец — не держать очередь, но и не считать фразу доигранной раньше звука
+        setTimeout(() => { synth(); client.stop(id); r(); }, 120_000);
       });
       waits.set(id, { synth, played });
+      client.resume();
       client.say(id, 'chief', text, undefined, voiceId);
       return { synthDone, done, stop: () => { client.stop(id); waits.delete(id); synth(); played(); } };
     },
@@ -341,6 +342,7 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   const onHide = () => { if (document.visibilityState === 'hidden') silence(); };
   window.addEventListener('pagehide', silence);
   document.addEventListener('visibilitychange', onHide);
+  document.addEventListener('freeze', silence);
   return {
     speaker,
     voiced: (f) => clipPlan(manifest, f.text, f.parts) !== null,
@@ -355,6 +357,7 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
       disposed = true;
       window.removeEventListener('pagehide', silence);
       document.removeEventListener('visibilitychange', onHide);
+      document.removeEventListener('freeze', silence);
       silence();
       live.dispose();
       client.close();

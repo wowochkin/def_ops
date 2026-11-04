@@ -14,6 +14,37 @@ async function json(url: string) {
   if (!r.ok) throw Error(String(r.status));
   return r.json();
 }
+/** Порты локальной модели: LM Studio обычно на 1234, Bionic — на 1235. Берётся тот, где есть не-эмбеддинг. */
+const MODEL_URLS = ['http://127.0.0.1:1235/v1', 'http://127.0.0.1:1234/v1'];
+let liveModel: string | null = null;
+
+async function modelsAt(url: string): Promise<string[]> {
+  const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), 2000));
+  if (app()) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return await Promise.race([invoke<string[]>('list_models', { url }), timeout]);
+  }
+  const r = await fetch(`${url}/models`, { signal: AbortSignal.timeout(2000) });
+  if (!r.ok) throw Error(String(r.status));
+  const j = await r.json() as { data?: { id: string }[] };
+  return (j.data ?? []).map((m) => m.id);
+}
+
+/** Адрес живой локальной модели или null. Настройки полного режима могут указывать другой сервер — стенд их не берёт. */
+export async function findLocalModel(): Promise<string | null> {
+  if (liveModel) return liveModel;
+  for (const url of MODEL_URLS) {
+    try {
+      const models = await modelsAt(url);
+      if (models.some((id) => !id.toLowerCase().includes('embed'))) {
+        liveModel = url;
+        return url;
+      }
+    } catch { /* следующий порт */ }
+  }
+  return null;
+}
+
 /** Адрес модели фиксирован на loopback: настройки полного режима могут указывать удалённый сервер. */
 export function localProbes(windowsReady: () => boolean): Probe[] {
   let booted = false;
@@ -40,12 +71,7 @@ export function localProbes(windowsReady: () => boolean): Probe[] {
     {
       id: 'model',
       label: 'Языковая модель',
-      check: async () => {
-        const models = app()
-          ? await (await import('@tauri-apps/api/core')).invoke<string[]>('list_models', { url: 'http://127.0.0.1:1234/v1' })
-          : ((await json('http://127.0.0.1:1234/v1/models')).data ?? []).map((m: { id: string }) => m.id);
-        return models.some((id: string) => !id.toLowerCase().includes('embed'));
-      },
+      check: async () => (await findLocalModel()) !== null,
     },
     { id: 'windows', label: 'Экраны', check: async () => windowsReady() },
   ];

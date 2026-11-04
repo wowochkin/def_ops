@@ -27,14 +27,35 @@ describe('исполнитель голоса и ИИ', () => {
     expect(s.frames.at(-1)).toEqual({ line: null, said: null, answer: null, thinking: null, ear: 'idle' });
   });
 
+  it('ответ звучит, даже если за время ожидания сцена уже сменилась', async () => {
+    let release: (s: string) => void = () => {};
+    const said: string[] = [];
+    const q = voiceQueue({ speak: (t) => { said.push(t); return { done: Promise.resolve(), stop() {} }; } });
+    q.scene('turn-1-explain');
+    const r = aiRunner({
+      queue: q,
+      ask: () => () => new Promise<string>((res) => { release = res; }),
+      facts: () => ({ text: '', vars: {} }),
+      dispatch: () => {},
+      onFrame: () => {},
+      answerMs: 5000,
+    });
+    void r.ask('проверка связи');
+    q.scene('turn-1-choose');
+    release('Связь работает.');
+    await tick();
+    expect(said).toContain('Связь работает.');
+  });
+
   it('вопрос без ИИ — готовый ответ с источником', async () => {
     const s = setup(null);
     s.r.handle({ e: 'ask', q: 'Какой вариант лучше?' });
     await tick();
     expect(s.frames.at(-1)!.answer).toMatchObject({ source: 'prepared' });
     expect(s.said.at(-1)!.priority).toBe('action');
+    const kept = s.frames.at(-1)!.answer;
     s.r.handle({ e: 'deal', n: 2, front: 'su_1bf' });
-    expect(s.frames.at(-1)!.answer).toBeNull();
+    expect(s.frames.at(-1)!.answer).toEqual(kept);
   });
 
   it('ИИ медлит — мысль на экране, потом заготовка; учёт вовремя/заменено', async () => {
@@ -62,6 +83,8 @@ describe('исполнитель голоса и ИИ', () => {
   it('комментарий выбора без ИИ — заготовка события', async () => {
     const s = setup(null);
     await s.r.decided('own');
-    expect(s.said.at(-1)).toMatchObject({ priority: 'action', source: 'prepared', scene: 'turn-1-scroll' });
+    expect(s.said.at(-1)).toMatchObject({ priority: 'action', source: 'prepared' });
+    expect(s.said.at(-1)!.voice).toBeUndefined();
+    expect(s.said.at(-1)!.scene).toBeUndefined();
   });
 });

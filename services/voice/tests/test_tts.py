@@ -26,6 +26,14 @@ def test_planner_first_short_alone_after_wait():
     assert p.next_piece(100.41, 0.0) == "Есть."
 
 
+def test_long_first_sentence_starts_early():
+    s = Sentences()
+    text = "Я штаб первого Белорусского фронта и докладываю обстановку по силам и замыслу на этот час."
+    first = s.push(text)
+    assert first and len(first[0]) <= 70
+    assert " ".join(first + s.rest()).replace("  ", " ") == text
+
+
 def test_planner_first_long_goes_at_once():
     p = PiecePlanner()
     p.push("Это достаточно длинная первая фраза.")

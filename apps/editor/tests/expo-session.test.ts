@@ -99,12 +99,13 @@ describe('сеанс модели', () => {
     const before = s.view.cards.map((c) => c.id);
     expect(s.replace(own)).toBe(true);
     expect(before).not.toContain(s.view.cards[own].id);
-    // новых нет — по кругу из уже показанных, которых нет на экране: «Другой вариант» работает снова
-    expect(s.view.spare).toBeGreaterThan(0);
-    const second = s.view.cards[own].id;
+    // пять своих карточек: на экране две, после первой замены остаются две непоказанные; показанные по кругу не возвращаются
+    expect(s.view.spare).toBe(2);
     expect(s.replace(own)).toBe(true);
-    expect(s.view.cards[own].id).not.toBe(second);
-    expect(s.view.cards.map((c) => c.id).filter((id) => id === s.view.cards[own].id)).toHaveLength(1);
+    expect(s.view.spare).toBe(1);
+    expect(s.replace(own)).toBe(true);
+    expect(s.view.spare).toBe(0);
+    expect(s.replace(own)).toBe(false);
   });
 
   it('time and reference helpers', () => {

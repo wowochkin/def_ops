@@ -8,8 +8,8 @@
 import type { Card, OrderKind, TurnN } from './bank';
 import { LINES, answerFor, pickFilled, textErrors, type Filled, type Lines, type Vars } from './lines';
 
-/** Запрос к языковой модели: системный текст и запрос → ответ. */
-export type Ask = (system: string, text: string, signal: AbortSignal) => Promise<string>;
+/** Запрос к языковой модели: системный текст и запрос → ответ. `onText` — уже собранный ответ по мере генерации. */
+export type Ask = (system: string, text: string, signal: AbortSignal, onText?: (full: string) => void) => Promise<string>;
 
 export type Source = 'now' | 'prepared' | 'kb' | 'bank' | 'historical' | 'aiBank';
 export const SOURCE_LABEL: Record<Source, string> = {
@@ -38,8 +38,10 @@ export async function within<T>(ms: number, f: (signal: AbortSignal) => Promise<
 }
 
 const SYSTEM =
-  'Ты — офицер штаба на выставке о Берлинской операции 1945 года. Тон — сдержанная штабная хроника. ' +
-  'Отвечай по-русски, коротко (1–2 предложения, до 200 знаков), без выдумок: только то, что дано в запросе или общеизвестно.';
+  'Ты — начальник штаба на выставке о Берлинской операции 1945 года. Имени у тебя нет: не представляйся выдуманной фамилией и званием. ' +
+  'Командующий фронта назван в фактах. Тон — сдержанная штабная хроника. ' +
+  'Ответь сразу по-русски, 1–2 предложения, до 200 знаков. Без плана, без английского, без разбора задания. ' +
+  'Только то, что есть в фактах или общеизвестно об операции. Нет факта — скажи, что в сводке этого нет.';
 
 export interface CardContext {
   front: string;
@@ -135,11 +137,56 @@ export function cardSmith(o: { ask: () => Ask | null; check: (card: Card, c: Car
   };
 }
 
-/** Ответ на вопрос: ИИ в срок, иначе готовый ответ, иначе честное «не успеваю». */
-export async function answer(ask: Ask | null, question: string, facts: string, ms: number, lines: Lines = LINES): Promise<Said> {
+/** Доля кириллицы среди букв. Черновик модели на английском сюда не проходит. */
+function cyrillicShare(s: string): number {
+  const letters = [...s].filter((ch) => /\p{L}/u.test(ch));
+  if (!letters.length) return 0;
+  return letters.filter((ch) => /[А-Яа-яЁё]/.test(ch)).length / letters.length;
+}
+
+/**
+ * Фраза для посетителя. Английский разбор задания («thinking process», план по пунктам) — не ответ:
+ * из него нельзя вынимать черновые цитаты, модель в них выдумывает имена.
+ */
+/** Законченные предложения и недописанный хвост. Хвост на экран можно показать, в голос он не идёт. */
+export function staffParts(raw: string): { done: string; live: string } {
+  const t = raw.replace(/<think>[\s\S]*?<\/think>/gi, ' ').replace(/\s+/g, ' ').trim();
+  if (!t || /thinking process|analyze user input|analyze the request|here's a thinking|\*\*role:\*\*|\*\*constraints:\*\*|draft \d|character count/i.test(t)) return { done: '', live: '' };
+  const bits = t.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+  const doneBits: string[] = [];
+  let tail = '';
+  for (const s of bits) {
+    if (/[.!?]$/.test(s) && s.length >= 8 && s.length <= 400 && cyrillicShare(s) >= 0.75 && !/^пользователь\b/i.test(s)) doneBits.push(s);
+    else if (cyrillicShare(s) >= 0.75) tail = s;
+  }
+  let done = doneBits.slice(0, 2).join(' ');
+  if (done.length > 220) done = `${done.slice(0, 219).replace(/\s+\S*$/, '')}…`;
+  const live = [done, tail].filter(Boolean).join(' ');
+  return { done, live: live.length > 240 ? `${live.slice(0, 239).replace(/\s+\S*$/, '')}…` : live };
+}
+
+export function staffAnswer(raw: string): string {
+  return staffParts(raw).done;
+}
+
+/** Законченная русская фраза из черновика модели: она пишет её в кавычках раньше, чем отдельный ответ. */
+export function draftReply(raw: string): string {
+  const found = [...raw.matchAll(/[«"]([А-ЯЁ][^"»\n]{20,240})[»"]/g)]
+    .map((m) => m[1].replace(/\s+/g, ' ').trim())
+    .filter((s) => /[.!]$/.test(s) && s.length <= 220 && cyrillicShare(s) >= 0.8);
+  return found.at(-1) ?? '';
+}
+
+/** Ответ на вопрос: ИИ в срок (текст появляется по мере генерации), иначе готовый ответ, иначе честное «не успеваю». */
+export async function answer(ask: Ask | null, question: string, facts: string, ms: number, lines: Lines = LINES, onText?: (full: string) => void): Promise<Said> {
   if (ask) {
-    const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nВопрос посетителя: ${question}`, s));
-    if (t?.trim() && !textErrors(t.trim()).length) return { text: t.trim(), source: 'now' };
+    const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nВопрос посетителя: ${question}`, s, (full) => {
+      const shown = staffAnswer(full) || draftReply(full);
+      if (shown) onText?.(shown);
+    }));
+    const raw = t?.trim() ?? '';
+    const fit = (raw && staffAnswer(raw)) || (raw && draftReply(raw)) || '';
+    if (fit) return { text: fit, source: 'now' };
   }
   const a = answerFor(question, lines);
   if (a) return { text: a.a, source: 'prepared' };

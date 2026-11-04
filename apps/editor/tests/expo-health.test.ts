@@ -14,6 +14,7 @@ it('startup all ok and fallback when model fails', () => {
     note: 'Запуск в режиме без ИИ',
   });
   expect(startupVerdict({ core: 'fail', windows: 'ok', voice: 'ok', model: 'ok' }, EXPO_DEFAULTS).ready).toBe(false);
+  expect(startupVerdict({ core: 'ok', windows: 'ok', voice: 'fail', model: 'ok' }, EXPO_DEFAULTS).aiMode).toBe('ai');
   expect(startupPlan({ ...EXPO_DEFAULTS, aiMode: 'noai' })).not.toContain('model');
 });
 it('startup names phrases that have no clip', () => {

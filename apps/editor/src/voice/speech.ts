@@ -387,8 +387,8 @@ export function speakable(text: string, o: { full?: boolean } = {}): string {
   // «в ночь на 16/17 апреля» — «в ночь с шестнадцатого на семнадцатое апреля»
   t = t.replace(new RegExp(`(ночь\\s+)(?:на\\s+)?(\\d{1,2})\\s*[/–-]\\s*(\\d{1,2})\\s+(${MONTHS.join('|')})(?!${L})`, 'giu'), (_m, p: string, a: string, b: string, mo: string) =>
     `${p}с ${ordinalWords(+a, 'го')} на ${ordinalWords(+b, 'е')} ${mo}`);
-  // «2/3», «2 из 3» — «два из трёх»
-  t = t.replace(/(?<![\d.,])(\d{1,4})\s*(?:\/|\s+из\s+)(\d{1,4})(?![\d.,])/g, (_m, a: string, b: string) => `${numberWords(+a)} из ${cardinalGen(+b) ?? numberWords(+b)}`);
+  // «2/3», «2 из 3», «4 из 5.» — «два из трёх», «четыре из пяти» (точка конца фразы число не прячет)
+  t = t.replace(/(?<![\d.,])(\d{1,4})\s*(?:\/|\s+из\s+)(\d{1,4})(?!\d|[.,]\d)/g, (_m, a: string, b: string) => `${numberWords(+a)} из ${cardinalGen(+b) ?? numberWords(+b)}`);
   t = t.replace(/\s*[·•|]\s*/g, ', ').replace(/\s*\/\s*/g, ', ');
   // даты: «16.04», «16.04.1945», «16 апреля»
   t = t.replace(/(?<![\d.,])(\d{1,2})\.(\d{2})(?:\.(\d{4}))?(?![\d.,]\d)(?!\s*(?:(?:км|м|кг|т|л|ч|мин|раз)(?!\p{L})|%|чел\.|тыс\.|метр|километр|процент|тонн|час|минут))/gu, (m, d, mo, y) =>

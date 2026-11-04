@@ -11,6 +11,14 @@ import type { FrontId } from './settings';
 
 const VOICE: Record<string, string> = { su_1bf: 'zhukov-14s', su_1uf: 'konev-12s' };
 
+/** Образец командующего фронта: комментарий выбора и итог говорит он, не диктор штаба. */
+export function commanderVoice(marshal?: string): string | undefined {
+  if (!marshal) return undefined;
+  if (/конев/i.test(marshal)) return VOICE.su_1uf;
+  if (/жуков/i.test(marshal)) return VOICE.su_1bf;
+  return undefined;
+}
+
 const spoken = (note: string) => note.replace(/сут(?![\p{L}])/gu, 'суток');
 
 /** Суть решения: первые строки карточки, без «риска» и «расчёта». */
@@ -68,8 +76,10 @@ const START = '1945-04-16T05:00';
 export interface ResultBeat {
   phase: 'open' | 'turn' | 'close';
   turn: TurnN | null;
-  /** Момент карты: начало операции, конец рассказанного перелома или конец хода. */
+  /** Конец отрезка операции, вдоль которого идёт эта часть разбора. */
   until: string;
+  /** Доля отрезка на начале и в конце текущей фразы: карта проходит его, пока фраза звучит. */
+  span: [number, number];
 }
 
 /** Конец хода перелома — час следующего; у последнего — конец операции. */
@@ -86,16 +96,29 @@ function turnEnd(front: FrontId, n: TurnN, end: string): string {
 export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
   const d = operationDebrief(v);
   const end = v.time || START;
-  const open = (): ResultBeat => ({ phase: 'open', turn: null, until: START });
-  const close = (): ResultBeat => ({ phase: 'close', turn: null, until: end });
+  const turns = BANK.fronts[v.front].turns;
+  const openUntil = turns[1] ? timeAt(START, turns[1].hour) : timeAt(START, 36);
+  const spanOf = (paragraph: string, sentence: string): [number, number] => {
+    const parts = templateUnits(paragraph);
+    const i = Math.max(0, parts.indexOf(sentence));
+    const n = Math.max(1, parts.length);
+    return [i / n, (i + 1) / n];
+  };
+  const open = (span: [number, number] = [0, 0]): ResultBeat => ({ phase: 'open', turn: null, until: openUntil, span });
+  const close = (span: [number, number] = [0, 1]): ResultBeat => ({ phase: 'close', turn: null, until: end, span });
   if (!d) return close();
   if (!spoken) return open();
-  const loc = d.paragraphs.flatMap((p, i) => templateUnits(p).map((s) => ({ s, i }))).find((x) => x.s === spoken);
-  if (!loc) return close();
-  if (loc.i === 0) return open();
-  if (loc.i >= d.paragraphs.length - 1) return close();
+  const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, ' ').trim();
+  const said = norm(spoken);
+  const rows = d.paragraphs.flatMap((p, i) => templateUnits(p).map((s) => ({ s, i, p })));
+  const loc = rows.find((x) => norm(x.s) === said)
+    ?? rows.find((x) => said.startsWith(norm(x.s).slice(0, 48)) || norm(x.s).startsWith(said.slice(0, 48)));
+  if (!loc) return open();
+  const span = spanOf(loc.p, loc.s);
+  if (loc.i === 0) return open(span);
+  if (loc.i >= d.paragraphs.length - 1) return close(span);
   const turn = v.decisions[loc.i - 1]?.n ?? null;
-  return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end) } : close();
+  return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end), span } : close(span);
 }
 
 /** Рассказ о проведённой операции с точки зрения получившейся обстановки. Пусто — итога ещё нет. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answer, cardSmith, comment, parseCard, within, type Ask, type CardContext } from '../src/expo/ai';
+import { answer, cardSmith, comment, draftReply, parseCard, staffAnswer, within, type Ask, type CardContext } from '../src/expo/ai';
 import { cardErrors } from '../src/expo/bank';
 
 const ctx: CardContext = {
@@ -47,6 +47,15 @@ describe('ИИ сеанса', () => {
     const slow: Ask = () => new Promise(() => {});
     expect((await answer(slow, 'Почему высоты так важны?', '', 10)).source).toBe('prepared');
     expect((await answer(null, 'Какая погода', '', 10)).text).toMatch(/нет готового ответа/);
+    const dump = 'Here\'s a thinking process: 1. **Analyze User Input:** role. I need to respond appropriately within the constraints.';
+    expect(staffAnswer(dump)).toBe('');
+    expect((await answer(async () => dump, 'как тебя зовут', '', 1000)).text).toMatch(/нет готового ответа/);
+    expect(staffAnswer('В сводке имени нет; я — начальник штаба.')).toBe('В сводке имени нет; я — начальник штаба.');
+    expect(staffAnswer('Я — штаб 1-го Белорусского фронта. Командующ')).toBe('Я — штаб 1-го Белорусского фронта.');
+    const quote = 'Товарищ, Константин Константинович Рокоссовский — Маршал Советского Союза, командующий 2-м Белорусским фронтом.';
+    const draft = `Draft 1:\n"${quote}"\nLength: 120 characters.`;
+    expect(draftReply(draft)).toBe(quote);
+    expect((await answer(async () => draft, 'кто такой Рокоссовский', '', 1000)).text).toBe(quote);
   });
 
   it('комментарий без ИИ — заготовка с подстановкой', async () => {

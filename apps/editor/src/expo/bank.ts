@@ -3,7 +3,7 @@
  *
  * Карточка — заголовок, 4–5 коротких строк и распоряжения армиям своего фронта на объекты театра; историческая
  * карточка распоряжений не несёт: фронт идёт по истории («История как замысел»). На переломе посетитель видит
- * историческую и две случайные карточки в случайном порядке; замена берёт свою карточку перелома, которой нет на экране: сначала не показанную, затем уже показанную раньше.
+ * историческую и две случайные карточки в случайном порядке; замена берёт свою карточку перелома, которой нет на экране и которую ещё не показывали.
  */
 import bankJson from './bank-data/berlin-1945.cards.json';
 import { PICTURES } from './pictures';
@@ -121,16 +121,13 @@ export function deal(bank: Bank, front: FrontId, n: TurnN, rnd: () => number = M
 
 /**
  * Замена карточки в слоте: своя карточка перелома (банк и `extra` — карточки ИИ сеанса), которой нет на экране
- * (`onScreen`); сначала — ещё не показанные (`shown`), кончились — уже показанные раньше, по кругу. Историческую
- * не заменяем; заменить нечем — null.
+ * (`onScreen`) и которую ещё не показывали (`shown`). Историческую не заменяем; новых нет — null.
  */
 export function replacement(bank: Bank, shown: string[], slotCard: string, rnd: () => number = Math.random, onScreen: string[] = shown, extra: Card[] = []): string | null {
   const c = bank.cards.find((x) => x.id === slotCard) ?? extra.find((x) => x.id === slotCard);
   if (!c || c.historical) return null;
-  const free = spares(bank, c.front, c.turn, onScreen, extra);
-  const fresh = free.filter((x) => !shown.includes(x.id));
-  const from = fresh.length ? fresh : free;
-  return from.length ? from[Math.floor(rnd() * from.length)].id : null;
+  const fresh = spares(bank, c.front, c.turn, onScreen, extra).filter((x) => !shown.includes(x.id));
+  return fresh.length ? fresh[Math.floor(rnd() * fresh.length)].id : null;
 }
 
 /** Свои карточки перелома (банк и карточки ИИ сеанса), которых нет на экране, — чем заменить. */

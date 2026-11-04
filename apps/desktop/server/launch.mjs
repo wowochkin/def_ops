@@ -43,6 +43,18 @@ async function gatewayPort() {
 }
 const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), gateway: Number(opt('port', 0)) || await gatewayPort() };
 const url = (n) => `http://127.0.0.1:${ports[n]}`;
+async function llmUrl() {
+  const given = opt('llm', process.env.DEFOPS_LLM_URL || '');
+  if (given) return given;
+  for (const port of [1235, 1234]) {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/v1/models`, { signal: AbortSignal.timeout(800) });
+      if (r.ok) return `http://127.0.0.1:${port}/v1`;
+    } catch { /* следующий порт */ }
+  }
+  return 'http://127.0.0.1:1234/v1';
+}
+const llm = await llmUrl();
 const services = [
   { name: 'documents', env: { STORAGE: 'file', DATA_DIR: join(data, 'documents') } },
   { name: 'render', env: { DOCUMENTS_URL: url('documents') } },
@@ -61,7 +73,7 @@ const services = [
     ...(dev ? { DEFOPS_DEV: '1' } : {}),
     // шлюз открыт на постоянном порту: принимает только запросы своего окна (Host и Origin)
     DEFOPS_DESKTOP: '1',
-    AUTH: 'open', LLM_URL: opt('llm', process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1'),
+    AUTH: 'open', LLM_URL: llm,
     ...(opt('static') ? { STATIC_DIR: resolve(opt('static')) } : {}),
   } },
 ];

@@ -178,7 +178,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         // модель и голос, которыми сеанс уже не пользуется (стенд работает без ИИ), сеанс не прерывают
         const used = id === 'core' || id === 'windows' || host.snapshot().settings.aiMode === 'ai';
         if (used) host.dispatch({ t: 'jump', phase: id === 'core' || id === 'windows' ? 'startup' : 'attract' });
-        if (id === 'model' || id === 'voice') {
+        if (id === 'model') {
           host.setAiMode('noai');
           publishHealth(states, 'Запуск в режиме без ИИ');
         }
@@ -189,7 +189,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           setError('');
           host.dispatch({ t: 'ready' });
         }
-        if (host.configuration().aiMode === 'ai' && states.model === 'ok' && states.voice === 'ok') host.setAiMode('ai');
+        if (host.configuration().aiMode === 'ai' && states.model === 'ok') host.setAiMode('ai');
       };
       return watchdog(tracked, onFail, 15000, () => {}, onSweep);
     };
@@ -292,9 +292,8 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     const host = hostRef.current;
     if (!host) return;
     if (settings.aiMode === 'ai' && host.configuration().aiMode !== 'ai') {
-      const checks = localProbes(host.ready).filter((p) => p.id === 'model' || p.id === 'voice');
-      const ok = await Promise.all(checks.map((p) => p.check().catch(() => false)));
-      if (ok.some((v) => !v)) throw Error('Для режима с ИИ нужны работающие локальная модель и голос');
+      const model = localProbes(host.ready).find((p) => p.id === 'model');
+      if (model && !(await model.check().catch(() => false))) throw Error('Для режима с ИИ нужна работающая локальная модель');
     }
     await settingsStore().save(settings);
     await host.configure(settings);

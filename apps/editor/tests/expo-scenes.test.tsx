@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, it } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { KB_STATS } from '../src/expo/kb-stats';
 import { debriefSentences, forecastParts, operationDebrief, resultBeat } from '../src/expo/debrief';
 import { ExpoView, mapPlan, turnBbox } from '../src/expo/ExpoView';
 import { emptyDocument } from '@def-ops/core';
@@ -181,7 +180,9 @@ it('result shows rank, forecast, axes and matches; core failure is shown', () =>
   expect(right.queryByText(turnLine)).toBeNull();
   const session = { doc: emptyDocument(), front: 'su_1bf' as const, time: played.time, zones: [] };
   const plan = mapPlan({ state, mv: played, maps: { session }, lit: null, count: 3, index: 1, spoken: turnLine });
-  expect(plan?.camera?.key).toBe('result-turn-1');
+  expect(plan?.camera?.key.startsWith('result-turn-1-')).toBe(true);
+  const other = mapPlan({ state, mv: played, maps: { session }, lit: null, count: 3, index: 1, spoken: 'Другая фраза разбора про Эльбу.' });
+  expect(other?.camera?.key).not.toBe(plan?.camera?.key);
   expect(plan?.extra?.some((f) => f.id === 'result-sector')).toBe(true);
   expect(mapPlan({ state, mv: played, maps: { session }, lit: null, count: 3, index: 0, spoken: turnLine })).toBeNull();
   cleanup();
@@ -276,6 +277,9 @@ it('ai screen offers questions and the balance, not a bare situation line', () =
   expect(v.queryByText(/Плацдарм за Одером/)).toBeNull();
   fireEvent.click(v.getByRole('button', { name: 'Какие силы участвуют?' }));
   expect(sent).toContainEqual({ t: 'ask', q: 'Какие силы участвуют?' });
+  fireEvent.change(v.getByLabelText('Свой вопрос штабу'), { target: { value: 'Сколько километров до Берлина?' } });
+  fireEvent.click(v.getByRole('button', { name: 'Спросить' }));
+  expect(sent).toContainEqual({ t: 'ask', q: 'Сколько километров до Берлина?' });
 });
 
 it('chronicle on the combined attract shows a single caption', () => {
@@ -291,7 +295,8 @@ it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the f
   const sent: unknown[] = [];
   const a = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={(e) => sent.push(e)} />);
   expect(a.getByRole('heading', { name: 'Как работает штаб ИИ' })).toBeTruthy();
-  expect(a.getByText(new RegExp(`${KB_STATS.sources} источник`))).toBeTruthy();
+  expect(a.getByRole('heading', { name: 'Армии идут по часам' })).toBeTruthy();
+  expect(a.getByText('База знаний')).toBeTruthy();
   expect(a.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();
   fireEvent.click(a.getByRole('button', { name: 'Голос: вкл' }));
   expect(sent).toEqual([{ t: 'voice' }]);
@@ -305,9 +310,9 @@ it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the f
   const c = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={(e) => opened.push(e)} />);
   expect(c.getByRole('heading', { name: 'Полная версия' })).toBeTruthy();
   expect(c.getByRole('img', { name: 'Карта операции' })).toBeTruthy();
+  expect(c.queryByRole('img', { name: 'Моделирование' })).toBeNull();
+  fireEvent.click(c.getByRole('tab', { name: 'Моделирование' }));
   expect(c.getByRole('img', { name: 'Моделирование' })).toBeTruthy();
-  fireEvent.click(c.getByRole('button', { name: /Карта операции/ }));
-  expect(c.getByRole('dialog', { name: 'Карта операции' })).toBeTruthy();
   expect(opened).toEqual([]);
   expect(c.queryByText(/Рекорд дня/)).toBeNull();
   expect(c.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();

@@ -31,6 +31,15 @@ it('lockdown blocks quit keys and releases listeners on cleanup', () => {
     document.dispatchEvent(e);
     expect(e.defaultPrevented).toBe(true);
   }
+  const typed = document.createElement('input');
+  document.body.append(typed);
+  const letter = new KeyboardEvent('keydown', { key: 'а', bubbles: true, cancelable: true });
+  typed.dispatchEvent(letter);
+  expect(letter.defaultPrevented).toBe(false);
+  const quit = new KeyboardEvent('keydown', { key: 'w', metaKey: true, bubbles: true, cancelable: true });
+  typed.dispatchEvent(quit);
+  expect(quit.defaultPrevented).toBe(true);
+  typed.remove();
   const combo = new KeyboardEvent('keydown', { code: 'KeyO', ctrlKey: true, altKey: true, shiftKey: true, cancelable: true });
   document.dispatchEvent(combo);
   expect(combo.defaultPrevented).toBe(false);

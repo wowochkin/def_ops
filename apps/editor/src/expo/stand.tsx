@@ -1,7 +1,7 @@
 /**
  * Экраны заставки, у каждого своё: как устроен штаб ИИ, переигровка на карте, полная версия приложения.
  */
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SOURCE_LABEL } from './ai';
 import { QUESTIONS, type AiFrame } from './ai-runner';
 import { BRIEFING } from './briefing';
@@ -49,53 +49,102 @@ export function AttractActions({ voice, send, start = true }: { voice: boolean; 
   );
 }
 
-/** Экран «Как работает штаб ИИ»: четыре крупные карточки, у каждой своя схема. */
+/** Экран «Как работает штаб ИИ»: одна сцена, сюжет сменяется, схема на ней движется. */
+const HOW = [
+  {
+    k: 'Модель',
+    title: 'Армии идут по часам',
+    text: 'Ядро считает сутки операции. Противник идёт по своему замыслу, ваш фронт — по приказам.',
+  },
+  {
+    k: 'База знаний',
+    title: 'Ответ называет источник',
+    text: 'На вопрос штаб берёт запись из базы и говорит, откуда факт.',
+  },
+  {
+    k: 'Переигровка',
+    title: 'Три решения ведут фронт',
+    text: 'Соседний фронт в это время идёт своим ходом, как в операции.',
+  },
+  {
+    k: 'ИИ в ходе',
+    title: 'Спросили — карта сдвинулась',
+    text: 'Штаб отвечает, ядро считает, армии уходят на новый рубеж.',
+  },
+] as const;
+
 export function HowStaff({ foot }: { foot?: ReactNode }) {
-  const n = KB_STATS.entries.toLocaleString('ru-RU');
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setInterval(() => setBeat((n) => (n + 1) % HOW.length), 5600);
+    return () => window.clearInterval(id);
+  }, []);
+  const cur = HOW[beat];
   return (
     <section className="expo-board expo-how">
       <header className="expo-how-head">
         <p className="expo-kicker">Четыре части одного штаба</p>
         <h1>Как работает штаб ИИ</h1>
       </header>
-      <ul className="expo-parts">
-        <li>
-          <div className="expo-part-art expo-part-hours" aria-hidden="true">
-            <span>16</span>
-            <span>20</span>
-            <span>24</span>
-            <em>апрель, по часам</em>
-          </div>
-          <strong>Модель</strong>
-          <p>Ядро ведёт армии по часам. Противник идёт по замыслу.</p>
-        </li>
-        <li>
-          <div className="expo-part-art expo-part-nums" aria-hidden="true">
-            <p><b>{n}</b><small>записей</small></p>
-            <p><b>{KB_STATS.sources}</b> <small>источников</small></p>
-          </div>
-          <strong>База знаний</strong>
-          <p>{KB_STATS.sources} источников: на вопрос штаб берёт запись и называет, откуда она.</p>
-        </li>
-        <li>
-          <div className="expo-part-art expo-part-turns" aria-hidden="true">
-            <b>1</b>
-            <b>2</b>
-            <b>3</b>
-          </div>
-          <strong>Переигровка</strong>
-          <p>Три решения ведут ваш фронт. Соседний идёт своим ходом, как в операции.</p>
-        </li>
-        <li>
-          <div className="expo-part-art expo-part-chain" aria-hidden="true">
-            <span>Вопрос</span>
-            <span>Ядро</span>
-            <span>Карта</span>
-          </div>
-          <strong>ИИ в ходе</strong>
-          <p>Спросили — штаб отвечает, ядро считает, армии сдвигаются на карте.</p>
-        </li>
-      </ul>
+      <div className="expo-how-stage" data-beat={beat}>
+        <div key={beat} className="expo-how-art" aria-hidden="true">
+          {beat === 0 && (
+            <div className="expo-how-clock">
+              <span>16</span>
+              <span>20</span>
+              <span>24</span>
+              <i />
+              <em>апрель</em>
+            </div>
+          )}
+          {beat === 1 && (
+            <div className="expo-how-kb">
+              <p>Откуда цифра?</p>
+              <b>{KB_STATS.entries.toLocaleString('ru-RU')}</b>
+              <small>записей · {KB_STATS.sources} источников</small>
+              <em>Кривошеев, «Россия и СССР в войнах XX века»</em>
+            </div>
+          )}
+          {beat === 2 && (
+            <div className="expo-how-turns">
+              <b>1</b>
+              <b>2</b>
+              <b>3</b>
+            </div>
+          )}
+          {beat === 3 && (
+            <div className="expo-how-flow">
+              <div className="expo-how-q">
+                <small>Вопрос</small>
+                <p>Почему высоты держали так долго?</p>
+              </div>
+              <div className="expo-how-a">
+                <small>Штаб</small>
+                <p>Гребень видел всю пойму Одера.</p>
+                <em>Кривошеев, «Россия и СССР в войнах XX века»</em>
+              </div>
+              <div className="expo-how-move">
+                <span>Одер</span>
+                <span>Берлин</span>
+                <i />
+                <b />
+                <em>16 → 20 апреля</em>
+              </div>
+            </div>
+          )}
+        </div>
+        <div key={`c${beat}`} className="expo-how-copy">
+          <p className="expo-kicker">{cur.k}</p>
+          <h2>{cur.title}</h2>
+          <p>{cur.text}</p>
+        </div>
+      </div>
+      <ol className="expo-how-rail" aria-hidden="true">
+        {HOW.map((x, i) => (
+          <li key={x.k} data-on={i === beat || undefined}>{x.k}</li>
+        ))}
+      </ol>
       {foot}
     </section>
   );
@@ -185,47 +234,44 @@ export function MarshalPortrait({ id, on }: { id: keyof typeof MARSHAL_PLATE; on
   );
 }
 
-/** Экран «Полная версия»: четыре плашки, каждая открывает описание и демонстрацию. */
+/** Экран «Полная версия»: ролики по очереди крупно, внизу — переключатель. */
 export function FullVersion({ foot }: { foot?: ReactNode }) {
-  const [open, setOpen] = useState<string | null>(null);
-  const cur = APP_SHOTS.find((s) => s.file === open);
-  const clip = cur ? demoOf(cur.file) : undefined;
+  const [i, setI] = useState(0);
+  const video = useRef<HTMLVideoElement>(null);
+  const s = APP_SHOTS[i];
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    v.muted = true;
+    try { v.currentTime = 0; } catch { /* кадр ещё не готов */ }
+    const p = v.play?.();
+    void p?.catch(() => {});
+    const next = () => setI((n) => (n + 1) % APP_SHOTS.length);
+    v.addEventListener('ended', next);
+    const cap = window.setTimeout(next, 40000);
+    return () => { v.removeEventListener('ended', next); window.clearTimeout(cap); };
+  }, [i]);
   return (
     <section className="expo-board expo-full">
       <p className="expo-kicker">Основное приложение</p>
       <h1>Полная версия</h1>
-      <p className="expo-lead">Та же операция целиком: карта, штаб, моделирование и база знаний.</p>
-      <div className="expo-shots">
-        {APP_SHOTS.map((s) => (
-          <button key={s.file} type="button" className="expo-shot-card" onClick={(e) => { e.stopPropagation(); setOpen(s.file); }}>
-            <span className="expo-shot" role="img" aria-label={s.title}>
-              {demoOf(s.file)
-                ? <video src={demoOf(s.file)} poster={shot(s.file)} autoPlay muted loop playsInline />
-                : <img src={shot(s.file)} alt="" />}
-            </span>
-            <span className="expo-shot-cap">
-              {s.title}
-              <small>{s.text}</small>
-            </span>
+      <div className="expo-shot-stage" role="img" aria-label={s.title} onClick={(e) => e.stopPropagation()}>
+        {demoOf(s.file)
+          ? <video key={s.file} ref={video} src={demoOf(s.file)} poster={shot(s.file)} autoPlay muted playsInline />
+          : <img src={shot(s.file)} alt="" />}
+        <div className="expo-shot-cap">
+          {s.title}
+          <small>{s.body}</small>
+        </div>
+      </div>
+      <div className="expo-shot-rail" role="tablist" aria-label="Экраны полной версии">
+        {APP_SHOTS.map((x, n) => (
+          <button key={x.file} type="button" role="tab" aria-selected={n === i} className={n === i ? 'on' : ''} onClick={(e) => { e.stopPropagation(); setI(n); }}>
+            {x.title}
           </button>
         ))}
       </div>
       {foot}
-      {cur && (
-        <div className="expo-shot-sheet" role="dialog" aria-label={cur.title} onClick={(e) => e.stopPropagation()}>
-          <div>
-            <p className="expo-kicker">Полная версия</p>
-            <h2>{cur.title}</h2>
-            <p className="expo-lead">{cur.body}</p>
-            <button type="button" className="expo-secondary" onClick={() => setOpen(null)}>Закрыть</button>
-          </div>
-          <div className="expo-shot-play">
-            {clip
-              ? <video src={clip} autoPlay muted loop playsInline />
-              : <img src={shot(cur.file)} alt="" />}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
@@ -271,9 +317,41 @@ const FOCUS: Record<string, string> = {
   'su_1uf-3': 'Танковые армии у южных окраин. Рядом котёл 9-й армии, впереди Эльба.',
 };
 
+/** Ответ длиннее рамки медленно едет вверх и вниз, как барабан: читать можно не трогая экран. */
+function AnswerDrum({ text, live }: { text: string; live: boolean }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [over, setOver] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setOver(Math.max(0, el.scrollHeight - el.clientHeight));
+    measure();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, [text]);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || over < 12 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let y = 0;
+    let dir = 1;
+    let pause = 30;
+    const id = window.setInterval(() => {
+      if (pause > 0) { pause -= 1; return; }
+      y += dir;
+      if (y >= over) { y = over; dir = -1; pause = 36; }
+      else if (y <= 0) { y = 0; dir = 1; pause = 36; }
+      el.scrollTop = y;
+    }, 50);
+    return () => window.clearInterval(id);
+  }, [over, text]);
+  return <p ref={ref} className={`expo-drum${live ? ' live' : ''}`}>{text}</p>;
+}
+
 /** Подпись состояния голоса на панели штаба. */
 export function voiceLabel(ai: AiFrame): string {
   if (ai.ear === 'listen') return 'Слушаю';
+  if (ai.answer && ai.answer.source == null) return ai.answer.text ? 'Отвечаю' : 'Думаю';
   if (ai.thinking && !ai.answer?.text) return 'Думаю';
   if (ai.line || ai.ear === 'speak') return 'Отвечаю';
   return 'Молчит';
@@ -307,6 +385,14 @@ export function StaffBoard({
   const facts = (BRIEFING[front][5]?.facts ?? []).slice(0, 2);
   const sources = [...new Set(facts.map((f) => f.source))];
   const voice = voiceLabel(ai);
+  const [q, setQ] = useState('');
+  const live = !!ai.answer && ai.answer.source == null;
+  const ask = (text: string) => {
+    const next = text.trim();
+    if (!next) return;
+    setQ('');
+    send({ t: 'ask', q: next });
+  };
   return (
     <section className="expo-side expo-ai-screen expo-staff">
       <h2>Штаб ИИ</h2>
@@ -315,6 +401,28 @@ export function StaffBoard({
         <span className="expo-chip">{coreLine(model)}</span>
       </p>
       <p className="expo-lead">{FOCUS[`${front}-${n}`]}</p>
+      <form className="expo-ask" onSubmit={(e) => { e.preventDefault(); ask(q); }}>
+        <input
+          value={q}
+          aria-label="Свой вопрос штабу"
+          placeholder="Свой вопрос — ответ составит ИИ"
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <button type="submit" className="expo-primary">Спросить</button>
+      </form>
+      {(ai.thinking || ai.answer) && (
+        <div className={`expo-answer${live || ai.thinking ? ' live' : ''}`}>
+          <p className="expo-q">{ai.answer?.q}</p>
+          <AnswerDrum text={ai.answer?.text || ai.thinking || ''} live={live || !!ai.thinking} />
+        </div>
+      )}
+      <div className="expo-staff-q" role="group" aria-label="Вопросы штабу">
+        {QUESTIONS.map((item) => (
+          <button key={item} className="expo-secondary" onClick={() => ask(item)}>
+            {item}
+          </button>
+        ))}
+      </div>
       {model.view?.move && (
         <>
           <h3 className="expo-sum-h">Противник за ход</h3>
@@ -338,19 +446,6 @@ export function StaffBoard({
         Источники: {sources.join('; ')}. Ядро переигровки — положения армий, потери и события хода.
         {ai.answer?.source ? ` Ответ: ${SOURCE_LABEL[ai.answer.source]}.` : ''}
       </p>
-      <div className="expo-staff-q" role="group" aria-label="Вопросы штабу">
-        {QUESTIONS.map((q) => (
-          <button key={q} className="expo-secondary" onClick={() => send({ t: 'ask', q })}>
-            {q}
-          </button>
-        ))}
-      </div>
-      {ai.answer && (
-        <div className="expo-answer">
-          <p className="expo-q">{ai.answer.q}</p>
-          <p>{ai.answer.text || ai.thinking}</p>
-        </div>
-      )}
     </section>
   );
 }

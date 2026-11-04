@@ -10,6 +10,7 @@ PIECE_LEAD_S = 1.0  # синтез следующего куска — когд�
 PIECE_MAX_CHARS = 300  # кусок не длиннее (2–3 предложения)
 SHORT_CHARS = 30  # первая фраза короче — ждём следующую и синтезируем вместе
 SHORT_WAIT_S = 0.4  # но не дольше
+FIRST_CUT = 64  # первая фраза длиннее — звук начинается с этого куска, остаток синтезируется следом
 # тестовая фраза модели на шагах калибровки «эхо» и «перебивание»
 CALIB_PHRASE = ("Докладываю обстановку. Восьмая гвардейская армия ведёт бой за вторую полосу обороны у Зелова, "
                 "противник контратакует резервами из глубины.")
@@ -47,6 +48,14 @@ class Sentences:
             # конец предложения — знак и пробел после него (иначе «3.5» и «20.04» резались бы); перенос строки.
             # точка после 1–3 букв — сокращение («3-я гв. танковая», «47 А и»), фразу не рвём
             m = _sentence_break(self.buf)
+            # длинное первое предложение не ждём до точки: иначе озвучка молчит, пока синтезируется вся фраза
+            if m and self.first and m.end() > FIRST_CUT:
+                cut = self.buf.rfind(" ", 36, FIRST_CUT + 1)
+                if cut < 36:
+                    cut = FIRST_CUT
+                out.append(self.buf[:cut])
+                self.buf, self.first = self.buf[cut:].lstrip(), False
+                continue
             if not m and self.first and len(self.buf) > 50:
                 m = re.search(r",\s+", self.buf[30:])
                 if m:
@@ -54,6 +63,13 @@ class Sentences:
                     out.append(self.buf[:cut])
                     self.buf, self.first = self.buf[cut:], False
                     continue
+            if not m and self.first and len(self.buf) >= FIRST_CUT:
+                cut = self.buf.rfind(" ", 36, FIRST_CUT + 1)
+                if cut < 36:
+                    cut = FIRST_CUT
+                out.append(self.buf[:cut])
+                self.buf, self.first = self.buf[cut:].lstrip(), False
+                continue
             if not m:
                 break
             out.append(self.buf[:m.end()])

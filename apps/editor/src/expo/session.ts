@@ -237,7 +237,8 @@ export class ExpoSession {
 
   /** Сколько своих карточек перелома можно поставить взамен (их нет на экране). */
   private spareCount() {
-    return spares(this.bank, this.front, this.view.turn, this.view.cards.map((c) => c.id), this.extra).length;
+    const on = this.view.cards.map((c) => c.id);
+    return spares(this.bank, this.front, this.view.turn, on, this.extra).filter((c) => !this.shown.includes(c.id)).length;
   }
 
   /** Заменить карточку в слоте; false — заменить нечем (или историческая). */

@@ -178,6 +178,9 @@ pub async fn expo_set_guard(app: AppHandle, on: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// Оборвать голос заставки до того, как страница исчезнет: иначе уже поставленная фраза доигрывает без окна.
+fn hush(w: &WebviewWindow) { let _ = w.eval("window.__expoHush?.()"); }
+
 /// События окон: при охране закрытие отменяется, уничтоженное окно вида открывается снова. Главное окно уничтожено —
 /// окна видов закрываются (без режиссёра они — пустые рамки).
 pub fn on_window_event(w: &Window, ev: &WindowEvent) {
@@ -185,12 +188,18 @@ pub fn on_window_event(w: &Window, ev: &WindowEvent) {
     let st = app.state::<Expo>();
     if w.label() == "main" && matches!(ev, WindowEvent::Destroyed) {
         st.wanted.lock().unwrap().clear();
-        for (label, v) in app.webview_windows() { if label.starts_with(PREFIX) { let _ = v.destroy(); } }
+        for (label, v) in app.webview_windows() {
+            if label.starts_with(PREFIX) { hush(&v); let _ = v.destroy(); }
+        }
+        return;
+    }
+    if let WindowEvent::CloseRequested { api, .. } = ev {
+        if st.guard.load(Ordering::SeqCst) { api.prevent_close(); }
+        else if let Some(view) = app.get_webview_window(w.label()) { hush(&view); }
         return;
     }
     if !st.guard.load(Ordering::SeqCst) { return; }
     match ev {
-        WindowEvent::CloseRequested { api, .. } => api.prevent_close(),
         WindowEvent::Destroyed => {
             let label = w.label().to_string();
             let Some(monitor) = st.wanted.lock().unwrap().get(&label).cloned() else { return };
@@ -214,6 +223,7 @@ pub fn on_window_event(w: &Window, ev: &WindowEvent) {
 pub fn on_run_event(app: &AppHandle, ev: &RunEvent) {
     if let RunEvent::ExitRequested { api, .. } = ev {
         if app.state::<Expo>().guard.load(Ordering::SeqCst) { api.prevent_exit(); }
+        else { for (_, w) in app.webview_windows() { hush(&w); } }
     }
 }
 
