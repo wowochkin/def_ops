@@ -99,3 +99,41 @@ export function historyPaths(front: string, until?: string): Record<string, LL[]
   }
   return out;
 }
+
+const flat = (t: string) => t.toLowerCase().replace(/ё/g, 'е');
+
+/**
+ * Армии и пункты, названные во фразе разбора. «3-я и 4-я гв. танковые» — обе танковые;
+ * «танковые армии» без номера — танковые армии этого фронта. Пункт — из списка карты.
+ */
+export function spokenFocus(text: string, front: FrontId): { armies: string[]; places: LL[] } {
+  const t = flat(text);
+  const own = MAP.armies.filter((a) => a.front === front);
+  const ids = new Set<string>();
+  const take = (n: string, tank: boolean, guard: boolean, shock: boolean) => {
+    const hit = own.find((a) => {
+      const lab = flat(a.label);
+      if (!new RegExp(`^${n}\\s`).test(lab)) return false;
+      if (tank) return lab.includes('та');
+      if (shock) return lab.includes('уд');
+      if (guard) return lab.includes('гв') && !lab.includes('та');
+      return !lab.includes('гв') && !lab.includes('уд') && !lab.includes('та');
+    });
+    if (hit) ids.add(hit.id);
+  };
+  for (const m of t.matchAll(/(\d+)-я\s+и\s+(\d+)-я\s+гв\.?\s+танков\w*/g)) {
+    take(m[1], true, true, false);
+    take(m[2], true, true, false);
+  }
+  for (const m of t.matchAll(/(\d+)-я\s+(?:гв\.|гвардейск\w*)\s+танков\w*/g)) take(m[1], true, true, false);
+  for (const m of t.matchAll(/(\d+)-я\s+(?:гв\.|гвардейск\w*)\s+арми\w*/g)) take(m[1], false, true, false);
+  for (const m of t.matchAll(/(\d+)-я\s+ударн\w*/g)) take(m[1], false, false, true);
+  for (const m of t.matchAll(/(\d+)-я\s+арми\w*/g)) take(m[1], false, false, false);
+  if (!ids.size && /танков\w*\s+арми/.test(t)) for (const a of own) if (flat(a.label).includes('та')) ids.add(a.id);
+  const places = MAP.cities.filter((c) => t.includes(flat(c.name))).map((c) => c.at);
+  if (/эльб/.test(t)) {
+    const tor = MAP.cities.find((c) => c.name === 'Торгау');
+    if (tor && !places.some((p) => p[0] === tor.at[0] && p[1] === tor.at[1])) places.push(tor.at);
+  }
+  return { armies: [...ids], places };
+}

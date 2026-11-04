@@ -21,9 +21,9 @@ import { BRIEFING, briefFeatures } from './briefing';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
 import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
-import { bboxOf, dailyPaths, orderFeatures, pathFeatures, sectorShade } from './stage-doc';
+import { bboxOf, dailyPaths, focusMark, followHistory, frameOf, orderFeatures, pathFeatures, sectorShade, unitAt } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
-import { historyAt, historyPaths, mainPaths, MAP, type Arrow, type LL } from './map';
+import { historyAt, historyPaths, mainPaths, MAP, spokenFocus, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
 import { timeAt } from './session';
@@ -33,7 +33,7 @@ import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
 import { pictureByFile, picturesOf } from './pictures';
-import { EXCURSION } from './excursion';
+import { STAFF_PHOTO } from './excursion';
 import { BANK } from './bank';
 import { readRecord, recordLines } from './records';
 import './expo.css';
@@ -156,6 +156,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     const slot = main.querySelector<HTMLElement>('.expo-mapslot');
     if (!slot || !plan) {
       gis.style.visibility = 'hidden';
+      gis.style.width = '0';
+      gis.style.height = '0';
       return;
     }
     const m = main.getBoundingClientRect(), r = slot.getBoundingClientRect(), k = m.width / STAGE.width || 1;
@@ -184,7 +186,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
         </div>
         <header className="expo-header">
           <span>Штабные игры</span>
-          <PhaseTitle state={state} onStep={(step) => send({ t: 'step', step })} />
+          {controls ? <PhaseTitle state={state} onStep={(step) => send({ t: 'step', step })} /> : <span />}
           {single ? (
             <span className="expo-lenses" role="group" aria-label="Экраны стенда">
               {lensesFor(lens).map((x) => (
@@ -514,7 +516,7 @@ function Briefing({ front, point, steer, send, steps = true }: { front: FrontId;
   const cur = points[point];
   if (!cur) return null;
   const last = point + 1 >= points.length;
-  const pic = steps ? null : pictureByFile(EXCURSION[point]?.photo ?? '');
+  const pic = steps ? null : pictureByFile(STAFF_PHOTO[point] ?? '');
   return (
     <div className="expo-panel expo-brief">
       <p className="expo-brief-who">
@@ -740,8 +742,8 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
   const { head, deck } = forecastParts(final.forecast);
   const brief = operationDebrief(mv);
   const units = brief ? debriefSentences(brief.paragraphs) : [];
-  const found = spoken ? units.indexOf(spoken) : 0;
-  const at = found < 0 ? units.length - 1 : found;
+  const found = spoken ? units.indexOf(spoken) : -1;
+  const at = found;
   const rec = recordLines(readRecord());
   const other = fronts.find((f) => f !== mv.front);
   const linesRef = useRef<HTMLDivElement>(null);
@@ -759,7 +761,7 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
         </p>
       </header>
       <div className="expo-debrief-lines" ref={linesRef}>
-        {units.slice(0, at + 1).map((s, i) => (
+        {at >= 0 && units.slice(0, at + 1).map((s, i) => (
           <p key={s.slice(0, 48)} data-state={i === at ? 'now' : 'said'}>{s}</p>
         ))}
       </div>
@@ -1049,20 +1051,44 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const paths = dailyPaths(own.doc, ids, until);
     const hp = historyPaths(mv.front, until);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
-    const frame = beat.phase === 'turn' && beat.turn ? turnBbox(mv.front, beat.turn) : null;
+    const say = spoken ? spokenFocus(spoken, mv.front) : { armies: [] as string[], places: [] as LL[] };
     const pts = [...Object.values(paths), ...Object.values(history)].flat();
     const turn = beat.turn ? BANK.fronts[mv.front].turns.find((t) => t.n === beat.turn) : undefined;
-    const from = beat.phase === 'close' || !turn ? start : timeAt(start, turn.hour);
-    const run = beat.phase !== 'open' && from < until
-      ? { from, to: until, ms: beat.phase === 'close' ? 18000 : 10000, key: `result-move-${beat.phase}-${beat.turn ?? 0}-${until}` }
-      : null;
+    const last = mv.decisions.at(-1);
+    const lastTurn = last ? BANK.fronts[mv.front].turns.find((t) => t.n === last.n) : undefined;
+    const fromT = beat.phase === 'turn' && turn ? timeAt(start, turn.hour) : beat.phase === 'close' && lastTurn ? timeAt(start, lastTurn.hour) : start;
+    const endMs = Date.parse(`${until.slice(0, 16)}:00Z`);
+    const fromMs = Date.parse(`${fromT.slice(0, 16)}:00Z`);
+    const at = (p: number) => new Date(fromMs + (endMs - fromMs) * p).toISOString().slice(0, 16);
+    const [p0, p1] = beat.span;
+    const from = at(p0);
+    const toTime = at(p1);
+    const said = say.armies.flatMap((id) => {
+      const atArmy = unitAt(own.doc, id, toTime) ?? historyAt(toTime).find((a) => a.id === id)?.at;
+      return atArmy ? [{ id, at: atArmy }] : [];
+    });
+    const saidPts = [...said.map((x) => x.at), ...say.places];
+    const named = saidPts.length > 0;
+    const frame = named ? frameOf(saidPts) : beat.phase === 'turn' && beat.turn ? turnBbox(mv.front, beat.turn) : null;
+    const run = from < toTime ? { from, to: toTime, ms: 12000, key: `result-move-${beat.phase}-${beat.turn ?? 0}` } : null;
+    const sayKey = (spoken ?? '').replace(/\s+/g, ' ').trim().slice(0, 42);
     const camera = frame
-      ? { bbox: frame, key: `result-turn-${beat.turn}`, ms: 800 }
+      ? { bbox: frame, key: `result-${beat.phase}-${beat.turn ?? 'x'}-${said.map((x) => x.id).join('.')}-${say.places.length}-${sayKey}`, ms: 900 }
       : beat.phase === 'open'
-        ? { bbox: THEATRE, key: 'result-open', ms: 800 }
-        : { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: 'result-close', ms: 800 };
-    const extra = [...(frame ? [sectorShade(frame)] : []), ...pathFeatures(own.doc, paths, history, ZOOM)];
-    return { doc: own.doc, time: run ? null : until, run, camera, level: frame ? 'corps' : 'front', zones: own.zones, extra, fx: { front: [], smoke: beat.phase === 'close' ? [BERLIN] : [], bursts: [] } };
+        ? { bbox: THEATRE, key: `result-open-${sayKey}`, ms: 800 }
+        : { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-close-${sayKey}`, ms: 800 };
+    const shownIds = named ? said.map((x) => x.id) : ids;
+    const extra = [
+      ...(frame && !named ? [sectorShade(frame)] : []),
+      ...pathFeatures(
+        own.doc,
+        Object.fromEntries(Object.entries(paths).filter(([id]) => shownIds.includes(id))),
+        Object.fromEntries(Object.entries(history).filter(([id]) => shownIds.includes(id))),
+        ZOOM,
+      ),
+      ...said.map((x) => focusMark(x.at, x.id)),
+    ];
+    return { doc: followHistory(own.doc, mv.front), time: run ? null : beat.span[1] === 0 ? start : toTime, run, camera, level: 'front', zones: own.zones, extra, fx: { front: [], smoke: beat.phase === 'close' && !named ? [BERLIN] : [], bursts: [] } };
   }
   return null;
 }

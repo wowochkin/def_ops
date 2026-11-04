@@ -7,7 +7,7 @@
  */
 import { createFeature, DEFAULT_SIZING, type AreaFeature, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
 import { agentsHistory, agentsToRun, runToDocument, snapshotZones, type AgentHistory, type AgentTrace, type History, type SimContext, type ZoneGrid } from '@def-ops/sim';
-import type { Arrow } from './map';
+import { MAP, type Arrow } from './map';
 
 /** Слои карты стенда (как у «Командования»); историческая линия фронта и положения армий по истории — скрыты. */
 export const STAGE_LAYERS = [
@@ -82,6 +82,47 @@ function zonesOf(ctx: SimContext, sn: ReturnType<typeof agentsToRun>['run']['sna
   }
 }
 
+const moved = (pts: LngLat[]) => {
+  if (pts.length < 2) return 0;
+  let m = 0;
+  for (let i = 1; i < pts.length; i++) m = Math.max(m, Math.hypot(pts[i][0] - pts[0][0], pts[i][1] - pts[0][1]));
+  return m;
+};
+
+/**
+ * Армия, которую расчёт сеанса так и не сдвинул (резерв без дивизий в следе), на итоге идёт по историческому пути.
+ * Иначе знак («3 А») стоит на месте ввода, пока командующий рассказывает о передвижении.
+ */
+export function followHistory(doc: MapDocument, front: string): MapDocument {
+  const armies = MAP.armies.filter((a) => a.front === front);
+  const features = doc.features.map((f) => {
+    if (f.kind !== 'symbol') return f;
+    const text = `${f.name ?? ''} ${f.style.text ?? ''}`.toLowerCase().replace(/ё/g, 'е');
+    const army = armies.find((a) => f.ref === a.id || sameArmy(text, a.label));
+    if (!army) return f;
+    const hist = army.track.flatMap((p, i) => (p ? [{ t: MAP.days[i], at: p as LngLat }] : []));
+    if (moved(hist.map((x) => x.at)) < 0.08) return f;
+    const own = (f.keyframes ?? []).flatMap((k) => (k.at ? [k.at as LngLat] : []));
+    if (moved(own.length ? own : [f.at]) >= 0.08) return f;
+    return { ...f, at: hist[hist.length - 1].at, keyframes: hist };
+  });
+  return { ...doc, features };
+}
+
+/** Подпись знака — та же армия, что короткая подпись карты («3 А», «3 уд. А», «3 гв. ТА»). */
+function sameArmy(text: string, label: string): boolean {
+  const lab = label.toLowerCase().replace(/ё/g, 'е');
+  const num = /^(\d+)/.exec(lab)?.[1];
+  if (!num || !new RegExp(`(^|\\D)${num}(\\D|$)`).test(text)) return false;
+  const shock = lab.includes('уд');
+  const guard = lab.includes('гв');
+  const tank = lab.includes('та');
+  if (shock !== /удар/.test(text)) return false;
+  if (guard !== /гвард/.test(text)) return false;
+  if (tank !== /танк/.test(text)) return false;
+  return /арм/.test(text) || lab.replace(/\s/g, '') === text.replace(/\s/g, '');
+}
+
 /** Положение армии (знака уровня фронта) по ключевым кадрам на момент `t` (ISO); null — знака нет. */
 function armyAt(f: SymbolFeature, t: string): LngLat | null {
   const k = f.keyframes;
@@ -148,6 +189,32 @@ export function fitView(b: [number, number, number, number], w: number, h: numbe
   const cy = (y(b[1]) + y(b[3])) / 2;
   const lat = (Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))) * 180) / Math.PI;
   return { center: [(b[0] + b[2]) / 2, lat], zoom: Math.min(11, zoom), bearing: 0 };
+}
+
+/** Рамка точек с запасом, чтобы один знак не прилипал к краю и не занимал весь экран. */
+export function frameOf(pts: LngLat[], minDeg = 0.42): [number, number, number, number] {
+  const b = bboxOf(pts);
+  const cx = (b[0] + b[2]) / 2;
+  const cy = (b[1] + b[3]) / 2;
+  const hx = Math.max(minDeg, (b[2] - b[0]) / 2 + 0.18);
+  const hy = Math.max(minDeg, (b[3] - b[1]) / 2 + 0.18);
+  return [cx - hx, cy - hy, cx + hx, cy + hy];
+}
+
+/** Положение знака армии на момент (предпочтительно знак уровня фронта). */
+export function unitAt(doc: MapDocument, id: string, iso: string): LngLat | null {
+  const hits = doc.features.filter((f): f is SymbolFeature => f.kind === 'symbol' && f.ref === id);
+  const f = hits.find((x) => x.layerId === 'lvl-op-units') ?? hits[0];
+  return f ? armyAt(f, iso) : null;
+}
+
+/** Кольцо под знаком армии, о которой сейчас речь. */
+export function focusMark(at: LngLat, id: string): Feature {
+  const d = 0.07;
+  const area = createFeature('area', 'atlas.encircled', { points: [[at[0] - d, at[1] - d], [at[0] + d, at[1] - d], [at[0] + d, at[1] + d], [at[0] - d, at[1] + d]], layerId: ORDERS_LAYER }, 1, 'own') as AreaFeature;
+  area.id = `say-${id}`;
+  area.style = { ...area.style, fill: '#e2b657', fillOpacity: 0.55, hatch: null, cross: null, edge: [{ offset: 0, width: 3.2, color: '#f4e2a8', opacity: 1 }] };
+  return area;
 }
 
 /** Рамка точек [запад, юг, восток, север]. */

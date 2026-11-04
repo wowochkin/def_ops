@@ -3,12 +3,18 @@ export function lockdown(
   doc: Document,
   opts: { operatorCombo: (e: KeyboardEvent) => boolean; allowKey?: (e: KeyboardEvent) => boolean },
 ): () => void {
+  const field = (t: EventTarget | null) => t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement;
   const stop = (e: Event) => {
+    if (e.type === 'selectstart' && field(e.target)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
   };
   const key = (e: KeyboardEvent) => {
     if (opts.operatorCombo(e)) return;
+    if (field(e.target)) {
+      const edit = e.metaKey || e.ctrlKey ? /^[acvxz]$/i.test(e.key) : !e.altKey && !/^F\d+$/.test(e.key);
+      if (edit) return;
+    }
     if (e.metaKey || e.ctrlKey || e.altKey || /^F\d+$/.test(e.key)) return stop(e);
     if (opts.allowKey?.(e)) return;
     stop(e);

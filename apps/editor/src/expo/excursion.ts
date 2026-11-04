@@ -69,3 +69,13 @@ export const EXCURSION: ExcursionBeat[] = [
     photo: 'elbe-day-1945.jpg',
   },
 ];
+
+/** Кадры экрана штаба: не те, что в тот же пункт показывает справка. */
+export const STAFF_PHOTO = [
+  'seelow-trench.jpg',
+  'seelow-searchlight.jpg',
+  'neisse-smoke.jpg',
+  'spree-ford.jpg',
+  'city-tanks.jpg',
+  'reichstag-flag.jpg',
+];

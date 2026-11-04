@@ -589,14 +589,8 @@ export class VoiceClient {
     let a: AudioChunk;
     try { a = parseAudio(buf); } catch { return; }
     if (!a.pcm.length || (a.id !== 0 && this.cancelled.has(a.id)) || (a.id === 0 && !this.calibSound)) return;
-    // фразу копим до конца синтеза; играем, когда договорила предыдущая
-    if (a.id !== 0 && !this.phrases.get(a.id)?.done) {
-      const q = this.held.get(a.id) ?? [];
-      q.push(a);
-      this.held.set(a.id, q);
-      if (!this.phrases.has(a.id)) this.phrases.set(a.id, { done: false });
-      return;
-    }
+    if (!this.phrases.has(a.id) && a.id !== 0) this.phrases.set(a.id, { done: false });
+    // чужая фраза ещё звучит — этот кусок ждёт своей очереди; иначе играем сразу, не дожидаясь конца синтеза
     if (a.id !== 0 && this.sources.some((x) => x.id !== a.id)) {
       const q = this.buffered.get(a.id) ?? [];
       q.push(a);

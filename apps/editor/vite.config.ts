@@ -37,7 +37,22 @@ function expoVoice(): Plugin {
   };
 }
 
-export default defineConfig({
+/** Живой локальный сервер модели: Bionic часто на 1235, LM Studio — на 1234. */
+async function llmOrigin(): Promise<string> {
+  const env = process.env.DEFOPS_LLM_URL;
+  if (env) return new URL(env).origin;
+  for (const port of [1235, 1234]) {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/v1/models`, { signal: AbortSignal.timeout(800) });
+      if (r.ok) return `http://127.0.0.1:${port}`;
+    } catch { /* следующий порт */ }
+  }
+  return 'http://127.0.0.1:1234';
+}
+
+export default defineConfig(async () => {
+  const llm = await llmOrigin();
+  return {
   plugins: [react(), expoVoice()],
   define: { __MODEL_STAMP__: JSON.stringify(modelStamp) },
   server: {
@@ -46,8 +61,8 @@ export default defineConfig({
     proxy: {
       // API платформы — через шлюз (npm run dev:services)
       '/api': { target: process.env.GATEWAY_URL || 'http://localhost:8080', changeOrigin: true },
-      // локальная модель штаба (LM Studio): /llm/v1/… → http://localhost:1234/v1/… — браузеру не нужен CORS
-      '/llm': { target: new URL(process.env.DEFOPS_LLM_URL || 'http://localhost:1234/v1').origin, changeOrigin: true, rewrite: (p) => p.replace(/^\/llm/, '') },
+      // /llm/v1/… → живой локальный сервер модели — браузеру не нужен CORS
+      '/llm': { target: llm, changeOrigin: true, rewrite: (p) => p.replace(/^\/llm/, '') },
     },
   },
   // MapLibre 6 грузит воркер по относительному пути — пребандлинг Vite его ломает
@@ -64,4 +79,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

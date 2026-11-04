@@ -8,7 +8,7 @@
  * Кадр ИИ (что звучит, ответ, мысль) уходит в `onFrame` и рассылается окнам.
  */
 import { answer, comment, type Ask, type ChoiceKind, type Said } from './ai';
-import { debriefSentences } from './debrief';
+import { commanderVoice, debriefSentences } from './debrief';
 import type { DirectorEvent, Effect } from './director';
 import { LINES, pick, pickFilled, type Filled, type Lines, type Vars } from './lines';
 import { norm } from '../voice/fuzzy';
@@ -75,21 +75,22 @@ export function aiRunner(d: AiRunnerDeps) {
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
   const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs' | 'replace'> = {}) =>
     d.queue.push({ text, priority, source, ...more });
-  const here = () => d.queue.sceneNow() ?? undefined;
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
 
   const ask = async (q: string) => {
     const g = ++gen;
     const thinking = pick(lines.thinking) ?? 'Думаю…';
     set({ answer: { q, text: '', source: null }, thinking: d.ask() ? thinking : null });
-    const scene = here();
     const f = d.facts();
-    const a = await answer(d.ask(), q, f.text, d.answerMs ?? 8000, lines);
+    const a = await answer(d.ask(), q, f.text, d.answerMs ?? 90_000, lines, (full) => {
+      if (g !== gen) return;
+      set({ answer: { q, text: full, source: null }, thinking: null });
+    });
     if (g !== gen) return;
     tally(a);
     set({ answer: { q, text: a.text, source: a.source }, thinking: null });
-    // составленное ИИ сейчас — живым голосом; не выйдет — звучит готовый ответ из предзаписи
-    say(a.text, 'action', a.source, { scene, ...(a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {}) });
+    // без сцены: пока модель думает, шаг сеанса часто уже сменился, и фраза ушедшего шага иначе выбрасывается
+    say(a.text, 'action', a.source, a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {});
   };
 
   return {
@@ -112,11 +113,9 @@ export function aiRunner(d: AiRunnerDeps) {
           const f = pickFilled(lines.say.result, d.facts().vars, Math.random, d.voiced);
           const sentences = debriefSentences(brief.paragraphs);
           sentences.forEach((text, i) => {
-            const last = i === sentences.length - 1;
             say(text, e.priority, 'now', {
               voice: brief.voice,
               ...(e.scene ? { scene: e.scene } : {}),
-              ...(!last ? { gapMs: 800 } : {}),
               ...(i === 0 && f ? { fallback: { text: f.text, parts: f.parts } } : {}),
             });
           });
@@ -132,9 +131,6 @@ export function aiRunner(d: AiRunnerDeps) {
         d.queue.clear();
         frame = NO_AI;
         d.onFrame(frame);
-      } else if (e.e === 'deal') {
-        gen++;
-        set({ answer: null, thinking: null });
       } else if (e.e === 'ask') {
         void ask(e.q);
       } else if (e.e === 'listen') {
@@ -155,13 +151,15 @@ export function aiRunner(d: AiRunnerDeps) {
     /** После решения перелома: комментарий выбора по фактам хода. */
     async decided(kind: ChoiceKind) {
       const g = gen;
-      const scene = here();
       const f = d.facts();
       const c = await comment(d.ask(), kind, f.text, f.vars, d.commentMs ?? 12000, lines, d.voiced);
       if (g !== gen || !c) return;
       tally(c);
       const fallback = c.source === 'now' ? await comment(null, kind, '', f.vars, 0, lines, d.voiced) : null;
-      say(c.text, 'action', c.source, { parts: c.parts, scene, ...(fallback ? { fallback } : {}) });
+      // заготовка уже в записи и звучит сразу; живой комментарий — голосом командующего, не диктора
+      const marshal = typeof f.vars.marshal === 'string' ? f.vars.marshal : undefined;
+      const voice = c.source === 'now' ? commanderVoice(marshal) : undefined;
+      say(c.text, 'action', c.source, { parts: c.parts, ...(voice ? { voice } : {}), ...(fallback ? { fallback } : {}) });
     },
     /** Ответ на вопрос мимо режиссёра (для проверок). */
     ask,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attractLoopDue, voiceQueue, type Line, type Speaker } from '../src/expo/voice-queue';
+import { attractLoopDue, attractShown, voiceQueue, type Line, type Speaker } from '../src/expo/voice-queue';
 
 function fakeSpeaker() {
   const said: string[] = [];
@@ -91,7 +91,7 @@ describe('очередь голоса', () => {
     expect(said).toEqual(['a', 'b']);
   });
 
-  it('фраза с голосом начинает синтез следующей, пока сама ещё звучит', async () => {
+  it('следующая фраза ждёт, пока доиграет эта', async () => {
     const said: string[] = [];
     let releaseSynth = () => {};
     const pending: (() => void)[] = [];
@@ -113,10 +113,39 @@ describe('очередь голоса', () => {
     expect(said).toEqual(['первая']);
     releaseSynth();
     await new Promise((r) => setTimeout(r, 0));
+    // синтез второй уже идёт, пока первая ещё звучит
     expect(said).toEqual(['первая', 'вторая']);
+    expect(q.current()?.text).toBe('первая');
     pending[0]?.();
     await new Promise((r) => setTimeout(r, 0));
     expect(q.current()?.text).toBe('вторая');
+  });
+
+  it('доклад следующего шага не перебивает комментарий, пока тот звучит', async () => {
+    const said: string[] = [];
+    let releaseSynth = () => {};
+    const pending: (() => void)[] = [];
+    const q = voiceQueue({
+      speak(text) {
+        said.push(text);
+        let finish = () => {};
+        let synth = () => {};
+        if (text === 'комментарий') releaseSynth = () => synth();
+        const done = new Promise<void>((r) => (finish = r));
+        pending.push(finish);
+        return { done, stop() { finish(); }, synth: new Promise<void>((r) => (synth = r)) };
+      },
+    });
+    q.scene('turn-2-scroll');
+    q.push({ text: 'комментарий', priority: 'action', source: 'now' });
+    q.scene('turn-3-explain');
+    q.push({ text: 'доклад обстановки', priority: 'scene', source: 'prepared', scene: 'turn-3-explain' });
+    releaseSynth();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(said).toEqual(['комментарий']);
+    pending[0]?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(said).toEqual(['комментарий', 'доклад обстановки']);
   });
 
   it('смена выбора обрывает фразу этой сцены и сразу говорит новую', () => {
@@ -146,5 +175,10 @@ describe('круг фраз на заставке', () => {
   it('выключен или голос занят — молчит', () => {
     expect(attractLoopDue({ now: 99_000, quietSince: 0, pauseMs, on: false, busy: false })).toBe(false);
     expect(attractLoopDue({ now: 99_000, quietSince: 0, pauseMs, on: true, busy: true })).toBe(false);
+  });
+  it('скрытое или неактивное окно круг не продолжает', () => {
+    expect(attractShown({ hidden: false, focused: true })).toBe(true);
+    expect(attractShown({ hidden: true, focused: true })).toBe(false);
+    expect(attractShown({ hidden: false, focused: false })).toBe(false);
   });
 });

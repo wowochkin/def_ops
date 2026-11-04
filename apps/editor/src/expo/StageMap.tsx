@@ -125,7 +125,7 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
     const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => apply(false));
     ro?.observe(engine.getContainer());
     return () => { alive = false; ro?.disconnect(); };
-  }, [engine, camera?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [engine, camera?.key, camera?.bbox?.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!shown) return null;
   return (
     <div className="expo-stage-map">

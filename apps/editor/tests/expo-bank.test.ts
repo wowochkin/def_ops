@@ -66,9 +66,9 @@ describe('банк карточек', () => {
     expect(shown).not.toContain(r);
     expect(turnCards(BANK, 'su_1uf', 1).map((c) => c.id)).toContain(r);
     expect(replacement(BANK, shown, 'uf1-hist')).toBeNull();
-    // всё уже показано — берётся показанная раньше, но не на экране; на экране все — заменить нечем
+    // всё уже показано — повторять нечем, даже если карточка ушла с экрана
     const all = turnCards(BANK, 'su_1uf', 1).map((c) => c.id);
-    expect(shown).not.toContain(replacement(BANK, all, own, seq(3), shown));
+    expect(replacement(BANK, all, own, seq(3), shown)).toBeNull();
     expect(replacement(BANK, all, own, seq(3), all)).toBeNull();
   });
 });

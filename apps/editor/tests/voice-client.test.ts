@@ -45,7 +45,7 @@ describe('VoiceClient', () => {
       const v = new DataView(buf);
       v.setUint8(0, 1); v.setUint32(1, 7, true); v.setUint32(5, 24000, true); v.setInt16(9, 1000, true); v.setInt16(11, -1000, true);
       x.onAudio(buf);
-      expect(started.length).toBe(0); // кусок ждёт конца синтеза
+      expect(started.length).toBe(1); // первый кусок звучит сразу, не дожидаясь конца синтеза
       x.phraseDone(7);
       expect(started.length).toBe(1);
       expect(x.ctx).not.toBeNull();
