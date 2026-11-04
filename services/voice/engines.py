@@ -21,14 +21,26 @@ class Engine:
     kwargs: dict = field(default_factory=dict)
     license: str = ""
     commercial: bool = True
+    # Образец клонирования вместо роли начальника штаба. У моделей с ударениями проверен диапазон 8–14 с.
+    clone_voice: str | None = None
 
 
 _QWEN = {"lang_code": "russian", "streaming_interval": 0.32}
+# Ниже карточки модели (0,9): клон сильнее держится образца и меньше гуляет от фразы к фразе.
+_QWEN_STRESS = {**_QWEN, "temperature": 0.2}
 
 ENGINES: tuple[Engine, ...] = (
     Engine("qwen3-1.7b", "Qwen3-TTS 1.7B", "по умолчанию: стабильный; занимает около 4 ГБ памяти; ударения иногда ошибочны",
            ("mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"),
            eos_patch=True, kwargs=_QWEN, license="Apache-2.0"),
+    Engine("qwen3-ru-stress", "Qwen3-TTS 1.7B, ударения",
+           "ставит ударение на гласную со знаком ударения в тексте, в том числе против привычного; около 3 ГБ",
+           ("3Xj90Ibl4U/qwen3-tts-12hz-1.7b-ru-stress-cf-mlx8",),
+           eos_patch=True, kwargs=_QWEN_STRESS, license="Apache-2.0", clone_voice="chief-10s", stream=False),
+    Engine("qwen3-ru-stress-4bit", "Qwen3-TTS 1.7B, ударения, 4 бита",
+           "то же ударение по знаку, веса легче, около 2,3 ГБ; точность 4-битной сборки на слух стоит проверить",
+           ("3Xj90Ibl4U/qwen3-tts-12hz-1.7b-ru-stress-cf-mlx4",),
+           eos_patch=True, kwargs=_QWEN_STRESS, license="Apache-2.0", clone_voice="chief-10s", stream=False),
     Engine("qwen3-0.6b", "Qwen3-TTS 0.6B", "быстрее и легче (около 1,5 ГБ), голос беднее; чаще ошибается в ударениях",
            ("mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16", "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-8bit"),
            eos_patch=True, kwargs=_QWEN, license="Apache-2.0"),

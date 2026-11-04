@@ -144,9 +144,8 @@ const SAY_ON_ENTER: Record<string, string | undefined> = { welcome: 'welcome', e
 
 /** Предупреждение до конца таймера, мс. */
 const WARN_BEFORE = 10_000;
-/** Таймер выключен: через столько голос предлагает решить за посетителя, ещё через столько — выбор ИИ, мс. */
-const OFFER_AFTER = 30_000;
-const AI_PICK_AFTER = 60_000;
+/** Таймер выключен: через столько без выбора — промедление, как по истечении таймера, мс. */
+const DELAY_AFTER = 60_000;
 
 export function initialState(now: number): DirectorState {
   return {
@@ -202,29 +201,23 @@ function fresh(s: DirectorState, fx: Effect[]): DirectorState {
 const afterScroll = (n: TurnN): Phase => (n < 3 ? turnPhase((n + 1) as TurnN) : { kind: 'result' });
 
 /**
- * С какого момента считается бездействие: только в фазах, где режиссёр ждёт посетителя (welcome, выбор, итог), —
- * от последнего ввода или от входа в фазу, что позже. Бриф, пояснение и прокрутка идут сами и бездействие не копят.
- * Таймер включён: в выборе бездействия нет. Таймер выключен: в выборе — не раньше выбора ИИ (оболочка ответит на aiPick событием choose).
+ * С какого момента считается бездействие: только где режиссёр ждёт посетителя (выбор фронта, итог) —
+ * от последнего ввода или от входа в фазу, что позже. Выбор карточки кончается промедлением и бездействие не копит.
  */
-function idleStart(s: DirectorState, cfg: ExpoSettings): number | null {
+function idleStart(s: DirectorState): number | null {
   const p = s.phase;
-  const waiting = p.kind === 'welcome' || p.kind === 'result' || (p.kind === 'turn' && p.step === 'choose');
-  if (!waiting) return null;
-  let from = Math.max(s.lastInput, s.phaseStart);
-  // Таймер включён: выбор всегда кончается промедлением на сроке, даже если срок дольше бездействия.
-  if (p.kind === 'turn' && cfg.timer.on) return null;
-  if (p.kind === 'turn' && !cfg.timer.on) from = Math.max(from, s.phaseStart + AI_PICK_AFTER);
-  return from;
+  if (p.kind !== 'welcome' && p.kind !== 'result') return null;
+  return Math.max(s.lastInput, s.phaseStart);
 }
 
 type Due = { at: number; apply: (s: DirectorState) => DirectorState };
 
 /** Ближайшее по времени событие часов (без учёта того, наступило ли оно). */
-function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: number, aiFired: { v: boolean }): Due | null {
+function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null {
   const cands: Due[] = [];
   const p = s.phase;
   const t0 = s.phaseStart;
-  const idleFrom = idleStart(s, cfg);
+  const idleFrom = idleStart(s);
   if (idleFrom !== null && p.kind !== 'result') {
     const at = idleFrom + cfg.idleSeconds * 1000;
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
@@ -260,10 +253,14 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
       } });
     }
     if (p.step === 'choose' && p.deadline === null && p.choice === null) {
-      if (!p.offered) cands.push({ at: t0 + OFFER_AFTER, apply: (x) => { fx.push({ e: 'say', key: 'offer-decide', priority: 'timer', scene: sceneKey(x) }); return { ...x, phase: { ...p, offered: true } }; } });
-      const aiAt = t0 + AI_PICK_AFTER;
-      // Выбор ИИ — один раз: в момент, когда часы переходят отметку (выбор выставит последующий choose от оболочки).
-      if (!aiFired.v && aiAt > prevNow) cands.push({ at: aiAt, apply: (x) => { aiFired.v = true; fx.push({ e: 'say', key: 'ai-pick', priority: 'scene' }, { e: 'aiPick', n: p.n }); return x; } });
+      const at = t0 + DELAY_AFTER;
+      cands.push({ at, apply: (x) => {
+        if (x.phase.kind !== 'turn' || x.phase.step !== 'choose' || x.phase.choice !== null) return x;
+        fx.push({ e: 'decide', n: x.phase.n, choice: 'delay' });
+        const y = enter(x, { ...x.phase, step: 'scroll', choice: 'delay' }, at, cfg, fx);
+        fx.push({ e: 'say', key: 'delay', priority: 'scene', scene: sceneKey(y) });
+        return y;
+      } });
     }
   }
   if (!cands.length) return null;
@@ -274,11 +271,9 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[], prevNow: num
 function advance(s: DirectorState, now: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
   const target = Math.max(now, s.now);
   if (s.paused) return { ...s, now: target };
-  const prevNow = s.now;
-  const aiFired = { v: false };
   let cur = s;
   for (let guard = 0; guard < 64; guard++) {
-    const due = nextDue(cur, cfg, fx, prevNow, aiFired);
+    const due = nextDue(cur, cfg, fx);
     if (!due || due.at > target) break;
     cur = due.apply(cur);
   }

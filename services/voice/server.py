@@ -28,7 +28,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import aec
 from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
 from engines import EngineStore, describe as engines_list
-from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, pause_after, whole_pieces
+from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, lengthen_sentence_pauses, pause_after, whole_pieces
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
 HERE = Path(__file__).resolve().parent
@@ -153,7 +153,13 @@ class Service:
         return {"state": self.state, **({"error": self.error} if self.error else {})}
 
     def ref_for(self, role: str) -> tuple[Path, str] | None:
-        """Образец роли; пропал — образец по умолчанию; нет и его — None."""
+        """Образец роли; пропал — образец по умолчанию; нет и его — None.
+        Модель с ударениями для начальника штаба берёт образец 11 с: длинная склейка сбивает тембр."""
+        if role == "chief" and self.models.engine.clone_voice:
+            try:
+                return self.store.ref(self.models.engine.clone_voice)
+            except KeyError:
+                pass
         for vid in (self.store.roles().get(role), DEFAULT_VOICE):
             try:
                 return self.store.ref(vid)
@@ -513,11 +519,30 @@ class Session:
             r = self._render_for(job)
             # заготовлена — звук готов (или готовится заранее), синтеза здесь нет; заготовка не дала звука вовсе —
             # фраза синтезируется как обычно, оборвалась на середине — сказанное не повторяется
+            played = False
             if r is not None and (await self._play_render(job, r) or r.error is None):
                 if r.error is not None:
                     await self.send(type="error", text=f"синтез: {r.error}")
                 job.planner.pending.clear()
-            while True:
+                played = True
+            # голос командующего пришёл целиком: один синтез на весь кусок, иначе тембр берётся заново на каждом предложении
+            whole = (job.whole or "").strip()
+            ref_path = str(job.ref[0]) if job.ref else ""
+            if (not played and self.m.engine.clone_voice and whole and job.ref
+                    and self.m.engine.clone_voice not in Path(ref_path).parts):
+                self._note_said(job, whole)
+                try:
+                    audio = await self.loop.run_in_executor(
+                        self.m.mlx, lambda t=whole: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(t, job.ref)]))
+                    audio = lengthen_sentence_pauses(np.asarray(audio, np.float32), sr, whole)
+                    audio = fade_tail(audio, sr, self.svc.args.tail_fade_ms)
+                    if not job.preview:
+                        job.said = (job.said + " " + whole).strip()
+                    await self.send_audio(job, audio)
+                except Exception as e:  # noqa: BLE001 — сбой синтеза — в окно, фраза кончается
+                    await self.send(type="error", text=f"синтез: {e}")
+                played = True
+            while not played:
                 piece = job.planner.next_piece(time.perf_counter(), self.play_until)
                 if piece is None:
                     if job.planner.done:
@@ -648,12 +673,16 @@ class Session:
         sr = self.m.sample_rate
         try:
             parts, gap = [], 0.0
-            for piece in whole_pieces(text):
+            # клон по образцу на каждом куске заново берёт тембр и запинается на стыке; фразу целиком
+            pieces = [text] if self.m.engine.clone_voice else whole_pieces(text)
+            for piece in pieces:
                 a = await self.loop.run_in_executor(
                     self.m.mlx, lambda p=piece: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(p, ref)]))
                 parts += [np.zeros(int(gap * sr), np.float32), fade_tail(a.astype(np.float32), sr, self.svc.args.tail_fade_ms)]
                 gap = pause_after(piece)
             audio = np.concatenate(parts) if parts else np.zeros(0, np.float32)
+            if self.m.engine.clone_voice and len(audio):
+                audio = lengthen_sentence_pauses(audio, sr, text)
             path = Path(self.svc.args.data) / "render" / f"{rid}.wav"
             path.parent.mkdir(parents=True, exist_ok=True)
             write_wav(path, audio, sr)

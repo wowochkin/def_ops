@@ -74,7 +74,7 @@ export interface StageMapProps {
   time: string | null;
   run?: TimeRun | null;
   /** Кадр камеры: рамка и ключ (новый ключ — пролёт к рамке). */
-  camera: { bbox: Bbox; key: string; ms?: number } | null;
+  camera: { bbox: Bbox; key: string; ms?: number; pad?: number } | null;
   /** Знаки поверх: стрелки приказа, пути на итоге. */
   extra?: Feature[];
   /** Вспышки артиллерии и дым поверх карты. */
@@ -116,7 +116,7 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
       const { width, height } = engine.size();
       if (!width || !height) return;
       engine.setPanEnabled(false);
-      const v = fitView(camera.bbox, width, height);
+      const v = fitView(camera.bbox, width, height, camera.pad ?? 0.08);
       const d = reducedMotion() ? 0 : camera.ms ?? 2400;
       if (fly && d && engine.flyTo) engine.flyTo(v, d);
       else engine.setView(v);

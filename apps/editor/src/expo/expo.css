@@ -727,11 +727,11 @@ html.expo-active,
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 .expo-cards:has(.expo-confirm) {
-  grid-template-rows: repeat(3, 1fr) auto;
+  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
 }
 .expo-confirm {
   display: grid;
@@ -748,12 +748,13 @@ html.expo-active,
   font: 32px / 1.2 var(--expo-serif);
 }
 .expo .expo-confirm button {
-  min-height: 84px;
+  min-height: 64px;
 }
 .expo-card {
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 150px;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  grid-template-rows: minmax(0, 1fr);
   border: 2px solid var(--expo-line);
   border-radius: 8px;
   background: var(--expo-panel);
@@ -764,15 +765,18 @@ html.expo-active,
   border-color: var(--expo-gold);
 }
 .expo .expo-card-main.expo-card-nophoto {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 .expo .expo-card-main {
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: 176px 1fr;
+  grid-template-columns: 176px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 14px;
   align-items: stretch;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -877,22 +881,27 @@ html.expo-active,
 .expo-card-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  line-height: 1.2;
+  gap: 2px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  font-size: 34px;
+  line-height: 1.15;
 }
 .expo-card-body strong {
-  font: normal 34px / 1.1 var(--expo-serif);
-  margin-bottom: 2px;
+  font: normal 1em / 1.12 var(--expo-serif);
+  margin-bottom: 0;
 }
 .expo-card-body strong .expo-card-n {
-  font-size: 34px;
+  font-size: 1em;
   margin-right: 6px;
 }
-.expo-fact {
-  margin-top: 2px;
+.expo-card-body .expo-fact {
+  margin: 0;
+  font-size: 1em;
 }
 .expo-fact b {
-  font: 40px / 1 var(--expo-mono);
+  font: 1.05em / 1 var(--expo-mono);
   color: var(--expo-gold);
   margin-right: 6px;
 }
@@ -911,6 +920,7 @@ html.expo-active,
 }
 .expo .expo-card-actions button {
   flex: 1;
+  min-height: 0;
   padding: 8px 10px;
   border: 0;
   border-radius: 0;

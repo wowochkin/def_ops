@@ -213,7 +213,9 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
       void said.synthDone.then(markSynth, markSynth);
       return said.synthDone;
     });
-    const timer = setTimeout(() => {
+    // Разбор — голос маршала, строка за строкой. Четыре секунды годны ответу с готовой заменой.
+    // Фразу с образцом нельзя подменять молчанием, пока синтез предыдущей ещё занимает очередь.
+    const timer = line.voice ? undefined : setTimeout(() => {
       if (stopped || said) return;
       stopped = true; // не успел — замена; синтез, если ещё встанет в очередь, не начнётся
       markSynth();
@@ -230,10 +232,10 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
       }
     });
     return {
-      done: done.finally(() => clearTimeout(timer)),
+      done: done.finally(() => { if (timer) clearTimeout(timer); }),
       stop: () => {
         stopped = true;
-        clearTimeout(timer);
+        if (timer) clearTimeout(timer);
         (said as ReturnType<LiveVoice['say']> | null)?.stop();
         cur?.stop();
         markSynth();

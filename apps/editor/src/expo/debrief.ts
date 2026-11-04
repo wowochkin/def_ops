@@ -1,7 +1,8 @@
 /**
  * Разбор итога голосом командующего выбранного фронта. Текст собирается из фактов этого сеанса,
  * поэтому заранее не записывается: его читает живой голос Жукова или Конева.
- * Абзацы звучат по очереди, с паузой между ними: один кусок синтеза не склеивает их в одну скороговорку.
+ * Абзацы звучат по очереди. Соседние предложения одного абзаца, пока их меньше 220 знаков, идут одним
+ * синтезом: отдельный запуск на каждую точку заново берёт тембр клона.
  */
 import { BANK, type Card, type TurnN } from './bank';
 import { templateUnits } from './lines';
@@ -65,9 +66,45 @@ export function forecastParts(forecast: string): { head: string; deck: string } 
   return cut ? { head: cut[1], deck: cut[2] } : { head: forecast, deck: '' };
 }
 
-/** Предложения разбора по отдельности: каждое звучит своим куском, с паузой после. Сокращения армий не режутся. */
+/** Предложения разбора по отдельности. Сокращения армий не режутся. */
 export function debriefSentences(paragraphs: string[]): string[] {
   return paragraphs.flatMap((p) => templateUnits(p));
+}
+
+/** Где в списке предложений звучащий кусок: кусок — несколько предложений подряд, не одно. */
+export function debriefCursor(sentences: string[], spoken: string | null): { from: number; at: number } {
+  if (!spoken) return { from: -1, at: -1 };
+  const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, ' ').trim();
+  const said = norm(spoken);
+  for (let a = 0; a < sentences.length; a++) {
+    let acc = '';
+    for (let b = a; b < sentences.length; b++) {
+      acc = acc ? `${acc} ${norm(sentences[b])}` : norm(sentences[b]);
+      if (acc === said) return { from: a, at: b };
+      if (!said.startsWith(`${acc} `)) break;
+    }
+  }
+  return { from: -1, at: -1 };
+}
+
+/** Сколько знаков отдавать одним синтезом. Дальше тембр клона снова берётся с нуля, зато звук не ждёт весь разбор. */
+const UTTERANCE_CHARS = 220;
+
+/** Куски живого разбора: соседние предложения одного абзаца, пока кусок короче 220 знаков. */
+export function debriefUtterances(paragraphs: string[]): string[] {
+  const out: string[] = [];
+  for (const p of paragraphs) {
+    let buf = '';
+    for (const s of templateUnits(p)) {
+      const next = buf ? `${buf} ${s}` : s;
+      if (buf && next.length > UTTERANCE_CHARS) {
+        out.push(buf);
+        buf = s;
+      } else buf = next;
+    }
+    if (buf) out.push(buf);
+  }
+  return out;
 }
 
 const START = '1945-04-16T05:00';
@@ -110,6 +147,23 @@ export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
   if (!spoken) return open();
   const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').replace(/\s+/g, ' ').trim();
   const said = norm(spoken);
+  const beatOf = (i: number, span: [number, number]): ResultBeat => {
+    if (i === 0) return open(span);
+    if (i >= d.paragraphs.length - 1) return close(span);
+    const turn = v.decisions[i - 1]?.n ?? null;
+    return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end), span } : close(span);
+  };
+  for (let i = 0; i < d.paragraphs.length; i++) {
+    const parts = templateUnits(d.paragraphs[i]).map(norm);
+    const n = Math.max(1, parts.length);
+    for (let a = 0; a < parts.length; a++) {
+      let acc = '';
+      for (let b = a; b < parts.length; b++) {
+        acc = acc ? `${acc} ${parts[b]}` : parts[b];
+        if (acc === said) return beatOf(i, [a / n, (b + 1) / n]);
+      }
+    }
+  }
   const rows = d.paragraphs.flatMap((p, i) => templateUnits(p).map((s) => ({ s, i, p })));
   const loc = rows.find((x) => norm(x.s) === said)
     ?? rows.find((x) => said.startsWith(norm(x.s).slice(0, 48)) || norm(x.s).startsWith(said.slice(0, 48)));
