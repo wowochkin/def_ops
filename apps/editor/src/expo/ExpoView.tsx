@@ -27,7 +27,7 @@ import { historyAt, historyPaths, mainPaths, MAP, spokenFocus, type Arrow, type 
 import type { ModelFrame } from './model';
 import type { CardView } from './session';
 import { timeAt } from './session';
-import { debriefSentences, forecastParts, operationDebrief, resultBeat } from './debrief';
+import { debriefCursor, debriefSentences, forecastParts, operationDebrief, resultBeat } from './debrief';
 import { Figures, ModelNote, modelTime, MoveAdvance, OpSummary, Scales, Tasks, Timeline, turnDef } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
@@ -71,9 +71,16 @@ function useFit<T extends HTMLElement>(key: unknown, max: number, min = 32) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    let f = max;
-    el.style.fontSize = `${f}px`;
-    while (f > min && el.scrollHeight > el.clientHeight + 1) el.style.fontSize = `${(f -= 2)}px`;
+    const fit = () => {
+      if (el.clientHeight < 8) return;
+      let f = max;
+      el.style.fontSize = `${f}px`;
+      while (f > min && el.scrollHeight > el.clientHeight + 1) el.style.fontSize = `${(f -= 2)}px`;
+    };
+    fit();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    ro?.observe(el);
+    return () => ro?.disconnect();
   }, [key, max, min]);
   return ref;
 }
@@ -577,6 +584,8 @@ function Briefing({ front, point, steer, send, steps = true }: { front: FrontId;
 
 /** Суть карточки на виду: две первые строки (у карточки ИИ без факта и риска — три; при длинном заголовке — на одну меньше). */
 const gist = (c: CardView) => c.lines.filter((l) => !/^(Риск|Расчёт):/.test(l)).slice(0, (c.fact ? 2 : 3) - (c.title.length > 30 ? 1 : 0));
+/** Строка риска как в карточке: имена остаются с заглавной, регистр всей фразы не сбивается. */
+const riskLine = (c: CardView) => c.lines.find((l) => l.startsWith('Риск:')) ?? (c.risk ? `Риск: ${c.risk}` : '');
 const cardSource = (c: CardView) => (c.source ? SOURCE_LABEL[c.source === 'prepared' ? 'aiBank' : c.source] : null);
 
 /** Мини-карта выбора фронта: полоса фронта на 16 апреля и стрелки задачи танковых армий. */
@@ -601,6 +610,22 @@ function Fact({ c, source = false }: { c: CardView; source?: boolean }) {
       <b>{c.fact.value}</b> {c.fact.text}
       {source && <small className="expo-fact-src"> Источник: {c.fact.source}</small>}
     </p>
+  );
+}
+
+/** Лицо карточки: кегль сжимается, пока заголовок, суть, цифра и риск не влезут в рамку. */
+function CardFace({ c, n, tight }: { c: CardView | undefined; n: number; tight: boolean }) {
+  const ref = useFit<HTMLDivElement>(`${n}:${c?.id}:${c?.title}:${c?.lines.join('|')}:${c?.fact?.value}:${c?.risk}:${tight}`, 34, 22);
+  return (
+    <div ref={ref} className="expo-card-body">
+      <strong>
+        <span className="expo-card-n">{n + 1}</span> {c?.title ?? 'Карточка готовится'}
+      </strong>
+      {c && gist(c).map((l) => <span key={l}>{l}</span>)}
+      {c && <Fact c={c} />}
+      {c && riskLine(c) && <span className="expo-risk">{riskLine(c)}</span>}
+      {c && !c.fact && cardSource(c) && <small className="expo-source">{cardSource(c)}</small>}
+    </div>
   );
 }
 
@@ -663,15 +688,7 @@ function Cards(props: {
             onPointerLeave={props.hoverLights ? () => setHover(null) : undefined}
           >
             <button className="expo-card-main expo-card-nophoto" disabled={disabled || !c} aria-pressed={pending === card} aria-label={`Карточка ${card + 1}`} onClick={() => setPending(card)}>
-              <span className="expo-card-body">
-                <strong>
-                  <span className="expo-card-n">{card + 1}</span> {c?.title ?? 'Карточка готовится'}
-                </strong>
-                {c && gist(c).map((l) => <span key={l}>{l}</span>)}
-                {c && <Fact c={c} />}
-                {c?.risk && <span className="expo-risk">Риск: {c.risk.toLowerCase()}</span>}
-                {c && !c.fact && cardSource(c) && <small className="expo-source">{cardSource(c)}</small>}
-              </span>
+              <CardFace c={c} n={card} tight={pending !== null} />
             </button>
             {/* историческая карточка до выбора не отличается от прочих: кнопка замены есть у каждой */}
             <div className="expo-card-actions">
@@ -742,13 +759,21 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
   const { head, deck } = forecastParts(final.forecast);
   const brief = operationDebrief(mv);
   const units = brief ? debriefSentences(brief.paragraphs) : [];
-  const found = spoken ? units.indexOf(spoken) : -1;
-  const at = found;
+  const cursor = debriefCursor(units, spoken);
+  const at = cursor.at;
   const rec = recordLines(readRecord());
   const other = fronts.find((f) => f !== mv.front);
   const linesRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    linesRef.current?.querySelector('[data-state="now"]')?.scrollIntoView({ block: 'nearest' });
+  // Холст уменьшен transform: scale, поэтому getBoundingClientRect — уже в пикселях окна,
+  // а scrollTop — в пикселях холста. Делим разницу на масштаб, иначе прокрутка останавливается выше последней строки.
+  useLayoutEffect(() => {
+    const box = linesRef.current;
+    const line = box?.querySelector<HTMLElement>('[data-state="now"]');
+    if (!box || !line || box.offsetWidth < 1) return;
+    const scale = box.getBoundingClientRect().width / box.offsetWidth;
+    const fromTop = (line.getBoundingClientRect().top - box.getBoundingClientRect().top) / scale;
+    const y = fromTop + box.scrollTop;
+    box.scrollTop = Math.max(0, y + line.offsetHeight - box.clientHeight + 12);
   }, [at]);
   return (
     <article className="expo-debrief">
@@ -762,7 +787,7 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
       </header>
       <div className="expo-debrief-lines" ref={linesRef}>
         {at >= 0 && units.slice(0, at + 1).map((s, i) => (
-          <p key={s.slice(0, 48)} data-state={i === at ? 'now' : 'said'}>{s}</p>
+          <p key={`${i}:${s.slice(0, 24)}`} data-state={i === at ? 'now' : 'said'}>{s}</p>
         ))}
       </div>
       <footer>
@@ -934,10 +959,10 @@ const TURN_FRAME: Record<string, Bbox[]> = {
   ],
 };
 
-/** Рамка перелома. Точки рядом могут чуть раздвинуть её; дальний запад (Эльба, Магдебург) — нет. */
+/** Рамка перелома. Стрелка выбранного варианта может чуть раздвинуть её; дальний запад (Эльба, Магдебург) — нет. */
 export function turnBbox(front: string, n: number, extra: LL[] = []): Bbox {
   const frame = TURN_FRAME[front]?.[n - 1] ?? THEATRE;
-  const near = extra.filter((p) => p[0] > frame[0] - 0.45 && p[0] < frame[2] + 0.45 && p[1] > frame[1] - 0.3 && p[1] < frame[3] + 0.3);
+  const near = extra.filter((p) => p[0] > frame[0] - 0.8 && p[0] < frame[2] + 0.8 && p[1] > frame[1] - 0.55 && p[1] < frame[3] + 0.55);
   return near.length ? bboxOf([[frame[0], frame[1]], [frame[2], frame[3]], ...near]) : frame;
 }
 
@@ -1028,10 +1053,15 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const own = sessionDoc(maps.session, mv);
     const d = own ?? hist;
     if (!d) return null;
-    const arrowsAll = [...mv.cards, ...(mv.reveal ? [mv.reveal.historical] : [])].flatMap((c) => (c.arrows ?? []).flatMap((a) => [a.from, a.to]));
+    const litArrows = p.step === 'choose' && lit !== null ? mv.cards[lit]?.arrows ?? [] : [];
+    const bulge = (a: { from: LL; to: LL }): LL => [
+      (a.from[0] + a.to[0]) / 2 + (a.to[1] - a.from[1]) * 0.12,
+      (a.from[1] + a.to[1]) / 2 - (a.to[0] - a.from[0]) * 0.12,
+    ];
+    const arrowPts = litArrows.flatMap((a) => [a.from, a.to, bulge(a)]);
     const near = mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at);
-    const bbox = turnBbox(mv.front, p.n, [...near, ...arrowsAll]);
-    const camera = { bbox, key: `turn-${mv.front}-${p.n}-${bbox.map((x) => x.toFixed(2)).join(',')}`, ms: 0 };
+    const bbox = turnBbox(mv.front, p.n, [...near, ...arrowPts]);
+    const camera = { bbox, key: `turn-${mv.front}-${p.n}-${lit ?? 'x'}-${bbox.map((x) => x.toFixed(2)).join(',')}`, ms: 0, pad: 0.16 };
     const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
     const arrows = p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? mv.reveal?.historical.arrows : undefined;
     const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;

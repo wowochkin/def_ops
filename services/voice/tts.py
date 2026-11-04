@@ -15,6 +15,9 @@ FIRST_CUT = 64  # первая фраза длиннее — звук начин
 CALIB_PHRASE = ("Докладываю обстановку. Восьмая гвардейская армия ведёт бой за вторую полосу обороны у Зелова, "
                 "противник контратакует резервами из глубины.")
 PAUSE_AFTER = {".": 0.2, "…": 0.25, "!": 0.3, "?": 0.3, ",": 0.1, ";": 0.15, ":": 0.15}  # пауза между кусками, с
+# Модель с ударениями говорит фразу целиком и между предложениями оставляет короткую паузу.
+# Отдельный синтез каждого предложения меняет тембр, поэтому паузу удлиняем в готовом звуке.
+SENTENCE_PAUSE_S = 0.8
 
 
 _BREAK = re.compile(r"[.!?…]+[»\")]?\s+|\n+")
@@ -142,6 +145,84 @@ def whole_pieces(text: str) -> list[str]:
 def pause_after(text: str) -> float:
     """Пауза после куска по знаку в конце (закрывающие кавычки и скобки не считаются)."""
     return PAUSE_AFTER.get(text.rstrip("»\")) ")[-1:], PAUSE_AFTER["."])
+
+
+def sentence_pieces(text: str) -> list[str]:
+    """Предложения целиком. Точка сокращения («гв.», «А») фразу не режет — в отличие от нарезки для живого голоса."""
+    buf = text.strip()
+    out: list[str] = []
+    while buf:
+        m = _sentence_break(buf)
+        if not m:
+            break
+        piece = buf[:m.end()].strip()
+        if re.search(r"\w", piece):
+            out.append(piece)
+        buf = buf[m.end():].strip()
+    if re.search(r"\w", buf):
+        out.append(buf)
+    return out
+
+
+def lengthen_sentence_pauses(audio: np.ndarray, sr: int, text: str) -> np.ndarray:
+    """Довести уже имеющуюся тишину между предложениями до SENTENCE_PAUSE_S. Тишины нет — звук не режем."""
+    sents = sentence_pieces(text)
+    if len(sents) < 2 or sr <= 0 or len(audio) < sr // 4:
+        return audio
+    frame = max(1, sr // 100)
+    n = len(audio) // frame
+    if n < 10:
+        return audio
+    rms = np.sqrt(np.mean(audio[:n * frame].reshape(n, frame) ** 2, axis=1) + 1e-12)
+    speech = float(np.percentile(rms, 70))
+    if speech < 1e-4:
+        return audio
+    quiet = rms < speech * 0.12
+    gaps: list[tuple[int, int]] = []
+    i = 0
+    while i < n:
+        if not quiet[i]:
+            i += 1
+            continue
+        j = i + 1
+        while j < n and quiet[j]:
+            j += 1
+        if i > 2 and j < n - 2 and (j - i) * frame / sr >= 0.08:
+            gaps.append((i * frame, j * frame))
+        i = j
+    if not gaps:
+        return audio
+    total = sum(len(s) for s in sents) or 1
+    acc = 0
+    bounds: list[float] = []
+    for s in sents[:-1]:
+        acc += len(s)
+        bounds.append(acc / total * len(audio))
+    window = int(max(1.2, 0.18 * len(audio) / sr) * sr)
+    cands: list[tuple[float, int, int, int]] = []
+    for bi, exp in enumerate(bounds):
+        for gi, (a, b) in enumerate(gaps):
+            dist = abs((a + b) / 2 - exp)
+            if dist <= window:
+                cands.append((dist, -(b - a), bi, gi))
+    cands.sort()
+    used_b: set[int] = set()
+    used_g: set[int] = set()
+    chosen: list[tuple[int, int]] = []
+    for _dist, _neg, bi, gi in cands:
+        if bi in used_b or gi in used_g:
+            continue
+        used_b.add(bi)
+        used_g.add(gi)
+        chosen.append(gaps[gi])
+    target = int(SENTENCE_PAUSE_S * sr)
+    out = audio
+    for a, b in sorted(chosen, reverse=True):
+        if b - a >= target:
+            continue
+        mid = a + (b - a) // 2
+        out = np.concatenate([out[:mid], np.zeros(target - (b - a), audio.dtype), out[mid:]])
+    return out
 
 
 def fade_tail(a: np.ndarray, sr: int, ms: int) -> np.ndarray:

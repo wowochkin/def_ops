@@ -123,21 +123,17 @@ describe('режиссёр сеанса', () => {
     expect(says(r.since(mark), 'delay')).toBe(true);
   });
 
-  it('timer off offers then ai picks', () => {
+  it('timer off waits, then delays', () => {
     const r = toChoose(cfgWith({ timer: { on: false, seconds: 30 } })).send({ t: 'touch' });
     expect(r.phase).toMatchObject({ kind: 'turn', step: 'choose', deadline: null });
     const mark = r.effects.length;
     r.wait(30_000);
-    expect(says(r.since(mark), 'offer-decide')).toBe(true);
-    expect(turn(r.phase)?.offered).toBe(true);
-    expect(r.since(mark).some((e) => e.e === 'aiPick')).toBe(false);
+    expect(r.phase).toMatchObject({ step: 'choose', choice: null });
+    expect(r.since(mark).some((e) => e.e === 'aiPick' || (e.e === 'say' && e.key === 'offer-decide'))).toBe(false);
     r.wait(30_000);
-    expect(r.since(mark).filter((e) => e.e === 'aiPick')).toEqual([{ e: 'aiPick', n: 1 }]);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', choice: null });
-    r.wait(5_000);
-    expect(r.since(mark).filter((e) => e.e === 'aiPick')).toHaveLength(1);
-    r.send({ t: 'choose', card: 2 });
-    expect(r.phase).toMatchObject({ step: 'scroll', choice: 2 });
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
+    expect(says(r.since(mark), 'delay')).toBe(true);
+    expect(r.since(mark).some((e) => e.e === 'aiPick')).toBe(false);
   });
 
   it('the result stays while the account is still being spoken, then warns before the attract screen', () => {
@@ -203,22 +199,17 @@ describe('режиссёр сеанса', () => {
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-3', priority: 'scene', scene: 'turn-3-explain' });
   });
 
-  it('idle returns to attract', () => {
-    // Таймер выключен, оболочка не ответила на aiPick: бездействие считается от отметки выбора ИИ.
+  it('timer off: not choosing is a delay, not an AI card', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
     const r = toChoose(off).send({ t: 'choose', card: 1 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
     const mark = r.effects.length;
-    const session = r.state.session;
-    r.wait(60_000 + 89_750);
-    expect(r.phase.kind).toBe('turn');
-    expect(r.since(mark)).toContainEqual({ e: 'aiPick', n: 2 });
-    r.wait(250);
-    expect(r.phase.kind).toBe('attract');
-    expect(r.since(mark)).toContainEqual({ e: 'newSession' });
-    expect(r.state.session).toBe(session + 1);
-    r.wait(200_000);
-    expect(r.phase.kind).toBe('attract');
+    r.wait(59_000);
+    expect(r.phase).toMatchObject({ step: 'choose', choice: null });
+    r.wait(1_000);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'scroll', choice: 'delay' });
+    expect(says(r.since(mark), 'delay')).toBe(true);
+    expect(r.since(mark).some((e) => e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
   });
 
   it('passive viewer not kicked', () => {
@@ -226,11 +217,10 @@ describe('режиссёр сеанса', () => {
     const r = run(off).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', offered: true });
-    expect(says(r.since(mark), 'offer-decide')).toBe(true);
-    expect(r.since(mark)).toContainEqual({ e: 'aiPick', n: 1 });
-    expect(r.since(mark).some((e) => e.e === 'newSession')).toBe(false);
-    r.send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
+    expect(says(r.since(mark), 'delay')).toBe(true);
+    expect(r.since(mark).some((e) => e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
+    r.wait(DURATIONS.scroll).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyStress, markStress, plainStress, stressed } from '../src/expo/stress';
+import { applyStress, markStress, plainStress, stressed, type StressData } from '../src/expo/stress';
 import STRESS from '../src/expo/bank-data/stress.json';
 
 describe('ударения для озвучки стенда', () => {
@@ -21,7 +21,7 @@ describe('ударения для озвучки стенда', () => {
     expect(stressed('у Хальбе', 'x', { mark: { x: 'upper' }, words: { Хальбе: 'Х+альбе' } })).toEqual({ say: 'у Х+альбе', said: 'у ХАльбе' });
   });
   it('формы из разбора, которые распознавание слышало иначе, помечены', () => {
-    const said = stressed('у Кетцина, на Эльбе, у Хальбе', 'fish-s2-pro', STRESS).said;
+    const said = stressed('у Кетцина, на Эльбе, у Хальбе', 'fish-s2-pro', STRESS as StressData).said;
     expect(said).toBe('у Ке\u0301тцина, на Э\u0301льбе, у Ха\u0301льбе');
   });
   it('в словаре у каждого слова одна пометка перед гласной и то же слово без неё', () => {

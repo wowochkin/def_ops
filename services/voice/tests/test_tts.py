@@ -1,6 +1,6 @@
 import numpy as np
 
-from tts import PiecePlanner, Sentences, fade_tail, pause_after
+from tts import PiecePlanner, Sentences, fade_tail, lengthen_sentence_pauses, pause_after, sentence_pieces
 from tts_tail import extend_eos
 
 
@@ -72,6 +72,34 @@ def test_planner_finish_flushes_and_done():
 
 def test_pause_after():
     assert pause_after("Да?") == 0.3 and pause_after("Так,") == 0.1 and pause_after("Есть»") == 0.2
+
+
+def test_sentence_pieces_keep_army_abbreviations():
+    assert sentence_pieces("3-я гв. танковая штурмует юг Берлина. 47 А и 4 гв. ТА у Кетцина.") == [
+        "3-я гв. танковая штурмует юг Берлина.",
+        "47 А и 4 гв. ТА у Кетцина.",
+    ]
+
+
+def test_lengthen_sentence_pauses_to_target():
+    sr = 1000
+    tone = np.ones(300, np.float32) * 0.2
+    audio = np.concatenate([tone, np.zeros(100, np.float32), tone])
+    out = lengthen_sentence_pauses(audio, sr, "Первое предложение. Второе предложение.")
+    assert len(out) == len(audio) + 700
+    assert np.all(out[:300] == 0.2) and np.all(out[-300:] == 0.2)
+    assert np.count_nonzero(out[300:-300]) == 0
+
+
+def test_lengthen_sentence_pauses_leaves_long_gap_and_unbroken_speech():
+    sr = 1000
+    tone = np.ones(200, np.float32) * 0.2
+    long = np.concatenate([tone, np.zeros(900, np.float32), tone])
+    assert len(lengthen_sentence_pauses(long, sr, "Первое предложение. Второе предложение.")) == len(long)
+    solid = np.ones(2000, np.float32) * 0.2
+    text = "3-я гв. танковая штурмует юг Берлина. 47 А и 4 гв. ТА у Кетцина."
+    assert len(lengthen_sentence_pauses(solid, sr, text)) == len(solid)
+    assert len(lengthen_sentence_pauses(solid, sr, "Одна фраза.")) == len(solid)
 
 
 def test_fade_tail_only_last_ms():

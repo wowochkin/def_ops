@@ -227,6 +227,10 @@ describe('команда подготовки: автопроверка клип
     expect(wer('Ход досчитан до второго мая.', 'ход досчитан до второго')).toBeCloseTo(0.2);
     expect(werOk('Осталось десять секунд.', 1 / 3)).toBe(true);
     expect(werOk('Ход досчитан до второго мая и далее вперёд.', 3 / 8)).toBe(false);
+    // две ошибки из семи в клипе записаны как 0,29 и остаются в допуске; три — нет
+    const towns = 'Ваш вариант — «Заслон у Люккау и Люббена».';
+    expect(werOk(towns, 0.29)).toBe(true);
+    expect(werOk(towns, 0.43)).toBe(false);
     expect(msOk('Осталось десять секунд.', 1400)).toBe(true);
     expect(msOk('Осталось десять секунд.', 100)).toBe(false);
     expect(msOk('Есть.', 9000)).toBe(false);

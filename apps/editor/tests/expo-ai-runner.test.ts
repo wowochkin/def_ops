@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { aiRunner, parseSpeech, type AiFrame } from '../src/expo/ai-runner';
+import { debriefCursor, debriefUtterances, operationDebrief, resultBeat } from '../src/expo/debrief';
+import { templateUnits } from '../src/expo/lines';
 import { voiceQueue, type Line } from '../src/expo/voice-queue';
 import type { DirectorEvent } from '../src/expo/director';
+import type { ModelView } from '../src/expo/session';
 
 function setup(ask: (() => Promise<string>) | null, listen?: () => Promise<string | null>) {
   const said: Line[] = [];
@@ -86,5 +89,40 @@ describe('исполнитель голоса и ИИ', () => {
     expect(s.said.at(-1)).toMatchObject({ priority: 'action', source: 'prepared' });
     expect(s.said.at(-1)!.voice).toBeUndefined();
     expect(s.said.at(-1)!.scene).toBeUndefined();
+  });
+});
+
+describe('куски разбора', () => {
+  it('соседние короткие предложения одного абзаца звучат вместе', () => {
+    const a = 'Первое предложение. Второе предложение. Третье предложение.';
+    const b = 'Уже другой абзац, и он тоже короткий.';
+    const u = debriefUtterances([a, b]);
+    expect(u.at(-1)).toBe(b);
+    expect(u.slice(0, -1).join(' ')).toBe(a);
+    expect(debriefCursor(['Первое предложение.', 'Второе предложение.', 'Третье предложение.'], u[0])).toEqual({ from: 0, at: u[0].split('. ').length - 1 });
+    const long = Array.from({ length: 8 }, (_, i) => `Предложение номер ${i} про ход операции на берлинском направлении.`).join(' ');
+    const parts = debriefUtterances([long]);
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.join(' ')).toBe(long);
+    expect(parts.every((x) => x.length <= 220)).toBe(true);
+  });
+
+  it('кусок из нескольких предложений ведёт карту по всему куску', () => {
+    const v = {
+      front: 'su_1uf',
+      time: '1945-04-29T18:00',
+      decisions: [{ n: 1, choice: 'delay', historical: 'delay' }],
+      final: {
+        forecast: 'Берлин пал бы 29 апреля — на день раньше истории',
+        rank: 'генерал армии',
+        matches: 1,
+        scales: { notes: { speed: 'быстрее', cost: 'дешевле', intent: 'тот же замысел' } },
+      },
+    } as ModelView;
+    const d = operationDebrief(v)!;
+    const chunk = debriefUtterances(d.paragraphs).find((t) => templateUnits(t).length > 1)!;
+    const para = d.paragraphs.find((p) => p.includes(templateUnits(chunk)[0]))!;
+    const beat = resultBeat(v, chunk);
+    expect(beat.span[1] - beat.span[0]).toBeCloseTo(templateUnits(chunk).length / templateUnits(para).length);
   });
 });

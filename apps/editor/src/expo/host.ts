@@ -57,7 +57,6 @@ export function createHost(
     publish();
     for (const e of next.effects) {
       effect(e);
-      if (e.e === 'aiPick') dispatch({ t: 'choose', card: 0 });
     }
   };
   const arrange = (monitors: MonitorInfo[]) => {

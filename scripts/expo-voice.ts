@@ -63,8 +63,12 @@ export const cer = (said: string, heard: string) => lev(letters(said), letters(h
 export const heardText = (heard: string) =>
   speakable(heard.replace(/(\d+),5\s*(млн|тыс)\.?/g, (_m, n: string, u: string) => `${n} с половиной ${u === 'млн' ? 'миллионов' : 'тысяч'}`), { full: true });
 
-/** Допуск распознавания: одна ошибка на короткую фразу, иначе 20 % слов (имена собственные распознаются хуже). */
-export const werOk = (said: string, w: number) => w * words(said).length <= Math.max(1, Math.ceil(words(said).length * 0.2)) + 1e-9;
+/** Допуск распознавания: одна ошибка на короткую фразу, иначе 20 % слов (имена собственные распознаются хуже).
+ * Доля в клипе хранится до сотых: две ошибки из семи — это 0,29, и 0,29×7 уже чуть больше двух. */
+export const werOk = (said: string, w: number) => {
+  const n = words(said).length;
+  return w * n <= Math.max(1, Math.ceil(n * 0.2)) + 0.005 * n + 1e-9;
+};
 /** Распознанное совпадает с текстом: по словам в допуске или по буквам — не больше 8 % ошибок. */
 export const heardOk = (said: string, w: number, c: number) => werOk(said, w) || c <= 0.08;
 /** Длительность разумна: от 25 до 200 мс на знак озвучиваемого текста (обычная речь — 65–85). */
@@ -167,7 +171,7 @@ export function auditVoice(texts: string[], m: Manifest | null, dir: string): st
   return bad;
 }
 
-/** Модель озвучки предзаписи: лучшая по звучанию; для живой речи тяжела, для подготовки заранее — в самый раз. */
+/** Модель озвучки предзаписи: лучшая по звучанию; знак ударения не слушает. Модель, которая слушает знак, — `qwen3-ru-stress`. */
 export const EXPO_VOICE_ENGINE = 'fish-s2-pro';
 
 export async function prepareVoice(o: { data?: string; url?: string; start: string; hours: number; samples?: boolean; engine?: string }): Promise<VoiceReport> {

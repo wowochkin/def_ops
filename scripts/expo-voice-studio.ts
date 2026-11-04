@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, w
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, loadStress, msOk, service, STRESS_PATH, wer, type ClipCheck, type Manifest,
+  cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, loadStress, msOk, service, STRESS_PATH, voiceStamp, wer, type ClipCheck, type Manifest,
 } from './expo-voice';
 import { BANK } from '../apps/editor/src/expo/bank';
 import { situationVoice, stageDomains, voiceTexts } from '../apps/editor/src/expo/prerecord';
@@ -72,8 +72,12 @@ const sayOf = (text: string) => stressed(speakable(text, { full: true }), svc.en
 async function regen(text: string, own?: string, main = false): Promise<ClipCheck> {
   if (!load().clips[text] && !missingTexts().includes(text)) throw new Error('нет такой фразы');
   const { say, said } = own ? { say: own, said: markStress(own, markFor(svc.engine, loadStress())) } : sayOf(text);
-  const file = `${clipKey(said, voice, `${svc.engine}#${Date.now()}`)}.ogg`;
-  const r = await svc.render(said);
+  // обстановка Жукова и Конева — их образец; остальное — начальник штаба. Без образца служба
+  // для модели с ударениями всегда берёт образец штаба.
+  const sample = situationVoice(text);
+  const clipVoice = sample ? voiceStamp(data, sample) : voice;
+  const file = `${clipKey(said, clipVoice, `${svc.engine}#${Date.now()}`)}.ogg`;
+  const r = await svc.render(said, sample ?? undefined);
   if (r.error || !r.path) throw new Error(`синтез: ${r.error ?? 'нет файла'}`);
   const ms = encode(r.path, join(dir, 'clips', file));
   rmSync(r.path, { force: true });
@@ -176,7 +180,9 @@ createServer(async (req, res) => {
         const v = situationVoice(t);
         if (v) voiceOf[t] = v;
       }
-      json({ engine: svc.engine, live, engines: svc.engines, busy, clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length, missing: missingTexts(), samples: sampleFiles(), voiceOf });
+      const dictSay: Record<string, string> = {};
+      for (const t of new Set([...Object.keys(clips), ...missingTexts()])) dictSay[t] = sayOf(t).say;
+      json({ engine: svc.engine, live, engines: svc.engines, busy, clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length, missing: missingTexts(), samples: sampleFiles(), voiceOf, dictSay });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/stress/word') { json({ added: addStress(String((await body(req)).say)) }); return; }
@@ -197,7 +203,13 @@ createServer(async (req, res) => {
       json({ engine: svc.engine });
     } else if (url.pathname === '/api/regen') {
       busy = `дубль «${String(b.text).slice(0, 40)}…»`;
-      try { json(await regen(String(b.text), typeof b.say === 'string' && b.say.trim() ? b.say.trim() : undefined)); } finally { busy = null; }
+      try {
+        json(await regen(
+          String(b.text),
+          typeof b.say === 'string' && b.say.trim() ? b.say.trim() : undefined,
+          b.main !== false,
+        ));
+      } finally { busy = null; }
     } else if (url.pathname === '/api/restress') {
       // переозвучка затронутых словарём — в фоне, ход виден в шапке
       const list = affected();
@@ -281,9 +293,9 @@ function render() {
   $('#list').innerHTML = (samples ? '<h2>Склейки</h2>' + samples : '') + gap + items.map(([text, c], i) => '<div class="row ' + (!c.ok ? 'bad' : c.approved ? 'ok-approved' : '') + '">'
     + '<div>' + (i + 1) + '</div><div>' + esc(text)
     + (st.voiceOf && st.voiceOf[text] ? '<div class="meta">голос ' + esc(st.voiceOf[text]) + '</div>' : '')
-    + (c.said !== text ? '<div class="meta">сказано: ' + esc(c.said) + '</div>' : '')
+    + (c.say && c.say !== text ? '<div class="meta">в синтез: ' + esc(c.say) + '</div>' : '')
     + '<div class="meta">услышано: ' + esc(c.heard) + '</div>'
-    + '<div class="say"><input data-say="' + esc(text) + '" value="' + esc(c.say || toPlus(c.said)) + '" title="«+» перед ударной гласной: Х+альбе">'
+    + '<div class="say"><input data-say="' + esc(text) + '" value="' + esc(c.override ? (c.say || toPlus(c.said)) : (st.dictSay?.[text] || c.say || toPlus(c.said))) + '" title="«+» перед ударной гласной: Х+альбе. Поле — текущий словарь, если текст не задан вручную.">'
     + '<button data-own="' + esc(text) + '">Озвучить этот текст</button><button data-dict="' + esc(text) + '">Ударения → в словарь</button></div>'
     + '<label class="meta"><input type="checkbox" data-approve="' + esc(text) + '"' + (c.approved ? ' checked' : '') + '> одобрено</label></div>'
     + '<div>' + take(text, c, true) + (c.takes || []).map((t) => take(text, t, false)).join('')
