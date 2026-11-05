@@ -85,8 +85,11 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
   return {
     push(line: Line) {
       if (foreign(line)) return;
-      // такая же фраза уже звучит или ждёт — второй раз не нужна
-      if (same(line)) return;
+      // такая же фраза уже звучит или ждёт — второй раз не нужна.
+      // у разбора одинаковый текст разных переломов всё равно произносится: он ещё только ждёт в очереди
+      if (line.voice) {
+        if (cur?.line.text === line.text || ahead?.line.text === line.text) return;
+      } else if (same(line)) return;
       if (line.replace) {
         queue = queue.filter((l) => l.scene !== line.scene && l.text !== line.text);
         queue.unshift(line);

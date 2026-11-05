@@ -274,7 +274,18 @@ function liveVoice(client: VoiceClient): LiveVoice & { dispose(): void } {
   const waits = new Map<number, { synth: () => void; played: () => void }>();
   const offs = [
     client.onPlayed((id) => { waits.get(id)?.played(); waits.delete(id); }),
-    client.on('say-done', (m) => waits.get(m.id)?.synth()),
+    client.on('say-done', (m) => {
+      const w = waits.get(m.id);
+      w?.synth();
+      // остановка без звука не должна держать очередь разбора: следующая фраза всё равно произносится
+      if (m.stopped) { w?.played(); waits.delete(m.id); }
+    }),
+    client.on('barge', (m) => {
+      const w = waits.get(m.id);
+      w?.synth();
+      w?.played();
+      waits.delete(m.id);
+    }),
   ];
   return {
     dispose: () => offs.forEach((f) => f()),
