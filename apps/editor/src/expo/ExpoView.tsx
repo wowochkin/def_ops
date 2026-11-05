@@ -66,6 +66,33 @@ function useStageScale(): number {
 }
 
 /** Кегль текста по месту: с `max` вниз, пока текст не уместится в рамку, но не мельче `min`. */
+/** Колонка выше кадра: уменьшить целиком, пока содержимое не войдёт. `zoom` меняет вёрстку, не только картинку. */
+function ExplainFit({ fitKey, children }: { fitKey: unknown; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.zoom = '1';
+      if (el.clientHeight < 8) return;
+      let z = 1;
+      for (let i = 0; i < 3 && el.scrollHeight > el.clientHeight + 1; i++) {
+        z = Math.max(0.45, z * el.clientHeight / el.scrollHeight);
+        el.style.zoom = String(z);
+      }
+    };
+    fit();
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, [fitKey]);
+  return (
+    <div className="expo-explain-fit" ref={ref}>
+      {children}
+    </div>
+  );
+}
+
 function useFit<T extends HTMLElement>(key: unknown, max: number, min = 32) {
   const ref = useRef<T>(null);
   useLayoutEffect(() => {
@@ -352,7 +379,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         send={send}
                       />
                     ) : p.step === 'explain' ? (
-                      <>
+                      <ExplainFit fitKey={`${def?.situation ?? ''}:${mv?.time ?? ''}:${mv?.move?.advanceKm ?? ''}:${p.n}`}>
                         {state.front ? (
                           <SituationColumn front={state.front} n={p.n} situation={def?.situation ?? ''} />
                         ) : (
@@ -360,7 +387,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         )}
                         {mv?.move && <MoveAdvance mv={mv} />}
                         {roles.includes('progress') && p.n > 1 && <Progress model={model} size="compact" />}
-                      </>
+                      </ExplainFit>
                     ) : (
                       <>
                         <OrderSlip c={typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice} />
@@ -769,7 +796,16 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
   useLayoutEffect(() => {
     const box = linesRef.current;
     const line = box?.querySelector<HTMLElement>('[data-state="now"]');
-    if (!box || !line || box.offsetWidth < 1) return;
+    const article = box?.parentElement;
+    if (!box || !line || !article || box.offsetWidth < 1) return;
+    article.style.zoom = '1';
+    line.style.fontSize = '';
+    const chrome = (article.querySelector('header')?.clientHeight ?? 0) + (article.querySelector('footer')?.clientHeight ?? 0) + line.offsetHeight + 36;
+    if (article.clientHeight > 8 && chrome > article.clientHeight) article.style.zoom = String(Math.max(0.58, article.clientHeight / chrome));
+    let size = 40;
+    line.style.fontSize = `${size}px`;
+    while (size > 22 && box.clientHeight > 8 && line.offsetHeight > box.clientHeight - 8) line.style.fontSize = `${(size -= 2)}px`;
+    // Холст уменьшен transform: scale, поэтому getBoundingClientRect — уже в пикселях окна.
     const scale = box.getBoundingClientRect().width / box.offsetWidth;
     const fromTop = (line.getBoundingClientRect().top - box.getBoundingClientRect().top) / scale;
     const y = fromTop + box.scrollTop;
@@ -787,7 +823,7 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
       </header>
       <div className="expo-debrief-lines" ref={linesRef}>
         {at >= 0 && units.slice(0, at + 1).map((s, i) => (
-          <p key={`${i}:${s.slice(0, 24)}`} data-state={i === at ? 'now' : 'said'}>{s}</p>
+          <p key={i} data-state={i === at ? 'now' : 'said'}>{s}</p>
         ))}
       </div>
       <footer>

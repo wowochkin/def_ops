@@ -616,11 +616,17 @@ html.expo-active,
   overflow: hidden;
 }
 .expo-explain .expo-sit {
-  flex: 1 1 auto;
-  height: 100%;
+  flex: none;
+  height: auto;
   min-height: 0;
   gap: 10px;
   justify-content: flex-start;
+  overflow: visible;
+}
+.expo-explain-fit {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 .expo-explain .expo-situation {
@@ -1400,15 +1406,17 @@ html.expo-active,
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+  overflow: hidden;
   gap: 16px;
 }
 .expo-result-body {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   gap: 28px;
   align-items: stretch;
+  overflow: hidden;
 }
 .expo-result-body > * { min-width: 0; min-height: 0; }
 .expo-debrief header,

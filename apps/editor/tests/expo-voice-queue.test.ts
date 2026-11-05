@@ -121,6 +121,19 @@ describe('очередь голоса', () => {
     expect(q.current()?.text).toBe('вторая');
   });
 
+  it('одинаковый текст разных переломов разбора произносится оба раза', async () => {
+    const said: string[] = [];
+    const q = voiceQueue({ speak: (t) => { said.push(t); return { done: Promise.resolve(), stop() {} }; } });
+    q.scene('result');
+    const line = (text: string): Line => ({ text, priority: 'scene', source: 's', scene: 'result', voice: 'zhukov' });
+    const again = 'В истории на этом участке вышло иначе.';
+    q.push(line('Операция закончена.'));
+    q.push(line(again));
+    q.push(line(again));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(said).toEqual(['Операция закончена.', again, again]);
+  });
+
   it('доклад следующего шага не перебивает комментарий, пока тот звучит', async () => {
     const said: string[] = [];
     let releaseSynth = () => {};

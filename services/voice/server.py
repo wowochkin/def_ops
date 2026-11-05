@@ -231,6 +231,7 @@ class Job:
         self.wake = asyncio.Event()
         self.task: asyncio.Task | None = None
         self.samples = 0
+        self.pinned = False  # явный образец (голос маршала): микрофон штаба эту фразу не обрывает
         self.said = ""  # текст кусков, звук которых уже пошёл в окно, — с ним сравнивается эхо при перебивании словом
 
     def push(self, text: str, more: bool):
@@ -500,6 +501,8 @@ class Session:
                     raise ValueError(f"нет такой роли: {role}")
                 job = Job(jid, self.svc.ref_for(role))
             job.role = role
+            if vid:
+                job.pinned = True
             if not more:
                 job.whole = str(d.get("text", ""))
             self._start_job(job)
@@ -756,7 +759,7 @@ class Session:
     async def barge_all(self):
         """Человек перебил: фразы штаба обрываются, окно гасит звук по barge {id}. Проба голоса не перебивается —
         её останавливают только stop, новая проба, отказ от записи и закрытие окна."""
-        for job in [j for j in self.jobs.values() if not j.preview]:
+        for job in [j for j in self.jobs.values() if not j.preview and not j.pinned]:
             self._drop(job)
             await self.send(type="barge", id=job.id)
         if not self.jobs:
