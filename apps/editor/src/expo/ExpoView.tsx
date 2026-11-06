@@ -383,8 +383,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         doc={(mv && sessionDoc(maps.session, mv)) ?? maps.history ?? null}
                         time={mv?.time ?? MAP.days[0]}
                         disabled={state.paused}
-                        canReplace={!state.paused && p.replacements < settings.maxReplacements && (settings.aiMode === 'ai' || (mv?.spare ?? 0) > 0)}
-                        replaceLabel={p.replacements >= settings.maxReplacements ? 'Нет замен' : settings.aiMode !== 'ai' && mv && mv.spare === 0 ? 'Вариантов больше нет' : settings.aiMode === 'ai' ? 'Вариант от ИИ' : 'Другой вариант'}
+                        canReplace={!state.paused && p.replacements < settings.maxReplacements && (mv?.spare ?? 0) > 0}
+                        replaceLabel={p.replacements >= settings.maxReplacements || (mv?.spare ?? 0) === 0 ? 'Вариантов больше нет' : 'Другой вариант'}
                         hoverLights={access.hoverExpand}
                         expanded={expanded}
                         pending={pending}
@@ -1103,7 +1103,7 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     if (!pt) return null;
     // кадр пункта доклада; на первом — артиллерийская подготовка 16 апреля, 5:00, на переднем крае фронта
     const fx = p.point === 0 ? { front: START.filter((a) => a.front === state.front).map((a) => a.at), smoke: [], bursts: [] } : null;
-    return { doc: hist.doc, time: start, camera: { bbox: pt.map.bbox, key: `brief-${state.front}-${p.point}`, ms: 2600 }, extra: briefFeatures(hist.doc, pt.map, ZOOM), level: pt.map.level, zones: hist.zones, fx };
+    return { doc: hist.doc, time: start, camera: { bbox: pt.map.bbox, key: `brief-${state.front}-${p.point}`, ms: 2600 }, extra: briefFeatures(hist.doc, pt.map, ZOOM), level: 'front', zones: hist.zones, fx };
   }
   if (p.kind === 'turn' && mv) {
     const own = sessionDoc(maps.session, mv);

@@ -64,8 +64,8 @@ export function Feed({ lines }: { lines: string[] }) {
 }
 
 const START = '1945-04-16T05:00';
-/** Конец операции по истории — 8 мая. */
-const END = '1945-05-08T23:00';
+/** Конец хода модели: 16 апреля 05:00 плюс часы операции (384 ч — 2 мая 05:00). */
+const END = timeAt(START, BANK.end);
 /** Миллисекунды момента: дата (ГГГГ-ММ-ДД) — полдень этого дня. */
 const ms = (iso: string) => Date.parse(`${iso.length === 10 ? `${iso}T12:00` : iso.slice(0, 16)}:00Z`);
 /** Место момента на ленте: 0 и 100 % — на концах оси, не на краю блока. */
@@ -76,7 +76,7 @@ export const timelineAt = (iso: string) => {
 const at = timelineAt;
 const num = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
 
-/** Лента операции 16 апреля — 8 мая: три перелома, «сейчас», задачи — по истории (снизу) и в ходе (сверху). */
+/** Лента операции от 16 апреля до конца хода модели: три перелома, «сейчас», задачи — по истории (снизу) и в ходе (сверху). */
 export function Timeline({ mv }: { mv: ModelView }) {
   const turns = BANK.fronts[mv.front].turns;
   return (
@@ -101,7 +101,7 @@ export function Timeline({ mv }: { mv: ModelView }) {
       </div>
       <div className="expo-tl-dates">
         <span>16 апреля</span>
-        <span>8 мая</span>
+        <span>{dayMonth(END)}</span>
       </div>
       <p className="expo-tl-key">
         Золотая черта — сегодняшний день хода. Пустая точка — дата события в истории. Залитая становится зелёной, когда событие случилось в вашем ходе.

@@ -37,6 +37,11 @@ export async function within<T>(ms: number, f: (signal: AbortSignal) => Promise<
   }
 }
 
+const CARD_SYSTEM =
+  'Ты составляешь карточку решения для штабной игры о Берлинской операции. ' +
+  'Ответ — только один JSON-объект, без пояснений и без английского. ' +
+  'Армии и объекты — только из списка в задании, их идентификаторами.';
+
 const SYSTEM =
   'Ты — начальник штаба на выставке о Берлинской операции 1945 года. Имени у тебя нет: не представляйся выдуманной фамилией и званием. ' +
   'Командующий фронта назван в фактах. Тон — сдержанная штабная хроника. ' +
@@ -108,10 +113,11 @@ export function cardSmith(o: { ask: () => Ask | null; check: (card: Card, c: Car
   let ready: Card[] = [];
   let running: Promise<void> | null = null;
   let seq = 0;
+  let ctx: CardContext | null = null;
   const one = async (k: string, c: CardContext) => {
     const ask = o.ask();
     if (!ask) return;
-    const reply = await within(o.perCardMs, (s) => ask(SYSTEM, cardPrompt(c), s));
+    const reply = await within(o.perCardMs, (s) => ask(CARD_SYSTEM, cardPrompt(c), s));
     if (k !== key || !reply) return;
     const card = parseCard(reply, c, `ai-${c.front}-${c.n}-${++seq}`, (card) => o.check(card, c));
     if (card) ready.push(card);
@@ -119,6 +125,7 @@ export function cardSmith(o: { ask: () => Ask | null; check: (card: Card, c: Car
   return {
     prefetch(k: string, c: CardContext, want: number) {
       key = k;
+      ctx = c;
       ready = [];
       if (!o.ask()) return;
       running = (async () => {
@@ -130,10 +137,14 @@ export function cardSmith(o: { ask: () => Ask | null; check: (card: Card, c: Car
     },
     async take(k: string): Promise<Card | null> {
       if (k !== key) return null;
-      if (!ready.length && running) await within(o.wait, () => running ?? Promise.resolve());
+      if (!ready.length && !running && ctx && o.ask()) {
+        const c = ctx;
+        running = one(k, c).finally(() => { if (k === key) running = null; });
+      }
+      if (!ready.length && running) await within(o.perCardMs, () => running ?? Promise.resolve());
       return k === key ? ready.shift() ?? null : null;
     },
-    reset() { key = ''; ready = []; running = null; },
+    reset() { key = ''; ready = []; running = null; ctx = null; },
   };
 }
 

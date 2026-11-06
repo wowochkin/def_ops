@@ -25,7 +25,6 @@ export function modelRunner(makeEnv: () => Promise<ModelEnv>, onFrame: (f: Model
   let session: ExpoSession | null = null;
   let env: Promise<ModelEnv> | null = null;
   let gen = 0;
-  const key = (n: number) => `${gen}-${session?.front}-${n}`;
   let queue: Promise<void> = Promise.resolve();
   const publish = (error: string | null = null) => onFrame({ view: session ? structuredClone(session.view) : null, error });
   const run = (f: () => Promise<void> | void) => {
@@ -62,15 +61,13 @@ export function modelRunner(makeEnv: () => Promise<ModelEnv>, onFrame: (f: Model
           }
           session.deal(e.n);
           publish();
-          hooks.smith?.prefetch(key(e.n), session.cardContext(e.n), hooks.want ?? 2);
         });
       }
       if (e.e === 'replace') {
         return run(async () => {
           const s = session;
           if (!s || s.isHistorical(e.card)) return;
-          const ai = (await hooks.smith?.take(key(e.n))) ?? null;
-          if (s === session && s.replace(e.card, ai)) publish();
+          if (s === session && s.replace(e.card, null)) publish();
         });
       }
       if (e.e === 'decide') {

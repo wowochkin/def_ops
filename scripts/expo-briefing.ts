@@ -113,7 +113,7 @@ const su1bf: BriefPoint[] = [
       fromKb('op:berlin', 'src:DRZW', '12–15', '12–15 км', 'ширина Одербруха'),
       fromKb('battle:seelow', 'src:RA15', '1 282', '1 282', 'человека на квадратный километр плацдарма'),
     ],
-    map: { bbox: [14.15, 52.42, 14.8, 52.72], level: 'corps', labels: [{ text: 'Зееловские высоты', at: [14.42, 52.49], preset: 'atlas.region' }, { text: 'Одербрух', at: [14.52, 52.7], preset: 'atlas.region' }, { text: 'Одер', at: [14.66, 52.47], preset: 'atlas.water' }] },
+    map: { bbox: [14.15, 52.42, 14.8, 52.72], level: 'front', labels: [{ text: 'Зееловские высоты', at: [14.42, 52.49], preset: 'atlas.region' }, { text: 'Одербрух', at: [14.52, 52.7], preset: 'atlas.region' }, { text: 'Одер', at: [14.66, 52.47], preset: 'atlas.water' }] },
   },
   {
     title: 'Фланги и разграничение',
@@ -174,7 +174,7 @@ const su1uf: BriefPoint[] = [
       fromKb('op:berlin', 'src:RW_BNO', '133', '133', 'переправы через Нейсе 16 апреля'),
       fromKb('chr:berlin-1945-weather', 'src:KONEV', '390', '390 км', 'дымовая завеса по фронту'),
     ],
-    map: { bbox: [14.15, 51.45, 14.95, 51.85], level: 'corps', labels: [{ text: 'Нейсе', at: [14.69, 51.62], preset: 'atlas.water' }, { text: 'Шпрее', at: [14.33, 51.65], preset: 'atlas.water' }] },
+    map: { bbox: [14.15, 51.45, 14.95, 51.85], level: 'front', labels: [{ text: 'Нейсе', at: [14.69, 51.62], preset: 'atlas.water' }, { text: 'Шпрее', at: [14.33, 51.65], preset: 'atlas.water' }] },
   },
   {
     title: 'Фланги и разграничение',
