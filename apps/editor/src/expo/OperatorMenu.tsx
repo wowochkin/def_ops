@@ -13,6 +13,8 @@ import type { MonitorInfo } from './windows';
 import { pinAttempt } from './operator';
 import { FRONT_NAMES } from './scenes';
 import { MonitorOrder, ServiceSummary, Stepper } from './operator-parts';
+import type { VoiceClient } from '../voice/client';
+import { DEFAULT_SETTINGS, parseSettings, SETTINGS_KEY, storeSettings } from '../voice/panel-state';
 import './expo.css';
 
 export interface OperatorSummary {
@@ -33,6 +35,8 @@ export interface OperatorProps {
   onClose: () => void;
   onExit: () => void;
   onAction: (ev: DirectorEvent | 'reboot' | 'identify') => void;
+  /** Голосовой сервис первого экрана: выбор микрофона. Нет — пункт не показывается. */
+  mic?: VoiceClient | null;
 }
 
 type Tab = 'session' | 'screens' | 'sound' | 'access';
@@ -45,7 +49,7 @@ const TABS: [Tab, string][] = [
 type JumpPhase = Extract<DirectorEvent, { t: 'jump' }>['phase'];
 
 /** Компонент остаётся смонтированным при закрытии: счётчик неверных ПИН не сбрасывается. */
-export function OperatorMenu({ settings, open = true, setup = false, summary, monitors, onSave, onClose, onExit, onAction }: OperatorProps) {
+export function OperatorMenu({ settings, open = true, setup = false, summary, monitors, onSave, onClose, onExit, onAction, mic = null }: OperatorProps) {
   const [authorized, setAuthorized] = useState(false);
   const [pin, setPin] = useState('');
   const [lock, setLock] = useState({ failures: 0, until: 0 });
@@ -255,6 +259,7 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
       {volume('Громкость голоса', settings.volume.voice, (v) => save({ volume: { ...settings.volume, voice: v } }))}
       {volume('Громкость фона', settings.volume.ambient, (v) => save({ volume: { ...settings.volume, ambient: v } }))}
       {flag('Голос на заставке по умолчанию', settings.attractCall.on, (v) => save({ attractCall: { ...settings.attractCall, on: v } }))}
+      {mic && <MicField client={mic} />}
       <label>
         Пауза между фразами, с
         <input
@@ -321,5 +326,50 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
         {error && <p role="alert">{error}</p>}
       </div>
     </div>
+  );
+}
+
+/** Микрофон голосового сервиса: «как в системе» или найденное устройство. Выбор запоминается и берётся при «Говорить». */
+function MicField({ client }: { client: VoiceClient }) {
+  const [inputs, setInputs] = useState<{ id: string; label: string }[]>([]);
+  const [mic, setMic] = useState('');
+  useEffect(() => {
+    let live = true;
+    const take = (d: { inputs: { id: string; label: string }[]; mic: string }) => {
+      if (!live) return;
+      setInputs(d.inputs);
+      setMic(d.mic);
+    };
+    // без разрешения имена устройств скрыты: короткий запрос микрофона их открывает и сразу отпускает
+    void navigator.mediaDevices?.getUserMedia({ audio: true })
+      .then((s) => { s.getTracks().forEach((t) => t.stop()); return client.devices(); })
+      .then((d) => take(d))
+      .catch(() => { void client.devices().then((d) => take(d)); });
+    const off = client.onDevices((d) => take(d));
+    return () => { live = false; off(); };
+  }, [client]);
+  const saved = { ...DEFAULT_SETTINGS, ...parseSettings(localStorage.getItem(SETTINGS_KEY)) };
+  const [sense, setSense] = useState(+(1 - saved.vad).toFixed(2));
+  const setSensitivity = (v: number) => {
+    const vad = +(1 - v).toFixed(2);
+    setSense(v);
+    const next = { ...DEFAULT_SETTINGS, ...parseSettings(localStorage.getItem(SETTINGS_KEY)), vad };
+    try { localStorage.setItem(SETTINGS_KEY, storeSettings(localStorage.getItem(SETTINGS_KEY), next, {})); } catch { /* настройки звука необязательны */ }
+    client.settings({ vad });
+  };
+  return (
+    <>
+      <label>
+        Устройство ввода
+        <select value={mic} onChange={(e) => { void client.setMic(e.target.value); }}>
+          <option value="">Как в системе</option>
+          {inputs.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+        </select>
+      </label>
+      <label>
+        Чувствительность {Math.round(sense * 100)} %
+        <input type="range" min="0.1" max="0.85" step="0.05" value={sense} onChange={(e) => setSensitivity(Number(e.target.value))} />
+      </label>
+    </>
   );
 }

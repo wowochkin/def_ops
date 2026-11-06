@@ -24,6 +24,7 @@ import { setExpoBaseline } from './baseline';
 import { coreEnv, modelRunner, type ModelFrame } from './model';
 import { measureTrace } from './session';
 import { createStage } from './stage';
+import type { VoiceClient } from '../voice/client';
 import { NO_AI } from './ai-runner';
 import type { StatKind } from './stats';
 import { lockdown } from './lockdown';
@@ -48,6 +49,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
   const [note, setNote] = useState<string | null>(null);
   const [stats, setStats] = useState<ExpoStats>({ sessions: 0, finished: 0, failures: 0 });
   const [maps, setMaps] = useState<StageDocs>({});
+  const [mic, setMic] = useState<VoiceClient | null>(null);
   const hostRef = useRef<Host | null>(null);
   const busRef = useRef<ExpoBus | null>(null);
   const windowsRef = useRef<Windows | null>(null);
@@ -206,9 +208,11 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         count,
       });
       stopStage = () => {
+        setMic(null);
         document.removeEventListener('pointerdown', stage.resume);
         stage.dispose();
       };
+      setMic(stage.input);
       document.addEventListener('pointerdown', stage.resume);
       const model = modelRunner(coreEnv, (f) => hostRef.current?.setModel(f), undefined, undefined, {
         ...stage.hooks,
@@ -350,6 +354,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           }}
           monitors={() => windowsRef.current?.monitors() ?? Promise.resolve([])}
           settings={hostRef.current?.configuration() ?? frame.settings}
+          mic={mic}
           onSave={save}
           onClose={close}
           onExit={() => {

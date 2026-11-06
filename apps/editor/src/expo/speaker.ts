@@ -6,6 +6,7 @@
  * хуже тишины. Тишина с субтитрами — только для фразы без предзаписи (предзапись не подготовлена).
  */
 import { VoiceClient } from '../voice/client';
+import { DEFAULT_SETTINGS, parseSettings, SETTINGS_KEY } from '../voice/panel-state';
 import { speakable } from '../voice/speech';
 import { setPrerecord, setVoiceGaps } from './health';
 import { BANK } from './bank';
@@ -180,6 +181,8 @@ export interface SpeakerDeps {
   liveStartMs?: number;
   /** Вместо фразы ИИ звучит замена — субтитр меняется на неё. */
   onSwap?: (l: Line) => void;
+  /** Синтез всей фразы до начала звука: ответ модели не играет по кускам. */
+  prepare?(text: string, voiceId?: string): Promise<void>;
 }
 
 /** Речь стенда по правилам выше (без загрузки — её делает `expoSpeaker`). */
@@ -206,16 +209,19 @@ export function stageSpeaker(d: SpeakerDeps): Speaker {
     let said: ReturnType<LiveVoice['say']> | null = null;
     let markSynth = () => {};
     const synth = new Promise<void>((r) => (markSynth = r));
-    const turn = d.gate.run(() => {
-      if (stopped || !lv.ready()) { markSynth(); return Promise.resolve(); }
-      said = lv.say(stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said, line.voice);
+    const turn = d.gate.run(async () => {
+      if (stopped || !lv.ready()) { markSynth(); return; }
+      const saidText = stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said;
+      if (line.source === 'now' && d.prepare) await d.prepare(saidText, line.voice);
+      if (stopped) { markSynth(); return; }
+      said = lv.say(saidText, line.voice);
       said.done.then(finish, finish);
       void said.synthDone.then(markSynth, markSynth);
       return said.synthDone;
     });
     // Разбор — голос маршала, строка за строкой. Четыре секунды годны ответу с готовой заменой.
     // Фразу с образцом нельзя подменять молчанием, пока синтез предыдущей ещё занимает очередь.
-    const timer = line.voice ? undefined : setTimeout(() => {
+    const timer = line.voice || line.source === 'now' ? undefined : setTimeout(() => {
       if (stopped || said) return;
       stopped = true; // не успел — замена; синтез, если ещё встанет в очередь, не начнётся
       markSynth();
@@ -315,15 +321,28 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   /** Заготовка озвучена заранее. */
   voiced(f: { text: string; parts?: string[] }): boolean;
   /** Синтез фраз заранее голосом `voiceId` (разбор итога во время длинной прокрутки): `say` того же текста сыграет готовое. */
-  prepare(texts: string[], voiceId: string): void;
+  prepare(texts: string[], voiceId: string): Promise<void>;
   resume(): void;
+  /** Одна реплика с микрофона голосового сервиса; нет речи — null. */
+  listen(): Promise<string | null>;
+  /** Второе нажатие: отдать сказанное с начала записи и закрыть микрофон. */
+  stopListen(): void;
+  /** Идёт запись с кнопки. */
+  listening(): boolean;
+  /** Тот же клиент, что слушает «Говорить»: выбор микрофона. */
+  input: VoiceClient;
   /** Оборвать уже звучащее: окно скрыто или закрыто. */
   silence(): void;
   dispose(): void;
 } {
   const client = new VoiceClient();
+  const voiceSettings = () => ({ ...DEFAULT_SETTINGS, ...parseSettings(typeof localStorage === 'undefined' ? null : localStorage.getItem(SETTINGS_KEY)) });
   void client.refreshApi();
-  client.connect();
+  client.connect(voiceSettings());
+  let heard = '';
+  let recording: Promise<string | null> | null = null;
+  let endRecording: (() => void) | null = null;
+  client.on('utterance', (m) => { heard = m.text.trim(); });
   let ctx: AudioContext | null = null;
   let gain: GainNode | null = null;
   let volume = 1;
@@ -348,7 +367,10 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
     if (m) void player.preload(Object.values(m.clips));
   });
   const live = liveVoice(client);
-  const speaker = stageSpeaker({ manifest: () => manifest, player, aiOn: o.aiOn, live, gate: o.gate, onSwap: o.onSwap });
+  const speaker = stageSpeaker({
+    manifest: () => manifest, player, aiOn: o.aiOn, live, gate: o.gate, onSwap: o.onSwap,
+    prepare: async (text, voiceId) => { await client.prepare('chief', text, voiceId); },
+  });
   const silence = () => {
     player.stopAll();
     client.stop();
@@ -367,12 +389,67 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
       client.setVolume(volume);
     },
     prepare(texts, voiceId) {
-      for (const text of texts) {
-        const said = stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said;
-        void client.prepare('chief', said, voiceId);
-      }
+      // ударения — по фразе на кадр, чтобы надпись «готовим итог» не замирала
+      return new Promise((resolve) => {
+        const jobs: Promise<unknown>[] = [];
+        let i = 0;
+        const step = () => {
+          if (disposed) { resolve(); return; }
+          const text = texts[i++];
+          if (text === undefined) { void Promise.all(jobs).then(() => resolve()); return; }
+          const said = stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said;
+          jobs.push(client.prepare('chief', said, voiceId));
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
     },
     resume: () => { client.resume(); void ctx?.resume(); },
+    /** Запись с нажатия до повторного нажатия. В вопрос — только эта речь, без склейки с тем, что было раньше. */
+    listen(): Promise<string | null> {
+      if (recording) return recording;
+      const before = heard;
+      const mine = new Set<number>();
+      let acc = '';
+      recording = new Promise((resolve) => {
+        if (disposed) { resolve(null); return; }
+        let settled = false;
+        let quiet = 0;
+        const fresh = (text: string) => (before && (text === before || text.startsWith(`${before} `)) ? text.slice(before.length).trim() : text);
+        const offSpeech = client.on('speech', (m) => { if (m.state === 'start') window.clearTimeout(quiet); });
+        const off = client.on('utterance', (m) => {
+          const text = m.text.trim();
+          if (!text) return;
+          const part = fresh(text);
+          if (m.continues != null && mine.has(m.continues)) acc = part;
+          else if (part) acc = acc ? `${acc} ${part}` : part;
+          mine.add(m.id);
+          // договорил и замолчал — кнопка отжимается сама; новая речь в эту паузу запись не закрывает
+          window.clearTimeout(quiet);
+          if (acc) quiet = window.setTimeout(() => endRecording?.(), 1500);
+        });
+        const finish = (text: string | null) => {
+          if (settled) return;
+          settled = true;
+          recording = null;
+          window.clearTimeout(quiet);
+          off();
+          offSpeech();
+          void client.setEnabled(false);
+          resolve(text);
+        };
+        endRecording = () => {
+          window.clearTimeout(quiet);
+          void client.setEnabled(false);
+          window.setTimeout(() => finish(acc.trim() || null), 500);
+        };
+        void client.setEnabled(true).then(() => client.start(voiceSettings())).catch(() => finish(null));
+      });
+      return recording;
+    },
+    stopListen() { endRecording?.(); },
+    listening: () => recording !== null,
+    input: client,
     silence,
     dispose: () => {
       disposed = true;

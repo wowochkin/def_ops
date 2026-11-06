@@ -8,7 +8,7 @@
  * Кадр ИИ (что звучит, ответ, мысль) уходит в `onFrame` и рассылается окнам.
  */
 import { answer, comment, type Ask, type ChoiceKind, type Said } from './ai';
-import { commanderVoice, debriefSentences } from './debrief';
+import { commanderVoice, debriefUtterances } from './debrief';
 import type { DirectorEvent, Effect } from './director';
 import { LINES, pick, pickFilled, type Filled, type Lines, type Vars } from './lines';
 import { norm } from '../voice/fuzzy';
@@ -53,8 +53,10 @@ export interface AiRunnerDeps {
   /** Факты хода для подсказки модели и подстановки заготовок. */
   facts: () => { text: string; vars: Vars };
   dispatch: (ev: DirectorEvent) => void;
-  /** Одна реплика с микрофона; null — распознавания нет. */
+  /** Одна реплика с микрофона; null — распознавания нет. Повторный вызов, пока слушаем, — конец записи. */
   listen?: (() => Promise<string | null>) | null;
+  /** Закончить текущую запись и отдать сказанное. */
+  stopListen?: () => void;
   onFrame: (f: AiFrame) => void;
   /** Сроки ответа и комментария, мс. */
   answerMs?: number;
@@ -81,16 +83,18 @@ export function aiRunner(d: AiRunnerDeps) {
     const g = ++gen;
     const thinking = pick(lines.thinking) ?? 'Думаю…';
     set({ answer: { q, text: '', source: null }, thinking: d.ask() ? thinking : null });
+    d.dispatch({ t: 'timerHold' });
     const f = d.facts();
-    const a = await answer(d.ask(), q, f.text, d.answerMs ?? 90_000, lines, (full) => {
+    try {
+      const a = await answer(d.ask(), q, f.text, d.answerMs ?? 90_000, lines);
       if (g !== gen) return;
-      set({ answer: { q, text: full, source: null }, thinking: null });
-    });
-    if (g !== gen) return;
-    tally(a);
-    set({ answer: { q, text: a.text, source: a.source }, thinking: null });
-    // без сцены: пока модель думает, шаг сеанса часто уже сменился, и фраза ушедшего шага иначе выбрасывается
-    say(a.text, 'action', a.source, a.source === 'now' ? { fallback: await answer(null, q, '', 0, lines) } : {});
+      tally(a);
+      set({ answer: { q, text: a.text, source: a.source }, thinking: null });
+      // целиком собранный ответ — затем звук; таймер отпустится, когда фраза доиграет
+      await say(a.text, 'action', a.source);
+    } finally {
+      d.dispatch({ t: 'timerRelease' });
+    }
   };
 
   return {
@@ -111,7 +115,7 @@ export function aiRunner(d: AiRunnerDeps) {
         const brief = e.key === 'result' ? d.debrief?.() : null;
         if (brief) {
           const f = pickFilled(lines.say.result, d.facts().vars, Math.random, d.voiced);
-          const sentences = debriefSentences(brief.paragraphs);
+          const sentences = debriefUtterances(brief.paragraphs);
           sentences.forEach((text, i) => {
             say(text, e.priority, 'now', {
               voice: brief.voice,
@@ -126,6 +130,8 @@ export function aiRunner(d: AiRunnerDeps) {
         }
       } else if (e.e === 'scene') {
         d.queue.scene(e.key);
+        // ход карты без модели: комментарий, начатый раньше, не договаривается поверх прокрутки
+        if (e.key.endsWith('-scroll')) gen++;
       } else if (e.e === 'newSession') {
         gen++;
         d.queue.clear();
@@ -134,18 +140,22 @@ export function aiRunner(d: AiRunnerDeps) {
       } else if (e.e === 'ask') {
         void ask(e.q);
       } else if (e.e === 'listen') {
+        if (frame.ear === 'listen') {
+          d.stopListen?.();
+          return;
+        }
         if (!d.listen) return;
         const g = gen;
         set({ ear: 'listen' });
         void d.listen().then((text) => {
-          if (g !== gen) return;
+          if (g !== gen) { d.dispatch({ t: 'timerRelease' }); return; }
           if (frame.ear === 'listen') set({ ear: 'idle' });
-          if (!text) return;
-          const r = parseSpeech(text);
-          if (!r) return;
-          if ('ask' in r) void ask(r.ask);
-          else d.dispatch(r);
-        }, () => { if (g === gen && frame.ear === 'listen') set({ ear: 'idle' }); });
+          if (!text) { d.dispatch({ t: 'timerRelease' }); return; }
+          void ask(text);
+        }, () => {
+          if (g === gen && frame.ear === 'listen') set({ ear: 'idle' });
+          d.dispatch({ t: 'timerRelease' });
+        });
       }
     },
     /** После решения перелома: комментарий выбора по фактам хода. */
@@ -159,7 +169,7 @@ export function aiRunner(d: AiRunnerDeps) {
       // заготовка уже в записи и звучит сразу; живой комментарий — голосом командующего, не диктора
       const marshal = typeof f.vars.marshal === 'string' ? f.vars.marshal : undefined;
       const voice = c.source === 'now' ? commanderVoice(marshal) : undefined;
-      say(c.text, 'action', c.source, { parts: c.parts, ...(voice ? { voice } : {}), ...(fallback ? { fallback } : {}) });
+      say(c.text, 'scene', c.source, { parts: c.parts, ...(voice ? { voice } : {}), ...(fallback ? { fallback } : {}) });
     },
     /** Ответ на вопрос мимо режиссёра (для проверок). */
     ask,

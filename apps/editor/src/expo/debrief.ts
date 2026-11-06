@@ -4,7 +4,7 @@
  * Абзацы звучат по очереди. Соседние предложения одного абзаца, пока их меньше 220 знаков, идут одним
  * синтезом: отдельный запуск на каждую точку заново берёт тембр клона.
  */
-import { BANK, type Card, type TurnN } from './bank';
+import { BANK, placeTitle, type Card, type TurnN } from './bank';
 import { templateUnits } from './lines';
 import { timeAt, type Decision, type ModelView } from './session';
 import { FRONT_NAMES } from './scenes';
@@ -33,11 +33,14 @@ function gist(c: Card | undefined): string {
 function turnStory(front: FrontId, d: Decision): string {
   const turn = BANK.fronts[front]?.turns.find((t) => t.n === d.n);
   const sit = turn?.situation ?? '';
-  const card = d.choice === 'delay' ? undefined : BANK.cards.find((c) => c.id === d.choice);
+  const aim = d.choice.startsWith('aim:') ? placeTitle(d.choice.slice(4)) : '';
+  const card = d.choice === 'delay' || aim ? undefined : BANK.cards.find((c) => c.id === d.choice);
   const hist = BANK.cards.find((c) => c.id === d.historical);
   const done = d.choice === 'delay'
     ? 'Нового приказа не отдали: армии остались на достигнутом и ждали следующего решения.'
-    : `${gist(card)}.`;
+    : aim
+      ? `Армии направлены на ${aim}.`
+      : `${gist(card)}.`;
   const aside = d.choice !== d.historical && hist ? ` В истории на этом участке вышло иначе: ${gist(hist)}.` : '';
   return [sit, done].filter(Boolean).join(' ') + aside;
 }
@@ -56,7 +59,9 @@ function outcome(v: ModelView): string {
     `По темпу ${spoken(f.scales.notes.speed)}.`,
     `По цене операции ${spoken(f.scales.notes.cost)}.`,
     `Замысел: ${f.scales.notes.intent}.`,
-    `По такому ходу звание — ${f.rank}.`,
+    f.rank === 'Провал'
+      ? (v.front === 'su_1uf' ? 'Это провал: фронт не вышел к Берлину с юга.' : 'Это провал: Берлин не взят.')
+      : `По такому ходу звание — ${f.rank}.`,
   ].filter(Boolean).join(' ');
 }
 

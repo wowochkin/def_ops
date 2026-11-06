@@ -39,6 +39,10 @@ export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHist
   const keep = new Set(STAGE_LAYERS);
   const rivers = ctx.theatre.data.rivers.filter((rv) => rv.line.length > 1).map(river);
   const layers = [{ id: 'rivers', name: 'Театр: реки', role: 'base' as const, visible: true, locked: true, opacity: 0.85 }, ...doc.layers];
+  const drawn = layers.filter((l) => keep.has(l.id)).map((l) => ({ ...l, visible: l.visible && !HIDDEN.has(l.id), locked: true }));
+  // знаки армий — выше стрелок пути, иначе подписи перекрываются
+  const onTop = new Set(['lvl-op-units', 'sim-own', 'sim-enemy']);
+  const orders = { id: ORDERS_LAYER, name: 'Приказ', role: 'custom' as const, visible: true, locked: true, opacity: 1 };
   return {
     doc: {
       ...doc,
@@ -46,10 +50,7 @@ export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHist
       // размер знаков — как у карты полного режима по умолчанию: растут с картой не больше чем в полтора раза
       sizing: DEFAULT_SIZING,
       declutter: true,
-      layers: [
-        ...layers.filter((l) => keep.has(l.id)).map((l) => ({ ...l, visible: l.visible && !HIDDEN.has(l.id), locked: true })),
-        { id: ORDERS_LAYER, name: 'Приказ', role: 'custom', visible: true, locked: true, opacity: 1 },
-      ],
+      layers: [...drawn.filter((l) => !onTop.has(l.id)), orders, ...drawn.filter((l) => onTop.has(l.id))],
       features: [...rivers, ...doc.features.filter((f) => keep.has(f.layerId)).map(quiet)],
     },
     zones: zonesOf(ctx, run.snapshots),
@@ -65,9 +66,9 @@ const SHEET_WEST = 7.75;
 const SHEET_EAST = 18.85;
 
 /** Продлить зоны на бока листа. Западнее своих — противник, восточнее — свои; пустые полосы закрываются.
- * Берлин остаётся зоной противника до ночи на 1 мая, когда над рейхстагом подняли Знамя Победы. */
+ * Берлин не берётся по календарю и не красится своим только потому, что кто-то вышел западнее него.
+ * Город свой, только если в круге у Рейхстага уже стоят свои войска. */
 const BERLIN_AT: [number, number] = [13.377, 52.516];
-const BANNER_AT = Date.parse('1945-05-01T00:00:00Z');
 const BERLIN_KM = 14;
 const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 const latOfY = (y: number) => (360 / Math.PI) * Math.atan(Math.exp(y)) - 90;
@@ -80,7 +81,6 @@ function coverSheet(g: ZoneGrid, time: string): ZoneGrid {
   const cols = g.cols + left + right;
   const west = w - left * dw;
   const v = new Array<number>(cols * g.rows).fill(0);
-  const beforeBanner = Date.parse(`${time.slice(0, 16)}:00Z`) < BANNER_AT;
   const yN = mercY(n), yS = mercY(s);
   const inCity = (c: number, r: number) => {
     const lng = west + (c + 0.5) * dw;
@@ -91,12 +91,15 @@ function coverSheet(g: ZoneGrid, time: string): ZoneGrid {
   };
   for (let r = 0; r < g.rows; r++) {
     for (let c = 0; c < g.cols; c++) v[r * cols + left + c] = g.v[r * g.cols + c];
-    if (beforeBanner) for (let c = 0; c < cols; c++) if (inCity(c, r)) v[r * cols + c] = 0;
+  }
+  let cityTaken = false;
+  for (let r = 0; r < g.rows; r++) for (let c = 0; c < cols; c++) if (inCity(c, r) && v[r * cols + c] > 0) cityTaken = true;
+  for (let r = 0; r < g.rows; r++) {
     let front = -1;
-    for (let c = 0; c < cols; c++) if (v[r * cols + c] > 0) { front = c; break; }
+    for (let c = 0; c < cols; c++) if (v[r * cols + c] > 0 && !inCity(c, r)) { front = c; break; }
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
-      if (beforeBanner && inCity(c, r)) { v[i] = -42; continue; }
+      if (inCity(c, r) && !cityTaken) { v[i] = -42; continue; }
       if (front < 0 || c < front) { if (v[i] >= 0) v[i] = -42; }
       else if (v[i] <= 0) v[i] = 48;
     }
@@ -221,11 +224,30 @@ export function sectorShade(bbox: [number, number, number, number]): Feature {
   return area;
 }
 
-/** Пути армий на итоге: сеанса — тонкой стрелкой атласа, исторический — контурной (полой). */
+/** Пути армий на итоге: сеанса — тонкой стрелкой атласа, исторический — контурной (полой).
+ * Скачок больше 80 км или назад на восток больше чем на 0,35° — корректировка положения, не марш: стрелка с этого места начинается заново. */
+function splitHooks(pts: LngLat[]): LngLat[][] {
+  const km = (p: LngLat, q: LngLat) => Math.hypot((p[0] - q[0]) * 67.6, (p[1] - q[1]) * 111);
+  const runs: LngLat[][] = [];
+  let cur: LngLat[] = [];
+  for (const p of pts) {
+    const prev = cur[cur.length - 1];
+    const hook = !!prev && (p[0] - prev[0] > 0.35 || km(prev, p) > 80);
+    if (hook) {
+      if (cur.length > 1) runs.push(cur);
+      cur = [p];
+    } else cur.push(p);
+  }
+  if (cur.length > 1) runs.push(cur);
+  return runs;
+}
+
 export function pathFeatures(doc: MapDocument, own: Record<string, LngLat[]>, history: Record<string, LngLat[]>, zoom: number): Feature[] {
+  const arrow = (id: string, pts: LngLat[], preset: 'atlas.hollow' | 'atlas.thin', scale: number) =>
+    ({ ...createFeature('arrow', preset, { points: pts, layerId: ORDERS_LAYER }, k(doc, zoom) * scale, 'own'), id });
   return [
-    ...Object.entries(history).map(([id, pts]) => ({ ...createFeature('arrow', 'atlas.hollow', { points: pts, layerId: ORDERS_LAYER }, k(doc, zoom) * 0.7, 'own'), id: `hist-${id}` })),
-    ...Object.entries(own).map(([id, pts]) => ({ ...createFeature('arrow', 'atlas.thin', { points: pts, layerId: ORDERS_LAYER }, k(doc, zoom) * 5, 'own'), id: `path-${id}` })),
+    ...Object.entries(history).flatMap(([id, pts]) => splitHooks(pts).map((seg, i) => arrow(`hist-${id}-${i}`, seg, 'atlas.hollow', 0.7))),
+    ...Object.entries(own).flatMap(([id, pts]) => splitHooks(pts).map((seg, i) => arrow(`path-${id}-${i}`, seg, 'atlas.thin', 5))),
   ];
 }
 

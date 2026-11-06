@@ -6,7 +6,7 @@ import { SOURCE_LABEL } from './ai';
 import { QUESTIONS, type AiFrame } from './ai-runner';
 import { BRIEFING } from './briefing';
 import type { DirectorEvent } from './director';
-import { EXCURSION, EXCURSION_SOURCE } from './excursion';
+import { EXCURSION } from './excursion';
 import { KB_STATS } from './kb-stats';
 import type { ModelFrame } from './model';
 import { pictureByFile, picturesOf } from './pictures';
@@ -52,24 +52,24 @@ export function AttractActions({ voice, send, start = true }: { voice: boolean; 
 /** Экран «Как работает штаб ИИ»: одна сцена, сюжет сменяется, схема на ней движется. */
 const HOW = [
   {
-    k: 'Модель',
-    title: 'Армии идут по часам',
-    text: 'Ядро считает сутки операции. Противник идёт по своему замыслу, ваш фронт — по приказам.',
+    k: 'Ход операции',
+    title: 'Каждый день считается отдельно',
+    text: 'Операция идёт с 16 апреля. Противник действует как в истории. Ваш фронт идёт так, как вы прикажете.',
   },
   {
-    k: 'База знаний',
-    title: 'Ответ называет источник',
-    text: 'На вопрос штаб берёт запись из базы и говорит, откуда факт.',
+    k: 'Откуда факты',
+    title: 'Штаб опирается на исторические данные',
+    text: 'Если спросить, откуда цифра, штаб назовёт книгу или документ. Ответ не выдумывается.',
   },
   {
-    k: 'Переигровка',
-    title: 'Три решения ведут фронт',
-    text: 'Соседний фронт в это время идёт своим ходом, как в операции.',
+    k: 'Три выбора',
+    title: 'Вы решаете три раза',
+    text: 'За операцию будет три решения. От них зависит, куда пойдут ваши армии.',
   },
   {
-    k: 'ИИ в ходе',
-    title: 'Спросили — карта сдвинулась',
-    text: 'Штаб отвечает, ядро считает, армии уходят на новый рубеж.',
+    k: 'Вопрос штабу',
+    title: 'Можно спросить штаб ИИ',
+    text: 'Ответ будет дан в краткой форме с указанием источника информации.',
   },
 ] as const;
 
@@ -77,15 +77,14 @@ export function HowStaff({ foot }: { foot?: ReactNode }) {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setBeat((n) => (n + 1) % HOW.length), 5600);
+    const id = window.setInterval(() => setBeat((n) => (n + 1) % HOW.length), 15000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [beat]);
   const cur = HOW[beat];
   return (
     <section className="expo-board expo-how">
       <header className="expo-how-head">
-        <p className="expo-kicker">Четыре части одного штаба</p>
-        <h1>Как работает штаб ИИ</h1>
+        <h1>Как устроен стенд</h1>
       </header>
       <div className="expo-how-stage" data-beat={beat}>
         <div key={beat} className="expo-how-art" aria-hidden="true">
@@ -117,11 +116,11 @@ export function HowStaff({ foot }: { foot?: ReactNode }) {
             <div className="expo-how-flow">
               <div className="expo-how-q">
                 <small>Вопрос</small>
-                <p>Почему высоты держали так долго?</p>
+                <p>Почему штурм высот был таким тяжёлым?</p>
               </div>
               <div className="expo-how-a">
                 <small>Штаб</small>
-                <p>Гребень видел всю пойму Одера.</p>
+                <p>С высот простреливалась вся долина реки.</p>
                 <em>Кривошеев, «Россия и СССР в войнах XX века»</em>
               </div>
               <div className="expo-how-move">
@@ -140,11 +139,23 @@ export function HowStaff({ foot }: { foot?: ReactNode }) {
           <p>{cur.text}</p>
         </div>
       </div>
-      <ol className="expo-how-rail" aria-hidden="true">
+      <div className="expo-how-rail" role="tablist" aria-label="Как устроен стенд">
         {HOW.map((x, i) => (
-          <li key={x.k} data-on={i === beat || undefined}>{x.k}</li>
+          <button
+            key={x.k}
+            type="button"
+            role="tab"
+            aria-selected={i === beat}
+            data-on={i === beat || undefined}
+            onClick={(e) => {
+              e.stopPropagation();
+              setBeat(i);
+            }}
+          >
+            {x.k}
+          </button>
         ))}
-      </ol>
+      </div>
       {foot}
     </section>
   );
@@ -157,26 +168,26 @@ const APP_SHOTS = [
   {
     file: 'map',
     title: 'Карта операции',
-    text: 'Армии и удары за сутки, рубежи обороны и разграничительные линии.',
-    body: 'Та же карта, что на стенде, без сокращения. Армии, удары за сутки, рубежи и разграничительные линии. Уровень знаков — от фронта до дивизии, время хода двигает знаки и линию фронта. Подложка та, что выбрана в полном режиме.',
+    text: 'На данном стенде показаны только армии. В полной версии пять уровней командования.',
+    body: 'На данном стенде показаны только армии. В полной версии пять уровней командования: ставка, фронт, армия, корпус и дивизия. Сутки можно перематывать и смотреть, куда шли войска и где была линия фронта.',
   },
   {
     file: 'staff',
     title: 'Штаб',
-    text: 'Сводка, доклады фронтов, приказы и ветви переигровки.',
-    body: 'Сводка хода, доклады фронтов и приказы соединениям. Ветвь переигровки хранит, что было отдано и чем ход закончился. На стенде из этого остаются три карточки и голос командующего.',
+    text: 'На стенде штаб отвечает на вопрос. В полной версии он принимает доклады и отдаёт приказы.',
+    body: 'На стенде штаб отвечает голосом на вопрос пользователя. В полной версии штаб ещё принимает доклады, показывает сводку и отдаёт приказы войскам. Можно открыть любой отданный приказ и посмотреть, чем закончился ход.',
   },
   {
     file: 'modeling',
-    title: 'Моделирование',
-    text: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам.',
-    body: 'Правила арбитра, сравнение прогона с историей и калибровка по нормативам. Здесь видно, из каких чисел собраны скорость, цена и замысел — на стенде они сжаты в три шкалы итога.',
+    title: 'Сравнение с историей',
+    text: 'На стенде в конце три оценки. В полной версии видно, из каких чисел они сложились.',
+    body: 'На стенде в конце сеанса три оценки: раньше или позже истории и больше или меньше потери. В полной версии эти оценки можно раскрыть и увидеть, из каких чисел они сложились.',
   },
   {
     file: 'kb',
-    title: 'База знаний',
-    text: 'Факты операции с источником и вопросы, на которые модель отвечает по базе.',
-    body: 'Факты операции, у каждого источник. Вопрос к модели идёт по этим записям: ответ называет, откуда взят факт. На стенде тот же приём — у цифры доклада и у ответа штаба виден источник.',
+    title: 'Откуда факты',
+    text: 'На стенде штаб называет книгу. В полной версии можно открыть саму запись.',
+    body: 'На стенде штаб называет книгу или документ, из которого взят ответ. В полной версии можно открыть саму запись: факт и источник рядом.',
   },
 ];
 
@@ -195,7 +206,7 @@ const MARSHAL_PLATE = {
     focus: '50% 18%',
     lines: [
       '1-й Белорусский фронт.',
-      'С кюстринского плацдарма через Зееловские высоты на Берлин и к Эльбе.',
+      'С Кюстринского плацдарма через Зееловские высоты на Берлин и к Эльбе.',
       'Ставка дала на это двенадцать–пятнадцать суток.',
     ],
   },
@@ -247,9 +258,8 @@ export function FullVersion({ foot }: { foot?: ReactNode }) {
     const p = v.play?.();
     void p?.catch(() => {});
     const next = () => setI((n) => (n + 1) % APP_SHOTS.length);
-    v.addEventListener('ended', next);
-    const cap = window.setTimeout(next, 40000);
-    return () => { v.removeEventListener('ended', next); window.clearTimeout(cap); };
+    const cap = window.setTimeout(next, 20000);
+    return () => window.clearTimeout(cap);
   }, [i]);
   return (
     <section className="expo-board expo-full">
@@ -296,13 +306,9 @@ export function Excursion({ point }: { point: number }) {
       {pic && (
         <figure className="expo-note-photo">
           <img src={pic.src} alt={pic.caption} style={pic.focus ? { objectPosition: pic.focus } : undefined} />
-          <figcaption>
-            {pic.caption}
-            <small>{pic.author}</small>
-          </figcaption>
+          <figcaption>{pic.caption}</figcaption>
         </figure>
       )}
-      <p className="expo-source">Источник: {EXCURSION_SOURCE}.</p>
     </section>
   );
 }
@@ -361,8 +367,8 @@ function coreLine(model: ModelFrame): string {
   if (model.error) return model.error;
   const mv = model.view;
   if (!mv) return 'Ядро готовит сеанс';
-  if (mv.busy) return 'Ядро считает ход';
-  const bits = [`Ядро: ${modelTime(mv.time)}`];
+  if (mv.busy) return 'Считаем ход';
+  const bits = [`Ход: ${modelTime(mv.time)}`];
   if (mv.berlinKm) bits.push(`до Берлина ${mv.berlinKm.now} км, в этот день истории — ${mv.berlinKm.history} км`);
   if (mv.decisions.length && mv.loss.own > 0) bits.push(`потери ${mv.loss.own.toLocaleString('ru-RU')}`);
   return bits.join(' · ');
@@ -408,6 +414,9 @@ export function StaffBoard({
           placeholder="Свой вопрос — ответ составит ИИ"
           onChange={(e) => setQ(e.target.value)}
         />
+        <button type="button" className="expo-mic" aria-pressed={ai.ear === 'listen'} aria-label={ai.ear === 'listen' ? 'Слушаю' : 'Говорить'} onClick={() => send({ t: 'speak' })}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></svg>
+        </button>
         <button type="submit" className="expo-primary">Спросить</button>
       </form>
       {(ai.thinking || ai.answer) && (

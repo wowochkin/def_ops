@@ -67,7 +67,8 @@ export const RANKS = [
 ] as const;
 
 export const axesSum = (a: Axes) => a.speed + a.cost + a.intent;
-export const rankOf = (a: Axes) => RANKS.find((r) => axesSum(a) >= r.min)!.title;
+/** Берлин не взят — это провал, не звание: потери и сроки остальных задач его не смягчают. */
+export const rankOf = (a: Axes, berlinFell = true) => (berlinFell ? RANKS.find((r) => axesSum(a) >= r.min)!.title : 'Провал');
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 /** «29 апреля». */

@@ -135,8 +135,35 @@ html.expo-active,
   padding-top: 12px;
   border-top: 1px solid var(--expo-line);
 }
-.expo-fill {
-  flex: 1;
+.expo > .expo-footer > .expo-subs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.expo > .expo-footer > .expo-aim,
+.expo > .expo-footer > .expo-aims,
+.expo > .expo-footer > .expo-aim-pick,
+.expo > .expo-footer > .expo-confirm {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.expo-aims button[aria-pressed='true'] {
+  border-color: var(--expo-gold);
+  color: var(--expo-gold);
+}
+.expo > .expo-footer:has(.expo-aims),
+.expo > .expo-footer:has(.expo-aim-pick),
+.expo > .expo-footer:has(.expo-confirm) {
+  height: auto;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+}
+.expo-aim-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 .expo h1 {
   font: normal 80px / 1.08 var(--expo-serif);
@@ -245,6 +272,16 @@ html.expo-active,
 }
 .expo-stage-map {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.expo-stage-map > :first-child {
+  position: relative;
+  inset: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
 }
 /* тон архивной карты — неподвижный слой поверх (фильтр на всей карте перерастеризовал бы её на каждом кадре камеры) */
 .expo-gis::after {
@@ -355,14 +392,16 @@ html.expo-active,
   z-index: 1;
 }
 .expo-mapkey {
-  position: absolute;
-  z-index: 5;
-  left: 14px;
-  bottom: 52px;
-  margin: 0;
-  padding: 8px 12px;
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: max-content;
+  max-width: calc(100% - 16px);
+  margin: 6px 8px 8px;
+  padding: 6px 10px;
   display: grid;
-  gap: 3px;
+  grid-template-columns: repeat(4, max-content);
+  gap: 2px 14px;
   list-style: none;
   background: rgba(247, 244, 234, 0.94);
   border: 1px solid #c8bda6;
@@ -446,10 +485,11 @@ html.expo-active,
 }
 .expo-reel img {
   display: block;
-  flex: 0 0 88px;
   width: 100%;
-  height: 88px;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  background: #16120e;
   box-sizing: border-box;
   border: 6px solid #e8dfc8;
   filter: sepia(0.45) contrast(1.08);
@@ -767,8 +807,6 @@ html.expo-active,
   align-items: center;
 }
 .expo-subs-text {
-  max-height: 124px;
-  overflow: auto;
   text-align: center;
   font-family: var(--expo-serif);
   line-height: 1.3;
@@ -808,7 +846,9 @@ html.expo-active,
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
-.expo-cards:has(.expo-confirm) {
+.expo-cards:has(.expo-confirm),
+.expo-cards:has(.expo-aim),
+.expo-cards:has(.expo-aims) {
   grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
 }
 .expo-confirm {
@@ -1632,20 +1672,28 @@ html.expo-active,
   grid-column: 1 / -1;
   align-self: stretch;
 }
+.expo-legend {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin: 0;
+}
+.expo-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
 .expo-legend span::before {
   content: '';
-  display: inline-block;
   width: 56px;
-  margin: 0 14px 8px 0;
-  border-top: 8px solid #d9604f;
-}
-.expo-legend .expo-legend-history {
-  margin-left: 40px;
+  height: 6px;
+  background: #d9604f;
+  flex: none;
 }
 .expo-legend .expo-legend-history::before {
-  height: 4px;
-  border: 2px solid #d9604f;
+  height: 6px;
   background: #fff;
+  box-shadow: inset 0 0 0 2px #d9604f;
 }
 
 /* Шкалы, строки хода, ИИ */
@@ -2451,13 +2499,19 @@ html.expo-active,
   padding: 0;
   list-style: none;
 }
-.expo-how-rail li {
-  padding-bottom: 10px;
+.expo-how-rail button {
+  min-height: 0;
+  padding: 12px 0 10px;
+  border: none;
   border-bottom: 3px solid var(--expo-line);
+  border-radius: 0;
+  background: none;
   font: 32px / 1 var(--expo-serif);
   color: var(--expo-muted);
+  text-align: left;
+  cursor: pointer;
 }
-.expo-how-rail li[data-on] {
+.expo-how-rail button[data-on] {
   border-color: var(--expo-gold);
   color: var(--expo-gold);
 }
@@ -3070,7 +3124,7 @@ html.expo-active,
 }
 .expo-ask {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   margin-top: 8px;
 }
@@ -3084,7 +3138,86 @@ html.expo-active,
   font: 28px / 1.2 var(--expo-serif);
 }
 .expo-ask input::placeholder { color: var(--expo-muted); }
-.expo-ask button { min-width: 200px; }
+.expo-pick {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.expo-pick > .expo-aim,
+.expo-pick > .expo-aims { flex: none; }
+.expo-aims { display: flex; flex-wrap: wrap; gap: 12px; align-content: start; }
+.expo-aim-pick .expo-confirm { flex: none; }
+.expo-aims p { flex: 1 0 100%; margin: 0; font-size: 28px; }
+.expo button.expo-aim {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  margin: 0;
+  min-height: 108px;
+  padding: 14px 32px;
+  border: 2px solid #e2b657;
+  border-radius: 16px;
+  color: #f4e7c8;
+  background: #1a160f;
+  font: 600 32px/1.15 var(--expo-serif);
+  letter-spacing: 0.01em;
+  white-space: normal;
+  text-align: left;
+  overflow: hidden;
+}
+.expo-aim-track {
+  flex: none;
+  width: 132px;
+  height: 40px;
+  overflow: hidden;
+}
+.expo-aim-track svg {
+  display: block;
+  width: 168px;
+  height: 40px;
+  fill: none;
+  stroke: #c4382c;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: expo-aim-march 1.4s linear infinite;
+}
+@keyframes expo-aim-march {
+  from { transform: translateX(-48px); }
+  to { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expo-aim-track svg { animation: none; }
+}
+.expo-ask .expo-mic {
+  min-width: 0;
+  width: var(--expo-target, 96px);
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.expo-ask .expo-mic svg { width: 42px; height: 42px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.expo-ask .expo-mic[aria-pressed="true"] {
+  color: #f0d78c;
+  border-color: #f0d78c;
+  animation: expo-mic-pulse 1.15s ease-in-out infinite;
+}
+.expo-ask .expo-mic[aria-pressed="true"] svg { animation: expo-mic-glow 1.15s ease-in-out infinite; }
+@keyframes expo-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 215, 140, 0.55); }
+  70% { box-shadow: 0 0 0 16px rgba(240, 215, 140, 0); }
+}
+@keyframes expo-mic-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expo-ask .expo-mic[aria-pressed="true"],
+  .expo-ask .expo-mic[aria-pressed="true"] svg { animation: none; }
+}
 .expo-staff .expo-answer {
   font-size: 32px;
   line-height: 1.35;

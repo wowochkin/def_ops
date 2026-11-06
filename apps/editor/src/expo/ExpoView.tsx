@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { affordances, keyToEvent } from './input';
 import { scrollMs, type DirectorEvent, type DirectorState } from './director';
+import { BANK, aimPlaces, placeAt } from './bank';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { AttractActions, DayRecordLine, Excursion, FullVersion, HowStaff, MarshalPortrait, StaffBoard, roleLayout } from './stand';
@@ -21,7 +22,7 @@ import { BRIEFING, briefFeatures } from './briefing';
 import { StageMap, type Bbox, type StageMapProps } from './StageMap';
 import { Cut, Film, flip } from './film';
 import { LENS_EVENT, lensesFor, sameLens, stepLens, type Lens } from './lens';
-import { bboxOf, dailyPaths, focusMark, followHistory, frameOf, orderFeatures, pathFeatures, sectorShade, unitAt } from './stage-doc';
+import { bboxOf, dailyPaths, followHistory, frameOf, orderFeatures, pathFeatures, unitAt } from './stage-doc';
 import type { StageDoc, StageDocs } from './stage-maps';
 import { historyAt, historyPaths, mainPaths, MAP, spokenFocus, type Arrow, type LL } from './map';
 import type { ModelFrame } from './model';
@@ -29,12 +30,11 @@ import type { CardView } from './session';
 import { timeAt } from './session';
 import { debriefCursor, debriefSentences, forecastParts, operationDebrief, resultBeat } from './debrief';
 import { Figures, ModelNote, modelTime, MoveAdvance, OpSummary, Scales, Tasks, Timeline, turnDef, timelineAt } from './session-scenes';
-import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
+import { NO_AI, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
 import { pictureByFile, picturesOf } from './pictures';
 import { STAFF_PHOTO } from './excursion';
-import { BANK } from './bank';
 import { readRecord, recordLines } from './records';
 import './expo.css';
 export interface ExpoViewProps {
@@ -133,13 +133,15 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const [expanded, setExpanded] = useState<number | null>(null),
     [hover, setHover] = useState<number | null>(null),
     [pending, setPending] = useState<number | null>(null),
+    [aimPick, setAimPick] = useState<string | null>(null),
     [frontIndex, setFrontIndex] = useState(0),
-    [asking, setAsking] = useState(false);
+    [aimAt, setAimAt] = useState<LL | null>(null);
   useEffect(() => {
     setExpanded(null);
     setHover(null);
     setPending(null);
-    setAsking(false);
+    setAimPick(null);
+    setAimAt(null);
   }, [state.session, p.kind, p.kind === 'turn' ? p.n : 0, p.kind === 'turn' ? p.step : '']);
   useEffect(() => {
     if (!access.keys || state.paused || !(controls || single)) return;
@@ -170,7 +172,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
   const lit = expanded ?? pending ?? hover;
   const spoken = p.kind === 'result' ? ai.line?.text ?? ai.said : null;
-  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken }), [state.phase, state.front, mv, maps, lit, count, index, spoken]); // eslint-disable-line react-hooks/exhaustive-deps
+  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken, aimAt }), [state.phase, state.front, mv, maps, lit, count, index, spoken, aimAt]); // eslint-disable-line react-hooks/exhaustive-deps
   const onRunDone = useCallback(() => {
     if (p.kind === 'turn' && p.step === 'scroll') send({ t: 'scrollDone' });
   }, [p, send]);
@@ -367,7 +369,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     </div>
                     <div className="expo-mapframe">
                       <div className="expo-mapslot" role="img" aria-label="Карта перелома" />
-                      {p.rest && <p className="expo-scroll-rest">{p.n < 3 ? 'Переход к следующему перелому' : 'Переход к итогу'}</p>}
+                      {p.preparing && <p className="expo-scroll-rest">Готовим итог</p>}
                       {face === 'map' && (
                         <button type="button" className="expo-pause" aria-pressed={state.paused} onClick={() => send(state.paused ? { t: 'resume' } : { t: 'pause' })}>
                           {state.paused ? 'Продолжить' : 'Пауза'}
@@ -390,7 +392,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                         pending={pending}
                         lit={expanded ?? pending ?? hover}
                         setExpanded={setExpanded}
-                        setPending={setPending}
+                        setPending={(n) => { setPending(n); if (n !== null) { setAimPick(null); setAimAt(null); } }}
                         setHover={setHover}
                         send={send}
                       />
@@ -406,8 +408,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                       </ExplainFit>
                     ) : (
                       <>
-                        <OrderSlip c={typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice} />
-                        <Reveal model={model} delay={p.choice === 'delay'} full={!roles.includes('progress')} />
+                        <OrderSlip c={p.choice === 'aim' && mv?.blow ? { id: 'aim', title: mv.blow.title, lines: [] } : typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice === 'aim' ? 'aim' : p.choice} />
+                        <Reveal model={model} delay={p.choice === 'delay'} own={p.choice === 'aim'} full={!roles.includes('progress')} />
                         {mv?.move && !roles.includes('progress') && <MoveAdvance mv={mv} />}
                         {roles.includes('progress') && <Progress model={model} size="compact" date={false} />}
                       </>
@@ -435,10 +437,10 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                   {(face === 'all' || face === 'map') && (
                     <div className="expo-result-side">
                       <div className="expo-mapframe">
-                        <div className="expo-mapslot" role="img" aria-label="Участок, о котором говорит командующий: ваш путь сплошной стрелкой, история — полой" />
+                        <div className="expo-mapslot" role="img" aria-label="Участок, о котором говорит командующий: ход сеанса — сплошная стрелка, исторический ход — полая" />
                       </div>
                       <p className="expo-legend">
-                        <span className="expo-legend-own">ваш путь</span> <span className="expo-legend-history">как было</span>
+                        <span className="expo-legend-own">ход сеанса</span> <span className="expo-legend-history">исторический ход</span>
                       </p>
                       {controls && (
                         <button className="expo-primary" onClick={() => send({ t: 'touch' })}>
@@ -468,22 +470,33 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
         </div>
         {(buttons || subtitles) && (
           <footer className="expo-footer">
-            {buttons && access.voiceButton && (
-              <button disabled={state.paused} onClick={() => send({ t: 'speak' })}>
-                Говорить
-              </button>
-            )}
-            {buttons && (
-              <button className="expo-secondary" disabled={state.paused} aria-expanded={asking} onClick={() => setAsking(!asking)}>
-                Спросить ИИ
-              </button>
-            )}
             {p.kind === 'turn' && roles.includes('ai') ? (
               <AiBand ai={ai} rest={p.step === 'explain' ? state.front && FRONT_TASKS[state.front] : def?.situation} />
             ) : subtitles ? (
               <AiPanel ai={ai} compact />
             ) : (
               <span className="expo-fill" />
+            )}
+            {buttons && p.kind === 'turn' && p.step === 'choose' && pending !== null && mv?.cards[pending] && (
+              <div className="expo-confirm" role="group" aria-label="Подтверждение выбора">
+                <p>Принять вариант {pending + 1} — {mv.cards[pending].title}?</p>
+                <button className="expo-primary" disabled={state.paused} onClick={() => send({ t: 'choose', card: pending })}>
+                  Подтвердить
+                </button>
+                <button className="expo-secondary" onClick={() => setPending(null)}>
+                  Отмена
+                </button>
+              </div>
+            )}
+            {buttons && p.kind === 'turn' && p.step === 'choose' && pending === null && (
+              <AimBar
+                front={state.front}
+                disabled={state.paused}
+                picked={aimPick}
+                send={send}
+                onAim={setAimAt}
+                onPick={(id) => { setPending(null); setAimPick(id); }}
+              />
             )}
             {buttons && p.kind === 'welcome' && state.front && (
               <button className="expo-primary" disabled={state.paused} onClick={() => send({ t: 'pickFront', front: state.front! })}>
@@ -499,22 +512,6 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                 Начать заново
               </button>
             ))}
-            {asking && (
-              <div className="expo-questions" role="menu">
-                {QUESTIONS.map((q) => (
-                  <button
-                    key={q}
-                    role="menuitem"
-                    onClick={() => {
-                      send({ t: 'ask', q });
-                      setAsking(false);
-                    }}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
           </footer>
         )}
         <Film />
@@ -706,7 +703,7 @@ function Cards(props: {
         <Fact c={open} source />
         {cardSource(open) && <small className="expo-source">{cardSource(open)}</small>}
         <div className="expo-sheet-actions">
-          <button className="expo-primary" disabled={disabled} onClick={() => send({ t: 'choose', card: expanded })}>
+          <button className="expo-primary" disabled={disabled} onClick={() => { setPending(expanded); setExpanded(null); }}>
             Выбрать вариант {expanded + 1}
           </button>
           <button className="expo-secondary" disabled={!canReplace} onClick={() => { setPending(null); send({ t: 'replace', card: expanded }); }}>
@@ -730,7 +727,7 @@ function Cards(props: {
             onPointerEnter={props.hoverLights ? () => setHover(card) : undefined}
             onPointerLeave={props.hoverLights ? () => setHover(null) : undefined}
           >
-            <button className="expo-card-main expo-card-nophoto" disabled={disabled || !c} aria-pressed={pending === card} aria-label={`Карточка ${card + 1}`} onClick={() => setPending(card)}>
+            <button className="expo-card-main expo-card-nophoto" disabled={disabled || !c} aria-pressed={pending === card} aria-label={`Карточка ${card + 1}`} onClick={() => setPending(pending === card ? null : card)}>
               <CardFace c={c} n={card} tight={pending !== null} />
             </button>
             {/* историческая карточка до выбора не отличается от прочих: кнопка замены есть у каждой */}
@@ -745,13 +742,58 @@ function Cards(props: {
           </article>
         );
       })}
-      {pending !== null && cards[pending] && (
-        <div className="expo-confirm" role="group" aria-label="Подтверждение выбора">
-          <p>Принять вариант {pending + 1} — {cards[pending].title}?</p>
-          <button className="expo-primary" disabled={disabled} onClick={() => send({ t: 'choose', card: pending })}>
+    </div>
+  );
+}
+
+/** Своё направление удара: под картой, не среди карточек. */
+function AimBar({ front, disabled, picked, send, onAim, onPick }: { front: FrontId | null; disabled: boolean; picked: string | null; send: (ev: DirectorEvent) => void; onAim: (at: LL | null) => void; onPick: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const aims = front ? aimPlaces(BANK, front) : [];
+  const show = (id: string) => onAim(placeAt(id));
+  const chosen = aims.find((a) => a.id === picked);
+  if (!aims.length) return null;
+  if (!open) {
+    return (
+      <button type="button" className="expo-aim" disabled={disabled} onClick={() => setOpen(true)}>
+        <span className="expo-aim-track" aria-hidden="true">
+          <svg viewBox="0 0 120 28">
+            <path d="M2 14h28M24 6l10 8-10 8" />
+            <path d="M46 14h28M68 6l10 8-10 8" />
+            <path d="M90 14h28M112 6l10 8-10 8" />
+          </svg>
+        </span>
+        Выбрать собственное направление удара
+      </button>
+    );
+  }
+  return (
+    <div className="expo-aim-pick" onPointerLeave={() => { if (!picked) onAim(null); }}>
+      <div className="expo-aims" role="group" aria-label="Своё направление удара">
+        <p>Куда направить армии?</p>
+        {aims.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            className="expo-secondary"
+            disabled={disabled}
+            aria-pressed={picked === a.id}
+            onPointerEnter={() => show(a.id)}
+            onFocus={() => show(a.id)}
+            onClick={() => { onPick(picked === a.id ? null : a.id); show(a.id); }}
+          >
+            {a.title}
+          </button>
+        ))}
+        <button type="button" className="expo-secondary" onClick={() => { onAim(null); onPick(null); setOpen(false); }}>К карточкам</button>
+      </div>
+      {chosen && (
+        <div className="expo-confirm" role="group" aria-label="Подтверждение направления">
+          <p>Направить армии на {chosen.title}?</p>
+          <button className="expo-primary" disabled={disabled} onClick={() => send({ t: 'aim', place: chosen.id })}>
             Подтвердить
           </button>
-          <button className="expo-secondary" onClick={() => setPending(null)}>
+          <button className="expo-secondary" onClick={() => { onPick(null); onAim(null); }}>
             Отмена
           </button>
         </div>
@@ -761,12 +803,12 @@ function Cards(props: {
 }
 
 /** Отданный приказ: бланк выбранной карточки со штампом «ПРИКАЗ», текст — телетайпом. */
-function OrderSlip({ c, n }: { c: CardView | null; n: number | 'delay' | null }) {
-  if (n === 'delay' || !c) return null;
+function OrderSlip({ c, n }: { c: CardView | null; n: number | 'delay' | 'aim' | null }) {
+  if (n === 'delay' || n === 'aim' && !c || !c) return null;
   return (
     <article className="expo-slip" aria-label="Отданный приказ">
       <p className="expo-slip-head">
-        <span className="expo-card-n">{(n as number) + 1}</span> <span className="expo-tty">{c.title}</span>
+        {n === 'aim' ? <span className="expo-tty">{c.title}</span> : <><span className="expo-card-n">{(n as number) + 1}</span> <span className="expo-tty">{c.title}</span></>}
       </p>
       <span className="expo-stamp" aria-hidden="true">
         Приказ
@@ -834,7 +876,7 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
         <h1 className="expo-paper-head">{head}</h1>
         {deck && <p className="expo-paper-deck">{deck}</p>}
         <p className="expo-paper-rank">
-          Звание по итогам: <b className="expo-rank">{final.rank}</b>
+          {final.rank === 'Провал' ? <><b className="expo-rank">Провал</b></> : <>Звание по итогам: <b className="expo-rank">{final.rank}</b></>}
         </p>
       </header>
       <div className="expo-debrief-lines" ref={linesRef}>
@@ -863,9 +905,12 @@ function ResultCalc({ mv, spoken, verdict }: { mv: View; spoken: string | null; 
   const turn = beat.turn ? turnDef(mv.front, beat.turn) : null;
   const { head, deck } = forecastParts(mv.final?.forecast ?? '');
   const calcRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (beat.phase === 'close') calcRef.current?.querySelector('[data-final]')?.scrollIntoView({ block: 'nearest' });
-  }, [beat.phase]);
+  useLayoutEffect(() => {
+    const box = calcRef.current;
+    if (!box) return;
+    box.style.zoom = '1';
+    if (box.clientHeight > 8 && box.scrollHeight > box.clientHeight + 4) box.style.zoom = String(Math.max(0.62, box.clientHeight / box.scrollHeight));
+  }, [beat.phase, beat.until, head, deck]);
   return (
     <div className="expo-calc" ref={calcRef}>
       <h2>Расчёт модели</h2>
@@ -885,7 +930,7 @@ function ResultCalc({ mv, spoken, verdict }: { mv: View; spoken: string | null; 
         <>
           <h1 className="expo-paper-head">{head}</h1>
           {deck && <p className="expo-paper-deck">{deck}</p>}
-          <p className="expo-paper-rank">Звание по итогам: <b className="expo-rank">{mv.final.rank}</b></p>
+          <p className="expo-paper-rank">{mv.final.rank === 'Провал' ? <b className="expo-rank">Провал</b> : <>Звание по итогам: <b className="expo-rank">{mv.final.rank}</b></>}</p>
           <p>Совпало с историческим решением: {mv.final.matches} из 3</p>
         </>
       )}
@@ -906,7 +951,7 @@ function LeaveBar({ leave, now, send }: { leave: number; now: number; send: (ev:
 }
 
 /** После выбора: как поступил маршал и исторический вариант (целиком или сутью, когда рядом ход операции). */
-function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; full: boolean }) {
+function Reveal({ model, delay, full, own = false }: { model: ModelFrame; delay: boolean; full: boolean; own?: boolean }) {
   const mv = model.view;
   return (
     <div className="expo-reveal">
@@ -916,7 +961,7 @@ function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; ful
           <h3>{mv.reveal.text}</h3>
           {full ? (
             <>
-              <p className="expo-meta">Исторический вариант</p>
+              <p className="expo-meta">{own ? 'В истории было иначе' : 'Исторический вариант'}</p>
               <p className="expo-hist-title">{mv.reveal.historical.title}</p>
               <ul className="expo-card-lines">
                 {mv.reveal.historical.lines.map((l) => (
@@ -926,7 +971,7 @@ function Reveal({ model, delay, full }: { model: ModelFrame; delay: boolean; ful
             </>
           ) : (
             <p className="expo-hist-title">
-              <span className="expo-meta">Исторический вариант:</span> {mv.reveal.historical.title}
+              <span className="expo-meta">{own ? 'В истории:' : 'Исторический вариант:'}</span> {mv.reveal.historical.title}
             </p>
           )}
         </>
@@ -1084,7 +1129,7 @@ const ZOOM = 8;
 const sectorBox = (front: string, extra: LL[]): Bbox => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
 
 /** Что показывает карта стенда в сцене: документ, момент или бег времени, кадр камеры и знаки поверх; null — карты нет. */
-export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number; spoken?: string | null }): StageMapProps | null {
+export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aimAt = null }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number; spoken?: string | null; aimAt?: LL | null }): StageMapProps | null {
   const p = state.phase;
   const hist = maps.history;
   const start = hist?.doc.timeline?.start ?? MAP.days[0];
@@ -1110,20 +1155,30 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const d = own ?? hist;
     if (!d) return null;
     const litArrows = p.step === 'choose' && lit !== null ? mv.cards[lit]?.arrows ?? [] : [];
+    const aimArrows = p.step === 'choose' && aimAt ? (() => {
+      const own = mv.map.armies.filter((a) => a.front === mv.front);
+      if (!own.length) return [];
+      const from: LL = [own.reduce((s, a) => s + a.at[0], 0) / own.length, own.reduce((s, a) => s + a.at[1], 0) / own.length];
+      return [{ army: own[0].id, from, to: aimAt, kind: 'attack' }];
+    })() : [];
     const bulge = (a: { from: LL; to: LL }): LL => [
       (a.from[0] + a.to[0]) / 2 + (a.to[1] - a.from[1]) * 0.12,
       (a.from[1] + a.to[1]) / 2 - (a.to[0] - a.from[0]) * 0.12,
     ];
-    const arrowPts = litArrows.flatMap((a) => [a.from, a.to, bulge(a)]);
+    const arrowPts = (aimArrows.length ? aimArrows : litArrows).flatMap((a) => [a.from, a.to, bulge(a)]);
     const near = mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at);
-    const bbox = turnBbox(mv.front, p.n, [...near, ...arrowPts]);
+    const frame = turnBbox(mv.front, p.n, [...near, ...arrowPts]);
+    const bbox = aimAt
+      ? bboxOf([[frame[0], frame[1]], [frame[2], frame[3]], [aimAt[0] - 0.55, aimAt[1] - 0.4], [aimAt[0] + 0.55, aimAt[1] + 0.4], ...near])
+      : frame;
     const camera = { bbox, key: `turn-${mv.front}-${p.n}-${lit ?? 'x'}-${bbox.map((x) => x.toFixed(2)).join(',')}`, ms: 0, pad: 0.16 };
     const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
-    const arrows = p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? mv.reveal?.historical.arrows : undefined;
+    const arrows = aimArrows.length ? aimArrows : p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? (p.choice === 'aim' ? mv.blow?.arrows : undefined) ?? (p.choice === 'aim' ? undefined : mv.reveal?.historical.arrows) : undefined;
     const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;
     // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят. После конца кадра — на конечном времени, не обратно
-    const moving = p.step === 'scroll' && !p.rest && own && own.time === mv.time && mv.map.prev && !mv.busy;
-    const time = own ? (p.step === 'scroll' && !moving && !p.rest && mv.map.prev ? mv.map.prev.time : mv.time) : start;
+    const moving = p.step === 'scroll' && !p.rest && !p.preparing && own && own.time === mv.time && mv.map.prev && !mv.busy;
+    // пока ход ещё считается — кадр начала. Когда карта доиграла (пауза или «готовим итог») — конец хода, без скачка назад.
+    const time = own ? (p.step === 'scroll' && !moving && !p.rest && !p.preparing && mv.map.prev ? mv.map.prev.time : mv.time) : start;
     const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
     const runMs = Math.max(1_000, scrollMs(mv.front, p.n) - 500);
     return { doc: d.doc, time, level: 'front', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: runMs, delay: 500, linear: true, key: `run-${mv.time}` } : null, camera, extra, fx };
@@ -1139,7 +1194,6 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const hp = historyPaths(mv.front, until);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
     const say = spoken ? spokenFocus(spoken, mv.front) : { armies: [] as string[], places: [] as LL[] };
-    const pts = [...Object.values(paths), ...Object.values(history)].flat();
     const turn = beat.turn ? BANK.fronts[mv.front].turns.find((t) => t.n === beat.turn) : undefined;
     const last = mv.decisions.at(-1);
     const lastTurn = last ? BANK.fronts[mv.front].turns.find((t) => t.n === last.n) : undefined;
@@ -1161,19 +1215,15 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const sayKey = (spoken ?? '').replace(/\s+/g, ' ').trim().slice(0, 42);
     const camera = frame
       ? { bbox: frame, key: `result-${beat.phase}-${beat.turn ?? 'x'}-${said.map((x) => x.id).join('.')}-${say.places.length}-${sayKey}`, ms: 900 }
-      : beat.phase === 'open'
-        ? { bbox: THEATRE, key: `result-open-${sayKey}`, ms: 800, scale: 1_500_000 }
-        : { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-close-${sayKey}`, ms: 800 };
+      : { bbox: THEATRE, key: `result-${beat.phase}-${sayKey}`, ms: 800, pad: 0.02, scale: 1_500_000 };
     const shownIds = named ? said.map((x) => x.id) : ids;
     const extra = [
-      ...(frame && !named ? [sectorShade(frame)] : []),
       ...pathFeatures(
         own.doc,
         Object.fromEntries(Object.entries(paths).filter(([id]) => shownIds.includes(id))),
         Object.fromEntries(Object.entries(history).filter(([id]) => shownIds.includes(id))),
         ZOOM,
       ),
-      ...said.map((x) => focusMark(x.at, x.id)),
     ];
     return { doc: followHistory(own.doc, mv.front), time: run ? null : beat.span[1] === 0 ? start : toTime, run, camera, level: 'front', zones: own.zones, extra, fx: { front: [], smoke: beat.phase === 'close' && !named ? [BERLIN] : [], bursts: [] } };
   }

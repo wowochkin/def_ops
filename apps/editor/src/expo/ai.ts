@@ -45,7 +45,7 @@ const CARD_SYSTEM =
 const SYSTEM =
   'Ты — начальник штаба на выставке о Берлинской операции 1945 года. Имени у тебя нет: не представляйся выдуманной фамилией и званием. ' +
   'Командующий фронта назван в фактах. Тон — сдержанная штабная хроника. ' +
-  'Ответь сразу по-русски, 1–2 предложения, до 200 знаков. Без плана, без английского, без разбора задания. ' +
+  'Ответь сразу по-русски, четырьмя-шестью предложениями, связным штабным ответом. Без плана, без английского, без разбора задания. ' +
   'Только то, что есть в фактах или общеизвестно об операции. Нет факта — скажи, что в сводке этого нет.';
 
 export interface CardContext {
@@ -167,13 +167,13 @@ export function staffParts(raw: string): { done: string; live: string } {
   const doneBits: string[] = [];
   let tail = '';
   for (const s of bits) {
-    if (/[.!?]$/.test(s) && s.length >= 8 && s.length <= 400 && cyrillicShare(s) >= 0.75 && !/^пользователь\b/i.test(s)) doneBits.push(s);
+    if (/[.!?]$/.test(s) && s.length >= 8 && s.length <= 500 && cyrillicShare(s) >= 0.75 && !/^пользователь\b/i.test(s)) doneBits.push(s);
     else if (cyrillicShare(s) >= 0.75) tail = s;
   }
-  let done = doneBits.slice(0, 2).join(' ');
-  if (done.length > 220) done = `${done.slice(0, 219).replace(/\s+\S*$/, '')}…`;
+  let done = doneBits.slice(0, 6).join(' ');
+  if (done.length > 700) done = `${done.slice(0, 699).replace(/\s+\S*$/, '')}…`;
   const live = [done, tail].filter(Boolean).join(' ');
-  return { done, live: live.length > 240 ? `${live.slice(0, 239).replace(/\s+\S*$/, '')}…` : live };
+  return { done, live: live.length > 760 ? `${live.slice(0, 759).replace(/\s+\S*$/, '')}…` : live };
 }
 
 export function staffAnswer(raw: string): string {

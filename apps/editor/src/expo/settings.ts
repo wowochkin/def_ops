@@ -42,7 +42,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   aiMode: 'ai',
   input: 'touch',
   voiceInput: false,
-  timer: { on: true, seconds: 30 },
+  timer: { on: false, seconds: 30 },
   fronts: [...ALL_FRONTS],
   idleSeconds: 90,
   resultSeconds: 20,

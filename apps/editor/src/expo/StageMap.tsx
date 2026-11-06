@@ -64,23 +64,32 @@ function useClock(time: string | null, run: TimeRun | null, onTime?: (t: string)
         return;
       }
     }
-    const t0 = performance.now() + (run.delay ?? 0), period = run.ms + (run.loop ? run.hold ?? 3000 : 0), every = run.step ?? 50;
-    let id = 0, last = 0;
+    const t0 = performance.now() + (run.delay ?? 0);
+    const span = run.ms + (run.loop ? run.hold ?? 3000 : 0);
+    // кадр длиннее 40 мс (синтез речи) не ускоряет ход и не догоняет пропущенное
+    let id = 0, elapsed = 0, lastWall = performance.now(), lastV = '';
     const tick = (now: number) => {
-      const e = Math.max(0, now - t0);
-      const p = Math.min(1, (run.loop ? e % period : e) / run.ms);
-      if (now - last >= every || p === 1) {
-        last = now;
-        const v = iso(a + (b - a) * (run.loop || run.linear ? p : ease(p)));
+      const wall = Math.min(40, Math.max(0, now - lastWall));
+      lastWall = now;
+      if (now >= t0) elapsed += wall;
+      const e = run.loop ? elapsed % span : elapsed;
+      const p = Math.min(1, e / run.ms);
+      const eased = run.loop || run.linear ? p : ease(p);
+      const sim = a + (b - a) * eased;
+      const v = iso(sim);
+      if (v !== lastV) {
+        lastV = v;
         setT(v);
         cb.current?.(v);
       }
-      if (p === 1 && !run.loop) finish();
+      if (!run.loop && e >= run.ms) finish();
       else id = requestAnimationFrame(tick);
     };
     id = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(id);
   }, [time, run?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  // прошлый кадр хода ещё на конце операции (запад). Новый прогон начинается раньше — сразу на from, без обратного проплыва.
+  if (run && t && (ms(t) + 60_000 < ms(run.from) || ms(t) > ms(run.to) + 60_000)) return run.from;
   return t;
 }
 

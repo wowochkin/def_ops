@@ -123,17 +123,13 @@ describe('режиссёр сеанса', () => {
     expect(says(r.since(mark), 'delay')).toBe(true);
   });
 
-  it('timer off waits, then delays', () => {
+  it('timer off waits and does not decide for the visitor', () => {
     const r = toChoose(cfgWith({ timer: { on: false, seconds: 30 } })).send({ t: 'touch' });
     expect(r.phase).toMatchObject({ kind: 'turn', step: 'choose', deadline: null });
     const mark = r.effects.length;
-    r.wait(30_000);
+    r.wait(120_000);
     expect(r.phase).toMatchObject({ step: 'choose', choice: null });
-    expect(r.since(mark).some((e) => e.e === 'aiPick' || (e.e === 'say' && e.key === 'offer-decide'))).toBe(false);
-    r.wait(30_000);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
-    expect(says(r.since(mark), 'delay')).toBe(true);
-    expect(r.since(mark).some((e) => e.e === 'aiPick')).toBe(false);
+    expect(r.since(mark).some((e) => e.e === 'decide' || e.e === 'aiPick' || (e.e === 'say' && (e.key === 'delay' || e.key === 'offer-decide')))).toBe(false);
   });
 
   it('the result stays while the account is still being spoken, then warns before the attract screen', () => {
@@ -199,17 +195,14 @@ describe('режиссёр сеанса', () => {
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-3', priority: 'scene', scene: 'turn-3-explain' });
   });
 
-  it('timer off: not choosing is a delay, not an AI card', () => {
+  it('timer off: not choosing does not start the move', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
     const r = toChoose(off).send({ t: 'choose', card: 1 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
     const mark = r.effects.length;
-    r.wait(59_000);
+    r.wait(120_000);
     expect(r.phase).toMatchObject({ step: 'choose', choice: null });
-    r.wait(1_000);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'scroll', choice: 'delay' });
-    expect(says(r.since(mark), 'delay')).toBe(true);
-    expect(r.since(mark).some((e) => e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
+    expect(r.since(mark).some((e) => e.e === 'decide' || e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
   });
 
   it('passive viewer not kicked', () => {
@@ -217,10 +210,9 @@ describe('режиссёр сеанса', () => {
     const r = run(off).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
-    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
-    expect(says(r.since(mark), 'delay')).toBe(true);
-    expect(r.since(mark).some((e) => e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
-    r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', choice: null });
+    expect(r.since(mark).some((e) => e.e === 'decide' || e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
+    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
   });
 
@@ -331,7 +323,8 @@ describe('режиссёр сеанса', () => {
     r.send({ t: 'speak' });
     expect(r.since(mark)).toEqual([]);
     const c = toChoose().wait(5_000).send({ t: 'speak' });
-    expect(c.effects).toContainEqual(expect.objectContaining({ e: 'say', key: 'voice-soon', priority: 'action' }));
+    expect(c.effects).toContainEqual({ e: 'listen' });
+    expect(c.effects.some((e) => e.e === 'say' && e.key === 'voice-soon')).toBe(false);
     expect(c.state.lastInput).toBe(c.now);
     expect(c.phase).toMatchObject({ kind: 'turn', step: 'choose' });
   });

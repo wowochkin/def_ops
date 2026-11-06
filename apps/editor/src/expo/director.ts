@@ -34,11 +34,17 @@ export type Phase =
       /** Таймер выключен: голос уже предложил решить за посетителя. */
       offered: boolean;
       /** Выбранная карточка или промедление. */
-      choice: number | 'delay' | null;
+      choice: number | 'delay' | 'aim' | null;
+      /** Пункт своего направления, если выбор — `aim`. */
+      aim?: string;
       /** Прокрутка ждёт конца расчёта: таймер хода не идёт, пока модель не отдаст карту. */
       scrollHold?: boolean;
       /** Карта доиграла: до этого момента (мс режиссёра) держим кадр и надпись перехода. */
       rest?: number;
+      /** Третий ход доигран: на экране «готовим итог», речь ещё синтезируется. */
+      preparing?: boolean;
+      /** Пока штаб готовит ответ, отсчёт выбора стоит на этом моменте. */
+      held?: number;
     }
   | {
       kind: 'result';
@@ -72,6 +78,8 @@ export type DirectorEvent =
   | { t: 'pickFront'; front: FrontId }
   | { t: 'next' }
   | { t: 'choose'; card: number }
+  /** Своё направление удара: пункт театра, не карточка. */
+  | { t: 'aim'; place: string }
   | { t: 'replace'; card: number }
   | { t: 'speak' }
   /** Включить или выключить голос стенда (кнопка на заставке). */
@@ -86,6 +94,8 @@ export type DirectorEvent =
   | { t: 'scrollWait' }
   /** Карта доиграла прокрутку — следующий перелом, не дожидаясь запасного срока. */
   | { t: 'scrollDone' }
+  /** Разбор итога озвучен заранее — можно открывать итог. */
+  | { t: 'debriefReady' }
   | { t: 'restart' }
   /** С выбора фронта — обратно на заставку. */
   | { t: 'back' }
@@ -101,6 +111,10 @@ export type DirectorEvent =
   | { t: 'step'; step: 'explain' | 'choose' }
   | { t: 'pause' }
   | { t: 'resume' }
+  /** Выбор: остановить таймер, пока штаб готовит ответ. */
+  | { t: 'timerHold' }
+  /** Выбор: продолжить таймер с того места, где его остановили. */
+  | { t: 'timerRelease' }
   | { t: 'jump'; phase: Phase['kind']; n?: TurnN };
 
 export type Effect =
@@ -119,7 +133,11 @@ export type Effect =
   /** Заменить карточку в слоте. */
   | { e: 'replace'; n: TurnN; card: number }
   /** Решение перелома: слот карточки или промедление — прокрутка (после третьего — досчёт). */
-  | { e: 'decide'; n: TurnN; choice: number | 'delay' }
+  | { e: 'decide'; n: TurnN; choice: number | 'delay' | { place: string } }
+  /** Прокрутка доиграна: теперь можно комментировать выбор, карта уже стоит. */
+  | { e: 'commentChoice' }
+  /** Третий ход доигран: синтезировать разбор, карта в это время стоит. */
+  | { e: 'prepareDebrief' }
   | { e: 'stat'; kind: 'started' | 'finished' };
 
 /** Пунктов в докладе брифинга. */
@@ -148,7 +166,7 @@ export function scrollMs(front: FrontId | null, n: TurnN): number {
 }
 
 /** Пауза после прокрутки карты, мс: кадр стоит, на экране надпись перехода. */
-export const SCROLL_REST_MS = 5_000;
+export const SCROLL_REST_MS = 2_000;
 
 /** Ключ сцены: фаза, пункт брифинга, перелом и его шаг. */
 export function sceneKey(s: Pick<DirectorState, 'phase'>): string {
@@ -195,7 +213,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'markFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step' || ev.t === 'stay';
+  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'markFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'aim' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step' || ev.t === 'stay';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -270,12 +288,9 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null 
   if (p.kind === 'turn') {
     if (p.step === 'explain') cands.push({ at: t0 + DURATIONS.explain, apply: (x) => enter(x, { ...p, step: 'choose' }, t0 + DURATIONS.explain, cfg, fx) });
     if (p.step === 'scroll' && p.rest) cands.push({ at: p.rest, apply: (x) => enter(x, afterScroll(p.n), p.rest, cfg, fx) });
-    // карта не сообщила конец — всё равно пауза перехода, но не раньше длины прокрутки после её старта
-    if (p.step === 'scroll' && p.scrollBegan && !p.rest) {
-      const at = t0 + scrollMs(s.front, p.n) + 2_000;
-      cands.push({ at, apply: (x) => (x.phase.kind === 'turn' && x.phase.step === 'scroll' && !x.phase.rest ? { ...x, phase: { ...x.phase, rest: at + SCROLL_REST_MS } } : x) });
-    }
-    if (p.step === 'choose' && p.deadline !== null) {
+    // конец прокрутки — только когда карта дошла до конца хода. Обрыв по настенным часам срезал хвост
+    // (ход доигрывался примерно до 28 апреля и перескакивал на 2 мая), пока модель занимала поток.
+    if (p.step === 'choose' && p.deadline !== null && p.held == null) {
       const dl = p.deadline;
       if (!p.warned) cands.push({ at: dl - WARN_BEFORE, apply: (x) => { fx.push({ e: 'say', key: 'timer-warn', priority: 'timer', scene: sceneKey(x) }); return { ...x, phase: { ...p, warned: true } }; } });
       cands.push({ at: dl, apply: (x) => {
@@ -285,7 +300,7 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null 
         return y;
       } });
     }
-    if (p.step === 'choose' && p.deadline === null && p.choice === null) {
+    if (p.step === 'choose' && p.deadline === null && p.choice === null && cfg.timer.on) {
       const at = t0 + DELAY_AFTER;
       cands.push({ at, apply: (x) => {
         if (x.phase.kind !== 'turn' || x.phase.step !== 'choose' || x.phase.choice !== null) return x;
@@ -300,9 +315,10 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null 
   return cands.reduce((a, b) => (b.at < a.at ? b : a));
 }
 
-/** Довести часы до now, выполнив по порядку все наступившие переходы. */
+/** Довести часы до now. Дыра больше обычного тика (поток был занят синтезом) не проглатывается целиком: иначе таймер замирает и срывается вперёд, а прокрутка обрывается. */
 function advance(s: DirectorState, now: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
-  const target = Math.max(now, s.now);
+  const gap = Math.max(0, now - s.now);
+  const target = s.now + Math.min(gap, 250);
   if (s.paused) return { ...s, now: target };
   let cur = s;
   for (let guard = 0; guard < 64; guard++) {
@@ -338,6 +354,14 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
   const now = s.paused && s.pausedAt !== null ? s.pausedAt : s.now;
   const p = s.phase;
 
+  if (ev.t === 'timerHold') {
+    if (p.kind !== 'turn' || p.step !== 'choose' || p.deadline === null || p.held != null) return out(s);
+    return out({ ...s, phase: { ...p, held: now } });
+  }
+  if (ev.t === 'timerRelease') {
+    if (p.kind !== 'turn' || p.held == null || p.deadline === null) return out(s);
+    return out({ ...s, phase: { ...p, held: undefined, deadline: p.deadline + (now - p.held) } });
+  }
   if (ev.t === 'restart') {
     if (p.kind === 'startup' || p.kind === 'attract') return out(s);
     return out(enter({ ...fresh(s, fx), lastInput: now }, { kind: 'welcome' }, now, cfg, fx));
@@ -376,8 +400,17 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
     return out({ ...s, phaseStart: now, phase: { ...p, scrollHold: false, scrollBegan: true } });
   }
   if (ev.t === 'scrollDone') {
-    if (p.kind !== 'turn' || p.step !== 'scroll' || p.rest) return out(s);
+    if (p.kind !== 'turn' || p.step !== 'scroll' || p.rest || p.preparing) return out(s);
+    fx.push({ e: 'commentChoice' });
+    if (p.n === 3) {
+      fx.push({ e: 'prepareDebrief' });
+      return out({ ...s, phase: { ...p, preparing: true } });
+    }
     return out({ ...s, phase: { ...p, rest: now + SCROLL_REST_MS } });
+  }
+  if (ev.t === 'debriefReady') {
+    if (p.kind !== 'turn' || !p.preparing) return out(s);
+    return out(enter(s, { kind: 'result' }, now, cfg, fx));
   }
   if (ev.t === 'ready') return out(p.kind === 'startup' ? enter(s, { kind: 'attract' }, now, cfg, fx) : s);
 
@@ -416,6 +449,12 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
         return out(enter(touched, { ...p, step: 'scroll', choice: ev.card }, now, cfg, fx));
       }
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
+    case 'aim':
+      if (p.kind === 'turn' && p.step === 'choose' && p.choice === null && ev.place.trim()) {
+        fx.push({ e: 'decide', n: p.n, choice: { place: ev.place } });
+        return out(enter(touched, { ...p, step: 'scroll', choice: 'aim', aim: ev.place }, now, cfg, fx));
+      }
+      return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'replace':
       if (p.kind === 'turn' && p.step === 'choose' && p.replacements < cfg.maxReplacements) {
         fx.push({ e: 'replace', n: p.n, card: ev.card });
@@ -424,7 +463,7 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
       return out(p.kind === 'startup' || p.kind === 'attract' ? s : touched);
     case 'speak':
       if (p.kind === 'startup' || p.kind === 'attract') return out(s);
-      fx.push({ e: 'say', key: 'voice-soon', priority: 'action', scene: sceneKey(s) }, { e: 'listen' });
+      fx.push({ e: 'listen' });
       return out(touched);
     case 'brief':
       if (p.kind === 'briefing' && Number.isInteger(ev.point) && ev.point >= 0 && ev.point < BRIEF_POINTS && ev.point !== p.point) return out(enter(touched, briefing(ev.point), now, cfg, fx));

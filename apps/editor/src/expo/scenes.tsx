@@ -47,7 +47,8 @@ export function PhaseTitle({ state, onStep }: { state: DirectorState; onStep?: (
 export function Timer({ state, total }: { state: DirectorState; total: number }) {
   const p = state.phase;
   if (p.kind !== 'turn' || p.step !== 'choose' || p.deadline === null) return null;
-  const remaining = Math.max(0, Math.ceil((p.deadline - (state.pausedAt ?? state.now)) / 1000));
+  const clock = p.held ?? state.pausedAt ?? state.now;
+  const remaining = Math.max(0, Math.ceil((p.deadline - clock) / 1000));
   return (
     <div className={`expo-timer ${remaining <= 10 ? 'urgent' : ''}`}>
       <span role="timer">{remaining} с</span>

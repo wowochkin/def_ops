@@ -39,6 +39,7 @@ describe('оценка по трём осям', () => {
     expect(rankOf({ speed: 1, cost: 0.5, intent: 1 })).toBe('Маршал Советского Союза');
     expect(rankOf({ speed: 0, cost: 0, intent: 0 })).toBe('Генерал-полковник');
     expect(rankOf({ speed: -1, cost: -1, intent: -1 })).toBe('Генерал-майор');
+    expect(rankOf({ speed: 1, cost: 1, intent: 1 }, false)).toBe('Провал');
   });
 
   it('forecast and texts', () => {

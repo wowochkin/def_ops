@@ -14,7 +14,7 @@ import type { AgentTrace } from '@def-ops/sim';
 export interface ModelHooks {
   smith?: ReturnType<typeof cardSmith>;
   want?: number;
-  decided?: (s: ExpoSession, n: TurnN, choice: number | 'delay') => void;
+  decided?: (s: ExpoSession, n: TurnN, choice: number | 'delay' | { place: string }) => void;
   /** Новый ход ядра сеанса (после начала и после каждого решения) — для карты; `final` — после третьего решения. */
   traced?: (trace: AgentTrace, env: ModelEnv, s: ExpoSession, final: boolean) => void;
 }

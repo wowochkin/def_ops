@@ -9,7 +9,7 @@
  */
 import { agentsEvents, lossSeries, type AgentHistory, type AgentTrace, type EventResult, type History, type SimContext } from '@def-ops/sim';
 import { baselineAt, rebaseEvents } from './baseline';
-import { deal, replacement, spares, type Bank, type Card, type CardFact, type TurnN } from './bank';
+import { deal, placeAt as pointAt, placeTitle, replacement, spares, type Bank, type Card, type CardFact, type TurnN } from './bank';
 import { axes, axisNote, feedLines, forecast, rankOf, type AxesDetail } from './score';
 import type { FrontId } from './settings';
 import { cardArrows, historyAt, MAP, traceArmies, type Arrow, type ArmyPos, type LL } from './map';
@@ -72,7 +72,7 @@ export interface ModelView {
   /** Ближайшая армия фронта до центра Берлина, км: в ходе и по истории на тот же момент. */
   berlinKm: { now: number; history: number } | null;
   /** Что изменилось за последний ход; null — хода ещё не было. */
-  move: MoveDigest | null;
+  blow: { title: string; arrows: Arrow[] } | null;
   map: MapView;
   busy: boolean;
   error: string | null;
@@ -175,6 +175,8 @@ export class ExpoSession {
   private events: EventResult[] = [];
   private shown: string[] = [];
   private returned: string[] = [];
+  /** Удары «своего направления»: час решения и пункт. Ядро на следующем ходе затирает кадры историей — марш накладывается заново. */
+  private marches: { fromHour: number; until: number | null; target: LL }[] = [];
   /** Карточки ИИ этого сеанса. */
   private extra: Card[] = [];
   readonly view: ModelView;
@@ -190,7 +192,7 @@ export class ExpoSession {
     const start = this.start0();
     this.view = {
       front, turn: 1, time: start, hour: 0, cards: [], decisions: [], reveal: null, feed: [], final: null, busy: false, error: null,
-      spare: 0, tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start), move: null,
+      spare: 0, tasks: tasksOf(this.bank.fronts[front].keyEvents, []), loss: { own: 0, ref: 0 }, berlinKm: berlinDistance(front, historyAt(start), start), move: null, blow: null,
       map: { armies: historyAt(start), prev: null, flashes: [], path: {} },
       scales: this.scales([], start, 0),
     };
@@ -258,7 +260,7 @@ export class ExpoSession {
   /** Сколько своих карточек перелома можно поставить взамен (их нет на экране). */
   private spareCount() {
     const on = this.view.cards.map((c) => c.id);
-    return spares(this.bank, this.front, this.view.turn, on, this.extra).filter((c) => !this.shown.includes(c.id)).length;
+    return spares(this.bank, this.front, this.view.turn, on, this.extra).length;
   }
 
   /** Заменить карточку в слоте; false — заменить нечем (или историческая). */
@@ -273,6 +275,104 @@ export class ExpoSession {
     this.view.cards = this.view.cards.map((c, i) => (i === slot ? this.show(this.card(r), ai || again ? 'now' : 'bank') : c));
     this.view.spare = this.spareCount();
     return true;
+  }
+
+  /**
+   * Показ удара поверх свежего хода ядра. Пока удар последний, дивизии идут к пункту (~30 км в сутки).
+   * Противник впереди ближе 18 км не отпускает их ждать: ход падает примерно до 6 км в сутки, пока он там.
+   * Со следующего решения они не прыгают на исторические места: дальше сдвигаются на столько же, на сколько
+   * сдвинулся расчёт, но от точки, куда дошёл марш.
+   */
+  private paintMarches() {
+    const t = this.trace;
+    if (!t || !this.marches.length) return;
+    const hq = new Map(t.hqs.map((h) => [h.id, h]));
+    const armyOf = (id: string) => {
+      for (let h = hq.get(id), i = 0; h && i < 8; h = h.parent ? hq.get(h.parent) : undefined, i++) if (h.echelon === 'army') return h.id;
+      return null;
+    };
+    const ours = new Set(t.hqs.filter((h) => h.echelon === 'army' && h.parent === this.front).map((h) => h.id));
+    const end = t.frames.length - 1;
+    const perHour = 30 / 24;
+    const engine: LL[][] = t.divisions.map((_, i) => t.frames.map((f) => {
+      const row = f?.[i];
+      return Array.isArray(row) ? [Number(row[0]), Number(row[1])] as LL : [NaN, NaN];
+    }));
+    const enemy = t.divisions.flatMap((d, i) => ((d as { side?: string }).side === 'de' ? [i] : []));
+    const enemyAhead = (at: LL, h: number, target: LL) => enemy.some((k) => {
+      const e = engine[k][h];
+      if (!e || !Number.isFinite(e[0])) return false;
+      const dx = e[0] - at[0];
+      const dy = e[1] - at[1];
+      if (dx * (target[0] - at[0]) + dy * (target[1] - at[1]) <= 0) return false;
+      return km(at, e) < 18;
+    });
+    t.divisions.forEach((d, i) => {
+      const army = armyOf(d.hq);
+      if (!army || !ours.has(army)) return;
+      const pos = engine[i].map((p) => [p[0], p[1]] as LL);
+      for (const m of this.marches) {
+        const from = pos[m.fromHour];
+        if (!from || !Number.isFinite(from[0])) continue;
+        const until = Math.min(end, m.until ?? end);
+        const whole = Math.max(km(from, m.target), 1);
+        let gone = 0;
+        for (let h = m.fromHour + 1; h <= until; h++) {
+          const rate = enemyAhead(pos[h - 1], h, m.target) ? perHour * 0.2 : perHour;
+          gone += rate;
+          const step = Math.min(1, gone / whole);
+          pos[h] = [from[0] + (m.target[0] - from[0]) * step, from[1] + (m.target[1] - from[1]) * step];
+        }
+        const anchor = pos[until];
+        const base = engine[i][until];
+        if (anchor && base && until < end) {
+          for (let h = until + 1; h <= end; h++) {
+            const e = engine[i][h];
+            if (!e || !Number.isFinite(e[0])) continue;
+            pos[h] = [anchor[0] + (e[0] - base[0]), anchor[1] + (e[1] - base[1])];
+          }
+        }
+      }
+      for (let h = 0; h <= end; h++) {
+        const row = t.frames[h]?.[i];
+        const p = pos[h];
+        if (!Array.isArray(row) || !p || !Number.isFinite(p[0])) continue;
+        row[0] = Math.round(p[0] * 1e4) / 1e4;
+        row[1] = Math.round(p[1] * 1e4) / 1e4;
+      }
+    });
+  }
+
+  /** Дивизии этого фронта не дальше `kmMax` от точки. Чужой фронт не считается. */
+  private near(at: LL, kmMax: number): boolean {
+    const t = this.trace;
+    if (!t) return false;
+    const hq = new Map(t.hqs.map((h) => [h.id, h]));
+    const ours = (id: string) => {
+      for (let h = hq.get(id), i = 0; h && i < 8; h = h.parent ? hq.get(h.parent) : undefined, i++) if (h.id === this.front) return true;
+      return id === this.front;
+    };
+    const hour = t.frames.length - 1;
+    return t.divisions.some((d, i) => {
+      if (!ours(d.hq)) return false;
+      const row = t.frames[hour]?.[i];
+      return Array.isArray(row) && km([Number(row[0]), Number(row[1])], at) <= kmMax;
+    });
+  }
+
+  /** Жуков — круг Рейхстага. Конев — выход к Берлину с юга, район Цоссена, а не Рейхстаг. */
+  private cityHeld(): boolean {
+    return this.near([13.377, 52.516], 14);
+  }
+
+  private objectiveMet(): boolean {
+    if (this.front === 'su_1uf') return this.near([13.449, 52.216], 25);
+    return this.cityHeld();
+  }
+
+  /** Точка приказа: сначала пункт стрелки, затем район театра. Без точки приказ «наступать» расчёт отбрасывает. */
+  private point(id: string): LL | null {
+    return pointAt(id) ?? this.env.placeAt(id);
   }
 
   /** В слоте — историческая карточка (её не заменяют). */
@@ -292,16 +392,34 @@ export class ExpoSession {
   }
 
   /** Решение на переломе n: слот карточки или промедление; прокрутка до следующего перелома (после третьего — до конца). */
-  async decide(n: TurnN, choice: number | 'delay') {
+  async decide(n: TurnN, choice: number | 'delay' | { place: string }) {
     if (!this.trace) throw new Error('сеанс модели не начат');
     const turns = this.def.turns;
     const hist = this.bank.cards.find((c) => c.front === this.front && c.turn === n && c.historical)!;
-    const picked = choice === 'delay' ? null : this.card(this.view.cards[choice]?.id ?? hist.id);
+    const aim = typeof choice === 'object' ? choice.place : null;
+    const picked = choice === 'delay' || aim ? null : this.card(this.view.cards[choice]?.id ?? hist.id);
     this.view.busy = true;
     try {
       for (const id of this.returned.splice(0)) await this.env.call('game_release', { id });
       const orders = [];
-      if (picked === null) {
+      let blow: ModelView['blow'] = null;
+      if (aim) {
+        const name = placeTitle(aim);
+        const armies = this.trace.hqs.filter((h) => h.parent === this.front && h.echelon === 'army');
+        const who = armies;
+        // боевое распоряжение, не подготовленный приказ: тот идёт около суток на ступень и за двое суток первого перелома до дивизий не доходит — армии так и стоят. Распоряжение само снимает армию с истории.
+        for (const h of who) {
+          this.returned.push(h.id);
+          const target = this.point(aim);
+          if (target) orders.push({ hq: h.id, kind: 'attack', target, note: `удар на ${name}`, form: 'instruction' });
+        }
+        const from = this.view.map.armies.filter((a) => who.some((h) => h.id === a.id));
+        const at = from.length
+          ? [from.reduce((s, a) => s + a.at[0], 0) / from.length, from.reduce((s, a) => s + a.at[1], 0) / from.length] as [number, number]
+          : null;
+        const to = this.point(aim);
+        blow = { title: `Удар на ${name}`, arrows: at && to ? [{ army: who[0].id, from: at, to, kind: 'attack' }] : [] };
+      } else if (picked === null) {
         // армии без распоряжений фронта закрепляются на достигнутом: их исторические замыслы не наступают
         await this.env.call('game_take', { hq: this.front });
         this.returned.push(this.front);
@@ -311,21 +429,29 @@ export class ExpoSession {
         }
       } else {
         for (const o of picked.orders) {
-          orders.push({ hq: o.army, kind: o.kind, target: o.place === null ? null : this.env.placeAt(o.place), note: picked.title, form: 'order' });
+          orders.push({ hq: o.army, kind: o.kind, target: o.place === null ? null : this.point(o.place), note: picked.title, form: 'order' });
           this.returned.push(o.army);
         }
       }
       const hour = this.trace.frames.length - 1;
       const to = n < 3 ? turns[n].hour : this.bank.end;
       const before = this.events;
+      for (const m of this.marches) if (m.until === null) m.until = hour;
+      if (aim) {
+        const target = this.point(aim);
+        if (target) this.marches.push({ fromHour: hour, until: null, target });
+      }
       this.trace = (await this.env.call('game_turn', { orders, hours: Math.max(1, to - hour) })) as Trace;
+      this.paintMarches();
       const upTo = this.trace.frames.length - 1;
       const { events: raw, loss } = measureTrace(this.env, this.trace, this.front);
       const time = timeAt(this.start0(), upTo);
       const events = holdOpen(rebaseEvents(raw), time.slice(0, 10), this.view.decisions.every((d) => d.choice === d.historical) && !!picked?.historical);
-      this.events = events;
+      const banner = this.front !== 'su_1bf' || this.cityHeld();
+      this.events = banner ? events : events.map((e) => e.id === this.bank.berlinEvent ? { ...e, simulated: null, days: null, at: null } : e);
+      if (!banner) this.view.feed = this.view.feed.filter((line) => !/рейхстаг/i.test(line));
       const m = this.def.marshal;
-      const decision: Decision = { n, choice: picked?.id ?? 'delay', historical: hist.id };
+      const decision: Decision = { n, choice: aim ? `aim:${aim}` : picked?.id ?? 'delay', historical: hist.id };
       const was = new Set(before.filter((e) => e.simulated).map((e) => e.id));
       const armies = this.armiesNow(time);
       const histView = this.show(hist);
@@ -335,7 +461,7 @@ export class ExpoSession {
         time, hour: upTo,
         decisions: [...this.view.decisions, decision],
         reveal: {
-          text: picked?.historical ? `Именно так поступил ${m}` : picked ? `${m} решил иначе — вот как` : `Промедление: новых распоряжений нет. ${m} решил так`,
+          text: aim ? `${m} повёл удар на ${placeTitle(aim)}` : picked?.historical ? `Именно так поступил ${m}` : picked ? `${m} решил иначе — вот как` : `Промедление: новых распоряжений нет. ${m} решил так`,
           historical: histView,
         },
         map: {
@@ -345,6 +471,7 @@ export class ExpoSession {
           path: this.extend(this.view.map.path, armies),
         },
         feed: [...this.view.feed, ...feedLines(before, this.events)],
+        blow,
         scales: this.scales(this.events, time, upTo, loss),
         tasks: tasksOf(this.def.keyEvents, this.events),
         loss: { own: loss, ref: refAt(this.bank.reference[this.front]?.losses, upTo) },
@@ -354,9 +481,11 @@ export class ExpoSession {
       if (n === 3) {
         const s = this.view.scales;
         this.view.final = {
-          scales: s, rank: rankOf(s.axes),
+          scales: s, rank: rankOf(s.axes, this.objectiveMet()),
           matches: this.view.decisions.filter((d) => d.choice === d.historical).length,
-          forecast: forecast(this.events, this.bank.berlinEvent),
+          forecast: this.front === 'su_1uf' && !this.objectiveMet()
+            ? 'К концу расчёта фронт не вышел бы к Берлину с юга (в истории — Цоссен)'
+            : forecast(this.events, this.bank.berlinEvent),
         };
       }
       this.view.error = null;

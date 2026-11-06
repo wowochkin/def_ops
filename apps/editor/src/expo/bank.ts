@@ -51,6 +51,32 @@ export const BANK = bankJson as unknown as Bank;
 
 export const turnCards = (bank: Bank, front: FrontId, n: TurnN) => bank.cards.filter((c) => c.front === front && c.turn === n);
 
+export const PLACE_TITLE: Record<string, string> = {
+  Wriezen: 'Врицен', Fuerstenwalde: 'Фюрстенвальде', Frankfurt: 'Франкфурт-на-Одере', Nauen: 'Науэн', Potsdam: 'Потсдам',
+  Storkow: 'Шторков', Beeskow: 'Бесков', Halbe: 'Хальбе', B_Tempelhof: 'Темпельхоф', B_Spandau: 'Шпандау', B_Charlottenburg: 'Шарлоттенбург',
+  Ketzin: 'Кетцин', Cottbus: 'Котбус', Kamenz: 'Каменц', Bautzen: 'Бауцен', Wittenberg: 'Виттенберг', Torgau: 'Торгау',
+  Zossen: 'Цоссен', Luebben: 'Люббен', Luckau: 'Люккау',
+};
+
+/** Точки пунктов для стрелок «своего направления» — те же, что города карты, плюс объекты без подписи на листе. */
+export const PLACE_AT: Record<string, [number, number]> = {
+  Wriezen: [14.133, 52.717], Fuerstenwalde: [14.068, 52.36], Frankfurt: [14.55, 52.341], Nauen: [12.873, 52.605],
+  Potsdam: [13.059, 52.401], Storkow: [13.93, 52.255], Beeskow: [14.246, 52.172], Halbe: [13.7, 52.107],
+  B_Tempelhof: [13.386, 52.474], B_Spandau: [13.2, 52.536], B_Charlottenburg: [13.304, 52.517], Ketzin: [12.845, 52.478],
+  Cottbus: [14.336, 51.757], Kamenz: [14.094, 51.272], Bautzen: [14.424, 51.181], Wittenberg: [12.644, 51.866],
+  Torgau: [12.993, 51.538], Zossen: [13.449, 52.216], Luebben: [13.898, 51.938], Luckau: [13.715, 51.852],
+};
+
+export const placeAt = (id: string): [number, number] | null => PLACE_AT[id] ?? null;
+
+export const placeTitle = (id: string) => PLACE_TITLE[id] ?? id;
+
+/** Пункты, куда фронт может направить удар сам, без карточки. */
+export function aimPlaces(bank: Bank, front: FrontId): { id: string; title: string }[] {
+  const ids = [...new Set(bank.cards.filter((c) => c.front === front).flatMap((c) => c.orders.map((o) => o.place).filter((p): p is string => !!p)))];
+  return ids.map((id) => ({ id, title: placeTitle(id) })).sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+}
+
 /** Ошибки формы банка: армии — только своего фронта, цели — объекты театра, текст — в пределах карточки. */
 export function bankErrors(bank: Bank, armiesOf: (front: FrontId) => string[], places: Set<string>): string[] {
   const out: string[] = [];
@@ -120,13 +146,13 @@ export function deal(bank: Bank, front: FrontId, n: TurnN, rnd: () => number = M
 }
 
 /**
- * Замена карточки в слоте: своя карточка перелома (банк и `extra` — карточки ИИ сеанса), которой нет на экране
- * (`onScreen`) и которую ещё не показывали (`shown`). Историческую не заменяем; новых нет — null.
+ * Замена карточки в слоте: своя карточка этого перелома, которой сейчас нет на экране.
+ * Историческую не заменяем. Карточку, уже сходившую с экрана, можно вернуть.
  */
-export function replacement(bank: Bank, shown: string[], slotCard: string, rnd: () => number = Math.random, onScreen: string[] = shown, extra: Card[] = []): string | null {
+export function replacement(bank: Bank, _shown: string[], slotCard: string, rnd: () => number = Math.random, onScreen: string[] = _shown, extra: Card[] = []): string | null {
   const c = bank.cards.find((x) => x.id === slotCard) ?? extra.find((x) => x.id === slotCard);
   if (!c || c.historical) return null;
-  const fresh = spares(bank, c.front, c.turn, onScreen, extra).filter((x) => !shown.includes(x.id));
+  const fresh = spares(bank, c.front, c.turn, onScreen, extra);
   return fresh.length ? fresh[Math.floor(rnd() * fresh.length)].id : null;
 }
 

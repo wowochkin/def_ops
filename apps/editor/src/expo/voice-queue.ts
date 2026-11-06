@@ -22,30 +22,23 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
   let cur: { line: Line; stop(): void } | null = null;
   /** Следующая фраза уже отдана в синтез, пока звучит текущая: к её началу звук готов. */
   let ahead: { line: Line; stop(): void; done: Promise<void>; synth?: Promise<void> } | null = null;
+  const waits = new Map<Line, () => void>();
   let gen = 0;
   let scene: string | null = null;
   const foreign = (l: Line) => l.scene !== undefined && scene !== null && l.scene !== scene;
   const same = (l: Line) => cur?.line.text === l.text || ahead?.line.text === l.text || queue.some((x) => x.text === l.text);
 
   const prefetch = () => {
-    if (ahead || !cur) return;
-    while (queue.length) {
-      const line = queue[0];
-      if (foreign(line)) { queue.shift(); continue; }
-      // предзапись (доклад следующего шага) зазвучала бы сразу и перебила бы комментарий.
-      // заранее готовится только живой голос той же сцены: сервис копит его, пока звучит текущая фраза
-      if (!line.voice || (line.scene && cur.line.scene && line.scene !== cur.line.scene)) return;
-      try {
-        const h = speaker.speak(line.text, line);
-        queue.shift();
-        ahead = { line, stop: h.stop, done: h.done, synth: h.synth };
-        return;
-      } catch {
-        queue.shift();
-      }
-    }
+    // не начинать следующую фразу, пока эта звучит: сервис на новом say обрывает текущую,
+    // и из разбора доходит только каждая вторая-третья строка
   };
 
+  const finishWait = (line: Line) => {
+    const done = waits.get(line);
+    if (!done) return;
+    waits.delete(line);
+    done();
+  };
   const next = () => {
     const ready = ahead;
     ahead = null;
@@ -57,6 +50,7 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
     const finish = () => {
       if (g !== gen) return;
       o.onDone?.(line);
+      finishWait(line);
       next();
     };
     try {
@@ -78,42 +72,68 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
     gen++;
     cur = null;
     ahead = null;
+    if (c) finishWait(c.line);
+    if (a) finishWait(a.line);
     c?.stop();
     a?.stop();
   };
 
   return {
-    push(line: Line) {
-      if (foreign(line)) return;
+    push(line: Line): Promise<void> {
+      let done = () => {};
+      const played = new Promise<void>((r) => { done = r; });
+      const drop = () => done();
+      if (foreign(line)) return drop(), played;
       // такая же фраза уже звучит или ждёт — второй раз не нужна.
       // у разбора одинаковый текст разных переломов всё равно произносится: он ещё только ждёт в очереди
       if (line.voice) {
-        if (cur?.line.text === line.text || ahead?.line.text === line.text) return;
-      } else if (same(line)) return;
+        if (cur?.line.text === line.text || ahead?.line.text === line.text) return drop(), played;
+      } else if (same(line)) return drop(), played;
+      waits.set(line, done);
       if (line.replace) {
-        queue = queue.filter((l) => l.scene !== line.scene && l.text !== line.text);
+        queue = queue.filter((l) => {
+          const keep = l.scene !== line.scene && l.text !== line.text;
+          if (!keep) finishWait(l);
+          return keep;
+        });
         queue.unshift(line);
         if (cur?.line.scene === line.scene) cut();
         if (!cur) next();
-        return;
+        return played;
       }
       if (line.priority === 'action') {
+        // разбор итога не перебивается: иначе комментарий к решению срезает хвост текста
+        if (cur?.line.voice || queue.some((l) => l.voice)) {
+          queue.push(line);
+          if (!cur) next();
+          return played;
+        }
         // ответ на действие — сразу: прежний ответ и звучащая фраза обрываются
-        queue = queue.filter((l) => l.priority !== 'action');
+        queue = queue.filter((l) => {
+          const keep = l.priority !== 'action';
+          if (!keep) finishWait(l);
+          return keep;
+        });
         queue.unshift(line);
         if (cur) cut();
-        return next();
+        next();
+        return played;
       }
       const at = queue.findIndex((l) => RANK[l.priority] > RANK[line.priority]);
       if (at < 0) queue.push(line);
       else queue.splice(at, 0, line);
       if (!cur) next();
+      return played;
     },
     /** Смена сцены: фразы прежней сцены — прочь, звучащая — обрывается. */
     scene(key: string) {
       if (key === scene) return;
       scene = key;
-      queue = queue.filter((l) => !foreign(l));
+      queue = queue.filter((l) => {
+        const keep = !foreign(l);
+        if (!keep) finishWait(l);
+        return keep;
+      });
       if (ahead && foreign(ahead.line)) { ahead.stop(); ahead = null; }
       if (cur && foreign(cur.line)) {
         cut();
@@ -121,6 +141,7 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
       }
     },
     clear() {
+      for (const l of queue) finishWait(l);
       queue = [];
       cut();
       o.onLine?.(null);

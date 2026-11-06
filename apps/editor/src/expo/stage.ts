@@ -8,15 +8,14 @@
  * закрытие, сворачивание и уход с окна обрывают фразу. Кнопка на заставке глушит круг до перезапуска.
  */
 import { loadLlm } from '../shared';
-import { dictate } from '../voice/standalone';
 import { cardSmith, draftReply, staffAnswer, staffParts, type Ask } from './ai';
 import { aiRunner, type AiFrame } from './ai-runner';
-import { BANK, cardErrors } from './bank';
+import { BANK, cardErrors, placeTitle } from './bank';
 import type { DirectorState, Effect } from './director';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import type { ExpoSettings } from './settings';
-import { debriefSentences, operationDebrief } from './debrief';
+import { debriefUtterances, operationDebrief } from './debrief';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
@@ -37,7 +36,11 @@ export interface StageDeps {
 
 export function createStage(d: StageDeps) {
   const gate = turnstile();
+  // запрос модели, начатый до хода карты, обрывается на входе в прокрутку: иначе поток читает ответ, пока армии идут
+  let llmGen = 0;
   const llmAsk: Ask = (system, text, signal, onText) => gate.run(async () => {
+    const gen = llmGen;
+    if (gen !== llmGen) return '';
     if (signal.aborted) throw signal.reason ?? new Error('отменено');
     // Та же модель, что в полной версии для голоса: пусто — основная. Запрос как у голоса (reasoning_effort),
     // без шаблона «размышление», из‑за которого сервер пишет длинный черновик чужой моделью.
@@ -83,8 +86,9 @@ export function createStage(d: StageDeps) {
     };
     try {
       for (;;) {
+        if (gen !== llmGen) { stopNow(); break; }
         const chunk = await reader.read();
-        if (chunk.done || halt) break;
+        if (chunk.done || halt || gen !== llmGen) break;
         buf += dec.decode(chunk.value, { stream: true });
         const lines = buf.split('\n');
         buf = lines.pop() ?? '';
@@ -136,7 +140,8 @@ export function createStage(d: StageDeps) {
     const p = state.phase;
     const turn = f && p.kind === 'turn' ? f.turns.find((t) => t.n === p.n) : undefined;
     const last = v?.decisions.at(-1);
-    const picked = last && last.choice !== 'delay' ? (v?.cards.find((c) => c.id === last.choice)?.title ?? BANK.cards.find((c) => c.id === last.choice)?.title) : undefined;
+    const aim = last?.choice.startsWith('aim:') ? placeTitle(last.choice.slice(4)) : '';
+    const picked = aim ? `удар на ${aim}` : last && last.choice !== 'delay' ? (v?.cards.find((c) => c.id === last.choice)?.title ?? BANK.cards.find((c) => c.id === last.choice)?.title) : undefined;
     const vars = {
       front: state.front ? FRONT_NAMES[state.front] : undefined,
       marshal: f?.marshal,
@@ -152,8 +157,11 @@ export function createStage(d: StageDeps) {
       turn && `Перелом: ${turn.title}. ${turn.situation}`,
       v && `Время хода: ${vars.date}.`,
       v?.cards.length && `Варианты на экране: ${v.cards.map((c) => `«${c.title}»`).join(', ')}.`,
-      picked && `Посетитель выбрал: «${picked}».`,
-      v?.reveal && `${v.reveal.text}; исторический вариант — «${v.reveal.historical.title}».`,
+      aim && `Посетитель выбрал собственное направление: удар на ${aim}. Это не исторический вариант и не карточка с экрана.`,
+      !aim && picked && `Посетитель выбрал: «${picked}».`,
+      v?.reveal && (aim
+        ? `На экране: ${v.reveal.text}. Историческое решение этого перелома было другим — «${v.reveal.historical.title}»; его не выбирали.`
+        : `${v.reveal.text}; исторический вариант — «${v.reveal.historical.title}».`),
       v?.feed.length && `Последние события хода: ${v.feed.slice(-3).join('; ')}.`,
       v && `Оценка: скорость — ${v.scales.notes.speed}; цена — ${v.scales.notes.cost}; замысел — ${v.scales.notes.intent}.`,
     ].filter(Boolean).join('\n');
@@ -188,11 +196,8 @@ export function createStage(d: StageDeps) {
       if (brief) d.dispatch({ t: 'hold', ms: 240_000 });
       return brief;
     },
-    listen: () => new Promise<string | null>((res) => {
-      if (!d.aiOn()) return res(null);
-      let last = '';
-      dictate({ onText: (t) => (last = t), onEnd: () => res(last || null) });
-    }),
+    listen: () => (d.aiOn() ? voice.listen() : Promise.resolve(null)),
+    stopListen: () => voice.stopListen(),
   });
   const smith = cardSmith({
     ask: askCards,
@@ -203,16 +208,7 @@ export function createStage(d: StageDeps) {
   const hooks: ModelHooks = {
     smith,
     want: 4,
-    decided: (s, n, choice) => {
-      const last = s.view.decisions.at(-1);
-      const hist = !!last && last.choice === last.historical;
-      void runner?.decided(choice === 'delay' ? 'delay' : hist ? 'historical' : 'own');
-      // третий перелом — самая длинная прокрутка: разбор итога синтезируется, пока карта идёт
-      if (n === 3) {
-        const brief = operationDebrief(s.view);
-        if (brief) voice.prepare(debriefSentences(brief.paragraphs), brief.voice);
-      }
-    },
+    decided: () => {},
   };
   /** Окно перед посетителем. В проверках без страницы круг не отключается. */
   const pageShown = () => typeof document === 'undefined' || attractShown({
@@ -241,7 +237,29 @@ export function createStage(d: StageDeps) {
   return {
     hooks,
     handle(e: Effect) {
-      if (e.e === 'ask') voice.resume();
+      if (e.e === 'scene' && e.key.endsWith('-scroll')) llmGen++;
+      if (e.e === 'listen' && !voice.listening()) {
+        queue.clear();
+        voice.silence();
+        d.dispatch({ t: 'timerHold' });
+      }
+      if (e.e === 'ask' || e.e === 'listen') voice.resume();
+      if (e.e === 'commentChoice') {
+        const v = d.snapshot().model.view;
+        const last = v?.decisions.at(-1);
+        if (last) {
+          const kind = last.choice === 'delay' ? 'delay' : last.choice === last.historical ? 'historical' : 'own';
+          void runner?.decided(kind);
+        }
+        return;
+      }
+      if (e.e === 'prepareDebrief') {
+        const v = d.snapshot().model.view;
+        const brief = v ? operationDebrief(v) : null;
+        const ready = brief ? voice.prepare(debriefUtterances(brief.paragraphs), brief.voice) : Promise.resolve();
+        void ready.then(() => d.dispatch({ t: 'debriefReady' }));
+        return;
+      }
       if (e.e === 'say' || e.e === 'scene' || e.e === 'newSession' || e.e === 'ask' || e.e === 'listen' || e.e === 'deal') runner?.handle(e);
     },
     /** Тик часов: громкость голоса из настроек (смена — сразу); на заставке — круг фраз, если голос включён и окно перед посетителем. */
@@ -269,6 +287,7 @@ export function createStage(d: StageDeps) {
       for (const key of beat) runner?.handle({ e: 'say', key, priority: 'scene', scene: 'attract' });
     },
     resume: () => voice.resume(),
+    input: voice.input,
     dispose() {
       if (typeof window !== 'undefined') {
         window.removeEventListener('blur', onBlur);
