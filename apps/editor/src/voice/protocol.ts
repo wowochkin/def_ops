@@ -26,7 +26,7 @@ export type ClientMsg =
   | { type: 'hello'; settings: Partial<VoiceSettings> }
   | { type: 'say'; id: number; role: VoiceRole; text: string; more?: boolean; voice_id?: string }
   /** Заготовить звук фразы заранее: `say` того же текста тем же голосом сыграет его без синтеза. */
-  | { type: 'prepare'; id: number; role: VoiceRole; text: string }
+  | { type: 'prepare'; id: number; role: VoiceRole; text: string; voice_id?: string }
   | { type: 'stop'; id?: number }
   | { type: 'played'; id: number }
   | ({ type: 'settings' } & Partial<VoiceSettings>)

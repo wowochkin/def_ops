@@ -20,7 +20,9 @@ import { createHost } from './host';
 import { initialState, type DirectorEvent } from './director';
 import { ExpoView } from './ExpoView';
 import { cuesFor, soundEngine } from './sound';
+import { setExpoBaseline } from './baseline';
 import { coreEnv, modelRunner, type ModelFrame } from './model';
+import { measureTrace } from './session';
 import { createStage } from './stage';
 import { NO_AI } from './ai-runner';
 import type { StatKind } from './stats';
@@ -217,7 +219,9 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       });
       historyRun = () =>
         void model.history().then((r) => {
-          if (r && !disposed) void mapsRef.history(r.trace, r.env.history);
+          if (!r || disposed) return;
+          setExpoBaseline(measureTrace(r.env, r.trace, 'su_1bf').events);
+          void mapsRef.history(r.trace, r.env.history);
         });
       const host = createHost(
         settings,

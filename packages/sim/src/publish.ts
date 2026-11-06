@@ -251,7 +251,9 @@ export function runToDocument(ctx: SimContext, run: RunResult, history?: History
     for (const x of all) {
       if (o.visible && side !== 'own' && !o.visible(f.id, run.snapshots[x.i])) continue;
       const cur = runs[runs.length - 1];
-      if (cur && cur[cur.length - 1].i === x.i - 1) cur.push(x); else runs.push([x]);
+      // перестановка (передача командования) — не ход: знак не ведётся назад по прямой от прежнего места
+      const jumped = !!run.snapshots[x.i].jumped?.includes(f.id);
+      if (cur && cur[cur.length - 1].i === x.i - 1 && !jumped) cur.push(x); else runs.push([x]);
     }
     for (const frames of runs) {
       const preset = tankish(f, ctx) ? 'std.mechCorps' : 'std.unitOval';
@@ -965,16 +967,27 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       states.forEach((st, k) => { const g = segs[segs.length - 1]; if (g && g.st === st) g.b = k; else segs.push({ st, a: k, b: k }); });
       for (const [n, sg] of segs.entries()) {
         const fs = frames.slice(sg.a, sg.b + 1);
-        const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(fs[0].c!.xy), layerId: `${lay}-units` }, level === 'corps' ? 1.3 : 1.6, side) as SymbolFeature;
-        sym.ref = x.g.id;
-        sym.name = x.g.name + (sg.st === 'routed' ? ' — разгромлено' : sg.st === 'reserve' ? ' — на марше / в резерве' : '');
-        sym.labelRank = 20 + (RANK[x.g.echelon] ?? 0);
-        sym.style = { ...sym.style, text: shortName(x.g.name), textStyle: { font: 'PT Sans Narrow', size: 13, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 },
-          ...(sg.st === 'reserve' ? { hatch: { mode: 'half' as const } } : {}), ...(sg.st === 'routed' ? { cross: { mode: 'slash' as const, color: side === 'own' ? '#3b3a36' : '#c0392b' } } : {}) };
-        sym.keyframes = fs.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
         const nextSeg = segs[n + 1];
-        sym.time = { from: fs[0].sn.time, to: nextSeg ? frames[nextSeg.a].sn.time : to };
-        out.push(sym);
+        // скачок центра (перестановка большей части людей или рывок не с марша) режет знак: иначе он едет назад
+        const parts: typeof fs[] = [];
+        for (const q of fs) {
+          const prev = parts[parts.length - 1];
+          const last = prev?.[prev.length - 1];
+          const leap = !!last && (jumps.includes(q.i) || Math.hypot(q.c!.xy[0] - last.c!.xy[0], q.c!.xy[1] - last.c!.xy[1]) > 40);
+          if (prev && !leap) prev.push(q); else parts.push([q]);
+        }
+        for (const [pi, part] of parts.entries()) {
+          const sym = createFeature('symbol', tank ? 'std.mechCorps' : 'std.unitOval', { at: LL(part[0].c!.xy), layerId: `${lay}-units` }, level === 'corps' ? 1.3 : 1.6, side) as SymbolFeature;
+          sym.ref = x.g.id;
+          sym.name = x.g.name + (sg.st === 'routed' ? ' — разгромлено' : sg.st === 'reserve' ? ' — на марше / в резерве' : '');
+          sym.labelRank = 20 + (RANK[x.g.echelon] ?? 0);
+          sym.style = { ...sym.style, text: shortName(x.g.name), textStyle: { font: 'PT Sans Narrow', size: 13, weight: 700, italic: false, color: sym.style.color, halo: { color: '#ffffff', width: 2.5 }, letterSpacing: 0, uppercase: false, align: 'middle', lineHeight: 1.1 },
+            ...(sg.st === 'reserve' ? { hatch: { mode: 'half' as const } } : {}), ...(sg.st === 'routed' ? { cross: { mode: 'slash' as const, color: side === 'own' ? '#3b3a36' : '#c0392b' } } : {}) };
+          sym.keyframes = part.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy), note: note(q.c!) }));
+          const nxt = parts[pi + 1]?.[0] ?? (nextSeg ? frames[nextSeg.a] : null);
+          sym.time = { from: part[0].sn.time, to: nxt ? nxt.sn.time : to };
+          out.push(sym);
+        }
       }
     } else {
       // фронт — надпись, как на оперативной карте, в основной массе его войск; размер — под исходный масштаб карты
@@ -983,8 +996,27 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
       lb.style = { ...lb.style, color: side === 'own' ? '#b3261e' : '#1f4e8c', halo: { color: '#ffffff', width: 3 * labelK }, uppercase: true, letterSpacing: 0.5 * labelK };
       lb.name = x.g.name;
       lb.ref = x.g.id;
-      lb.keyframes = frames.map((q) => ({ t: q.sn.time, at: LL(labelAt.get(id)![q.i]), note: note(q.c!) }));
-      lb.time = { from: frames[0].sn.time, to };
+      const labelParts: typeof frames[] = [];
+      for (const q of frames) {
+        const prev = labelParts[labelParts.length - 1];
+        const last = prev?.[prev.length - 1];
+        const here = labelAt.get(id)![q.i];
+        const was = last ? labelAt.get(id)![last.i] : null;
+        const leap = !!was && Math.hypot(here[0] - was[0], here[1] - was[1]) > 40;
+        if (prev && !leap) prev.push(q); else labelParts.push([q]);
+      }
+      lb.keyframes = labelParts[0].map((q) => ({ t: q.sn.time, at: LL(labelAt.get(id)![q.i]), note: note(q.c!) }));
+      lb.time = { from: frames[0].sn.time, to: labelParts[1] ? labelParts[1][0].sn.time : to };
+      for (const part of labelParts.slice(1)) {
+        const more = createFeature('label', 'atlas.front', { at: LL(labelAt.get(id)![part[0].i]), text: frontName(x.g.name), layerId: `${lay}-units` }, labelK, side) as LabelFeature;
+        more.style = lb.style;
+        more.name = lb.name;
+        more.ref = lb.ref;
+        more.keyframes = part.map((q) => ({ t: q.sn.time, at: LL(labelAt.get(id)![q.i]), note: note(q.c!) }));
+        const after = labelParts[labelParts.indexOf(part) + 1];
+        more.time = { from: part[0].sn.time, to: after ? after[0].sn.time : to };
+        out.push(more);
+      }
       out.push(lb);
       // армии фронта — подписью, как в атласе («8 гв. А»); танковые — овалом с ромбом и номером под ним
       for (const a of armiesOf.get(id) ?? []) {
@@ -1006,9 +1038,20 @@ function levelFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) => S
         ft.name = a.g.name;
         ft.ref = a.g.id;
         ft.labelRank = 15;
-        ft.keyframes = af.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy) }));
-        ft.time = { from: af[0].sn.time, to: ato };
-        out.push(ft);
+        const armyParts: typeof af[] = [];
+        for (const q of af) {
+          const prev = armyParts[armyParts.length - 1];
+          const last = prev?.[prev.length - 1];
+          const leap = !!last && (q.sn.jumped?.some((id) => a.members.includes(id)) && Math.hypot(q.c!.xy[0] - last.c!.xy[0], q.c!.xy[1] - last.c!.xy[1]) > 15
+            || Math.hypot(q.c!.xy[0] - last.c!.xy[0], q.c!.xy[1] - last.c!.xy[1]) > 40);
+          if (prev && !leap) prev.push(q); else armyParts.push([q]);
+        }
+        const paint = (part: typeof af, end: string | null) => {
+          const mark = { ...ft, at: LL(part[0].c!.xy), keyframes: part.map((q) => ({ t: q.sn.time, at: LL(q.c!.xy) })), time: { from: part[0].sn.time, to: end } };
+          out.push(mark as typeof ft);
+        };
+        armyParts.forEach((part, pi) => paint(part, armyParts[pi + 1] ? armyParts[pi + 1][0].sn.time : ato));
+        continue;
       }
     }
     // направления и рубежи по ходам

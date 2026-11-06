@@ -83,7 +83,7 @@ const NAME = { type: 'object', properties: { name: { type: 'string' } }, require
 export function screenActions(get: () => ScreenDeps): Action[] {
   live = get;
   const ready = (): true | string => { const r = inReplay(); return r !== true ? r : get().view ? true : 'обстановка ещё готовится — подождите немного'; };
-  const play = (): true | string => { const r = ready(); return r !== true ? r : get().view!.over ? 'игра окончена — приказы не нужны' : get().busy ? BUSY : true; };
+  const play = (): true | string => { const r = ready(); return r !== true ? r : get().view!.over ? 'кампания окончена — приказы не нужны' : get().busy ? BUSY : true; };
   const base = { section: 'replay', available: ready };
   const variant = (n: unknown) => get().plan?.variants[Math.round(Number(n)) - 1] ?? null;
   return [
@@ -198,7 +198,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       params: NAME, say: ['штаб, покажи событие Зееловские высоты'],
       run: async (p: { name: string }) => {
         const gs = get().view!.goals.filter((g) => g.at);
-        if (!gs.length) return 'Контрольные события в игре ещё не случились.';
+        if (!gs.length) return 'Контрольные события в кампании ещё не случились.';
         const r = pickTitle(String(p?.name ?? ''), gs.map((g) => g.title.split(':')[0]), 'Какое событие', `События «${p?.name}» нет`);
         if ('say' in r) return r.say;
         const g: Goal = gs[r.index];
@@ -211,7 +211,7 @@ export function screenActions(get: () => ScreenDeps): Action[] {
       available: () => { const r = ready(); return r !== true ? r : get().focus ? true : 'участок не выбран. Скажите: «участок …»'; },
       run: async (p: { on: boolean }) => { get().setFocusOnly(!!p?.on); return p?.on ? 'В списках — только участок.' : 'В списках — весь театр.'; } },
     { ...base, id: 'command.toEditor', title: 'Карта в редакторе', describe: 'Открывает карту игры в разделе «Редактор» (правка, экспорт).', say: ['штаб, открой карту в редакторе'],
-      run: async () => (get().toEditor() ? 'Карта игры открыта в редакторе.' : 'Карта ещё не готова.') },
+      run: async () => (get().toEditor() ? 'Карта кампании открыта в редакторе.' : 'Карта ещё не готова.') },
     // ---- посредник, полосы
     { ...base, id: 'command.umpire.part', highlight: (p: { part: string }) => hl(`ump-${p?.part}`), title: 'Посредник: что показать', describe: 'Вкладка «Посредник»: как действовал противник или поправки посредника.',
       params: { type: 'object', properties: { part: { enum: ['enemy', 'umpire'] } }, required: ['part'] }, say: ['штаб, покажи поправки посредника'],

@@ -60,6 +60,50 @@ export function stageDoc(base: SimContext, trace: AgentTrace, history: AgentHist
 const UNNAMED = new Set(['sim-own', 'sim-enemy']);
 const quiet = (f: Feature): Feature => (f.kind === 'symbol' && UNNAMED.has(f.layerId) && f.style.text ? { ...f, style: { ...f.style, text: '' } } : f);
 
+/** Запад и восток боковых листов OpenHistoricalMap — те же, что кадр заставки. Сетка зон считается по театру и без этого обрывается. */
+const SHEET_WEST = 7.75;
+const SHEET_EAST = 18.85;
+
+/** Продлить зоны на бока листа. Западнее своих — противник, восточнее — свои; пустые полосы закрываются.
+ * Берлин остаётся зоной противника до ночи на 1 мая, когда над рейхстагом подняли Знамя Победы. */
+const BERLIN_AT: [number, number] = [13.377, 52.516];
+const BANNER_AT = Date.parse('1945-05-01T00:00:00Z');
+const BERLIN_KM = 14;
+const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+const latOfY = (y: number) => (360 / Math.PI) * Math.atan(Math.exp(y)) - 90;
+
+function coverSheet(g: ZoneGrid, time: string): ZoneGrid {
+  const [w, s, e, n] = g.bbox;
+  const dw = (e - w) / g.cols;
+  const left = Math.max(0, Math.ceil((w - SHEET_WEST) / dw - 1e-9));
+  const right = Math.max(0, Math.ceil((SHEET_EAST - e) / dw - 1e-9));
+  const cols = g.cols + left + right;
+  const west = w - left * dw;
+  const v = new Array<number>(cols * g.rows).fill(0);
+  const beforeBanner = Date.parse(`${time.slice(0, 16)}:00Z`) < BANNER_AT;
+  const yN = mercY(n), yS = mercY(s);
+  const inCity = (c: number, r: number) => {
+    const lng = west + (c + 0.5) * dw;
+    const lat = latOfY(yN - ((r + 0.5) / g.rows) * (yN - yS));
+    const dx = (lng - BERLIN_AT[0]) * 67.6;
+    const dy = (lat - BERLIN_AT[1]) * 111;
+    return dx * dx + dy * dy <= BERLIN_KM * BERLIN_KM;
+  };
+  for (let r = 0; r < g.rows; r++) {
+    for (let c = 0; c < g.cols; c++) v[r * cols + left + c] = g.v[r * g.cols + c];
+    if (beforeBanner) for (let c = 0; c < cols; c++) if (inCity(c, r)) v[r * cols + c] = 0;
+    let front = -1;
+    for (let c = 0; c < cols; c++) if (v[r * cols + c] > 0) { front = c; break; }
+    for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      if (beforeBanner && inCity(c, r)) { v[i] = -42; continue; }
+      if (front < 0 || c < front) { if (v[i] >= 0) v[i] = -42; }
+      else if (v[i] <= 0) v[i] = 48;
+    }
+  }
+  return { bbox: [+west.toFixed(6), s, +(e + right * dw).toFixed(6), n], cols, rows: g.rows, v };
+}
+
 /** Зоны влияния советской стороны по снимкам хода: раз в сутки от начала и последний снимок (как у «Переигровки»). */
 function zonesOf(ctx: SimContext, sn: ReturnType<typeof agentsToRun>['run']['snapshots']): ZoneFrame[] {
   try {
@@ -73,9 +117,14 @@ function zonesOf(ctx: SimContext, sn: ReturnType<typeof agentsToRun>['run']['sna
       if (!picked.includes(s)) picked.push(s);
     }
     if (!picked.includes(sn[sn.length - 1])) picked.push(sn[sn.length - 1]);
-    return picked.map((s) => {
-      const g = snapshotZones(ctx, s, side);
-      return { time: s.time, grid: { ...g, v: Array.from(g.v, (x) => Math.round(x)) } };
+    const grids = picked.map((s) => snapshotZones(ctx, s, side));
+    const held = new Uint8Array(grids[0]?.v.length ?? 0);
+    return grids.map((g, i) => {
+      const v = Array.from(g.v, (x) => Math.round(x));
+      for (let k = 0; k < v.length; k++) if (v[k] > 0) held[k] = 1;
+      // земля, уже бывшая своей, не становится чужой в следующем снимке: иначе тыл за Одером синеет, будто его отбили
+      for (let k = 0; k < v.length; k++) if (held[k] && v[k] <= 0) v[k] = 48;
+      return { time: picked[i].time, grid: coverSheet({ ...g, v }, picked[i].time) };
     });
   } catch {
     return [];
@@ -180,12 +229,13 @@ export function pathFeatures(doc: MapDocument, own: Record<string, LngLat[]>, hi
   ];
 }
 
-/** Вид карты, вмещающий рамку [запад, юг, восток, север] в окно w×h с полями `pad` (доля), веб-Меркатор, тайл 512. */
-export function fitView(b: [number, number, number, number], w: number, h: number, pad = 0.08): { center: LngLat; zoom: number; bearing: number } {
+/** Вид карты, вмещающий рамку [запад, юг, восток, север] в окно w×h. `cover` — рамка закрывает окно целиком (лишнее по краям срезается), иначе рамка целиком внутри окна. */
+export function fitView(b: [number, number, number, number], w: number, h: number, pad = 0.08, cover = false): { center: LngLat; zoom: number; bearing: number } {
   const x = (lng: number) => (lng + 180) / 360;
   const y = (lat: number) => (1 - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / Math.PI) / 2;
   const dx = Math.max(1e-6, x(b[2]) - x(b[0])), dy = Math.max(1e-6, y(b[1]) - y(b[3]));
-  const zoom = Math.log2(Math.min((w * (1 - 2 * pad)) / (dx * 512), (h * (1 - 2 * pad)) / (dy * 512)));
+  const zx = (w * (1 - 2 * pad)) / (dx * 512), zy = (h * (1 - 2 * pad)) / (dy * 512);
+  const zoom = Math.log2(cover ? Math.max(zx, zy) : Math.min(zx, zy));
   const cy = (y(b[1]) + y(b[3])) / 2;
   const lat = (Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))) * 180) / Math.PI;
   return { center: [(b[0] + b[2]) / 2, lat], zoom: Math.min(11, zoom), bearing: 0 };

@@ -9,7 +9,7 @@ it('доклад обоих фронтов: каждый пункт — фраз
   for (const front of ['su_1bf', 'su_1uf'] as FrontId[]) {
     const points = BRIEFING[front];
     expect(points).toHaveLength(BRIEF_POINTS);
-    expect(points.map((p) => p.title)).toEqual(['Задача фронта', 'Свои силы', 'Противник', 'Местность', 'Соседи и разграничение', 'Соотношение сил']);
+    expect(points.map((p) => p.title)).toEqual(['Задача фронта', 'Свои силы', 'Противник', 'Местность', 'Фланги и разграничение', 'Соотношение сил']);
     points.forEach((p, i) => {
       const say = LINES.say[briefKey(front, i)];
       expect(say?.length, `${front} ${i + 1}`).toBeGreaterThan(0);

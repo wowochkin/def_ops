@@ -16,7 +16,7 @@ import type { ModelFrame } from './model';
 import { NO_AI, type AiFrame } from './ai-runner';
 import { plan, type Windows, type MonitorInfo } from './windows';
 
-const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'markFront', 'next', 'choose', 'replace', 'speak', 'ask', 'restart', 'voice', 'brief', 'back', 'step', 'stay'];
+const VISITOR_EVENTS: DirectorEvent['t'][] = ['touch', 'pickFront', 'markFront', 'next', 'choose', 'replace', 'speak', 'ask', 'restart', 'voice', 'brief', 'back', 'step', 'stay', 'scrollWait', 'scrollReady', 'scrollDone', 'pause', 'resume'];
 
 const sameScreens = (a: ExpoSettings['screens'], b: ExpoSettings['screens']) =>
   a.count === b.count && a.order.length === b.order.length && a.order.every((id, i) => id === b.order[i]);
@@ -78,7 +78,7 @@ export function createHost(
       if (m.window > 0 && m.window < count) beats.set(m.window, Date.now());
       if (m.k === 'hello') publish();
     }
-    if (m.k === 'input' && !state.paused && VISITOR_EVENTS.includes(m.ev.t)) dispatch(m.ev);
+    if (m.k === 'input' && VISITOR_EVENTS.includes(m.ev.t) && (!state.paused || m.ev.t === 'pause' || m.ev.t === 'resume')) dispatch(m.ev);
   });
 
   return {
@@ -90,6 +90,9 @@ export function createHost(
     setModel(f: ModelFrame) {
       model = f;
       publish();
+      const p = state.phase;
+      if (p.kind !== 'turn' || p.step !== 'scroll') return;
+      if (p.kind === 'turn' && p.step === 'scroll' && f.view?.busy && !p.scrollBegan) dispatch({ t: 'scrollWait' });
     },
     /** Кадр ИИ: что звучит, ответ на вопрос, мысль. */
     setAi(f: AiFrame) {

@@ -8,6 +8,7 @@
  * Прокрутка — ход ядра до следующего перелома; после третьего — досчёт до конца операции и итог по осям.
  */
 import { agentsEvents, lossSeries, type AgentHistory, type AgentTrace, type EventResult, type History, type SimContext } from '@def-ops/sim';
+import { baselineAt, rebaseEvents } from './baseline';
 import { deal, replacement, spares, type Bank, type Card, type CardFact, type TurnN } from './bank';
 import { axes, axisNote, feedLines, forecast, rankOf, type AxesDetail } from './score';
 import type { FrontId } from './settings';
@@ -46,8 +47,8 @@ export interface MapView {
 }
 export interface Decision { n: TurnN; choice: string | 'delay'; historical: string }
 export interface Scales { axes: AxesDetail; notes: { speed: string; cost: string; intent: string } }
-/** Задача фронта — ключевое событие: дата по истории и в ходе (null — ещё не случилось). */
-export interface Task { id: string; title: string; historical: string; simulated: string | null; days: number | null }
+/** Задача фронта — ключевое событие. `historical` — дата календаря; `due` — с какого дня оно уже должно было случиться в базе. */
+export interface Task { id: string; title: string; historical: string; due: string; simulated: string | null; days: number | null }
 export interface ModelView {
   front: FrontId;
   turn: TurnN;
@@ -133,7 +134,9 @@ export function tasksOf(keys: string[], events: EventResult[]): Task[] {
   return keys.map((id) => {
     const e = events.find((x) => x.id === id);
     const h = MAP.events.find((x) => x.id === id);
-    return { id, title: e?.title ?? h?.title ?? id, historical: (e?.historical ?? h?.date ?? '').slice(0, 10), simulated: e?.simulated?.slice(0, 10) ?? null, days: e?.days ?? null };
+    const calendar = (h?.date ?? e?.historical ?? '').slice(0, 10);
+    const due = (e?.historical ?? h?.date ?? '').slice(0, 10);
+    return { id, title: e?.title ?? h?.title ?? id, historical: calendar || due, due: due || calendar, simulated: e?.simulated?.slice(0, 10) ?? null, days: e?.days ?? null };
   });
 }
 
@@ -141,7 +144,24 @@ export function timeAt(start: string, hour: number): string {
   return new Date(Date.parse(`${start.slice(0, 16)}:00Z`) + hour * 3_600_000).toISOString().slice(0, 16);
 }
 
-/** Эталон потерь на час: линейно между сутками (на час 0 — ноль). */
+const dayAfter = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * Исторические решения идут тем же расчётом, что база. Событие, которого в базе к этому дню ещё нет
+ * (или база ещё не посчитана), не считается просроченным по календарю 1945 года: иначе шкала цены
+ * удваивает совпавшие потери, а скорость получает сутки опоздания за событие, до которого ход не дошёл.
+ */
+function holdOpen(events: EventResult[], today: string, historical: boolean): EventResult[] {
+  if (!historical) return events;
+  return events.map((e) => {
+    if (e.simulated) return e;
+    const at = baselineAt(e.id);
+    if (typeof at === 'string' && at <= today) return e;
+    if (typeof at === 'string') return { ...e, historical: at };
+    if (at === null) return { ...e, historical: '9999-01-01' };
+    return { ...e, historical: dayAfter(today) };
+  });
+}
 export function refAt(losses: number[] | undefined, hour: number): number | null {
   if (!losses?.length) return null;
   const x = hour / 24;
@@ -300,9 +320,10 @@ export class ExpoSession {
       const before = this.events;
       this.trace = (await this.env.call('game_turn', { orders, hours: Math.max(1, to - hour) })) as Trace;
       const upTo = this.trace.frames.length - 1;
-      const { events, loss } = measureTrace(this.env, this.trace, this.front);
-      this.events = events;
+      const { events: raw, loss } = measureTrace(this.env, this.trace, this.front);
       const time = timeAt(this.start0(), upTo);
+      const events = holdOpen(rebaseEvents(raw), time.slice(0, 10), this.view.decisions.every((d) => d.choice === d.historical) && !!picked?.historical);
+      this.events = events;
       const m = this.def.marshal;
       const decision: Decision = { n, choice: picked?.id ?? 'delay', historical: hist.id };
       const was = new Set(before.filter((e) => e.simulated).map((e) => e.id));

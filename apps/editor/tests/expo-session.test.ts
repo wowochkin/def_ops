@@ -52,6 +52,31 @@ describe('сеанс модели', () => {
     expect(s.view.feed).toEqual(['18 апреля — seelow (в истории — 19 апреля)']);
   });
 
+  it('historical decision does not count a later event as already missed', async () => {
+    const core = fakeCore();
+    const s = new ExpoSession({
+      ...env(core),
+      measure: (t) => {
+        const h = t.frames.length - 1;
+        return {
+          events: [
+            ev('spremberg', '1945-04-16', h >= 48 ? '1945-04-16' : null, h >= 48 ? 0 : null),
+            ev('pocket', '1945-04-16', null, null),
+          ],
+          loss: 2159,
+        };
+      },
+    }, BANK, 'su_1uf', first);
+    await s.start();
+    s.deal(1);
+    await s.decide(1, s.view.cards.findIndex((c) => c.id === 'uf1-hist'));
+    expect(s.view.time.slice(0, 10)).toBe('1945-04-18');
+    expect(s.view.scales.axes.days).toBe(0);
+    expect(s.view.scales.axes.lossRatio).toBeCloseTo(1, 2);
+    expect(s.view.scales.notes.cost).toBe('как в истории');
+    expect(s.view.tasks.find((t) => t.id === 'pocket')!.due > '1945-04-18').toBe(true);
+  });
+
   it('own card sends orders to armies at theatre places, released at the next turn', async () => {
     const core = fakeCore();
     const s = new ExpoSession(env(core), BANK, 'su_1bf', first);

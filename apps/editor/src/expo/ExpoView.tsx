@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { affordances, keyToEvent } from './input';
-import type { DirectorEvent, DirectorState } from './director';
+import { scrollMs, type DirectorEvent, type DirectorState } from './director';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { AttractActions, DayRecordLine, Excursion, FullVersion, HowStaff, MarshalPortrait, StaffBoard, roleLayout } from './stand';
@@ -28,7 +28,7 @@ import type { ModelFrame } from './model';
 import type { CardView } from './session';
 import { timeAt } from './session';
 import { debriefCursor, debriefSentences, forecastParts, operationDebrief, resultBeat } from './debrief';
-import { Figures, ModelNote, modelTime, MoveAdvance, OpSummary, Scales, Tasks, Timeline, turnDef } from './session-scenes';
+import { Figures, ModelNote, modelTime, MoveAdvance, OpSummary, Scales, Tasks, Timeline, turnDef, timelineAt } from './session-scenes';
 import { NO_AI, QUESTIONS, type AiFrame } from './ai-runner';
 import { SOURCE_LABEL } from './ai';
 import type { FrontId } from './settings';
@@ -171,6 +171,12 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const lit = expanded ?? pending ?? hover;
   const spoken = p.kind === 'result' ? ai.line?.text ?? ai.said : null;
   const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken }), [state.phase, state.front, mv, maps, lit, count, index, spoken]); // eslint-disable-line react-hooks/exhaustive-deps
+  const onRunDone = useCallback(() => {
+    if (p.kind === 'turn' && p.step === 'scroll') send({ t: 'scrollDone' });
+  }, [p, send]);
+  useEffect(() => {
+    if (p.kind === 'turn' && p.step === 'scroll' && plan?.run) send({ t: 'scrollReady' });
+  }, [p, plan?.run?.key, send]);
   // сцена без карты: карта скрыта, но не размонтирована — один экземпляр на окно, без пересоздания
   const lastPlan = useRef<StageMapProps>(NO_PLAN);
   if (plan) lastPlan.current = plan;
@@ -178,6 +184,10 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   const clock = useRef<HTMLSpanElement | null>(null);
   const onTime = useCallback((t: string) => {
     for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) flip(el, modelTime(t));
+    const now = document.querySelector<HTMLElement>('[data-tl-now]');
+    if (now) now.style.left = timelineAt(t);
+    const day = t.slice(0, 16);
+    for (const dot of document.querySelectorAll<HTMLElement>('[data-tl-at]')) dot.classList.toggle('is-on', (dot.dataset.tlAt ?? '') <= day);
   }, []);
   const mainRef = useRef<HTMLElement>(null);
   const gisRef = useRef<HTMLDivElement>(null);
@@ -215,7 +225,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
       >
         <div ref={gisRef} className="expo-gis" aria-hidden="true">
           <div className="expo-gis-in">
-            <StageMap {...shownPlan} camera={shownPlan.camera && { ...shownPlan.camera, key: `${shownPlan.camera.key}@${gisSize}` }} onTime={onTime} />
+            <StageMap {...shownPlan} camera={shownPlan.camera && { ...shownPlan.camera, key: `${shownPlan.camera.key}@${gisSize}` }} onTime={onTime} onDone={onRunDone} />
           </div>
         </div>
         <header className="expo-header">
@@ -357,6 +367,12 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     </div>
                     <div className="expo-mapframe">
                       <div className="expo-mapslot" role="img" aria-label="Карта перелома" />
+                      {p.rest && <p className="expo-scroll-rest">{p.n < 3 ? 'Переход к следующему перелому' : 'Переход к итогу'}</p>}
+                      {face === 'map' && (
+                        <button type="button" className="expo-pause" aria-pressed={state.paused} onClick={() => send(state.paused ? { t: 'resume' } : { t: 'pause' })}>
+                          {state.paused ? 'Продолжить' : 'Пауза'}
+                        </button>
+                      )}
                       {!mv && <ModelNote model={model} />}
                     </div>
                   </section>
@@ -510,7 +526,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
 }
 
 /** Краткие названия пунктов доклада — для строки пунктов. */
-const BRIEF_STEPS = ['Задача', 'Силы', 'Противник', 'Местность', 'Соседи', 'Соотношение'];
+const BRIEF_STEPS = ['Задача', 'Силы', 'Противник', 'Местность', 'Фланги', 'Соотношение'];
 
 /** Строка пункта на экране карты: название, пункты доклада, переход дальше. Цифры — на соседнем экране. */
 function BriefBar({ front, point, send }: { front: FrontId; point: number; send: (ev: DirectorEvent) => void }) {
@@ -1055,8 +1071,12 @@ type View = NonNullable<ModelFrame['view']>;
 const TABLE = picturesOf('generated').find((x) => x.file === 'staff-table.jpg')?.src;
 const CITY = picturesOf('generated').find((x) => x.file === 'city-dawn.jpg')?.src;
 const NO_PLAN: StageMapProps = { doc: null, time: null, camera: null };
-/** Театр операции целиком (заставка). */
-const THEATRE: Bbox = [12.2, 51.35, 15.2, 53.05];
+/**
+ * Кадр заставки и итога. Север — по разграничительной линии 2 БФ / 1 БФ
+ * (северная точка линии 53,17°). Центр чуть севернее середины листа: иначе под тайлами
+ * остаётся пустая полоса. Запад и восток — боковые листы OpenHistoricalMap.
+ */
+const THEATRE: Bbox = [7.75, 51.12, 18.85, 53.44];
 const BERLIN = MAP.cities.find((c) => c.capital)!.at;
 const tank = (army: string) => /ТА/.test(MAP.armies.find((a) => a.id === army)?.label ?? '');
 const ZOOM = 8;
@@ -1073,10 +1093,10 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
   if (p.kind === 'attract') {
     const d = maps.best ?? hist;
     if (!d || !roles.includes('map')) return null;
-    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: THEATRE, key: `attract-${index}`, ms: 0 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
+    return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: THEATRE, key: `attract-${index}`, ms: 0, pad: 0.02, scale: 1_500_000 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
-  if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'corps', zones: hist.zones };
+  if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'front', zones: hist.zones };
   if (p.kind === 'briefing' && hist && state.front) {
     if (!roles.includes('map')) return null;
     const pt = BRIEFING[state.front][p.point];
@@ -1101,11 +1121,12 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
     const arrows = p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? mv.reveal?.historical.arrows : undefined;
     const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;
-    // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят
-    const moving = p.step === 'scroll' && own && own.time === mv.time && mv.map.prev && !mv.busy;
-    const time = own ? (p.step === 'scroll' && !moving && mv.map.prev ? mv.map.prev.time : mv.time) : start;
+    // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят. После конца кадра — на конечном времени, не обратно
+    const moving = p.step === 'scroll' && !p.rest && own && own.time === mv.time && mv.map.prev && !mv.busy;
+    const time = own ? (p.step === 'scroll' && !moving && !p.rest && mv.map.prev ? mv.map.prev.time : mv.time) : start;
     const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
-    return { doc: d.doc, time, level: 'corps', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: 8000, delay: 500, key: `run-${mv.time}` } : null, camera, extra, fx };
+    const runMs = Math.max(1_000, scrollMs(mv.front, p.n) - 500);
+    return { doc: d.doc, time, level: 'front', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: runMs, delay: 500, linear: true, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
     if (!roles.includes('map')) return null;
@@ -1141,7 +1162,7 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null }: {
     const camera = frame
       ? { bbox: frame, key: `result-${beat.phase}-${beat.turn ?? 'x'}-${said.map((x) => x.id).join('.')}-${say.places.length}-${sayKey}`, ms: 900 }
       : beat.phase === 'open'
-        ? { bbox: THEATRE, key: `result-open-${sayKey}`, ms: 800 }
+        ? { bbox: THEATRE, key: `result-open-${sayKey}`, ms: 800, scale: 1_500_000 }
         : { bbox: pts.length ? bboxOf(pts) : sector(mv.front, []), key: `result-close-${sayKey}`, ms: 800 };
     const shownIds = named ? said.map((x) => x.id) : ids;
     const extra = [

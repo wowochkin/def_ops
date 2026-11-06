@@ -50,8 +50,9 @@ export const ZONE_MAX = 100;
 const MAX_SIDE = 200;
 /** Насыщение влияния: 1 − exp(−x/K). Одно соединение у себя — около 0,86. */
 const K = 0.5;
-/** Цвет земли у самой линии фронта (доля полного); в глубину — бледнее. */
+/** Цвет земли у самой линии фронта (доля полного). В глубине сторона не гаснет до нуля: заливка покрывает всю её землю, лишь бледнее. */
 const FLOOR = 0.85;
+const DEPTH = 0.62;
 /** Насколько войска одной стороны бледнят цвет земли другой (котёл, вклинение, войска у самого фронта). */
 const CROSS = 0.4;
 /** Слабее этого — без цвета. */
@@ -111,8 +112,7 @@ export function influenceZones(T: Theatre, inp: ZoneInput): ZoneGrid {
     }
     return { bbox: [w, s, e, n], cols, rows, v };
   }
-  // территория: сторона — по свою сторону расчётной линии фронта; у самой линии — узкий шов без цвета; в глубину —
-  // бледнее (у своих войск — ярче); земля противника — только в поле зрения своей разведки (recon) или у обнаруженных
+  // территория: сторона — по свою сторону расчётной линии фронта; в глубину бледнее, но цвет не обрывается у линии
   const side = new Int8Array(N);
   for (let i = 0; i < N; i++) {
     const k = T.indexOf(T.proj.toLL([X[i], Y[i]]));
@@ -123,15 +123,16 @@ export function influenceZones(T: Theatre, inp: ZoneInput): ZoneGrid {
   const seen = new Uint8Array(N);
   if (inp.recon === Infinity) seen.fill(1);
   else if (inp.recon) for (const u of inp.own) around(u.at, inp.recon, (i) => { seen[i] = 1; });
-  const deep = sigma * 2, seam = Math.max(T.cellKm, sigma / 5);
+  const deep = sigma * 2;
   for (let i = 0; i < N; i++) {
     if (!side[i]) continue;
-    const d = D[i], near = Number.isFinite(d) ? FLOOR * Math.exp(-(d * d) / (2 * deep * deep)) : 0;
-    const edge = Number.isFinite(d) ? 1 - Math.exp(-(d * d) / (2 * seam * seam)) : 1;
+    const d = D[i];
+    const fall = Number.isFinite(d) ? Math.exp(-(d * d) / (2 * deep * deep)) : 0;
+    const near = FLOOR * (DEPTH + (1 - DEPTH) * fall);
     const a = sat(A[i]), b = sat(B[i]);
     // своя земля: свои войска или близость к фронту; противник рядом (котёл, вклинение) — бледнее
-    if (side[i] === 1) put(i, Math.max(a, near) * (1 - CROSS * b) * edge);
-    else put(i, -Math.max(b, seen[i] ? near : 0) * (1 - CROSS * a) * edge);
+    if (side[i] === 1) put(i, Math.max(a, near) * (1 - CROSS * b));
+    else put(i, -Math.max(b, seen[i] ? near : 0) * (1 - CROSS * a));
   }
   return { bbox: [w, s, e, n], cols, rows, v };
 }

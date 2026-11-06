@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPO_DEFAULTS, type ExpoSettings } from '../src/expo/settings';
-import { BRIEF_POINTS, briefKey, DEBOUNCE_MS, DURATIONS, initialState, sceneKey, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
+import { BRIEF_POINTS, briefKey, DEBOUNCE_MS, DURATIONS, initialState, sceneKey, SCROLL_REST_MS, scrollMs, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
 
 const cfgWith = (patch: Partial<ExpoSettings>): ExpoSettings => ({ ...JSON.parse(JSON.stringify(EXPO_DEFAULTS)), ...patch });
 
@@ -58,7 +58,7 @@ describe('режиссёр сеанса', () => {
       expect(r.phase).toMatchObject({ kind: 'turn', n, step: 'choose', choice: null, deadline: r.now + 30_000 });
       r.send({ t: 'choose', card: 0 });
       expect(r.phase).toMatchObject({ kind: 'turn', n, step: 'scroll', choice: 0 });
-      r.wait(DURATIONS.scroll);
+      r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
     }
     expect(r.phase.kind).toBe('result');
     expect(r.effects.filter((e) => e.e === 'stat')).toEqual([{ e: 'stat', kind: 'started' }, { e: 'stat', kind: 'finished' }]);
@@ -79,7 +79,7 @@ describe('режиссёр сеанса', () => {
     expect(r.effects.at(-1)).toEqual({ e: 'replace', n: 1, card: 2 });
     r.send({ t: 'choose', card: 1 });
     expect(r.effects).toContainEqual({ e: 'decide', n: 1, choice: 1 });
-    r.wait(DURATIONS.scroll);
+    r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
     expect(r.effects).toContainEqual({ e: 'deal', n: 2, front: 'su_1bf' });
     r.wait(DURATIONS.explain + 30_000);
     expect(r.effects).toContainEqual({ e: 'decide', n: 2, choice: 'delay' });
@@ -191,17 +191,17 @@ describe('режиссёр сеанса', () => {
   });
 
   it('situation after a decision is the marshal line', () => {
-    const r = toChoose().send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll);
+    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-2', priority: 'scene', scene: 'turn-2-explain' });
-    r.wait(DURATIONS.explain).send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll);
+    r.wait(DURATIONS.explain).send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
     expect(r.phase).toMatchObject({ n: 3, step: 'explain' });
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-3', priority: 'scene', scene: 'turn-3-explain' });
   });
 
   it('timer off: not choosing is a delay, not an AI card', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
-    const r = toChoose(off).send({ t: 'choose', card: 1 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    const r = toChoose(off).send({ t: 'choose', card: 1 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
     const mark = r.effects.length;
     r.wait(59_000);
@@ -220,7 +220,7 @@ describe('режиссёр сеанса', () => {
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
     expect(says(r.since(mark), 'delay')).toBe(true);
     expect(r.since(mark).some((e) => e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
-    r.wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
   });
 
@@ -264,10 +264,19 @@ describe('режиссёр сеанса', () => {
     expect(r.effects.some((e) => e.e === 'newSession')).toBe(false);
   });
 
+  it('scroll does not end on the clock, only when the map finishes', () => {
+    const r = toChoose().send({ t: 'choose', card: 0 });
+    r.wait(scrollMs('su_1bf', 1) + 5_000);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll' });
+    r.send({ t: 'scrollDone' });
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll' });
+    r.wait(SCROLL_REST_MS);
+    expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
+  });
   it('double choose ignored', () => {
     const r = toChoose().send({ t: 'choose', card: 0 }, { t: 'choose', card: 2 });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 0 });
-    r.wait(DURATIONS.scroll - 250);
+    r.wait(scrollMs('su_1bf', 1) - 250);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll' });
   });
 
@@ -291,12 +300,12 @@ describe('режиссёр сеанса', () => {
   it('replace limited', () => {
     const r = toChoose().send({ t: 'replace', card: 0 }, { t: 'replace', card: 1 }, { t: 'replace', card: 2 }, { t: 'replace', card: 0 }, { t: 'replace', card: 1 });
     expect(turn(r.phase)?.replacements).toBe(EXPO_DEFAULTS.maxReplacements);
-    r.send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll).wait(DURATIONS.explain);
+    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ n: 2, step: 'choose', replacements: 0 });
   });
 
   it('restart from any phase', () => {
-    const r = toChoose().send({ t: 'choose', card: 0 }).wait(DURATIONS.scroll).wait(DURATIONS.explain).send({ t: 'choose', card: 1 });
+    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain).send({ t: 'choose', card: 1 });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'scroll' });
     const mark = r.effects.length;
     const session = r.state.session;

@@ -314,6 +314,8 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
   setVolume(v: number): void;
   /** Заготовка озвучена заранее. */
   voiced(f: { text: string; parts?: string[] }): boolean;
+  /** Синтез фраз заранее голосом `voiceId` (разбор итога во время длинной прокрутки): `say` того же текста сыграет готовое. */
+  prepare(texts: string[], voiceId: string): void;
   resume(): void;
   /** Оборвать уже звучащее: окно скрыто или закрыто. */
   silence(): void;
@@ -363,6 +365,12 @@ export function expoSpeaker(o: { aiOn: () => boolean; gate: Turnstile; onSwap?: 
       volume = Math.min(1, Math.max(0, v));
       if (gain && ctx) gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.03);
       client.setVolume(volume);
+    },
+    prepare(texts, voiceId) {
+      for (const text of texts) {
+        const said = stressed(speakable(text, { full: true }), 'fish-s2-pro', STRESS as StressData).said;
+        void client.prepare('chief', said, voiceId);
+      }
     },
     resume: () => { client.resume(); void ctx?.resume(); },
     silence,

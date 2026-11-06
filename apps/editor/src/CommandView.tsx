@@ -1354,7 +1354,7 @@ export function CommandView({ bm, llm, start, saved, enemy: enemy0, note, onExit
                 <button data-action="command.toEditor" onClick={() => { close(); tap('command.toEditor'); }}>Открыть карту в редакторе</button>
                 <hr />
                 <button data-action="command.exit" onClick={() => { close(); void act('command.exit'); }}>Выйти (игра сохранена)</button>
-                <button data-action="command.discard" className="danger" onClick={() => { close(); void confirmAsync('Завершить игру и удалить её запись?', { ok: 'Завершить и удалить', danger: true }).then((ok) => { if (ok) void act('command.discard'); }); }}>Завершить и удалить игру</button>
+                <button data-action="command.discard" className="danger" onClick={() => { close(); void confirmAsync('Завершить кампанию и удалить её запись?', { ok: 'Завершить и удалить', danger: true }).then((ok) => { if (ok) void act('command.discard'); }); }}>Завершить и удалить кампанию</button>
               </div>
             )}</Popover>
           </div>

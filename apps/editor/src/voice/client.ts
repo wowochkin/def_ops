@@ -537,12 +537,12 @@ export class VoiceClient {
    * Заготовить звук фразы заранее (сервис синтезирует её целиком и держит до `say` того же текста тем же голосом).
    * Промис — когда звук готов (true) или заготовка не вышла: сервис не готов, нет связи, ошибка синтеза (false).
    */
-  prepare(role: VoiceRole, text: string): Promise<boolean> {
+  prepare(role: VoiceRole, text: string, voiceId?: string): Promise<boolean> {
     if (this.muted || !this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
     const id = ++this.prepId;
     return new Promise((res) => {
       this.prepWait.set(id, res);
-      this.send({ type: 'prepare', id, role, text });
+      this.send({ type: 'prepare', id, role, text, ...(voiceId ? { voice_id: voiceId } : {}) });
     });
   }
 

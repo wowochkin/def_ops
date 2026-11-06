@@ -7,11 +7,12 @@
  * в момент последнего тика. Тик с большим скачком часов догоняет все переходы, наступившие за это время, по порядку.
  *
  * Фазы: startup → attract (заставка) → welcome → briefing → три перелома (пояснение, выбор, прокрутка) → result.
- * Пояснение, прокрутка и бриф переходят дальше сами по DURATIONS; ход модели ведёт хост по эффектам deal, replace, decide.
+ * Пояснение и бриф переходят дальше сами по DURATIONS, прокрутка — по `scrollMs` (дольше у длинного хода); ход модели ведёт хост по эффектам deal, replace, decide.
  * Бриф — доклад по пунктам (`BRIEF_POINTS`): пункт меняется по концу его фразы (`briefDone` от голоса) или по сроку,
  * посетитель листает пункты (`brief`) или пропускает доклад («К решениям»). Каждая смена сцены — эффект `scene`
  * (по нему голос обрывает фразу ушедшей сцены); фразы входа в сцену несут её ключ (`sceneKey`).
  */
+import { BANK } from './bank';
 import type { ExpoSettings, FrontId } from './settings';
 
 export type TurnN = 1 | 2 | 3;
@@ -34,8 +35,10 @@ export type Phase =
       offered: boolean;
       /** Выбранная карточка или промедление. */
       choice: number | 'delay' | null;
-      /** Сколько раз заменили карточку на этом переломе. */
-      replacements: number;
+      /** Прокрутка ждёт конца расчёта: таймер хода не идёт, пока модель не отдаст карту. */
+      scrollHold?: boolean;
+      /** Карта доиграла: до этого момента (мс режиссёра) держим кадр и надпись перехода. */
+      rest?: number;
     }
   | {
       kind: 'result';
@@ -79,6 +82,10 @@ export type DirectorEvent =
   | { t: 'brief'; point: number }
   /** Голос договорил фразу пункта брифинга (от главного окна, не ввод посетителя). */
   | { t: 'briefDone'; point: number }
+  /** Модель ещё считает ход: не обрывать прокрутку карты таймером, начатым в момент выбора. */
+  | { t: 'scrollWait' }
+  /** Карта доиграла прокрутку — следующий перелом, не дожидаясь запасного срока. */
+  | { t: 'scrollDone' }
   | { t: 'restart' }
   /** С выбора фронта — обратно на заставку. */
   | { t: 'back' }
@@ -120,7 +127,28 @@ export const BRIEF_POINTS = 6;
 /** Срок пункта брифинга, мс: голос договорил раньше — пункт меняется раньше. */
 const BRIEF_POINT_MS = 18_000;
 /** Длительности фаз, мс; briefing — весь доклад, если голос молчит. */
-export const DURATIONS = { welcome: 20_000, briefPoint: BRIEF_POINT_MS, briefing: BRIEF_POINT_MS * BRIEF_POINTS, explain: 10_000, scroll: 20_000 } as const;
+export const DURATIONS = { welcome: 20_000, briefPoint: BRIEF_POINT_MS, briefing: BRIEF_POINT_MS * BRIEF_POINTS, explain: 10_000 } as const;
+
+/**
+ * Миллисекунд экрана на час операции. Ориентир — первый перелом 1-го Белорусского (96 часов, четверо суток):
+ * около 15 секунд. Скорость одна на всех переломах, более длинный ход длится дольше.
+ */
+export const SCROLL_MS_PER_HOUR = 156;
+
+/**
+ * Длительность прокрутки перелома, мс: от часа этого перелома до следующего (у третьего — до конца операции).
+ * Включает паузу перед стартом карты. Третий перелом самый длинный — за него успевает синтез разбора.
+ */
+export function scrollMs(front: FrontId | null, n: TurnN): number {
+  const turns = front ? BANK.fronts[front]?.turns : undefined;
+  const from = turns?.find((t) => t.n === n)?.hour ?? 0;
+  const next = n < 3 ? turns?.find((t) => t.n === ((n + 1) as TurnN))?.hour : BANK.end;
+  const hours = Math.max(1, (next ?? from) - from);
+  return Math.max(8_000, Math.round(hours * SCROLL_MS_PER_HOUR));
+}
+
+/** Пауза после прокрутки карты, мс: кадр стоит, на экране надпись перехода. */
+export const SCROLL_REST_MS = 5_000;
 
 /** Ключ сцены: фаза, пункт брифинга, перелом и его шаг. */
 export function sceneKey(s: Pick<DirectorState, 'phase'>): string {
@@ -241,7 +269,12 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null 
   }
   if (p.kind === 'turn') {
     if (p.step === 'explain') cands.push({ at: t0 + DURATIONS.explain, apply: (x) => enter(x, { ...p, step: 'choose' }, t0 + DURATIONS.explain, cfg, fx) });
-    if (p.step === 'scroll') cands.push({ at: t0 + DURATIONS.scroll, apply: (x) => enter(x, afterScroll(p.n), t0 + DURATIONS.scroll, cfg, fx) });
+    if (p.step === 'scroll' && p.rest) cands.push({ at: p.rest, apply: (x) => enter(x, afterScroll(p.n), p.rest, cfg, fx) });
+    // карта не сообщила конец — всё равно пауза перехода, но не раньше длины прокрутки после её старта
+    if (p.step === 'scroll' && p.scrollBegan && !p.rest) {
+      const at = t0 + scrollMs(s.front, p.n) + 2_000;
+      cands.push({ at, apply: (x) => (x.phase.kind === 'turn' && x.phase.step === 'scroll' && !x.phase.rest ? { ...x, phase: { ...x.phase, rest: at + SCROLL_REST_MS } } : x) });
+    }
     if (p.step === 'choose' && p.deadline !== null) {
       const dl = p.deadline;
       if (!p.warned) cands.push({ at: dl - WARN_BEFORE, apply: (x) => { fx.push({ e: 'say', key: 'timer-warn', priority: 'timer', scene: sceneKey(x) }); return { ...x, phase: { ...p, warned: true } }; } });
@@ -333,6 +366,18 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
   if (ev.t === 'briefDone') {
     if (s.paused || p.kind !== 'briefing' || p.point !== ev.point || p.point + 1 >= BRIEF_POINTS) return out(s);
     return out(enter(s, briefing(p.point + 1), now, cfg, fx));
+  }
+  if (ev.t === 'scrollWait') {
+    if (p.kind !== 'turn' || p.step !== 'scroll' || p.scrollBegan) return out(s);
+    return out({ ...s, phase: { ...p, scrollHold: true } });
+  }
+  if (ev.t === 'scrollReady') {
+    if (p.kind !== 'turn' || p.step !== 'scroll' || p.scrollBegan || p.rest) return out(s);
+    return out({ ...s, phaseStart: now, phase: { ...p, scrollHold: false, scrollBegan: true } });
+  }
+  if (ev.t === 'scrollDone') {
+    if (p.kind !== 'turn' || p.step !== 'scroll' || p.rest) return out(s);
+    return out({ ...s, phase: { ...p, rest: now + SCROLL_REST_MS } });
   }
   if (ev.t === 'ready') return out(p.kind === 'startup' ? enter(s, { kind: 'attract' }, now, cfg, fx) : s);
 

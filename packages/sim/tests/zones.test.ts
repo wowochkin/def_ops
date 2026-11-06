@@ -70,13 +70,11 @@ describe('зоны влияния сторон', () => {
     const z = influenceZones(T, { own: [], enemy: [], territory: { owner, own: 0, enemy: 1 } });
     expect(zoneAt(z, east(A, -15))).toBeGreaterThan(0.1);
     expect(zoneAt(z, east(A, 15))).toBe(0);
-    // у самой линии фронта — узкий шов без цвета
-    expect(Math.abs(zoneAt(z, east(A, -1)))).toBeLessThan(0.15);
     // в глубину своей земли — бледнее
     expect(zoneAt(z, east(A, -60))).toBeLessThan(zoneAt(z, east(A, -15)));
-    // земля противника в поле зрения своей разведки — его цвет и без обнаруженных войск; дальше — без цвета
+    // земля противника в поле зрения — цвет на всю её землю; за пределом разведки — без цвета
     const recon = influenceZones(T, { own: [{ at: east(A, -10), w: 1 }], enemy: [], recon: 30, territory: { owner, own: 0, enemy: 1 } });
-    expect(zoneAt(recon, east(A, 12))).toBeLessThan(-0.3);
+    expect(zoneAt(recon, east(A, 12))).toBeLessThan(-0.2);
     expect(zoneAt(recon, east(A, 45))).toBe(0);
     // противник обнаружен за фронтом — его сторона окрашена
     const seen = influenceZones(T, { own: [], enemy: [{ at: east(A, 15), w: 1 }], territory: { owner, own: 0, enemy: 1 } });

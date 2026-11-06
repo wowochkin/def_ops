@@ -36,7 +36,7 @@ let sectionNow = (): string => (typeof location === 'undefined' ? '' : location.
 export function setSectionSource(f: () => string): void { sectionNow = f; }
 
 export const NOT_IN_REPLAY = 'открыт другой раздел. Скажите: «Штаб, открой переигровку»';
-export const NO_GAME = 'игра не идёт. Чтобы начать, скажите: «Штаб, открой переигровку», затем «рассчитай операцию» и «прими командование»';
+export const NO_GAME = 'кампания не идёт. Чтобы начать, скажите: «Штаб, открой переигровку», затем «рассчитай операцию» и «прими командование»';
 export const NO_MAP = 'карта операции не открыта. Скажите: «Штаб, открой переигровку» и «рассчитай операцию»';
 
 /** Раздел «Переигровка» открыт (не в фоне). */
@@ -314,13 +314,13 @@ export function commandActions(get: () => CommandDeps): Action[] {
     { ...base, id: 'command.enemyMode', title: 'Противник', describe: 'Кто командует противником: штаб на модели или без штаба (держится прежних приказов).',
       params: { type: 'object', properties: { mode: { enum: ['llm', 'passive'] } }, required: ['mode'] }, say: ['штаб, противник без штаба'],
       available: inReplay, highlight: () => [hl('enemy-mode'), hl('tab-umpire')],
-      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents' || p.mode === 'intent') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents' || get().enemy === 'intent') return 'Противник — штабы без модели: это выбирается при передаче командования, в ходе игры не меняется.'; if (!get().enemyChoices.includes(p.mode)) return `В этом режиме игры противник — только ${enemyNames(get().enemyChoices)}.`; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
-    { ...base, id: 'command.exit', title: 'Выйти из игры', describe: 'Выходит из игры к переигровке; игра сохранена, её можно продолжить.', say: ['штаб, выйди из игры'],
+      run: async (p: { mode: EnemyMode }) => { if (!ENEMY_SAY[p?.mode] || p.mode === 'agents' || p.mode === 'intent') return 'Скажите: «штаб на модели» или «без штаба».'; if (get().enemy === 'agents' || get().enemy === 'intent') return 'Противник — штабы без модели: это выбирается при передаче командования, в ходе кампании не меняется.'; if (!get().enemyChoices.includes(p.mode)) return `В этом режиме противник — только ${enemyNames(get().enemyChoices)}.`; get().setEnemy(p.mode); return `Противник — ${ENEMY_SAY[p.mode]}.`; } },
+    { ...base, id: 'command.exit', title: 'Выйти из кампании', describe: 'Выходит из кампании к переигровке; кампания сохранена, её можно продолжить.', say: ['штаб, выйди из кампании', 'штаб, выйди из игры'],
       available: inReplay,
-      run: async () => { more = null; get().exit(false); return 'Вышел из игры, она сохранена. Продолжить — скажите: «Штаб, продолжи игру».'; } },
-    { ...base, id: 'command.discard', title: 'Завершить и удалить игру', describe: 'Завершает игру и удаляет её запись (необратимо).', say: ['штаб, заверши и удали игру'],
-      irreversible: true, confirm: () => 'Завершить игру и удалить её запись?', available: inReplay,
-      run: async () => { more = null; get().exit(true); return 'Игра завершена, запись удалена.'; } },
+      run: async () => { more = null; get().exit(false); return 'Вышел из кампании, она сохранена. Продолжить — скажите: «Штаб, продолжи кампанию».'; } },
+    { ...base, id: 'command.discard', title: 'Завершить и удалить кампанию', describe: 'Завершает кампанию и удаляет её запись (необратимо).', say: ['штаб, заверши и удали кампанию', 'штаб, заверши и удали игру'],
+      irreversible: true, confirm: () => 'Завершить кампанию и удалить её запись?', available: inReplay,
+      run: async () => { more = null; get().exit(true); return 'Кампания завершена, запись удалена.'; } },
   ];
 }
 
@@ -388,7 +388,7 @@ export function replayActions(get: () => ReplayDeps): Action[] {
   const idle = (): true | string => {
     const r = inReplay(); if (r !== true) return r;
     const d = get();
-    if (d.game) return 'идёт игра. Сначала выйдите из неё: «Штаб, выйди из игры»';
+    if (d.game) return 'идёт кампания. Сначала выйдите из неё: «Штаб, выйди из кампании»';
     return d.busy ? 'идёт расчёт — подождите, я скажу, когда будет готово' : true;
   };
   /**
@@ -456,27 +456,27 @@ export function replayActions(get: () => ReplayDeps): Action[] {
     { section: 'replay', id: 'replay.stop', title: 'Остановить расчёт', describe: 'Останавливает идущий расчёт операции.', say: ['штаб, останови расчёт'],
       available: () => { const r = inReplay(); return r !== true ? r : get().busy ? true : 'расчёт не идёт'; },
       run: async () => { get().stop(); return 'Расчёт остановлен.'; } },
-    { section: 'replay', id: 'replay.discardSaved', title: 'Удалить незавершённую игру', describe: 'Удаляет запись незавершённой игры (необратимо).',
-      say: ['штаб, удали незавершённую игру'], irreversible: true, confirm: () => 'Удалить запись незавершённой игры?',
-      available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
-      run: async () => { get().discardSaved(); return 'Запись незавершённой игры удалена.'; } },
-    { section: 'replay', id: 'replay.continue', title: 'Продолжить игру', describe: 'Продолжает сохранённую незавершённую игру; branch — название её ветви («ветвь от хода 5 (…)», «основная линия»; нет — текущая линия).',
-      params: { type: 'object', properties: { branch: { type: 'string' }, id: { type: 'string' } } }, say: ['штаб, продолжи игру'],
-      available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой игры нет'; },
+    { section: 'replay', id: 'replay.discardSaved', title: 'Удалить незавершённую кампанию', describe: 'Удаляет запись незавершённой кампании (необратимо).',
+      say: ['штаб, удали незавершённую кампанию', 'штаб, удали незавершённую игру'], irreversible: true, confirm: () => 'Удалить запись незавершённой кампании?',
+      available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой кампании нет'; },
+      run: async () => { get().discardSaved(); return 'Запись незавершённой кампании удалена.'; } },
+    { section: 'replay', id: 'replay.continue', title: 'Продолжить кампанию', describe: 'Продолжает сохранённую незавершённую кампанию; branch — название её ветви («ветвь от хода 5 (…)», «основная линия»; нет — текущая линия).',
+      params: { type: 'object', properties: { branch: { type: 'string' }, id: { type: 'string' } } }, say: ['штаб, продолжи кампанию', 'штаб, продолжи игру'],
+      available: () => { const r = idle(); return r !== true ? r : get().saved ? true : 'незавершённой кампании нет'; },
       check: (p?: { branch?: string; id?: string }) => { const r = lineOf(p); return typeof r === 'string' ? r : true; },
       run: async (p?: { branch?: string; id?: string }) => {
         const s = get().saved!, l = lineOf(p);
         if (typeof l === 'string') return `${l.charAt(0).toUpperCase()}${l.slice(1)}`;
         const n = await get().continueGame(l?.id ?? undefined);
         if (n && typeof n === 'object') { const e = n.error.trim().replace(/[.\s]+$/, ''); return `${e.charAt(0).toUpperCase()}${e.slice(1)}.`; }
-        return `Продолжаю игру: ${opName(s.title)}${l && l.id ? `, ${l.name}` : ''}.${n ? ` ${n}` : ''}`;
+        return `Продолжаю кампанию: ${opName(s.title)}${l && l.id ? `, ${l.name}` : ''}.${n ? ` ${n}` : ''}`;
       } },
-    { section: 'replay', id: 'replay.start', title: 'Начать игру', describe: 'Окно «Принять командование»: принять командование и начать игру.', params: ENEMY,
+    { section: 'replay', id: 'replay.start', title: 'Начать кампанию', describe: 'Окно «Принять командование»: принять командование и начать кампанию.', params: ENEMY,
       say: ['принимаю'],
-      available: () => { const r = takeOpen(); return r !== true ? r : get().saved ? 'есть незавершённая игра — новая её заменит, нужно подтверждение' : true; },
+      available: () => { const r = takeOpen(); return r !== true ? r : get().saved ? 'есть незавершённая кампания — новая её заменит, нужно подтверждение' : true; },
       run: async (p?: { enemy?: EnemyMode; mode?: GameMode }) => start(p) },
-    { section: 'replay', id: 'replay.startOver', title: 'Начать новую игру вместо незавершённой', describe: 'Начинает новую игру; запись незавершённой заменяется (необратимо).',
-      params: ENEMY, irreversible: true, confirm: () => 'Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', available: takeOpen,
+    { section: 'replay', id: 'replay.startOver', title: 'Начать новую кампанию вместо незавершённой', describe: 'Начинает новую кампанию; запись незавершённой заменяется (необратимо).',
+      params: ENEMY, irreversible: true, confirm: () => 'Есть незавершённая кампания. Начать новую? Запись прежней будет заменена.', available: takeOpen,
       run: async (p?: { enemy?: EnemyMode; mode?: GameMode }) => start(p) },
     { section: 'replay', id: 'replay.takeCommand.cancel', title: 'Отмена', describe: 'Закрывает окно «Принять командование».', say: ['отмена'], available: takeOpen,
       run: async () => { get().closeTake(); return 'Отменено.'; } },
@@ -492,7 +492,7 @@ export function takeoverRead(o: { day: string; turn: number; enemy: EnemyMode; d
   // ответы о противнике — только допустимые при режиме (окно показывает только их)
   const opts = o.options ?? ['llm', 'passive'];
   const say = [...(opts.includes('passive') ? ['«без штаба»'] : []), ...(opts.includes('llm') ? ['«штаб на модели»'] : [])];
-  return `Принять командование с ${o.day}? ${o.saved ? 'Незавершённая игра будет заменена. ' : ''}`
+  return `Принять командование с ${o.day}? ${o.saved ? 'Незавершённая кампания будет заменена. ' : ''}`
     + `Скажите: «принимаю»${say.length ? (say.length > 1 ? `, ${say.join(' или ')}` : ` или ${say[0]}`) : ''}, или «отмена». `
     + `Противник — ${o.enemy === 'llm' ? 'штаб на модели' : o.enemy === 'intent' ? 'история как замысел' : o.enemy === 'agents' ? 'штабы-агенты' : 'без штаба'}${o.down ? '; модель сейчас не на связи' : ''}. Ход ${o.turn}. Жду ответа.`;
 }

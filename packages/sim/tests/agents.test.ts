@@ -166,7 +166,14 @@ describe('агентная модель в «Переигровке»', () => {
     const { ctx, run } = agentsToRun(base, t, 6);
     // снимок 60-го часа — перестановка всех трёх, остальные — ход
     expect(run.snapshots.filter((sn) => sn.jumped).map((sn) => [sn.time, sn.jumped!.length])).toEqual([['1945-04-18T17:00', 3]]);
-    const axes = runToDocument(ctx, run, null, { name: 'проба' }).features.filter((f) => f.kind === 'arrow' && (f as { preset?: string }).preset === 'atlas.tankAxis');
+    const doc = runToDocument(ctx, run, null, { name: 'проба' });
+    const axes = doc.features.filter((f) => f.kind === 'arrow' && (f as { preset?: string }).preset === 'atlas.tankAxis');
+    // знак дивизии не едет назад через перестановку: кадры одного знака только на запад
+    for (const f of doc.features) {
+      if (f.kind !== 'symbol' || f.ref !== 'su_a1' || !f.keyframes) continue;
+      const xs = f.keyframes.map((k) => k.at?.[0] ?? 0);
+      for (let i = 1; i < xs.length; i++) expect(xs[i]).toBeLessThanOrEqual(xs[i - 1] + 0.05);
+    }
     const last = axes[axes.length - 1] as unknown as { points: [number, number][]; name: string };
     // последняя ось — от места после перестановки на запад, без разворота назад через прежний путь
     expect(last.points[0][0]).toBeCloseTo(14.2, 1);

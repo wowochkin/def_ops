@@ -440,7 +440,7 @@ export async function buildOhm(
   return {
     patch: {
       kind: 'vector', format: 'pbf', tileSize: 512, minzoom: 0, maxzoom: 16, bounds: [...bbox] as BBox,
-      attribution: OHM_ATTRIBUTION, description: out.description, stats: { tiles: out.tiles, bytes: out.bytes },
+      attribution: OHM_ATTRIBUTION, description: map.description?.startsWith('wing-of:') ? map.description : out.description, stats: { tiles: out.tiles, bytes: out.bytes },
       ohm: { bbox: [...bbox] as BBox, cells: cells.length, features: count, layers: out.layers, fetchedAt },
     },
     message: `Объектов ${count}, тайлов ${out.tiles}, ${mb(out.bytes)} МБ`,

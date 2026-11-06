@@ -400,10 +400,25 @@ export function buildRouter(d: Deps): Router {
     const m = await load(c);
     if (m.kind === 'vector') {
       const prefix = publicPrefix(c);
-      return ohmStyle({
+      const style = ohmStyle({
         name: m.name, tiles: tilesUrl(c, m), bounds: m.bounds, attribution: m.attribution ?? OHM_ATTRIBUTION,
         glyphs: `${prefix}/cartography/fonts/{fontstack}/{range}.pbf`, sprite: `${prefix}/cartography/sprites/ohm`,
       });
+      // боковые листы той же подложки: описание «wing-of:<id>». Слои те же, источник свой,
+      // чтобы широкий кадр брал тайлы соседнего листа, а не бумагу.
+      const wings = (await repo.listMaps(c.tenant)).filter((w) => w.kind === 'vector' && w.description === `wing-of:${m.id}`);
+      for (const w of wings) {
+        const sid = `ohm-${w.id.slice(0, 8)}`;
+        style.sources[sid] = {
+          type: 'vector', tiles: [tilesUrl(c, w)], minzoom: 0, maxzoom: 16,
+          bounds: w.bounds, attribution: w.attribution ?? OHM_ATTRIBUTION,
+        };
+        const extra = style.layers
+          .filter((l) => l.source === 'ohm')
+          .map((l) => ({ ...l, id: `${String(l.id)}--${sid}`, source: sid }));
+        style.layers.push(...extra);
+      }
+      return style;
     }
     const src = `map-${m.id}`;
     return {

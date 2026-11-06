@@ -59,6 +59,9 @@ export function vectorBase(style: StyleSpecification, o: { opacity: number; year
     const s = { ...src } as Record<string, unknown>;
     if (Array.isArray(s.tiles)) s.tiles = (s.tiles as string[]).map((t) => absolutize(t, o.base));
     if (typeof s.url === 'string') s.url = absolutize(s.url, o.base);
+    // рамка в TileJSON уже скачанного листа: MapLibre из‑за неё не берёт соседние тайлы, хотя они есть в файле.
+    // запрос идёт только в локальную службу картографии; нет тайла — пустой ответ, не интернет
+    delete s.bounds;
     sources[BASE_PREFIX + id] = s as unknown as StyleSpecification['sources'][string];
   }
   const filters: Record<string, FilterSpecification | undefined> = {};

@@ -16,7 +16,7 @@ import type { DirectorState, Effect } from './director';
 import { MATCH_WORDS } from './prerecord';
 import type { ModelHooks, ModelFrame } from './model';
 import type { ExpoSettings } from './settings';
-import { operationDebrief } from './debrief';
+import { debriefSentences, operationDebrief } from './debrief';
 import { dayMonth } from './score';
 import type { StatKind } from './stats';
 import { expoSpeaker, turnstile } from './speaker';
@@ -203,10 +203,15 @@ export function createStage(d: StageDeps) {
   const hooks: ModelHooks = {
     smith,
     want: 4,
-    decided: (s, _n, choice) => {
+    decided: (s, n, choice) => {
       const last = s.view.decisions.at(-1);
       const hist = !!last && last.choice === last.historical;
       void runner?.decided(choice === 'delay' ? 'delay' : hist ? 'historical' : 'own');
+      // третий перелом — самая длинная прокрутка: разбор итога синтезируется, пока карта идёт
+      if (n === 3) {
+        const brief = operationDebrief(s.view);
+        if (brief) voice.prepare(debriefSentences(brief.paragraphs), brief.voice);
+      }
     },
   };
   /** Окно перед посетителем. В проверках без страницы круг не отключается. */

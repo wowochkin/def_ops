@@ -66,7 +66,7 @@ export function usePost(view: TurnView | null, level: LevelId, setLevel: (l: Lev
   // указание на карте — только при открытом документе; смена уровня или штаба его снимает
   useEffect(() => { setPick(null); }, [level, issuer]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef({ draft, pick }); live.current = { draft, pick };
-  const ready = (): true | string => (!on ? 'пункт управления — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view?.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
+  const ready = (): true | string => (!on ? 'пункт управления — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view?.over ? 'кампания окончена' : busy ? 'идёт расчёт хода' : true);
   // правка проекта (в том числе принятого из варианта) — уже свой: снимает пометку auto
   const put = (d: DirDraft) => setDirs((x) => ({ ...x, [`${d.level}:${d.to}`]: noted({ ...d, auto: undefined }) }));
 

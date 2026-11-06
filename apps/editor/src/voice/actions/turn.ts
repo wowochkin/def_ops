@@ -152,7 +152,7 @@ export function turnActions(get: () => TurnDeps): Action[] {
   const play = (): true | string => {
     const r = game(); if (r !== true) return r;
     const d = get();
-    if (d.view!.over) return 'игра окончена. Можно сказать: «Штаб, составь разбор»';
+    if (d.view!.over) return 'кампания окончена. Можно сказать: «Штаб, составь разбор»';
     if (d.blocked) return 'штаб противника не дал решения. Скажите «повтори запрос» или «ход без его приказов»';
     return d.busy ? BUSY : true;
   };
@@ -235,7 +235,7 @@ export function turnActions(get: () => TurnDeps): Action[] {
   /** Линия по коду (кнопки окна) или по названию (голос): одна — она; нет, несколько, текущая — что сказать. */
   const pickLine = (p: LineRef | undefined): BranchLine | string => {
     const ls = get().lines;
-    if (ls.length < 2) return 'ветвей нет: игра идёт одной линией';
+    if (ls.length < 2) return 'ветвей нет: кампания идёт одной линией';
     const hit = findLine(String(p?.name ?? ''), ls, p?.id);
     if (!hit.length) return `такой ветви нет. Есть: ${ls.map((l) => `«${l.name}»`).join(', ')}`;
     if (hit.length > 1) return `какую ветвь: ${hit.slice(0, 3).map((l) => `«${l.name}»`).join(', ')}?`;

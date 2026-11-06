@@ -113,9 +113,9 @@ export function turnReview(v: TurnView, prev: TurnView | null): ReviewStep[] {
   const all: LngLat[] = [...own.map((u) => u.at), ...v.battles.map((b) => b.at)];
 
   if (v.over && v.outcome) {
-    const t = `Игра окончена: ${v.outcome.result === 'victory' ? 'победа' : 'поражение'}. ${v.outcome.text}`;
+    const t = `Кампания окончена: ${v.outcome.result === 'victory' ? 'победа' : 'поражение'}. ${v.outcome.text}`;
     const g = v.goals.find((x) => x.at && x.at === v.outcome!.at && x.place);
-    out.push({ kind: 'outcome', title: 'Итог игры', text: say(t), facts: t, map: g?.place ? { at: g.place, level: 'front', spot: g.place } : { fit: all, level: 'auto' } });
+    out.push({ kind: 'outcome', title: 'Итог кампании', text: say(t), facts: t, map: g?.place ? { at: g.place, level: 'front', spot: g.place } : { fit: all, level: 'auto' } });
   }
 
   // общее: что изменилось за ход — карта проигрывает ход

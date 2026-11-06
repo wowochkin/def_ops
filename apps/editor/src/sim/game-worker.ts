@@ -739,7 +739,7 @@ function reviewInput(): ReviewInput {
   const goals = checkEvents(ctx, { final: s, snapshots: g.snapshots }, history).map((r) => ({ title: r.title, historical: r.historical, simulated: r.simulated, days: r.days }));
   return {
     scenario: ctx.scenario.name, side: sideName(human), enemy: sideName(rec.ai), takeover: rec.takeover, now: s.time,
-    outcome: outcome ? `${outcome.result === 'victory' ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ'} — ${outcome.text}` : 'игра не окончена',
+    outcome: outcome ? `${outcome.result === 'victory' ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ'} — ${outcome.text}` : 'кампания не окончена',
     victory: end.victory.title, strength: { start: 1, now: baseStrength ? sideStrength(s, human) / baseStrength : 1 }, goals, forces,
     turns: rec.turns.map((t, i) => {
       const j = journal[i];

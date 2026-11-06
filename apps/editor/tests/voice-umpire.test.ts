@@ -749,7 +749,7 @@ describe('экранные действия голосом', () => {
   });
   it('игра окончена, идёт расчёт хода — приказы недоступны с причиной', () => {
     const d = screen({ view: view({ over: true }) });
-    expect(getAction('command.order.open')!.available()).toMatch(/игра окончена/);
+    expect(getAction('command.order.open')!.available()).toMatch(/кампания окончена/);
     d.view = view(); d.busy = 'расчёт хода…';
     expect(getAction('command.order.set')!.available()).toMatch(/^считаю ход/);
   });

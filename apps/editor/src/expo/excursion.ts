@@ -14,7 +14,7 @@ export interface ExcursionBeat {
 
 export const EXCURSION: ExcursionBeat[] = [
   {
-    title: 'Зачем операция',
+    title: 'Замысел операции',
     facts: [
       { value: '16.04–8.05', label: 'срок операции в статье' },
       { value: '3 фронта', label: 'Белорусские и Украинский' },
@@ -50,7 +50,7 @@ export const EXCURSION: ExcursionBeat[] = [
     photo: 'elbe-patrol-boat-1945.jpg',
   },
   {
-    title: 'Соседи и Эльба',
+    title: 'Встреча на Эльбе',
     facts: [
       { value: '25.04', label: 'встреча у Торгау: 5-я гв. армия и американская 1-я' },
       { value: '3–4.05', label: '2-й Белорусский на Эльбе встречает английскую 2-ю армию' },
@@ -59,7 +59,7 @@ export const EXCURSION: ExcursionBeat[] = [
     photo: 'elbe-patrol-boat-1945.jpg',
   },
   {
-    title: 'Как шло по дням',
+    title: 'Ход операции',
     facts: [
       { value: '1,5–2 км', label: 'продвижение 1-го Белорусского утром 16 апреля' },
       { value: '21.04', label: 'окраины Берлина' },

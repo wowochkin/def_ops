@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventResult } from '@def-ops/sim';
+import { clearExpoBaseline, rebaseEvents, setExpoBaseline } from '../src/expo/baseline';
 import { axes, axisNote, dayMonth, feedLines, forecast, rankOf, shiftText } from '../src/expo/score';
 
 const ev = (id: string, historical: string, simulated: string | null, days: number | null): EventResult =>
@@ -13,11 +14,12 @@ describe('оценка по трём осям', () => {
     expect(d).toMatchObject({ speed: 0, cost: 0, intent: 1, done: 2, due: 2, days: 0, lossRatio: 1 });
   });
 
-  it('overdue event counts as late by elapsed days; not due yet is ignored', () => {
+  it('event not yet simulated does not move speed or price', () => {
     const d = axes([ev('a', '1945-04-19', null, null), ev('c', '1945-04-30', null, null)], keys, '1945-04-22T05:00', 1300, 1000);
-    expect(d.days).toBe(3);
-    expect(d.speed).toBe(-1);
+    expect(d.days).toBeNull();
+    expect(d.speed).toBe(0);
     expect(d.intent).toBe(-1);
+    expect(d.lossRatio).toBeCloseTo(1.3);
     expect(d.cost).toBe(-1);
   });
 
@@ -27,9 +29,10 @@ describe('оценка по трём осям', () => {
     expect(d.cost).toBeCloseTo(0.5);
   });
 
-  it('cost is per task done: saving on undone tasks is not cheaper', () => {
+  it('undone event does not inflate the price when losses are the losses', () => {
     const d = axes([ev('a', '1945-04-19', '1945-04-19', 0), ev('b', '1945-04-20', null, null)], keys, '1945-04-22T05:00', 600, 1000);
-    expect(d.lossRatio).toBeCloseTo(1.2);
+    expect(d.lossRatio).toBeCloseTo(0.6);
+    expect(d.intent).toBe(0);
   });
 
   it('rank by sum of axes', () => {
@@ -51,5 +54,22 @@ describe('оценка по трём осям', () => {
     const before = [ev('a', '1945-04-19', '1945-04-18', -1), ev('b', '1945-04-21', null, null), ev('c', '1945-04-25', null, null)];
     const after = [ev('a', '1945-04-19', '1945-04-18', -1), ev('b', '1945-04-21', '1945-04-21', 0), ev('c', '1945-04-25', '1945-04-20', -5)];
     expect(feedLines(before, after)).toEqual(['20 апреля — событие c (в истории — 25 апреля)', '21 апреля — событие b (как в истории)']);
+  });
+});
+
+describe('нуль шкал — ход «как было»', () => {
+  const keys = ['a'];
+  const late = ev('a', '1945-04-19', '1945-04-21', 2);
+
+  it('тот же сдвиг, что у базы, — как в истории; опережение базы — быстрее', () => {
+    setExpoBaseline([late]);
+    const same = rebaseEvents([late]);
+    expect(same[0].days).toBe(0);
+    expect(axes(same, keys, '1945-04-22T05:00', 1000, 1000).speed).toBe(0);
+    const ahead = rebaseEvents([ev('a', '1945-04-19', '1945-04-20', 1)]);
+    expect(ahead[0].days).toBe(-1);
+    expect(ahead[0].historical).toBe('1945-04-21');
+    expect(feedLines([], ahead)).toEqual(['20 апреля — событие a (в истории — 21 апреля)']);
+    clearExpoBaseline();
   });
 });

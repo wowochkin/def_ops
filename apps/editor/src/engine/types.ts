@@ -62,6 +62,8 @@ export interface MapEngine {
   /** Плавный переезд к виду за ms миллисекунд (по умолчанию 900); нет — вызывающий прыгает через setView. */
   flyTo?(v: Partial<ViewState>, ms?: number): void;
   size(): { width: number; height: number };
+  /** Подогнать холст под контейнер и догрузить тайлы на всё окно. */
+  resize?(): void;
   getContainer(): HTMLElement;
   setPaper(color: string): void;
   setBasemap(spec: BasemapSpec | null, opacity: number): void;

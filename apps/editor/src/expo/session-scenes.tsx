@@ -68,8 +68,12 @@ const START = '1945-04-16T05:00';
 const END = '1945-05-08T23:00';
 /** Миллисекунды момента: дата (ГГГГ-ММ-ДД) — полдень этого дня. */
 const ms = (iso: string) => Date.parse(`${iso.length === 10 ? `${iso}T12:00` : iso.slice(0, 16)}:00Z`);
-/** Место момента на ленте, %. */
-const at = (iso: string) => `${Math.max(0, Math.min(100, ((ms(iso) - ms(START)) / (ms(END) - ms(START))) * 100)).toFixed(2)}%`;
+/** Место момента на ленте: 0 и 100 % — на концах оси, не на краю блока. */
+export const timelineAt = (iso: string) => {
+  const p = Math.max(0, Math.min(1, (ms(iso) - ms(START)) / (ms(END) - ms(START))));
+  return `calc(var(--tl-inset) + (100% - 2 * var(--tl-inset)) * ${p.toFixed(4)})`;
+};
+const at = timelineAt;
 const num = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
 
 /** Лента операции 16 апреля — 8 мая: три перелома, «сейчас», задачи — по истории (снизу) и в ходе (сверху). */
@@ -77,24 +81,31 @@ export function Timeline({ mv }: { mv: ModelView }) {
   const turns = BANK.fronts[mv.front].turns;
   return (
     <div className="expo-tl" role="img" aria-label={`Лента операции: сейчас ${modelTime(mv.time)}`}>
-      <div className="expo-tl-axis" />
-      {turns.map((x) => {
-        const done = mv.decisions.some((d) => d.n === x.n);
-        return (
-          <span key={x.n} className={`expo-tl-turn${done ? ' expo-tl-done' : ''}`} style={{ left: at(timeAt(START, x.hour)) }}>
-            {x.n}
-          </span>
-        );
-      })}
-      {mv.tasks.map((x) => (
-        <span key={`h-${x.id}`} className="expo-tl-hist" style={{ left: at(x.historical) }} />
-      ))}
-      {mv.tasks.filter((x) => x.simulated).map((x) => (
-        <span key={`s-${x.id}`} className="expo-tl-own" style={{ left: at(x.simulated!) }} />
-      ))}
-      <span className="expo-tl-now" style={{ left: at(mv.time) }} />
-      <span className="expo-tl-from">16 апреля</span>
-      <span className="expo-tl-to">8 мая</span>
+      <div className="expo-tl-track">
+        <div className="expo-tl-axis" />
+        {turns.map((x) => {
+          const done = mv.decisions.some((d) => d.n === x.n);
+          return (
+            <span key={x.n} className={`expo-tl-turn${done ? ' expo-tl-done' : ''}`} style={{ left: at(timeAt(START, x.hour)) }}>
+              {x.n}
+            </span>
+          );
+        })}
+        {mv.tasks.map((x) => (
+          <span key={`h-${x.id}`} className="expo-tl-hist" style={{ left: at(x.historical) }} />
+        ))}
+        {mv.tasks.filter((x) => x.simulated).map((x) => (
+          <span key={`s-${x.id}`} className={`expo-tl-own${x.simulated! <= mv.time.slice(0, 16) ? ' is-on' : ''}`} data-tl-at={x.simulated!.slice(0, 16)} style={{ left: at(x.simulated!) }} />
+        ))}
+        <span className="expo-tl-now" data-tl-now style={{ left: at(mv.time) }} />
+      </div>
+      <div className="expo-tl-dates">
+        <span>16 апреля</span>
+        <span>8 мая</span>
+      </div>
+      <p className="expo-tl-key">
+        Золотая черта — сегодняшний день хода. Пустая точка — дата события в истории. Залитая становится зелёной, когда событие случилось в вашем ходе.
+      </p>
     </div>
   );
 }
@@ -105,7 +116,7 @@ export function Tasks({ mv, limit = 6 }: { mv: ModelView; limit?: number }) {
   return (
     <ul className="expo-tasks" aria-label="Задачи фронта">
       {mv.tasks.slice(0, limit).map((x) => {
-        const state = x.simulated ? 'done' : x.historical && x.historical <= now ? 'late' : 'ahead';
+        const state = x.simulated ? 'done' : 'ahead';
         return (
           <li key={x.id} data-state={state}>
             <span className="expo-task-mark" aria-hidden="true">{state === 'done' ? '✓' : state === 'late' ? '!' : '○'}</span>

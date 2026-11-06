@@ -447,7 +447,7 @@ describe('когда нельзя', () => {
     expect(await act('command.order', { unit: 'восьмая гвардейская', task: 'наступать', place: 'Зелов' })).toMatch(/открыт другой раздел/);
     section = 'replay';
     d.view = view({ over: true });
-    expect(await act('decision.missing')).toMatch(/игра окончена/);
+    expect(await act('decision.missing')).toMatch(/кампания окончена/);
   });
   it('нет игры — фразы командования не перехватываются (кроме понятных: причина)', () => {
     expect(parseStaff('восьмой гвардейской наступать на зелов', 'replay')).toBeNull();

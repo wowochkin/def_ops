@@ -600,9 +600,17 @@ class Session:
         """Заготовить фразу заранее (`prepare {id, role, text}`) → `prepared {id, audio_s}` или `{id, error}`, когда
         весь её звук готов. Тот же текст тем же голосом уже заготовлен или готовится — второй раз не синтезируется."""
         pid, role, text = int(d["id"]), d.get("role", "chief"), str(d.get("text", ""))
-        if role not in ROLES:
+        vid = str(d.get("voice_id") or "")
+        if vid:
+            try:
+                ref = self.svc.store.ref(vid)
+            except KeyError:
+                await self.send(type="prepared", id=pid, error=f"нет образца {vid}")
+                return
+        elif role not in ROLES:
             raise ValueError(f"нет такой роли: {role}")
-        ref = self.svc.ref_for(role)
+        else:
+            ref = self.svc.ref_for(role)
         if ref is None:
             await self.send(type="prepared", id=pid, error=NO_REF)
             return

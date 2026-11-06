@@ -116,6 +116,7 @@ export function createMapLibreEngine(container: HTMLElement, opts: EngineOptions
     setView(v) { map.jumpTo({ center: v.center as [number, number] | undefined, zoom: v.zoom, bearing: v.bearing }); },
     flyTo(v, ms) { map.flyTo({ center: v.center as [number, number] | undefined, zoom: v.zoom, bearing: v.bearing, duration: ms ?? 900, essential: true }); },
     size() { const c = map.getContainer(); return { width: c.clientWidth, height: c.clientHeight }; },
+    resize() { map.resize(); },
     getContainer: () => map.getContainer(),
     setPaper(c) { if (c !== paper) { paper = c; restyle(); } },
     setBasemap(spec, op) {

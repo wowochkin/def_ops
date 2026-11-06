@@ -26,7 +26,7 @@ export const staffsOn = (v: TurnView | null): boolean => !!v?.command && v.comma
  */
 export function useStaffActions(view: TurnView | null, cmds: CommandOp[], setCmds: (f: (q: CommandOp[]) => CommandOp[]) => void, busy: boolean, setLevel?: (l: LevelId) => void): void {
   const c = view?.command;
-  const ready = (): true | string => (!staffsOn(view) ? 'командование по ступеням — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view!.over ? 'игра окончена' : busy ? 'идёт расчёт хода' : true);
+  const ready = (): true | string => (!staffsOn(view) ? 'командование по ступеням — в игре на агентной модели в режиме «штабы-агенты» или «гибрид»' : view!.over ? 'кампания окончена' : busy ? 'идёт расчёт хода' : true);
   const hqOf = (name: string): string | null => (c ? findHq(c.hqs, String(name ?? '')) : null);
   const put = (op: CommandOp, done: string) => { setCmds((q) => queueOp(q, op)); return `${done} — уйдёт в ядро с ходом.`; };
   const nameOf = (id: string) => c?.hqs[id]?.name ?? id;

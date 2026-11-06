@@ -595,7 +595,7 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
   /** Кнопка окна: поверх незавершённой игры — сначала вопрос. */
   const startGame = async (enemy: EnemyMode, mode: GameMode) => {
     if (!saved) { void act('replay.start', { enemy, mode }); return; }
-    if (await confirmAsync('Есть незавершённая игра. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' })) void act('replay.startOver', { enemy, mode });
+    if (await confirmAsync('Есть незавершённая кампания. Начать новую? Запись прежней будет заменена.', { ok: 'Начать новую' })) void act('replay.startOver', { enemy, mode });
   };
   // голос и кнопки: расчёт, вход в командование, продолжение игры
   const voice = useRef<ReplayDeps>(null!);
@@ -698,10 +698,10 @@ export function ReplayView({ bm, llm, onOpenInEditor }: { bm: Basemaps; llm: Llm
         </div>
         {/* voice-entry: начало */}
         {saved && !busy && <div className="rp-saved" data-tour="replay-saved">
-          <div><b>Незавершённая игра</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
+          <div><b>Незавершённая кампания</b><span>{saved.title} · командование с {saved.record.takeover.slice(8, 10)}.{saved.record.takeover.slice(5, 7)}, сыграно ходов: {saved.record.turns.length}</span></div>
           <div className="rp-saved-b">
             <ActButton className="primary" action="replay.continue">Продолжить</ActButton>
-            <button data-action="replay.discardSaved" onClick={() => { void confirmAsync('Удалить запись незавершённой игры?', { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void act('replay.discardSaved'); }); }}>Удалить</button>
+            <button data-action="replay.discardSaved" onClick={() => { void confirmAsync('Удалить запись незавершённой кампании?', { ok: 'Удалить', danger: true }).then((ok) => { if (ok) void act('replay.discardSaved'); }); }}>Удалить</button>
           </div>
           {(saved.branches?.length ?? 0) > 0 && <div className="rp-lines">
             {gameLines(saved).map((l) => <div key={l.id ?? 'cur'} className={`rp-line${l.current ? ' on' : ''}`}>

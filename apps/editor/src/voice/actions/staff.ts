@@ -512,7 +512,7 @@ export function staffActions(get: () => StaffDeps): Action[] {
     const r = inReplay(); if (r !== true) return r;
     const d = get();
     if (!d.view) return 'обстановка ещё готовится — подождите немного';
-    if (d.view.over) return 'игра окончена — новые приказы не нужны. Можно сказать: «Штаб, выйди из игры»';
+    if (d.view.over) return 'кампания окончена — новые приказы не нужны. Можно сказать: «Штаб, выйди из кампании»';
     if (d.busy) return BUSY;
     return true;
   };

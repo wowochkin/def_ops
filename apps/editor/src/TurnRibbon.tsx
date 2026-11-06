@@ -52,10 +52,10 @@ export function TurnRibbon({ items, lines, busy, open, project, notice }: {
           </div>
         ))}
       </div>
-      <button className={`tr-branches${open ? ' on' : ''}`} data-action="command.branches.show" title="Линии игры: текущая и сохранённые ветви" onClick={() => tap(open ? 'command.branches.close' : 'command.branches.show')}>
+      <button className={`tr-branches${open ? ' on' : ''}`} data-action="command.branches.show" title="Линии кампании: текущая и сохранённые ветви" onClick={() => tap(open ? 'command.branches.close' : 'command.branches.show')}>
         Ветви{forks > 0 ? ` · ${forks}` : ''}</button>
       {open && <div className="tr-pop" data-hl="branches">
-        <div className="tr-pop-h"><b>Ветви игры</b><button className="x" title="Закрыть" data-action="command.branches.close" onClick={() => tap('command.branches.close')}>×</button></div>
+        <div className="tr-pop-h"><b>Ветви кампании</b><button className="x" title="Закрыть" data-action="command.branches.close" onClick={() => tap('command.branches.close')}>×</button></div>
         {lines.length < 2 && <p className="muted">Ветвей нет: игра идёт одной линией. Вернитесь к прошлому ходу — сыгранное останется ветвью.</p>}
         {lines.map((l) => (
           <div key={l.id ?? 'cur'} className={`tr-line${l.current ? ' on' : ''}`}>
