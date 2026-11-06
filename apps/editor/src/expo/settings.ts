@@ -27,6 +27,8 @@ export interface ExpoSettings {
   screens: { count: 1 | 2 | 3; order: string[] };
   pin: string;
   maxReplacements: number;
+  /** Интро сеанса после заставки. Нет поля в старом файле — включено. */
+  intro: boolean;
   /**
    * Голос на заставке. `on` — значение по умолчанию при запуске стенда (кнопка на заставке помнит своё до перезапуска).
    * `pause` — пауза между фразами круга, секунды (4–30).
@@ -51,6 +53,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   pin: '0000',
   maxReplacements: 4,
   attractCall: { on: true, pause: 8 },
+  intro: true,
 }) as ExpoSettings;
 
 const copyDefaults = (): ExpoSettings => JSON.parse(JSON.stringify(EXPO_DEFAULTS)) as ExpoSettings;
@@ -126,6 +129,7 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
       // прежнее поле minutes — интервал в минутах, к паузе в секундах не относится: без pause берём умолчание
       pause: call.pause === undefined ? d.attractCall.pause : pick('attractCall.pause', call.pause, inRange(4, 30), d.attractCall.pause),
     },
+    intro: r.intro === undefined ? d.intro : pick('intro', r.intro, isBool, d.intro),
   };
   return { settings, problems };
 }
