@@ -184,6 +184,7 @@ export function createStage(d: StageDeps) {
       const m = l.scene?.match(/^briefing-(\d+)$/);
       // пауза между пунктами доклада — чтобы цифры на экране успели прочитать
       if (m) setTimeout(() => d.dispatch({ t: 'briefDone', point: Number(m[1]) }), BRIEF_GAP_MS);
+      if (l.mark === 'intro-4') d.dispatch({ t: 'introDone' });
     },
   });
   runner = aiRunner({
@@ -237,6 +238,7 @@ export function createStage(d: StageDeps) {
   return {
     hooks,
     handle(e: Effect) {
+      if (e.e === 'scene' && e.key === 'intro') stopAttract();
       if (e.e === 'scene' && e.key.endsWith('-scroll')) llmGen++;
       if (e.e === 'listen' && !voice.listening()) {
         queue.clear();

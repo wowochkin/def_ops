@@ -75,7 +75,7 @@ export function aiRunner(d: AiRunnerDeps) {
   let frame: AiFrame = NO_AI;
   let gen = 0;
   const set = (p: Partial<AiFrame>) => { frame = { ...frame, ...p }; d.onFrame(frame); };
-  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs' | 'replace'> = {}) =>
+  const say = (text: string, priority: Line['priority'], source: string, more: Pick<Line, 'parts' | 'fallback' | 'scene' | 'voice' | 'gapMs' | 'replace' | 'mark'> = {}) =>
     d.queue.push({ text, priority, source, ...more });
   const tally = (s: Said) => { if (d.ask()) d.count?.(s.source === 'now' ? 'aiOnTime' : 'aiFallback'); };
 
@@ -125,7 +125,7 @@ export function aiRunner(d: AiRunnerDeps) {
           });
         } else {
           const f = pickFilled(lines.say[e.key], d.facts().vars, Math.random, d.voiced);
-          if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}) });
+          if (f) say(f.text, e.priority, 'prepared', { parts: f.parts, ...(e.scene ? { scene: e.scene } : {}), ...(e.key.startsWith('intro-') ? { mark: e.key } : {}) });
         }
         }
       } else if (e.e === 'scene') {
