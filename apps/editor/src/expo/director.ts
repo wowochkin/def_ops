@@ -20,6 +20,8 @@ export type TurnN = 1 | 2 | 3;
 export type Phase =
   | { kind: 'startup' }
   | { kind: 'attract' }
+  /** Визитная карточка сеанса: после заставки, до выбора фронта. */
+  | { kind: 'intro' }
   | { kind: 'welcome' }
   /** Ввод в обстановку: пункт доклада (0…BRIEF_POINTS−1). */
   | { kind: 'briefing'; point: number }
@@ -75,6 +77,10 @@ export type DirectorEvent =
   | { t: 'tick'; now: number }
   | { t: 'ready' }
   | { t: 'touch' }
+  /** Интро доиграло само. */
+  | { t: 'introDone' }
+  /** Посетитель нажал «Пропустить» в интро. */
+  | { t: 'skipIntro' }
   | { t: 'pickFront'; front: FrontId }
   | { t: 'next' }
   | { t: 'choose'; card: number }
@@ -190,6 +196,8 @@ const SAY_ON_ENTER: Record<string, string | undefined> = { welcome: 'welcome', e
 
 /** Предупреждение до конца таймера, мс. */
 const WARN_BEFORE = 10_000;
+/** Нет клипов интро: картина всё равно открывает выбор фронта, мс. */
+export const INTRO_FALLBACK_MS = 48_000;
 /** Таймер выключен: через столько без выбора — промедление, как по истечении таймера, мс. */
 const DELAY_AFTER = 60_000;
 
@@ -213,7 +221,7 @@ const turnPhase = (n: TurnN, stepName: 'explain' | 'choose' | 'scroll' = 'explai
 });
 
 const isInput = (ev: DirectorEvent) =>
-  ev.t === 'touch' || ev.t === 'pickFront' || ev.t === 'markFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'aim' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step' || ev.t === 'stay';
+  ev.t === 'touch' || ev.t === 'introDone' || ev.t === 'skipIntro' || ev.t === 'pickFront' || ev.t === 'markFront' || ev.t === 'next' || ev.t === 'choose' || ev.t === 'aim' || ev.t === 'replace' || ev.t === 'speak' || ev.t === 'ask' || ev.t === 'brief' || ev.t === 'back' || ev.t === 'step' || ev.t === 'stay';
 
 /** Перейти в фазу в момент at (с эффектами входа). */
 function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx: Effect[]): DirectorState {
@@ -226,6 +234,9 @@ function enter(s: DirectorState, phase: Phase, at: number, cfg: ExpoSettings, fx
   fx.push({ e: 'scene', key: scene });
   const say = phase.kind === 'briefing' ? (next.front ? briefKey(next.front, phase.point) : undefined) : phase.kind === 'turn' && phase.step === 'explain' ? (phase.n > 1 && next.front ? situationKey(next.front, phase.n) : 'explain') : SAY_ON_ENTER[phase.kind];
   if (say) fx.push({ e: 'say', key: say, priority: 'scene', scene });
+  if (phase.kind === 'intro') {
+    for (const key of ['intro-1', 'intro-2', 'intro-3', 'intro-4']) fx.push({ e: 'say', key, priority: 'scene', scene });
+  }
   if (phase.kind === 'briefing' && s.phase.kind !== 'briefing') {
     fx.push({ e: 'stat', kind: 'started' });
     next = { ...next, stats: { ...next.stats, sessions: next.stats.sessions + 1 } };
@@ -267,6 +278,10 @@ function nextDue(s: DirectorState, cfg: ExpoSettings, fx: Effect[]): Due | null 
   if (idleFrom !== null && p.kind !== 'result') {
     const at = idleFrom + cfg.idleSeconds * 1000;
     cands.push({ at, apply: (x) => enter(fresh(x, fx), { kind: 'attract' }, at, cfg, fx) });
+  }
+  if (p.kind === 'intro') {
+    const at = t0 + INTRO_FALLBACK_MS;
+    cands.push({ at, apply: (x) => (x.phase.kind === 'intro' ? enter(x, { kind: 'welcome' }, at, cfg, fx) : x) });
   }
   if (p.kind === 'briefing') {
     const at = t0 + DURATIONS.briefPoint;
@@ -421,10 +436,14 @@ export function step(s: DirectorState, ev: DirectorEvent, cfg: ExpoSettings): { 
   switch (ev.t) {
     case 'touch':
       if (now - s.phaseStart < DEBOUNCE_MS) return out(touched);
-      if (p.kind === 'attract') return out(enter(touched, { kind: 'welcome' }, now, cfg, fx));
+      if (p.kind === 'attract') return out(enter(touched, cfg.intro ? { kind: 'intro' } : { kind: 'welcome' }, now, cfg, fx));
       if (p.kind === 'welcome' && cfg.fronts.length === 1) return out(enter({ ...touched, front: cfg.fronts[0] }, briefing(), now, cfg, fx));
       if (p.kind === 'result') return out(enter(fresh(touched, fx), { kind: 'welcome' }, now, cfg, fx));
       return out(p.kind === 'startup' ? s : touched);
+    case 'introDone':
+    case 'skipIntro':
+      if (p.kind !== 'intro') return out(touched);
+      return out(enter(touched, { kind: 'welcome' }, now, cfg, fx));
     case 'back':
       if (p.kind === 'welcome') return out(enter({ ...touched, front: null }, { kind: 'attract' }, now, cfg, fx));
       return out(touched);

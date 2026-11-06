@@ -39,14 +39,17 @@ const turn = (p: Phase) => (p.kind === 'turn' ? p : null);
 
 /** До выбора в переломе 1: ready, touch, pickFront, бриф и пояснение по времени. */
 function toChoose(cfg: ExpoSettings = EXPO_DEFAULTS) {
-  return run(cfg).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' }).wait(DURATIONS.briefing).wait(DURATIONS.explain);
+  return run(cfg).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }, { t: 'pickFront', front: 'su_1bf' }).wait(DURATIONS.briefing).wait(DURATIONS.explain);
 }
 
 describe('режиссёр сеанса', () => {
+  const timed = cfgWith({ timer: { on: true, seconds: 30 } });
   it('full session path', () => {
-    const r = run().send({ t: 'ready' });
+    const r = run(timed).send({ t: 'ready' });
     expect(r.phase.kind).toBe('attract');
     r.wait(DEBOUNCE_MS).send({ t: 'touch' });
+    expect(r.phase.kind).toBe('intro');
+    r.send({ t: 'introDone' });
     expect(r.phase.kind).toBe('welcome');
     r.send({ t: 'pickFront', front: 'su_1bf' });
     expect(r.phase.kind).toBe('briefing');
@@ -60,6 +63,7 @@ describe('режиссёр сеанса', () => {
       expect(r.phase).toMatchObject({ kind: 'turn', n, step: 'scroll', choice: 0 });
       r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
     }
+    r.send({ t: 'debriefReady' });
     expect(r.phase.kind).toBe('result');
     expect(r.effects.filter((e) => e.e === 'stat')).toEqual([{ e: 'stat', kind: 'started' }, { e: 'stat', kind: 'finished' }]);
     expect(r.state.stats).toEqual({ sessions: 1, finished: 1 });
@@ -73,7 +77,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('model effects: deal on entering a turn, decide on choice and on delay, replace', () => {
-    const r = toChoose();
+    const r = toChoose(timed);
     expect(r.effects).toContainEqual({ e: 'deal', n: 1, front: 'su_1bf' });
     r.send({ t: 'replace', card: 2 });
     expect(r.effects.at(-1)).toEqual({ e: 'replace', n: 1, card: 2 });
@@ -88,7 +92,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('single front skips choice', () => {
-    const r = run(cfgWith({ fronts: ['su_1uf'] })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    const r = run(cfgWith({ fronts: ['su_1uf'] })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' });
     expect(r.phase.kind).toBe('welcome');
     r.wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('briefing');
@@ -96,20 +100,20 @@ describe('режиссёр сеанса', () => {
   });
 
   it('two fronts: touch keeps welcome, unknown front ignored', () => {
-    const r = run(cfgWith({ fronts: ['su_1bf'] , })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    const r = run(cfgWith({ fronts: ['su_1bf'] , })).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' });
     r.send({ t: 'pickFront', front: 'su_1uf' });
     expect(r.phase.kind).toBe('welcome');
     const r2 = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'touch' });
-    expect(r2.phase.kind).toBe('welcome');
+    expect(r2.phase.kind).toBe('intro');
   });
 
   it('briefing skipped by next', () => {
-    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1uf' }, { t: 'next' });
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }, { t: 'pickFront', front: 'su_1uf' }, { t: 'next' });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'explain' });
   });
 
   it('timer warns and delays', () => {
-    const r = toChoose();
+    const r = toChoose(timed);
     expect(turn(r.phase)?.step).toBe('choose');
     const mark = r.effects.length;
     r.wait(19_750);
@@ -150,7 +154,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('marking a front does not start the briefing; the launch does', () => {
-    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' });
     r.send({ t: 'markFront', front: 'su_1uf' });
     expect(r.phase.kind).toBe('welcome');
     expect(r.state.front).toBe('su_1uf');
@@ -160,7 +164,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('back from the front choice returns to the attract screen', () => {
-    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' });
     expect(r.phase.kind).toBe('welcome');
     r.send({ t: 'back' });
     expect(r.phase.kind).toBe('attract');
@@ -170,7 +174,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('situation and decision tabs switch without dealing again', () => {
-    const r = toChoose();
+    const r = toChoose(timed);
     expect(r.phase).toMatchObject({ step: 'choose' });
     const mark = r.effects.length;
     r.send({ t: 'step', step: 'explain' });
@@ -207,7 +211,7 @@ describe('режиссёр сеанса', () => {
 
   it('passive viewer not kicked', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
-    const r = run(off).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const r = run(off).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', choice: null });
@@ -217,7 +221,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('timer on: passive viewer gets delays, not idle', () => {
-    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+    const r = run(timed).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }, { t: 'pickFront', front: 'su_1bf' });
     const mark = r.effects.length;
     r.wait(DURATIONS.briefing + DURATIONS.explain + 30_000);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll', choice: 'delay' });
@@ -225,7 +229,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('idle in welcome returns', () => {
-    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }).wait(89_750);
+    const r = run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }).wait(89_750);
     expect(r.phase.kind).toBe('welcome');
     r.wait(250);
     expect(r.phase.kind).toBe('attract');
@@ -234,7 +238,7 @@ describe('режиссёр сеанса', () => {
 
   it('double touch does not skip', () => {
     const one = cfgWith({ fronts: ['su_1uf'] });
-    const r = run(one).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }).wait(100).send({ t: 'touch' });
+    const r = run(one).send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }).wait(100).send({ t: 'touch' });
     expect(r.phase.kind).toBe('welcome');
     r.wait(DEBOUNCE_MS).send({ t: 'touch' });
     expect(r.phase.kind).toBe('briefing');
@@ -273,7 +277,7 @@ describe('режиссёр сеанса', () => {
   });
 
   it('operator pause freezes timers', () => {
-    const r = toChoose().wait(25_000);
+    const r = toChoose(timed).wait(25_000);
     expect(turn(r.phase)?.step).toBe('choose');
     const mark = r.effects.length;
     r.send({ t: 'pause' }).wait(120_000);
@@ -342,19 +346,31 @@ describe('голос и ИИ в режиссёре', () => {
   it('вопрос — эффект ask, «Говорить» — фраза и listen; в заставке — ничего', () => {
     const turn: Phase = { kind: 'turn', n: 1, step: 'choose', deadline: null, warned: false, offered: false, choice: null, replacements: 0 };
     expect(step(s0(turn), { t: 'ask', q: ' Почему высоты? ' }, EXPO_DEFAULTS).effects).toEqual([{ e: 'ask', q: 'Почему высоты?' }]);
-    expect(step(s0(turn), { t: 'speak' }, EXPO_DEFAULTS).effects.map((e) => e.e)).toEqual(['say', 'listen']);
+    expect(step(s0(turn), { t: 'speak' }, EXPO_DEFAULTS).effects.map((e) => e.e)).toEqual(['listen']);
     expect(step(s0({ kind: 'attract' }), { t: 'ask', q: 'x' }, EXPO_DEFAULTS).effects).toEqual([]);
   });
   it('вход в фазу сопровождается фразой', () => {
     const r = step(s0({ kind: 'attract' }), { t: 'touch' }, EXPO_DEFAULTS);
-    expect(r.effects).toContainEqual({ e: 'say', key: 'welcome', priority: 'scene', scene: 'welcome' });
-    // смена сцены — до фразы входа: голос обрывает фразу ушедшей сцены
+    expect(r.state.phase).toEqual({ kind: 'intro' });
+    expect(r.effects).toContainEqual({ e: 'say', key: 'intro-1', priority: 'scene', scene: 'intro' });
     expect(r.effects.findIndex((e) => e.e === 'scene')).toBeLessThan(r.effects.findIndex((e) => e.e === 'say'));
+  });
+  it('выключенное интро пропускается', () => {
+    const r = step(s0({ kind: 'attract' }), { t: 'touch' }, cfgWith({ intro: false }));
+    expect(r.state.phase).toEqual({ kind: 'welcome' });
+  });
+  it('интро кончается речью или пропуском и не кончается касанием', () => {
+    const open = step(s0({ kind: 'intro' }), { t: 'introDone' }, EXPO_DEFAULTS);
+    expect(open.state.phase).toEqual({ kind: 'welcome' });
+    const skip = step(s0({ kind: 'intro' }), { t: 'skipIntro' }, EXPO_DEFAULTS);
+    expect(skip.state.phase).toEqual({ kind: 'welcome' });
+    const tap = step(s0({ kind: 'intro' }), { t: 'touch' }, EXPO_DEFAULTS);
+    expect(tap.state.phase.kind).toBe('intro');
   });
 });
 
 describe('ввод в обстановку — доклад по пунктам', () => {
-  const toBrief = () => run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'pickFront', front: 'su_1bf' });
+  const toBrief = () => run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' }, { t: 'introDone' }, { t: 'pickFront', front: 'su_1bf' });
   it('каждый пункт — своя сцена и своя фраза; пункт меняется по концу фразы', () => {
     const r = toBrief();
     expect(r.phase).toEqual({ kind: 'briefing', point: 0 });
