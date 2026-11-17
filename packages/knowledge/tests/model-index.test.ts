@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { docFragments, normFragments, tsFragments, rsFragments } from '../src/model-index';
@@ -119,7 +120,7 @@ describe('выжимка: код', () => {
 
 describe('выжимка: свежесть', () => {
   it('файл выжимки совпадает со сборкой по исходникам (npm run model:index)', () => {
-    const root = new URL('../../../', import.meta.url).pathname;
+    const root = fileURLToPath(new URL('../../../', import.meta.url));
     const built = serialize(buildModelIndex(root));
     const file = readFileSync(`${root}packages/knowledge/data/model-index.json`, 'utf8');
     expect(file === built, 'выжимка устарела: npm run model:index').toBe(true);
@@ -131,7 +132,7 @@ describe('выжимка: свежесть', () => {
 describe('выжимка: полнота кода', () => {
   it('каждая функция верхнего уровня packages/sim/src попадает в выжимку', async () => {
     const { readdirSync } = await import('node:fs');
-    const dir = new URL('../../sim/src/', import.meta.url).pathname;
+    const dir = fileURLToPath(new URL('../../sim/src/', import.meta.url));
     const missing: string[] = [];
     for (const name of readdirSync(dir).filter((n) => n.endsWith('.ts'))) {
       const src = readFileSync(dir + name, 'utf8');

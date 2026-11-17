@@ -12,19 +12,21 @@ export type Priority = 'action' | 'timer' | 'scene';
  * предзаписи (заготовка с подстановками); `fallback` — заготовка на замену фразы, составленной ИИ сейчас, если
  * живой голос недоступен или не успевает.
  */
-export interface Line { text: string; priority: Priority; source: string; scene?: string; parts?: string[]; fallback?: { text: string; parts?: string[] }; /** Образец живого голоса (разбор итога); нет — как обычно, из предзаписи. */ voice?: string; /** Пауза после фразы, мс: между абзацами разбора. */ gapMs?: number; /** Сменить звучащую фразу этой же сцены сразу: субтитр и предзапись, не дожидаясь конца прежней. */ replace?: boolean; /** Ключ заготовки, если по концу фразы нужно узнать, какая это была. */ mark?: string }
-export interface Speaker { speak(text: string, line?: Line): { done: Promise<void>; stop(): void; /** Синтез закончен — следующую фразу с голосом можно готовить, пока эта ещё звучит. */ synth?: Promise<void> } }
+export interface Line { text: string; priority: Priority; source: string; scene?: string; parts?: string[]; fallback?: { text: string; parts?: string[] }; /** Срок показа текста вместо речи. */ durationMs?: number; /** Образец живого голоса (разбор итога); нет — как обычно, из предзаписи. */ voice?: string; /** В итоговом разборе разрешены только готовые клипы. */ prerecordOnly?: boolean; /** Пауза после фразы, мс: между абзацами разбора. */ gapMs?: number; /** Сменить звучащую фразу этой же сцены сразу: субтитр и предзапись, не дожидаясь конца прежней. */ replace?: boolean; /** Ключ заготовки, если по концу фразы нужно узнать, какая это была. */ mark?: string }
+export interface Speaker { speak(text: string, line?: Line): { done: Promise<void>; stop(): void; pause?(): void; resume?(): void; /** Предзапись действительно дошла до конца, а не закончилась ошибкой загрузки. */ played?: () => boolean; /** Синтез закончен — следующую фразу с голосом можно готовить, пока эта ещё звучит. */ synth?: Promise<void> } }
 
 const RANK: Record<Priority, number> = { action: 0, timer: 1, scene: 2 };
 
-export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => void; onDone?: (l: Line) => void } = {}) {
+export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => void; onDone?: (l: Line, played?: boolean) => void } = {}) {
   let queue: Line[] = [];
-  let cur: { line: Line; stop(): void } | null = null;
+  let cur: { line: Line; stop(): void; pause?(): void; resume?(): void } | null = null;
   /** Следующая фраза уже отдана в синтез, пока звучит текущая: к её началу звук готов. */
-  let ahead: { line: Line; stop(): void; done: Promise<void>; synth?: Promise<void> } | null = null;
+  let ahead: { line: Line; stop(): void; pause?(): void; resume?(): void; done: Promise<void>; played?: () => boolean; synth?: Promise<void> } | null = null;
   const waits = new Map<Line, () => void>();
   let gen = 0;
   let scene: string | null = null;
+  let paused = false;
+  let finishedWhilePaused: (() => void) | null = null;
   const foreign = (l: Line) => l.scene !== undefined && scene !== null && l.scene !== scene;
   const same = (l: Line) => cur?.line.text === l.text || ahead?.line.text === l.text || queue.some((x) => x.text === l.text);
 
@@ -40,6 +42,7 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
     done();
   };
   const next = () => {
+    if (paused) return;
     const ready = ahead;
     ahead = null;
     const line = ready?.line ?? queue.shift() ?? null;
@@ -47,22 +50,25 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
     o.onLine?.(line);
     if (!line) return;
     const g = ++gen;
-    const finish = () => {
+    const finish = (played?: boolean) => {
       if (g !== gen) return;
-      o.onDone?.(line);
+      if (paused) { finishedWhilePaused = () => finish(played); return; }
+      o.onDone?.(line, played);
       finishWait(line);
+      // onDone может открыть следующую сцену и уже запустить её голос.
+      if (g !== gen) return;
       next();
     };
     try {
       const h = ready ?? (() => {
         const s = speaker.speak(line.text, line);
-        return { line, stop: s.stop, done: s.done, synth: s.synth };
+        return { line, stop: s.stop, pause: s.pause, resume: s.resume, done: s.done, synth: s.synth, played: s.played };
       })();
-      cur = { line, stop: h.stop };
+      cur = { line, stop: h.stop, pause: h.pause, resume: h.resume };
       if (h.synth) void h.synth.then(() => { if (g === gen) prefetch(); });
-      h.done.then(finish, finish);
+      h.done.then(() => finish(h.played?.()), () => finish(false));
     } catch {
-      queueMicrotask(finish);
+      queueMicrotask(() => finish(false));
     }
   };
   /** Оборвать звучащую фразу и уже начатый синтез следующей (без onDone: они не договорены). */
@@ -70,6 +76,7 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
     const c = cur;
     const a = ahead;
     gen++;
+    finishedWhilePaused = null;
     cur = null;
     ahead = null;
     if (c) finishWait(c.line);
@@ -79,6 +86,20 @@ export function voiceQueue(speaker: Speaker, o: { onLine?: (l: Line | null) => v
   };
 
   return {
+    pause() {
+      if (paused) return;
+      paused = true;
+      cur?.pause?.();
+    },
+    resume() {
+      if (!paused) return;
+      paused = false;
+      cur?.resume?.();
+      const finish = finishedWhilePaused;
+      finishedWhilePaused = null;
+      if (finish) finish();
+      else if (!cur) next();
+    },
     push(line: Line): Promise<void> {
       let done = () => {};
       const played = new Promise<void>((r) => { done = r; });

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { EXPO_DEFAULTS, normalizeSettings, settingsStore, localSettingsStore, appSettingsStore, type ExpoSettings } from '../src/expo/settings';
+import { EXPO_DEFAULTS, normalizeSettings, settingsStore, localSettingsStore, appSettingsStore, saveConfiguredSettings, type ExpoSettings } from '../src/expo/settings';
 
 const clone = (): ExpoSettings => JSON.parse(JSON.stringify(EXPO_DEFAULTS));
 
@@ -79,5 +79,23 @@ describe('настройки стенда', () => {
     const store = settingsStore();
     await store.save(s);
     expect(await store.load()).toEqual(s);
+  });
+
+  it('не записывает неудачное назначение мониторов', async () => {
+    const writes: ExpoSettings[] = [];
+    const host = { configuration: () => EXPO_DEFAULTS, configure: async () => { throw Error('экран отключён'); } };
+    const store = { load: async () => EXPO_DEFAULTS, save: async (s: ExpoSettings) => { writes.push(s); } };
+    await expect(saveConfiguredSettings(host, store, { ...EXPO_DEFAULTS, screens: { count: 2, order: [] } })).rejects.toThrow('экран отключён');
+    expect(writes).toEqual([]);
+  });
+
+  it('ошибка записи возвращает прежнее назначение и сохранённые настройки', async () => {
+    let current = EXPO_DEFAULTS, saved = EXPO_DEFAULTS;
+    const host = { configuration: () => current, configure: async (s: ExpoSettings) => { current = s; } };
+    const next = { ...EXPO_DEFAULTS, screens: { count: 2 as const, order: ['b', 'a'] } };
+    const store = { load: async () => saved, save: async (s: ExpoSettings) => { saved = s; if (s === next) throw Error('диск недоступен'); } };
+    await expect(saveConfiguredSettings(host, store, next)).rejects.toThrow('диск недоступен');
+    expect(current).toBe(EXPO_DEFAULTS);
+    expect(saved).toBe(EXPO_DEFAULTS);
   });
 });

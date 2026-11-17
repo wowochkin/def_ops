@@ -278,6 +278,16 @@ await ctx.addInitScript(() => {
   e2e.playing = () => [...new Set(e2e.sources.filter((s) => s.on).map((s) => s.id))];
   /** Звучащие пробы голоса (номера из отправленных `voice preview`). */
   e2e.previews = () => { const ids = e2e.sent.filter((m) => m.op === 'preview').map((m) => m.id); return e2e.playing().filter((id) => ids.includes(id)); };
+  // Очередь может запустить кусок позже, из onended предыдущей фразы, уже вне обработчика WebSocket.
+  // Номер берём у самого проигрываемого куска, чтобы проверка видела и такое воспроизведение.
+  import('/src/voice/client.ts').then(({ VoiceClient }) => {
+    const playChunk = VoiceClient.prototype.playChunk;
+    VoiceClient.prototype.playChunk = function (chunk) {
+      const before = cur;
+      cur = chunk.id;
+      try { return playChunk.call(this, chunk); } finally { cur = before; }
+    };
+  });
   const md = navigator.mediaDevices;
   if (md?.getUserMedia) {
     const gum = md.getUserMedia.bind(md);
@@ -550,7 +560,10 @@ async function playPreview(btn) {
   await btn.click();
   const id = await page.evaluate(() => window.__e2e.sent.filter((m) => m.op === 'preview').at(-1)?.id);
   await page.waitForFunction((x) => window.__e2e.previews().includes(x), id, { timeout: 15000, polling: 20 })
-    .catch(() => { throw new Error(`проба ${id} не звучит`); });
+    .catch(async () => {
+      const detail = await page.evaluate(() => ({ sent: window.__e2e.sent.slice(-8), messages: window.__e2e.msgs.slice(-8), sources: window.__e2e.sources.slice(-8) }));
+      throw new Error(`проба ${id} не звучит: ${JSON.stringify(detail)}`);
+    });
   return id;
 }
 async function silentWithin(ms, what) {

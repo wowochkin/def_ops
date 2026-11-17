@@ -26,7 +26,7 @@ describe('ударения для озвучки стенда', () => {
   });
   it('в словаре у каждого слова одна пометка перед гласной и то же слово без неё', () => {
     for (const [w, s] of Object.entries(STRESS.words)) {
-      expect(plainStress(s), w).toBe(w);
+      expect(plainStress(s).toLowerCase(), w).toBe(w.toLowerCase());
       expect(s.match(/\+[аеёиоуыэюя]/gi)?.length, w).toBe(1);
     }
   });

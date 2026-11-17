@@ -15,11 +15,17 @@ import { effectiveCount } from './layout';
 export interface MonitorInfo { id: string; name: string; x: number; y: number; width: number; height: number; scale: number }
 export type WindowPlan = { count: 1 | 2 | 3; windows: { index: number; monitor: string }[] };
 
-export function plan(monitors: MonitorInfo[], s: ExpoSettings): WindowPlan {
+/** Подключённые мониторы в порядке назначения; один порядок для настройки и открытия окон. */
+export function orderedMonitors(monitors: MonitorInfo[], order: string[]): MonitorInfo[] {
   const byX = [...monitors].sort((a, b) => a.x - b.x || a.y - b.y);
   const known = new Set(byX.map((m) => m.id));
-  const first = [...new Set(s.screens.order)].filter((id) => known.has(id));
+  const first = [...new Set(order)].filter((id) => known.has(id));
   const ids = [...first, ...byX.map((m) => m.id).filter((id) => !first.includes(id))];
+  return ids.map(id => byX.find(m => m.id === id)!);
+}
+
+export function plan(monitors: MonitorInfo[], s: ExpoSettings): WindowPlan {
+  const ids = orderedMonitors(monitors, s.screens.order).map(m => m.id);
   const count = effectiveCount(s.screens.count, ids.length);
   // мониторов не нашлось — одно окно там, где оно есть (пустой id: приложение оставит окно на текущем мониторе)
   const windows = Array.from({ length: count }, (_, i) => ({ index: i, monitor: ids[i] ?? '' }));
@@ -31,6 +37,8 @@ export interface Windows {
   open(p: WindowPlan): Promise<void>;
   closeAll(): Promise<void>;
   guard(on: boolean): Promise<void>;
+  /** Перевести клавиатуру на главное окно, где проверяется ПИН оператора. */
+  focusMain?(): Promise<void>;
   /** Подписка на смену списка мониторов; возвращает отписку. */
   onMonitors(f: (m: MonitorInfo[]) => void): () => void;
 }
@@ -61,6 +69,7 @@ export function desktopWindows(
     },
     closeAll: async () => { await invoke('expo_close_all'); },
     guard: async (on) => { await invoke('expo_set_guard', { on }); },
+    focusMain: async () => { await invoke('expo_focus_main'); },
     onMonitors(f) {
       let off: (() => void) | null = null;
       let done = false;
@@ -83,6 +92,7 @@ export function browserWindows(w: Window = window): Windows {
     },
     async closeAll() { for (const t of tabs.values()) t.close(); tabs.clear(); },
     async guard() { /* в браузере окна не стережём */ },
+    async focusMain() { w.focus(); },
     onMonitors: () => () => {},
   };
 }

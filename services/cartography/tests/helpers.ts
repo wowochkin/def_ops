@@ -1,3 +1,4 @@
+import { VectorTiles } from '../src/vector';
 /** Вспомогательное для тестов картографии: поддельный сервер тайлов, синтетический скан, запуск сервиса. */
 import http from 'node:http';
 import os from 'node:os';
@@ -69,6 +70,8 @@ export interface FakeOverpass {
   hits: { path: string; t: number; ua?: string; query?: string }[];
   /** Ответ на участок (рамка — из node(s,w,n,e) запроса). */
   cells: (b: BBox) => OverpassJson;
+  /** Готовый JSON для замеров: генерация ответа не должна блокировать проверяемый процесс. */
+  cellText?: (b: BBox) => string;
   /** Сбои по номеру участка (порядок первого запроса его рамки): по одному на запрос, затем — нормальный ответ. */
   script: Map<number, OverpassFault[]>;
   /** Задержка ответа, мс. */
@@ -156,7 +159,7 @@ export async function fakeOverpass(): Promise<FakeOverpass> {
           }));
           return;
       }
-      const text = JSON.stringify(json);
+      const text = s.cellText?.(b) ?? JSON.stringify(json);
       if (!s.chunked) { res.writeHead(200, { 'Content-Type': 'application/json' }).end(text); return; }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked' });
       for (let i = 0; i < text.length && !res.destroyed; i += 1024) {
@@ -232,13 +235,15 @@ export async function startService(repo: MapRepo, options: Partial<CartographyOp
   const bus = new EventBus();
   const jobs = new JobRunner(repo, bus, { progressMs: 50 });
   const store = new TileStore(tilesDir);
-  const svc = createService({ name: 'cartography', port: 0, router: buildRouter({ repo, store, bus, jobs, options }) });
+  const vectors = new VectorTiles();
+  const svc = createService({ name: 'cartography', port: 0, router: buildRouter({ repo, store, bus, jobs, options, vectors }) });
   const port = await svc.listen();
   return {
     base: `http://127.0.0.1:${port}`, tilesDir, jobs, store, bus,
     async close() {
       await jobs.stop();
       await svc.close();
+      vectors.closeAll();
       await fs.rm(tilesDir, { recursive: true, force: true });
     },
   };

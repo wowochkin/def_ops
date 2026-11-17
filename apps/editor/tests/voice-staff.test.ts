@@ -451,7 +451,7 @@ describe('когда нельзя', () => {
   });
   it('нет игры — фразы командования не перехватываются (кроме понятных: причина)', () => {
     expect(parseStaff('восьмой гвардейской наступать на зелов', 'replay')).toBeNull();
-    expect(parseStaff('подробнее о втором', 'replay')).toEqual({ say: expect.stringMatching(/игра не идёт/) });
+    expect(parseStaff('подробнее о втором', 'replay')).toEqual({ say: expect.stringMatching(/кампания не идёт/) });
   });
   it('вне «Переигровки» не перехватывается ничего', () => {
     staff();

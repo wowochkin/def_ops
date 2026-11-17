@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin, type ViteDevServer, type PreviewServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -17,9 +17,7 @@ const modelStamp = (() => {
  */
 function expoVoice(): Plugin {
   const dir = join(process.env.DEFOPS_DATA_DIR || join(homedir(), 'Library/Application Support/ru.defops.desktop'), 'expo/voice');
-  return {
-    name: 'expo-voice',
-    configureServer(server) {
+  const configure = (server: ViteDevServer | PreviewServer) => {
       server.middlewares.use('/expo-voice', (req, res, next) => {
         const p = (req.url ?? '').split('?')[0];
         const file = p === '/manifest.json' ? 'manifest.json' : /^\/clips\/[0-9a-f]{8,64}\.ogg$/.test(p) ? p.slice(1) : null;
@@ -33,8 +31,8 @@ function expoVoice(): Plugin {
           res.end();
         }
       });
-    },
   };
+  return { name: 'expo-voice', configureServer: configure, configurePreviewServer: configure };
 }
 
 /** Живой локальный сервер модели: Bionic часто на 1235, LM Studio — на 1234. */
@@ -71,6 +69,9 @@ export default defineConfig(async () => {
   build: {
     chunkSizeWarningLimit: 2000,
     rolldownOptions: {
+      // Словари речи и знаний вычисляются при загрузке: их зависимости должны
+      // инициализироваться до потребителей независимо от разбиения на чанки.
+      output: { strictExecutionOrder: true },
       input: {
         main: resolve(__dirname, 'index.html'),
         gallery: resolve(__dirname, 'gallery.html'),

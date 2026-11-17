@@ -137,32 +137,64 @@ export interface SectorOptions {
 
 /** Полосы стороны side в момент time по положению войск units. */
 export function sectorMap(T: Theatre, scenario: Scenario, units: SectorUnit[], side: string, time: string, o: SectorOptions = {}): SectorMap {
-  const level = o.level ?? 'front';
-  const gOf = o.groups ?? groupOf(scenario, level);
+  return labelSectors(sectorGrid(T, units, side, o), scenario, side, time, o);
+}
+
+/** Полосы нескольких уровней на одной сетке: поиск ближайших войск выполняется один раз. */
+export function sectorMaps(T: Theatre, scenario: Scenario, units: SectorUnit[], side: string, time: string, levels: readonly Pick<SectorOptions, 'level' | 'groups'>[]): SectorMap[] {
+  const grid = sectorGrid(T, units, side, {});
+  return levels.map((level) => labelSectors(grid, scenario, side, time, level));
+}
+
+function sectorGrid(T: Theatre, units: SectorUnit[], side: string, o: Pick<SectorOptions, 'stepKm' | 'reachKm'>) {
   const step = Math.max(1, Math.round((o.stepKm ?? T.cellKm * 2) / T.cellKm));
   const stepKm = step * T.cellKm;
   const cols = Math.ceil(T.cols / step), rows = Math.ceil(T.rows / step);
   const reach = Math.max(o.reachKm ?? 80, T.cellKm * 6);
   const live = units.filter((u) => !u.destroyed);
   const own = live.filter((u) => u.side === side), enemy = live.filter((u) => u.side !== side);
-  const groups = [...new Set(own.map((u) => gOf.get(u.id) ?? u.id))].sort();
-  const gi = new Map(groups.map((g, i) => [g, i]));
-  const ownXY = own.map((u) => ({ p: T.proj.toXY(u.at), g: gi.get(gOf.get(u.id) ?? u.id)! }));
-  const enXY = enemy.map((u) => T.proj.toXY(u.at));
+  const ownXY = new Float64Array(own.length * 2);
+  const enemyXY = new Float64Array(enemy.length * 2);
+  own.forEach((u, i) => ownXY.set(T.proj.toXY(u.at), i * 2));
+  enemy.forEach((u, i) => enemyXY.set(T.proj.toXY(u.at), i * 2));
   const N = cols * rows;
-  const label = new Int16Array(N).fill(-1), hist = new Uint8Array(N);
+  const nearest = new Int32Array(N).fill(-1);
   const ownKm = new Float32Array(N), enemyKm = new Float32Array(N);
+  const xs = Float64Array.from({ length: cols }, (_, c) => centerOf(T, step, c, 0)[0]);
+  const ys = Float64Array.from({ length: rows }, (_, r) => centerOf(T, step, 0, r)[1]);
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const k = r * cols + c, p = centerOf(T, step, c, r);
+    const k = r * cols + c, x = xs[c], y = ys[r];
     // квадраты расстояний (без корня в цикле — сетка большого театра считается каждый ход)
-    let best = Infinity, bg = -1;
-    for (const u of ownXY) { const dx = u.p[0] - p[0], dy = u.p[1] - p[1], d = dx * dx + dy * dy; if (d < best) { best = d; bg = u.g; } }
+    let best = Infinity, unit = -1;
+    for (let i = 0; i < ownXY.length; i += 2) {
+      const dx = ownXY[i] - x, dy = ownXY[i + 1] - y;
+      const d = dx * dx + dy * dy;
+      if (d < best) { best = d; unit = i / 2; }
+    }
     let be = Infinity;
-    for (const q of enXY) { const dx = q[0] - p[0], dy = q[1] - p[1], d = dx * dx + dy * dy; if (d < be) be = d; }
+    for (let i = 0; i < enemyXY.length; i += 2) {
+      const dx = enemyXY[i] - x, dy = enemyXY[i + 1] - y;
+      const d = dx * dx + dy * dy;
+      if (d < be) be = d;
+    }
     best = Math.sqrt(best); be = Math.sqrt(be);
     ownKm[k] = best; enemyKm[k] = be;
-    if (best <= reach) label[k] = bg;
+    if (best <= reach) nearest[k] = unit;
   }
+  return { T, step, stepKm, cols, rows, own, nearest, ownKm, enemyKm, xs, ys };
+}
+
+function labelSectors(grid: ReturnType<typeof sectorGrid>, scenario: Scenario, side: string, time: string, o: Pick<SectorOptions, 'level' | 'groups'>): SectorMap {
+  const { T, step, stepKm, cols, rows, own, nearest, ownKm, enemyKm, xs, ys } = grid;
+  const level = o.level ?? 'front';
+  const gOf = o.groups ?? groupOf(scenario, level);
+  const unitGroups = own.map((u) => gOf.get(u.id) ?? u.id);
+  const groups = [...new Set(unitGroups)].sort();
+  const gi = new Map(groups.map((g, i) => [g, i]));
+  const ownGroup = Int16Array.from(unitGroups, (g) => gi.get(g)!);
+  const N = nearest.length;
+  const label = new Int16Array(N).fill(-1), hist = new Uint8Array(N);
+  for (let k = 0; k < N; k++) if (nearest[k] >= 0) label[k] = ownGroup[nearest[k]];
   // исторические линии: клетки двух объединений пары — по сторонам линии (кроме зон за концами линии)
   const bs = activeBoundaries(scenario, time, side);
   for (const b of bs) {
@@ -171,7 +203,7 @@ export function sectorMap(T: Theatre, scenario: Scenario, units: SectorUnit[], s
     const line = b.line.map((x) => T.proj.toXY(x));
     for (let k = 0; k < N; k++) {
       if (label[k] !== R && label[k] !== L) continue;
-      const s = sideOf(line, centerOf(T, step, k % cols, Math.floor(k / cols)));
+      const s = sideOf(line, [xs[k % cols], ys[Math.floor(k / cols)]]);
       if (s === 0) continue;
       label[k] = s > 0 ? R : L;
       hist[k] = 1;

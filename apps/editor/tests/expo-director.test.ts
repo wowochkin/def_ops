@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXPO_DEFAULTS, type ExpoSettings } from '../src/expo/settings';
-import { BRIEF_POINTS, briefKey, DEBOUNCE_MS, DURATIONS, initialState, sceneKey, SCROLL_REST_MS, scrollMs, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
+import { INTRO_KEYS, INTRO_DURATION_MS } from '../src/expo/intro-story';
+import { BRIEF_POINTS, briefKey, DEBOUNCE_MS, DURATIONS, INTRO_FALLBACK_MS, initialState, sceneKey, scrollMs, step, type DirectorEvent, type DirectorState, type Effect, type Phase } from '../src/expo/director';
 
 const cfgWith = (patch: Partial<ExpoSettings>): ExpoSettings => ({ ...JSON.parse(JSON.stringify(EXPO_DEFAULTS)), ...patch });
 
@@ -21,6 +22,11 @@ function run(cfg: ExpoSettings = EXPO_DEFAULTS) {
         state = r.state;
         effects.push(...r.effects);
       }
+      return api;
+    },
+    finishComment() {
+      const p = state.phase;
+      if (p.kind === 'turn' && p.commenting) api.send({ t: 'commentDone', n: p.n, session: state.session, token: p.commenting.token });
       return api;
     },
     wait(ms: number) {
@@ -61,7 +67,7 @@ describe('режиссёр сеанса', () => {
       expect(r.phase).toMatchObject({ kind: 'turn', n, step: 'choose', choice: null, deadline: r.now + 30_000 });
       r.send({ t: 'choose', card: 0 });
       expect(r.phase).toMatchObject({ kind: 'turn', n, step: 'scroll', choice: 0 });
-      r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
+      r.send({ t: 'scrollDone' }).finishComment();
     }
     r.send({ t: 'debriefReady' });
     expect(r.phase.kind).toBe('result');
@@ -83,7 +89,7 @@ describe('режиссёр сеанса', () => {
     expect(r.effects.at(-1)).toEqual({ e: 'replace', n: 1, card: 2 });
     r.send({ t: 'choose', card: 1 });
     expect(r.effects).toContainEqual({ e: 'decide', n: 1, choice: 1 });
-    r.send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
+    r.send({ t: 'scrollDone' }).finishComment();
     expect(r.effects).toContainEqual({ e: 'deal', n: 2, front: 'su_1bf' });
     r.wait(DURATIONS.explain + 30_000);
     expect(r.effects).toContainEqual({ e: 'decide', n: 2, choice: 'delay' });
@@ -191,17 +197,17 @@ describe('режиссёр сеанса', () => {
   });
 
   it('situation after a decision is the marshal line', () => {
-    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
+    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).finishComment();
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-2', priority: 'scene', scene: 'turn-2-explain' });
-    r.wait(DURATIONS.explain).send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS);
+    r.wait(DURATIONS.explain).send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).finishComment();
     expect(r.phase).toMatchObject({ n: 3, step: 'explain' });
     expect(r.effects).toContainEqual({ e: 'say', key: 'situation-su_1bf-3', priority: 'scene', scene: 'turn-3-explain' });
   });
 
   it('timer off: not choosing does not start the move', () => {
     const off = cfgWith({ timer: { on: false, seconds: 30 } });
-    const r = toChoose(off).send({ t: 'choose', card: 1 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
+    const r = toChoose(off).send({ t: 'choose', card: 1 }).send({ t: 'scrollDone' }).finishComment().wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
     const mark = r.effects.length;
     r.wait(120_000);
@@ -216,7 +222,7 @@ describe('режиссёр сеанса', () => {
     r.wait(DURATIONS.briefing + DURATIONS.explain + 60_000);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'choose', choice: null });
     expect(r.since(mark).some((e) => e.e === 'decide' || e.e === 'aiPick' || e.e === 'newSession')).toBe(false);
-    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
+    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).finishComment().wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'choose' });
   });
 
@@ -266,7 +272,7 @@ describe('режиссёр сеанса', () => {
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll' });
     r.send({ t: 'scrollDone' });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 1, step: 'scroll' });
-    r.wait(SCROLL_REST_MS);
+    r.finishComment();
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'explain' });
   });
   it('double choose ignored', () => {
@@ -296,12 +302,12 @@ describe('режиссёр сеанса', () => {
   it('replace limited', () => {
     const r = toChoose().send({ t: 'replace', card: 0 }, { t: 'replace', card: 1 }, { t: 'replace', card: 2 }, { t: 'replace', card: 0 }, { t: 'replace', card: 1 });
     expect(turn(r.phase)?.replacements).toBe(EXPO_DEFAULTS.maxReplacements);
-    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain);
+    r.send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).finishComment().wait(DURATIONS.explain);
     expect(r.phase).toMatchObject({ n: 2, step: 'choose', replacements: 0 });
   });
 
   it('restart from any phase', () => {
-    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).wait(SCROLL_REST_MS).wait(DURATIONS.explain).send({ t: 'choose', card: 1 });
+    const r = toChoose().send({ t: 'choose', card: 0 }).send({ t: 'scrollDone' }).finishComment().wait(DURATIONS.explain).send({ t: 'choose', card: 1 });
     expect(r.phase).toMatchObject({ kind: 'turn', n: 2, step: 'scroll' });
     const mark = r.effects.length;
     const session = r.state.session;
@@ -342,6 +348,30 @@ describe('режиссёр сеанса', () => {
 });
 
 describe('голос и ИИ в режиссёре', () => {
+  const toIntro = () => run().send({ t: 'ready' }).wait(DEBOUNCE_MS).send({ t: 'touch' });
+  it('без очереди интро ждёт срок 12 сцен; длинная предзапись завершается по голосу', () => {
+    expect(INTRO_FALLBACK_MS).toBe(INTRO_DURATION_MS);
+    const silent = toIntro().wait(INTRO_FALLBACK_MS - 1);
+    expect(silent.phase.kind).toBe('intro');
+    silent.wait(1);
+    expect(silent.phase.kind).toBe('welcome');
+    const speaking = toIntro().send({ t: 'introVoice', playing: true }).wait(INTRO_FALLBACK_MS + 10_000);
+    expect(speaking.phase.kind).toBe('intro');
+    speaking.send({ t: 'introDone' });
+    expect(speaking.phase.kind).toBe('welcome');
+  });
+  it('конец речи во время меню запоминается; закрытие меню открывает выбор фронта', () => {
+    const r = toIntro().send({ t: 'introVoice', playing: true }, { t: 'pause' }).wait(60_000).send({ t: 'introDone' });
+    expect(r.phase.kind).toBe('intro');
+    r.send({ t: 'resume' });
+    expect(r.phase.kind).toBe('welcome');
+  });
+  it('неудачная загрузка клипов возвращает запасной срок, а смена настройки не обрывает интро', () => {
+    const r = toIntro().send({ t: 'introVoice', playing: true }).wait(10_000).send({ t: 'introVoice', playing: false });
+    expect(step(r.state, { t: 'touch' }, cfgWith({ intro: false })).state.phase.kind).toBe('intro');
+    r.wait(INTRO_FALLBACK_MS - 10_000);
+    expect(r.phase.kind).toBe('welcome');
+  });
   const s0 = (phase: Phase): DirectorState => ({ ...initialState(0), phase, front: 'su_1bf', phaseStart: -10_000, now: 0 });
   it('вопрос — эффект ask, «Говорить» — фраза и listen; в заставке — ничего', () => {
     const turn: Phase = { kind: 'turn', n: 1, step: 'choose', deadline: null, warned: false, offered: false, choice: null, replacements: 0 };
@@ -350,9 +380,10 @@ describe('голос и ИИ в режиссёре', () => {
     expect(step(s0({ kind: 'attract' }), { t: 'ask', q: 'x' }, EXPO_DEFAULTS).effects).toEqual([]);
   });
   it('вход в фазу сопровождается фразой', () => {
-    const r = step(s0({ kind: 'attract' }), { t: 'touch' }, EXPO_DEFAULTS);
+    const r = step(s0({ kind: 'attract' }), { t: 'touch' }, cfgWith({ intro: true }));
     expect(r.state.phase).toEqual({ kind: 'intro' });
     expect(r.effects).toContainEqual({ e: 'say', key: 'intro-1', priority: 'scene', scene: 'intro' });
+    expect(r.effects.filter((e) => e.e === 'say').map((e) => e.key)).toEqual(INTRO_KEYS);
     expect(r.effects.findIndex((e) => e.e === 'scene')).toBeLessThan(r.effects.findIndex((e) => e.e === 'say'));
   });
   it('выключенное интро пропускается', () => {

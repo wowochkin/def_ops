@@ -129,7 +129,7 @@ export function soundEngine(make: () => Ctx | null = () => (typeof AudioContext 
       if (cue === 'reveal') { tone(c, fx, 196, 0.2, 1.8, t, 'triangle'); tone(c, fx, 294, 0.15, 1.8, t + 0.05, 'triangle'); }
     },
     /** Разблокировать звук после первого касания (политика автозапуска). */
-    resume() { void ctx?.resume?.(); },
+    resume() { const c = ensure(); if (c?.resume) void c.resume().catch(() => {}); },
     close() {
       if (timer) clearTimeout(timer);
       void ctx?.close?.();

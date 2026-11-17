@@ -20,9 +20,12 @@
 import http from 'node:http';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { portableApi } from './portable';
 import { log, sanitizeTenant } from '@def-ops/service-kit';
 
 export interface GatewayConfig {
+  portableData?: string;
+  portableAssets?: string;
   port: number;
   services: Record<string, string>;
   /** Префикс API → [сервис, префикс на стороне сервиса]. */
@@ -217,6 +220,7 @@ export function createGateway(cfg: GatewayConfig) {
 
     // --- настольное приложение: файл игры — в «Загрузки» (окно приложения сохраняет без окна выбора)
     if (url.pathname === '/api/save' && cfg.downloadsDir) return saveDownload(cfg.downloadsDir, !!cfg.downloadsDev, url, req, res);
+    if (url.pathname.startsWith('/api/portable/') && guarded && cfg.portableData) return portableApi(cfg.portableData, cfg.portableAssets, req, res, url.pathname);
 
     // --- аутентификация
     const key = (req.headers['x-api-key'] as string) || url.searchParams.get('api_key') || '';
@@ -266,6 +270,15 @@ export function createGateway(cfg: GatewayConfig) {
 /** /llm/… → языковая модель: путь без /llm, тело и ответ — потоком (ответы модели идут SSE). */
 function proxyLlm(llmUrl: string, url: URL, req: http.IncomingMessage, res: http.ServerResponse) {
   const target = new URL(url.pathname.slice('/llm'.length) + url.search, new URL(llmUrl).origin);
+  const started = Date.now();
+  const requestedModel = req.headers['x-defops-llm-model'];
+  if (typeof requestedModel === 'string') {
+    let model = requestedModel;
+    try { model = decodeURIComponent(model); } catch { }
+    const info = { event: 'llm-request', role: req.headers['x-defops-llm-role'], model: model || '(server default)', path: url.pathname };
+    console.error(JSON.stringify(info));
+    res.once('close', () => console.error(JSON.stringify({ ...info, event: 'llm-finished', status: res.statusCode, completed: res.writableEnded, elapsed_ms: Date.now() - started })));
+  }
   const headers: http.OutgoingHttpHeaders = { ...req.headers, host: target.host };
   const up = http.request(target, { method: req.method, headers }, (ur) => {
     res.writeHead(ur.statusCode || 502, ur.headers);

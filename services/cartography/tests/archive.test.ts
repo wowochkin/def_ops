@@ -33,7 +33,8 @@ describe('RMaps / Locus (.sqlitedb)', () => {
     for (const z of LEVELS) { const [x, y] = berlin(z); ins.run(x, y, 17 - z, await tilePng(z, x, y)); }
     db.prepare('insert into info values (?, ?)').run(17 - 12, 17 - 10);
     db.close();
-    expect(openArchive(file).info.format).toBe('sqlitedb');
+    const opened = openArchive(file);
+    try { expect(opened.info.format).toBe('sqlitedb'); } finally { opened.db.close(); }
     const r = await importArchive(ctx(), store, 'm1', file);
     expect(r).toMatchObject({ tiles: 3, errors: 0, minzoom: 10, maxzoom: 12, ext: 'png' });
     for (const z of LEVELS) {

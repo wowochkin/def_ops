@@ -17,8 +17,10 @@ import argparse
 import asyncio
 import difflib
 import json
+import os
 import threading
 import time
+import traceback
 import uuid
 from pathlib import Path
 
@@ -28,6 +30,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import aec
 from audio import FRAME, SR_IN, Listener, calibrate, is_stop_phrase, should_merge
 from engines import EngineStore, describe as engines_list
+from models import validate_temperature, validate_cpu_threads
 from tts import CALIB_PHRASE, PiecePlanner, Sentences, fade_tail, lengthen_sentence_pauses, pause_after, whole_pieces
 from voices import DEFAULT_VOICE, RECORD_TEXT, ROLES, VoiceStore, check_recording, trim_silence, write_wav
 
@@ -85,6 +88,11 @@ def parse_args(argv=None):
     ap.add_argument("--min-speech-ms", dest="min_speech_ms", type=int, default=200)
     ap.add_argument("--tts", default=None,
                     help="свои веса синтеза вместо первого доступного варианта выбранной модели озвучки")
+    ap.add_argument("--backend", choices=("auto", "mlx", "torch"), default=os.environ.get("DEFOPS_VOICE_BACKEND", "auto"))
+    ap.add_argument("--models-dir", default=os.environ.get("DEFOPS_VOICE_MODELS"), help="папка подготовленных весов выбранной платформы")
+    ap.add_argument("--offline", action=argparse.BooleanOptionalAction,
+                    default=os.environ.get("DEFOPS_VOICE_OFFLINE", "0").lower() in ("1", "true", "yes"),
+                    help="запретить обращения Hugging Face к сети")
     ap.add_argument("--asr", default="v3_e2e_rnnt")
     ap.add_argument("--eos-extra", dest="eos_extra", type=int, default=1,
                     help="кадров (по 80 мс) договаривания после «конца» синтеза")
@@ -107,9 +115,20 @@ class Service:
 
             self.models = FakeModels(Path(args.fake_script) if args.fake_script else None, self.engines.get())
         else:
-            from models import Models
+            from runtime import select_backend, selected_engine
 
-            self.models = Models(self.engines.get(), args.asr, args.eos_extra, args.tts)
+            backend = select_backend(args.backend)
+            eid = selected_engine(self.engines, backend)
+            if backend == "torch":
+                from models_torch import TorchModels
+                root = Path(args.models_dir) if args.models_dir else Path(args.data).parent / "models" / "voice"
+                from torch_profile import load_torch_profile
+                self.models = TorchModels(eid, args.asr, args.eos_extra, args.tts, models_dir=root,
+                                          offline=args.offline, profile=load_torch_profile(Path(args.data)))
+            else:
+                from models import Models
+                self.models = Models(eid, args.asr, args.eos_extra, args.tts,
+                                     models_dir=Path(args.models_dir) if args.models_dir else None, offline=args.offline)
         self.state, self.error = "loading", None
         self.tts_state, self.tts_error = "ready", None  # смена модели озвучки: loading — идёт загрузка
         self.loaded = threading.Event()
@@ -135,7 +154,11 @@ class Service:
             self.loaded.set()
 
     def tts_info(self) -> dict:
-        return {"engines": engines_list(), "current": self.models.engine.id, "state": self.tts_state,
+        supported = getattr(self.models, "supported_engines", None)
+        engines = [e for e in engines_list() if supported is None or e["id"] in supported]
+        runtime = self.models.runtime_info() if hasattr(self.models, "runtime_info") else {}
+        resource = {k: runtime[k] for k in ("managed", "resident", "phase", "quantization", "attention") if k in runtime}
+        return {"engines": engines, "current": self.models.engine.id, "state": self.tts_state, **resource,
                 **({"error": self.tts_error} if self.tts_error else {})}
 
     def switch_tts(self, eid: str):  # в нити mlx, после синтеза, который уже идёт
@@ -150,7 +173,11 @@ class Service:
         self.engines.set(eid)
 
     def health(self) -> dict:
-        return {"state": self.state, **({"error": self.error} if self.error else {})}
+        runtime = self.models.runtime_info() if hasattr(self.models, "runtime_info") else {}
+        synthesis = dict(getattr(self.models, "synthesis_state", {}))
+        if synthesis.get("stage") == "generating":
+            synthesis["elapsed_s"] = round(time.monotonic() - synthesis["started_monotonic"], 2)
+        return {"state": self.state, "synthesis": synthesis, **runtime, **({"error": self.error} if self.error else {})}
 
     def ref_for(self, role: str) -> tuple[Path, str] | None:
         """Образец роли; пропал — образец по умолчанию; нет и его — None.
@@ -210,10 +237,10 @@ class Render:
         return sum(len(a) for _, a in self.pieces) / sr
 
 
-def render_key(ref, text: str):
-    """Заготовка — для образца (новая запись того же голоса — другой mtime) и текста."""
+def render_key(ref, text: str, engine: str, temperature: float | None = None):
+    """Заготовка — для модели, образца (новая запись — другой mtime) и текста."""
     path = Path(ref[0])
-    return str(path), path.stat().st_mtime_ns if path.is_file() else 0, text.strip()
+    return engine, str(path), path.stat().st_mtime_ns if path.is_file() else 0, ref[1], text.strip(), temperature
 
 
 class Job:
@@ -221,6 +248,8 @@ class Job:
 
     def __init__(self, jid: int, ref, preview: bool = False):
         self.id, self.ref, self.preview = jid, ref, preview
+        self.temperature: float | None = None
+        self.cpu_threads: int | None = None
         self.whole: str | None = None  # текст пришёл одним `say` — такую фразу можно сыграть из заготовки
         self.sentences = Sentences()
         self.planner = PiecePlanner()
@@ -283,6 +312,9 @@ class Session:
         self.last_task: asyncio.Task | None = None
         # заготовки (prepare): синтезируются по очереди, в порядке запросов
         self.renders: dict[tuple, Render] = {}
+        self.prepare_requests: dict[int, Render] = {}
+        self.batch_requests: dict[int, dict] = {}
+        self.closed = False
         self.render_task: asyncio.Task | None = None
         self.play_until = 0.0  # когда (perf_counter) окно доиграет всё отправленное
         self.last_said = ""  # последняя фраза модели — чтобы не принять её эхо за реплику
@@ -309,6 +341,8 @@ class Session:
         return await self.loop.run_in_executor(self.m.mlx, self.m.turn_complete, audio)
 
     async def send(self, **msg):
+        if msg.get("type") == "error":
+            print(f"[voice-error] {msg.get('text', '')}", flush=True)
         await self.ws.send_text(json.dumps(msg, ensure_ascii=False))
 
     @property
@@ -479,11 +513,23 @@ class Session:
         prev = self.last_task
         job.task = asyncio.create_task(self.run_job(job, prev))
         self.last_task = job.task
+        def task_done(task):
+            if task.cancelled():
+                return
+            error = task.exception()
+            if error is not None:
+                traceback.print_exception(type(error), error, error.__traceback__)
+                self.loop.create_task(self.send(type="error", text=f"синтез: {error}"))
+                self.loop.create_task(self.send(type="say-done", id=job.id, error=str(error)))
+        job.task.add_done_callback(task_done)
 
     async def on_say(self, d: dict):
         """Фраза разговора. Во время калибровки и записи голоса не звучит (испортила бы замер или образец): say-done
         stopped без звука. Проба голоса и звук калибровки (id 0) идут не через say — они звучат."""
+        print(f"[say-request] id={d.get('id')} chars={len(str(d.get('text', '')))}", flush=True)
         jid, role, more = int(d["id"]), d.get("role", "chief"), bool(d.get("more"))
+        temperature = validate_temperature(d.get("temperature"))
+        cpu_threads = self._cpu_threads(d)
         vid = str(d.get("voice_id") or "")
         job = self.jobs.get(jid)
         if job is None and (self.calib_on or self.recording is not None):
@@ -500,12 +546,18 @@ class Session:
                 if role not in ROLES:
                     raise ValueError(f"нет такой роли: {role}")
                 job = Job(jid, self.svc.ref_for(role))
+            job.temperature = temperature
+            job.cpu_threads = cpu_threads
             job.role = role
             if vid:
                 job.pinned = True
             if not more:
                 job.whole = str(d.get("text", ""))
             self._start_job(job)
+        elif "cpu_threads" in d and cpu_threads != job.cpu_threads:
+            raise ValueError("число потоков начатой фразы измениться не может")
+        elif "temperature" in d and temperature != job.temperature:
+            raise ValueError("температура уже начатой фразы измениться не может")
         elif job.closed:
             raise ValueError(f"фраза {jid} уже получена целиком")
         job.push(str(d.get("text", "")), more)
@@ -530,15 +582,13 @@ class Session:
                 played = True
             # голос командующего пришёл целиком: один синтез на весь кусок, иначе тембр берётся заново на каждом предложении
             whole = (job.whole or "").strip()
-            ref_path = str(job.ref[0]) if job.ref else ""
-            if (not played and self.m.engine.clone_voice and whole and job.ref
-                    and self.m.engine.clone_voice not in Path(ref_path).parts):
+            if not played and self.m.engine.clone_voice and whole and job.ref:
                 self._note_said(job, whole)
                 try:
                     audio = await self.loop.run_in_executor(
-                        self.m.mlx, lambda t=whole: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(t, job.ref)]))
-                    audio = lengthen_sentence_pauses(np.asarray(audio, np.float32), sr, whole)
-                    audio = fade_tail(audio, sr, self.svc.args.tail_fade_ms)
+                        self.m.mlx, lambda t=whole: np.concatenate([np.zeros(0, np.float32), *self._tts_stream(t, job.ref, job.temperature, job.cpu_threads)]))
+                    audio = fade_tail(np.asarray(audio, np.float32), sr, self.svc.args.tail_fade_ms)
+                    audio = lengthen_sentence_pauses(audio, sr, whole)
                     if not job.preview:
                         job.said = (job.said + " " + whole).strip()
                     await self.send_audio(job, audio)
@@ -580,7 +630,7 @@ class Session:
     def _render_for(self, job: Job) -> Render | None:
         if job.whole is None or job.preview or job.ref is None:
             return None
-        return self.renders.get(render_key(job.ref, job.whole))
+        return self.renders.get(self._render_key(job.ref, job.whole, job.temperature))
 
     async def _play_render(self, job: Job, r: Render) -> bool:
         """Сыграть заготовку: куски уходят в окно сразу, как готовы. Возвращает, ушёл ли звук."""
@@ -596,10 +646,32 @@ class Session:
                 job.said = (job.said + " " + piece).strip()
             await self.send_audio(job, a)
 
+    def _render_key(self, ref, text: str, temperature: float | None):
+        effective = self.m.engine.kwargs.get("temperature") if temperature is None else temperature
+        return render_key(ref, text, self.m.engine.id, effective)
+
+    def _cpu_threads(self, data):
+        value = validate_cpu_threads(data.get("cpu_threads"))
+        if value is not None and not getattr(self.m, "supports_cpu_threads", False):
+            raise ValueError("настройка потоков CPU TTS доступна в PyTorch/Windows")
+        return value
+
+    def _tts_stream(self, text, ref, temperature, cpu_threads=None):
+        options = {} if temperature is None else {"temperature": temperature}
+        if cpu_threads is not None:
+            options["cpu_threads"] = cpu_threads
+        return self.m.tts_stream(text, ref, **options)
+
     async def on_prepare(self, d: dict):
         """Заготовить фразу заранее (`prepare {id, role, text}`) → `prepared {id, audio_s}` или `{id, error}`, когда
         весь её звук готов. Тот же текст тем же голосом уже заготовлен или готовится — второй раз не синтезируется."""
         pid, role, text = int(d["id"]), d.get("role", "chief"), str(d.get("text", ""))
+        try:
+            temperature = validate_temperature(d.get("temperature"))
+            cpu_threads = self._cpu_threads(d)
+        except ValueError as e:
+            await self.send(type="prepared", id=pid, error=str(e))
+            return
         vid = str(d.get("voice_id") or "")
         if vid:
             try:
@@ -614,28 +686,50 @@ class Session:
         if ref is None:
             await self.send(type="prepared", id=pid, error=NO_REF)
             return
-        key = render_key(ref, text)
+        key = self._render_key(ref, text, temperature)
         r = self.renders.pop(key, None)
         if r is None or (r.done and r.error):
             r = Render()
-            r.task = asyncio.create_task(self._render(r, ref, text, self.render_task))
+            r.task = asyncio.create_task(self._render(r, ref, text, self.render_task, temperature=temperature, cpu_threads=cpu_threads))
             self.render_task = r.task
         self.renders[key] = r  # в конец: недавно нужная заготовка вытесняется последней
-        for k in [k for k, x in self.renders.items() if x.done][:max(0, len(self.renders) - PREPARED_MAX)]:
-            del self.renders[k]
+        self.prepare_requests[pid] = r
+        self._trim_renders()
         asyncio.create_task(self._report_prepared(pid, r))
 
-    async def _render(self, r: Render, ref, text: str, prev: asyncio.Task | None):
+    def cancel_prepare(self, pid: int):
+        r = self.prepare_requests.get(pid)
+        if r is None or r.done:
+            return
+        if any(request["task"] is r.task for request in self.batch_requests.values()):
+            # Этот prepare только ждёт PCM общей подготовки; его отмена не останавливает пакет.
+            cancelled = Render()
+            cancelled.finish("отменено")
+            self.prepare_requests[pid] = cancelled
+            asyncio.create_task(self._report_prepared(pid, cancelled))
+            return
+        r.finish("отменено")
+        if r.task:
+            r.task.cancel()
+        # Уже запущенный вызов MLX завершится в своей нити; результат не используется, следующие не запускаются.
+        for key in [key for key, value in self.renders.items() if value is r]:
+            del self.renders[key]
+
+    async def _render(self, r: Render, ref, text: str, prev: asyncio.Task | None, *, temperature: float | None = None, cpu_threads: int | None = None):
         """Синтез заготовки в нити MLX — по куску на работу; заготовки идут по очереди."""
         if prev is not None and not prev.done():
             await asyncio.wait([prev])
         sr = self.m.sample_rate
         gap = 0.0
         try:
-            for piece in whole_pieces(text):
+            # Тот же цельный синтез и паузы, что в render предзаписи: тембр не сбрасывается на стыках.
+            pieces = [text] if self.m.engine.clone_voice else whole_pieces(text)
+            for piece in pieces:
                 a = await self.loop.run_in_executor(
-                    self.m.mlx, lambda p=piece: np.concatenate([np.zeros(0, np.float32), *self.m.tts_stream(p, ref)]))
+                    self.m.mlx, lambda p=piece: np.concatenate([np.zeros(0, np.float32), *self._tts_stream(p, ref, temperature, cpu_threads)]))
                 a = fade_tail(a.astype(np.float32), sr, self.svc.args.tail_fade_ms)
+                if self.m.engine.clone_voice and len(a):
+                    a = lengthen_sentence_pauses(a, sr, piece)
                 r.add(piece, np.concatenate([np.zeros(int(gap * sr), np.float32), a]))
                 gap = pause_after(piece)
             r.finish()
@@ -647,6 +741,9 @@ class Session:
 
     async def _report_prepared(self, pid: int, r: Render):
         await r.wait(1 << 30)
+        if self.prepare_requests.get(pid) is not r or self.closed:
+            return
+        self.prepare_requests.pop(pid, None)
         try:
             if r.error:
                 await self.send(type="prepared", id=pid, error=r.error)
@@ -654,6 +751,158 @@ class Session:
                 await self.send(type="prepared", id=pid, audio_s=round(r.audio_s(self.m.sample_rate), 2))
         except Exception:  # noqa: BLE001 — окно уже закрыто
             pass
+        self._trim_renders()
+
+    async def on_prepare_batch(self, d: dict):
+        """Один запрос, настоящие пакеты CUDA; готовый PCM остаётся для say."""
+        pid = int(d["id"])
+        texts = d.get("texts")
+        total = len(texts) if isinstance(texts, list) else 0
+        try:
+            temperature = validate_temperature(d.get("temperature"))
+            cpu_threads = self._cpu_threads(d)
+            size = d.get("batch_size", 4)
+            if isinstance(size, bool) or not isinstance(size, int) or size not in (1, 2, 4):
+                raise ValueError("размер пакета должен быть 1, 2 или 4")
+            if not isinstance(texts, list) or not all(isinstance(t, str) and t.strip() for t in texts):
+                raise ValueError("пакет должен содержать непустые тексты")
+            vid, role = str(d.get("voice_id") or ""), d.get("role", "chief")
+            if vid:
+                ref = self.svc.store.ref(vid)
+            elif role in ROLES:
+                ref = self.svc.ref_for(role)
+            else:
+                raise ValueError(f"нет такой роли: {role}")
+            if ref is None:
+                raise ValueError(NO_REF)
+        except (ValueError, KeyError) as e:
+            await self.send(type="prepared-batch", id=pid, done=0, total=total, error=str(e))
+            return
+        self.cancel_prepare_batch(pid)
+        entries, owned = [], {}
+        for text in texts:
+            key = self._render_key(ref, text, temperature)
+            r = self.renders.pop(key, None)
+            if r is None or (r.done and r.error):
+                r = Render()
+                owned[key] = (text, r)
+            self.renders[key] = r
+            entries.append(r)
+        request = {"entries": entries, "owned": owned, "cancelled": False, "task": None}
+        self.batch_requests[pid] = request
+        request["task"] = asyncio.create_task(self._render_batch(pid, request, ref, size, temperature, cpu_threads, self.render_task))
+        for _, r in owned.values():
+            r.task = request["task"]
+        self.render_task = request["task"]
+
+    def cancel_prepare_batch(self, pid: int):
+        request = self.batch_requests.get(pid)
+        if request is None or request["cancelled"]:
+            return
+        request["cancelled"] = True
+        self._discard_batch(request, "отменено")
+        # Cancel interrupts the await, not the already running CUDA kernel; its result is discarded.
+        if request["task"]:
+            request["task"].cancel()
+        if not self.closed:
+            self.loop.create_task(self._batch_cancelled(pid, request))
+        else:
+            self.batch_requests.pop(pid, None)
+
+    def _discard_batch(self, request, error):
+        for key, (_, r) in request["owned"].items():
+            # Завершённый PCM уже может принадлежать другой подготовке или готовому say.
+            # Отмена/сбой следующих пакетов не отзывает ранее подготовленный звук.
+            if r.done and r.error is None:
+                continue
+            if not r.done:
+                r.finish(error)
+            if self.renders.get(key) is r:
+                del self.renders[key]
+        self._trim_renders(exclude_request=request)
+
+    def _trim_renders(self, *, exclude_request=None):
+        """Вытеснять старый готовый PCM, которым сейчас никто не пользуется."""
+        protected = set(self.prepare_requests.values())
+        for request in self.batch_requests.values():
+            if request is not exclude_request and not request["cancelled"]:
+                protected.update(request["entries"])
+        for job in self.jobs.values():
+            r = self._render_for(job)
+            if r is not None:
+                protected.add(r)
+        for key, r in list(self.renders.items()):
+            if len(self.renders) <= PREPARED_MAX:
+                break
+            if r.done and r not in protected:
+                del self.renders[key]
+
+    async def _batch_cancelled(self, pid, request):
+        if self.batch_requests.get(pid) is request and not self.closed:
+            self.batch_requests.pop(pid, None)
+            try:
+                await self.send(type="prepared-batch", id=pid, done=sum(r.done and not r.error for r in request["entries"]),
+                                total=len(request["entries"]), error="отменено")
+            except Exception:
+                pass
+
+    async def _render_batch(self, pid, request, ref, size, temperature, cpu_threads, prev):
+        entries = request["entries"]
+        total = len(entries)
+        def active():
+            return not self.closed and not request["cancelled"] and self.batch_requests.get(pid) is request
+        def done():
+            return sum(r.done and not r.error for r in entries)
+        try:
+            if prev is not None and not prev.done():
+                await asyncio.wait([prev])
+            if not active():
+                return
+            # Previously queued prepare/batch requests own these renders and complete first.
+            for r in dict.fromkeys(entries):
+                if all(r is not owned_r for _, owned_r in request["owned"].values()):
+                    await r.wait(1 << 30)
+                    if r.error:
+                        raise RuntimeError(r.error)
+            pending = list(request["owned"].values())
+            if 0 < done() < total:
+                await self.send(type="prepared-batch", id=pid, done=done(), total=total)
+            for start in range(0, len(pending), size):
+                if not active():
+                    return
+                chunk = pending[start:start + size]
+                options = {} if temperature is None else {"temperature": temperature}
+                if cpu_threads is not None:
+                    options["cpu_threads"] = cpu_threads
+                wavs = await self.loop.run_in_executor(
+                    self.m.mlx, lambda batch=chunk: self.m.tts_batch([t for t, _ in batch], ref, **options))
+                if not active():
+                    return
+                if len(wavs) != len(chunk):
+                    raise RuntimeError("модель вернула неожиданное число фраз")
+                for (text, r), audio in zip(chunk, wavs):
+                    audio = fade_tail(np.asarray(audio, np.float32), self.m.sample_rate, self.svc.args.tail_fade_ms)
+                    if self.m.engine.clone_voice and len(audio):
+                        audio = lengthen_sentence_pauses(audio, self.m.sample_rate, text)
+                    r.add(text, audio)
+                    r.finish()
+                if done() < total:
+                    await self.send(type="prepared-batch", id=pid, done=done(), total=total)
+            if active():
+                await self.send(type="prepared-batch", id=pid, done=total, total=total,
+                                audio_s=[round(r.audio_s(self.m.sample_rate), 2) for r in entries])
+                self._trim_renders(exclude_request=request)
+        except asyncio.CancelledError:
+            self._discard_batch(request, "отменено")
+            raise
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"
+            self._discard_batch(request, error)
+            if active():
+                await self.send(type="prepared-batch", id=pid, done=done(), total=total, error=error)
+        finally:
+            if self.batch_requests.get(pid) is request and not request["cancelled"]:
+                self.batch_requests.pop(pid, None)
 
     async def on_render(self, d: dict):
         """Синтез в файл (`render {id, role, text, asr?, voice_id?}`): звук в окно не уходит и нигде не звучит. Фраза целиком —
@@ -715,7 +964,7 @@ class Session:
 
         def synth():
             try:
-                for a in self.m.tts_stream(text, job.ref):
+                for a in self._tts_stream(text, job.ref, job.temperature, job.cpu_threads):
                     if cancel.is_set():
                         break
                     self.loop.call_soon_threadsafe(q.put_nowait, a)
@@ -934,6 +1183,28 @@ class Session:
             svc.tts_state = "ready"
         await self.send(type="tts_list", **svc.tts_info())
 
+    async def on_tts_resource(self, d: dict):
+        request_id = d.get("id")
+        try:
+            if isinstance(request_id, bool) or not isinstance(request_id, (int, float)):
+                raise ValueError("нужен числовой id")
+            op = d.get("op")
+            if op not in ("load", "unload"):
+                raise ValueError("неизвестная операция TTS")
+            if op == "load":
+                voice_id = d.get("voice_id")
+                ref = self.svc.store.ref(voice_id) if voice_id is not None else self.svc.ref_for("chief")
+                if ref is None:
+                    raise ValueError(NO_REF)
+                operation = lambda: self.m.load_tts_resource(ref)
+            else:
+                operation = self.m.unload_tts_resource
+            await self.loop.run_in_executor(self.m.mlx, operation)
+            await self.send(type="tts-resource-done", id=request_id, tts=self.svc.tts_info())
+        except Exception as e:
+            await self.send(type="tts-resource-done", id=request_id, tts=self.svc.tts_info(),
+                            error=f"{type(e).__name__}: {e}")
+
     # ------------------------------------------------------------ сообщения окна
 
     async def on_text(self, d: dict):
@@ -949,10 +1220,18 @@ class Session:
             await self.send(type="settings", **self.cfg)
         elif t == "tts":
             await self.on_tts(d)
+        elif t == "tts-resource":
+            await self.on_tts_resource(d)
         elif t == "say":
             await self.on_say(d)
         elif t == "prepare":
             await self.on_prepare(d)
+        elif t == "prepare-batch":
+            await self.on_prepare_batch(d)
+        elif t == "cancel-prepare-batch":
+            self.cancel_prepare_batch(int(d["id"]))
+        elif t == "cancel-prepare":
+            self.cancel_prepare(int(d["id"]))
         elif t == "render":
             await self.on_render(d)
         elif t == "stop":
@@ -975,6 +1254,9 @@ class Session:
         self.m.forget_ref(self.pending_path)
 
     async def close(self):
+        self.closed = True
+        for pid in list(self.batch_requests):
+            self.cancel_prepare_batch(pid)
         if self.word_task and not self.word_task.done():
             self.word_task.cancel()
         for job in list(self.jobs.values()):
@@ -1014,7 +1296,7 @@ def build_app(argv=None):
             else:
                 await s.send(type="ready", voices=svc.store.list(), roles=svc.store.roles(), loaded=True,
                              record_text=RECORD_TEXT, rate=svc.models.sample_rate, aec=svc.aec,
-                             tts=svc.tts_info())
+                             tts=svc.tts_info(), capabilities={"prepare_batch": True, "tts_temperature": True, "tts_cpu_threads": getattr(svc.models, "supports_cpu_threads", False)})
                 await s.send(type="settings", **s.cfg)
             while True:
                 msg = await sock.receive()

@@ -19,6 +19,31 @@ function fakeSpeaker() {
 }
 
 describe('очередь голоса', () => {
+  it('на паузе окончание текущего звука не запускает следующую сцену', async () => {
+    const f = fakeSpeaker();
+    const q = voiceQueue(f.speaker);
+    q.scene('intro');
+    void q.push({ text: 'первая сцена', scene: 'intro', source: 'prepared', priority: 'scene' });
+    void q.push({ text: 'вторая сцена', scene: 'intro', source: 'prepared', priority: 'scene' });
+    q.pause();
+    await f.finishOne();
+    expect(f.said).toEqual(['первая сцена']);
+    q.resume();
+    expect(f.said).toEqual(['первая сцена', 'вторая сцена']);
+  });
+  it('переход сцены в onDone не теряет уже начавшуюся фразу следующей сцены', async () => {
+    const f = fakeSpeaker();
+    const q = voiceQueue(f.speaker, { onDone: (line) => {
+      if (line.scene !== 'intro') return;
+      q.scene('welcome');
+      void q.push({ text: 'Выбор фронта', priority: 'scene', source: 'prepared', scene: 'welcome' });
+    } });
+    q.scene('intro');
+    void q.push({ text: 'Последняя фраза интро', priority: 'scene', source: 'prepared', scene: 'intro' });
+    await f.finishOne();
+    expect(q.current()?.text).toBe('Выбор фронта');
+    expect(q.busy()).toBe(true);
+  });
   it('не говорит поверх себя: предупреждение таймера ждёт конца фразы сцены', async () => {
     const f = fakeSpeaker();
     const q = voiceQueue(f.speaker);
@@ -108,17 +133,21 @@ describe('очередь голоса', () => {
     });
     q.scene('result');
     const line = (text: string): Line => ({ text, priority: 'scene', source: 's', scene: 'result', voice: 'zhukov' });
-    q.push(line('первая'));
-    q.push(line('вторая'));
+    const firstDone = q.push(line('первая'));
+    const secondDone = q.push(line('вторая'));
     expect(said).toEqual(['первая']);
     releaseSynth();
     await new Promise((r) => setTimeout(r, 0));
-    // синтез второй уже идёт, пока первая ещё звучит
-    expect(said).toEqual(['первая', 'вторая']);
+    // Новый say прервал бы звук на сервере: synthDone не разрешает запуск следующей фразы.
+    expect(said).toEqual(['первая']);
     expect(q.current()?.text).toBe('первая');
     pending[0]?.();
-    await new Promise((r) => setTimeout(r, 0));
+    await firstDone;
+    expect(said).toEqual(['первая', 'вторая']);
     expect(q.current()?.text).toBe('вторая');
+    pending[1]?.();
+    await secondDone;
+    expect(q.current()).toBeNull();
   });
 
   it('одинаковый текст разных переломов разбора произносится оба раза', async () => {

@@ -3,6 +3,17 @@
  * Пять неверных ПИН подряд закрывают вход на минуту; после блокировки счёт начинается заново.
  */
 import type { ExpoSettings } from './settings';
+import type { ExpoBus } from './bus';
+
+/** Любое окно запрашивает вход; ПИН и меню остаются в главном окне. */
+export function operatorAccess(index: number, bus: ExpoBus, onOpen: () => void, focus: () => Promise<void>, failed: (error: unknown) => void = () => {}) {
+  const open = () => { onOpen(); void focus().catch(failed); };
+  const off = index === 0 ? bus.on(message => { if (message.k === 'operator-open') open(); }) : () => {};
+  return {
+    request() { if (index === 0) open(); else bus.send({ k: 'operator-open' }); },
+    dispose: off,
+  };
+}
 export const operatorCombo = (e: KeyboardEvent) => e.ctrlKey && e.altKey && e.shiftKey && e.code === 'KeyO';
 export const checkPin = (entered: string, s: ExpoSettings) => entered === s.pin;
 export interface PinLock {

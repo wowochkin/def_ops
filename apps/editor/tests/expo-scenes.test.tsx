@@ -13,7 +13,7 @@ afterEach(cleanup);
 const scales = { axes: { speed: 0.5, cost: -0.2, intent: 1, days: -1.5, lossRatio: 1.06, done: 2, due: 2 }, notes: { speed: 'быстрее истории на 1,5 сут', cost: 'потери больше истории на 6 %', intent: 'выполнено 2 из 2' } };
 const view = (patch: Partial<ModelView> = {}): ModelView => ({
   front: 'su_1bf', turn: 1, time: '1945-04-16T05:00', hour: 0, decisions: [], reveal: null, feed: [], final: null, busy: false, error: null, scales, map: { armies: [], prev: null, flashes: [], path: {} },
-  spare: 1, tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 }, move: null,
+  spare: 1, tasks: [{ id: 'seelow', title: 'Прорыв Зееловских высот', historical: '1945-04-19', due: '1945-04-19', simulated: null, days: null }], loss: { own: 0, ref: 0 }, berlinKm: { now: 68, history: 68 }, move: null, blow: null,
   cards: [
     { id: 'bf1-north', title: 'Обход высот с севера', lines: ['Танковые армии — севернее, через Врицен', 'б', 'в', 'г'] },
     { id: 'bf1-hist', title: 'Ночной штурм с прожекторами', lines: ['а', 'б', 'в', 'г'] },
@@ -28,6 +28,15 @@ const choose = () => {
 };
 const show = (state: DirectorState, model: ModelFrame, sent: unknown[] = []) =>
   render(<ExpoView window={0} state={state} settings={EXPO_DEFAULTS} count={1} model={model} send={(e) => sent.push(e)} />);
+
+it('без разбора итог сразу содержит финальные показатели без ожидания реплик', () => {
+  const played = view({ time: '1945-05-02T05:00', final: { scales, rank: 'Генерал армии', matches: 2, forecast: 'Берлин взят' } });
+  const s: DirectorState = { ...initialState(0), front: 'su_1bf', phase: { kind: 'result', narrated: false } };
+  const cfg = { ...EXPO_DEFAULTS, generation: { ...EXPO_DEFAULTS.generation, comments: true, debrief: false } };
+  const v = render(<ExpoView window={0} state={s} settings={cfg} count={1} model={{ view: played, error: null }} send={() => {}} />);
+  expect(v.getByRole('heading', { name: 'Итог расчёта' })).toBeTruthy();
+  expect(v.queryByText(/Задачи и шкалы появятся вместе с речью/)).toBeNull();
+});
 
 it('turn shows bank cards with gist, details open in place, choice is sent', () => {
   const sent: unknown[] = [];
@@ -52,6 +61,9 @@ it('turn shows bank cards with gist, details open in place, choice is sent', () 
   expect(sent).toContainEqual({ t: 'choose', card: 1 });
   fireEvent.click(v.getByRole('button', { name: 'Подробнее о карточке 3' }));
   fireEvent.click(v.getByRole('button', { name: 'Выбрать вариант 3' }));
+  expect(sent).not.toContainEqual({ t: 'choose', card: 2 });
+  expect(v.getByText('Принять вариант 3 — Главный удар южнее, на Фюрстенвальде?')).toBeTruthy();
+  fireEvent.click(v.getByRole('button', { name: 'Подтвердить' }));
   expect(sent).toContainEqual({ t: 'choose', card: 2 });
 });
 
@@ -183,7 +195,10 @@ it('result shows rank, forecast, axes and matches; core failure is shown', () =>
   expect(plan?.camera?.key.startsWith('result-turn-1-')).toBe(true);
   const other = mapPlan({ state, mv: played, maps: { session }, lit: null, count: 3, index: 1, spoken: 'Другая фраза разбора про Эльбу.' });
   expect(other?.camera?.key).not.toBe(plan?.camera?.key);
-  expect(plan?.extra?.some((f) => f.id === 'result-sector')).toBe(true);
+  // Участок задаётся камерой; поверх карты нет прежней заливки сектора.
+  expect(plan?.camera?.bbox).toBeDefined();
+  expect(plan?.extra?.some((f) => f.id === 'result-sector')).toBe(false);
+  expect(other?.camera).toMatchObject({ ms: 0, scale: 1_500_000 });
   expect(mapPlan({ state, mv: played, maps: { session }, lit: null, count: 3, index: 0, spoken: turnLine })).toBeNull();
   cleanup();
   const w = show(choose(), { view: null, error: 'Модель недоступна: нет ядра' });
@@ -241,7 +256,8 @@ it('briefing: map, figures and excursion are different screens', () => {
   const note = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
   expect(note.getByRole('heading', { name: 'Одерско-нейсенский рубеж' })).toBeTruthy();
   expect(note.getByText('20–40 км')).toBeTruthy();
-  expect(note.getByText(/с\. 246–248/)).toBeTruthy();
+  expect(note.getByText('3 обвода')).toBeTruthy();
+  expect(note.getByText(/Немецкий замысел — не отдать Берлин/)).toBeTruthy();
   expect(note.queryByRole('img', { name: /Обстановка к 16 апреля 1945/ })).toBeNull();
 });
 
@@ -294,9 +310,11 @@ it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the f
   const model = { view: null, error: null } as const;
   const sent: unknown[] = [];
   const a = render(<ExpoView window={0} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={(e) => sent.push(e)} />);
-  expect(a.getByRole('heading', { name: 'Как работает штаб ИИ' })).toBeTruthy();
-  expect(a.getByRole('heading', { name: 'Армии идут по часам' })).toBeTruthy();
-  expect(a.getByText('База знаний')).toBeTruthy();
+  expect(a.getByRole('heading', { name: 'Как устроен стенд' })).toBeTruthy();
+  expect(a.getByRole('heading', { name: 'Каждый день считается отдельно' })).toBeTruthy();
+  fireEvent.click(a.getByRole('tab', { name: 'Откуда факты' }));
+  expect(a.getByRole('heading', { name: 'Штаб опирается на исторические данные' })).toBeTruthy();
+  expect(a.getByText(/Кривошеев, «Россия и СССР в войнах XX века»/)).toBeTruthy();
   expect(a.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();
   fireEvent.click(a.getByRole('button', { name: 'Голос: вкл' }));
   expect(sent).toEqual([{ t: 'voice' }]);
@@ -304,15 +322,15 @@ it('attract: screen 1 explains the staff, screen 2 is the map, screen 3 is the f
   const b = render(<ExpoView window={1} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={() => {}} />);
   expect(b.getByRole('img', { name: 'Переигровка Берлинской операции' })).toBeTruthy();
   expect(b.getByText(/Рекорд дня/)).toBeTruthy();
-  expect(b.queryByRole('heading', { name: 'Как работает штаб ИИ' })).toBeNull();
+  expect(b.queryByRole('heading', { name: 'Как устроен стенд' })).toBeNull();
   cleanup();
   const opened: unknown[] = [];
   const c = render(<ExpoView window={2} state={s} settings={EXPO_DEFAULTS} count={3} model={model} send={(e) => opened.push(e)} />);
   expect(c.getByRole('heading', { name: 'Полная версия' })).toBeTruthy();
   expect(c.getByRole('img', { name: 'Карта операции' })).toBeTruthy();
-  expect(c.queryByRole('img', { name: 'Моделирование' })).toBeNull();
-  fireEvent.click(c.getByRole('tab', { name: 'Моделирование' }));
-  expect(c.getByRole('img', { name: 'Моделирование' })).toBeTruthy();
+  expect(c.queryByRole('img', { name: 'Сравнение с историей' })).toBeNull();
+  fireEvent.click(c.getByRole('tab', { name: 'Сравнение с историей' }));
+  expect(c.getByRole('img', { name: 'Сравнение с историей' })).toBeTruthy();
   expect(opened).toEqual([]);
   expect(c.queryByText(/Рекорд дня/)).toBeNull();
   expect(c.queryByRole('img', { name: 'Переигровка Берлинской операции' })).toBeNull();

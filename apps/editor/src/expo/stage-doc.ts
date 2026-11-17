@@ -5,7 +5,7 @@
  * как в полном режиме. Зоны влияния сторон — снимками по суткам (`zonesOf`), картинкой под знаками.
  * Поверх — стрелки приказа карточки и пути армий на итоге (знаки атласа), кадр камеры по рамке.
  */
-import { createFeature, DEFAULT_SIZING, type AreaFeature, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
+import { createFeature, featureAt, DEFAULT_SIZING, type AreaFeature, type Feature, type LngLat, type MapDocument, type SymbolFeature } from '@def-ops/core';
 import { agentsHistory, agentsToRun, runToDocument, snapshotZones, type AgentHistory, type AgentTrace, type History, type SimContext, type ZoneGrid } from '@def-ops/sim';
 import { MAP, type Arrow } from './map';
 
@@ -73,7 +73,7 @@ const BERLIN_KM = 14;
 const mercY = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 const latOfY = (y: number) => (360 / Math.PI) * Math.atan(Math.exp(y)) - 90;
 
-function coverSheet(g: ZoneGrid, time: string): ZoneGrid {
+function coverSheet(g: ZoneGrid): ZoneGrid {
   const [w, s, e, n] = g.bbox;
   const dw = (e - w) / g.cols;
   const left = Math.max(0, Math.ceil((w - SHEET_WEST) / dw - 1e-9));
@@ -127,7 +127,7 @@ function zonesOf(ctx: SimContext, sn: ReturnType<typeof agentsToRun>['run']['sna
       for (let k = 0; k < v.length; k++) if (v[k] > 0) held[k] = 1;
       // земля, уже бывшая своей, не становится чужой в следующем снимке: иначе тыл за Одером синеет, будто его отбили
       for (let k = 0; k < v.length; k++) if (held[k] && v[k] <= 0) v[k] = 48;
-      return { time: picked[i].time, grid: coverSheet({ ...g, v }, picked[i].time) };
+      return { time: picked[i].time, grid: coverSheet({ ...g, v }) };
     });
   } catch {
     return [];
@@ -147,18 +147,30 @@ const moved = (pts: LngLat[]) => {
  */
 export function followHistory(doc: MapDocument, front: string): MapDocument {
   const armies = MAP.armies.filter((a) => a.front === front);
+  const identity = new Map<SymbolFeature, typeof armies[number]>();
+  const positions = new Map<string, LngLat[]>();
+  // Один ref может состоять из нескольких символов с разными time (смена состояния армии).
+  // Неподвижность последнего куска означает прибытие, а не отсутствие траектории у всей армии.
+  for (const f of doc.features) {
+    if (f.kind !== 'symbol') continue;
+    const text = `${f.name ?? ''} ${f.style.text ?? ''}`.toLowerCase().replace(/ё/g, 'е');
+    const army = f.ref ? armies.find((a) => f.ref === a.id) : armies.find((a) => sameArmy(text, a.label));
+    if (!army) continue;
+    identity.set(f, army);
+    const pts = [f.at, ...(f.keyframes ?? []).flatMap((k) => k.at ? [k.at as LngLat] : [])];
+    positions.set(army.id, [...(positions.get(army.id) ?? []), ...pts]);
+  }
+  let changed = false;
   const features = doc.features.map((f) => {
     if (f.kind !== 'symbol') return f;
-    const text = `${f.name ?? ''} ${f.style.text ?? ''}`.toLowerCase().replace(/ё/g, 'е');
-    const army = armies.find((a) => f.ref === a.id || sameArmy(text, a.label));
-    if (!army) return f;
+    const army = identity.get(f);
+    if (!army || moved(positions.get(army.id) ?? []) >= 0.08) return f;
     const hist = army.track.flatMap((p, i) => (p ? [{ t: MAP.days[i], at: p as LngLat }] : []));
     if (moved(hist.map((x) => x.at)) < 0.08) return f;
-    const own = (f.keyframes ?? []).flatMap((k) => (k.at ? [k.at as LngLat] : []));
-    if (moved(own.length ? own : [f.at]) >= 0.08) return f;
+    changed = true;
     return { ...f, at: hist[hist.length - 1].at, keyframes: hist };
   });
-  return { ...doc, features };
+  return changed ? { ...doc, features } : doc;
 }
 
 /** Подпись знака — та же армия, что короткая подпись карты («3 А», «3 уд. А», «3 гв. ТА»). */
@@ -177,11 +189,7 @@ function sameArmy(text: string, label: string): boolean {
 
 /** Положение армии (знака уровня фронта) по ключевым кадрам на момент `t` (ISO); null — знака нет. */
 function armyAt(f: SymbolFeature, t: string): LngLat | null {
-  const k = f.keyframes;
-  if (!k?.length) return f.at;
-  let best: LngLat | null = null;
-  for (const x of k) if (x.t <= t && x.at) best = x.at as LngLat;
-  return best ?? (k[0].at as LngLat | undefined) ?? f.at;
+  return featureAt(f, t)?.at ?? null;
 }
 
 /** Суточные точки пути армий (знаки слоя `layer` с `ref` из `ids`) от начала до `until`, по 20:00 и последней. */
@@ -195,11 +203,15 @@ export function dailyPaths(doc: MapDocument, ids: string[], until: string, layer
   }
   days.push(until);
   const out: Record<string, LngLat[]> = {};
-  for (const f of doc.features) {
-    if (f.kind !== 'symbol' || f.layerId !== layer || !f.ref || !ids.includes(f.ref)) continue;
-    const pts = days.map((d) => armyAt(f, d)).filter((p): p is LngLat => !!p);
+  for (const id of ids) {
+    const segments = doc.features.filter((f): f is SymbolFeature => f.kind === 'symbol' && f.layerId === layer && f.ref === id);
+    // На каждую дату выбирается действующий символ, независимо от порядка сегментов в документе.
+    const pts = days.flatMap((d) => {
+      const at = segments.map((f) => armyAt(f, d)).find((p) => p !== null);
+      return at ? [at] : [];
+    });
     const uniq = pts.filter((p, i) => i === 0 || Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) > 0.01);
-    if (uniq.length > 1) out[f.ref] = [...(out[f.ref] ?? []), ...uniq];
+    if (uniq.length > 1) out[id] = uniq;
   }
   return out;
 }
@@ -275,7 +287,7 @@ export function frameOf(pts: LngLat[], minDeg = 0.42): [number, number, number, 
 
 /** Положение знака армии на момент (предпочтительно знак уровня фронта). */
 export function unitAt(doc: MapDocument, id: string, iso: string): LngLat | null {
-  const hits = doc.features.filter((f): f is SymbolFeature => f.kind === 'symbol' && f.ref === id);
+  const hits = doc.features.filter((f): f is SymbolFeature => f.kind === 'symbol' && f.ref === id && armyAt(f, iso) !== null);
   const f = hits.find((x) => x.layerId === 'lvl-op-units') ?? hits[0];
   return f ? armyAt(f, iso) : null;
 }

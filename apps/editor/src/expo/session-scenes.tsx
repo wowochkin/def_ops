@@ -112,20 +112,19 @@ export function Timeline({ mv }: { mv: ModelView }) {
 
 /** Задачи фронта с отметками: выполнена (дата и сравнение с историей), по истории уже пора, впереди. */
 export function Tasks({ mv, limit = 6 }: { mv: ModelView; limit?: number }) {
-  const now = mv.time.slice(0, 10);
   return (
     <ul className="expo-tasks" aria-label="Задачи фронта">
       {mv.tasks.slice(0, limit).map((x) => {
         const state = x.simulated ? 'done' : 'ahead';
         return (
           <li key={x.id} data-state={state}>
-            <span className="expo-task-mark" aria-hidden="true">{state === 'done' ? '✓' : state === 'late' ? '!' : '○'}</span>
+            <span className="expo-task-mark" aria-hidden="true">{state === 'done' ? '✓' : '○'}</span>
             <span className="expo-task-title">{x.title}</span>
             <span className="expo-task-when">
               {state === 'done'
                 ? `${dayMonth(x.simulated!)}${x.days ? `, в истории — ${dayMonth(x.historical)}` : ', как в истории'}`
                 : x.historical
-                  ? `${state === 'late' ? 'в истории — уже' : 'в истории —'} ${dayMonth(x.historical)}`
+                  ? `в истории — ${dayMonth(x.historical)}`
                   : ''}
             </span>
           </li>

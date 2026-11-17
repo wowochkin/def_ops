@@ -16,6 +16,8 @@ export interface ExpoSettings {
   version: 1;
   autostart: boolean;
   aiMode: AiMode;
+  /** Независимые этапы комментариев и озвученного разбора; в прежних настройках оба включены. */
+  generation: { comments: boolean; debrief: boolean; temperature: number; batchSize: 1 | 2 | 4; cpuThreads: 1 | 2 | 4 | 8; commentVoice: boolean; debriefVoice: boolean };
   input: InputProfile;
   voiceInput: boolean;
   timer: { on: boolean; seconds: number };
@@ -42,6 +44,7 @@ export const EXPO_DEFAULTS: ExpoSettings = Object.freeze({
   version: 1,
   autostart: false,
   aiMode: 'ai',
+  generation: { comments: true, debrief: true, temperature: 0.2, batchSize: 4, cpuThreads: 2, commentVoice: true, debriefVoice: true },
   input: 'touch',
   voiceInput: false,
   timer: { on: false, seconds: 30 },
@@ -95,6 +98,7 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
   const screens = sub('screens');
   // поле появилось позже: в прежних настройках его нет — это не порча
   const call = r.attractCall === undefined ? d.attractCall : sub('attractCall');
+  const generation = r.generation === undefined ? d.generation : sub('generation');
   const fronts = (v: unknown): v is FrontId[] =>
     Array.isArray(v) && v.length > 0 && new Set(v).size === v.length && v.every((f) => (ALL_FRONTS as unknown[]).includes(f));
   const order = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
@@ -104,6 +108,15 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
     version: 1,
     autostart: pick('autostart', r.autostart, isBool, d.autostart),
     aiMode: pick('aiMode', r.aiMode, oneOf<AiMode>('ai', 'noai'), d.aiMode),
+    generation: {
+      comments: generation.comments === undefined ? d.generation.comments : pick('generation.comments', generation.comments, isBool, d.generation.comments),
+      debrief: generation.debrief === undefined ? d.generation.debrief : pick('generation.debrief', generation.debrief, isBool, d.generation.debrief),
+      commentVoice: generation.commentVoice === undefined ? d.generation.commentVoice : pick('generation.commentVoice', generation.commentVoice, isBool, d.generation.commentVoice),
+      debriefVoice: generation.debriefVoice === undefined ? d.generation.debriefVoice : pick('generation.debriefVoice', generation.debriefVoice, isBool, d.generation.debriefVoice),
+      cpuThreads: generation.cpuThreads === undefined ? d.generation.cpuThreads : pick('generation.cpuThreads', generation.cpuThreads, (v): v is 1 | 2 | 4 | 8 => v === 1 || v === 2 || v === 4 || v === 8, d.generation.cpuThreads),
+      temperature: generation.temperature === undefined ? d.generation.temperature : pick('generation.temperature', generation.temperature, inRange(0, 1, false), d.generation.temperature),
+      batchSize: generation.batchSize === undefined ? d.generation.batchSize : pick('generation.batchSize', generation.batchSize, (v): v is 1 | 2 | 4 => v === 1 || v === 2 || v === 4, d.generation.batchSize),
+    },
     input: pick('input', r.input, oneOf<InputProfile>('touch', 'mouse', 'mouse-keyboard'), d.input),
     voiceInput: pick('voiceInput', r.voiceInput, isBool, d.voiceInput),
     timer: {
@@ -137,6 +150,24 @@ export function normalizeSettings(raw: unknown): { settings: ExpoSettings; probl
 export interface SettingsStore {
   load(): Promise<ExpoSettings>;
   save(s: ExpoSettings): Promise<void>;
+}
+
+/** Записываем только применённые настройки; при ошибке диска возвращаем и окна, и прежний файл. */
+export async function saveConfiguredSettings(
+  host: { configuration(): ExpoSettings; configure(s: ExpoSettings): Promise<void> },
+  store: SettingsStore,
+  next: ExpoSettings,
+): Promise<void> {
+  const previous = host.configuration();
+  await host.configure(next);
+  try { await store.save(next); }
+  catch (error) {
+    const failed: string[] = [];
+    try { await host.configure(previous); } catch (e) { failed.push(`окна: ${String(e)}`); }
+    try { await store.save(previous); } catch (e) { failed.push(`файл: ${String(e)}`); }
+    if (failed.length) throw new Error(`${String(error)}. Не удалось полностью восстановить настройки: ${failed.join('; ')}`);
+    throw error;
+  }
 }
 
 const KEY = 'def_ops.expo.settings';

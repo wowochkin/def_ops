@@ -83,6 +83,12 @@ export function loadLlm(): LlmSettings {
   } catch { return LLM_DEFAULTS; }
 }
 
+/** Единая запись настроек для редактора и мастера первого запуска; окна получают обновление без перезапуска. */
+export function saveLlm(settings: LlmSettings) {
+  localStorage.setItem('def_ops.llm', JSON.stringify(settings));
+  window.dispatchEvent(new Event('def_ops.llm.changed'));
+}
+
 /** models — модели для ответов; embedModels — модели эмбеддингов (в названии embed), для смыслового поиска по базе знаний. */
 export type LlmCheck = { state: 'unknown' | 'checking' } | { state: 'ok'; models: string[]; embedModels: string[]; info?: Record<string, ModelInfo> } | { state: 'fail'; error: string };
 /** Что известно о модели из собственного API LM Studio: квантование, загружена ли. */
@@ -150,6 +156,13 @@ export interface Llm { settings: LlmSettings; set: (p: Partial<LlmSettings>) => 
 export function useLlm(): Llm {
   const [settings, setSettings] = useState<LlmSettings>(loadLlm);
   const [check, setCheck] = useState<LlmCheck>({ state: 'unknown' });
+  useEffect(() => {
+    const changed = () => setSettings(loadLlm());
+    const stored = (e: StorageEvent) => { if (e.key === 'def_ops.llm') changed(); };
+    window.addEventListener('def_ops.llm.changed', changed);
+    window.addEventListener('storage', stored);
+    return () => { window.removeEventListener('def_ops.llm.changed', changed); window.removeEventListener('storage', stored); };
+  }, []);
   /** Проверить связь заново; промис — итог (голос перепроверяет связь при обращении, без возврата в окно). */
   const recheck = () => { setCheck({ state: 'checking' }); return checkLlm(settings.url).then((r) => { setCheck(r); return r; }); };
   useEffect(() => { void recheck(); }, [settings.url]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -157,7 +170,7 @@ export function useLlm(): Llm {
   useEffect(() => { const f = () => checkLlm(settings.url).then(setCheck); window.addEventListener('focus', f); return () => window.removeEventListener('focus', f); }, [settings.url]);
   return {
     settings, check, recheck,
-    set: (p) => { const s = { ...settings, ...p }; setSettings(s); try { localStorage.setItem('def_ops.llm', JSON.stringify(s)); } catch { /* */ } },
+    set: (p) => { const s = { ...settings, ...p }; setSettings(s); try { saveLlm(s); } catch { /* */ } },
   };
 }
 

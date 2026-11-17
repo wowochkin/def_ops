@@ -1,14 +1,29 @@
 import { historyAt } from '../src/expo/map';
 import { describe, expect, it } from 'vitest';
-import type { EventResult, SimContext } from '@def-ops/sim';
-import { BANK } from '../src/expo/bank';
+import type { AgentTrace, EventResult, SimContext } from '@def-ops/sim';
+import { BANK, turnCards } from '../src/expo/bank';
 import { ExpoSession, moveDigest, refAt, timeAt, type ModelEnv, berlinDistance, tasksOf } from '../src/expo/session';
 
 /** Поддельное ядро: запоминает вызовы, ход — кадры по часам. */
 function fakeCore() {
   const calls: { cmd: string; args: Record<string, unknown> }[] = [];
   let hour = 0;
-  const trace = () => ({ start: '1945-04-16T05:00', hqs: [{ id: 'su_8gva', parent: 'su_1bf', echelon: 'army' }, { id: 'su_13a', parent: 'su_1uf', echelon: 'army' }], frames: Array.from({ length: hour + 1 }, () => []) });
+  // Проверка занятия цели читает дивизии и их цепочку штабов, поэтому макет
+  // отдаёт полный trace: по одной дивизии каждой армии на исторической позиции.
+  const trace = (): AgentTrace => ({
+    scenario: 'fixture', name: 'Тест сеанса', start: '1945-04-16T05:00', hours: hour, seed: 1, fields: ['lon', 'lat'], journal: [],
+    hqs: [
+      { id: 'su_1bf', name: '1 БФ', side: 'su', parent: null, echelon: 'front' },
+      { id: 'su_1uf', name: '1 УФ', side: 'su', parent: null, echelon: 'front' },
+      { id: 'su_8gva', name: '8 гв. А', side: 'su', parent: 'su_1bf', echelon: 'army' },
+      { id: 'su_13a', name: '13 А', side: 'su', parent: 'su_1uf', echelon: 'army' },
+    ],
+    divisions: ['su_8gva', 'su_13a'].map(hq => ({ id: `${hq}-test`, name: 'Тестовая дивизия', side: 'su', hq, kind: 'infantry', mobility: 'foot', size: 'division', quality: 1 })),
+    frames: Array.from({ length: hour + 1 }, (_, h) => {
+      const at = historyAt(timeAt('1945-04-16T05:00', h));
+      return ['su_8gva', 'su_13a'].map(id => [...at.find(a => a.id === id)!.at]);
+    }),
+  });
   const call = async (cmd: string, args: Record<string, unknown>) => {
     calls.push({ cmd, args });
     if (cmd === 'game_start') hour = 0;
@@ -77,7 +92,7 @@ describe('сеанс модели', () => {
     expect(s.view.tasks.find((t) => t.id === 'pocket')!.due > '1945-04-18').toBe(true);
   });
 
-  it('own card sends orders to armies at theatre places, released at the next turn', async () => {
+  it('own card uses the precise bank place before the theatre fallback, orders are released next turn', async () => {
     const core = fakeCore();
     const s = new ExpoSession(env(core), BANK, 'su_1bf', first);
     await s.start();
@@ -86,8 +101,8 @@ describe('сеанс модели', () => {
     await s.decide(1, 0);
     const turn = core.calls.at(-1)!;
     expect(turn.args.orders).toEqual([
-      { hq: 'su_2gta', kind: 'attack', target: [14.1, 52.7], note: 'Обход высот с севера', form: 'order' },
-      { hq: 'su_1gta', kind: 'attack', target: [14.1, 52.7], note: 'Обход высот с севера', form: 'order' },
+      { hq: 'su_2gta', kind: 'attack', target: [14.133, 52.717], note: 'Обход высот с севера', form: 'order' },
+      { hq: 'su_1gta', kind: 'attack', target: [14.133, 52.717], note: 'Обход высот с севера', form: 'order' },
     ]);
     expect(s.view.reveal?.text).toBe('Жуков решил иначе — вот как');
     expect(s.view.reveal?.historical.id).toBe('bf1-hist');
@@ -115,7 +130,7 @@ describe('сеанс модели', () => {
     expect(s.view.final?.rank).toBeTruthy();
   });
 
-  it('replace swaps an own card for an unshown one, never the historical', async () => {
+  it('replace can return an earlier card, keeps three distinct cards and never replaces history', async () => {
     const s = new ExpoSession(env(fakeCore()), BANK, 'su_1uf', first);
     s.deal(2);
     const hist = s.view.cards.findIndex((c) => c.id === 'uf2-hist');
@@ -124,13 +139,21 @@ describe('сеанс модели', () => {
     const before = s.view.cards.map((c) => c.id);
     expect(s.replace(own)).toBe(true);
     expect(before).not.toContain(s.view.cards[own].id);
-    // пять своих карточек: на экране две, после первой замены остаются две непоказанные; показанные по кругу не возвращаются
-    expect(s.view.spare).toBe(2);
-    expect(s.replace(own)).toBe(true);
-    expect(s.view.spare).toBe(1);
-    expect(s.replace(own)).toBe(true);
-    expect(s.view.spare).toBe(0);
-    expect(s.replace(own)).toBe(false);
+    const ownCount = turnCards(BANK, 'su_1uf', 2).filter(c => !c.historical).length;
+    const seen = new Set([...before, s.view.cards[own].id]);
+    let returned = false;
+    for (let i = 0; i < ownCount * 2; i++) {
+      const previous = s.view.cards[own].id;
+      expect(s.replace(own)).toBe(true);
+      const next = s.view.cards[own].id;
+      expect(next).not.toBe(previous);
+      expect(new Set(s.view.cards.map(c => c.id)).size).toBe(3);
+      expect(s.view.cards[hist].id).toBe('uf2-hist');
+      expect(s.view.spare).toBe(ownCount - 2);
+      returned ||= seen.has(next);
+      seen.add(next);
+    }
+    expect(returned).toBe(true);
   });
 
   it('time and reference helpers', () => {
@@ -190,4 +213,14 @@ describe('сводка хода', () => {
     expect(d.taken).toEqual(['Прорыв Зееловских высот: советские войска у Мюнхеберга']);
     expect(d.enemy).toMatch(/исторический замысел/);
   });
+});
+
+it('стрелки готовых решений используют пункты банка, даже если в театре нет одноимённого района', async () => {
+  const core = fakeCore();
+  const bank = { ...BANK, cards: BANK.cards.map(c => c.front === 'su_1bf' && c.turn === 1 && !c.historical ? { ...c, orders: [{ army: 'su_8gva', kind: 'attack' as const, place: 'Wriezen' }] } : c) };
+  const s = new ExpoSession({ ...env(core), placeAt: () => null }, bank, 'su_1bf', first);
+  await s.start(); s.deal(1);
+  const alternatives = s.view.cards.filter(c => c.id !== 'bf1-hist');
+  expect(alternatives.length).toBeGreaterThan(0);
+  expect(alternatives.every(c => (c.arrows?.length ?? 0) > 0)).toBe(true);
 });

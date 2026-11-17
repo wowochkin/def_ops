@@ -10,6 +10,7 @@ export const FRONT_MARSHALS = { su_1bf: 'Маршал Георгий Жуков'
 const PHASE_TITLES = {
   startup: 'Подготовка стенда',
   attract: 'Берлинская операция',
+  intro: 'Интро сеанса',
   welcome: 'Выбор фронта',
   briefing: 'Ввод в обстановку',
   result: 'Итог сеанса',

@@ -8,6 +8,7 @@
  * подсветка исполненного голосом (voice/FlashLayer).
  */
 import { IN_APP, SERVICES_HINT } from './dialogs';
+import { openPortableSetup } from './portable/setup-state';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
@@ -160,6 +161,7 @@ function StaffView({ llm }: { llm: Llm }) {
     <div className="page" data-tour="section-staff">
       <div className="page-in narrow">
         <h2>ИИ</h2>
+        <button onClick={openPortableSetup}>Модели, словарь и перенос библиотеки</button>
         <p className="lead" data-tour="staff-lead">Немецкой стороной в игре может командовать языковая модель на этом компьютере (LM Studio); на агентной модели — ещё и штабы-агенты по уставам, без языковой модели. Игра начинается в «Переигровке»: выберите момент на шкале времени и нажмите «Принять командование». С этого хода советской стороной командуете вы, немецкой — выбранный штаб, до конца операции. На каждом ходу модель получает обстановку, которую мог знать немецкий штаб: свои войска, противника в пределах разведки, итоги суток. Она отдаёт приказы, а арбитр считает их последствия так же, как исторические.</p>
         <section className="card staff-cfg">
           <h3>Связь с моделью</h3>

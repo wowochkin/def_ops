@@ -72,6 +72,8 @@ export interface ModelView {
   /** Ближайшая армия фронта до центра Берлина, км: в ходе и по истории на тот же момент. */
   berlinKm: { now: number; history: number } | null;
   /** Что изменилось за последний ход; null — хода ещё не было. */
+  move: MoveDigest | null;
+  /** Направление принятого решения на карте. */
   blow: { title: string; arrows: Arrow[] } | null;
   map: MapView;
   busy: boolean;
@@ -234,7 +236,7 @@ export class ExpoSession {
   /** Стрелки карточки: распоряжения — к объектам театра; историческая — куда армии фронта дошли по истории к следующему перелому. */
   private arrows(c: Card): Arrow[] {
     const armies = this.view.map.armies;
-    if (!c.historical) return cardArrows(c.orders, armies, this.env.placeAt);
+    if (!c.historical) return cardArrows(c.orders, armies, id => this.point(id));
     const t = this.def.turns.find((x) => x.n === c.turn);
     const next = this.def.turns.find((x) => x.n === c.turn + 1)?.hour ?? this.bank.end;
     if (!t) return [];
@@ -397,7 +399,7 @@ export class ExpoSession {
     const turns = this.def.turns;
     const hist = this.bank.cards.find((c) => c.front === this.front && c.turn === n && c.historical)!;
     const aim = typeof choice === 'object' ? choice.place : null;
-    const picked = choice === 'delay' || aim ? null : this.card(this.view.cards[choice]?.id ?? hist.id);
+    const picked = typeof choice === 'number' ? this.card(this.view.cards[choice]?.id ?? hist.id) : null;
     this.view.busy = true;
     try {
       for (const id of this.returned.splice(0)) await this.env.call('game_release', { id });

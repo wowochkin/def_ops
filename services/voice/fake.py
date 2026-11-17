@@ -13,6 +13,8 @@ from typing import Iterator
 
 import numpy as np
 
+from models import Models, validate_temperature, validate_cpu_threads
+
 DEFAULT_TEXT = "штаб, открой переигровку"
 ECHO = "{эхо}"  # в строке сценария: то, что синтез говорил последним (эхо из динамиков)
 SILENCE = "{тишина}"  # в строке сценария: ничего не распознано (реплики нет)
@@ -23,6 +25,7 @@ CHUNK_S = 0.32  # как streaming_interval настоящего синтеза
 
 class FakeModels:
     sample_rate = 24000
+    supports_cpu_threads = True
 
     def __init__(self, script: Path | None = None, tts: str = "qwen3-1.7b"):
         from engines import engine
@@ -75,7 +78,9 @@ class FakeModels:
     def forget_ref(self, path: Path):
         self.forgotten.append(Path(path))
 
-    def tts_stream(self, text: str, ref) -> Iterator[np.ndarray]:
+    def tts_stream(self, text: str, ref, *, temperature: float | None = None, cpu_threads: int | None = None) -> Iterator[np.ndarray]:
+        validate_temperature(temperature)
+        validate_cpu_threads(cpu_threads)
         # как настоящий синтез: без образца или с удалённым файлом образца — ошибка
         if ref is None:
             raise RuntimeError("нет образца голоса — запишите голос в окне «Голоса»")
@@ -89,3 +94,5 @@ class FakeModels:
         step = int(CHUNK_S * sr)
         for i in range(0, n, step):
             yield a[i:i + step]
+
+    tts_batch = Models.tts_batch

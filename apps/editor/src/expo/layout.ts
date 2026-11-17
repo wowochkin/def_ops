@@ -23,10 +23,12 @@ export function effectiveCount(wanted: 1 | 2 | 3, monitors: number): 1 | 2 | 3 {
 }
 
 /** Сцена: общая на все экраны (панорама, карта во всю ширину, итог) или каждый экран показывает свою роль. */
-export type Scene = 'panorama' | 'map-wide' | 'roles' | 'result-wide' | 'startup';
+export type Scene = 'panorama' | 'intro' | 'map-wide' | 'roles' | 'result-wide' | 'startup';
 
 export function sceneOf(phase: Phase): Scene {
   switch (phase.kind) {
+    case 'intro':
+      return 'intro';
     case 'attract':
     case 'welcome':
       return 'panorama';

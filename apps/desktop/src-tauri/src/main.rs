@@ -23,6 +23,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
 use tauri::{Manager, RunEvent};
 
+mod node_paths;
 mod expo;
 mod expo_storage;
 
@@ -38,8 +39,18 @@ const DEV_EDITOR: &str = "http://localhost:5173/";
 
 fn repo_root() -> PathBuf { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..") }
 
+/// Отдельная папка для переносимого профиля или проверки комплекта без изменения основной библиотеки.
+pub(crate) fn data_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    if let Some(dir) = std::env::var_os("DEFOPS_DATA_DIR") {
+        let path = PathBuf::from(dir);
+        if !path.is_absolute() { return Err("DEFOPS_DATA_DIR должен быть абсолютным путём".into()); }
+        return Ok(path);
+    }
+    app.path().app_data_dir().map_err(|e| e.to_string())
+}
+
 fn launch(app: &tauri::AppHandle) -> Result<Child, String> {
-    let data = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let data = node_paths::for_node(&data_dir(app)?);
     let mut cmd = if cfg!(debug_assertions) {
         let root = repo_root();
         let mut c = Command::new(if cfg!(windows) { "node.exe" } else { "node" });
@@ -48,19 +59,27 @@ fn launch(app: &tauri::AppHandle) -> Result<Child, String> {
     } else {
         let exe = std::env::current_exe().map_err(|e| e.to_string())?;
         let bin = exe.parent().ok_or("нет папки приложения")?.join(if cfg!(windows) { "node.exe" } else { "node" });
-        let res = app.path().resource_dir().map_err(|e| e.to_string())?;
+        let res = node_paths::for_node(&app.path().resource_dir().map_err(|e| e.to_string())?);
         let mut c = Command::new(bin);
         c.arg(res.join("server/launch.mjs")).arg("--static").arg(res.join("editor"));
+        c.current_dir(exe.parent().ok_or("нет папки приложения")?);
         c
     };
     cmd.arg("--data").arg(&data).arg("--watch-stdin");
     cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit());
+    // Службы работают в фоне: консоль node.exe не должна появляться поверх телевизоров.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    eprintln!("[запуск Node] {:?}", cmd);
     cmd.spawn().map_err(|e| format!("не запускается Node: {e}"))
 }
 
 /// Файл настроек выставочного стенда в папке данных приложения.
 fn expo_settings_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo.json"))
+    Ok(data_dir(app)?.join("expo.json"))
 }
 
 /// Текст настроек стенда (expo.json) или None, если файла нет. Проверка значений — в редакторе (expo/settings.ts).
@@ -117,7 +136,7 @@ fn main() {
             agents_tauri::commands::run_scenario, agents_tauri::commands::read_text, agents_tauri::commands::list_models,
             agents_tauri::commands::llm_chat_stream, agents_tauri::commands::llm_cancel, agents_tauri::commands::probe_parallel, agents_tauri::commands::game_start, agents_tauri::commands::game_turn, agents_tauri::commands::game_stop, agents_tauri::commands::game_directive, agents_tauri::commands::game_historical, agents_tauri::commands::game_take, agents_tauri::commands::game_release, agents_tauri::commands::game_permit, agents_tauri::commands::game_rewind, agents_tauri::commands::game_variants,
             expo_settings_read, expo_settings_write,
-            expo::expo_monitors, expo::expo_open, expo::expo_close_all, expo::expo_set_guard,
+            expo::expo_monitors, expo::expo_open, expo::expo_close_all, expo::expo_set_guard, expo::expo_focus_main,
             expo_storage::expo_log, expo_storage::expo_stats_add, expo_storage::expo_stats_today,
             expo_storage::expo_voice_manifest, expo_storage::expo_voice_clip
         ])
@@ -125,7 +144,7 @@ fn main() {
             let handle = app.handle().clone();
             // корень данных агентной модели
             if cfg!(debug_assertions) { agents_tauri::set_root(repo_root()); }
-            else if let Ok(res) = handle.path().resource_dir() { agents_tauri::set_root(res.join("data")); }
+            else if let Ok(res) = handle.path().resource_dir() { agents_tauri::set_root(node_paths::for_node(&res).join("data")); }
             match launch(&handle) {
                 Ok(mut child) => {
                     let out = child.stdout.take();

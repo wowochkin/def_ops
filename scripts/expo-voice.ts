@@ -8,7 +8,7 @@
  * Автопроверка каждого клипа: файл есть и не пуст, длительность разумна для длины текста, распознавание речи сервисом
  * совпадает с текстом (доля ошибок по словам в допуске); не прошёл — синтезируется заново (до трёх попыток).
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -105,13 +105,23 @@ const FILTER = [
   'afade=t=in:d=0.01',
 ].join(',');
 
-export function encode(wav: string, ogg: string): number {
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-af', FILTER, '-ac', '1', '-c:a', 'libopus', '-b:a', '40k', '-f', 'ogg', ogg]);
-  return durationMs(ogg);
+export class EmptyVoiceClipError extends Error {
+  constructor() {
+    super('Модель не вернула звуковую дорожку для этой фразы.');
+    this.name = 'EmptyVoiceClipError';
+  }
 }
 
-const durationMs = (f: string) =>
-  Math.round(Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString().trim()) * 1000);
+export function encode(wav: string, ogg: string): number {
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', wav, '-af', FILTER, '-ac', '1', '-c:a', 'libopus', '-b:a', '40k', '-f', 'ogg', ogg]);
+  const probe = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', ogg], { encoding: 'utf8' });
+  if (probe.error) throw probe.error;
+  const ms = Math.round(Number(probe.stdout.trim()) * 1000);
+  if (probe.status === 0 && Number.isFinite(ms) && ms > 0) return ms;
+  rmSync(ogg, { force: true });
+  if (probe.stderr.includes('End of file') || probe.status === 0) throw new EmptyVoiceClipError();
+  throw new Error(`Не удалось проверить запись: ${probe.stderr.trim() || probe.signal || probe.status}`);
+}
 
 /** Подключение к голосовому сервису: синтез в файл с распознаванием. */
 export async function service(url: string) {

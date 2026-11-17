@@ -5,6 +5,8 @@ export const EXPO_CFG = {
   aiMode: 'noai',
   input: 'mouse-keyboard',
   voiceInput: false,
+  // Общие проверки переходят сразу к игре; интро проверяет expo-intro-check.mjs.
+  intro: false,
   timer: { on: true, seconds: 30 },
   fronts: ['su_1bf', 'su_1uf'],
   idleSeconds: 90,

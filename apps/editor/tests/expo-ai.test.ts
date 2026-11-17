@@ -2,6 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { answer, cardSmith, comment, draftReply, parseCard, staffAnswer, within, type Ask, type CardContext } from '../src/expo/ai';
 import { cardErrors } from '../src/expo/bank';
 
+
+it('называет участника пользователем в запросах и сохраняет фразу о его решении', async () => {
+  const prompts: string[][] = [];
+  const ask: Ask = async (system, text) => {
+    prompts.push([system, text]);
+    return 'Пользователь выбрал обход укреплений.';
+  };
+  const reply = await answer(ask, 'Что изменилось?', 'Выбран обход укреплений.', 1000);
+  await comment(ask, 'own', 'Выбран обход укреплений.', {});
+  expect(prompts).toHaveLength(2);
+  for (const [system, text] of prompts) {
+    expect(system).toContain('пользователь');
+    expect(text).toContain('пользователя');
+    expect(text).not.toMatch(/посетител/i);
+  }
+  expect(reply.text).toBe('Пользователь выбрал обход укреплений.');
+  expect(staffAnswer('Пользователь просит объяснить выбор.')).toBe('');
+});
+
 const ctx: CardContext = {
   front: 'su_1bf', frontName: '1-й Белорусский фронт', marshal: 'Жуков', n: 1, turnTitle: 'Зееловские высоты',
   situation: 'Оборона на высотах.', armies: ['su_1gta', 'su_8ga'], places: ['Wriezen', 'Seelow'], shownTitles: ['Обход высот с севера'],
@@ -59,7 +78,7 @@ describe('ИИ сеанса', () => {
   });
 
   it('комментарий без ИИ — заготовка с подстановкой', async () => {
-    const c = await comment(null, 'own', '', { title: 'Обход', marshal: 'Жуков', date: '20 апреля' }, 10);
+    const c = await comment(null, 'own', '', { title: 'Обход', marshal: 'Жуков', date: '20 апреля' });
     expect(c?.source).toBe('prepared');
     expect(c?.text).toMatch(/Обход|Жуков/);
   });

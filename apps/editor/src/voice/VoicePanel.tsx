@@ -35,6 +35,8 @@
  * Тур (voice/tour.tsx) говорит тем же путём, что ответы штаба (useTourVoice); `voice:open` с detail 'panel'
  * разворачивает панель (подготовка тура по ней). Элементы панели помечены `data-tour` для подсветки.
  */
+import { runtimeStress } from '../portable/stress';
+import { stressed } from '../expo/stress';
 import { setServiceVoice, type DictateOpts } from './standalone';
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type RefObject } from 'react';
 import { usePanelPlace } from './avoid-modals';
@@ -207,8 +209,9 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
     syncSpeaking();
     // языковая модель занята (штаб противника, советник): голос и модель делят одну машину, живой синтез запинается —
     // фраза сначала готовится целиком, потом звучит ровно (начало — чуть позже)
-    if (modelBusy()) void client.prepare(role ?? 'chief', text).then(() => { if (speakingIds.current.has(id)) client.say(id, role ?? 'chief', text); });
-    else client.say(id, role ?? 'chief', text);
+    const said = stressed(text, ttsStore.get()?.current ?? '', runtimeStress()).said;
+    if (modelBusy()) void client.prepare(role ?? 'chief', said).then(() => { if (speakingIds.current.has(id)) client.say(id, role ?? 'chief', said); });
+    else client.say(id, role ?? 'chief', said);
     setFeed((f) => feedAdd(f, { key: `s${id}`, kind: role === 'umpire' ? 'umpire' : 'chief', text }));
     size.chief(text); // длинное — полоса показывает фразу целиком
   // «штаб говорит» — только настоящей фразой: пока звучит лишь «повторяю запрос», ответ модели ждёт конца речи человека;
@@ -666,7 +669,7 @@ export function VoicePanel({ section, llm, llmCheck, recheck }: {
   useEffect(() => { feedEnd.current?.scrollIntoView({ block: 'nearest' }); }, [feed.at(-1)?.key, view]);
   const last = [...feed].reverse().find((x) => x.kind === 'chief' || x.kind === 'umpire');
 
-  // голоса в этой версии нет (установленная программа, браузер, не Mac на Apple Silicon) — панели нет
+  // На неподдерживаемой платформе голосовой панели нет.
   if (status === 'unsupported') return null;
 
   const confirm = pending && live && (

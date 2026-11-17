@@ -5,7 +5,8 @@ import { PRERECORD_MISSING, PROBE_NAMES, voiceGapNote, type ProbeState, type Pro
 import { MAP } from './map';
 import { loadManifest, missingClips, stageDomains } from './prerecord';
 import type { ExpoStats } from './stats';
-import type { MonitorInfo } from './windows';
+import { orderedMonitors, type MonitorInfo } from './windows';
+import { effectiveCount } from './layout';
 
 export function Stepper({
   label,
@@ -39,29 +40,38 @@ export function Stepper({
   );
 }
 
-/** Полный порядок мониторов (сначала известные из `order`, затем остальные по `ids`) со сдвигом `id` на `by`. */
+/** Двигаем подключённые мониторы, сохраняя места временно отключённых в настройках. */
 export function moveMonitor(order: string[], ids: string[], id: string, by: -1 | 1): string[] {
-  const first = [...new Set(order)].filter((x) => ids.includes(x));
+  const first = [...new Set(order)];
   const full = [...first, ...ids.filter((x) => !first.includes(x))];
-  const i = full.indexOf(id);
+  const connected = full.filter(x => ids.includes(x));
+  const i = connected.indexOf(id);
   const j = i + by;
-  if (i < 0 || j < 0 || j >= full.length) return full;
-  [full[i], full[j]] = [full[j], full[i]];
-  return full;
+  if (i < 0 || j < 0 || j >= connected.length) return full;
+  [connected[i], connected[j]] = [connected[j], connected[i]];
+  let n = 0;
+  return full.map(x => ids.includes(x) ? connected[n++] : x);
 }
 
-export function MonitorOrder({ monitors, order, onOrder }: { monitors: MonitorInfo[]; order: string[]; onOrder: (order: string[]) => void }) {
-  if (!monitors.length) return <p className="expo-muted">Мониторы не найдены.</p>;
-  const ids = monitors.map((m) => m.id);
-  const full = moveMonitor(order, ids, '', 1);
+export function MonitorOrder({ monitors, order, onOrder, count = 3 }: { monitors: MonitorInfo[]; order: string[]; onOrder: (order: string[]) => void; count?: 1 | 2 | 3 }) {
+  const sorted = orderedMonitors(monitors, []);
+  const ids = sorted.map((m) => m.id);
+  const full = orderedMonitors(sorted, order);
+  const offline = [...new Set(order)].filter(id => !ids.includes(id));
+  const actual = effectiveCount(count, monitors.length);
+  const labels = actual === 3 ? ['Левый — Штаб ИИ', 'Центральный — Карта', 'Правый — Ход операции'] : actual === 2 ? ['Левый — Карта', 'Правый — Штаб ИИ и ход операции'] : ['Все экраны вместе'];
   return (
+    <>
+      {!monitors.length && <p className="expo-muted">Мониторы не найдены.</p>}
     <ol className="expo-monitors" aria-label="Порядок экранов">
-      {full.map((id, i) => {
-        const m = monitors.find((x) => x.id === id)!;
+      {full.map((m, i) => {
+        const id = m.id;
         return (
           <li key={id}>
-            <span>
-              {m.name} · {m.id}
+            <span className="expo-monitor-info">
+              <strong>{labels[i] ?? 'Не используется'}</strong>
+              <span>{i < actual ? `Экран ${i + 1} · ` : ''}{m.name} · {m.id}</span>
+              <small>{m.width} × {m.height} · положение {m.x}, {m.y}</small>
             </span>
             <button type="button" aria-label={`${m.name}: выше`} disabled={i === 0} onClick={() => onOrder(moveMonitor(order, ids, id, -1))}>
               ↑
@@ -78,6 +88,8 @@ export function MonitorOrder({ monitors, order, onOrder }: { monitors: MonitorIn
         );
       })}
     </ol>
+      {offline.map(id => <p className="expo-muted" key={id}>Не подключён: {id}. Назначение сохранено.</p>)}
+    </>
   );
 }
 

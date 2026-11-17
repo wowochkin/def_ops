@@ -1,0 +1,28 @@
+# Python 3.12 x64. Windows/NVIDIA, без MLX и FlashAttention.
+# Torch wheels: https://download.pytorch.org/whl/cu128
+# GigaAM wheel готовит setup.ps1 из закреплённого commit, не из одноимённого стороннего пакета.
+torch==2.7.1+cu128
+torchaudio==2.7.1+cu128
+qwen-tts==0.1.1
+transformers==4.57.3
+accelerate==1.12.0
+# NF4/int8 CUDA; активация профиля после native smoke, звуковой кодек остаётся BF16.
+bitsandbytes==0.46.1
+huggingface-hub==0.36.0
+gigaam==0.2.0
+onnx==1.19.1
+onnxruntime==1.23.2
+silero-vad==6.2.1
+numpy==2.2.6
+gradio==5.49.1
+librosa==0.11.0
+# Нативный backend Numba и зависимости DLL; нужны также проверке автономности.
+tbb==2023.2.0
+tcmlib==1.6.0
+soundfile==0.13.1
+num2words==0.5.14
+livekit==1.1.21
+fastapi==0.115.12
+uvicorn==0.34.3
+pytest==8.4.2
+httpx==0.28.1

@@ -24,9 +24,13 @@ export type CalibStep = 'noise' | 'speech' | 'echo' | 'over' | 'finish' | 'cance
 /** Окно → сервис (JSON; микрофонные кадры идут двоичными). */
 export type ClientMsg =
   | { type: 'hello'; settings: Partial<VoiceSettings> }
-  | { type: 'say'; id: number; role: VoiceRole; text: string; more?: boolean; voice_id?: string }
+  | { type: 'say'; id: number; role: VoiceRole; text: string; more?: boolean; voice_id?: string; temperature?: number; cpu_threads?: number }
   /** Заготовить звук фразы заранее: `say` того же текста тем же голосом сыграет его без синтеза. */
-  | { type: 'prepare'; id: number; role: VoiceRole; text: string; voice_id?: string }
+  | { type: 'prepare'; id: number; role: VoiceRole; text: string; voice_id?: string; temperature?: number; cpu_threads?: number }
+  | { type: 'cancel-prepare'; id: number }
+  | { type: 'prepare-batch'; id: number; role: VoiceRole; texts: string[]; voice_id?: string; temperature?: number; cpu_threads?: number; batch_size?: 1 | 2 | 4 }
+  | { type: 'cancel-prepare-batch'; id: number }
+  | { type: 'tts-resource'; id: number; op: 'load' | 'unload'; voice_id?: string }
   | { type: 'stop'; id?: number }
   | { type: 'played'; id: number }
   | ({ type: 'settings' } & Partial<VoiceSettings>)
@@ -59,7 +63,7 @@ export interface VoiceCheck {
 
 /** Сервис → окно (JSON). */
 export type ServerMsg =
-  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean; tts?: TtsInfo }
+  | { type: 'ready'; voices: VoiceInfo[]; roles: VoiceRoles; loaded: boolean; record_text?: string; rate?: number; aec?: boolean; tts?: TtsInfo; capabilities?: { prepare_batch?: boolean; tts_temperature?: boolean; tts_cpu_threads?: boolean } }
   | ({ type: 'tts_list' } & TtsInfo)
   | { type: 'level'; p: number; busy: boolean }
   | { type: 'speech'; state: 'start' | 'end' }
@@ -70,6 +74,8 @@ export type ServerMsg =
   | { type: 'say-done'; id: number; stopped?: boolean }
   /** Заготовка `prepare` готова (audio_s — длина звука) или не вышла (error: фраза потом синтезируется как обычно). */
   | { type: 'prepared'; id: number; audio_s?: number; error?: string }
+  | { type: 'prepared-batch'; id: number; done: number; total: number; audio_s?: number[]; error?: string }
+  | { type: 'tts-resource-done'; id: number; tts: TtsInfo; error?: string }
   | { type: 'barge'; id: number }
   | ({ type: 'settings' } & VoiceSettings)
   | { type: 'calib_rec'; step: CalibStep; sec: number }

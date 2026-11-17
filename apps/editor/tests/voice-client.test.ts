@@ -95,6 +95,17 @@ describe('VoiceClient', () => {
     c.say(7, 'umpire', 'Итоги хода.');
     expect(sent).toEqual([{ type: 'say', id: 7, role: 'umpire', text: 'Итоги хода.' }]);
   });
+  it('отмена prepare снимает ожидание и отменяет подготовку в сервисе', async () => {
+    const { c, msg, sent } = mk();
+    msg({ type: 'ready', voices: [], roles: {}, loaded: true });
+    const abort = new AbortController();
+    const prepared = c.prepare('chief', 'Докладываю итоги.', undefined, abort.signal);
+    abort.abort();
+    expect(await prepared).toBe(false);
+    expect(sent).toContainEqual({ type: 'cancel-prepare', id: 1 });
+    msg({ type: 'prepared', id: 1, audio_s: 1.2 });
+  });
+
   it('prepare: до ready — сразу false; после — сообщение сервису, ответ prepared решает промис; обрыв — false', async () => {
     const { c, x, sent, msg } = mk();
     vi.stubGlobal('WebSocket', { OPEN: 1 });
@@ -167,4 +178,19 @@ describe('VoiceClient', () => {
       expect(sent.map((b) => b.byteLength)).toEqual([1024, 2049]);
     });
   });
+});
+
+it('сопоставляет подтверждение ресурса и отклоняет запрос при закрытии', async () => {
+  const client = new VoiceClient();
+  const raw = client as unknown as Record<string, any>;
+  const send = vi.fn();
+  raw.ws = { readyState: WebSocket.OPEN, send, close() {} };
+  raw.ready = true;
+  const first = client.ttsResource('load', 'marshal');
+  const req = JSON.parse(send.mock.calls[0][0]);
+  raw.onMessage({ type: 'tts-resource-done', id: req.id, tts: { engines: [], current: 'qwen', state: 'ready', managed: true } });
+  await expect(first).resolves.toMatchObject({ managed: true });
+  const second = client.ttsResource('unload');
+  client.close();
+  await expect(second).rejects.toThrow();
 });

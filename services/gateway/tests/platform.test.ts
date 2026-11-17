@@ -335,7 +335,7 @@ describe('шлюз: языковая модель', () => {
     const g = createGateway({ port: 0, services: {}, routes: [], auth: 'open', apiKeys: new Map(), corsOrigin: '*', llmUrl: `http://127.0.0.1:${lPort}/v1` });
     await new Promise<void>((r) => g.listen(0, '127.0.0.1', () => r()));
     const gb = `http://127.0.0.1:${(g.address() as AddressInfo).port}`;
-    const r = await fetch(`${gb}/llm/v1/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"stream":true}' });
+    const r = await fetch(`${gb}/llm/v1/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-defops-llm-model': 'bonsai', 'x-defops-llm-role': 'expo-voice' }, body: '{"stream":true}' });
     expect(r.status).toBe(200);
     expect(await r.text()).toContain('[DONE]');
     expect(seen).toEqual(['POST /v1/chat/completions']);

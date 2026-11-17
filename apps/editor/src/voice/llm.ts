@@ -86,7 +86,7 @@ async function once(body: object, url: string, f: typeof fetch, signal?: AbortSi
     let r: Response;
     try {
       r = await f(`${url.replace(/\/+$/, '')}/chat/completions`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ac.signal,
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-defops-llm-model': encodeURIComponent((body as { model?: string }).model || ''), 'x-defops-llm-role': 'voice' }, body: JSON.stringify(body), signal: ac.signal,
       });
     } catch (e) {
       if (ac.signal.aborted) throw e; // нет ответа 20 с (повтор) или отмена

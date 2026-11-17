@@ -52,8 +52,9 @@ function kv(db: DatabaseSync, table: string): Record<string, string> {
 
 /** Открыть архив и определить его формат. Ошибка 422 — если это не тайловый архив. */
 export function openArchive(file: string): { db: DatabaseSync; info: ArchiveInfo; meta: Record<string, string> } {
-  let db: DatabaseSync;
+  let db: DatabaseSync | undefined;
   try { db = new DatabaseSync(file, { readOnly: true }); db.prepare('select 1').get(); } catch {
+    if (db?.isOpen) db.close();
     throw new HttpError(422, 'invalid', 'Файл не является базой SQLite (.sqlitedb или .mbtiles)');
   }
   const cols = tableColumns(db, 'tiles');

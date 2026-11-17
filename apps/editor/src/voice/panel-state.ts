@@ -236,8 +236,8 @@ export interface PanelInput {
   conversation: boolean;
 }
 
-export const NOT_INSTALLED = 'Голос не установлен: services/voice/setup.sh';
-/** Установленная программа, браузер, не Mac на Apple Silicon: голоса в этой версии нет — значок не показывается. */
+export const NOT_INSTALLED = 'Голос не установлен: подготовьте голосовое окружение';
+/** Для неподдерживаемой платформы голосовая панель скрывается. */
 export const UNSUPPORTED = 'Голос в этой версии недоступен';
 export const VOICE_DISABLED = 'Голос выключен';
 /** Выключено только управление (микрофон): звук посредника и экскурсий остаётся. */

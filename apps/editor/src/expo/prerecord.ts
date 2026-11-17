@@ -22,6 +22,36 @@ export const MATCH_WORDS = ['ни одного', 'одно', 'два', 'три']
 
 export interface Clip { file: string; ms: number }
 export interface VoiceManifest { version: 1; voice: string; engine: string; clips: Record<string, Clip> }
+export type DebriefVoices = Record<string, Record<string, Clip>>;
+const DEBRIEF_CLIPS = 'expo-debrief/clips/';
+const CLIP_NAME = /^[0-9a-f]{8,64}\.ogg$/;
+
+/** Записи итогов входят в сборку редактора и хранятся отдельно от пользовательской предзаписи. */
+export function parseDebriefManifest(value: unknown): DebriefVoices | null {
+  const manifest = value as { version?: number; voices?: DebriefVoices } | null;
+  if (manifest?.version !== 1 || !manifest.voices || typeof manifest.voices !== 'object' || Array.isArray(manifest.voices)) return null;
+  for (const clips of Object.values(manifest.voices)) {
+    if (!clips || typeof clips !== 'object' || Array.isArray(clips)) return null;
+    if (!Object.values(clips).every((clip) => typeof clip?.file === 'string' && CLIP_NAME.test(clip.file) && Number.isFinite(clip.ms) && clip.ms > 0)) return null;
+  }
+  return manifest.voices;
+}
+
+export function debriefClip(voices: DebriefVoices | null, text: string, voiceId: string): Clip | null {
+  const clips = voices && Object.hasOwn(voices, voiceId) ? voices[voiceId] : null;
+  if (!clips || !Object.hasOwn(clips, text)) return null;
+  const clip = clips[text];
+  return { ...clip, file: DEBRIEF_CLIPS + clip.file };
+}
+
+export async function loadDebriefManifest(): Promise<DebriefVoices | null> {
+  try {
+    const response = await fetch(new URL('expo-debrief/manifest.json', location.href), { signal: AbortSignal.timeout(5000) });
+    return response.ok ? parseDebriefManifest(await response.json()) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Подстановки, значения которых зависят от фронта. */
 export interface FrontSlots { front: string; marshal: string; turn: string[]; title: string[] }
@@ -118,7 +148,7 @@ export function joinGap(part: string): number {
 export function parseManifest(j: unknown): VoiceManifest | null {
   const m = j as VoiceManifest | null;
   if (!m || m.version !== 1 || typeof m.clips !== 'object' || !m.clips) return null;
-  const ok = Object.values(m.clips).every((c) => typeof c?.file === 'string' && /^[0-9a-f]{8,64}\.ogg$/.test(c.file) && c.ms > 0);
+  const ok = Object.values(m.clips).every((c) => typeof c?.file === 'string' && CLIP_NAME.test(c.file) && c.ms > 0);
   return ok && Object.keys(m.clips).length ? m : null;
 }
 
@@ -139,12 +169,18 @@ export async function loadManifest(): Promise<VoiceManifest | null> {
   }
 }
 
-export async function loadClip(file: string): Promise<ArrayBuffer> {
+export async function loadClip(file: string, signal?: AbortSignal): Promise<ArrayBuffer> {
+  signal?.throwIfAborted();
+  if (file.startsWith(DEBRIEF_CLIPS) && CLIP_NAME.test(file.slice(DEBRIEF_CLIPS.length))) {
+    const response = await fetch(new URL(file, location.href), { signal });
+    if (!response.ok) throw new Error(`клип итога ${file}: ${response.status}`);
+    return response.arrayBuffer();
+  }
   if (inApp()) {
     const { invoke } = await import('@tauri-apps/api/core');
     return invoke<ArrayBuffer>('expo_voice_clip', { file });
   }
-  const r = await fetch(`/expo-voice/clips/${file}`);
+  const r = await fetch(`/expo-voice/clips/${file}`, { signal });
   if (!r.ok) throw new Error(`клип ${file}: ${r.status}`);
   return r.arrayBuffer();
 }

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { aiRunner, parseSpeech, type AiFrame } from '../src/expo/ai-runner';
 import { debriefCursor, debriefUtterances, operationDebrief, resultBeat } from '../src/expo/debrief';
-import { templateUnits } from '../src/expo/lines';
+import { LINES, templateUnits } from '../src/expo/lines';
 import { voiceQueue, type Line } from '../src/expo/voice-queue';
 import type { DirectorEvent } from '../src/expo/director';
 import type { ModelView } from '../src/expo/session';
+import { INTRO_CUES, INTRO_KEYS } from '../src/expo/intro-story';
 
 function setup(ask: (() => Promise<string>) | null, listen?: () => Promise<string | null>) {
   const said: Line[] = [];
@@ -14,13 +15,47 @@ function setup(ask: (() => Promise<string>) | null, listen?: () => Promise<strin
   const counts: string[] = [];
   const r = aiRunner({
     queue, ask: () => (ask ? async () => ask() : null), facts: () => ({ text: '', vars: { marshal: 'Жуков', date: '20 апреля', title: 'Обход' } }),
-    dispatch: (e) => events.push(e), listen, onFrame: (f) => frames.push(f), answerMs: 50, commentMs: 50, count: (k) => counts.push(k),
+    dispatch: (e) => events.push(e), listen, onFrame: (f) => frames.push(f), answerMs: 50, count: (k) => counts.push(k),
   });
   return { r, said, frames, events, counts };
 }
 const tick = () => new Promise((res) => setTimeout(res, 0));
 
 describe('исполнитель голоса и ИИ', () => {
+  it('вход в итог очищает комментарий и незавершённый ответ прежней сцены', async () => {
+    let finish!: (text: string) => void;
+    const s = setup(() => new Promise<string>(r => { finish = r; }));
+    s.r.onLine({ text: 'Войска идут к Торгау.', source: 'now', priority: 'scene' });
+    const pending = s.r.ask('Что произошло?');
+    s.r.handle({ e: 'scene', key: 'result' });
+    expect(s.r.frame()).toMatchObject({ line: null, said: null, answer: null, thinking: null, ear: 'idle' });
+    finish('Старый ответ.'); await pending;
+    expect(s.said).toEqual([]);
+    expect(s.r.frame().said).toBeNull();
+  });
+
+  it('интро сохраняет все 13 сцен, реальные сроки клипов и общий момент начала', () => {
+    const said: Line[] = [];
+    const queue = { push: (l: Line) => { said.push(l); return Promise.resolve(); }, scene() {} } as unknown as ReturnType<typeof voiceQueue>;
+    const r = aiRunner({ queue, ask: () => null, facts: () => ({ text: '', vars: {} }), dispatch() {}, onFrame() {},
+      voiced: (f) => f.text === LINES.say['intro-2'][0], now: () => 7500,
+      duration: (f) => f.text === LINES.say['intro-2'][0] ? 24_000 : null });
+    r.handle({ e: 'scene', key: 'intro' });
+    for (const key of INTRO_KEYS) r.handle({ e: 'say', key, priority: 'scene', scene: 'intro' });
+    expect(said).toHaveLength(13);
+    expect(said.map(line => line.mark)).toEqual(INTRO_KEYS);
+    expect(said[1]).toMatchObject({ source: 'prepared', mark: 'intro-13', durationMs: INTRO_CUES[1].durationMs });
+    expect(said.find(line => line.mark === 'intro-10')).toMatchObject({ source: 'prepared', durationMs: INTRO_CUES.find(cue => cue.key === 'intro-10')!.durationMs });
+    expect(said.find(line => line.mark === 'intro-2')).toMatchObject({ source: 'prepared', durationMs: 24_000 });
+    expect(said[2]).toMatchObject({ source: 'prepared', mark: 'intro-11', durationMs: INTRO_CUES[2].durationMs });
+    r.onLine(said[2]);
+    expect(r.frame()).toMatchObject({ introLine: 3, introCueStartedAt: 7500, introCueDurationMs: INTRO_CUES[2].durationMs });
+    r.onLine(null);
+    expect(r.frame().introLine).toBe(3);
+    r.handle({ e: 'scene', key: 'welcome' });
+    expect(r.frame().introLine).toBeUndefined();
+  });
+
   it('эффекты say режиссёра звучат заготовкой; newSession глушит', () => {
     const s = setup(null);
     for (const key of ['timer-warn', 'delay', 'offer-decide', 'voice-soon']) s.r.handle({ e: 'say', key, priority: 'timer' });
@@ -73,11 +108,25 @@ describe('исполнитель голоса и ИИ', () => {
     expect(t.counts).toEqual(['aiOnTime']);
   });
 
-  it('голосом: команда сеанса — событие режиссёру, иное — вопрос', async () => {
-    const s = setup(null, async () => 'выбираю второй');
-    s.r.handle({ e: 'listen' });
+  it('микрофон отправляет сказанное вопросом и держит таймер до окончания ответа', async () => {
+    const events: DirectorEvent[] = [];
+    let finishPlayback = () => {};
+    const queue = voiceQueue({ speak: () => ({ done: new Promise<void>(r => { finishPlayback = r; }), stop() { finishPlayback(); } }) });
+    const r = aiRunner({
+      queue, ask: () => async () => 'Второй вариант требует сохранить резерв.', facts: () => ({ text: '', vars: {} }),
+      listen: async () => 'выбираю второй', dispatch: e => events.push(e), onFrame() {},
+    });
+    r.handle({ e: 'listen' });
     await tick();
-    expect(s.events).toEqual([{ t: 'choose', card: 1 }]);
+    expect(r.frame().answer).toEqual({ q: 'выбираю второй', text: 'Второй вариант требует сохранить резерв.', source: 'now' });
+    expect(queue.current()?.text).toBe('Второй вариант требует сохранить резерв.');
+    expect(events).toEqual([{ t: 'timerHold' }]);
+    finishPlayback();
+    await tick();
+    expect(events).toEqual([{ t: 'timerHold' }, { t: 'timerRelease' }]);
+  });
+
+  it('отдельный разбор команды распознаёт варианты и обычные вопросы', () => {
     expect(parseSpeech('Начать заново')).toEqual({ t: 'restart' });
     expect(parseSpeech('карточка 3')).toEqual({ t: 'choose', card: 2 });
     expect(parseSpeech('сколько было танков')).toEqual({ ask: 'сколько было танков' });
@@ -86,9 +135,9 @@ describe('исполнитель голоса и ИИ', () => {
   it('комментарий выбора без ИИ — заготовка события', async () => {
     const s = setup(null);
     await s.r.decided('own');
-    expect(s.said.at(-1)).toMatchObject({ priority: 'action', source: 'prepared' });
+    expect(s.said.at(-1)).toMatchObject({ priority: 'scene', source: 'prepared' });
     expect(s.said.at(-1)!.voice).toBeUndefined();
-    expect(s.said.at(-1)!.scene).toBeUndefined();
+    expect(s.said.at(-1)!.scene).toBe('turn-1-scroll');
   });
 });
 
@@ -116,7 +165,7 @@ describe('куски разбора', () => {
         forecast: 'Берлин пал бы 29 апреля — на день раньше истории',
         rank: 'генерал армии',
         matches: 1,
-        scales: { notes: { speed: 'быстрее', cost: 'дешевле', intent: 'тот же замысел' } },
+        scales: { notes: { speed: 'быстрее', cost: 'дешевле', intent: 'выполнено 2 из 5' } },
       },
     } as ModelView;
     const d = operationDebrief(v)!;
@@ -124,5 +173,14 @@ describe('куски разбора', () => {
     const para = d.paragraphs.find((p) => p.includes(templateUnits(chunk)[0]))!;
     const beat = resultBeat(v, chunk);
     expect(beat.span[1] - beat.span[0]).toBeCloseTo(templateUnits(chunk).length / templateUnits(para).length);
+    const close = debriefUtterances(d.paragraphs).slice(-5);
+    expect(close).toEqual([
+      'Берлин пал бы 29 апреля, на день раньше истории.',
+      'По темпу быстрее.',
+      'По цене операции дешевле.',
+      'Замысел: выполнено 2 из 5.',
+      'По такому ходу звание — генерал армии.',
+    ]);
+    expect(resultBeat(v, close[3])).toMatchObject({ phase: 'close', span: [3 / 5, 4 / 5] });
   });
 });

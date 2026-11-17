@@ -53,6 +53,11 @@ describe('места по названию', () => {
     for (const w of ['привет', 'обстановка', 'доложи', 'погода', 'наступать', 'карта', 'танковый', 'в', ''])
       expect(findPlace(w, P), w).toEqual({ options: [], labels: [] });
   });
+  it('камень не принимается за Каммин, но название Каммин и Kamien распознаётся', () => {
+    expect(findPlace('камень', P)).toEqual({ options: [], labels: [] });
+    expect(findPlace('Каммин', P).place?.id).toBe('Kamien');
+    expect(findPlace('Kamien', P).place?.id).toBe('Kamien');
+  });
 });
 
 describe('«N километров <сторона> от …»', () => {
@@ -227,7 +232,7 @@ describe('обычные слова не дают мест', () => {
 
 describe('обычные слова не дают соединений', () => {
   /** Слова, которые законно дают соединение не по началу слова его названия. */
-  const KNOWN_UNIT: Record<string, string> = {};
+  const KNOWN_UNIT: Record<string, string> = { одиннадцатого: 'порядковый номер 11: XI корпус или 11-я дивизия' };
   it('ни одно слово docs/system.md не даёт unit, если не похоже на слово названия', () => {
     const text = readFileSync(new URL('../../../docs/system.md', import.meta.url), 'utf8').toLowerCase().replace(/ё/g, 'е');
     const words = [...new Set(text.match(/[а-я]{4,}/g) ?? [])];
@@ -244,6 +249,14 @@ describe('обычные слова не дают соединений', () => {
     }
     expect([...new Set(wrong)]).toEqual([]);
   }, 120_000);
+  it('«одиннадцатого» называет соединение по номеру 11, включая римское написание', () => {
+    for (const scenario of [scenarioFile, vistulaScenario, cityScenario]) {
+      const units = names(scenario);
+      const numeric = findUnit('11', units).unit;
+      expect(numeric).toBeDefined();
+      expect(findUnit('одиннадцатого', units).unit).toEqual(numeric);
+    }
+  });
   it('слова приказов не дают соединение по описательным скобкам', () => {
     const V = names(vistulaScenario);
     for (const w of ['часть', 'части', 'командование', 'командовать', 'штурм', 'штурмовая', 'вермахт', 'гарнизон'])

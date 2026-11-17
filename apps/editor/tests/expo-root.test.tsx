@@ -79,7 +79,9 @@ it('click sends input', () => {
 });
 it('keys ignored outside profile and active keyboard profile chooses', () => {
   const p = step(initialState(0), { t: 'jump', phase: 'turn' }, EXPO_DEFAULTS).state;
-  const state = step(p, { t: 'tick', now: 11000 }, EXPO_DEFAULTS).state;
+  // Проверяем клавиатурный профиль на выборе, без зависимости от часов режиссёра.
+  const state = step(p, { t: 'step', step: 'choose' }, EXPO_DEFAULTS).state;
+  expect(state.phase).toMatchObject({ kind: 'turn', step: 'choose' });
   const events: unknown[] = [];
   const view = render(<ExpoView window={0} count={1} state={state} settings={EXPO_DEFAULTS} send={(e) => events.push(e)} />);
   fireEvent.keyDown(document, { key: '2' });

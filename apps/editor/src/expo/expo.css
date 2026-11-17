@@ -159,6 +159,30 @@ html.expo-active,
   flex-wrap: nowrap;
   align-items: flex-end;
 }
+/* Комментарий не делит ширину с вопросом подтверждения. Две фиксированные
+   строки сохраняют размер карты и доступность кнопок при длинном ответе. */
+.expo > .expo-footer:has(> .expo-confirm) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 128px 96px;
+  height: 236px;
+  gap: 12px 24px;
+  align-items: center;
+}
+.expo > .expo-footer:has(> .expo-confirm) > :first-child {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-height: 0;
+  max-height: 128px;
+}
+.expo > .expo-footer > .expo-confirm {
+  grid-column: 1;
+  grid-row: 2;
+}
+.expo > .expo-footer:has(> .expo-confirm) > button {
+  grid-column: 2;
+  grid-row: 2;
+}
 .expo-aim-pick {
   display: flex;
   flex-direction: column;
@@ -395,12 +419,13 @@ html.expo-active,
   position: relative;
   z-index: 1;
   flex: none;
-  width: max-content;
+  width: fit-content;
+  box-sizing: border-box;
   max-width: calc(100% - 16px);
   margin: 6px 8px 8px;
   padding: 6px 10px;
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
+  display: flex;
+  flex-wrap: wrap;
   gap: 2px 14px;
   list-style: none;
   background: rgba(247, 244, 234, 0.94);
@@ -410,7 +435,7 @@ html.expo-active,
   font: 15px / 1.25 var(--expo-serif);
   pointer-events: none;
 }
-.expo-mapkey li { display: flex; align-items: center; gap: 8px; }
+.expo-mapkey li { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 .expo-mapkey svg { width: 36px; height: 16px; flex: none; }
 .expo-mapframe {
   position: relative;
@@ -478,15 +503,17 @@ html.expo-active,
 .expo-reel {
   width: 100%;
   margin: 0;
-  flex: none;
-  display: flex;
-  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 8px;
 }
 .expo-reel img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
   object-position: center;
   background: #16120e;
@@ -511,6 +538,9 @@ html.expo-active,
   overflow: hidden;
   justify-content: flex-start;
   gap: 16px;
+}
+.expo-attract .expo-intro > :not(.expo-reel) {
+  flex: none;
 }
 .expo-attract .expo-intro h1 {
   font-size: 48px;
@@ -755,19 +785,26 @@ html.expo-active,
   flex: 1;
   position: relative;
 }
-.expo-scroll-rest {
-  position: absolute;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
-  margin: 0;
-  padding: 14px 28px;
+.expo > .expo-footer:has(> .expo-scroll-rest) {
+  box-sizing: border-box;
+  height: 137px;
+  padding: 20px 28px;
   background: rgba(20, 16, 12, 0.82);
+  border: 1px solid var(--expo-gold);
+  border-radius: 6px;
+}
+.expo-footer > .expo-scroll-rest {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   color: #f4e7c8;
-  font-size: 32px;
+  font-size: 36px;
   line-height: 1.2;
   letter-spacing: 0.02em;
-  z-index: 2;
+  text-align: center;
+}
+.expo-footer:has(> .expo-scroll-rest) > button {
+  flex: none;
 }
 .expo-turn-title {
   display: flex;
@@ -805,8 +842,14 @@ html.expo-active,
   align-self: stretch;
   display: flex;
   align-items: center;
+  min-height: 0;
+  overflow: hidden;
 }
 .expo-subs-text {
+  width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  overflow-wrap: anywhere;
   text-align: center;
   font-family: var(--expo-serif);
   line-height: 1.3;
@@ -2069,6 +2112,11 @@ html.expo-active,
 .expo-monitors li span {
   flex: 1;
 }
+.expo-monitors .expo-monitor-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.expo-monitors .expo-monitor-info strong { color: var(--expo-text); }
+.expo-monitors .expo-monitor-info small { opacity: .7; }
+.expo-monitor-actions { display: flex; flex-wrap: wrap; gap: 12px; grid-column: 1 / -1; }
+.expo-monitor-note { grid-column: 1 / -1; margin: 0; }
 .expo-muted {
   color: var(--expo-muted);
 }
@@ -2960,23 +3008,32 @@ html.expo-active,
 .expo-marshal-pair .expo-marshal-copy > p:not(.expo-kicker):not(.expo-marshal-credit) { font-size: 28px; }
 .expo-brief-photo,
 .expo-note-photo {
+  flex: 1 1 250px;
+  min-width: 0;
+  min-height: 0;
+  max-height: 250px;
   margin-top: auto;
   margin-bottom: 12px;
-  align-self: start;
+  align-self: stretch;
+  width: 100%;
   max-width: 920px;
 }
 .expo-brief-photo {
   margin: auto 0 12px;
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 28px 36px;
   align-items: center;
 }
 .expo-brief-photo img {
-  width: 420px;
-  height: 250px;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
   display: block;
+  background: #16120e;
+  box-sizing: border-box;
   border: 6px solid #e8dfc8;
 }
 .expo-brief-photo figcaption {
@@ -3041,23 +3098,31 @@ html.expo-active,
 }
 .expo-brief-pair {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 36px;
+}
+.expo-brief-pair > .expo-note {
+  grid-column: auto;
 }
 .expo-note-photo {
   display: grid;
-  grid-template-columns: 460px minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(460px, 44%)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 28px 40px;
   align-items: center;
-  margin-top: auto;
-  margin-bottom: 8px;
+  margin: auto 0 8px;
   min-height: 0;
   max-width: 1100px;
 }
 .expo-note-photo img {
-  width: 460px;
-  height: 250px;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  display: block;
+  background: #16120e;
+  box-sizing: border-box;
   border: 6px solid #e8dfc8;
   filter: sepia(0.35) contrast(1.05);
 }

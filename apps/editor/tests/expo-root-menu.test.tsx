@@ -2,20 +2,32 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import type { DirectorEvent } from '../src/expo/director';
+import type { ProbeId } from '../src/expo/health';
 
-const fake = vi.hoisted(() => ({ events: [] as unknown[], stopped: 0 }));
+const fake = vi.hoisted(() => ({ events: [] as unknown[], stopped: 0, fail: null as ((id: ProbeId) => void) | null }));
+
+vi.mock('../src/expo/health', async (actual) => ({
+  ...await actual<typeof import('../src/expo/health')>(),
+  watchdog: (_: unknown, onFail: (id: ProbeId) => void) => {
+    fake.fail = onFail;
+    return () => { fake.fail = null; };
+  },
+}));
 
 vi.mock('../src/expo/host', async () => {
   const { initialState } = await import('../src/expo/director');
   const { EXPO_DEFAULTS } = await import('../src/expo/settings');
+  const { NO_AI } = await import('../src/expo/ai-runner');
   return {
-    createHost: () => ({
-      snapshot: () => ({ state: initialState(0), settings: EXPO_DEFAULTS, count: 1 }),
+    createHost: (): ReturnType<typeof import('../src/expo/host').createHost> => ({
+      snapshot: () => ({ state: initialState(0), settings: EXPO_DEFAULTS, count: 1, model: { view: null, error: null }, ai: NO_AI }),
       dispatch: (ev: DirectorEvent) => fake.events.push(ev),
       ready: () => true,
+      windowsHealthy: () => true,
       configuration: () => EXPO_DEFAULTS,
       setAiMode: () => {},
       setAi: () => {},
+      setModel: () => {},
       checkWindows: async () => {},
       start: async () => {},
       configure: async () => {},
@@ -63,6 +75,14 @@ it('operator menu pauses the session and resumes on close', async () => {
   fireEvent.click(view.getByRole('button', { name: 'Закрыть' }));
   expect(fake.events.at(-1)).toEqual({ t: 'resume' });
   expect(view.queryByRole('dialog')).toBeNull();
+});
+
+it('потеря связи со службой не переводит режиссёра на другую сцену', async () => {
+  render(<ExpoRoot index={0} />);
+  await waitFor(() => expect(fake.fail).not.toBeNull());
+  const previous = fake.events.length;
+  for (const id of ['windows', 'voice', 'model', 'core'] as const) fake.fail!(id);
+  expect(fake.events.slice(previous)).toEqual([]);
 });
 
 it('exit to full mode stops the host and leaves exhibition address', async () => {

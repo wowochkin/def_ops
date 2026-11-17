@@ -7,16 +7,41 @@ import type { MapDocument } from '@def-ops/core';
 import type { AgentHistory, AgentTrace } from '@def-ops/sim';
 import type { FrontId } from './settings';
 import type { ZoneFrame } from './stage-doc';
+import type { ExpoBus } from './bus';
 
 export type StageKey = 'history' | 'session' | 'best';
 /** Документ и чей он: фронт сеанса и момент конца хода (по нему вид сеанса узнаёт свой документ); зоны влияния по суткам. */
 export interface StageDoc { doc: MapDocument; front: FrontId | null; time: string; zones: ZoneFrame[] }
 export type StageDocs = Partial<Record<StageKey, StageDoc>>;
+/** Один документ может одновременно стать текущим и лучшим — передаём тело только один раз. */
+export interface StageMapUpdate { key: StageKey; d: StageDoc; aliases?: StageKey[] }
+export function applyStageMap(docs: StageDocs, update: StageMapUpdate): StageDocs {
+  const next = { ...docs, [update.key]: update.d };
+  for (const key of update.aliases ?? []) next[key] = update.d;
+  return next;
+}
+/** На одном физическом окне отправка через Tauri лишь сериализовала карту и возвращала своё эхо. */
+export function broadcastStageMap(bus: ExpoBus, update: StageMapUpdate, count: number) {
+  if (count > 1) bus.send({ k: 'map', ...update });
+}
+/** Дослать карты новому окну, сохраняя общую ссылку session/best в одном сообщении. */
+export function missingStageMaps(docs: StageDocs, has = ''): StageMapUpdate[] {
+  const known = new Set(has.split('|'));
+  const grouped = new Map<StageDoc, StageMapUpdate>();
+  for (const [key, d] of Object.entries(docs) as [StageKey, StageDoc | undefined][]) {
+    if (!d || known.has(`${key}:${d.front}:${d.time}`)) continue;
+    const update = grouped.get(d);
+    if (update) (update.aliases ??= []).push(key);
+    else grouped.set(d, { key, d });
+  }
+  return [...grouped.values()];
+}
+
 
 /** Подпись набора документов: какие есть и на какой момент. */
 export const docsSig = (d: StageDocs) => (Object.entries(d) as [StageKey, StageDoc | undefined][]).filter(([, x]) => x).map(([k, x]) => `${k}:${x!.front}:${x!.time}`).sort().join('|');
 
-export function stageMaps(onDoc: (key: StageKey, d: StageDoc) => void) {
+export function stageMaps(onDoc: (key: StageKey, d: StageDoc, aliases?: StageKey[]) => void) {
   let worker: Worker | null = null;
   let seq = 0;
   let best = -Infinity;
@@ -49,11 +74,15 @@ export function stageMaps(onDoc: (key: StageKey, d: StageDoc) => void) {
       const time = end(trace);
       const b = await build(trace, history);
       if (!b) return;
-      put('session', { ...b, front, time });
+      const d = { ...b, front, time };
+      docs.session = d;
+      const aliases: StageKey[] = [];
       if (score !== undefined && score > best) {
         best = score;
-        put('best', { ...b, front, time });
+        docs.best = d;
+        aliases.push('best');
       }
+      onDoc('session', d, aliases);
     },
     async history(trace: AgentTrace, history: AgentHistory) {
       const b = await build(trace, history);

@@ -36,6 +36,7 @@
     "allow-expo-open",
     "allow-expo-close-all",
     "allow-expo-set-guard",
+    "allow-expo-focus-main",
     "allow-expo-log",
     "allow-expo-stats-add",
     "allow-expo-stats-today",

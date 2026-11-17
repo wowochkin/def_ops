@@ -26,13 +26,15 @@
     "pdfmake": "^0.2.23",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "read-excel-file": "^9.3.12"
+    "read-excel-file": "^9.3.12",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@maplibre/maplibre-gl-style-spec": "26.4.4",
     "@types/pdfmake": "^0.2.13",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.170.0",
     "@vitejs/plugin-react": "^6.1.2",
     "vite": "^8.3.3"
   }

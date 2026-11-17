@@ -49,6 +49,7 @@ describe('раскладки экранов', () => {
     const cases: [Phase, Scene][] = [
       [{ kind: 'startup' }, 'startup'],
       [{ kind: 'attract' }, 'panorama'],
+      [{ kind: 'intro' }, 'intro'],
       [{ kind: 'welcome' }, 'panorama'],
       [{ kind: 'briefing', point: 0 }, 'map-wide'],
       [{ kind: 'turn', n: 1, step: 'choose', deadline: null, warned: false, offered: false, choice: null, replacements: 0 }, 'roles'],

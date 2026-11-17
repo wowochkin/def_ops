@@ -114,6 +114,160 @@ describe('предзапись: звук', () => {
     f.nodes[1].onended!();
     await flush();
     expect(done).toBe(true);
+    expect(h.played?.()).toBe(true);
+  });
+
+  it('ошибка загрузки клипа не считается сыгранной речью интро', async () => {
+    const f = fakeAudio();
+    const p = clipPlayer(() => f.a, async () => { throw new Error('нет файла'); });
+    const h = p.play([{ file: 'missing.ogg', ms: 1000 }], []);
+    await h.done;
+    expect(h.played?.()).toBe(false);
+    expect(f.started).toEqual([]);
+  });
+
+  it('скрытие окна завершает ожидание оборванного клипа и не считает его сыгранным', async () => {
+    const f = fakeAudio();
+    const p = clipPlayer(() => f.a, async () => new Uint8Array([20]).buffer);
+    const h = p.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    let done = false;
+    void h.done.then(() => { done = true; });
+    await flush();
+    p.stopAll();
+    await flush();
+    expect(done).toBe(true);
+    expect(h.played?.()).toBe(false);
+  });
+
+  it('зависшая загрузка обрывается за 10 секунд; поздний ответ не запускает звук и следующий сеанс загружает заново', async () => {
+    vi.useFakeTimers();
+    const f = fakeAudio();
+    let resolveLoad = (_: ArrayBuffer) => {};
+    let signal: AbortSignal | undefined;
+    let loads = 0;
+    const p = clipPlayer(() => f.a, (_file, stop) => {
+      signal = stop;
+      loads++;
+      return new Promise<ArrayBuffer>((r) => { resolveLoad = r; });
+    });
+    const h = p.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    let done = false;
+    void h.done.then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(9999);
+    expect(done).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(done).toBe(true);
+    expect(h.played?.()).toBe(false);
+    expect(signal?.aborted).toBe(true);
+    resolveLoad(new Uint8Array([20]).buffer);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.started).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+    const retry = p.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(loads).toBe(2);
+    retry.stop();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(['decode', 'resume'] as const)('ожидание %s ограничено; позднее завершение не включает оборванный клип', async (wait) => {
+    vi.useFakeTimers();
+    const f = fakeAudio();
+    let release = () => {};
+    if (wait === 'decode') f.a.decodeAudioData = () => new Promise<AudioBuffer>((r) => { release = () => r({ duration: 20 } as AudioBuffer); });
+    else {
+      f.a.state = 'suspended';
+      f.a.resume = () => new Promise<void>((r) => { release = () => { f.a.state = 'running'; r(); }; });
+    }
+    const p = clipPlayer(() => f.a, async () => new Uint8Array([20]).buffer);
+    const h = p.play([{ file: 'intro.ogg', ms: 20_000 }], []);
+    let done = false;
+    void h.done.then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(done).toBe(true);
+    expect(h.played?.()).toBe(false);
+    release();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(f.started).toEqual([]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('срок начала звука не обрывает длинный клип после успешной загрузки', async () => {
+    vi.useFakeTimers();
+    const f = fakeAudio();
+    f.a.decodeAudioData = async () => ({ duration: 80 } as AudioBuffer);
+    const p = clipPlayer(() => f.a, async () => new ArrayBuffer(0));
+    const h = p.play([{ file: 'intro.ogg', ms: 80_000 }], []);
+    let done = false;
+    void h.done.then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(70_000);
+    expect(done).toBe(false);
+    expect(f.started).toHaveLength(1);
+    expect(vi.getTimerCount()).toBe(0);
+    f.nodes[0].onended!();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(h.played?.()).toBe(true);
+  });
+
+  it('пауза клипа останавливает AudioContext, продолжение возобновляет тот же источник', async () => {
+    const f = fakeAudio();
+    f.a.state = 'running';
+    f.a.suspend = vi.fn(async () => { f.a.state = 'suspended'; });
+    f.a.resume = vi.fn(async () => { f.a.state = 'running'; });
+    const player = clipPlayer(() => f.a, async () => new Uint8Array([20]).buffer);
+    const h = player.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    await flush();
+    h.pause?.();
+    expect(f.a.suspend).toHaveBeenCalledOnce();
+    h.resume?.();
+    expect(f.a.resume).toHaveBeenCalledOnce();
+    expect(f.started).toHaveLength(1);
+    h.stop();
+  });
+
+  it('вход в интро сразу после обрыва предзагрузки заново запрашивает отменённый буфер', async () => {
+    vi.useFakeTimers();
+    const f = fakeAudio();
+    let loads = 0;
+    const player = clipPlayer(() => f.a, async () => {
+      if (++loads === 1) return new Promise<ArrayBuffer>(() => {});
+      return new Uint8Array([20]).buffer;
+    });
+    void player.preload([{ file: 'intro.ogg', ms: 2000 }]);
+    await vi.advanceTimersByTimeAsync(0);
+    player.stopAll();
+    const h = player.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(loads).toBe(2);
+    expect(f.started).toHaveLength(1);
+    f.nodes[0].onended!();
+    await h.done;
+    expect(h.played?.()).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('пауза во время разблокирования AudioContext не превращает имеющийся клип в тишину', async () => {
+    const f = fakeAudio();
+    let initialResume = () => {};
+    f.a.state = 'suspended';
+    f.a.resume = vi.fn().mockImplementationOnce(() => new Promise<void>((resolve) => { initialResume = resolve; }))
+      .mockImplementation(async () => { f.a.state = 'running'; });
+    f.a.suspend = async () => { f.a.state = 'suspended'; };
+    const player = clipPlayer(() => f.a, async () => new Uint8Array([20]).buffer);
+    const h = player.play([{ file: 'intro.ogg', ms: 2000 }], []);
+    await flush();
+    h.pause?.();
+    initialResume();
+    await flush();
+    expect(f.started).toHaveLength(0);
+    h.resume?.();
+    await flush();
+    expect(f.a.resume).toHaveBeenCalledTimes(2);
+    expect(f.started).toHaveLength(1);
+    f.nodes[0].onended!();
+    await h.done;
+    expect(h.played?.()).toBe(true);
   });
 
   it('декодированное держится в пределах бюджета; вытесненное декодируется заново', async () => {
@@ -168,24 +322,34 @@ describe('предзапись: звук', () => {
     }
   });
 
-  it('живой голос занят моделью дольше срока — звучит замена, синтез потом не начинается', async () => {
+  it('готовый ответ ИИ ждёт освобождения модели и звучит целиком без подмены предзаписью', async () => {
+    vi.useFakeTimers();
     const gate = turnstile();
     let freeModel = () => {};
+    let finishPlayback = () => {};
     void gate.run(() => new Promise<void>((r) => (freeModel = r)));
     const said: string[] = [];
     const played: string[][] = [];
     const sp = stageSpeaker({
       manifest: () => manifest, aiOn: () => true, gate, liveStartMs: 20,
       player: { preload: async () => {}, play: (cs: { file: string }[]) => { played.push(cs.map((c) => c.file)); return { done: Promise.resolve(), stop() {} }; } } as unknown as ReturnType<typeof clipPlayer>,
-      live: { ready: () => true, say: (t) => { said.push(t); return { synthDone: Promise.resolve(), done: Promise.resolve(), stop() {} }; } },
+      live: { ready: () => true, say: (t) => { said.push(t); return { synthDone: Promise.resolve(), done: new Promise<void>(r => { finishPlayback = r; }), stop() { finishPlayback(); } }; } },
     });
     const h = sp.speak(nowLine.text, nowLine);
-    await new Promise((r) => setTimeout(r, 40));
-    expect(played).toHaveLength(1);
-    freeModel();
-    await h.done;
-    await flush();
+    let done = false;
+    void h.done.then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(40); // больше прежнего срока замены liveStartMs
+    expect(played).toEqual([]);
     expect(said).toEqual([]);
+    expect(done).toBe(false);
+    freeModel();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(said).toEqual([nowLine.text]);
+    expect(played).toEqual([]);
+    expect(done).toBe(false); // synthDone ещё не означает, что пользователь услышал фразу
+    finishPlayback();
+    await h.done;
+    expect(done).toBe(true);
   });
 
   afterEach(() => vi.useRealTimers());
@@ -206,8 +370,8 @@ describe('предзапись: звук', () => {
   });
 });
 
-describe('исполнитель: куски склейки и замена для текста ИИ', () => {
-  it('say — с кусками; ответ ИИ — с заменой из готовых ответов', async () => {
+describe('исполнитель: куски склейки и текст ответа ИИ', () => {
+  it('say сохраняет куски предзаписи; сгенерированный ответ не заменяется другим готовым ответом', async () => {
     const said: Line[] = [];
     const queue = { push: (l: Line) => said.push(l), clear() {}, scene() {}, sceneNow: () => null, current: () => null, busy: () => false } as unknown as ReturnType<typeof voiceQueue>;
     const r = aiRunner({
@@ -217,7 +381,8 @@ describe('исполнитель: куски склейки и замена дл
     r.handle({ e: 'say', key: 'explain', priority: 'scene' });
     expect(said[0]).toMatchObject({ text: expect.stringMatching(/^Перелом: Нейсе\./), parts: expect.any(Array) });
     await r.ask('Почему Зееловские высоты так важны?');
-    expect(said.at(-1)).toMatchObject({ source: 'now', fallback: { text: LINES.answers[0].a } });
+    expect(said.at(-1)).toMatchObject({ text: 'Высоты прикрывали Берлин.', source: 'now', priority: 'action' });
+    expect(said.at(-1)?.fallback).toBeUndefined();
   });
 });
 

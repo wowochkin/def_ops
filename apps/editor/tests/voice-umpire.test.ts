@@ -559,7 +559,7 @@ describe('разбор хода после хода — голосом поср�
     const ctl = fakeReview();
     turn({ view: over, review: { open: true, ctl, show: vi.fn() } });
     await announceTurn({ view: over, prev, record: RECORD, ai: { state: 'off' } });
-    expect(tours[0].tour.steps[0].text).toMatch(/^Игра окончена: поражение\. Предельный срок вышел\./);
+    expect(tours[0].tour.steps[0].text).toMatch(/^Кампания окончена: поражение\. Предельный срок вышел\./);
     tours[0].end();
     expect(disp.pending).toMatchObject({ action: 'command.review.compose' });
     expect(last()).toMatch(/^Составить разбор операции\?/);

@@ -28,6 +28,8 @@
   },
   "bundle": {
     "active": true,
+    "macOS": { "minimumSystemVersion": "14.0" },
+    "windows": { "webviewInstallMode": { "type": "offlineInstaller" } },
     "targets": "all",
     "icon": [
       "icons/32x32.png",
@@ -41,6 +43,7 @@
     ],
     "resources": {
       "../server/": "server/",
+      "../portable/": "portable/",
       "../../editor/dist/": "editor/",
       "../../../packages/sim/data/": "data/packages/sim/data/"
     }

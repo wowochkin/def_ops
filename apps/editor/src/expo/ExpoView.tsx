@@ -12,7 +12,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { affordances, keyToEvent } from './input';
 import { scrollMs, type DirectorEvent, type DirectorState } from './director';
-import { BANK, aimPlaces, placeAt } from './bank';
+import { IntroView } from './intro-view';
+import { INTRO_CUES, introCueAt } from './intro-story';
+import { BANK, aimPlaces, placeAt, type TurnN } from './bank';
 import type { ExpoSettings } from './settings';
 import { layoutFor, sceneOf } from './layout';
 import { AttractActions, DayRecordLine, Excursion, FullVersion, HowStaff, MarshalPortrait, StaffBoard, roleLayout } from './stand';
@@ -122,11 +124,17 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
   }, []);
   // один монитор: экран многомониторной раскладки во весь монитор
   const single = realCount === 1;
+  useEffect(() => {
+    if (single && state.phase.kind === 'intro') setLensState(null);
+  }, [single, state.phase.kind]);
   const count = single && lens ? lens.count : realCount;
   const index = single && lens ? lens.window : realIndex;
   const p = state.phase,
     roles = layoutFor(count).find((s) => s.window === index)?.roles ?? [];
   const controls = roles.includes('map');
+  // В режиме просмотра одного монитора ход должен доиграть и за боковой линзой.
+  const playHiddenTurn = single && realIndex === 0;
+  const playsTurn = controls || playHiddenTurn;
   const face = roleLayout(roles);
   const access = affordances(settings.input, settings.voiceInput, settings.aiMode);
   const scale = useStageScale();
@@ -143,10 +151,24 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     setAimPick(null);
     setAimAt(null);
   }, [state.session, p.kind, p.kind === 'turn' ? p.n : 0, p.kind === 'turn' ? p.step : '']);
+  const introElapsed = Math.max(0, (state.pausedAt ?? state.now) - state.phaseStart);
+  const introLine = (p.kind === 'intro' ? p.line : undefined) ?? ai.introLine ?? introCueAt(introElapsed).line;
+  const introVoiceClock = p.kind === 'intro' && p.voiced && ai.introLine === introLine && ai.introCueStartedAt !== undefined;
+  const introCueElapsed = introVoiceClock ? Math.max(0, (state.pausedAt ?? state.now) - ai.introCueStartedAt!)
+    : p.kind === 'intro' && p.voiced ? 0 : undefined;
   useEffect(() => {
     if (!access.keys || state.paused || !(controls || single)) return;
     const key = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (p.kind === 'intro') {
+        const target = e.target;
+        if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+        if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+        e.preventDefault();
+        const next = introLine + (e.key === 'ArrowLeft' ? -1 : 1);
+        if (next >= 1 && next <= INTRO_CUES.length) send({ t: 'introSeek', line: next });
+        return;
+      }
       if (single && p.kind !== 'welcome' && p.kind !== 'briefing' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         setLensState((l) => stepLens(l, e.key === 'ArrowLeft' ? -1 : 1));
@@ -166,23 +188,37 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
     };
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
-  }, [controls, access.keys, state.paused, state.front, p, expanded, hover, frontIndex, settings.fronts, send, single]);
-  const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract';
+  }, [controls, access.keys, state.paused, state.front, p, expanded, hover, frontIndex, settings.fronts, send, single, introLine]);
+  const buttons = controls && p.kind !== 'startup' && p.kind !== 'attract' && p.kind !== 'intro';
   const subtitles = buttons && !(p.kind === 'turn' && roles.includes('ai')) && p.kind !== 'result';
   const def = p.kind === 'turn' ? turnDef(state.front, p.n) : null;
   const lit = expanded ?? pending ?? hover;
-  const spoken = p.kind === 'result' ? ai.line?.text ?? ai.said : null;
-  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken, aimAt }), [state.phase, state.front, mv, maps, lit, count, index, spoken, aimAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const resultComplete = p.kind === 'result' && !(p.narrated ?? settings.generation.debrief);
+  const spoken = p.kind === 'result' && !resultComplete ? ai.line?.text ?? ai.said : null;
+  const debriefPercent = p.kind === 'turn' && p.debriefProgress && p.debriefProgress.total > 0
+    ? Math.min(100, Math.max(0, Math.floor(p.debriefProgress.done / p.debriefProgress.total * 100))) : 0;
+  const plan = useMemo(() => mapPlan({ state, mv, maps, lit, count, index, spoken, aimAt, playHiddenTurn }), [state.phase, state.front, mv, maps, lit, count, index, spoken, aimAt, playHiddenTurn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const computed = p.kind === 'turn' && turnComputed(mv, p.n);
+  const scrollError = p.kind === 'turn' && p.step === 'scroll'
+    ? model.error ?? p.gpuError ?? (p.debriefError ? `Не удалось подготовить озвучку: ${p.debriefError}` : null)
+    : null;
+  const scrollStatus = scrollError ?? (p.kind === 'turn' && p.step === 'scroll' ? (
+    p.gpuHold ? 'Подготавливаем модель'
+      : p.preparing ? `Готовим итог — ${debriefPercent}%`
+        : p.rest === undefined && !p.commenting && !plan?.run
+          ? computed ? 'Готовим карту…' : 'Модель считает ход операции…'
+          : null
+  ) : null);
   const onRunDone = useCallback(() => {
-    if (p.kind === 'turn' && p.step === 'scroll') send({ t: 'scrollDone' });
-  }, [p, send]);
+    if (playsTurn && p.kind === 'turn' && p.step === 'scroll') send({ t: 'scrollDone' });
+  }, [playsTurn, p, send]);
   useEffect(() => {
-    if (p.kind === 'turn' && p.step === 'scroll' && plan?.run) send({ t: 'scrollReady' });
-  }, [p, plan?.run?.key, send]);
+    if (playsTurn && p.kind === 'turn' && p.step === 'scroll' && !p.scrollBegan && plan?.run) send({ t: 'scrollReady' });
+  }, [playsTurn, p, plan?.run?.key, send]);
   // сцена без карты: карта скрыта, но не размонтирована — один экземпляр на окно, без пересоздания
   const lastPlan = useRef<StageMapProps>(NO_PLAN);
   if (plan) lastPlan.current = plan;
-  const shownPlan = plan ?? { ...lastPlan.current, run: null, fx: null };
+  const shownPlan = plan ?? (playsTurn ? { ...lastPlan.current, run: null, fx: null } : NO_PLAN);
   const clock = useRef<HTMLSpanElement | null>(null);
   const onTime = useCallback((t: string) => {
     for (const el of document.querySelectorAll<HTMLElement>('[data-clock]')) flip(el, modelTime(t));
@@ -230,7 +266,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
             <StageMap {...shownPlan} camera={shownPlan.camera && { ...shownPlan.camera, key: `${shownPlan.camera.key}@${gisSize}` }} onTime={onTime} onDone={onRunDone} />
           </div>
         </div>
-        <header className="expo-header">
+        {p.kind !== 'intro' && <header className="expo-header">
           <span>Штабные игры</span>
           {controls ? <PhaseTitle state={state} onStep={(step) => send({ t: 'step', step })} /> : <span />}
           {single ? (
@@ -244,8 +280,23 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
           ) : (
             <span>{`Экран ${index + 1} из ${count}`}</span>
           )}
-        </header>
+        </header>}
         <div className="expo-content">
+          {p.kind === 'intro' && single && <span className="expo-lenses expo-intro-switch" role="group" aria-label="Экраны стенда">
+            {lensesFor(lens).map((x) => <button key={x.label} aria-pressed={sameLens(x.lens, lens)} onClick={() => setLensState(x.lens)}>{x.label}</button>)}
+          </span>}
+          {p.kind === 'intro' && (
+            <IntroView
+              pane={controls ? 'film' : index === 2 ? 'swarm' : 'factors'}
+              line={introLine}
+              cueElapsedMs={introCueElapsed}
+              cueDurationMs={introVoiceClock ? ai.introCueDurationMs : undefined}
+              elapsedMs={introElapsed}
+              paused={state.paused}
+              onSkip={controls ? () => { if (!state.paused) send({ t: 'skipIntro' }); } : undefined}
+              onSelectScene={controls || single ? line => { if (!state.paused) send({ t: 'introSeek', line }); } : undefined}
+            />
+          )}
           {p.kind === 'startup' && <section className="expo-wide" />}
           {p.kind === 'attract' && (
             <section className="expo-attract-root" onClick={() => send({ t: 'touch' })}>
@@ -360,7 +411,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                           {mv && ', '}
                           {mv && (
                             <span className={p.step === 'scroll' ? 'expo-run-date' : undefined} ref={clock} data-clock>
-                              {modelTime(mv.time)}
+                              {modelTime(plan?.run?.from ?? plan?.time ?? scrollFrom(p, mv) ?? mv.time)}
                             </span>
                           )}
                         </p>
@@ -369,7 +420,6 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     </div>
                     <div className="expo-mapframe">
                       <div className="expo-mapslot" role="img" aria-label="Карта перелома" />
-                      {p.preparing && <p className="expo-scroll-rest">Готовим итог</p>}
                       {face === 'map' && (
                         <button type="button" className="expo-pause" aria-pressed={state.paused} onClick={() => send(state.paused ? { t: 'resume' } : { t: 'pause' })}>
                           {state.paused ? 'Продолжить' : 'Пауза'}
@@ -409,7 +459,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     ) : (
                       <>
                         <OrderSlip c={p.choice === 'aim' && mv?.blow ? { id: 'aim', title: mv.blow.title, lines: [] } : typeof p.choice === 'number' ? mv?.cards[p.choice] ?? null : null} n={p.choice === 'aim' ? 'aim' : p.choice} />
-                        <Reveal model={model} delay={p.choice === 'delay'} own={p.choice === 'aim'} full={!roles.includes('progress')} />
+                        <Reveal reveal={computed ? mv?.reveal : null} delay={p.choice === 'delay'} own={p.choice === 'aim'} full={!roles.includes('progress')} />
                         {mv?.move && !roles.includes('progress') && <MoveAdvance mv={mv} />}
                         {roles.includes('progress') && <Progress model={model} size="compact" date={false} />}
                       </>
@@ -432,7 +482,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
               {mv?.final ? (
                 <div className="expo-result-body">
                   {(face === 'all' || face === 'ai' || face === 'pair') && (
-                    <DebriefBoard mv={mv} spoken={spoken} fronts={settings.fronts} />
+                    <DebriefBoard mv={mv} spoken={spoken} fronts={settings.fronts} complete={resultComplete} />
                   )}
                   {(face === 'all' || face === 'map') && (
                     <div className="expo-result-side">
@@ -450,7 +500,7 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
                     </div>
                   )}
                   {(face === 'all' || face === 'app' || face === 'pair') && (
-                    <ResultCalc mv={mv} spoken={spoken} verdict={face === 'app'} />
+                    <ResultCalc mv={mv} spoken={spoken} verdict={face === 'app'} complete={resultComplete} />
                   )}
                 </div>
               ) : (
@@ -468,9 +518,11 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
             </section>
           )}
         </div>
-        {(buttons || subtitles) && (
+        {(buttons || subtitles || scrollStatus) && (
           <footer className="expo-footer">
-            {p.kind === 'turn' && roles.includes('ai') ? (
+            {scrollStatus ? (
+              <p className="expo-scroll-rest" role={scrollError ? 'alert' : 'status'}>{scrollStatus}</p>
+            ) : p.kind === 'turn' && roles.includes('ai') ? (
               <AiBand ai={ai} rest={p.step === 'explain' ? state.front && FRONT_TASKS[state.front] : def?.situation} />
             ) : subtitles ? (
               <AiPanel ai={ai} compact />
@@ -514,8 +566,8 @@ export function ExpoView({ window: realIndex, state, settings, count: realCount,
             ))}
           </footer>
         )}
-        <Film />
-        <Cut scene={p.kind === 'turn' ? `turn-${p.n}` : p.kind} />
+        {p.kind !== 'intro' && <Film />}
+        {p.kind !== 'intro' && <Cut scene={p.kind === 'turn' ? `turn-${p.n}` : p.kind} />}
         {children}
       </main>
     </div>
@@ -839,10 +891,10 @@ function Newsreel() {
 }
 
 /** Разбор на экране штаба: звучащая фраза крупно, уже сказанные мельче. Шапка — прогноз и звание. */
-function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null; fronts: FrontId[] }) {
+function DebriefBoard({ mv, spoken, fronts, complete = false }: { mv: View; spoken: string | null; fronts: FrontId[]; complete?: boolean }) {
   const final = mv.final!;
   const { head, deck } = forecastParts(final.forecast);
-  const brief = operationDebrief(mv);
+  const brief = complete ? null : operationDebrief(mv);
   const units = brief ? debriefSentences(brief.paragraphs) : [];
   const cursor = debriefCursor(units, spoken);
   const at = cursor.at;
@@ -894,8 +946,8 @@ function DebriefBoard({ mv, spoken, fronts }: { mv: View; spoken: string | null;
 }
 
 /** Расчёт полной версии на экране хода: лента, задачи и шкалы доезжают до фразы разбора. */
-function ResultCalc({ mv, spoken, verdict }: { mv: View; spoken: string | null; verdict: boolean }) {
-  const beat = resultBeat(mv, spoken);
+function ResultCalc({ mv, spoken, verdict, complete = false }: { mv: View; spoken: string | null; verdict: boolean; complete?: boolean }) {
+  const beat = resultBeat(mv, spoken, complete);
   const shown: View = {
     ...mv,
     time: beat.until,
@@ -951,32 +1003,30 @@ function LeaveBar({ leave, now, send }: { leave: number; now: number; send: (ev:
 }
 
 /** После выбора: как поступил маршал и исторический вариант (целиком или сутью, когда рядом ход операции). */
-function Reveal({ model, delay, full, own = false }: { model: ModelFrame; delay: boolean; full: boolean; own?: boolean }) {
-  const mv = model.view;
+function Reveal({ reveal, delay, full, own = false }: { reveal?: View['reveal']; delay: boolean; full: boolean; own?: boolean }) {
+  if (!delay && !reveal) return null;
   return (
     <div className="expo-reveal">
       {delay && <p className="expo-status">Промедление: новых распоряжений нет, армии закрепляются на достигнутом.</p>}
-      {mv?.reveal && !mv.busy ? (
+      {reveal && (
         <>
-          <h3>{mv.reveal.text}</h3>
+          <h3>{reveal.text}</h3>
           {full ? (
             <>
               <p className="expo-meta">{own ? 'В истории было иначе' : 'Исторический вариант'}</p>
-              <p className="expo-hist-title">{mv.reveal.historical.title}</p>
+              <p className="expo-hist-title">{reveal.historical.title}</p>
               <ul className="expo-card-lines">
-                {mv.reveal.historical.lines.map((l) => (
+                {reveal.historical.lines.map((l) => (
                   <li key={l}>{l}</li>
                 ))}
               </ul>
             </>
           ) : (
             <p className="expo-hist-title">
-              <span className="expo-meta">{own ? 'В истории:' : 'Исторический вариант:'}</span> {mv.reveal.historical.title}
+              <span className="expo-meta">{own ? 'В истории:' : 'Исторический вариант:'}</span> {reveal.historical.title}
             </p>
           )}
         </>
-      ) : (
-        !model.error && <p className="expo-status">Решение принято. Модель считает ход операции…</p>
       )}
     </div>
   );
@@ -1002,12 +1052,13 @@ function Progress({ model, size, date = true }: { model: ModelFrame; size: 'full
 
 /** «Штаб ИИ» на одном экране — субтитром в подвале: ответ, мысль или звучащая фраза; в тишине — `rest` (обстановка, задача). */
 function AiBand({ ai, rest }: { ai: AiFrame; rest?: string | null }) {
-  const text = ai.answer ? (ai.answer.text || ai.thinking) : ai.line?.text ?? rest;
+  const text = ai.answer ? (ai.answer.text || ai.thinking) : ai.thinking ?? ai.line?.text ?? ai.said ?? rest;
   const ref = useFit<HTMLDivElement>(`${ai.answer?.q}|${text}`, 34);
+  useEffect(() => { if (ref.current) ref.current.scrollTop = 0; }, [text, ref]);
   return (
     <section className="expo-subs" aria-live="polite">
       <h2 className="expo-sr">Штаб ИИ</h2>
-      <div ref={ref} className="expo-subs-text">
+      <div ref={ref} className="expo-subs-text" tabIndex={0} role="region" aria-label="Комментарий штаба">
         {ai.answer && <span className="expo-q">{ai.answer.q} </span>}
         <span className={ai.answer && !ai.answer.text ? 'expo-thinking' : ''}>{text}</span>
         {ai.answer?.source && <small className="expo-source"> {SOURCE_LABEL[ai.answer.source]}</small>}
@@ -1018,12 +1069,13 @@ function AiBand({ ai, rest }: { ai: AiFrame; rest?: string | null }) {
 
 /** Что говорит ИИ: ответ на вопрос (с источником), мысль, пока он думает, и субтитр звучащей фразы. */
 function AiPanel({ ai, compact = false }: { ai: AiFrame; compact?: boolean }) {
-  const line = ai.line && ai.line.text !== ai.answer?.text ? ai.line.text : null;
+  const spoken = ai.line?.text ?? ai.said;
+  const line = spoken !== ai.answer?.text ? spoken : null;
   const ref = useFit<HTMLDivElement>(`${ai.answer?.text}|${ai.thinking}|${line}`, compact ? 32 : 40);
   if (compact)
     return (
       <div ref={ref} className="expo-ai expo-ai-compact" aria-live="polite">
-        {ai.answer ? <p>{ai.answer.text || ai.thinking}</p> : line && <p className="expo-subtitle">{line}</p>}
+        {ai.answer ? <p>{ai.answer.text || ai.thinking}</p> : ai.thinking ? <p className="expo-thinking">{ai.thinking}</p> : line && <p className="expo-subtitle">{line}</p>}
       </div>
     );
   return (
@@ -1035,7 +1087,7 @@ function AiPanel({ ai, compact = false }: { ai: AiFrame; compact?: boolean }) {
           {ai.answer.source && <small className="expo-source">{SOURCE_LABEL[ai.answer.source]}</small>}
         </div>
       )}
-      {line && <p className="expo-subtitle">{line}</p>}
+      {!ai.answer && ai.thinking ? <p className="expo-thinking">{ai.thinking}</p> : line && <p className="expo-subtitle">{line}</p>}
     </div>
   );
 }
@@ -1129,21 +1181,20 @@ const ZOOM = 8;
 const sectorBox = (front: string, extra: LL[]): Bbox => bboxOf([...START.filter((a) => a.front === front).map((a) => a.at), BERLIN, ...extra]);
 
 /** Что показывает карта стенда в сцене: документ, момент или бег времени, кадр камеры и знаки поверх; null — карты нет. */
-export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aimAt = null }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number; spoken?: string | null; aimAt?: LL | null }): StageMapProps | null {
+export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aimAt = null, playHiddenTurn = false }: { state: DirectorState; mv: View | null; maps: StageDocs; lit: number | null; count: number; index: number; spoken?: string | null; aimAt?: LL | null; playHiddenTurn?: boolean }): StageMapProps | null {
   const p = state.phase;
   const hist = maps.history;
   const start = hist?.doc.timeline?.start ?? MAP.days[0];
-  const sector = sectorBox;
   const roles = layoutFor(count === 2 || count === 3 ? count : 1).find((s) => s.window === index)?.roles ?? [];
+  if (!roles.includes('map') && !(playHiddenTurn && p.kind === 'turn')) return null;
   if (p.kind === 'attract') {
     const d = maps.best ?? hist;
-    if (!d || !roles.includes('map')) return null;
+    if (!d) return null;
     return { doc: d.doc, time: null, run: { from: start, to: d.time, ms: 36000, loop: true, hold: 4000, step: 100, key: `${d.front}-${d.time}` }, camera: { bbox: THEATRE, key: `attract-${index}`, ms: 0, pad: 0.02, scale: 1_500_000 }, level: 'front', zones: d.zones, fx: { front: START.filter((a) => a.side === 'su').map((a) => a.at), smoke: [BERLIN], bursts: [] } };
   }
   // выбор фронта: карта скрыта, но уже встаёт на 16 апреля — на вводе в обстановку останется только пролёт камеры
   if (p.kind === 'welcome' && hist) return { doc: hist.doc, time: start, camera: null, level: 'front', zones: hist.zones };
   if (p.kind === 'briefing' && hist && state.front) {
-    if (!roles.includes('map')) return null;
     const pt = BRIEFING[state.front][p.point];
     if (!pt) return null;
     // кадр пункта доклада; на первом — артиллерийская подготовка 16 апреля, 5:00, на переднем крае фронта
@@ -1175,25 +1226,30 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aim
     const picked = p.step === 'scroll' && typeof p.choice === 'number' ? mv.cards[p.choice] : null;
     const arrows = aimArrows.length ? aimArrows : p.step === 'choose' ? (lit !== null ? mv.cards[lit]?.arrows : undefined) : p.step === 'scroll' ? picked?.arrows ?? (p.choice === 'aim' ? mv.blow?.arrows : undefined) ?? (p.choice === 'aim' ? undefined : mv.reveal?.historical.arrows) : undefined;
     const extra = arrows?.length ? orderFeatures(d.doc, arrows, ZOOM, tank) : undefined;
-    // прокрутка: армии идут от прошлого перелома, когда документ хода готов; до того — стоят. После конца кадра — на конечном времени, не обратно
-    const moving = p.step === 'scroll' && !p.rest && !p.preparing && own && own.time === mv.time && mv.map.prev && !mv.busy;
-    // пока ход ещё считается — кадр начала. Когда карта доиграла (пауза или «готовим итог») — конец хода, без скачка назад.
-    const time = own ? (p.step === 'scroll' && !moving && !p.rest && !p.preparing && mv.map.prev ? mv.map.prev.time : mv.time) : start;
+    // После выбора сначала ждём результат именно этого перелома, затем его документ.
+    const previous = scrollFrom(p, mv);
+    const moving = previous && !p.gpuHold && own?.time === mv.time;
+    const time = previous && !moving ? previous : own ? mv.time : start;
     const fx = { front: p.step === 'scroll' ? mv.map.armies.filter((a) => a.front === mv.front).map((a) => a.at) : [], smoke: mv.time >= '1945-04-20' ? [BERLIN] : [], bursts: moving ? mv.map.flashes.map((f) => f.at) : [] };
-    const runMs = Math.max(1_000, scrollMs(mv.front, p.n) - 500);
-    return { doc: d.doc, time, level: 'front', zones: d.zones, run: moving ? { from: mv.map.prev!.time, to: mv.time, ms: runMs, delay: 500, linear: true, key: `run-${mv.time}` } : null, camera, extra, fx };
+    // Сохраняем прежнюю длительность движения, исключая стартовую паузу из общего времени.
+    const runMs = scrollMs(mv.front, p.n) - 500;
+    return { doc: d.doc, time, level: 'front', zones: d.zones, run: moving ? { from: previous, to: mv.time, ms: runMs, linear: true, key: `run-${mv.time}` } : null, camera, extra, fx };
   }
   if (p.kind === 'result' && mv?.final) {
-    if (!roles.includes('map')) return null;
     const own = sessionDoc(maps.session, mv);
     if (!own) return null;
-    const beat = resultBeat(mv, spoken);
+    // До первой реплики разбора ещё может прийти кадр с последним комментарием хода.
+    // Его топонимы не должны уводить камеру от начального обзора операции.
+    const complete = p.narrated === false;
+    const brief = complete ? null : operationDebrief(mv);
+    const activeSpoken = spoken && brief && debriefCursor(debriefSentences(brief.paragraphs), spoken).at >= 0 ? spoken : null;
+    const beat = resultBeat(mv, activeSpoken, complete);
     const until = beat.until < own.time ? beat.until : own.time;
     const ids = Object.keys(mainPaths(mv.map.path));
     const paths = dailyPaths(own.doc, ids, until);
     const hp = historyPaths(mv.front, until);
     const history = Object.fromEntries(ids.filter((id) => hp[id]).map((id) => [id, hp[id]]));
-    const say = spoken ? spokenFocus(spoken, mv.front) : { armies: [] as string[], places: [] as LL[] };
+    const say = activeSpoken ? spokenFocus(activeSpoken, mv.front) : { armies: [] as string[], places: [] as LL[] };
     const turn = beat.turn ? BANK.fronts[mv.front].turns.find((t) => t.n === beat.turn) : undefined;
     const last = mv.decisions.at(-1);
     const lastTurn = last ? BANK.fronts[mv.front].turns.find((t) => t.n === last.n) : undefined;
@@ -1212,10 +1268,10 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aim
     const named = saidPts.length > 0;
     const frame = named ? frameOf(saidPts) : beat.phase === 'turn' && beat.turn ? turnBbox(mv.front, beat.turn) : null;
     const run = from < toTime ? { from, to: toTime, ms: 12000, key: `result-move-${beat.phase}-${beat.turn ?? 0}` } : null;
-    const sayKey = (spoken ?? '').replace(/\s+/g, ' ').trim().slice(0, 42);
+    const sayKey = (activeSpoken ?? '').replace(/\s+/g, ' ').trim().slice(0, 42);
     const camera = frame
       ? { bbox: frame, key: `result-${beat.phase}-${beat.turn ?? 'x'}-${said.map((x) => x.id).join('.')}-${say.places.length}-${sayKey}`, ms: 900 }
-      : { bbox: THEATRE, key: `result-${beat.phase}-${sayKey}`, ms: 800, pad: 0.02, scale: 1_500_000 };
+      : { bbox: THEATRE, key: `result-${beat.phase}-${sayKey}`, ms: activeSpoken ? 800 : 0, pad: 0.02, scale: 1_500_000 };
     const shownIds = named ? said.map((x) => x.id) : ids;
     const extra = [
       ...pathFeatures(
@@ -1233,4 +1289,13 @@ export function mapPlan({ state, mv, maps, lit, count, index, spoken = null, aim
 /** Документ сеанса, если он этого сеанса (фронт) и не новее его хода. */
 function sessionDoc(d: StageDoc | undefined, mv: View): StageDoc | null {
   return d && d.front === mv.front && d.time <= mv.time ? d : null;
+}
+
+function turnComputed(mv: View | null, n: TurnN): boolean {
+  return mv?.decisions.at(-1)?.n === n && !mv.busy;
+}
+
+function scrollFrom(p: Extract<DirectorState['phase'], { kind: 'turn' }>, mv: View): string | null {
+  return p.step === 'scroll' && p.rest === undefined && !p.preparing && !p.commenting && turnComputed(mv, p.n)
+    ? mv.map.prev?.time ?? null : null;
 }

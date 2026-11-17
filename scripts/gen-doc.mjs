@@ -64,14 +64,38 @@ const meta = join(dir, 'meta.yaml');
 writeFileSync(meta, `title: ${JSON.stringify(title)}\ntoc-title: "Содержание"\n`);
 execFileSync('pandoc', ['--from', 'gfm', '--to', 'docx', '--reference-doc', join(dirname(src), 'reference.docx'), '--resource-path', dirname(src),
   '--toc', '--toc-depth=2', '--metadata-file', meta, '-o', docx], { input: bodyMd, encoding: 'utf8' });
-// Word при открытии обновит поля — содержание заполнится с номерами страниц
+// Word обновит содержание; изображение останется на одной странице с курсивной подписью.
 execFileSync('python3', ['-c', `import sys, zipfile, shutil
+from xml.dom import minidom
+W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 src = sys.argv[1]; tmp = src + '.tmp'
 with zipfile.ZipFile(src) as zi, zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as zo:
     for it in zi.infolist():
         data = zi.read(it.filename)
         if it.filename == 'word/settings.xml' and b'updateFields' not in data:
             data = data.replace(b'</w:settings>', b'<w:updateFields w:val="true"/></w:settings>')
+        if it.filename == 'word/document.xml':
+            doc = minidom.parseString(data)
+            body = doc.getElementsByTagNameNS(W, 'body')[0]
+            blocks = [node for node in body.childNodes if node.nodeType == node.ELEMENT_NODE]
+            for image, caption in zip(blocks, blocks[1:]):
+                if image.localName != 'p' or caption.localName != 'p':
+                    continue
+                if not image.getElementsByTagNameNS(W, 'drawing'):
+                    continue
+                runs = [run for run in caption.getElementsByTagNameNS(W, 'r') if run.getElementsByTagNameNS(W, 't')]
+                if not runs or not all(run.getElementsByTagNameNS(W, 'i') for run in runs):
+                    continue
+                props = next((node for node in image.childNodes if node.nodeType == node.ELEMENT_NODE and node.localName == 'pPr'), None)
+                if props is None:
+                    props = doc.createElementNS(W, 'w:pPr')
+                    image.insertBefore(props, image.firstChild)
+                keep = props.getElementsByTagNameNS(W, 'keepNext')
+                if keep:
+                    keep[0].setAttributeNS(W, 'w:val', 'true')
+                else:
+                    props.appendChild(doc.createElementNS(W, 'w:keepNext'))
+            data = doc.toxml(encoding='UTF-8')
         zo.writestr(it, data)
 shutil.move(tmp, src)`, docx]);
 console.log(`Word: ${docx}`);

@@ -15,7 +15,7 @@ import type { Formation } from './types';
 import type { Theatre } from './theatre';
 import { visualPath } from './roadnet';
 import { areaTitle } from './reports';
-import { groupOf as sectorGroups, sectorLines, sectorMap } from './sectors';
+import { groupOf as sectorGroups, sectorLines, sectorMaps } from './sectors';
 
 export interface PublishOptions {
   name?: string;
@@ -709,13 +709,14 @@ function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
   // глубина линий от переднего края: операция — 40 км, город — ~5 км
   const depthKm = Math.min(40, T.cellKm * 20);
   const own = ctx.scenario.sides.map((x) => x.id).filter((sd) => !visible || sideOf(sd) === 'own');
+  const levels = [{ groups: front }, { level: 'army' as const, groups: army }];
   for (let i = 0; i < run.snapshots.length; i++) {
     const sn = run.snapshots[i];
     const to = run.snapshots[i + 1]?.time ?? addHours(sn.time, ctx.scenario.turnHours);
     const units = sn.units.filter((u) => !u.destroyed).map((u) => ({ id: u.id, side: sideOfF.get(u.id) ?? '', at: u.at }));
     for (const sd of own) {
       const side = sideOf(sd);
-      const fm = sectorMap(T, ctx.scenario, units, sd, sn.time, { groups: front });
+      const [fm, am] = sectorMaps(T, ctx.scenario, units, sd, sn.time, levels);
       if (fm.groups.length > 1) for (const l of sectorLines(T, fm, { depthKm })) {
         const nm = `Разграничительная линия ${l.pair.map((g) => names.get(g) ?? g).join(' / ')} (${l.historical >= 0.5 ? 'по директиве' : 'расчёт'}), ход ${sn.turn}`;
         for (const layerId of ['sim-bounds', 'lvl-op-bounds', 'lvl-st-bounds']) {
@@ -728,7 +729,6 @@ function boundaryFeatures(ctx: SimContext, run: RunResult, sideOf: (s: string) =
       // полосы армий — внутри фронта; линия между армиями, у которых обеих в этот час есть полоса ядра (агентная
       // модель, след полос), не рассчитывается — их полосы ниже
       const banded = new Set((ctx.agentBands ?? []).filter((b) => b.time <= sn.time).map((b) => b.hq));
-      const am = sectorMap(T, ctx.scenario, units, sd, sn.time, { level: 'army', groups: army });
       if (am.groups.length > 1) for (const l of sectorLines(T, am, { depthKm: depthKm * 0.6 })) {
         if ((front.get(l.pair[0]) ?? l.pair[0]) !== (front.get(l.pair[1]) ?? l.pair[1])) continue;
         if (l.pair.every((g) => banded.has(g))) continue;

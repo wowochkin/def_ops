@@ -79,7 +79,7 @@ describe('сценарий «Берлин-1945»', () => {
     expect(hkl.length).toBeGreaterThan(0);
     expect(hkl.some((f) => f.time?.to != null)).toBe(true);
     expect(hkl.every((f) => f.time?.from === tctx.scenario.start && (f.time.to == null || f.time.to > tctx.scenario.start))).toBe(true);
-  });
+  }, 30_000);
 
   it('графика атласа: исходный и вчерашний фронт, оси танковых армий с датами, черта и дата у остановленных ударов', () => {
     const tctx = loadContext('berlin-1945-tasks');

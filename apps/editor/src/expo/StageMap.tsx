@@ -4,7 +4,7 @@
  * (10–20 раз в секунду: армии идут плавно, а карта не перерисовывается на каждом кадре) — остальная сцена при этом
  * не перерисовывается. Карта не принимает ввода посетителя.
  */
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { zoomForScale, type Feature, type MapDocument } from '@def-ops/core';
 import { MapView } from '../MapView';
 import type { MapEngine } from '../engine/types';
@@ -140,7 +140,8 @@ export const StageMap = memo(function StageMap({ doc, time, run = null, camera, 
   useEffect(() => {
     onEngine?.(engine);
   }, [engine, onEngine]);
-  useEffect(() => {
+  // Новая сцена не должна успеть показать кадр со старой камерой.
+  useLayoutEffect(() => {
     if (!engine || !camera) return;
     let alive = true;
     // окно карты часто ещё нулевое в момент смены сцены: без повтора кадр остаётся прежним (широкий доклад, его левый край — Магдебург)

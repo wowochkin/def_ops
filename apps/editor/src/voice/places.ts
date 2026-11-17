@@ -57,6 +57,8 @@ function phonOf(w: string): string {
  */
 function wordDist(a: string, b: string): number | null {
   if (a === b) return 0;
+  // Родовое слово не превращается в название по звучанию («камень» → «Каммин»).
+  if (COMMON_STEMS.has(oneEnding(a)) && !linked(a, b)) return null;
   let best: number | null = null;
   const put = (d: number) => { if (best === null || d < best) best = d; };
   for (const x of stems(a)) for (const y of stems(b)) {
@@ -192,7 +194,7 @@ function scoreKey(q: string[], key: string[]): number {
   return partial(q, key);
 }
 /** Родовые слова: сами по себе не называют пункт («мост», «озеро», «часть»). */
-const COMMON = new Set(['мост', 'озеро', 'леса', 'лес', 'район', 'часть', 'станция', 'остров', 'река', 'аэродром', 'канал', 'шоссе', 'высота', 'высоты', 'плацдарм', 'гора', 'порт', 'вокзал', 'площадь', 'парк', 'кладбище', 'казармы', 'завод', 'город', 'деревня', 'станции']);
+const COMMON = new Set(['мост', 'озеро', 'леса', 'лес', 'район', 'часть', 'станция', 'остров', 'река', 'аэродром', 'канал', 'шоссе', 'высота', 'высоты', 'плацдарм', 'гора', 'порт', 'вокзал', 'площадь', 'парк', 'кладбище', 'казармы', 'завод', 'город', 'деревня', 'станции', 'камень']);
 const COMMON_STEMS = new Set([...COMMON].map(oneEnding));
 /** Слово запроса — то же слово названия буква в букву или с одним падежным окончанием. */
 const linked = (w: string, k: string) => w === k || oneEnding(k) === w || oneEnding(w) === k || oneEnding(w) === oneEnding(k);

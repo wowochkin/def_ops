@@ -66,7 +66,7 @@ def connect(c):
 
 def test_health_ready(make_client):
     c = make_client()
-    assert c.get("/health").json() == {"state": "ready"}
+    assert c.get("/health").json() == {"state": "ready", "synthesis": {}}
 
 
 def test_ws_ready_lists_voices_and_roles(make_client):
@@ -280,29 +280,29 @@ def wavs(root):
 def test_recording_leaves_no_files(make_client, tmp_path):
     data = tmp_path / "data"
     c = make_client([RECORD_TEXT] * 4)
-    ws, _ = connect(c)
-    assert record(ws)["ok"] is True
-    assert any("pending" in w for w in wavs(data))  # проверенная запись — до сохранения, для пробы
-    ws.send_text(json.dumps({"type": "voice", "op": "save", "name": "Гость"}))
-    vid = until(ws, "voice_saved")["id"]
-    assert wavs(data) == sorted(["voices/zhukov-10s/ref.wav", f"voices/{vid}/ref.wav"])
-    ws.send_text(json.dumps({"type": "voice", "op": "delete", "voice_id": vid}))
-    until(ws, "voice_list")
-    assert wavs(data) == ["voices/zhukov-10s/ref.wav"] and not (data / "voices" / vid).exists()
-    # новая запись поверх проверенной и отказ от записи стирают её
-    assert record(ws)["ok"] is True
-    ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
-    until(ws, "voice_recording")
-    assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
-    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
-    until(ws, "voice_discarded")
-    assert record(ws)["ok"] is True
-    ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
-    until(ws, "voice_discarded")
-    assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
-    # закрытие окна стирает непрошедшую в образцы запись
-    assert record(ws)["ok"] is True
-    ws.close()
+    with c.websocket_connect("/ws") as ws:
+        until(ws, "ready")
+        assert record(ws)["ok"] is True
+        assert any("pending" in w for w in wavs(data))  # проверенная запись — до сохранения, для пробы
+        ws.send_text(json.dumps({"type": "voice", "op": "save", "name": "Гость"}))
+        vid = until(ws, "voice_saved")["id"]
+        assert wavs(data) == sorted(["voices/zhukov-10s/ref.wav", f"voices/{vid}/ref.wav"])
+        ws.send_text(json.dumps({"type": "voice", "op": "delete", "voice_id": vid}))
+        until(ws, "voice_list")
+        assert wavs(data) == ["voices/zhukov-10s/ref.wav"] and not (data / "voices" / vid).exists()
+        # новая запись поверх проверенной и отказ от записи стирают её
+        assert record(ws)["ok"] is True
+        ws.send_text(json.dumps({"type": "voice", "op": "record-start"}))
+        until(ws, "voice_recording")
+        assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
+        ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+        until(ws, "voice_discarded")
+        assert record(ws)["ok"] is True
+        ws.send_text(json.dumps({"type": "voice", "op": "discard"}))
+        until(ws, "voice_discarded")
+        assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
+        # закрытие окна стирает непрошедшую в образцы запись
+        assert record(ws)["ok"] is True
     c.close()
     assert wavs(data) == ["voices/zhukov-10s/ref.wav"]
 
@@ -844,4 +844,144 @@ def test_render_writes_file_without_sound_to_window(make_client, tmp_path):
     assert until(ws, "rendered") == {"type": "rendered", "id": 8, "error": "нет образца голоса — запишите голос в окне «Голоса»"}
     ws.send_text(json.dumps({"type": "render", "id": 9, "role": "chief", "text": " "}))
     assert until(ws, "error")["text"] == "синтез в файл: пустой текст"
+    ws.close()
+
+
+def test_stress_prepare_matches_prerecord_and_reuses_full_phrase(make_client, monkeypatch):
+    from engines import engine
+    import server
+    c = make_client()
+    c.app.state.service.models.engine = engine('qwen3-ru-stress')
+    calls = count_tts(c)
+    pauses = []
+    monkeypatch.setattr(server, 'lengthen_sentence_pauses', lambda a, sr, t: (pauses.append(t), a)[1])
+    ws, _ = connect(c)
+    text = 'Докладываю итоги хода. Противник отошёл за реку. Наши части заняли переправу.'
+    ws.send_text(json.dumps({'type': 'prepare', 'id': 11, 'role': 'chief', 'text': text}))
+    assert until(ws, 'prepared')['audio_s'] > 0
+    assert calls == [text]
+    assert pauses == [text]
+    ws.send_text(json.dumps({'type': 'say', 'id': 12, 'role': 'chief', 'text': text}))
+    until(ws, 'say-done')
+    assert calls == [text]
+    ws.send_text(json.dumps({'type': 'render', 'id': 13, 'role': 'chief', 'text': text}))
+    until(ws, 'rendered')
+    assert calls == [text, text]
+    assert pauses == [text, text]
+    ws.close()
+
+
+def test_prepared_audio_is_not_reused_for_another_engine(make_client):
+    from engines import engine
+    c = make_client()
+    calls = count_tts(c)
+    ws, _ = connect(c)
+    text = 'Докладываю итоги хода.'
+    ws.send_text(json.dumps({'type': 'prepare', 'id': 11, 'role': 'chief', 'text': text}))
+    until(ws, 'prepared')
+    c.app.state.service.models.engine = engine('qwen3-ru-stress')
+    ws.send_text(json.dumps({'type': 'prepare', 'id': 12, 'role': 'chief', 'text': text}))
+    until(ws, 'prepared')
+    assert calls == [text, text]
+    ws.close()
+
+
+def test_cancel_prepare_discards_inflight_audio(make_client):
+    import threading
+    c = make_client()
+    m = c.app.state.service.models
+    original = m.tts_stream
+    started, release = threading.Event(), threading.Event()
+    calls = []
+
+    def slow(text, ref):
+        calls.append(text)
+        started.set()
+        assert release.wait(3)
+        return original(text, ref)
+
+    m.tts_stream = slow
+    ws, _ = connect(c)
+    text = 'Докладываю итоги.'
+    try:
+        ws.send_text(json.dumps({'type': 'prepare', 'id': 1, 'role': 'chief', 'text': text}))
+        assert started.wait(3)
+        ws.send_text(json.dumps({'type': 'cancel-prepare', 'id': 1}))
+        assert until(ws, 'prepared') == {'type': 'prepared', 'id': 1, 'error': 'отменено'}
+        release.set()
+        ws.send_text(json.dumps({'type': 'prepare', 'id': 2, 'role': 'chief', 'text': text}))
+        assert until(ws, 'prepared')['audio_s'] > 0
+        assert calls == [text, text]
+    finally:
+        release.set()
+        ws.close()
+
+
+def test_stress_direct_say_chief_uses_whole_phrase(make_client):
+    from pathlib import Path
+    from engines import engine
+    c = make_client()
+    svc = c.app.state.service
+    svc.models.engine = engine('qwen3-ru-stress')
+    svc.ref_for = lambda role: (Path('/chief-10s/ref.wav'), 'Образец голоса.')
+    calls = count_tts(c)
+    ws, _ = connect(c)
+    text = 'Докладываю итоги хода. Противник отошёл за реку. Наши части заняли переправу.'
+    ws.send_text(json.dumps({'type': 'say', 'id': 2, 'role': 'chief', 'text': text}))
+    until(ws, 'say-done')
+    assert calls == [text]
+    ws.close()
+
+
+def test_tts_resource_acknowledges_after_operation(make_client):
+    c = make_client()
+    svc = c.app.state.service
+    calls = []
+    svc.models.load_tts_resource = lambda ref: calls.append(('load', ref))
+    svc.models.unload_tts_resource = lambda: calls.append(('unload', None))
+    ws, _ = connect(c)
+    ws.send_json({'type': 'tts-resource', 'id': 42, 'op': 'load', 'voice_id': 'zhukov-10s'})
+    reply = until(ws, 'tts-resource-done')
+    assert reply['id'] == 42 and calls[0][0] == 'load' and 'error' not in reply
+    ws.send_json({'type': 'tts-resource', 'id': 43, 'op': 'unload'})
+    reply = until(ws, 'tts-resource-done')
+    assert reply['id'] == 43 and calls[-1][0] == 'unload'
+    ws.close()
+
+
+def test_resource_waits_for_running_synthesis(make_client):
+    import threading
+    c = make_client()
+    svc = c.app.state.service
+    entered, release, unloaded = threading.Event(), threading.Event(), threading.Event()
+    def busy():
+        entered.set()
+        assert release.wait(3)
+    svc.models.mlx.submit(busy)
+    assert entered.wait(2)
+    svc.models.unload_tts_resource = unloaded.set
+    ws, _ = connect(c)
+    ws.send_json({'type': 'tts-resource', 'id': 7, 'op': 'unload'})
+    assert not unloaded.wait(0.1)
+    release.set()
+    assert until(ws, 'tts-resource-done')['id'] == 7
+    assert unloaded.is_set()
+    ws.close()
+
+
+def test_prepared_pcm_survives_tts_resource_unload(make_client):
+    c = make_client()
+    calls = count_tts(c)
+    c.app.state.service.models.unload_tts_resource = lambda: None
+    ws, _ = connect(c)
+    text = 'Противник отошёл за реку.'
+    ws.send_json({'type': 'prepare', 'id': 11, 'role': 'chief', 'text': text})
+    until(ws, 'prepared')
+    count = len(calls)
+    ws.send_json({'type': 'tts-resource', 'id': 12, 'op': 'unload'})
+    assert 'error' not in until(ws, 'tts-resource-done')
+    ws.send_json({'type': 'say', 'id': 13, 'role': 'chief', 'text': text})
+    seen = []
+    until(ws, 'say-done', seen)
+    assert any(isinstance(x, bytes) for x in seen) and len(calls) == count
     ws.close()

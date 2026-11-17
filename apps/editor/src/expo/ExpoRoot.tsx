@@ -15,7 +15,7 @@ import { StartupScene } from './StartupScene';
 import { telemetry, type ExpoStats } from './stats';
 import { expoBus, type ExpoBus } from './bus';
 import { expoWindows, plan, type Windows } from './windows';
-import { settingsStore, EXPO_DEFAULTS, type ExpoSettings } from './settings';
+import { settingsStore, saveConfiguredSettings, EXPO_DEFAULTS, type ExpoSettings } from './settings';
 import { createHost } from './host';
 import { initialState, type DirectorEvent } from './director';
 import { ExpoView } from './ExpoView';
@@ -28,10 +28,10 @@ import type { VoiceClient } from '../voice/client';
 import { NO_AI } from './ai-runner';
 import type { StatKind } from './stats';
 import { lockdown } from './lockdown';
-import { cornerHold, operatorCombo } from './operator';
+import { cornerHold, operatorAccess, operatorCombo } from './operator';
 import { OperatorMenu } from './OperatorMenu';
 import { phaseLabel } from './scenes';
-import { docsSig, stageMaps, type StageDocs } from './stage-maps';
+import { applyStageMap, broadcastStageMap, docsSig, missingStageMaps, stageMaps, type StageDocs } from './stage-maps';
 import { axesSum } from './score';
 import { noteSession } from './records';
 
@@ -54,6 +54,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
   const busRef = useRef<ExpoBus | null>(null);
   const windowsRef = useRef<Windows | null>(null);
   const menuRef = useRef(false);
+  const saves = useRef(Promise.resolve());
   const frameRef = useRef(frame);
   frameRef.current = frame;
   const sound = useRef<ReturnType<typeof soundEngine> | null>(null);
@@ -115,20 +116,21 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     const bus = expoBus();
     busRef.current = bus;
     let mine: StageDocs = {};
-    const mapsRef = stageMaps((key, d) => {
+    const mapsRef = stageMaps((key, d, aliases) => {
       if (disposed) return;
-      setMaps((x) => ({ ...x, [key]: d }));
-      bus.send({ k: 'map', key, d });
+      const update = { key, d, aliases };
+      setMaps((x) => applyStageMap(x, update));
+      broadcastStageMap(bus, update, hostRef.current?.snapshot().count ?? 1);
     });
     const windows = expoWindows();
     windowsRef.current = windows;
 
-    const open = () => {
-      if (index !== 0) return;
+    const access = operatorAccess(index, bus, () => {
       hostRef.current?.dispatch({ t: 'pause' });
       menuRef.current = true;
       setMenu(true);
-    };
+    }, () => windows.focusMain?.() ?? Promise.resolve(), e => log(`Не удалось переключиться на меню оператора: ${String(e)}`));
+    const open = access.request;
     const offLock = lockdown(document, {
       operatorCombo,
       allowKey: (e) => menuRef.current || (frameRef.current.settings.input === 'mouse-keyboard' && VISITOR_KEYS.includes(e.key)),
@@ -139,7 +141,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       open();
     };
     document.addEventListener('keydown', combo);
-    const offCorner = index === 0 ? cornerHold(document.body, open) : () => {};
+    const offCorner = cornerHold(document.body, open);
 
     const off = bus.on((m) => {
       if (index > 0 && m.k === 'state') setFrame({ state: m.state, settings: m.settings, count: m.count, model: m.model ?? NO_MODEL, ai: m.ai ?? NO_AI });
@@ -148,9 +150,9 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
         setNote(m.note);
       }
       if (m.k === 'identify') setIdentify({ until: m.until, names: m.names });
-      if (index > 0 && m.k === 'map') setMaps((x) => (mine = { ...x, [m.key]: m.d }));
+      if (index > 0 && m.k === 'map') setMaps((x) => (mine = applyStageMap(x, m)));
       // окно без нынешних документов карты (новое или перезапущенное) — дослать
-      if (index === 0 && m.k === 'hello' && m.has !== docsSig(mapsRef.docs)) for (const [key, d] of Object.entries(mapsRef.docs)) if (d) bus.send({ k: 'map', key: key as keyof StageDocs, d });
+      if (index === 0 && m.k === 'hello') for (const update of missingStageMaps(mapsRef.docs, m.has)) bus.send({ k: 'map', ...update });
     });
 
     const publishHealth = (states: ProbeStates, reason: string | null = null) => {
@@ -170,30 +172,33 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
             publishHealth(states);
             return true;
           }
-          const ok = await p.check();
+          // При подключении нового ТВ окно ещё загружается: не сбрасываем текущую сцену
+          // до первого heartbeat. Начальный запуск по-прежнему требует строгой ready().
+          const ok = p.id === 'windows' && host.snapshot().state.phase.kind !== 'startup'
+            ? host.windowsHealthy() : await p.check();
           states[p.id] = ok ? 'ok' : 'fail';
           publishHealth(states);
           return ok;
         },
       }));
       const onFail = (id: ProbeId) => {
-        log(`Нет связи: ${id}`);
+        const { state } = host.snapshot();
+        log(`Нет связи: ${id}. Сеанс ${state.session}, сцена ${phaseLabel(state)} сохранена`);
         count('failure');
-        // модель и голос, которыми сеанс уже не пользуется (стенд работает без ИИ), сеанс не прерывают
-        const used = id === 'core' || id === 'windows' || host.snapshot().settings.aiMode === 'ai';
-        if (used) host.dispatch({ t: 'jump', phase: id === 'core' || id === 'windows' ? 'startup' : 'attract' });
         if (id === 'model') {
           host.setAiMode('noai');
-          publishHealth(states, 'Запуск в режиме без ИИ');
+          publishHealth(states, 'Языковая модель недоступна. Сеанс продолжается без ИИ');
         }
-        if (id === 'windows') void host.checkWindows().catch((e) => log(String(e)));
       };
       const onSweep = () => {
-        if (states.core === 'ok' && states.windows === 'ok') {
+        const { state, settings } = host.snapshot();
+        if (states.windows === 'fail') void host.checkWindows().catch((e) => log(`Не удалось восстановить раскладку: ${String(e)}`));
+        if (state.phase.kind === 'startup' && states.core === 'ok' && states.windows === 'ok') {
           setError('');
           host.dispatch({ t: 'ready' });
+          historyRun();
         }
-        if (host.configuration().aiMode === 'ai' && states.model === 'ok') host.setAiMode('ai');
+        if (settings.aiMode !== 'ai' && host.configuration().aiMode === 'ai' && states.model === 'ok') host.setAiMode('ai');
       };
       return watchdog(tracked, onFail, 15000, () => {}, onSweep);
     };
@@ -239,6 +244,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
           if (e.e === 'newSession' || e.e === 'deal' || e.e === 'replace' || e.e === 'decide') void model.handle(e);
           stage.handle(e);
         },
+        (e) => log(`Не удалось обновить раскладку: ${String(e)}`),
       );
       hostRef.current = host;
       await host.start();
@@ -286,6 +292,7 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
       mapsRef.dispose();
       off();
       offCorner();
+      access.dispose();
       offLock();
       document.removeEventListener('keydown', combo);
       clearInterval(timer);
@@ -296,15 +303,18 @@ export function ExpoRoot({ index = 0, onExit }: { index?: number; onExit?: () =>
     };
   }, [index]);
 
-  const save = async (settings: ExpoSettings) => {
-    const host = hostRef.current;
-    if (!host) return;
-    if (settings.aiMode === 'ai' && host.configuration().aiMode !== 'ai') {
-      const model = localProbes(host.ready).find((p) => p.id === 'model');
-      if (model && !(await model.check().catch(() => false))) throw Error('Для режима с ИИ нужна работающая локальная модель');
-    }
-    await settingsStore().save(settings);
-    await host.configure(settings);
+  const save = (settings: ExpoSettings) => {
+    const pending = saves.current.catch(() => {}).then(async () => {
+      const host = hostRef.current;
+      if (!host) return;
+      if (settings.aiMode === 'ai' && host.configuration().aiMode !== 'ai') {
+        const model = localProbes(host.ready).find((p) => p.id === 'model');
+        if (model && !(await model.check().catch(() => false))) throw Error('Для режима с ИИ нужна работающая локальная модель');
+      }
+      await saveConfiguredSettings(host, settingsStore(), settings);
+    });
+    saves.current = pending;
+    return pending;
   };
   const exit = async () => {
     await hostRef.current?.stop();

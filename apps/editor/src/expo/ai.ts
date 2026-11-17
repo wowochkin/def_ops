@@ -1,12 +1,12 @@
 /**
  * ИИ выставочного сеанса: карточка по «Сгенерировать альтернативу», ответ на вопрос, комментарий выбора.
  *
- * Посетитель ИИ не ждёт: у каждой работы срок (`within`); не успела или сломалась — берётся заготовка, сеанс идёт
- * дальше. Карточки перелома модель составляет заранее (`prefetch` при раздаче), по кнопке обычно берётся уже готовая.
+ * Карточки и ответы на вопросы имеют срок (`within`); комментарий завершённого хода ждёт ответ до конца,
+ * пока пользователь не сменил сцену. Карточки перелома модель составляет заранее (`prefetch` при раздаче).
  * Карточка ИИ проходит ту же проверку формы, что банк; не прошла — отбрасывается. У каждого текста — источник.
  */
 import type { Card, OrderKind, TurnN } from './bank';
-import { LINES, answerFor, pickFilled, textErrors, type Filled, type Lines, type Vars } from './lines';
+import { LINES, answerFor, pickFilled, templateUnits, textErrors, type Filled, type Lines, type Vars } from './lines';
 
 /** Запрос к языковой модели: системный текст и запрос → ответ. `onText` — уже собранный ответ по мере генерации. */
 export type Ask = (system: string, text: string, signal: AbortSignal, onText?: (full: string) => void) => Promise<string>;
@@ -45,6 +45,7 @@ const CARD_SYSTEM =
 const SYSTEM =
   'Ты — начальник штаба на выставке о Берлинской операции 1945 года. Имени у тебя нет: не представляйся выдуманной фамилией и званием. ' +
   'Командующий фронта назван в фактах. Тон — сдержанная штабная хроника. ' +
+  'Участник сеанса — пользователь. При упоминании называй его пользователем, при прямом обращении используй «вы» и «ваше решение». ' +
   'Ответь сразу по-русски, четырьмя-шестью предложениями, связным штабным ответом. Без плана, без английского, без разбора задания. ' +
   'Только то, что есть в фактах или общеизвестно об операции. Нет факта — скажи, что в сводке этого нет.';
 
@@ -167,7 +168,7 @@ export function staffParts(raw: string): { done: string; live: string } {
   const doneBits: string[] = [];
   let tail = '';
   for (const s of bits) {
-    if (/[.!?]$/.test(s) && s.length >= 8 && s.length <= 500 && cyrillicShare(s) >= 0.75 && !/^пользователь\b/i.test(s)) doneBits.push(s);
+    if (/[.!?]$/.test(s) && s.length >= 8 && s.length <= 500 && cyrillicShare(s) >= 0.75 && !/^пользователь\s+(?:спрашивает|просит|хочет\s+узнать)(?=\s|[.,:!?]|$)/i.test(s)) doneBits.push(s);
     else if (cyrillicShare(s) >= 0.75) tail = s;
   }
   let done = doneBits.slice(0, 6).join(' ');
@@ -191,7 +192,7 @@ export function draftReply(raw: string): string {
 /** Ответ на вопрос: ИИ в срок (текст появляется по мере генерации), иначе готовый ответ, иначе честное «не успеваю». */
 export async function answer(ask: Ask | null, question: string, facts: string, ms: number, lines: Lines = LINES, onText?: (full: string) => void): Promise<Said> {
   if (ask) {
-    const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nВопрос посетителя: ${question}`, s, (full) => {
+    const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nВопрос пользователя: ${question}`, s, (full) => {
       const shown = staffAnswer(full) || draftReply(full);
       if (shown) onText?.(shown);
     }));
@@ -206,14 +207,39 @@ export async function answer(ask: Ask | null, question: string, facts: string, m
 
 export type ChoiceKind = 'historical' | 'own' | 'delay';
 
-/** Комментарий выбора: ИИ по фактам хода в срок, иначе заготовка с подстановками (`prefer` — озвученная заранее). */
-export async function comment(
-  ask: Ask | null, kind: ChoiceKind, facts: string, vars: Vars, ms: number, lines: Lines = LINES, prefer?: (f: Filled) => boolean,
-): Promise<Said | null> {
-  if (ask) {
-    const t = await within(ms, (s) => ask(SYSTEM, `${facts}\nПрокомментируй выбор посетителя и его последствия по этим фактам.`, s));
-    if (t?.trim() && !textErrors(t.trim()).length) return { text: t.trim(), source: 'now' };
+export const COMMENT_CHARS = 220;
+export const COMMENT_TOKENS = 50;
+export const COMMENT_QUERY = 'Прокомментируй выбор пользователя и его последствия по этим фактам.';
+const COMMENT_SYSTEM = SYSTEM.replace('четырьмя-шестью предложениями', 'двумя короткими предложениями') +
+  ` Весь ответ — не больше ${COMMENT_CHARS} символов с пробелами. Первое предложение — оценка решения, второе — его главное последствие по фактам. Без вступления и перечислений.`;
+
+/** Избыточный ответ остаётся комментарием LLM: до двух предложений в пределах рамки. */
+function shortComment(raw: string): string {
+  const text = raw.replace(/\s+/g, ' ').trim();
+  let kept = '';
+  for (const sentence of templateUnits(text).slice(0, 2)) {
+    const next = kept ? `${kept} ${sentence}` : sentence;
+    if (next.length > COMMENT_CHARS) break;
+    kept = next;
   }
+  return kept || (text.length <= COMMENT_CHARS ? text : `${text.slice(0, COMMENT_CHARS - 1).replace(/\s+\S*$/, '')}…`);
+}
+
+/** Комментарий выбора без срока: заготовка только при ошибке, отмена сцены не выдаёт запоздалую замену. */
+export async function comment(
+  ask: Ask | null, kind: ChoiceKind, facts: string, vars: Vars, lines: Lines = LINES, prefer?: (f: Filled) => boolean,
+  signal: AbortSignal = new AbortController().signal,
+): Promise<Said | null> {
+  if (signal.aborted) return null;
+  if (ask) {
+    try {
+      const t = await ask(COMMENT_SYSTEM, `${facts}\n${COMMENT_QUERY}`, signal);
+      if (signal.aborted) return null;
+      const text = shortComment(t);
+      if (text && !textErrors(text, lines).length) return { text, source: 'now' };
+    } catch { /* Реальный отказ модели: используем подготовленный комментарий. */ }
+  }
+  if (signal.aborted) return null;
   const f = pickFilled(lines.comment[kind], vars, Math.random, prefer);
   return f ? { ...f, source: 'prepared' } : null;
 }

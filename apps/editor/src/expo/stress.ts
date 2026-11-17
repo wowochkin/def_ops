@@ -3,6 +3,7 @@
  * пометки, который понимает модель озвучки (знак ударения над гласной, «+» перед гласной или заглавная гласная).
  * Пометки ставятся только в тексте, уходящем на озвучку; на экране и в проверке распознаванием их нет.
  */
+import { placeStressForms } from './stress-places';
 export type StressMark = 'acute' | 'plus' | 'upper';
 export interface StressData { mark: Record<string, StressMark>; words: Record<string, string> }
 
@@ -16,14 +17,19 @@ export function markStress(text: string, mark: StressMark): string {
   });
 }
 
-/** Слова словаря в тексте — с ударением (слово целиком, без учёта регистра первой буквы). */
+/** Словарь и безопасные падежи известных топонимов; явная форма важнее производной и входной пометки. */
 export function applyStress(text: string, words: Record<string, string>): string {
-  const keys = Object.keys(words).sort((a, b) => b.length - a.length);
-  if (!keys.length) return text;
-  const esc = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  return text.replace(new RegExp(`(?<![\\p{L}+])(${esc.join('|')})(?![\\p{L}])`, 'giu'), (w: string) => {
-    const key = keys.find((k) => k.toLowerCase() === w.toLowerCase())!;
-    const v = words[key];
+  const lookup = new Map(Object.entries(placeStressForms(words)));
+  for (const [word, say] of Object.entries(words)) lookup.set(word.toLowerCase(), say);
+  if (!lookup.size) return text;
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const keys = [...lookup.keys()].sort((a, b) => b.length - a.length);
+  const patterns = keys.map(k => [...k].map(c => /\p{L}/u.test(c) ? `\\+?${esc(c)}\u0301?` : esc(c)).join(''));
+  const re = new RegExp(`(?<![\\p{L}\\p{M}+])(?:${patterns.join('|')})(?![\\p{L}\\p{M}])`, 'giu');
+  return text.normalize('NFC').replace(re, (token: string) => {
+    const w = plainStress(token).normalize('NFC');
+    const v = lookup.get(w.toLowerCase());
+    if (!v) return token;
     const up = w[0] !== w[0].toLowerCase();
     const i = v[0] === '+' ? 1 : 0;
     return v.slice(0, i) + (up ? v[i].toUpperCase() : v[i].toLowerCase()) + v.slice(i + 1);

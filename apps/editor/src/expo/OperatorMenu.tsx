@@ -3,6 +3,7 @@
  * «Сеанс», «Экраны», «Звук», «Доступ». Настройки сохраняются сразу при изменении (через `normalizeSettings`).
  * `setup` — то же меню на странице «Начало» полного режима: без сводки, вместо действий — включение выставочного режима.
  */
+import { openPortableSetup } from '../portable/setup-state';
 import { LENSES, LENSES_2, setLens } from './lens';
 import { useEffect, useRef, useState } from 'react';
 import { normalizeSettings, type ExpoSettings, type FrontId } from './settings';
@@ -57,8 +58,12 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('session');
   const [found, setFound] = useState<MonitorInfo[]>([]);
+  const [monitorRefresh, setMonitorRefresh] = useState(0);
   const monitorsRef = useRef(monitors);
   monitorsRef.current = monitors;
+  const pendingSaves = useRef(0);
+  const latestSettings = useRef(settings);
+  if (!pendingSaves.current) latestSettings.current = settings;
   useEffect(() => {
     if (open) return;
     setAuthorized(false);
@@ -75,23 +80,35 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
     const list = monitorsRef.current;
     if (!open || !authorized || tab !== 'screens' || !list) return;
     let live = true;
-    void list()
+    let pending = false;
+    const refresh = () => {
+      if (pending) return;
+      pending = true;
+      void list()
       .then((m) => {
         if (live) setFound(m);
       })
       .catch(() => {
         if (live) setFound([]);
-      });
+      }).finally(() => { pending = false; });
+    };
+    refresh();
+    const timer = setInterval(refresh, 2000);
     return () => {
       live = false;
+      clearInterval(timer);
     };
-  }, [open, authorized, tab]);
+  }, [open, authorized, tab, monitorRefresh]);
   if (!open) return null;
 
+  // Запись expo.json асинхронна: соседние переключатели объединяются до подтверждения родителя.
   const save = (patch: Partial<ExpoSettings>) => {
-    const s = normalizeSettings({ ...settings, ...patch }).settings;
-    void onSave(s).catch((e) => setError(`Не удалось сохранить: ${String(e)}`));
+    const s = normalizeSettings({ ...latestSettings.current, ...patch }).settings;
+    latestSettings.current = s;
+    pendingSaves.current++;
+    void onSave(s).catch((e) => setError(`Не удалось сохранить: ${String(e)}`)).finally(() => { pendingSaves.current--; });
   };
+  const saveGeneration = (patch: Partial<ExpoSettings['generation']>) => save({ generation: { ...latestSettings.current.generation, ...patch } });
   const flag = (label: string, value: boolean, change: (v: boolean) => void) => (
     <label className="expo-check">
       <input type="checkbox" checked={value} onChange={(e) => change(e.target.checked)} />
@@ -170,7 +187,7 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
           <option value="result">Итог</option>
         </select>
       </label>
-      <button onClick={() => onAction('identify')}>Показать номера экранов</button>
+      {tab !== 'screens' && <button onClick={() => onAction('identify')}>Показать номера экранов</button>}
       <button onClick={() => onAction('reboot')}>Перезапустить стенд</button>
       <button className="expo-danger" onClick={onExit}>
         Выйти в полный режим
@@ -180,6 +197,7 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
 
   const sessionTab = (
     <>
+      <button onClick={openPortableSetup}>Модели, словарь и перенос библиотеки</button>
       <label>
         Режим ИИ
         <select value={settings.aiMode} onChange={(e) => save({ aiMode: e.target.value as ExpoSettings['aiMode'] })}>
@@ -187,6 +205,31 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
           <option value="noai">Без ИИ</option>
         </select>
       </label>
+      <fieldset>
+        <legend>Генерация и озвучка</legend>
+        {flag('Комментарии после решений', settings.generation.comments, (v) => saveGeneration({ comments: v }))}
+        {flag('Итоговый разбор', settings.generation.debrief, (v) => saveGeneration({ debrief: v }))}
+        {flag('Озвучивать комментарии', settings.generation.commentVoice, (v) => saveGeneration({ commentVoice: v }))}
+        {flag('Догенерировать озвучку итога', settings.generation.debriefVoice, (v) => saveGeneration({ debriefVoice: v }))}
+        <label>
+          Температура голоса
+          <input type="number" min="0" max="1" step="0.1" value={settings.generation.temperature}
+            onChange={(e) => { const temperature = e.target.valueAsNumber; if (Number.isFinite(temperature) && temperature >= 0 && temperature <= 1) saveGeneration({ temperature }); }} />
+        </label>
+        <label>
+          Размер пакета
+          <select aria-label="Размер пакета" value={settings.generation.batchSize} onChange={(e) => saveGeneration({ batchSize: Number(e.target.value) as 1 | 2 | 4 })}>
+            <option value="1">1</option><option value="2">2</option><option value="4">4</option>
+          </select>
+        </label>
+        <label>
+          Потоки CPU для TTS
+          <select aria-label="Потоки CPU для TTS" value={settings.generation.cpuThreads} onChange={(e) => saveGeneration({ cpuThreads: Number(e.target.value) as 1 | 2 | 4 | 8 })}>
+            <option value="1">1 — один поток</option><option value="2">2</option><option value="4">4</option><option value="8">8</option>
+          </select>
+        </label>
+        <p>Готовые записи итогов звучат при любом положении переключателя. Если догенерация выключена, остальные фразы видны текстом. Настройки действуют со следующего этапа. Потоки CPU — для PyTorch в Windows.</p>
+      </fieldset>
       <label>
         Ввод
         <select value={settings.input} onChange={(e) => save({ input: e.target.value as ExpoSettings['input'] })}>
@@ -241,9 +284,16 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
         step={1}
         onValue={(v) => save({ screens: { ...settings.screens, count: v as 1 | 2 | 3 } })}
       />
-      <MonitorOrder monitors={found} order={settings.screens.order} onOrder={(order) => save({ screens: { ...settings.screens, order } })} />
+      <p className="expo-muted">Запрошено {settings.screens.count}, доступно {found.length}. {found.length < settings.screens.count ? 'Стенд использует доступные экраны.' : 'Экраны назначаются в порядке ниже.'}</p>
+      <p className="expo-muted expo-monitor-note">В настройках компьютера выберите расширенный рабочий стол. HDMI-сплиттер дублирует один экран и не создаёт три независимых.</p>
+      <div className="expo-monitor-actions">
+        {!setup && <button onClick={() => onAction('identify')}>Показать номера экранов</button>}
+        <button onClick={() => setMonitorRefresh(n => n + 1)}>Обновить подключения</button>
+      </div>
+      <MonitorOrder monitors={found} order={settings.screens.order} count={settings.screens.count} onOrder={(order) => save({ screens: { ...settings.screens, order } })} />
       <fieldset>
         <legend>Показ на одном мониторе (содержимое экрана раскладки во весь монитор)</legend>
+        <p className="expo-muted">Переключатель «Все вместе / 1 / 2 / 3» меняет просмотр в одном окне. Назначение физических мониторов он не меняет.</p>
         {[...LENSES, ...LENSES_2.slice(1)].map((x) => (
           <button key={`${x.lens?.count}-${x.label}`} onClick={() => setLens(x.lens)}>
             {x.lens ? `${x.lens.count === 3 ? 'Раскладка на три' : 'Раскладка на два'}: ${x.label}` : x.label}
@@ -259,6 +309,8 @@ export function OperatorMenu({ settings, open = true, setup = false, summary, mo
       {volume('Громкость голоса', settings.volume.voice, (v) => save({ volume: { ...settings.volume, voice: v } }))}
       {volume('Громкость фона', settings.volume.ambient, (v) => save({ volume: { ...settings.volume, ambient: v } }))}
       {flag('Голос на заставке по умолчанию', settings.attractCall.on, (v) => save({ attractCall: { ...settings.attractCall, on: v } }))}
+      {flag('Интро сеанса', settings.intro, (v) => save({ intro: v }))}
+      <p className="expo-note">После заставки, не вместо неё.<br />Изменение действует со следующего сеанса.</p>
       {mic && <MicField client={mic} />}
       <label>
         Пауза между фразами, с

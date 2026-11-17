@@ -83,5 +83,5 @@ export function vectorBase(style: StyleSpecification, o: { opacity: number; year
     layers.push(out as unknown as LayerSpecification);
   }
   const sprite = typeof style.sprite === 'string' ? absolutize(style.sprite, o.base) : undefined;
-  return { sources, layers, filters, glyphs: style.glyphs ? absolutize(style.glyphs, o.base) : undefined, sprite };
+  return { sources, layers, filters, glyphs: style.glyphs ? absolutize(style.glyphs, o.base) + (style.glyphs.includes('?') ? '&' : '?') + 'assets=2' : undefined, sprite };
 }

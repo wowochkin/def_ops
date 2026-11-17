@@ -10,7 +10,6 @@
 //! --voice`); окну отдаётся только манифест и клипы с именем из шестнадцатеричного хеша.
 
 use std::{fs, io::Write, path::Path, sync::Mutex};
-use tauri::Manager;
 
 /// Одна запись за раз: счётчики и журнал из разных окон не перемешиваются.
 static LOCK: Mutex<()> = Mutex::new(());
@@ -90,7 +89,7 @@ fn append_log(dir: &Path, day: &str, line: &str, limit: u64) -> Result<(), Strin
 #[tauri::command]
 pub fn expo_stats_add(app: tauri::AppHandle, day: String, kind: String) -> Result<(), String> {
     let _lock = LOCK.lock().map_err(|e| e.to_string())?;
-    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let dir = crate::data_dir(&app)?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     add_stat(&dir.join("expo-stats.json"), &day, &kind).map(|_| ())
 }
@@ -101,14 +100,14 @@ pub fn expo_stats_today(app: tauri::AppHandle, day: String) -> Result<serde_json
         return Err("Неверный день".into());
     }
     let _lock = LOCK.lock().map_err(|e| e.to_string())?;
-    let data = read_json(&app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo-stats.json"));
+    let data = read_json(&crate::data_dir(&app)?.join("expo-stats.json"));
     Ok(if data[&day].is_object() { data[&day].clone() } else { blank_day() })
 }
 
 #[tauri::command]
 pub fn expo_log(app: tauri::AppHandle, day: String, line: String) -> Result<(), String> {
     let _lock = LOCK.lock().map_err(|e| e.to_string())?;
-    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo-logs");
+    let dir = crate::data_dir(&app)?.join("expo-logs");
     append_log(&dir, &day, &line, LOG_LIMIT)
 }
 
@@ -117,7 +116,7 @@ fn valid_clip(file: &str) -> bool {
 }
 
 fn voice_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("expo").join("voice"))
+    Ok(crate::data_dir(&app)?.join("expo").join("voice"))
 }
 
 /// Манифест предзаписи голоса или None, если её не готовили.

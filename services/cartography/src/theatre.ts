@@ -38,7 +38,7 @@ export class TheatreBuilder {
   constructor(o: { python?: string; cache?: string; script?: string } = {}) {
     const venv = join(ROOT, '.venv/bin/python');
     this.script = o.script || SCRIPT;
-    this.python = o.python || (existsSync(venv) ? venv : 'python3');
+    this.python = o.python || process.env.THEATRE_PYTHON || (existsSync(venv) ? venv : 'python3');
     this.cache = o.cache || join(homedir(), '.cache/def-ops-theatre');
   }
 
@@ -60,7 +60,7 @@ export class TheatreBuilder {
     const rp = join(dir, `${recipe.id}.recipe.json`), out = join(dir, `${recipe.id}.json`);
     await fs.writeFile(rp, JSON.stringify(recipe, null, 1));
     const b = { id, recipeId: String(recipe.id), name: String(recipe.name ?? recipe.id), status: 'running' as const, startedAt: new Date().toISOString(), log: [] as string[], out, dir };
-    const proc = spawn(this.python, ['-u', this.script, rp, '--out', out, '--cache', this.cache], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn(this.python, ['-u', this.script, rp, '--out', out, '--cache', this.cache], { cwd: ROOT, env: { ...process.env, PYTHONUTF8: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
     const add = (d: Buffer) => { for (const l of d.toString().split('\n').map((x) => x.trimEnd()).filter(Boolean)) { b.log.push(l); if (b.log.length > 200) b.log.shift(); } };
     proc.stdout.on('data', add);
     proc.stderr.on('data', add);

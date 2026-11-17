@@ -4,6 +4,7 @@
  */
 import linesJson from './bank-data/berlin-1945.lines.json';
 import { norm } from '../voice/fuzzy';
+import { INTRO_KEYS } from './intro-story';
 
 export interface Answer { keys: string[]; q: string; a: string }
 export interface Lines {
@@ -82,10 +83,14 @@ export function answerFor(question: string, lines: Lines = LINES): Answer | null
   return best;
 }
 
-/** Ошибки текста заготовки: длина (~15 с вслух — до 220 знаков), стоп-слова, двойные пробелы. */
+/** Сцены визитной карточки из банка могут звучать длиннее обычной реплики стенда. */
+const INTRO_TEXTS = new Set(INTRO_KEYS.flatMap((key) => LINES.say[key] ?? []));
+
+/** Ошибки текста: до 220 знаков (фразы интро из банка — до 360), стоп-слова, двойные пробелы. */
 export function textErrors(t: string, lines: Lines = LINES): string[] {
   const out: string[] = [];
-  if (t.length > 220) out.push(`длиннее 220 знаков: «${t.slice(0, 40)}…»`);
+  const max = INTRO_TEXTS.has(t) ? 360 : 220;
+  if (t.length > max) out.push(`длиннее ${max} знаков: «${t.slice(0, 40)}…»`);
   for (const s of lines.stop) if (t.toLowerCase().includes(s)) out.push(`стоп-слово «${s}»: «${t.slice(0, 40)}…»`);
   if (/\s{2,}/.test(t)) out.push(`двойной пробел: «${t.slice(0, 40)}…»`);
   return out;

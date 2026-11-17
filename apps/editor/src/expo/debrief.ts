@@ -1,8 +1,7 @@
 /**
- * Разбор итога голосом командующего выбранного фронта. Текст собирается из фактов этого сеанса,
- * поэтому заранее не записывается: его читает живой голос Жукова или Конева.
- * Абзацы звучат по очереди. Соседние предложения одного абзаца, пока их меньше 220 знаков, идут одним
- * синтезом: отдельный запуск на каждую точку заново берёт тембр клона.
+ * Разбор итога голосом командующего выбранного фронта. Текст собирается из фактов сеанса.
+ * Для типовых реплик есть записи Жукова и Конева. Предложения итогового абзаца идут отдельно,
+ * чтобы готовые записи подходили к разным сочетаниям результата, оценки и звания.
  */
 import { BANK, placeTitle, type Card, type TurnN } from './bank';
 import { templateUnits } from './lines';
@@ -46,11 +45,11 @@ function turnStory(front: FrontId, d: Decision): string {
 }
 
 /** С чего командующий начинает разбор: что сейчас будет, а не сразу частность перелома. */
-function opening(v: ModelView): string {
+function opening(v: Pick<ModelView, 'front'>): string {
   return `Операция ${FRONT_NAMES[v.front]} закончена. Разбираю, как она прошла по вашим приказам: что стояло перед войсками и чем каждый перелом закончился.`;
 }
 
-function outcome(v: ModelView): string {
+function outcome(v: Pick<ModelView, 'front' | 'final'>): string {
   const f = v.final!;
   const head = f.forecast.replace(' — ', ', ');
   const sentence = head ? `${head[0].toUpperCase()}${head.slice(1)}.` : '';
@@ -71,9 +70,16 @@ export function forecastParts(forecast: string): { head: string; deck: string } 
   return cut ? { head: cut[1], deck: cut[2] } : { head: forecast, deck: '' };
 }
 
+/** В итоговом абзаце точка после числа задач завершает предложение. */
+function paragraphUnits(paragraph: string, closing: boolean): string[] {
+  return closing
+    ? paragraph.split(/(?<= из \d+\.) (?=\p{Lu})/u).flatMap(templateUnits)
+    : templateUnits(paragraph);
+}
+
 /** Предложения разбора по отдельности. Сокращения армий не режутся. */
 export function debriefSentences(paragraphs: string[]): string[] {
-  return paragraphs.flatMap((p) => templateUnits(p));
+  return paragraphs.flatMap((p, i) => paragraphUnits(p, i === paragraphs.length - 1));
 }
 
 /** Где в списке предложений звучащий кусок: кусок — несколько предложений подряд, не одно. */
@@ -95,10 +101,10 @@ export function debriefCursor(sentences: string[], spoken: string | null): { fro
 /** Сколько знаков отдавать одним синтезом. Дальше тембр клона снова берётся с нуля, зато звук не ждёт весь разбор. */
 const UTTERANCE_CHARS = 220;
 
-/** Куски живого разбора: соседние предложения одного абзаца, пока кусок короче 220 знаков. */
+/** Вступление и переломы звучат группами предложений, общий итог — по предложениям. */
 export function debriefUtterances(paragraphs: string[]): string[] {
   const out: string[] = [];
-  for (const p of paragraphs) {
+  for (const p of paragraphs.slice(0, -1)) {
     let buf = '';
     for (const s of templateUnits(p)) {
       const next = buf ? `${buf} ${s}` : s;
@@ -109,6 +115,8 @@ export function debriefUtterances(paragraphs: string[]): string[] {
     }
     if (buf) out.push(buf);
   }
+  const closing = paragraphs.at(-1);
+  if (closing) out.push(...paragraphUnits(closing, true));
   return out;
 }
 
@@ -135,17 +143,12 @@ function turnEnd(front: FrontId, n: TurnN, end: string): string {
  * Какой кусок разбора сейчас звучит. Нет фразы — вступление.
  * Фраза не из разбора (короткая заготовка) — общий исход, карта на всём пути.
  */
-export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
+export function resultBeat(v: ModelView, spoken: string | null, complete = false): ResultBeat {
+  if (complete) return { phase: 'close', turn: null, until: v.time || START, span: [1, 1] };
   const d = operationDebrief(v);
   const end = v.time || START;
   const turns = BANK.fronts[v.front].turns;
   const openUntil = turns[1] ? timeAt(START, turns[1].hour) : timeAt(START, 36);
-  const spanOf = (paragraph: string, sentence: string): [number, number] => {
-    const parts = templateUnits(paragraph);
-    const i = Math.max(0, parts.indexOf(sentence));
-    const n = Math.max(1, parts.length);
-    return [i / n, (i + 1) / n];
-  };
   const open = (span: [number, number] = [0, 0]): ResultBeat => ({ phase: 'open', turn: null, until: openUntil, span });
   const close = (span: [number, number] = [0, 1]): ResultBeat => ({ phase: 'close', turn: null, until: end, span });
   if (!d) return close();
@@ -158,8 +161,9 @@ export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
     const turn = v.decisions[i - 1]?.n ?? null;
     return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end), span } : close(span);
   };
-  for (let i = 0; i < d.paragraphs.length; i++) {
-    const parts = templateUnits(d.paragraphs[i]).map(norm);
+  const paragraphs = d.paragraphs.map((p, i) => paragraphUnits(p, i === d.paragraphs.length - 1));
+  for (let i = 0; i < paragraphs.length; i++) {
+    const parts = paragraphs[i].map(norm);
     const n = Math.max(1, parts.length);
     for (let a = 0; a < parts.length; a++) {
       let acc = '';
@@ -169,19 +173,15 @@ export function resultBeat(v: ModelView, spoken: string | null): ResultBeat {
       }
     }
   }
-  const rows = d.paragraphs.flatMap((p, i) => templateUnits(p).map((s) => ({ s, i, p })));
+  const rows = paragraphs.flatMap((parts, i) => parts.map((s, n) => ({ s, i, span: [n / parts.length, (n + 1) / parts.length] as [number, number] })));
   const loc = rows.find((x) => norm(x.s) === said)
     ?? rows.find((x) => said.startsWith(norm(x.s).slice(0, 48)) || norm(x.s).startsWith(said.slice(0, 48)));
   if (!loc) return open();
-  const span = spanOf(loc.p, loc.s);
-  if (loc.i === 0) return open(span);
-  if (loc.i >= d.paragraphs.length - 1) return close(span);
-  const turn = v.decisions[loc.i - 1]?.n ?? null;
-  return turn ? { phase: 'turn', turn, until: turnEnd(v.front, turn, end), span } : close(span);
+  return beatOf(loc.i, loc.span);
 }
 
 /** Рассказ о проведённой операции с точки зрения получившейся обстановки. Пусто — итога ещё нет. */
-export function operationDebrief(v: ModelView): { paragraphs: string[]; voice: string } | null {
+export function operationDebrief(v: Pick<ModelView, 'front' | 'decisions' | 'final'>): { paragraphs: string[]; voice: string } | null {
   const f = v.final;
   if (!f) return null;
   const paragraphs = [

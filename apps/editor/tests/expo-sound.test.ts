@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { cuesFor, levels } from '../src/expo/sound';
+import { describe, expect, it, vi } from 'vitest';
+import { cuesFor, levels, soundEngine } from '../src/expo/sound';
 import { initialState, type DirectorState } from '../src/expo/director';
 
 const st = (phase: DirectorState['phase'], patch: Partial<DirectorState> = {}) => ({ ...initialState(0), phase, ...patch }) as DirectorState;
-const choose = (deadline: number, now: number) => st({ kind: 'turn', n: 1, step: 'choose', deadline, replacements: 0 } as DirectorState['phase'], { now });
+const choose = (deadline: number, now: number) => st({ kind: 'turn', n: 1, step: 'choose', deadline, replacements: 0, warned: false, offered: false, choice: null }, { now });
 
 describe('звук стенда', () => {
   it('звуки на смену фаз', () => {
@@ -27,4 +27,18 @@ describe('звук стенда', () => {
     expect(levels({ voice: 0.8, ambient: 0.5, ambientOn: true }).ambient).toBe(0.5);
     expect(levels({ voice: 0.8, ambient: 0, ambientOn: true }).cue).toBeCloseTo(0.1);
   });
+});
+
+it('первое касание создаёт и разблокирует звук до применения громкости', () => {
+  const resume = vi.fn(() => Promise.resolve());
+  const node = () => ({ connect: (other: unknown) => other, start: () => {}, gain: { value: 0, setTargetAtTime: () => {} }, frequency: { value: 0 } });
+  const ctx = { sampleRate: 10, currentTime: 0, destination: {}, createGain: node, createBufferSource: node,
+    createBiquadFilter: node, createBuffer: () => ({ getChannelData: () => new Float32Array(40) }), resume, close: () => Promise.resolve() };
+  const make = vi.fn(() => ctx as unknown as AudioContext);
+  const sound = soundEngine(make);
+  sound.resume();
+  expect(make).toHaveBeenCalledOnce(); expect(resume).toHaveBeenCalledOnce();
+  sound.set({ voice: 1, ambient: 0.5, ambientOn: true });
+  expect(make).toHaveBeenCalledOnce();
+  sound.close();
 });

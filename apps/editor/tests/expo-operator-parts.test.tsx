@@ -18,7 +18,7 @@ it('stepper moves by step and stops at bounds', () => {
 
 it('monitor order fills unknown and moves within bounds', () => {
   expect(moveMonitor([], ['a', 'b', 'c'], 'c', -1)).toEqual(['a', 'c', 'b']);
-  expect(moveMonitor(['c', 'x'], ['a', 'b', 'c'], 'c', -1)).toEqual(['c', 'a', 'b']);
+  expect(moveMonitor(['c', 'x'], ['a', 'b', 'c'], 'c', -1)).toEqual(['c', 'x', 'a', 'b']);
   expect(moveMonitor(['b'], ['a', 'b'], 'a', 1)).toEqual(['b', 'a']);
   const saved: string[][] = [];
   const view = render(
@@ -34,6 +34,21 @@ it('monitor order fills unknown and moves within bounds', () => {
   fireEvent.click(view.getByRole('button', { name: 'Правый: выше' }));
   expect(saved).toEqual([['b', 'a']]);
   expect((view.getByRole('button', { name: 'Левый: выше' }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+it('перестановка подключённых экранов сохраняет места отключённых', () => {
+  expect(moveMonitor(['middle', 'left', 'right'], ['left', 'right'], 'right', -1)).toEqual(['middle', 'right', 'left']);
+});
+
+it('назначения трёх экранов видны по роли и порядку слева направо', () => {
+  const view = render(<MonitorOrder monitors={[
+    { id: 'right', name: 'TV', x: 3840, y: 0, width: 1920, height: 1080, scale: 1 },
+    { id: 'left', name: 'TV', x: 0, y: 0, width: 1920, height: 1080, scale: 1 },
+    { id: 'middle', name: 'TV', x: 1920, y: 0, width: 1920, height: 1080, scale: 1 },
+  ]} order={['offline']} onOrder={() => {}} />);
+  expect(view.getAllByRole('listitem')[0].textContent).toContain('left');
+  for (const label of ['Левый — Штаб ИИ', 'Центральный — Карта', 'Правый — Ход операции']) expect(view.getByText(label)).toBeTruthy();
+  expect(view.getByText(/Не подключён: offline/)).toBeTruthy();
 });
 
 it('summary speaks words, not codes', () => {

@@ -6,6 +6,7 @@ import {
 } from './protocol';
 
 export { VOICE_SAY_IDS } from './protocol';
+import type { TtsInfo } from './tts-store';
 import { MIC_CHANGED_NOTE, MIC_KEY, OUT_KEY, onDevicesChanged, parseDevices, pickDevice, type AudioDevices } from './audio-devices';
 
 const DEFAULT_URL = 'ws://127.0.0.1:47645/ws';
@@ -87,6 +88,9 @@ export class VoiceClient {
   private wsState: WsState = 'closed';
   private api: { state: string } | null = null;
   private ready = false;
+  private batchCapable = false;
+  private temperatureCapable = false;
+  private cpuThreadsCapable = false;
   private failed = false;  // последняя попытка подключиться не удалась
   private fails = 0;  // неудачных попыток подряд
   private everOpened = false;  // связь уже была (сервис перезапускается — переподключаться часто)
@@ -140,13 +144,18 @@ export class VoiceClient {
   private sources: { src: AudioBufferSourceNode; id: number }[] = [];
   /** Заготовки `prepare`, ждущие ответа: номер → чем ответить (true — звук готов). */
   private prepWait = new Map<number, (ok: boolean) => void>();
+  private batchWait = new Map<number, { finish(ok: boolean, error?: string): void; progress(done: number, total: number): void; total: number; done: number }>();
   private prepId = 0;
+  private resourceId = 0;
+  private resourceWait = new Map<number, (info?: TtsInfo, error?: string) => void>();
   /** По фразам: `done` — сервис сказал, что кусков больше нет; сыграно — когда доиграли все. */
   private phrases = new Map<number, { done: boolean }>();
   /** Куски фразы до `say-done`: играем целиком, когда синтез закончился. */
   private held = new Map<number, AudioChunk[]>();
   /** Синтез закончен, звук ждёт, пока доиграет более ранняя фраза. */
   private buffered = new Map<number, AudioChunk[]>();
+
+  get supportsPrepareBatch(): boolean { return this.batchCapable; }
 
   get status(): VoiceStatus { return voiceStatus(this.api, this.wsState, this.ready, this.failed, this.serviceError !== null); }
 
@@ -432,11 +441,13 @@ export class VoiceClient {
     if (old) { old.onopen = old.onmessage = old.onclose = old.onerror = null; old.close(); }
     this.stopPlayback();
     this.settlePrepared();
+    this.settleResources();
     this.closeMic();
     this.node?.disconnect();
     void this.ctx?.close();
     this.ctx = null; this.bus = null; this.out = null; this.node = null; this.nodeReady = null;
     this.ready = false;
+    this.batchCapable = this.temperatureCapable = this.cpuThreadsCapable = false;
     this.failed = false;
     this.fails = 0;
     this.serviceError = null;
@@ -464,6 +475,7 @@ export class VoiceClient {
     this.ws = ws;
     ws.onopen = () => {
       if (this.ws !== ws) return;
+      this.batchCapable = this.temperatureCapable = this.cpuThreadsCapable = false;
       this.ready = false;  // до нового `ready` сервис не считается готовым
       this.failed = false;
       this.fails = 0;
@@ -484,9 +496,11 @@ export class VoiceClient {
     ws.onclose = () => {
       if (this.ws !== ws) return;
       this.ws = null;
+      this.batchCapable = this.temperatureCapable = this.cpuThreadsCapable = false;
       if (!opened) { this.failed = true; this.fails++; }
       this.stopPlayback();  // обрыв: договаривать некому
-      this.settlePrepared();  // и заготовки пропали вместе с подключением
+      this.settlePrepared();
+      this.settleResources();  // и заготовки пропали вместе с подключением
       this.setWs('closed');
       this.scheduleReconnect();
     };
@@ -509,6 +523,9 @@ export class VoiceClient {
 
   private onMessage(m: ServerMsg) {
     if (m.type === 'ready') {
+      this.batchCapable = m.capabilities?.prepare_batch === true;
+      this.temperatureCapable = m.capabilities?.tts_temperature === true;
+      this.cpuThreadsCapable = m.capabilities?.tts_cpu_threads === true;
       this.ready = true; this.serviceError = null; this.aec = m.aec === true; this.emitStatus();
       void this.syncCapture();
     }
@@ -517,7 +534,22 @@ export class VoiceClient {
     // остановил сервис (калибровка, запись голоса, отказ от записи): уже пришедший звук не доигрывается
     else if (m.type === 'say-done' && m.stopped) { this.cancelled.add(m.id); this.stopPlayback(m.id); }
     else if (m.type === 'say-done') this.phraseDone(m.id);
+    else if (m.type === 'tts-resource-done') { const f = this.resourceWait.get(m.id); this.resourceWait.delete(m.id); f?.(m.tts, m.error); }
     else if (m.type === 'prepared') { const f = this.prepWait.get(m.id); this.prepWait.delete(m.id); f?.(!m.error); }
+    else if (m.type === 'prepared-batch') {
+      const wait = this.batchWait.get(m.id);
+      if (wait) {
+        if (m.error) wait.finish(false, m.error);
+        else if (m.total !== wait.total || !Number.isInteger(m.done) || m.done < wait.done || m.done > m.total) {
+          this.send({ type: 'cancel-prepare-batch', id: m.id });
+          wait.finish(false, 'Неверный счётчик готовности пакетной озвучки');
+        } else {
+          wait.done = m.done;
+          wait.progress(m.done, m.total);
+          if (m.done === m.total) wait.finish(true);
+        }
+      }
+    }
     this.handlers.get(m.type)?.forEach((cb) => cb(m as never));
   }
 
@@ -527,22 +559,82 @@ export class VoiceClient {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(m));
   }
 
-  say(id: number, role: VoiceRole, text: string, more?: boolean, voiceId?: string) {
+  say(id: number, role: VoiceRole, text: string, more?: boolean, voiceId?: string, temperature?: number, cpuThreads?: number) {
+    const sampling = this.sampling(temperature, cpuThreads);
     if (this.muted) return;
     this.cancelled.revive(id);
-    this.send({ type: 'say', id, role, text, ...(more !== undefined ? { more } : {}), ...(voiceId ? { voice_id: voiceId } : {}) });
+    this.send({ type: 'say', id, role, text, ...(more !== undefined ? { more } : {}), ...(voiceId ? { voice_id: voiceId } : {}), ...sampling });
   }
 
   /**
    * Заготовить звук фразы заранее (сервис синтезирует её целиком и держит до `say` того же текста тем же голосом).
    * Промис — когда звук готов (true) или заготовка не вышла: сервис не готов, нет связи, ошибка синтеза (false).
    */
-  prepare(role: VoiceRole, text: string, voiceId?: string): Promise<boolean> {
-    if (this.muted || !this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
+  async prepare(role: VoiceRole, text: string, voiceId?: string, signal?: AbortSignal, temperature?: number, cpuThreads?: number): Promise<boolean> {
+    const sampling = this.sampling(temperature, cpuThreads);
+    if (signal?.aborted || this.muted || !this.ready || this.ws?.readyState !== WebSocket.OPEN || !text.trim()) return Promise.resolve(false);
     const id = ++this.prepId;
     return new Promise((res) => {
-      this.prepWait.set(id, res);
-      this.send({ type: 'prepare', id, role, text, ...(voiceId ? { voice_id: voiceId } : {}) });
+      const finish = (ok: boolean) => { signal?.removeEventListener('abort', abort); res(ok); };
+      const abort = () => {
+        this.prepWait.delete(id);
+        this.send({ type: 'cancel-prepare', id });
+        finish(false);
+      };
+      signal?.addEventListener('abort', abort, { once: true });
+      this.prepWait.set(id, finish);
+      this.send({ type: 'prepare', id, role, text, ...(voiceId ? { voice_id: voiceId } : {}), ...sampling });
+    });
+  }
+
+  /** Параметр на запрос: старый сервис допускает только совместимое умолчание 0,2. */
+  private sampling(temperature?: number, cpuThreads?: number): { temperature?: number; cpu_threads?: number } {
+    const result: { temperature?: number; cpu_threads?: number } = {};
+    if (temperature !== undefined) {
+      if (typeof temperature !== 'number' || !Number.isFinite(temperature) || temperature < 0 || temperature > 1)
+        throw new Error('Температура голоса должна быть числом от 0 до 1');
+      if (this.temperatureCapable) result.temperature = temperature;
+      else if (temperature !== 0.2) throw new Error('Голосовой сервис не поддерживает настройку температуры. Обновите сервис.');
+    }
+    if (cpuThreads !== undefined) {
+      if (![1, 2, 4, 8].includes(cpuThreads)) throw new Error('Число потоков CPU должно быть 1, 2, 4 или 8');
+      if (this.cpuThreadsCapable) result.cpu_threads = cpuThreads;
+      else if (cpuThreads !== 2) throw new Error('Голосовой сервис не поддерживает настройку потоков CPU для TTS (PyTorch/Windows). Обновите сервис.');
+    }
+    return result;
+  }
+
+  /** Группа остаётся одним запросом сервиса; прогресс приходит после готовых пакетов. */
+  async prepareBatch(role: VoiceRole, texts: string[], voiceId?: string, signal?: AbortSignal, options: {
+    temperature?: number; cpuThreads?: number; batchSize?: 1 | 2 | 4; onProgress?: (done: number, total: number) => void;
+  } = {}): Promise<boolean> {
+    const sampling = this.sampling(options.temperature, options.cpuThreads);
+    const batchSize = options.batchSize ?? 4;
+    if (batchSize !== 1 && batchSize !== 2 && batchSize !== 4) throw new Error('Размер пакета должен быть 1, 2 или 4');
+    if (signal?.aborted || this.muted || !this.ready || this.ws?.readyState !== WebSocket.OPEN) return false;
+    if (!texts.length) return true;
+    if (texts.some(text => typeof text !== 'string' || !text.trim())) throw new Error('Пакет озвучки содержит пустую фразу');
+    if (!this.supportsPrepareBatch) {
+      // Прежняя версия: строго последовательно, без очереди будущих фраз после отмены/разрыва.
+      const connection = this.ws;
+      for (let i = 0; i < texts.length; i++) {
+        if (signal?.aborted || this.ws !== connection || !await this.prepare(role, texts[i], voiceId, signal, options.temperature, options.cpuThreads)) return false;
+        if (signal?.aborted || this.ws !== connection) return false;
+        options.onProgress?.(i + 1, texts.length);
+      }
+      return true;
+    }
+    const id = ++this.prepId;
+    return new Promise((resolve, reject) => {
+      const finish = (ok: boolean, error?: string) => {
+        this.batchWait.delete(id);
+        signal?.removeEventListener('abort', abort);
+        if (error) reject(new Error(error)); else resolve(ok);
+      };
+      const abort = () => { this.send({ type: 'cancel-prepare-batch', id }); finish(false); };
+      signal?.addEventListener('abort', abort, { once: true });
+      this.batchWait.set(id, { finish, total: texts.length, done: 0, progress: (done, total) => options.onProgress?.(done, total) });
+      this.send({ type: 'prepare-batch', id, role, texts: [...texts], batch_size: batchSize, ...(voiceId ? { voice_id: voiceId } : {}), ...sampling });
     });
   }
 
@@ -551,6 +643,9 @@ export class VoiceClient {
     const ws = [...this.prepWait.values()];
     this.prepWait.clear();
     ws.forEach((f) => f(false));
+    const batches = [...this.batchWait.values()];
+    this.batchWait.clear();
+    batches.forEach(wait => wait.finish(false));
   }
 
   /** Замолчать: фраза `id` или всё; локальный звук гасится сразу. */
@@ -571,6 +666,29 @@ export class VoiceClient {
     this.calibSound = step === 'echo' || step === 'over';
     if (step === 'cancel') this.stopPlayback(0);
     this.send(sec === undefined ? { type: 'calib', step } : { type: 'calib', step, sec });
+  }
+
+  ttsResource(op: 'load' | 'unload', voiceId?: string, signal?: AbortSignal): Promise<TtsInfo> {
+    if (signal?.aborted) return Promise.reject(signal.reason);
+    if (!this.ready || this.ws?.readyState !== WebSocket.OPEN) return Promise.reject(new Error('Нет связи с голосовым сервисом'));
+    const id = ++this.resourceId;
+    return new Promise((resolve, reject) => {
+      const finish = (info?: TtsInfo, error?: string) => {
+        this.resourceWait.delete(id);
+        signal?.removeEventListener('abort', abort);
+        if (error || !info) reject(new Error(error ?? 'Нет связи с голосовым сервисом')); else resolve(info);
+      };
+      const abort = () => { this.resourceWait.delete(id); signal?.removeEventListener('abort', abort); reject(signal?.reason); };
+      this.resourceWait.set(id, finish);
+      signal?.addEventListener('abort', abort, { once: true });
+      this.send({ type: 'tts-resource', id, op, ...(voiceId ? { voice_id: voiceId } : {}) });
+    });
+  }
+
+  private settleResources() {
+    const pending = [...this.resourceWait.values()];
+    this.resourceWait.clear();
+    pending.forEach((finish) => finish(undefined, 'Нет связи с голосовым сервисом'));
   }
 
   /** Модель озвучки: список или смена (сервис отвечает `tts_list`). */

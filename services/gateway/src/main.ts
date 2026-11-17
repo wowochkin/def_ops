@@ -28,6 +28,8 @@ const server = createGateway({
   downloadsDir: process.env.DOWNLOADS_DIR,
   downloadsDev: process.env.DEFOPS_DEV === '1',
   localOnly: process.env.DEFOPS_DESKTOP === '1',
+  portableData: process.env.PORTABLE_DATA,
+  portableAssets: process.env.PORTABLE_ASSETS,
   corsOrigin: env('CORS_ORIGIN', '*'),
   requestTimeoutMs: Number(env('REQUEST_TIMEOUT_MS', '3600000')),
 });

@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
-import { cornerHold, pinAttempt, operatorCombo } from '../src/expo/operator';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { cornerHold, pinAttempt, operatorCombo, operatorAccess } from '../src/expo/operator';
+import { memoryBus } from '../src/expo/bus';
 import { OperatorMenu } from '../src/expo/OperatorMenu';
 import { EXPO_DEFAULTS } from '../src/expo/settings';
 afterEach(() => {
@@ -34,6 +35,18 @@ it('combo opens pin and five failures lock it for sixty seconds', () => {
   expect(pinAttempt(lock, '0000', EXPO_DEFAULTS, 61000).ok).toBe(true);
 });
 const noop = () => {};
+it('вход с любого окна открывает защищённое меню только на главном и переводит фокус', async () => {
+  const [a, b] = memoryBus();
+  const opened = vi.fn(), focus = vi.fn(async () => {}), viewOpened = vi.fn();
+  const main = operatorAccess(0, a, opened, focus);
+  const view = operatorAccess(2, b, viewOpened, async () => {});
+  view.request(); await Promise.resolve();
+  expect(opened).toHaveBeenCalledTimes(1);
+  expect(focus).toHaveBeenCalledTimes(1);
+  expect(viewOpened).not.toHaveBeenCalled();
+  main.dispose(); view.request(); expect(opened).toHaveBeenCalledTimes(1);
+  view.dispose(); a.close(); b.close();
+});
 const enter = (view: ReturnType<typeof render>) => {
   fireEvent.change(view.getByLabelText('ПИН'), { target: { value: '0000' } });
   fireEvent.click(view.getByRole('button', { name: 'Открыть меню' }));
@@ -69,6 +82,16 @@ it('settings are split into tabs', () => {
   expect(view.getByLabelText('Новый ПИН (4–8 цифр)')).toBeTruthy();
   expect(view.queryByRole('group', { name: 'Время выбора, с' })).toBeNull();
 });
+it('выключатель интро сохраняется отдельно от голоса заставки', () => {
+  let saved = EXPO_DEFAULTS;
+  const view = render(<OperatorMenu settings={EXPO_DEFAULTS} onSave={async (s) => { saved = s; }} onClose={noop} onExit={noop} onAction={noop} />);
+  enter(view);
+  fireEvent.click(view.getByRole('tab', { name: 'Звук' }));
+  fireEvent.click(view.getByRole('checkbox', { name: 'Интро сеанса' }));
+  expect(saved.intro).toBe(false);
+  expect(saved.attractCall).toEqual(EXPO_DEFAULTS.attractCall);
+  expect(view.getByText(/После заставки, не вместо неё/)).toBeTruthy();
+});
 it('screens tab saves monitor order', async () => {
   let saved = EXPO_DEFAULTS;
   const monitors = async () => [
@@ -91,6 +114,22 @@ it('screens tab saves monitor order', async () => {
   fireEvent.click(view.getByRole('tab', { name: 'Экраны' }));
   fireEvent.click(await view.findByRole('button', { name: 'Правый: выше' }));
   expect(saved.screens.order).toEqual(['b', 'a']);
+});
+it('в открытой вкладке экранов обновляются подключения и доступно обозначение экранов', async () => {
+  vi.useFakeTimers();
+  let connected = [{ id: 'a', name: 'Первый', x: 0, y: 0, width: 1920, height: 1080, scale: 1 }];
+  const action = vi.fn();
+  const view = render(<OperatorMenu settings={EXPO_DEFAULTS} monitors={async () => connected} onSave={async () => {}} onClose={noop} onExit={noop} onAction={action} />);
+  enter(view); fireEvent.click(view.getByRole('tab', { name: 'Экраны' }));
+  await act(async () => { await Promise.resolve(); });
+  expect(view.getByText(/Запрошено 3, доступно 1/)).toBeTruthy();
+  expect(view.getByText(/расширенный рабочий стол/i)).toBeTruthy();
+  expect(view.getByText(/сплиттер дублирует/i)).toBeTruthy();
+  connected = [...connected, { id: 'b', name: 'Второй', x: 1920, y: 0, width: 1920, height: 1080, scale: 1 }];
+  await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+  expect(view.getByText(/Запрошено 3, доступно 2/)).toBeTruthy();
+  fireEvent.click(view.getByRole('button', { name: 'Показать номера экранов' }));
+  expect(action).toHaveBeenCalledWith('identify');
 });
 it('summary shows services in words', () => {
   const view = render(

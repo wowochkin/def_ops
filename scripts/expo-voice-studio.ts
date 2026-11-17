@@ -6,28 +6,71 @@
  * голоса приложения; при выходе из студии (Ctrl+C) возвращается прежняя.
  */
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { voiceEnvironment, voicePython } from '../apps/desktop/server/voice-platform.mjs';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  cer, chiefVoice, clipKey, dataDir, encode, heardOk, heardText, loadStress, msOk, service, STRESS_PATH, voiceStamp, wer, type ClipCheck, type Manifest,
+  cer, chiefVoice, clipKey, dataDir, EmptyVoiceClipError, encode, heardOk, heardText, msOk, service, STRESS_PATH, voiceStamp, wer, type ClipCheck, type Manifest,
 } from './expo-voice';
+import { padding, recognizer, trimContext } from './expo-debrief-context';
 import { BANK } from '../apps/editor/src/expo/bank';
 import { situationVoice, stageDomains, voiceTexts } from '../apps/editor/src/expo/prerecord';
 import { markFor, markStress, plainStress, stressed, type StressMark } from '../apps/editor/src/expo/stress';
 import { speakable } from '../apps/editor/src/voice/speech';
+import { buildLexicon } from './expo-voice-lexicon';
+import { dictionaryEntry, updateDictionary, type StudioDictionary } from './expo-voice-dictionary';
+import { PAGE } from './expo-voice-studio-page';
 
 const PORT = Number(process.env.PORT ?? 47700);
 const data = dataDir(process.argv.includes('--data') ? process.argv[process.argv.indexOf('--data') + 1] : undefined);
 const dir = join(data, 'expo/voice');
 const mpath = join(dir, 'manifest.json');
+const debriefDir = join(import.meta.dirname, '../apps/editor/public/expo-debrief');
+const debriefPath = join(debriefDir, 'manifest.json');
+const debriefTakes = join(data, 'expo/debrief-takes');
+const debriefEngine = 'qwen3-ru-stress';
+type StudioClip = Pick<ClipCheck, 'file' | 'ms'> & Omit<Partial<ClipCheck>, 'takes'> & { takes?: StudioClip[] };
+type DebriefCatalog = { version: 1; voices: Record<string, Record<string, StudioClip>> };
 const cache = join(tmpdir(), 'expo-voice-studio');
 mkdirSync(cache, { recursive: true });
+const stressPath = process.env.EXPO_STRESS_PATH ?? STRESS_PATH;
+const loadStress = (): StudioDictionary => JSON.parse(readFileSync(stressPath, 'utf8'));
+const saveStress = (d: StudioDictionary) => {
+  writeFileSync(`${stressPath}.tmp`, `${JSON.stringify(d, null, 1)}\n`);
+  renameSync(`${stressPath}.tmp`, stressPath);
+};
+const previews: string[] = [];
 if (!existsSync(mpath)) throw new Error(`нет предзаписи (${mpath}) — сначала npm run expo:prepare -- --voice`);
 
 const load = () => JSON.parse(readFileSync(mpath, 'utf8')) as Manifest;
-const save = (m: Manifest) => { writeFileSync(`${mpath}.tmp`, `${JSON.stringify(m, null, 1)}\n`); renameSync(`${mpath}.tmp`, mpath); };
+function saveJson(path: string, value: unknown) {
+  const temporary = `${path}.${process.pid}.tmp`;
+  writeFileSync(temporary, `${JSON.stringify(value, null, 1)}\n`);
+  renameSync(temporary, path);
+}
+
+function debriefVoice(value: unknown) {
+  if (value == null) return undefined;
+  if (value === 'zhukov-14s' || value === 'konev-12s') return value;
+  throw new Error('Выберите голос Жукова или Конева.');
+}
+
+function recordings(frontVoice?: string) {
+  if (!frontVoice) {
+    const manifest = load();
+    const clips: Record<string, StudioClip> = manifest.clips;
+    return { clips, folder: join(dir, 'clips'), save: () => saveJson(mpath, manifest) };
+  }
+  const manifest = existsSync(debriefPath)
+    ? JSON.parse(readFileSync(debriefPath, 'utf8')) as DebriefCatalog
+    : { version: 1, voices: {} } as DebriefCatalog;
+  const clips = manifest.voices[frontVoice] ?? {};
+  const folder = join(debriefDir, 'clips');
+  return { clips, folder, save: () => saveJson(debriefPath, manifest), voices: manifest.voices };
+}
 
 const VOICE_URL = process.env.VOICE_URL ?? 'ws://127.0.0.1:47645/ws';
 /** Служба не запущена (приложение закрыто) — студия поднимает её сама и гасит при выходе. */
@@ -35,10 +78,10 @@ let own: ChildProcess | null = null;
 async function connect() {
   try { return await service(VOICE_URL); } catch { /* запускаем свою */ }
   const vdir = join(import.meta.dirname, '../services/voice');
-  const py = join(vdir, '.venv/bin/python');
+  const py = voicePython(vdir);
   if (!existsSync(py)) throw new Error(`голосовой службы нет и запустить её нечем (${py}) — services/voice/setup.sh`);
   console.log('Голосовая служба не запущена — запускаю (загрузка моделей 1–3 мин)…');
-  own = spawn(py, ['server.py', '--data', join(data, 'voice')], { cwd: vdir, stdio: ['ignore', 'ignore', 'inherit'] });
+  own = spawn(py, ['server.py', '--data', join(data, 'voice')], { cwd: vdir, env: voiceEnvironment(), windowsHide: true, stdio: ['ignore', 'ignore', 'inherit'] });
   own.on('exit', (c) => { if (c) console.error(`голосовая служба завершилась (код ${c})`); own = null; });
   const until = Date.now() + 300_000;
   for (;;) {
@@ -63,38 +106,71 @@ const voice = chiefVoice(data);
 let busy: string | null = null;
 
 /** Текст для озвучки по словарю ударений — как у подготовки. */
-const sayOf = (text: string) => stressed(speakable(text, { full: true }), svc.engine, loadStress());
+const sayOf = (text: string, engine = svc.engine, dictionary = loadStress()) => stressed(speakable(text, { full: true }), engine, dictionary);
+
+async function renderTake(said: string, output: string, sample: string | undefined, debrief: boolean) {
+  const expected = plainStress(said);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const padded = debrief && attempt === 2 && expected.length < 95;
+    const prompt = attempt === 1 ? said.replace(/ — /g, ', ') : said;
+    const r = await svc.render(padded ? `${prompt}${/[.!?…]$/.test(prompt) ? '' : '.'} ${padding}` : prompt, sample);
+    if (r.error || !r.path) throw new Error(`Синтез: ${r.error ?? 'нет файла'}`);
+    const trimmed = `${output}.wav`;
+    try {
+      if (r.audio_s === 0) throw new EmptyVoiceClipError();
+      if (!padded) return { ms: encode(r.path, output), heard: r.heard ?? '' };
+
+      const asr = recognizer();
+      try {
+        const heard = await trimContext(r.path, trimmed, padding, asr);
+        if (heard && cer(expected, heardText(heard)) <= 0.13) {
+          const ms = encode(trimmed, output);
+          if (msOk(expected, ms)) return { ms, heard };
+          rmSync(output, { force: true });
+        }
+      } finally { asr.close(); }
+    } catch (error) {
+      if (!(error instanceof EmptyVoiceClipError)) throw error;
+    } finally {
+      rmSync(r.path, { force: true });
+      rmSync(trimmed, { force: true });
+    }
+    console.warn(`Пустой или неполный дубль ${attempt + 1}/3 — ${expected}`);
+  }
+  throw new Error('Модель не произнесла фразу после трёх попыток. Текущий дубль сохранён.');
+}
 
 /**
  * Ещё один дубль текущей моделью. own — свой текст для озвучки (с «+» перед ударной), иначе по словарю.
  * Дубль — в takes, выбирает человек; main — сразу основным (переозвучка по словарю).
  */
-async function regen(text: string, own?: string, main = false): Promise<ClipCheck> {
-  if (!load().clips[text] && !missingTexts().includes(text)) throw new Error('нет такой фразы');
+async function regen(text: string, own?: string, main = false, frontVoice?: string): Promise<ClipCheck> {
+  if (!Object.hasOwn(recordings(frontVoice).clips, text) && (frontVoice || !missingTexts().includes(text))) throw new Error('нет такой фразы');
+  if (frontVoice && svc.engine !== debriefEngine) throw new Error('Для итогов выберите модель Qwen3-TTS с ударениями и нажмите «Сменить».');
   const { say, said } = own ? { say: own, said: markStress(own, markFor(svc.engine, loadStress())) } : sayOf(text);
   // обстановка Жукова и Конева — их образец; остальное — начальник штаба. Без образца служба
   // для модели с ударениями всегда берёт образец штаба.
-  const sample = situationVoice(text);
+  const sample = frontVoice ?? situationVoice(text);
   const clipVoice = sample ? voiceStamp(data, sample) : voice;
-  const file = `${clipKey(said, clipVoice, `${svc.engine}#${Date.now()}`)}.ogg`;
-  const r = await svc.render(said, sample ?? undefined);
-  if (r.error || !r.path) throw new Error(`синтез: ${r.error ?? 'нет файла'}`);
-  const ms = encode(r.path, join(dir, 'clips', file));
-  rmSync(r.path, { force: true });
-  const heard = heardText(r.heard ?? '');
+  if (frontVoice && clipVoice.endsWith(':встроенный')) throw new Error(`Нет образца голоса ${frontVoice}.`);
+  const file = `${clipKey(said, clipVoice, `${svc.engine}#${randomUUID()}`)}.ogg`;
+  const target = frontVoice ? debriefTakes : join(dir, 'clips');
+  mkdirSync(target, { recursive: true });
+  const { ms, heard: recognized } = await renderTake(said, join(target, file), sample ?? undefined, !!frontVoice);
+  const heard = heardText(recognized);
   const w = Math.round(wer(said, heard) * 100) / 100, ce = Math.round(cer(said, heard) * 100) / 100;
   const take: ClipCheck = {
-    file, ms, said, say, heard: r.heard ?? '', wer: w, cer: ce, ok: msOk(said, ms) && heardOk(said, w, ce), engine: svc.engine,
+    file, ms, said, say, heard: recognized, wer: w, cer: ce, ok: msOk(said, ms) && heardOk(said, w, ce), engine: svc.engine,
     ...(own ? { override: true } : {}),
   };
-  const fresh = load(); // за время синтеза манифест мог измениться
+  const fresh = recordings(frontVoice); // за время синтеза манифест мог измениться
   const fc = fresh.clips[text];
   if (!fc) fresh.clips[text] = take;
-  else if (main) {
+  else if (main && !frontVoice) {
     const { takes, ...prev } = fc;
     fresh.clips[text] = { ...take, approved: fc.approved, manual: fc.manual, takes: [...(takes ?? []), prev] };
   } else fc.takes = [...(fc.takes ?? []), take];
-  save(fresh);
+  fresh.save();
   console.log(`${main ? 'по словарю' : 'дубль'}: ${take.ok ? '✓' : '✗'} WER ${w} — ${say}`);
   return take;
 }
@@ -107,37 +183,48 @@ function affected(): string[] {
 
 /** Добавить ударения из текста с «+» в словарь: каждое слово с «+» — как есть. */
 function addStress(say: string): string[] {
-  const d = loadStress();
+  let d = loadStress();
   const added: string[] = [];
   for (const w of say.match(/[\p{L}+]*\+[\p{L}+]*/gu) ?? []) {
     const plain = plainStress(w);
     if (!plain || !/\+[аеёиоуыэюя]/i.test(w)) continue;
-    d.words[plain[0].toUpperCase() + plain.slice(1)] = w[0].toUpperCase() + w.slice(1);
+    d = updateDictionary(d, plain[0].toUpperCase() + plain.slice(1), w);
     added.push(w);
   }
-  writeFileSync(STRESS_PATH, `${JSON.stringify(d, null, 1)}\n`);
+  saveStress(d);
   return added;
 }
 
 /** Выбрать дубль: он становится основным, прежний основной — среди дублей. */
-function pick(text: string, file: string) {
-  const m = load();
-  const c = m.clips[text];
+function pick(text: string, file: string, frontVoice?: string) {
+  const catalog = recordings(frontVoice);
+  const c = Object.hasOwn(catalog.clips, text) ? catalog.clips[text] : undefined;
   const i = c?.takes?.findIndex((t) => t.file === file) ?? -1;
   if (!c || i < 0) throw new Error('нет такого дубля');
   const t = c.takes![i];
-  const { takes: _t, ...main } = c;
+  const { takes: _t, manual: _m, approved: _a, ...main } = c;
   const rest = c.takes!.filter((_, j) => j !== i);
-  m.clips[text] = { ...t, manual: true, approved: c.approved, takes: [...rest, { ...main, manual: undefined, approved: undefined }] };
-  save(m);
+  catalog.clips[text] = { ...t, manual: true, approved: c.approved, takes: [...rest, main] };
+  if (!frontVoice) { catalog.save(); return; }
+
+  if (!msOk(speakable(text, { full: true }), t.ms)) throw new Error('Длительность дубля не подходит для этой реплики.');
+  const previous = join(catalog.folder, main.file);
+  const selected = join(catalog.folder, file);
+  copyFileSync(previous, join(debriefTakes, main.file));
+  const alreadyPublished = existsSync(selected);
+  if (!alreadyPublished) copyFileSync(join(debriefTakes, file), selected);
+  try { catalog.save(); }
+  catch (error) { if (!alreadyPublished) rmSync(selected, { force: true }); throw error; }
+  const stillUsed = Object.values(catalog.voices!).some((lines) => Object.values(lines).some((clip) => clip.file === main.file));
+  if (!stillUsed) rmSync(previous, { force: true });
 }
 
-function approve(text: string, on: boolean) {
-  const m = load();
-  if (!m.clips[text]) throw new Error('нет такой фразы');
+function approve(text: string, on: boolean, frontVoice?: string) {
+  const m = recordings(frontVoice);
+  if (!Object.hasOwn(m.clips, text)) throw new Error('нет такой фразы');
   m.clips[text].approved = on;
   if (on) m.clips[text].manual = true;
-  save(m);
+  m.save();
 }
 
 const body = (req: import('node:http').IncomingMessage) => new Promise<Record<string, unknown>>((res) => {
@@ -151,6 +238,51 @@ createServer(async (req, res) => {
   const json = (v: unknown, code = 200) => { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(v)); };
   try {
     if (url.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(PAGE); return; }
+    if (url.pathname.startsWith('/dictionary-audio/')) {
+      const name = url.pathname.slice('/dictionary-audio/'.length);
+      if (!/^dictionary-[0-9a-f-]+\.m4a$/.test(name) || !previews.includes(name)) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'content-type': 'audio/mp4', 'cache-control': 'no-store' });
+      res.end(readFileSync(join(cache, name)));
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/lexicon') {
+      json(buildLexicon(loadStress(), Object.keys(load().clips)));
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lexicon/entry') {
+      const b = await body(req);
+      try {
+        const updated = updateDictionary(loadStress(), b.word, b.say);
+        saveStress(updated);
+        json({ ok: true });
+      } catch (e) { json({ error: (e as Error).message }, 400); }
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/lexicon/preview') {
+      if (busy) { json({ error: `Служба занята: ${busy}` }, 409); return; }
+      const b = await body(req);
+      let entry: ReturnType<typeof dictionaryEntry>;
+      try { entry = dictionaryEntry(b.word, b.say); }
+      catch (e) { json({ error: (e as Error).message }, 400); return; }
+      const sample = typeof b.voiceId === 'string' && b.voiceId ? b.voiceId : undefined;
+      if (sample && !['zhukov-14s', 'konev-12s'].includes(sample)) { json({ error: 'Выберите голос штаба, Жукова или Конева.' }, 400); return; }
+      const text = typeof b.text === 'string' && b.text.trim() ? b.text.trim() : `Проверяем произношение: ${entry.word}.`;
+      if (text.length > 1200) { json({ error: 'Для проверки используйте фразу не длиннее 1200 знаков.' }, 400); return; }
+      const dictionary = updateDictionary(loadStress(), entry.word, entry.say ?? '');
+      const said = stressed(speakable(text, { full: true }), svc.engine, dictionary).said;
+      busy = `проверка произношения «${entry.word}»`;
+      try {
+        const r = await svc.render(said, sample);
+        if (r.error || !r.path) throw new Error(r.error ?? 'Сервис не вернул звук.');
+        const name = `dictionary-${randomUUID()}.m4a`;
+        try { execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', r.path, '-c:a', 'aac', '-b:a', '128k', join(cache, name)]); }
+        finally { rmSync(r.path, { force: true }); }
+        previews.push(name);
+        while (previews.length > 20) rmSync(join(cache, previews.shift()!), { force: true });
+        json({ url: `/dictionary-audio/${name}`, said, engine: svc.engine });
+      } finally { busy = null; }
+      return;
+    }
     if (url.pathname.startsWith('/samples/')) {
       const name = decodeURIComponent(url.pathname.slice(9));
       const f = join(dir, 'samples', name);
@@ -161,12 +293,15 @@ createServer(async (req, res) => {
       res.end(readFileSync(m4a));
       return;
     }
-    if (url.pathname.startsWith('/clips/')) {
+    const isDebriefClip = url.pathname.startsWith('/debrief-clips/');
+    if (isDebriefClip || url.pathname.startsWith('/clips/')) {
       // браузеру — M4A: Safari не играет Ogg Opus в <audio>; клипы стенда остаются Ogg
-      const name = url.pathname.slice(7);
-      const f = join(dir, 'clips', name);
-      if (!/^[0-9a-f]{8,64}\.ogg$/.test(name) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-      const m4a = join(cache, name.replace(/\.ogg$/, '.m4a'));
+      const name = url.pathname.split('/')[2];
+      if (!/^[0-9a-f]{8,64}\.ogg$/.test(name) || url.pathname.split('/').length !== 3) { res.writeHead(404); res.end(); return; }
+      const published = join(isDebriefClip ? debriefDir : dir, 'clips', name);
+      const f = isDebriefClip && !existsSync(published) ? join(debriefTakes, name) : published;
+      if (!existsSync(f)) { res.writeHead(404); res.end(); return; }
+      const m4a = join(cache, `${isDebriefClip ? 'debrief-' : ''}${name.replace(/\.ogg$/, '.m4a')}`);
       if (!existsSync(m4a)) execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', f, '-c:a', 'aac', '-b:a', '96k', m4a]);
       res.writeHead(200, { 'content-type': 'audio/mp4', 'cache-control': 'no-store' });
       res.end(readFileSync(m4a));
@@ -174,15 +309,17 @@ createServer(async (req, res) => {
     }
     if (url.pathname === '/api/state') {
       const st = loadStress();
-      const clips = load().clips;
+      const frontVoice = debriefVoice(url.searchParams.get('debrief'));
+      const { clips } = recordings(frontVoice);
       const voiceOf: Record<string, string> = {};
       for (const t of Object.keys(clips)) {
-        const v = situationVoice(t);
+        const v = frontVoice ?? situationVoice(t);
         if (v) voiceOf[t] = v;
       }
+      const missing = frontVoice ? [] : missingTexts();
       const dictSay: Record<string, string> = {};
-      for (const t of new Set([...Object.keys(clips), ...missingTexts()])) dictSay[t] = sayOf(t).say;
-      json({ engine: svc.engine, live, engines: svc.engines, busy, clips, mark: markFor(svc.engine, st), words: st.words, affected: affected().length, missing: missingTexts(), samples: sampleFiles(), voiceOf, dictSay });
+      for (const t of new Set([...Object.keys(clips), ...missing])) dictSay[t] = sayOf(t, frontVoice ? debriefEngine : svc.engine, st).say;
+      json({ engine: svc.engine, live, engines: svc.engines, busy, clips, mark: markFor(svc.engine, st), words: st.words, affected: frontVoice ? 0 : affected().length, missing, samples: frontVoice ? [] : sampleFiles(), voiceOf, dictSay });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/stress/word') { json({ added: addStress(String((await body(req)).say)) }); return; }
@@ -190,7 +327,7 @@ createServer(async (req, res) => {
       const b = await body(req);
       const d = loadStress();
       d.mark[svc.engine] = String(b.mark) as StressMark;
-      writeFileSync(STRESS_PATH, `${JSON.stringify(d, null, 1)}\n`);
+      saveStress(d);
       json({ ok: true });
       return;
     }
@@ -208,6 +345,7 @@ createServer(async (req, res) => {
           String(b.text),
           typeof b.say === 'string' && b.say.trim() ? b.say.trim() : undefined,
           b.main !== false,
+          debriefVoice(b.debrief),
         ));
       } finally { busy = null; }
     } else if (url.pathname === '/api/restress') {
@@ -219,8 +357,8 @@ createServer(async (req, res) => {
           for (const [i, t] of list.entries()) { busy = `по словарю ${i + 1} из ${list.length}`; await regen(t, undefined, true); }
         } catch (e) { console.error((e as Error).message); } finally { busy = null; }
       })();
-    } else if (url.pathname === '/api/pick') { pick(String(b.text), String(b.file)); json({ ok: true }); }
-    else if (url.pathname === '/api/approve') { approve(String(b.text), !!b.on); json({ ok: true }); }
+    } else if (url.pathname === '/api/pick') { pick(String(b.text), String(b.file), debriefVoice(b.debrief)); json({ ok: true }); }
+    else if (url.pathname === '/api/approve') { approve(String(b.text), !!b.on, debriefVoice(b.debrief)); json({ ok: true }); }
     else json({ error: 'нет такого адреса' }, 404);
   } catch (e) {
     json({ error: (e as Error).message }, 500);
@@ -242,93 +380,3 @@ async function quit() {
   own?.kill('SIGTERM');
   process.exit(0);
 }
-
-const PAGE = `<!doctype html><meta charset="utf-8"><title>Студия предзаписи</title>
-<style>
-body{font:15px system-ui;margin:0;background:#f6f5f2;color:#222}
-header{position:sticky;top:0;background:#1d2a24;color:#eee;padding:12px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;z-index:1}
-header select,header button{font:inherit;padding:4px 8px}
-main{padding:12px 20px}
-.row{background:#fff;border-radius:6px;padding:10px 14px;margin:8px 0;display:grid;grid-template-columns:40px 1fr 360px;gap:12px}
-.row.bad{background:#fdecec}.row.ok-approved{background:#eaf6ea}
-.meta{color:#777;font-size:13px}.take{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
-.take.main{font-weight:600}audio{height:32px;width:220px}
-.say{display:flex;gap:6px;margin:6px 0}.say input{flex:1;font:inherit;padding:3px 6px}
-button{cursor:pointer}#status{margin-left:auto;font-size:14px;color:#cfc}
-</style>
-<header>
- <b>Студия предзаписи</b>
- <label>Модель озвучки <select id="engine"></select></label><button id="setEngine">Сменить</button>
- <label title="Как модель понимает ударение — проверьте на слух и выберите">Ударение для модели <select id="mark"><option value="acute">знак над гласной (а́)</option><option value="plus">плюс перед гласной (+а)</option><option value="upper">заглавная гласная (А)</option></select></label>
- <button id="restress">Переозвучить по словарю</button>
- <label>Показать <select id="filter"><option value="all">все</option><option value="bad">не прошли проверку</option><option value="todo">не одобренные</option></select></label>
- <span id="count"></span><span id="status"></span>
-</header>
-<main id="list"></main>
-<script>
-const $ = (s) => document.querySelector(s);
-let st = null;
-const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-async function api(p, b) {
-  const r = await fetch(p, b ? { method: 'POST', body: JSON.stringify(b) } : undefined);
-  const j = await r.json();
-  if (j.error) { alert(j.error); throw new Error(j.error); }
-  return j;
-}
-function status(t) { $('#status').textContent = t || ''; }
-const toPlus = (s) => String(s).replace(/([аеёиоуыэюя])\\u0301/gi, '+$1');
-const sayOf = (text) => document.querySelector('[data-say="' + CSS.escape(text) + '"]').value;
-function take(text, t, main) {
-  return '<div class="take' + (main ? ' main' : '') + '"><audio controls preload="none" src="/clips/' + t.file + '"></audio>'
-    + (t.ok ? '✓' : '✗') + ' ' + (t.ms / 1000).toFixed(1) + ' с · WER ' + t.wer + (t.engine ? ' · ' + esc(t.engine) : '')
-    + (main ? ' · основной' : ' <button data-pick="' + t.file + '" data-text="' + esc(text) + '">Выбрать</button>') + '</div>';
-}
-function render() {
-  const f = $('#filter').value;
-  const items = Object.entries(st.clips).filter(([, c]) => f === 'all' || (f === 'bad' ? !c.ok : !c.approved));
-  const missing = f === 'all' ? (st.missing || []) : [];
-  $('#count').textContent = (items.length + missing.length) + ' из ' + (Object.keys(st.clips).length + missing.length);
-  const samples = (st.samples || []).map((name) => '<p>' + esc(name) + '<br><audio controls preload="none" src="/samples/' + encodeURIComponent(name) + '"></audio></p>').join('');
-  const gap = missing.map((text) => '<div class="row bad"><div>—</div><div>' + esc(text) + '<div class="meta">записи нет</div></div><div><button data-regen="' + esc(text) + '">Озвучить</button></div></div>').join('');
-  $('#list').innerHTML = (samples ? '<h2>Склейки</h2>' + samples : '') + gap + items.map(([text, c], i) => '<div class="row ' + (!c.ok ? 'bad' : c.approved ? 'ok-approved' : '') + '">'
-    + '<div>' + (i + 1) + '</div><div>' + esc(text)
-    + (st.voiceOf && st.voiceOf[text] ? '<div class="meta">голос ' + esc(st.voiceOf[text]) + '</div>' : '')
-    + (c.say && c.say !== text ? '<div class="meta">в синтез: ' + esc(c.say) + '</div>' : '')
-    + '<div class="meta">услышано: ' + esc(c.heard) + '</div>'
-    + '<div class="say"><input data-say="' + esc(text) + '" value="' + esc(c.override ? (c.say || toPlus(c.said)) : (st.dictSay?.[text] || c.say || toPlus(c.said))) + '" title="«+» перед ударной гласной: Х+альбе. Поле — текущий словарь, если текст не задан вручную.">'
-    + '<button data-own="' + esc(text) + '">Озвучить этот текст</button><button data-dict="' + esc(text) + '">Ударения → в словарь</button></div>'
-    + '<label class="meta"><input type="checkbox" data-approve="' + esc(text) + '"' + (c.approved ? ' checked' : '') + '> одобрено</label></div>'
-    + '<div>' + take(text, c, true) + (c.takes || []).map((t) => take(text, t, false)).join('')
-    + '<button data-regen="' + esc(text) + '">Ещё дубль (' + esc(st.engine) + ')</button></div></div>').join('');
-}
-async function load() {
-  st = await api('/api/state');
-  $('#engine').innerHTML = st.engines.map((e) => '<option value="' + e.id + '"' + (e.id === st.engine ? ' selected' : '') + ' title="' + esc(e.note) + '">' + esc(e.title) + '</option>').join('');
-  $('#mark').value = st.mark;
-  $('#restress').textContent = 'Переозвучить по словарю (' + st.affected + ')';
-  $('#restress').disabled = !st.affected || !!st.busy;
-  status(st.busy || ('сейчас: ' + st.engine + (st.engine !== st.live ? ' (живой голос вернётся к ' + st.live + ' при выходе)' : '')));
-  render();
-  if (st.busy) setTimeout(load, 3000);
-}
-$('#mark').onchange = async () => { await api('/api/stress/mark', { mark: $('#mark').value }); load(); };
-$('#restress').onclick = async () => { await api('/api/restress', {}); load(); };
-$('#filter').onchange = render;
-$('#setEngine').onclick = async () => { status('загружаю модель… (до нескольких минут)'); await api('/api/engine', { id: $('#engine').value }).catch(() => {}); load(); };
-document.addEventListener('click', async (e) => {
-  const b = e.target;
-  if (b.dataset.regen) { b.disabled = true; b.textContent = 'озвучиваю…'; await api('/api/regen', { text: b.dataset.regen }).catch(() => {}); load(); }
-  if (b.dataset.pick) { await api('/api/pick', { text: b.dataset.text, file: b.dataset.pick }); load(); }
-  if (b.dataset.own) { b.disabled = true; b.textContent = 'озвучиваю…'; await api('/api/regen', { text: b.dataset.own, say: sayOf(b.dataset.own) }).catch(() => {}); load(); }
-  if (b.dataset.dict) {
-    const r = await api('/api/stress/word', { say: sayOf(b.dataset.dict) });
-    alert(r.added.length ? 'В словарь: ' + r.added.join(', ') + '. «Переозвучить по словарю» — все фразы с этими словами.' : 'Нет слов с «+» перед гласной');
-    load();
-  }
-});
-document.addEventListener('change', async (e) => {
-  const b = e.target;
-  if (b.dataset.approve) { await api('/api/approve', { text: b.dataset.approve, on: b.checked }); st.clips[b.dataset.approve].approved = b.checked; render(); }
-});
-load();
-</script>`;

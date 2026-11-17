@@ -4,6 +4,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { voiceEnvironment, voicePython, voiceSupported } from './voice-platform.mjs';
 
 export const VOICE_PORT = 47645;
 const HEALTH_WAIT_MS = 5 * 60_000;
@@ -12,7 +13,7 @@ const RESTARTS_MAX = 3;
 
 /**
  * Что делать с голосом: порт уже отвечает — подключиться; нет папки сервиса (установленная программа) или не Mac на
- * Apple Silicon — голоса в этой версии нет (unsupported); есть Python окружения — запустить; иначе не установлен (off).
+ * Apple Silicon / Windows x64 — голоса в этой версии нет (unsupported); есть Python окружения — запустить; иначе не установлен (off).
  */
 export function voicePlan({ python, portAnswers, installed, supported }) {
   if (portAnswers) return 'attach';
@@ -47,10 +48,10 @@ export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopp
     const body = JSON.stringify({ state, port: VOICE_PORT, ...(error ? { error } : {}) });
     try { writeFileSync(stateFile + '.tmp', body); renameSync(stateFile + '.tmp', stateFile); } catch (e) { log(`не записать состояние: ${e.message}`); }
   };
-  const python = join(voiceDir, '.venv', 'bin', 'python');
+  const python = voicePython(voiceDir);
   const plan = voicePlan({
     python: existsSync(python), portAnswers: (await health()) !== null,
-    installed: existsSync(join(voiceDir, 'server.py')), supported: process.platform === 'darwin' && process.arch === 'arm64',
+    installed: existsSync(join(voiceDir, 'server.py')), supported: voiceSupported(),
   });
   let stopped = false, child = null;
   const stopping = () => stopped || isStopping();
@@ -63,8 +64,8 @@ export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopp
     setTimeout(() => { if (c.exitCode === null && c.signalCode === null) c.kill('SIGKILL'); }, 300);
   };
   if (stopping()) return { stop }; // приложение уже останавливается — ничего не запускаем
-  if (plan === 'unsupported') { write('unsupported'); log('голоса в этой версии нет: нужен запуск из исходников на Mac с Apple Silicon'); return { stop }; }
-  if (plan === 'off') { write('off'); log('голос выключен: нет окружения'); return { stop }; }
+  if (plan === 'unsupported') { write('unsupported'); log('голос недоступен: требуется Mac с Apple Silicon или Windows x64 с NVIDIA CUDA и папка голосового сервиса'); return { stop }; }
+  if (plan === 'off') { write('off', 'Нет Python-окружения голоса. Подготовьте его и модели до отключения сети.'); log(`голос выключен: нет ${python}`); return { stop }; }
 
   // опрос /health раз в секунду, пока не ready/error или пока жив запущенный процесс (не дольше 5 мин)
   const poll = async (alive) => {
@@ -84,10 +85,11 @@ export async function startVoice({ repo, data, voiceDir, log = () => {}, isStopp
 
   const run = (restarts) => {
     child = spawn(python, ['server.py', '--port', String(VOICE_PORT), '--data', dir, '--seed-refs', join(repo, 'scripts', 'voice-bench')],
-      { cwd: voiceDir, stdio: ['ignore', 'pipe', 'pipe'] });
+      { cwd: voiceDir, env: voiceEnvironment(process.env, process.platform, process.env.DEFOPS_VOICE_RUNTIME, dir), windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     const me = child;
     let alive = true, becameReady = false;
     const out = (d) => log(d.toString().split('\n').filter(Boolean).map((l) => `[voice] ${l}`).join('\n'));
+    me.stdout.setEncoding('utf8'); me.stderr.setEncoding('utf8');
     me.stdout.on('data', out); me.stderr.on('data', out);
     let gone = false;
     // ошибка запуска (ENOENT и т. п.) может не сопровождаться exit — считаем её выходом, один раз

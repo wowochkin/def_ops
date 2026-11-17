@@ -82,7 +82,7 @@ describe('vectorBase', () => {
   });
   it('адреса абсолютны', () => {
     expect((v.sources['base-ohm'] as { tiles: string[] }).tiles[0]).toBe('http://127.0.0.1:5173/api/cartography/maps/x/tiles/{z}/{x}/{y}.pbf?v=1');
-    expect(v.glyphs).toBe('http://127.0.0.1:5173/api/cartography/fonts/{fontstack}/{range}.pbf');
+    expect(v.glyphs).toBe('http://127.0.0.1:5173/api/cartography/fonts/{fontstack}/{range}.pbf?assets=2');
     expect(v.sprite).toBe('http://127.0.0.1:5173/api/cartography/sprites/ohm');
   });
   it('исходный стиль не меняется', () => {

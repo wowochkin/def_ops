@@ -9,7 +9,7 @@ const dir = mkdtempSync(join(tmpdir(), 'th-test-'));
 const stub = join(dir, 'stub.py');
 writeFileSync(stub, `import json, sys
 rp = sys.argv[1]; out = sys.argv[sys.argv.index('--out') + 1]
-r = json.load(open(rp))
+r = json.load(open(rp, encoding='utf-8'))
 print('местность: земной покров и рельеф', file=sys.stderr, flush=True)
 if r['id'] == 'bad':
     raise SystemExit('нет места «X» в справочнике')
@@ -20,7 +20,7 @@ const wait = async (b: TheatreBuilder, id: string) => { for (let i = 0; i < 100;
 
 describe('сборка театра на сервере', () => {
   it('рецепт → процесс сборщика → журнал → театр; ошибка сборщика — в статусе', async () => {
-    const b = new TheatreBuilder({ python: 'python3', script: stub, cache: dir });
+    const b = new TheatreBuilder({ python: process.env.THEATRE_PYTHON || 'python3', script: stub, cache: dir });
     const ok = await b.start({ id: 'test-area', name: 'Тест', bbox: [13, 52, 13.5, 52.5], cellKm: 1 });
     const done = await wait(b, ok.id);
     expect(done.status).toBe('done');

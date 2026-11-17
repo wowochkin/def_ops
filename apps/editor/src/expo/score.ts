@@ -18,7 +18,6 @@ export interface AxesDetail extends Axes {
   due: number;
 }
 
-const DAY = 86_400_000;
 const clamp = (x: number) => Math.max(-1, Math.min(1, x)) + 0;
 const dayOf = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
 

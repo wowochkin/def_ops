@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "platform": "darwin-arm64",
+  "files": [
+    {
+      "name": "mlx-0.32.4-cp312-cp312-macosx_14_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/69/b0/e726ce51e1b445e4ed08c2d0e036a01c7532f4d1a856328da546a6f883bd/mlx-0.32.4-cp312-cp312-macosx_14_0_arm64.whl",
+      "sha256": "ff1d7be54758ea3a875b8fe54eff13bed17ad9566505e301f5d7851bf869680f"
+    },
+    {
+      "name": "mlx_metal-0.32.4-py3-none-macosx_14_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/77/24/7e5b7ed5d28abacab4577c7a8dd1fca6e9058504f5f95ae4333c09420e2e/mlx_metal-0.32.4-py3-none-macosx_14_0_arm64.whl",
+      "sha256": "8019b2db622599267d66cc168b2f0dbf5af929790a6c3b3913e00eabc42a7947"
+    },
+    {
+      "name": "imageio_ffmpeg-0.8.1-py3-none-macosx_12_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/2b/47/9f9b654f853598bae0850fa22bba168103e45d31b5a2a893ed474f28d54a/imageio_ffmpeg-0.8.1-py3-none-macosx_12_0_arm64.whl",
+      "sha256": "5636d691e36e5274b13fe38182b1f627b2e35dcecc63944012c2470f9484fc45"
+    }
+  ]
+}

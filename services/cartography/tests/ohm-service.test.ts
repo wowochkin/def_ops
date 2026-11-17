@@ -13,7 +13,7 @@ import tar from 'tar-stream';
 import { PbfReader } from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
 import { validateStyleMin, type StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
-import { tileOf, tileRange, type BBox, type LngLat, type MapJob, type MapSource, type OverpassJson } from '@def-ops/core';
+import { ohmCells, tileOf, tileRange, type BBox, type LngLat, type MapJob, type MapSource, type OverpassJson } from '@def-ops/core';
 import { persistent } from '@def-ops/service-kit';
 import { MemoryRepo, type MapRepo } from '../src/repo';
 import type { OhmOptions } from '../src/ohm';
@@ -417,7 +417,14 @@ describe('карта OHM: служба отзывчива во время сбо
   const HEAVY = 8000;
 
   it('сборка и нарезка не держат цикл событий: /health отвечает быстро, итог тот же', async () => {
-    fake.cells = (b) => (b[0] === 13.25 ? heavyCell(b, HEAVY) : B);
+    // Поддельный Overpass работает в том же процессе, что и служба.
+    // Готовим внешний ответ до замера, иначе измеряется генерация тестовых данных.
+    const responses = new Map(ohmCells(BBOX).map(b => {
+      const json = b[0] === 13.25 ? heavyCell(b, HEAVY) : B;
+      return [b.join(','), { json, text: JSON.stringify(json) }] as const;
+    }));
+    fake.cells = b => responses.get(b.join(','))!.json;
+    fake.cellText = b => responses.get(b.join(','))!.text;
     const probe = healthProbe();
     const r = await post('/cartography/maps/ohm', { name: 'Тяжёлая', bbox: BBOX });
     expect(r.status).toBe(202);

@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react';
 
 export interface TtsEngine { id: string; title: string; note: string; license: string; commercial: boolean; default: boolean }
-export interface TtsInfo { engines: TtsEngine[]; current: string; state: 'ready' | 'loading'; error?: string }
+export interface TtsInfo { engines: TtsEngine[]; current: string; state: 'ready' | 'loading'; error?: string; managed?: boolean; resident?: boolean; phase?: string; quantization?: string; attention?: string }
 
 let info: TtsInfo | null = null;
 /** Почему голоса нет (текст панели: «Голос не установлен: …», «Голос загружается», …). */

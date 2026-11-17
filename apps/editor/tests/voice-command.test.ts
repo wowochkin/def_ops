@@ -177,7 +177,7 @@ describe('командование голосом', () => {
     const d = cmd({ enemyChoices: ['llm'] });
     const r = await getAction('command.enemyMode')!.run({ mode: 'passive' });
     expect(d.setEnemy).not.toHaveBeenCalled();
-    expect(r).toBe('В этом режиме игры противник — только штаб на модели.');
+    expect(r).toBe('В этом режиме противник — только штаб на модели.');
   });
   it('«противник без штаба» там, где допустим, ставится', async () => {
     const d = cmd();
@@ -293,7 +293,7 @@ describe('командование голосом', () => {
     const d = cmd();
     const disp = mk();
     await disp.utterance('Штаб, заверши и удали игру', 1);
-    expect(said.at(-1)).toBe(`Завершить игру и удалить её запись? ${YES_NO_SAY}`);
+    expect(said.at(-1)).toBe(`Завершить кампанию и удалить её запись? ${YES_NO_SAY}`);
     expect(d.exit).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
     expect(d.exit).toHaveBeenCalledWith(true);
@@ -355,7 +355,7 @@ describe('вход в командование голосом', () => {
     expect(await act('replay.calc')).toMatch(/идёт расчёт/);
     offs.forEach((o) => o()); offs = [];
     rep({ game: true });
-    expect(await act('replay.takeCommand')).toMatch(/идёт игра/);
+    expect(await act('replay.takeCommand')).toMatch(/идёт кампания/);
     offs.forEach((o) => o()); offs = [];
     rep();
     section = 'knowledge';
@@ -384,11 +384,11 @@ describe('вход в командование голосом', () => {
     expect(d.begin).toHaveBeenLastCalledWith(undefined, 'intent');
     offs.forEach((o) => o()); offs = [];
     const d2 = rep({ take: '1945-04-16T05:00', saved: { title: 'Берлинская операция' } });
-    expect(await act('replay.start')).toMatch(/незавершённая игра/);
+    expect(await act('replay.start')).toMatch(/незавершённая кампания/);
     const disp = mk();
     // в окне ответы разбирает окно (takeoverParse) — здесь как его вызов
     await (disp as unknown as { execute(id: string, p?: unknown): Promise<string> }).execute('replay.startOver', { enemy: 'llm' });
-    expect(said.at(-1)).toBe(`Есть незавершённая игра. Начать новую? Запись прежней будет заменена. ${YES_NO_SAY}`);
+    expect(said.at(-1)).toBe(`Есть незавершённая кампания. Начать новую? Запись прежней будет заменена. ${YES_NO_SAY}`);
     expect(d2.begin).not.toHaveBeenCalled();
     await disp.utterance('да', 2);
     expect(d2.begin).toHaveBeenCalledWith('llm', undefined);
@@ -406,16 +406,16 @@ describe('вход в командование голосом', () => {
   it('«продолжи игру»: противник старой записи заменён — сообщение в ответе', async () => {
     rep({ saved: { title: 'Берлинская операция, 16.04–2.05.1945' }, continueGame: vi.fn(() => 'Игра продолжена с противником «история как замысел».') });
     await mk().utterance('Штаб, продолжи игру', 1);
-    expect(said.at(-1)).toBe('Продолжаю игру: Берлинская операция. Игра продолжена с противником «история как замысел».');
+    expect(said.at(-1)).toBe('Продолжаю кампанию: Берлинская операция. Игра продолжена с противником «история как замысел».');
   });
   it('«продолжи игру» — только если есть незавершённая', async () => {
     rep();
-    expect(await act('replay.continue')).toBe('незавершённой игры нет');
+    expect(await act('replay.continue')).toBe('незавершённой кампании нет');
     offs.forEach((o) => o()); offs = [];
     const d = rep({ saved: { title: 'Берлинская операция, 16.04–2.05.1945' } });
     await mk().utterance('Штаб, продолжи игру', 1);
     expect(d.continueGame).toHaveBeenCalled();
-    expect(said.at(-1)).toBe('Продолжаю игру: Берлинская операция.');
+    expect(said.at(-1)).toBe('Продолжаю кампанию: Берлинская операция.');
   });
 });
 
@@ -761,7 +761,7 @@ describe('ветви с похожими названиями', () => {
     const d = { catalog: [], scenario: 'berlin-1945-tasks', busy: null, game: false, calc: vi.fn(), result: null, time: null, takeAt: (x: string) => x, setTime: vi.fn(),
       openTake: vi.fn(), closeTake: vi.fn(), take: null, saved: { title: 'Берлинская операция, 16.04–2.05.1945', lines: LS }, begin: vi.fn(), continueGame: vi.fn(async () => undefined), stop: vi.fn(), discardSaved: vi.fn() } as unknown as ReplayDeps;
     reg(replayActions(() => d));
-    expect(await getAction('replay.continue')!.run({ id: 'b12b' })).toBe(`Продолжаю игру: Берлинская операция, ${N12b}.`);
+    expect(await getAction('replay.continue')!.run({ id: 'b12b' })).toBe(`Продолжаю кампанию: Берлинская операция, ${N12b}.`);
     expect(d.continueGame).toHaveBeenLastCalledWith('b12b');
     await getAction('replay.continue')!.run({ branch: N12 });
     expect(d.continueGame).toHaveBeenLastCalledWith('b12');
@@ -785,6 +785,6 @@ describe('продолжить игру с ветви', () => {
   });
   it('удачно — «Продолжаю игру…» с названием ветви и заметкой о противнике', async () => {
     rep(async () => 'Противник заменён.');
-    expect(await getAction('replay.continue')!.run({ branch: 'ветвь от хода два' })).toBe('Продолжаю игру: Берлинская операция, ветвь от хода 2 (17 апреля, 05:00). Противник заменён.');
+    expect(await getAction('replay.continue')!.run({ branch: 'ветвь от хода два' })).toBe('Продолжаю кампанию: Берлинская операция, ветвь от хода 2 (17 апреля, 05:00). Противник заменён.');
   });
 });

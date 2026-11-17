@@ -13,13 +13,15 @@ import type { AiFrame } from './ai-runner';
 export type BusMsg =
   | { k: 'state'; state: DirectorState; settings: ExpoSettings; count: 1 | 2 | 3; model?: ModelFrame; ai?: AiFrame }
   | { k: 'input'; ev: DirectorEvent }
+  /** Запрос открыть защищённое ПИН меню в главном окне; сам ПИН по шине не передаётся. */
+  | { k: 'operator-open' }
   | { k: 'health'; states: import('./health').ProbeStates; note: string | null }
   | { k: 'identify'; until: number; names: string[] }
   /** has — подпись документов карты, которые у окна уже есть (главное окно досылает недостающие). */
   | { k: 'hello'; window: number; has?: string }
   | { k: 'beat'; window: number; at: number }
   /** Документ карты стенда (рассылается только при смене). */
-  | { k: 'map'; key: import('./stage-maps').StageKey; d: import('./stage-maps').StageDoc };
+  | ({ k: 'map' } & import('./stage-maps').StageMapUpdate);
 
 export interface ExpoBus {
   send(m: BusMsg): void;
@@ -31,6 +33,7 @@ export interface ExpoBus {
 
 const EVENT = 'expo://bus';
 const CHANNEL = 'def_ops.expo';
+type NativeEnvelope = { from: string; seq: number; m: BusMsg };
 
 /** Общая часть: список подписчиков и признак закрытия. */
 function hub() {
@@ -60,13 +63,31 @@ function tauriBus(): ExpoBus {
   const h = hub();
   // Событие Tauri получают все окна, включая отправителя: метка отправителя отсекает своё эхо.
   const me = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  let seq = 0;
+  const lastState = new Map<string, number>();
   let unlisten: (() => void) | null = null;
-  const ev = import('@tauri-apps/api/event');
-  void ev
-    .then(({ listen }) => listen<{ from: string; m: BusMsg }>(EVENT, (e) => { if (e.payload.from !== me) h.deliver(e.payload.m); }))
-    .then((u) => { if (h.closed) u(); else unlisten = u; });
+  const ready = import('@tauri-apps/api/event').then(async ({ listen, emit }) => {
+    const off = await listen<NativeEnvelope>(EVENT, ({ payload: { from, seq, m } }) => {
+      if (from === me || h.closed) return;
+      // Параллельные вызовы Tauri IPC могут завершаться в другом порядке. Старый
+      // кадр не должен заменить уже показанную сцену на боковом экране.
+      if (m.k === 'state') {
+        if (seq <= (lastState.get(from) ?? 0)) return;
+        lastState.set(from, seq);
+      }
+      h.deliver(m);
+    });
+    if (h.closed) off(); else unlisten = off;
+    return emit;
+  }).catch((e) => { console.error('Не удалось открыть шину стенда', e); return null; });
   return {
-    send: (m) => { if (!h.closed) void ev.then(({ emit }) => emit(EVENT, { from: me, m })); },
+    send(m) {
+      if (h.closed) return;
+      const envelope = { from: me, seq: ++seq, m };
+      // Иначе ответ на первое hello может прийти до регистрации слушателя.
+      void ready.then((emit) => { if (!h.closed && emit) return emit(EVENT, envelope); })
+        .catch((e) => { if (!h.closed) console.error('Не удалось отправить сообщение стенда', e); });
+    },
     on: (f) => h.on(f),
     close: () => { h.close(); unlisten?.(); unlisten = null; },
   };

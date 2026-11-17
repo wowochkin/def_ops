@@ -16,7 +16,8 @@ import { ExpoSession, type ModelEnv } from '../src/expo/session';
 import type { FrontId } from '../src/expo/settings';
 
 const ROOT = join(__dirname, '../../..');
-const BIN = join(ROOT, 'target/release/agents-game');
+const BIN = join(ROOT, 'target/release', process.platform === 'win32' ? 'agents-game.exe' : 'agents-game');
+if (process.env.DEFOPS_REQUIRE_GAME_TESTS === '1' && !existsSync(BIN)) throw new Error('Нет свежего agents-game для обязательной проверки ядра');
 const BANK_FILE = join(ROOT, 'apps/editor/src/expo/bank-data/berlin-1945.cards.json');
 const get = (kind: string, file: string) => {
   const id = file.replace(/\.json$/, '');

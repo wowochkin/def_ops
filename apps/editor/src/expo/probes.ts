@@ -1,8 +1,8 @@
 /**
  * Проверки служб стенда и первый прогон при запуске.
  *
- * Ядро в приложении — пробная игра по сценарию Берлинской операции при первой проверке, дальше — чтение сценария
- * командой ядра; в браузере ядро не проверяется. Голос — `/api/voice`, модель — список моделей локальной LM Studio.
+ * Ядро в приложении — чтение сценария командой ядра; проверка не меняет единственный GAME и не прерывает сеанс.
+ * В браузере ядро не проверяется. Голос — `/api/voice`, модель — список моделей локальной LM Studio.
  * `runProbes` повторяет неудачные проверки раз в секунду до двух минут, но отпускает раньше, если ядро и окна готовы,
  * а голос и модель уже ответили (хотя бы отказом) — тогда стенд стартует без ИИ.
  */
@@ -47,7 +47,6 @@ export async function findLocalModel(): Promise<string | null> {
 
 /** Адрес модели фиксирован на loopback: настройки полного режима могут указывать удалённый сервер. */
 export function localProbes(windowsReady: () => boolean): Probe[] {
-  let booted = false;
   return [
     {
       id: 'core',
@@ -55,14 +54,6 @@ export function localProbes(windowsReady: () => boolean): Probe[] {
       check: async () => {
         if (!app()) return true; // браузер показывает каркас, ядро доступно только в приложении или мосте
         const { invoke } = await import('@tauri-apps/api/core');
-        if (!booted) {
-          try {
-            await invoke('game_start', { scenario, seed: 1, takeover: 0, player: 'su', enemy: 'intent', mode: 'intent' });
-            booted = true;
-          } finally {
-            await invoke('game_stop');
-          }
-        }
         const text = await invoke<string>('read_text', { path: scenario });
         return JSON.parse(text).id !== undefined;
       },
