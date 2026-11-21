@@ -5,6 +5,7 @@ import { registerExerciseRoutes } from './http/exercise-routes';
 import { InMemoryExerciseStore, type ExerciseStore } from './store/exercise-store';
 import { MemoryModernImportStore, registerForceRoutes } from './http/force-routes';
 import { addEnvironmentRoutes } from './http/environment-routes';
+import { registerSymbolRoutes } from './http/symbol-routes';
 import type { CartographyEnvironmentProvider } from './environment/cartography-provider';
 
 function tokenOf(ctx: Ctx): string {
@@ -55,6 +56,7 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
 
   registerExerciseRoutes(router, { store: exerciseStore, sessions });
   registerForceRoutes(router, forceStore);
+  registerSymbolRoutes(router);
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
   return router;
 }

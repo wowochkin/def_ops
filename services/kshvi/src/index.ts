@@ -10,5 +10,6 @@ export * from './store/exercise-store';
 export * from './http/exercise-routes';
 export * from './http/force-routes';
 export * from './http/environment-routes';
+export * from './http/symbol-routes';
 export * from './environment/cartography-provider';
 export * from './environment/snapshot-store';
