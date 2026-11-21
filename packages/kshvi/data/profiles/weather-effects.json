@@ -1,0 +1,83 @@
+{
+  "id": "kshvi-weather-effects-training",
+  "version": 1,
+  "weatherEffectProfileVersion": 1,
+  "status": "APPROVED",
+  "approvedBy": "Методист локального учебного профиля",
+  "movementRequires": ["precipitation"],
+  "requiredTargets": ["movement", "visibility", "condition"],
+  "rules": [
+    {
+      "id": "road-precipitation-low",
+      "target": "movement",
+      "input": "precipitation",
+      "unit": "mm/h",
+      "range": [0, 50],
+      "condition": { "min": 0, "max": 5 },
+      "factor": 0.8,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебное допущение о снижении подвижности при малом дожде", "applicability": "Только синтетические парные сценарии на грунтовой дороге" }
+    },
+    {
+      "id": "road-precipitation-high",
+      "target": "movement",
+      "input": "precipitation",
+      "unit": "mm/h",
+      "range": [0, 50],
+      "condition": { "min": 5, "max": 50 },
+      "factor": 0.45,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебное допущение о существенном снижении подвижности при интенсивном дожде", "applicability": "Только синтетические парные сценарии на грунтовой дороге" }
+    },
+    {
+      "id": "visibility-low",
+      "target": "visibility",
+      "input": "visibility",
+      "unit": "m",
+      "range": [0, 1000000],
+      "condition": { "min": 0, "max": 1000 },
+      "factor": 0.35,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебное допущение для проверки порога малой видимости", "applicability": "Только относительная видимость в учебной модели" }
+    },
+    {
+      "id": "visibility-normal-range",
+      "target": "visibility",
+      "input": "visibility",
+      "unit": "m",
+      "range": [0, 1000000],
+      "condition": { "min": 1000, "max": 1000000 },
+      "factor": 0.75,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебное допущение, не являющееся нейтральным значением по умолчанию", "applicability": "Только относительная видимость в учебной модели" }
+    },
+    {
+      "id": "soil-frozen",
+      "target": "condition",
+      "input": "soilTemperature",
+      "unit": "°C",
+      "range": [-100, 100],
+      "condition": { "min": -100, "max": 0 },
+      "factor": 0.7,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебный индекс состояния промёрзшего грунта", "applicability": "Не использовать как физическую несущую способность грунта" }
+    },
+    {
+      "id": "soil-thawed",
+      "target": "condition",
+      "input": "soilTemperature",
+      "unit": "°C",
+      "range": [-100, 100],
+      "condition": { "min": 0, "max": 100 },
+      "factor": 0.5,
+      "movementClasses": ["FOOT", "WHEELED", "TRACKED", "UNIT", "COLUMN"],
+      "outside": "REQUIRES_REVIEW",
+      "source": { "kind": "ASSUMPTION", "note": "Учебный индекс состояния оттаявшего грунта", "applicability": "Не использовать как физическую несущую способность грунта" }
+    }
+  ]
+}
