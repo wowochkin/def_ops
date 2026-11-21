@@ -1,6 +1,11 @@
 import { HttpError, Router, reply, type Ctx } from '@def-ops/service-kit';
 import { assertCsrf, clearSessionCookie, publicParticipant, SessionManager } from './auth/sessions';
 import { KSHVI_ROUTE_PREFIX } from './http/router';
+import { registerExerciseRoutes } from './http/exercise-routes';
+import { InMemoryExerciseStore, type ExerciseStore } from './store/exercise-store';
+import { MemoryModernImportStore, registerForceRoutes } from './http/force-routes';
+import { addEnvironmentRoutes } from './http/environment-routes';
+import type { CartographyEnvironmentProvider } from './environment/cartography-provider';
 
 function tokenOf(ctx: Ctx): string {
   const bearer = ctx.req.headers.authorization;
@@ -11,7 +16,14 @@ function tokenOf(ctx: Ctx): string {
   return decodeURIComponent(pair.slice('kshvi_session='.length));
 }
 
-export function buildRouter({ sessions }: { sessions: SessionManager }): Router {
+export type BuildRouterOptions = {
+  sessions: SessionManager;
+  exerciseStore?: ExerciseStore;
+  forceStore?: MemoryModernImportStore;
+  environmentProvider?: CartographyEnvironmentProvider;
+};
+
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider }: BuildRouterOptions): Router {
   const router = new Router();
   const participant = async (ctx: Ctx) => sessions.authenticate(tokenOf(ctx));
 
@@ -41,5 +53,8 @@ export function buildRouter({ sessions }: { sessions: SessionManager }): Router 
     return reply(204, null, { 'Set-Cookie': clearSessionCookie() });
   });
 
+  registerExerciseRoutes(router, { store: exerciseStore, sessions });
+  registerForceRoutes(router, forceStore);
+  if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
   return router;
 }

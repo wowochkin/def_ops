@@ -17,9 +17,13 @@ export class MemoryModernImportStore {
   }
 }
 
-export function buildForceRouter(store: MemoryModernImportStore): Router {
-  const router = new Router();
+export function registerForceRoutes(router: Router, store: MemoryModernImportStore): void {
   router.post('/kshvi/forces/import', async ctx => store.import(await ctx.json<ModernImportInput>()));
   router.get('/kshvi/forces/import', async ctx => store.list(ctx.query.get('sideId') ?? ''));
+}
+
+export function buildForceRouter(store: MemoryModernImportStore): Router {
+  const router = new Router();
+  registerForceRoutes(router, store);
   return router;
 }

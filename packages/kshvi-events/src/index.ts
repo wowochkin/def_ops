@@ -3,3 +3,4 @@ export * from './model/event-effect';
 export * from './template-schema';
 export * from './validate-template';
 export * from './catalog-manifest';
+export * from './catalog-adapter';

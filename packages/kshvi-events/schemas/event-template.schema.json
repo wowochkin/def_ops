@@ -156,7 +156,7 @@
   "$defs": {
     "id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
     "nonEmptyString": { "type": "string", "minLength": 1, "pattern": ".*\\S.*" },
-    "unit": { "enum": ["count", "kg", "L", "m", "s", "m_per_s", "ratio"] },
+    "unit": { "enum": ["count", "kg", "L", "m", "s", "m_per_s", "deg", "ratio"] },
     "amount": {
       "oneOf": [
         { "type": "number" },
@@ -295,6 +295,27 @@
             "type": { "const": "communication.state" },
             "channelId": { "$ref": "#/$defs/id" },
             "status": { "enum": ["AVAILABLE", "DEGRADED", "UNAVAILABLE"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "operation", "target", "mechanism", "reason"],
+          "properties": {
+            "type": { "const": "catalog.effect" },
+            "operation": { "enum": ["advanceMedicalEvacuation", "advanceSupply", "applyCommunicationFailure", "applyMoraleImpact", "changeFormationState", "closeRoute", "consumeResource", "createApprovalRequest", "createCivilContextEvent", "createDocumentRevision", "createMedicalProcess", "createObservation", "createScenarioZone", "delayMovement", "delaySupply", "holdFormation", "markObservationStale", "markReportOverdue", "reconcileInformation", "recordCommandNodeState", "recordCoordination", "recordInformationState", "recordInteractionConstraint", "recordPersonnelChange", "recordReadinessActivity", "recordResourceDeficit", "recordSafetyConstraint", "recordScenarioCondition", "redirectSupply", "releaseCapacity", "requestRepair", "rerouteMessage", "rerouteMovement", "reserveCapacity", "restoreRoute", "reviseObservation", "scheduleEvacuation", "scheduleRest", "transferResource", "transitionEquipment", "updateCrossingState", "updateInfrastructureState", "updateMedicalCapacity", "updateRepairCapacity", "updateSupplyNode", "updateTask", "updateTerrainState", "updateWeather"] },
+            "target": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["domain", "ref"],
+              "properties": {
+                "domain": { "$ref": "#/$defs/nonEmptyString" },
+                "ref": { "$ref": "#/$defs/nonEmptyString" }
+              }
+            },
+            "mechanism": { "$ref": "#/$defs/nonEmptyString" },
+            "reason": { "$ref": "#/$defs/nonEmptyString" },
+            "parameters": { "type": "object" }
           }
         }
       ]

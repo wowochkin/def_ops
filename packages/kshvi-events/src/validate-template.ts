@@ -1,4 +1,4 @@
-import { EVENT_EFFECT_TYPES, EVENT_UNITS, type EventUnit } from './model/event-effect';
+import { CATALOG_EFFECT_OPERATIONS, EVENT_EFFECT_TYPES, EVENT_UNITS, type EventUnit } from './model/event-effect';
 import type { EventTemplate, ValidationIssue, ValidationResult } from './model/event-template';
 import { validateTemplateAgainstSchema } from './template-schema';
 
@@ -249,6 +249,16 @@ function validateEffects(
           add(issues, 'RESOURCE_TRANSFER_CONFLICT', `${base}/toSideId`, 'Передача ресурса требует разных сторон отправителя и получателя.');
         }
       }
+    }
+    if (type === 'catalog.effect') {
+      if (!CATALOG_EFFECT_OPERATIONS.includes(effectValue.operation as (typeof CATALOG_EFFECT_OPERATIONS)[number])) {
+        add(issues, 'UNKNOWN_OPERATION', `${base}/operation`, 'Операция отсутствует в версионном контракте каталога.');
+      }
+      if (!isObject(effectValue.target) || typeof effectValue.target.domain !== 'string' || typeof effectValue.target.ref !== 'string' || !effectValue.target.domain || !effectValue.target.ref) {
+        add(issues, 'TARGET_REQUIRED', `${base}/target`, 'Типизированная операция требует домен и ссылку на объект.');
+      }
+      if (typeof effectValue.mechanism !== 'string' || !effectValue.mechanism.trim()) add(issues, 'REQUIRED_TEXT', `${base}/mechanism`, 'Нужен механизм последствий.');
+      if (typeof effectValue.reason !== 'string' || !effectValue.reason.trim()) add(issues, 'REQUIRED_TEXT', `${base}/reason`, 'Нужно основание последствий.');
     }
     if (type === 'terrain.state' && typeof effectValue.areaId === 'string' && context.areaIds && !context.areaIds.includes(effectValue.areaId)) {
       add(issues, 'UNKNOWN_AREA', `${base}/areaId`, `Район «${effectValue.areaId}» отсутствует в снимке среды.`);
