@@ -9,6 +9,8 @@ import {
   type KshviClient,
 } from './kshvi-api';
 import { LibraryView, type LibraryExercise } from './LibraryView';
+import { PreparationWorkspace } from './preparation/PreparationWorkspace';
+import { ConductWorkspace } from './conduct/ConductWorkspace';
 import './kshvi.css';
 
 type KshviSection = 'library' | 'preparation' | 'conduct' | 'review' | 'archive' | 'admin';
@@ -234,7 +236,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     {activeTab === 'library' && library(false)}
     {activeTab === 'archive' && library(true)}
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
-    {activeTab === 'preparation' && <LocalEditor />}
+    {activeTab === 'preparation' && <><LocalEditor /><PreparationWorkspace /></>}
     {activeTab === 'conduct' && <section className="kshvi-placeholder">
       <h2>Проведение</h2>
       {session ? <div className="kshvi-session-card"><h3>Сеанс {session.id}</h3><dl>
@@ -243,6 +245,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
         <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
       </dl><p>Оптимистичные изменения браузера не считаются совершившимися до подтверждения серверной команды.</p></div>
         : <p>Выберите последний сеанс в карточке учения. Здесь отображаются только подтверждённые сервером ревизии.</p>}
+      <ConductWorkspace />
     </section>}
     {activeTab === 'review' && <section className="kshvi-placeholder"><h2>Разбор</h2><p>Общий и частный разбор использует сохранённые редакции и серверные сеансы выбранного учения.</p></section>}
     {activeTab === 'admin' && canAdmin && <section className="kshvi-placeholder"><h2>Администрирование</h2><p>Раздел открыт по назначенному сервером полномочию. Содержание учения само по себе административное право не раскрывает.</p></section>}
