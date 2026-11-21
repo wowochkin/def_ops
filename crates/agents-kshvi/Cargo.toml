@@ -1,0 +1,14 @@
+[package]
+name = "agents-kshvi"
+version = "0.1.0"
+edition = "2021"
+description = "Современный адаптер системных участников КШВИ к алгоритмам agents-core"
+publish = false
+
+[dependencies]
+agents-core = { path = "../agents-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+sha2 = "0.10"
+
+[workspace]

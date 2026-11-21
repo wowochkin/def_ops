@@ -1,0 +1,42 @@
+{
+  "id": "modern-balanced-opponent",
+  "version": "modern-opponent-1",
+  "source": {
+    "era": "modern",
+    "kind": "ASSUMPTION",
+    "reference": "Учебное допущение КШВИ: параметры созданы заново для проверки причинного влияния и не являются историческим или доктринальным нормативом.",
+    "version": "1"
+  },
+  "risk": 0.65,
+  "persistence": 0.25,
+  "ambition": 0.55,
+  "lossTolerance": 0.45,
+  "obedience": 0.8,
+  "motives": {
+    "task": 0.3,
+    "rival": 0.1,
+    "preserve": 0.2,
+    "noEncircle": 0.1,
+    "destroy": 0.2,
+    "hold": 0.1,
+    "save": 0.1
+  },
+  "weights": {
+    "uncertainty": 1.0,
+    "losses": 1.2,
+    "persistence": 0.4,
+    "obedience": 0.8
+  },
+  "searchDepth": 2,
+  "optionCount": 5,
+  "horizonTicks": 6,
+  "reviewCycleTicks": 2,
+  "initiative": 0.6,
+  "onInsufficientData": "CONTINUE_ORDER",
+  "minAdvanceConfidence": 0.55,
+  "maxAdvanceStress": 0.8,
+  "maxAdvanceThreat": 1.5,
+  "minSupplyFraction": 0.35,
+  "minMovementFactor": 0.4,
+  "communicationDelayTicks": 1
+}
