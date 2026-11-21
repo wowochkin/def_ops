@@ -20,4 +20,5 @@ it('регистрирует Instance, проекции и SSE в основно
   expect(router.match('POST', '/kshvi/instances')).not.toBeNull();
   expect(router.match('GET', '/kshvi/instances/i1/projection')).not.toBeNull();
   expect(router.match('GET', '/kshvi/instances/i1/events')).not.toBeNull();
+  expect(router.match('POST', '/kshvi/sealing')).not.toBeNull();
 });

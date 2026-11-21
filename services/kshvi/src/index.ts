@@ -23,5 +23,7 @@ export * from './agents/agent-command-client';
 export * from './agents/agent-recovery';
 export * from './agents/rust-worker';
 export * from './agents/agent-process';
+export * from './instances/sealing-service';
+export * from './http/sealing-routes';
 export * from './environment/cartography-provider';
 export * from './environment/snapshot-store';

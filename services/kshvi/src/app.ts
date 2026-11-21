@@ -14,6 +14,8 @@ import { SubscriptionService } from './http/subscription-service';
 import { registerInstanceRoutes } from './http/instance-routes';
 import { registerProjectionRoutes } from './http/projection-routes';
 import { registerSseRoutes } from './http/sse';
+import { SealingService } from './instances/sealing-service';
+import { registerSealingRoutes } from './http/sealing-routes';
 import type { ProjectableWorld } from '../../../packages/kshvi/src/projections/project';
 
 function tokenOf(ctx: Ctx): string {
@@ -35,9 +37,10 @@ export type BuildRouterOptions = {
   projections?: ProjectionService;
   subscriptions?: SubscriptionService;
   projectionWorld?: ProjectableWorld;
+  sealing?: SealingService;
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] } }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService() }: BuildRouterOptions): Router {
   const router = new Router();
   const participant = async (ctx: Ctx) => sessions.authenticate(tokenOf(ctx));
 
@@ -73,6 +76,7 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerInstanceRoutes(router, instances, commands);
   registerProjectionRoutes(router, projections, projectionWorld);
   registerSseRoutes(router, subscriptions);
+  registerSealingRoutes(router, sealing);
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
   return router;
 }
