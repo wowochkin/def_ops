@@ -13,7 +13,7 @@ export function finalReleaseGaps({ functionalPassed, nfPassed, acPassed, exposit
   return gaps;
 }
 
-function passedCount(directory, prefix) {
+export function countPassed(directory, prefix) {
   if (!existsSync(directory)) return 0;
   const records = [];
   for (let number = 1; number <= 30; number += 1) {
@@ -23,7 +23,7 @@ function passedCount(directory, prefix) {
     const record = JSON.parse(readFileSync(path, 'utf8'));
     if (record.status === 'passed') records.push(id);
   }
-  return records;
+  return records.length;
 }
 
 function main(argv) {
@@ -42,8 +42,8 @@ function main(argv) {
   const matrixPath = resolve(options.functionalDir, 'functional-contract-matrix.json');
   const matrix = existsSync(matrixPath) ? JSON.parse(readFileSync(matrixPath, 'utf8')) : { requirements: [] };
   const functionalPassed = (matrix.requirements ?? []).filter(entry => entry.implementation?.length && entry.tests?.length && entry.evidence?.length).length;
-  const nfPassed = passedCount(options.nfDir, 'NF').length;
-  const acPassed = passedCount(options.acceptanceDir, 'AC').length;
+  const nfPassed = countPassed(options.nfDir, 'NF');
+  const acPassed = countPassed(options.acceptanceDir, 'AC');
   const ac28Path = resolve(options.acceptanceDir, 'AC-28.json');
   const expositionPassed = existsSync(ac28Path) && JSON.parse(readFileSync(ac28Path, 'utf8')).status === 'passed';
   const pyramidPath = resolve(options.functionalDir, 'test-pyramid.json');

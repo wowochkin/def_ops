@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { finalReleaseGaps } from '../kshvi-final-verify.mjs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { countPassed, finalReleaseGaps } from '../kshvi-final-verify.mjs';
 
 const complete = { functionalPassed: 267, nfPassed: 22, acPassed: 30, expositionPassed: true, openLimitations: [], fullChecksPassed: true };
 
@@ -15,4 +18,13 @@ test('проверяет точные количества и полные пр�
   assert.deepEqual(finalReleaseGaps({ ...complete, acPassed: 29 }), ['AC_COUNT:29']);
   assert.deepEqual(finalReleaseGaps({ ...complete, fullChecksPassed: false }), ['FULL_CHECKS_FAILED']);
   assert.deepEqual(finalReleaseGaps(complete), []);
+});
+
+
+test('считает только реально пройденные протоколы, без undefined', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'kshvi-final-count-'));
+  writeFileSync(join(directory, 'NF-01.json'), '{"status":"passed"}');
+  writeFileSync(join(directory, 'NF-02.json'), '{"status":"failed"}');
+  assert.equal(countPassed(directory, 'NF'), 1);
+  assert.equal(countPassed(join(directory, 'missing'), 'AC'), 0);
 });
