@@ -1,0 +1,12 @@
+{
+  "name": "@def-ops/kshvi-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@def-ops/db": "0.2.0",
+    "@def-ops/kshvi": "0.1.0"
+  }
+}
