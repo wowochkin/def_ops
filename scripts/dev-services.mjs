@@ -8,7 +8,8 @@ const services = [
   { name: 'registry', dir: 'services/registry', env: { PORT: '8103', STORAGE: process.env.DATABASE_URL ? 'postgres' : 'memory' } },
   // картография: описания карт — как у реестра; тайлы — на диске в TILES_DIR
   { name: 'cartography', dir: 'services/cartography', env: { PORT: '8104', TILES_DIR: './data/tiles', STORAGE: process.env.DATABASE_URL ? 'postgres' : 'memory' } },
-  { name: 'gateway', dir: 'services/gateway', env: { PORT: '8080', DOCUMENTS_URL: 'http://localhost:8101', RENDER_URL: 'http://localhost:8102', REGISTRY_URL: 'http://localhost:8103', CARTOGRAPHY_URL: 'http://localhost:8104', AUTH: process.env.AUTH ?? 'open', API_KEYS: process.env.API_KEYS ?? '' } },
+  { name: 'kshvi', dir: 'services/kshvi', env: { PORT: '8105', KSHVI_SCHEMA: 'kshvi' } },
+  { name: 'gateway', dir: 'services/gateway', env: { PORT: '8080', DOCUMENTS_URL: 'http://localhost:8101', RENDER_URL: 'http://localhost:8102', REGISTRY_URL: 'http://localhost:8103', CARTOGRAPHY_URL: 'http://localhost:8104', KSHVI_URL: 'http://localhost:8105', AUTH: process.env.AUTH ?? 'open', API_KEYS: process.env.API_KEYS ?? '' } },
 ];
 const colors = [36, 35, 32, 34, 33];
 const procs = services.map((s, i) => {
