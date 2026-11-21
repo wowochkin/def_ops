@@ -252,7 +252,7 @@ export function canonicalJson(value: unknown): string {
 
 - [ ] **Step 4: Проверить кросспроцессную повторяемость**
 
-Run: `npx vitest run packages/kshvi/tests/events.test.ts && node packages/kshvi/tests/fixtures/replay-random.mjs`
+Run: `npx vitest run packages/kshvi/tests/events.test.ts && node --import tsx packages/kshvi/tests/fixtures/replay-random.mjs`
 Expected: одинаковые хеши и последовательности в двух процессах; повреждение `prevHash` обнаруживается.
 
 - [ ] **Step 5: Зафиксировать задачу**
