@@ -1,0 +1,43 @@
+{
+  "levels": [
+    {
+      "kind": "unit",
+      "status": "pending",
+      "command": "",
+      "artifacts": []
+    },
+    {
+      "kind": "contract",
+      "status": "pending",
+      "command": "",
+      "artifacts": []
+    },
+    {
+      "kind": "integration",
+      "status": "pending",
+      "command": "",
+      "artifacts": []
+    },
+    {
+      "kind": "endToEnd",
+      "status": "pending",
+      "command": "",
+      "artifacts": []
+    },
+    {
+      "kind": "loadAndRecovery",
+      "status": "pending",
+      "command": "",
+      "artifacts": []
+    }
+  ],
+  "missingLevels": [],
+  "invalidLevels": [
+    "unit",
+    "contract",
+    "integration",
+    "endToEnd",
+    "loadAndRecovery"
+  ],
+  "unexpectedLevels": []
+}
