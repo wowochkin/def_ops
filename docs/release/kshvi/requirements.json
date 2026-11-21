@@ -1,0 +1,1606 @@
+{
+  "schemaVersion": 1,
+  "spec": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+  "entries": [
+    {
+      "id": "KSHVI-F-GEN-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-GEN-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-CLASS-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-CLASS-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-CLASS-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-CLASS-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ROLE-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-24",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-23",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-MPS-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-LOG-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ORG-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-DOC-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-RUN-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-AUTO-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-COM-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-23",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SIM-24",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-UI-23",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-SYM-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-REPLAY-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-23",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ENV-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-PREP-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ARCH-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-F-ADM-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-00",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-01",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-02",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-03",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-04",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-05",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-06",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-07",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-08",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-09",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-10",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-11",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-12",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-13",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-14",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-15",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-16",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-17",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-18",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-19",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-20",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-21",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-22",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-23",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-24",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-25",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-26",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-27",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-28",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-29",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-AC-30",
+      "status": "pending",
+      "evidence": null
+    },
+    {
+      "id": "KSHVI-NF-22",
+      "status": "pending",
+      "evidence": null
+    }
+  ]
+}
