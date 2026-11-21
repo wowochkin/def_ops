@@ -1,4 +1,4 @@
-import { requiredIntermediaries, type CommandTree } from '@def-ops/kshvi';
+import { requiredIntermediaries, type CommandTree } from '@def-ops/kshvi/browser';
 
 export function CommandTreeStep(tree: CommandTree) {
   const missing = requiredIntermediaries(tree);

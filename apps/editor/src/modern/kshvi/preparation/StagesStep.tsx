@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { stageImpact, type StageImpact, type StageImpactLinks } from '@def-ops/kshvi';
+import { stageImpact, type StageImpact, type StageImpactLinks } from '@def-ops/kshvi/browser';
 
 const links: StageImpactLinks = {
   inputs: [{ id: 'input-1', stageIds: ['stage-2'], affectedBy: ['expectedActions'] }],

@@ -1,4 +1,4 @@
-import { validateKit, type ScenarioKit } from '@def-ops/kshvi';
+import { validateKit, type ScenarioKit } from '@def-ops/kshvi/browser';
 
 export function KitStep({ items, omissions, usesLogistics }: Pick<ScenarioKit, 'items' | 'omissions' | 'usesLogistics'>) {
   const issues = validateKit({ items, omissions, usesLogistics });

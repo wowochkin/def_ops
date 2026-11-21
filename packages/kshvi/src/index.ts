@@ -27,3 +27,4 @@ export * from './forces/morale-profile';
 export * from './forces/morale-state';
 export * from './forces/morale-effects';
 export * from './forces/morale-projection';
+export * from './forces/modern-import';
