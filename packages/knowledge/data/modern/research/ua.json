@@ -1,0 +1,3537 @@
+{
+  "country": "UA",
+  "sources": [
+    {
+      "id": "ua-r-ste",
+      "title": "STE Brief Catalogue",
+      "publisher": "ДП «Спецтехноекспорт»",
+      "url": "https://www.spetstechnoexport.com/storage/files/ed7cd1c6642c6299a40c00e2770de4a5.pdf",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-structure",
+      "title": "Структура Збройних Сил України",
+      "publisher": "Збройні Сили України",
+      "url": "https://www.zsu.gov.ua/suchasni-zbroini-syly-ukrainy/struktura-zbroinykh-syl-ukrainy",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-ground",
+      "title": "Роди військ",
+      "publisher": "Сухопутні війська ЗС України",
+      "url": "https://landforces.mil.gov.ua/uk/about/ground-forces/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-air",
+      "title": "Повітряні сили",
+      "publisher": "Міністерство оборони України",
+      "url": "https://mod.gov.ua/pro-nas/povitryani-sili",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-pd2",
+      "title": "PD-2 UAS, украинская версия",
+      "publisher": "Ukrspecsystems",
+      "url": "https://ukrspecsystems.com/uk/drones/pd-2-uas",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-sharkd-source",
+      "title": "SHARK-D technical details",
+      "publisher": "Ukrspecsystems",
+      "url": "https://ukrspecsystems.com/drones/shark-uas",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-sharkm-source",
+      "title": "SHARK-M technical details",
+      "publisher": "Ukrspecsystems",
+      "url": "https://ukrspecsystems.com/drones/shark-m-uas",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-minishark-source",
+      "title": "MINI SHARK technical details",
+      "publisher": "Ukrspecsystems",
+      "url": "https://ukrspecsystems.com/drones/mini-shark-uas",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-furia-source",
+      "title": "А1-СМ «Фурія»",
+      "publisher": "Атлон Авіа",
+      "url": "https://athlonavia.com/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-raybird-source",
+      "title": "Raybird technical specs",
+      "publisher": "Skyeton",
+      "url": "https://skyeton.com/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-an178-source",
+      "title": "AN-178",
+      "publisher": "Антонов",
+      "url": "https://antonov.com/en/aircraft/an-178",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Полный поисковый фрагмент карточки прочитан; прямое открытие вернуло 502. Полная страница требует перепроверки."
+    },
+    {
+      "id": "ua-r-novator-source",
+      "title": "NOVATOR Light Armored Vehicle",
+      "publisher": "Ukrainian Armor",
+      "url": "https://ukrarmor.com/wp-content/uploads/2019/05/5.-NOVATOR_ENG.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан общий открытый паспорт; сведения о реальных частях исключены."
+    },
+    {
+      "id": "ua-r-novator2021",
+      "title": "Novator: справочные характеристики",
+      "publisher": "Ukrainian Armor",
+      "url": "https://ukrarmor.com/news-en/ukrainian-armor-handed-a-batch-of-apc-novator-over-to-the-national-guard-of-ukraine/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-02-26",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Использован только общий блок For information; поставки и реальные операторы не извлекаются."
+    },
+    {
+      "id": "ua-r-progress-catalogue",
+      "title": "Catalogue: Armored Military Vehicles; Rocket Artillery Weapons and Munitions",
+      "publisher": "ДП СЗТФ «Прогрес»",
+      "url": "https://progress.gov.ua/wp-content/uploads/2020/08/Catalogue_Progress_All.pdf",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны страницы через веб и извлечённый текст официального PDF. Дата редакции не установлена."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "ua-armed-forces",
+      "country": "UA",
+      "parent": null,
+      "title": "Вооружённые силы Украины",
+      "nativeName": "Збройні Сили України",
+      "kind": "organization",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-army",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Сухопутні війська",
+      "kind": "service",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Воздушные силы",
+      "nativeName": "Повітряні Сили",
+      "kind": "service",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-navy",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Військово-Морські Сили",
+      "kind": "service",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-airborne",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Десантно-штурмовые войска",
+      "nativeName": "Десантно-штурмові війська",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-special",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Силы специальных операций",
+      "nativeName": "Сили спеціальних операцій",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-territorial",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Силы территориальной обороны",
+      "nativeName": "Сили територіальної оборони",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-unmanned",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Силы беспилотных систем",
+      "nativeName": "Сили безпілотних систем",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-support",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Силы поддержки",
+      "nativeName": "Сили підтримки",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-logistics",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Силы логистики",
+      "nativeName": "Сили логістики",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-medical",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Медицинские силы",
+      "nativeName": "Медичні сили",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-signals-cyber",
+      "country": "UA",
+      "parent": "ua-armed-forces",
+      "title": "Войска связи и кибербезопасности",
+      "nativeName": "Війська зв’язку та кібербезпеки",
+      "kind": "independent_branch",
+      "sources": [
+        "ua-r-structure"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-bomber",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Бомбардировочная авиация",
+      "nativeName": "Бомбардувальна авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-fighter",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Истребительная авиация",
+      "nativeName": "Винищувальна авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-attack",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Штурмовая авиация",
+      "nativeName": "Штурмова авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-recon",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Разведывательная авиация",
+      "nativeName": "Розвідувальна авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-transport",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Транспортная авиация",
+      "nativeName": "Транспортна авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-air-defence-missile",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Зенитные ракетные войска",
+      "nativeName": "Зенітні ракетні війська",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-air-radio-technical",
+      "country": "UA",
+      "parent": "ua-air",
+      "title": "Радиотехнические войска",
+      "nativeName": "Радіотехнічні війська",
+      "kind": "branch",
+      "sources": [
+        "ua-r-air"
+      ],
+      "status": "draft",
+      "note": "Справочная национальная классификация; не связь подчинения конкретных формирований."
+    },
+    {
+      "id": "ua-r-ground-mechanized",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Механизированные войска",
+      "nativeName": "Механізовані війська",
+      "kind": "branch",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-tank",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Танковые войска",
+      "nativeName": "Танкові війська",
+      "kind": "branch",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-artillery",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Ракетные войска и артиллерия",
+      "nativeName": "Ракетні війська і артилерія",
+      "kind": "branch",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-airdefence",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Войска ПВО",
+      "nativeName": "Війська ППО",
+      "kind": "branch",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-aviation",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Армейская авиация",
+      "nativeName": "Армійська авіація",
+      "kind": "branch",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-special",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Специальные войска",
+      "nativeName": "Спеціальні війська",
+      "kind": "branch_group",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    },
+    {
+      "id": "ua-r-ground-drone",
+      "country": "UA",
+      "parent": "ua-army",
+      "title": "Дроновые силы Сухопутных войск",
+      "nativeName": "Дронові сили Сухопутних військ",
+      "kind": "component",
+      "sources": [
+        "ua-r-ground"
+      ],
+      "status": "draft",
+      "note": "Узел обзорной классификации официального портала; организационный уровень подразделения не задаёт."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "ua-hierarchy-research",
+      "country": "UA",
+      "service": null,
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Схема подразделений ещё не собрана. Национальную иерархию не заменяем общей российской или американской схемой.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "ua-r-oplot",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Оплот",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "Печатные с. 4–5",
+            "scope": "Оплот; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 400,
+            "unit": "km",
+            "source": "ua-r-ste",
+            "locator": "Печатные с. 4–5",
+            "scope": "Оплот; конфигурация указанной страницы; период редакции не установлен. Максимальный запас хода по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "Печатные с. 4–5",
+            "scope": "Оплот; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 51000,
+            "unit": "kg",
+            "source": "ua-r-ste",
+            "locator": "Печатные с. 4–5",
+            "scope": "Оплот; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-atlet",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Атлет",
+      "objectClass": "support-vehicle",
+      "summary": "Ремонтно-эвакуационная машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ремонтно-эвакуационная машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 6",
+            "scope": "Атлет; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 6",
+            "scope": "Атлет; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 46000,
+            "unit": "kg",
+            "source": "ua-r-ste",
+            "locator": "с. 6",
+            "scope": "Атлет; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-gpm72",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "ГПМ-72",
+      "objectClass": "engineering",
+      "summary": "Пожарная машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пожарная машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 7",
+            "scope": "ГПМ-72; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Семейство; таблица относится к экспортной конфигурации Deutz/Allison/Парус. Характеристики автоматически на варианты не переносятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8–9",
+            "scope": "БТР-4; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 8–9",
+            "scope": "БТР-4; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4k",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4К",
+      "objectClass": "apc",
+      "summary": "Командирская машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Отдельная каталожная модификация; численные характеристики базовой машины не наследуются. Межклассовая связь с БТР-4 описана названием; parentModel не задаётся из-за требования одинакового objectClass.",
+      "granularity": "variant",
+      "parentModel": "ua-r-btr4",
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Командирская машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8, Family of vehicles",
+            "scope": "БТР-4К; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4ksh",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4КШ",
+      "objectClass": "apc",
+      "summary": "Командно-штабная машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Отдельная каталожная модификация; численные характеристики базовой машины не наследуются. Межклассовая связь с БТР-4 описана названием; parentModel не задаётся из-за требования одинакового objectClass.",
+      "granularity": "variant",
+      "parentModel": "ua-r-btr4",
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Командно-штабная машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8, Family of vehicles",
+            "scope": "БТР-4КШ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4mv",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4МВ",
+      "objectClass": "ifv",
+      "summary": "Боевая машина пехоты.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Отдельная каталожная модификация; численные характеристики базовой машины не наследуются. Межклассовая связь с БТР-4 описана названием; parentModel не задаётся из-за требования одинакового objectClass.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Боевая машина пехоты.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8, Family of vehicles",
+            "scope": "БТР-4МВ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4s",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4С",
+      "objectClass": "support-vehicle",
+      "summary": "Медицинская машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Отдельная каталожная модификация; численные характеристики базовой машины не наследуются. Межклассовая связь с БТР-4 описана названием; parentModel не задаётся из-за требования одинакового objectClass.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Медицинская машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8, Family of vehicles",
+            "scope": "БТР-4С; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr4rm",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-4РМ",
+      "objectClass": "support-vehicle",
+      "summary": "Ремонтно-эвакуационная машина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Отдельная каталожная модификация; численные характеристики базовой машины не наследуются. Межклассовая связь с БТР-4 описана названием; parentModel не задаётся из-за требования одинакового objectClass.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ремонтно-эвакуационная машина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 8, Family of vehicles",
+            "scope": "БТР-4РМ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-btr3",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БТР-3",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 10–11",
+            "scope": "БТР-3; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 600,
+            "unit": "km",
+            "source": "ua-r-ste",
+            "locator": "с. 10–11",
+            "scope": "БТР-3; конфигурация указанной страницы; период редакции не установлен. Maximum range; режим движения и нагрузка не раскрыты.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 10–11",
+            "scope": "БТР-3; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-otaman8",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Отаман 8×8",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 8×8; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 8×8; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 11,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 8×8; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-otaman6",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Отаман 6×6",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 6×6; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 6×6; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Отаман 6×6; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-triton",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Тритон",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 12",
+            "scope": "Тритон; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-varta",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Варта",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 13",
+            "scope": "Варта; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 120,
+            "unit": "km/h",
+            "source": "ua-r-ste",
+            "locator": "с. 13",
+            "scope": "Варта; конфигурация указанной страницы; период редакции не установлен. Максимум на дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1250,
+            "unit": "km",
+            "source": "ua-r-ste",
+            "locator": "с. 13",
+            "scope": "Варта; конфигурация указанной страницы; период редакции не установлен. Максимум; режим/нагрузка не раскрыты.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-dozor",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Дозор (бронемашина)",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 14",
+            "scope": "Дозор (бронемашина); конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kozak2",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Козак-2",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "Козак-2; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kozak2m",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Козак-2М",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "Козак-2М; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kozak5",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Козак-5",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "Козак-5; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-shrek",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ Шрек",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "КрАЗ Шрек; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-hulk",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ Халк",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "КрАЗ Халк; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-hurricane",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ Ураган",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "КрАЗ Ураган; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-bars8",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Барс-8",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "Барс-8; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-fiona",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ Фиона",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 15–16",
+            "scope": "КрАЗ Фиона; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-7634",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ-7634HE",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортное шасси.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортное шасси.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 17",
+            "scope": "КрАЗ-7634HE; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-6322",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ-6322",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортное шасси.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортное шасси.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 17",
+            "scope": "КрАЗ-6322; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-6511",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ-6511H4",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортное шасси.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортное шасси.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 17",
+            "scope": "КрАЗ-6511H4; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-5233",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ-5233HE",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортное шасси.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортное шасси.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 17",
+            "scope": "КрАЗ-5233HE; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-5401",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КрАЗ-5401H2",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортное шасси.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортное шасси.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 17",
+            "scope": "КрАЗ-5401H2; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-verba",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БМ-21У «Верба»",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 25",
+            "scope": "БМ-21У «Верба»; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-berest",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БМ-21УМ «Берест»",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 25",
+            "scope": "БМ-21УМ «Берест»; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-bohdana",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "2С22 «Богдана» (КрАЗ-6322)",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная гаубица.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Ранняя каталожная конфигурация на КрАЗ-6322. Около 20 снарядов — оценка, не точная номинальная вместимость; поздние варианты не охватываются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная гаубица.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 25",
+            "scope": "2С22 «Богдана» (КрАЗ-6322); конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-90k6",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "90К6Е",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "90К6Е; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-1l221",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "1Л221Е",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "1Л221Е; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-mineral",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Минерал-МЕ",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "Минерал-МЕ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-36d6",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "36Д6-М2",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "36Д6-М2; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-delta",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Дельта",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "Дельта; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kolchuga",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Кольчуга RDF 360",
+      "objectClass": "radar-sensor",
+      "summary": "Радиотехническое средство.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиотехническое средство.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 32–35",
+            "scope": "Кольчуга RDF 360; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-bukovel",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Буковель-AD",
+      "objectClass": "electronic-warfare",
+      "summary": "Средство РЭБ.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средство РЭБ.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 36–37",
+            "scope": "Буковель-AD; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-nota",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Нота",
+      "objectClass": "electronic-warfare",
+      "summary": "Средство РЭБ.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средство РЭБ.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 36–37",
+            "scope": "Нота; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-mi2",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Ми-2МСБ-1",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой вертолёт.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой вертолёт.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-2МСБ-1; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 220,
+            "unit": "km/h",
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-2МСБ-1; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 180,
+            "unit": "km/h",
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-2МСБ-1; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-mi8",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Ми-8МСБ",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой вертолёт.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой вертолёт.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-8МСБ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 270,
+            "unit": "km/h",
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-8МСБ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1030,
+            "unit": "km",
+            "source": "ua-r-ste",
+            "locator": "с. 45",
+            "scope": "Ми-8МСБ; конфигурация указанной страницы; период редакции не установлен. Operating range; нагрузка и профиль не раскрыты.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kentavr",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Кентавр",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный корабельный проект.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Предложение общего каталога, не подтверждение постройки или текущего наличия. Скорость в узлах, не автоматически км/ч. Запас хода в морских милях не отождествляется с километрами.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный корабельный проект.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 52–53",
+            "scope": "Кентавр; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-gurza",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Гюрза-М",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный корабельный проект.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Предложение общего каталога, не подтверждение постройки или текущего наличия. Скорость в узлах, не автоматически км/ч. Запас хода в морских милях не отождествляется с километрами.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный корабельный проект.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 52–53",
+            "scope": "Гюрза-М; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-dozor-vessel",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Дозор (корабельный проект)",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный корабельный проект.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Предложение общего каталога, не подтверждение постройки или текущего наличия. Скорость в узлах, не автоматически км/ч. Запас хода в морских милях не отождествляется с километрами.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный корабельный проект.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 52–53",
+            "scope": "Дозор (корабельный проект); конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-gayduk",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Гайдук-М",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный корабельный проект.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Предложение общего каталога, не подтверждение постройки или текущего наличия. Скорость в узлах, не автоматически км/ч. Запас хода в морских милях не отождествляется с километрами.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный корабельный проект.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 52–53",
+            "scope": "Гайдук-М; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-ram2",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "RAM II",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 49",
+            "scope": "RAM II; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 70,
+            "unit": "km/h",
+            "source": "ua-r-ste",
+            "locator": "с. 49",
+            "scope": "RAM II; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-sparrow",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Sparrow LE",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-ste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-ste",
+            "locator": "с. 50",
+            "scope": "Sparrow LE; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-pd2",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "PD-2",
+      "objectClass": "unmanned-air",
+      "summary": "Модульное семейство БПЛА.",
+      "sources": [
+        "ua-r-pd2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульное семейство БПЛА.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Конфігурації БпАК PD-2",
+            "scope": "PD-2; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-pd2vtol",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "PD-2 СВЗП",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-pd2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "variant",
+      "parentModel": "ua-r-pd2",
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "PD-2 СВЗП",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический/программируемый маршрут.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 140,
+            "unit": "km/h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. Максимальная скорость полёта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 100,
+            "unit": "km/h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. Крейсерская скорость.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 800,
+            "unit": "km",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. Практическая дальность; не дальность радиоканала.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 8,
+            "unit": "h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. С полным полезным грузом.",
+            "status": "reported"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 11,
+            "unit": "l",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 55,
+            "unit": "kg",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 2.85,
+            "unit": "m",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 5,
+            "unit": "m",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Бензин А95; четырёхтактный двигатель.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "Рабочая температура −40…+55 °C.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 СВЗП",
+            "scope": "PD-2 СВЗП; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-pd2lt",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "PD-2 ЛТ",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-pd2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "variant",
+      "parentModel": "ua-r-pd2",
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "PD-2 ЛТ",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический/программируемый маршрут.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 160,
+            "unit": "km/h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. Максимальная скорость полёта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 100,
+            "unit": "km/h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. Крейсерская скорость.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1300,
+            "unit": "km",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. Практическая дальность; не дальность радиоканала.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 10,
+            "unit": "h",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. С полным полезным грузом.",
+            "status": "reported"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 11,
+            "unit": "l",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 45,
+            "unit": "kg",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 2.85,
+            "unit": "m",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 4,
+            "unit": "m",
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Бензин А95; четырёхтактный двигатель.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "Рабочая температура −40…+55 °C.",
+            "unit": null,
+            "source": "ua-r-pd2",
+            "locator": "Технічні характеристики БпАК PD-2 — PD-2 ЛТ",
+            "scope": "PD-2 ЛТ; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-sharkd",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "SHARK-D",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-sharkd-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический/ручной.",
+            "unit": null,
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 13.5,
+            "unit": "kg",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.4,
+            "unit": "m",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 1.65,
+            "unit": "m",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 130,
+            "unit": "km/h",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. Максимальная скорость полёта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 75,
+            "unit": "km/h",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 4,
+            "unit": "h",
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. До 4 часов с дневным EO-подвесом.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электрический двигатель.",
+            "unit": null,
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "−15…+45 °C; SHARK-D/M — только без осадков.",
+            "unit": null,
+            "source": "ua-r-sharkd-source",
+            "locator": "Technical details",
+            "scope": "SHARK-D; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-sharkm",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "SHARK-M",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-sharkm-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический/ручной.",
+            "unit": null,
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 14.5,
+            "unit": "kg",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.4,
+            "unit": "m",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 1.65,
+            "unit": "m",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 130,
+            "unit": "km/h",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. Максимальная скорость полёта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 75,
+            "unit": "km/h",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 7,
+            "unit": "h",
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. До 7 часов с дневным EO-подвесом.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электрический двигатель.",
+            "unit": null,
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "−15…+45 °C; SHARK-D/M — только без осадков.",
+            "unit": null,
+            "source": "ua-r-sharkm-source",
+            "locator": "Technical details",
+            "scope": "SHARK-M; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-minishark",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "MINI SHARK",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-minishark-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический/ручной.",
+            "unit": null,
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 5.5,
+            "unit": "kg",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.6,
+            "unit": "m",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 1.25,
+            "unit": "m",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 120,
+            "unit": "km/h",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. Максимальная скорость полёта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 60,
+            "unit": "km/h",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 3.5,
+            "unit": "h",
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. До 3,5 часа с полной полезной нагрузкой.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электрический двигатель.",
+            "unit": null,
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "−15…+45 °C.",
+            "unit": null,
+            "source": "ua-r-minishark-source",
+            "locator": "Technical details",
+            "scope": "MINI SHARK; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-furia",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "А1-СМ «Фурия»",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "sources": [
+        "ua-r-furia-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "ua-r-furia-source",
+            "locator": "Наш виріб",
+            "scope": "А1-СМ «Фурия»; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 4,
+            "unit": "h",
+            "source": "ua-r-furia-source",
+            "locator": "Наш виріб",
+            "scope": "А1-СМ «Фурия»; конфигурация указанной страницы; период редакции не установлен. До 4 часов в воздухе.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2,
+            "unit": "m",
+            "source": "ua-r-furia-source",
+            "locator": "Наш виріб",
+            "scope": "А1-СМ «Фурия»; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электрический двигатель.",
+            "unit": null,
+            "source": "ua-r-furia-source",
+            "locator": "Наш виріб",
+            "scope": "А1-СМ «Фурия»; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-raybird",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Raybird",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотная платформа.",
+      "sources": [
+        "ua-r-raybird-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Текущая главная страница сообщает 24 часа; рекламные страницы других рынков называют 28/30 часов. Эти значения не усредняются и не переносятся между конфигурациями.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная платформа.",
+            "unit": null,
+            "source": "ua-r-raybird-source",
+            "locator": "Technical Specs",
+            "scope": "Raybird; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 24,
+            "unit": "h",
+            "source": "ua-r-raybird-source",
+            "locator": "Technical Specs",
+            "scope": "Raybird; конфигурация указанной страницы; период редакции не установлен. До 24 часов; страница не разделяет варианты.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2500,
+            "unit": "km",
+            "source": "ua-r-raybird-source",
+            "locator": "Technical Specs",
+            "scope": "Raybird; конфигурация указанной страницы; период редакции не установлен. Maximum flight range; не дальность радиоканала.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 23,
+            "unit": "kg",
+            "source": "ua-r-raybird-source",
+            "locator": "Technical Specs",
+            "scope": "Raybird; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-an178",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Ан-178",
+      "objectClass": "aircraft",
+      "summary": "Средний транспортный самолёт.",
+      "sources": [
+        "ua-r-an178-source"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средний транспортный самолёт.",
+            "unit": null,
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 825,
+            "unit": "km/h",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. Максимальная крейсерская скорость.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 3680,
+            "unit": "km",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. С грузом 10 т.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 51000,
+            "unit": "kg",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. Стандартная конфигурация; перегрузочный вариант 52400 кг не смешан.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 32.23,
+            "unit": "m",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 30.57,
+            "unit": "m",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 9.65,
+            "unit": "m",
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Д-436-148FM.",
+            "unit": null,
+            "source": "ua-r-an178-source",
+            "locator": "Performance; Overall Dimensions",
+            "scope": "Ан-178; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-novator",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Новатор",
+      "objectClass": "apc",
+      "summary": "Бронемашина.",
+      "sources": [
+        "ua-r-novator-source",
+        "ua-r-novator2021"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Буклет объединяет несколько компоновок мест; точное число экипажа/десанта не выбрано. Высота/ширина отличаются порядком от каталога STE и не перенесены до сверки чертежа.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронемашина.",
+            "unit": null,
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 140,
+            "unit": "km/h",
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. До 140 по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. До 500; условия не указаны.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 160,
+            "unit": "l",
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 8845,
+            "unit": "kg",
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. Полная масса Gross vehicle weight, не боевая.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 6.4,
+            "unit": "m",
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Ford V8 Turbo Diesel 6,7 л; Ford F-550; 4×4.",
+            "unit": null,
+            "source": "ua-r-novator-source",
+            "locator": "с. 4–6, Technical specifications",
+            "scope": "Новатор; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "ua-r-novator2021",
+            "locator": "For information",
+            "scope": "Не менее 500 км в гористой местности; справка производителя 2021 года.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1100,
+            "unit": "km",
+            "source": "ua-r-novator2021",
+            "locator": "For information",
+            "scope": "По шоссе; справка производителя 2021 года. Не усреднять с максимумом 500 км в другом буклете.",
+            "status": "reported",
+            "qualifier": "at_least"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-triton01",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "Тритон-01",
+      "objectClass": "apc",
+      "summary": "Лёгкая бронемашина.",
+      "sources": [
+        "ua-r-progress-catalogue"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкая бронемашина.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 28",
+            "scope": "Тритон-01; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 700,
+            "unit": "km",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 28",
+            "scope": "Тритон-01; конфигурация указанной страницы; период редакции не установлен. Endurance range; дорожные условия и нагрузка не раскрыты.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 10,
+            "unit": "km/h",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 28",
+            "scope": "Тритон-01; конфигурация указанной страницы; период редакции не установлен. Swimming speed: до 10 км/ч.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "12,7 мм: 50/100 выстрелов, опция 200; 40 мм: 32 выстрела.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 28",
+            "scope": "Тритон-01; конфигурация указанной страницы; период редакции не установлен. Номинальная каталожная вместимость модуля; не текущий остаток.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 32,
+            "unit": "round",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 28",
+            "scope": "Тритон-01; конфигурация указанной страницы; период редакции не установлен. Боезапас 40-мм гранатомёта указанного модуля.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-mmk",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "ММК (мобильный миномётный комплекс)",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Мобильный миномётный комплекс.",
+      "sources": [
+        "ua-r-progress-catalogue"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог даёт название Mobile Mortar Complex без точного индекса и шасси. Не отождествляется с иным комплексом по внешнему виду.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильный миномётный комплекс.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 23",
+            "scope": "ММК (мобильный миномётный комплекс); конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 23",
+            "scope": "ММК (мобильный миномётный комплекс); конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 60,
+            "unit": "round",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 23",
+            "scope": "ММК (мобильный миномётный комплекс); конфигурация указанной страницы; период редакции не установлен. Ammunition capacity: 60 мин; номинальная вместимость перевозимого боекомплекта, не текущий остаток.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-m12015",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "М120-15",
+      "objectClass": "towed-artillery",
+      "summary": "Миномёт.",
+      "sources": [
+        "ua-r-progress-catalogue"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Миномёт.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "М120-15; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 230,
+            "unit": "kg",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "М120-15; конфигурация указанной страницы; период редакции не установлен. Масса в боевом положении.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 5,
+            "unit": "person",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "М120-15; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Носимый боекомплект — 48 мин.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "М120-15; конфигурация указанной страницы; период редакции не установлен. Wearable ammunition; относится к переносимому комплекту расчёта, не вместимости магазина.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-kba48m1",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "КБА48М1",
+      "objectClass": "towed-artillery",
+      "summary": "82-мм миномёт.",
+      "sources": [
+        "ua-r-progress-catalogue"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "82-мм миномёт.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "КБА48М1; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 48.6,
+            "unit": "kg",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "КБА48М1; конфигурация указанной страницы; период редакции не установлен. Масса в боевом положении.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "КБА48М1; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Носимый боекомплект — 18 мин.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Rocket Artillery Weapons and Munitions, печатная с. 24",
+            "scope": "КБА48М1; конфигурация указанной страницы; период редакции не установлен. Wearable ammunition; комплект расчёта, не текущий остаток и не магазин.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ua-r-bmp55",
+      "kind": "equipment_model",
+      "countryContext": "UA",
+      "title": "БМП-55",
+      "objectClass": "ifv",
+      "summary": "Боевая машина пехоты.",
+      "sources": [
+        "ua-r-progress-catalogue"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая справочная модель. Текущие операторы и наличие не устанавливались. Неизвестные поля паспорта отсутствуют.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Боевая машина пехоты.",
+            "unit": null,
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 29",
+            "scope": "БМП-55; конфигурация указанной страницы; период редакции не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 29",
+            "scope": "БМП-55; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 8,
+            "unit": "person",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 29",
+            "scope": "БМП-55; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 28500,
+            "unit": "kg",
+            "source": "ua-r-progress-catalogue",
+            "locator": "Armored Military Vehicles, печатная с. 29",
+            "scope": "БМП-55; конфигурация указанной страницы; период редакции не установлен. ",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Открытая национальная классификация и общий каталог моделей. Наличие, операторы, реальные части, запасы и готовность не исследуются.",
+    "gaps": [
+      "Организационная иерархия не восстановлена: перечень учреждений не задаёт цепочку подразделений.",
+      "Не закрыты национальные паспорта наземных и морских роботов, средств связи и инженерных мостовых систем.",
+      "Номинальный боекомплект у большинства машин не опубликован в прочитанных паспортах; неизвестные значения отсутствуют."
+    ],
+    "sourceProblems": [
+      "Общий каталог STE не имеет установленной даты редакции; это экспортные предложения, включая проекты, а не перечень действующего вооружения.",
+      "В старом каталоге STE MAXIMUM SPEED наземных машин обычно без указания дорожных условий; такие числа не записаны как скорость по шоссе.",
+      "У БОГДАНЫ каталог говорит around 20 shells; приблизительное число не внесено как точная вместимость.",
+      "В каталоге STE встречаются опечатки и сомнительные единицы: Ан-140, Квитник, Dozor, Gayduk-M; спорные характеристики не перенесены.",
+      "Радиус связи, operating range и дальность поражения не преобразованы в запас хода.",
+      "Паспорт PD-2 в английской и украинской версиях различается; использована единая украинская таблица отдельно для СВЗП и ЛТ. Данные английской версии не смешаны с ней."
+    ]
+  }
+}

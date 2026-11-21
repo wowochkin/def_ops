@@ -21,3 +21,9 @@ export { renderDocument, renderFeature, createContext, exportSVG, createRenderCa
 export type { RenderResult, RenderedFeature, RenderedLayer, RenderOptions, RenderCache } from './render/index';
 export { arrowGeometry, arrowAxisPoints } from './render/arrow';
 export { linePath } from './render/line';
+
+export * from './weather';
+
+export * from "./weather-region";
+
+export * from "./weather-elevation";

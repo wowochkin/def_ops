@@ -14,6 +14,7 @@ import { emptyDocument, type MapDocument } from '@def-ops/core';
 import { EditorView, type IncomingDoc } from './App';
 import { ReplayView } from './ReplayView';
 import { StartView } from './StartView';
+import { AppWorkspace, type AppMode } from './AppMode';
 import { KnowledgeView } from './KnowledgeView';
 import { ModelingView } from './modeling/ModelingView';
 import { TheatreView } from './TheatreView';
@@ -50,6 +51,10 @@ const fromHash = (): Section => {
 };
 
 export function Shell() {
+  return <AppWorkspace historical={(active, onModeChange) => <HistoricalShell active={active} onModeChange={onModeChange} />} />;
+}
+
+function HistoricalShell({ active, onModeChange }: { active: boolean; onModeChange(mode: AppMode): void }) {
   const [section, setSection] = useState<Section>(fromHash);
   const bm = useBasemaps();
   const server = useServer();
@@ -68,10 +73,15 @@ export function Shell() {
   // голосовые действия оболочки (переход — через адрес, его слушает hashchange)
   const sectionRef = useRef(section);
   sectionRef.current = section;
-  useEffect(() => registerShellActions({ section: () => sectionRef.current }), []);
+  useEffect(() => active ? registerShellActions({ section: () => sectionRef.current }) : undefined, [active]);
   // вкладки разделов голосом и кнопками (modeling.tab, knowledge.tab, maps.tab)
-  useEffect(() => registerTabActions(), []);
-  useEffect(() => { const h = () => setSection(fromHash()); window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h); }, []);
+  useEffect(() => active ? registerTabActions() : undefined, [active]);
+  useEffect(() => {
+    if (!active) return;
+    const h = () => setSection(fromHash());
+    window.addEventListener('hashchange', h);
+    return () => window.removeEventListener('hashchange', h);
+  }, [active]);
 
   const toEditor = (doc: MapDocument) => { setIncoming({ doc, key: Date.now() }); setSection('editor'); };
 
@@ -87,7 +97,7 @@ export function Shell() {
         <span className={`rail-srv ${server.status}`} data-tour="rail-srv" title={server.status === 'online' ? 'Сервер доступен' : server.status === 'offline' ? 'Сервер недоступен — работа в браузере' : 'Проверка сервера…'} />
       </nav>
       <div className="stage">
-        {section === 'start' && <StartView llm={llm} />}
+        {section === 'start' && <StartView llm={llm} onModeChange={onModeChange} />}
         {mounted.has('editor') && <div className="pane" data-tour="section-editor" hidden={section !== 'editor'}><EditorView bm={bm} server={server} incoming={incoming} /></div>}
         {mounted.has('replay') && <div className="pane" data-tour="section-replay" hidden={section !== 'replay'}><ReplayView bm={bm} llm={llm} onOpenInEditor={toEditor} /></div>}
         {mounted.has('modeling') && <div className="pane" data-tour="section-modeling" hidden={section !== 'modeling'}><ModelingView llm={llm} /></div>}
@@ -97,9 +107,9 @@ export function Shell() {
         {section === 'staff' && <StaffView llm={llm} />}
       </div>
       {/* голос — поверх любого раздела */}
-      <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} recheck={llm.recheck} />
-      <TourLayer section={section} />
-      <FlashLayer />
+      {active && <VoicePanel section={section} llm={llm.settings} llmCheck={llm.check.state} recheck={llm.recheck} />}
+      {active && <TourLayer section={section} />}
+      {active && <FlashLayer />}
     </div>
   );
 }

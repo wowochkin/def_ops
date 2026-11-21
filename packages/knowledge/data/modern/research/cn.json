@@ -1,0 +1,3202 @@
+{
+  "country": "CN",
+  "sources": [
+    {
+      "id": "cn-r-reform",
+      "title": "中国人民解放军形成新型军兵种结构布局",
+      "publisher": "Министерство обороны КНР",
+      "url": "https://www.mod.gov.cn/gfbw/xwfyr/lhzb/ztjzh_249264/2024n4y_249265/16302029.html",
+      "kind": "national_authority",
+      "scopeDate": "2024-04-19",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан расширенный поисковый фрагмент с полным ответом о четырёх видах и четырёх родах; открытие страницы завершилось тайм-аутом."
+    },
+    {
+      "id": "cn-reform",
+      "title": "Xi presents flag to PLA information support force",
+      "publisher": "Government of China / Xinhua",
+      "url": "https://english.www.gov.cn/news/202404/19/content_WS66225707c6d0868f4e8e63bd.html",
+      "kind": "national_authority",
+      "scopeDate": "2024-04-19",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-transport-2019",
+      "title": "China’s aviation forces display strategic transport capacity",
+      "publisher": "Government of China / Xinhua",
+      "url": "https://english.www.gov.cn/news/topnews/201910/01/content_WS5d92ff82c6d0bcf8c4c147c1.html",
+      "kind": "national_authority",
+      "scopeDate": "2019-10-01",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитана официальная публикация. Подтверждает обозначения и транспортную роль, не технические характеристики и не текущую численность."
+    },
+    {
+      "id": "cn-r-whitepaper",
+      "title": "China’s National Defense in the New Era",
+      "publisher": "Государственный совет КНР / SCIO",
+      "url": "https://english.www.gov.cn/atts/stream/files/5d3943eec6d0a15c923d2036",
+      "kind": "national_authority",
+      "scopeDate": "2019-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Официальное вложение DOC скачано и прочитано через textutil; это редакция 2019 года, раздел о Strategic Support Force отменён реформой 2024 года и в дерево не перенесён."
+    },
+    {
+      "id": "cn-r-army-arms",
+      "title": "PLA Army formation reviewed in military parade",
+      "publisher": "Государственный совет КНР / Xinhua",
+      "url": "https://english.www.gov.cn/news/photos/201910/01/content_WS5d92ea32c6d0bcf8c4c14786.html",
+      "kind": "national_authority",
+      "scopeDate": "2019-10-01",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-r-norinco-2016",
+      "title": "简介: VT4、SH1",
+      "publisher": "SASTIND / NORINCO",
+      "url": "https://www.sastind.gov.cn/n152/n6750427/n6750520/n6750766/c6751090/content.html",
+      "kind": "national_authority",
+      "scopeDate": "2016-09-14",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-r-airshow-2016",
+      "title": "中国航展将于11月举办 打造2.0升级版",
+      "publisher": "SASTIND",
+      "url": "https://www.sastind.gov.cn/n10086200/n10086344/c10202705/content.html",
+      "kind": "national_authority",
+      "scopeDate": "2016",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Подтверждает выставочную идентификацию продукции; экспонат не равнозначен принятому на вооружение изделию."
+    },
+    {
+      "id": "cn-r-casic-2022",
+      "title": "中国航天科工全域攻防装备七大体系震撼亮相珠海航展",
+      "publisher": "CASIC / SASTIND",
+      "url": "https://www.sastind.gov.cn/n152/n6760440/n6760441/c6841498/content.html",
+      "kind": "manufacturer",
+      "scopeDate": "2022-11-10",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-r-wingloong-issuer",
+      "title": "中航（成都）无人机系统股份有限公司投资者关系活动记录表",
+      "publisher": "AVIC (Chengdu) UAS",
+      "url": "https://pdf.dfcfw.com/pdf/H22_AN202305311587389200_1.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2023-05-29",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный документ производителя в публичном зеркале раскрытия; вопрос 5. Объявленные максимумы, без массы полезной нагрузки и условий испытания."
+    },
+    {
+      "id": "cn-r-ag600",
+      "title": "China’s amphibious AG600 aircraft greenlighted for mass production",
+      "publisher": "Государственный совет КНР / Xinhua; данные AVIC",
+      "url": "https://english.www.gov.cn/english.www.gov.cn/news/202506/11/content_WS684935f7c6d0868f4e8f343f.html",
+      "kind": "national_authority",
+      "scopeDate": "2025-06-11",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-r-z20",
+      "title": "China’s Z-20 makes demo flight at helicopter expo",
+      "publisher": "Министерство обороны КНР / Xinhua",
+      "url": "https://eng.mod.gov.cn/xb/News_213114/TopStories/4852656.html",
+      "kind": "national_authority",
+      "scopeDate": "2019-10-10",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "cn-r-aviation-2025",
+      "title": "九三胜利日阅兵分列式各梯（方）队亮点速览",
+      "publisher": "Министерство обороны КНР / Xinhua",
+      "url": "https://www.mod.gov.cn/gfbw/qwfb/16407156.html",
+      "kind": "national_authority",
+      "scopeDate": "2025-09-03",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Текст доступен в поисковом извлечении; страница с тайм-аутом. Записаны только явно названные модели и роли."
+    },
+    {
+      "id": "cn-r-land-2018",
+      "title": "从两次大阅兵看我军装备发展这五年",
+      "publisher": "Министерство обороны КНР",
+      "url": "https://www.mod.gov.cn/djzx/4806153.html",
+      "kind": "national_authority",
+      "scopeDate": "2018-03-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "cn-r-navy-equipment",
+      "title": "PLA Navy’s aircraft carrier task forces constantly improves",
+      "publisher": "Министерство обороны КНР / China Military Online",
+      "url": "https://eng.mod.gov.cn/xb/News_213114/TopStories/4924727.html",
+      "kind": "national_authority",
+      "scopeDate": "2022-10-31",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "cn-r-cssc-2024",
+      "title": "中国船舶集团硬核装备集中亮相中国航展！",
+      "publisher": "CSSC",
+      "url": "https://www.csic.com.cn/n135/n171/n177/c30695/content.html",
+      "kind": "manufacturer",
+      "scopeDate": "2024-11-14",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "cn-r-radars",
+      "title": "智感万物，中国电科多型先进雷达全面亮相",
+      "publisher": "CETC",
+      "url": "https://www.cetc.com.cn/zgdk/1592960/1592965/2103270/index.html",
+      "kind": "manufacturer",
+      "scopeDate": "2025-05-19",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "cn-r-wingloong2h",
+      "title": "Homemade UAV restores communication for flood-hit area in central China",
+      "publisher": "Министерство обороны КНР / China Military Online",
+      "url": "https://eng.mod.gov.cn/xb/News_213114/TopStories/4890056.html",
+      "kind": "national_authority",
+      "scopeDate": "2021-07-23",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "cn-r-china-huazhou",
+      "title": "公开发行可转换公司债券募集说明书",
+      "publisher": "中国船舶重工集团应急预警与救援装备股份有限公司 / China Harzone",
+      "url": "https://pdf.dfcfw.com/pdf/H2_AN202004071377717140_1.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2019–2020",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичное раскрытие производителя в открытом зеркале. Прочитана таблица изделий на печатной с. 77; объёмы производства, заказчики и поставки в справочник не переносятся."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "cn-pla",
+      "country": "CN",
+      "parent": null,
+      "title": "Народно-освободительная армия Китая",
+      "nativeName": "中国人民解放军",
+      "kind": "organization",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Корень национальной классификации; конкретные формирования не перечисляются."
+    },
+    {
+      "id": "cn-army",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Сухопутные войска НОАК",
+      "nativeName": "陆军",
+      "kind": "service",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Вид ВС по сообщению о реформе 2024 года."
+    },
+    {
+      "id": "cn-navy",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Военно-морские силы НОАК",
+      "nativeName": "海军",
+      "kind": "service",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Вид ВС по сообщению о реформе 2024 года."
+    },
+    {
+      "id": "cn-air",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Военно-воздушные силы НОАК",
+      "nativeName": "空军",
+      "kind": "service",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Вид ВС по сообщению о реформе 2024 года."
+    },
+    {
+      "id": "cn-rocket",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Ракетные войска НОАК",
+      "nativeName": "火箭军",
+      "kind": "service",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Вид ВС по сообщению о реформе 2024 года."
+    },
+    {
+      "id": "cn-aerospace",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Военно-космические войска",
+      "nativeName": "军事航天部队",
+      "kind": "independent_branch",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Самостоятельный род (兵种) по реформе 2024 года; не вид ВС."
+    },
+    {
+      "id": "cn-cyberspace",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Войска киберпространства",
+      "nativeName": "网络空间部队",
+      "kind": "independent_branch",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Самостоятельный род (兵种) по реформе 2024 года; не вид ВС."
+    },
+    {
+      "id": "cn-information-support",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Войска информационной поддержки",
+      "nativeName": "信息支援部队",
+      "kind": "independent_branch",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Самостоятельный род (兵种) по реформе 2024 года; не вид ВС."
+    },
+    {
+      "id": "cn-joint-logistics",
+      "country": "CN",
+      "parent": "cn-pla",
+      "title": "Войска объединённого тылового обеспечения",
+      "nativeName": "联勤保障部队",
+      "kind": "independent_branch",
+      "sources": [
+        "cn-r-reform"
+      ],
+      "status": "draft",
+      "note": "Самостоятельный род (兵种) по реформе 2024 года; не вид ВС."
+    },
+    {
+      "id": "cn-r-army-infantry",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Пехота",
+      "nativeName": "Infantry",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-army-armour",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Бронетанковые войска",
+      "nativeName": "Armored force",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-army-artillery",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Артиллерия",
+      "nativeName": "Artillery",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-army-air-defence",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Войска ПВО СВ",
+      "nativeName": "Air defense force",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-army-special",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Специальные войска",
+      "nativeName": "Special troops",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-army-ecm",
+      "country": "CN",
+      "parent": "cn-army",
+      "title": "Силы радиоэлектронного противодействия СВ",
+      "nativeName": "Electronic countermeasure force",
+      "kind": "branch",
+      "sources": [
+        "cn-r-army-arms"
+      ],
+      "status": "draft",
+      "note": "Национальный обзор 2019 года; исходное англоязычное название сохранено, действующий штат не установлен."
+    },
+    {
+      "id": "cn-r-navy-submarine",
+      "country": "CN",
+      "parent": "cn-navy",
+      "title": "Подводные силы",
+      "nativeName": "Submarine forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-navy-surface",
+      "country": "CN",
+      "parent": "cn-navy",
+      "title": "Надводные силы",
+      "nativeName": "Surface ship forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-navy-aviation",
+      "country": "CN",
+      "parent": "cn-navy",
+      "title": "Морская авиация",
+      "nativeName": "Aviation forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-navy-marine",
+      "country": "CN",
+      "parent": "cn-navy",
+      "title": "Морская пехота",
+      "nativeName": "Marine forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-navy-coastal",
+      "country": "CN",
+      "parent": "cn-navy",
+      "title": "Береговая оборона",
+      "nativeName": "Coastal defense forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-aviation",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Авиация ВВС",
+      "nativeName": "Aviation forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-airborne",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Воздушно-десантные войска",
+      "nativeName": "Airborne forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-sam",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Зенитные ракетные войска",
+      "nativeName": "Ground-to-air missile forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-radar",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Радиолокационные войска",
+      "nativeName": "Radar forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-ecm",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Силы радиоэлектронного противодействия ВВС",
+      "nativeName": "ECM forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-air-signals",
+      "country": "CN",
+      "parent": "cn-air",
+      "title": "Войска связи ВВС",
+      "nativeName": "Communications forces",
+      "kind": "branch",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Классификация белой книги 2019 года; актуальность специализации после реформ требует проверки."
+    },
+    {
+      "id": "cn-r-rocket-nuclear",
+      "country": "CN",
+      "parent": "cn-rocket",
+      "title": "Силы ядерных ракет",
+      "nativeName": "Nuclear missile forces",
+      "kind": "component",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Компонент национального обзора 2019 года, не самостоятельный вид ВС и не реальное формирование."
+    },
+    {
+      "id": "cn-r-rocket-conventional",
+      "country": "CN",
+      "parent": "cn-rocket",
+      "title": "Силы обычных ракет",
+      "nativeName": "Conventional missile forces",
+      "kind": "component",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Компонент национального обзора 2019 года, не самостоятельный вид ВС и не реальное формирование."
+    },
+    {
+      "id": "cn-r-rocket-support",
+      "country": "CN",
+      "parent": "cn-rocket",
+      "title": "Силы обеспечения Ракетных войск",
+      "nativeName": "Support forces",
+      "kind": "component",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "status": "draft",
+      "note": "Компонент национального обзора 2019 года, не самостоятельный вид ВС и не реальное формирование."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "cn-r-army-levels",
+      "country": "CN",
+      "service": "cn-army",
+      "status": "draft",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "levels": [
+        {
+          "id": "group-army",
+          "title": "Общевойсковое объединение",
+          "nativeName": "集团军 / Group army",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "旅 / Brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "battalion",
+          "title": "Батальон",
+          "nativeName": "营 / Battalion",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        }
+      ],
+      "note": "Обзор системы group army–brigade–battalion по разделу IV; не обязательная цепочка для всех сил. Редакция 2019 года; численность и реальный состав не выводятся.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "validity_scope",
+            "value": "Обзор 2019 года",
+            "unit": null,
+            "source": "cn-r-whitepaper",
+            "locator": "Раздел IV: Reform in China’s National Defense and Armed Forces",
+            "scope": "Не подтверждает неизменность организационной схемы после реформ.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-navy-levels",
+      "country": "CN",
+      "service": "cn-navy",
+      "status": "draft",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "levels": [
+        {
+          "id": "base",
+          "title": "Военно-морская база",
+          "nativeName": "Naval base",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "flotilla",
+          "title": "Флотилия",
+          "nativeName": "Flotilla",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "aviation-brigade",
+          "title": "Авиационная бригада",
+          "nativeName": "Aviation brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        }
+      ],
+      "note": "Базы, флотилии и авиационные бригады — альтернативные типы формирований раздела IV, а не последовательная лестница. Редакция 2019 года; численность и реальный состав не выводятся.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "validity_scope",
+            "value": "Обзор 2019 года",
+            "unit": null,
+            "source": "cn-r-whitepaper",
+            "locator": "Раздел IV: Reform in China’s National Defense and Armed Forces",
+            "scope": "Не подтверждает неизменность организационной схемы после реформ.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-air-levels",
+      "country": "CN",
+      "service": "cn-air",
+      "status": "draft",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "levels": [
+        {
+          "id": "base",
+          "title": "Авиационная база",
+          "nativeName": "Air base",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "Brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        },
+        {
+          "id": "division",
+          "title": "Дивизия",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        }
+      ],
+      "note": "Базы и бригады (дивизии) перечислены в национальном обзоре раздела IV; порядок не задаёт подчинение. Редакция 2019 года; численность и реальный состав не выводятся.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "validity_scope",
+            "value": "Обзор 2019 года",
+            "unit": null,
+            "source": "cn-r-whitepaper",
+            "locator": "Раздел IV: Reform in China’s National Defense and Armed Forces",
+            "scope": "Не подтверждает неизменность организационной схемы после реформ.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-rocket-levels",
+      "country": "CN",
+      "service": "cn-rocket",
+      "status": "draft",
+      "sources": [
+        "cn-r-whitepaper"
+      ],
+      "levels": [
+        {
+          "id": "missile-base",
+          "title": "Ракетная база",
+          "nativeName": "Missile base",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": []
+          }
+        }
+      ],
+      "note": "Белая книга 2019 года, раздел IV: тип ракетной базы. Полная лестница нижних уровней не установлена; никаких реальных баз, мест и численностей.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "cn-y20",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Y-20",
+      "objectClass": "aircraft",
+      "summary": "Тяжёлый военно-транспортный самолёт в официальной публикации; точная модификация не определена.",
+      "relatedOrganizations": [
+        "cn-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочные сведения; требуется проверка конкретной модификации. Наличие в подразделениях и готовность агента не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-transport-2019"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый военно-транспортный самолёт",
+            "unit": null,
+            "source": "cn-transport-2019",
+            "locator": "Основной текст: Y-20 large-size / Y-9 medium-size transport planes",
+            "scope": "Публикация 2019 года; технические показатели и текущий состав не выводятся.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-y9",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Y-9",
+      "objectClass": "aircraft",
+      "summary": "Средний военно-транспортный самолёт в официальной публикации; точная модификация не определена.",
+      "relatedOrganizations": [
+        "cn-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочные сведения; требуется проверка конкретной модификации. Наличие в подразделениях и готовность агента не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-transport-2019"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средний военно-транспортный самолёт",
+            "unit": null,
+            "source": "cn-transport-2019",
+            "locator": "Основной текст: Y-20 large-size / Y-9 medium-size transport planes",
+            "scope": "Публикация 2019 года; технические показатели и текущий состав не выводятся.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-vt4",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "VT4",
+      "objectClass": "tank",
+      "summary": "Основной танк",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-norinco-2016"
+      ],
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац VT4",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "125-мм орудие, цифровое управление, навигация GPS/ИНС",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац VT4",
+            "scope": "Экспортная комплектация публикации 2016 года.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Силовой блок FX0011, 883 кВт",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац VT4",
+            "scope": "Опубликованная конфигурация; скорость и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-sh1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "SH1",
+      "objectClass": "self-propelled-artillery",
+      "summary": "155-мм колёсная самоходная гаубица",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-norinco-2016"
+      ],
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "155-мм колёсная самоходная гаубица",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац SH1",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mobility_medium",
+            "value": "Колёсное шасси 6×6",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац SH1",
+            "scope": "Конфигурация 2016 года.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Заявлена максимальная скорость движения свыше 90 км/ч; вид покрытия не указан",
+            "unit": null,
+            "source": "cn-r-norinco-2016",
+            "locator": "Абзац SH1: 最大行驶速度超过90千米/小时",
+            "scope": "Не записывается как точные 90 км/ч или шоссейная скорость; дальность стрельбы исключена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-st1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "ST1",
+      "objectClass": "wheeled-gun-vehicle",
+      "summary": "Колёсная машина со 105-мм орудием",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "wheeled-gun-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная машина со 105-мм орудием",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-vn12",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "VN12",
+      "objectClass": "ifv",
+      "summary": "Гусеничная БМП",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная БМП",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-vn4",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "VN4",
+      "objectClass": "apc",
+      "summary": "Колёсная бронированная машина 4×4",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная бронированная машина 4×4",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-vp11",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "VP11",
+      "objectClass": "apc",
+      "summary": "Лёгкая защищённая машина",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкая защищённая машина",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-vn1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "VN1",
+      "objectClass": "apc",
+      "summary": "Колёсная бронированная машина 8×8",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная бронированная машина 8×8",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ch4",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "CH-4",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ch5",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "CH-5",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ch6",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "CH-6",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ch7",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "CH-7",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ch95",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "CH-95",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-queying1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Queying-1 / 雀鹰-1",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ws64",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "WS-64 — пусковая машина",
+      "objectClass": "rocket-artillery",
+      "summary": "Машина реактивной артиллерии",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-airshow-2016"
+      ],
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина реактивной артиллерии",
+            "unit": null,
+            "source": "cn-r-airshow-2016",
+            "locator": "Разделы «新规模» / «新突破»",
+            "scope": "Выставочная номенклатура 2016 года; возможен показ макета. VN1/VN4 описаны как бронемашины, точное оснащение требует проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-dk1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "DK-1",
+      "objectClass": "radar-sensor",
+      "summary": "Радар наблюдения низкого воздушного пространства",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радар наблюдения низкого воздушного пространства",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-zkk20",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "ZK-K20",
+      "objectClass": "communications",
+      "summary": "Система управления и обмена информацией ПВО",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Система управления и обмена информацией ПВО",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-hq17ae",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "HQ-17AE",
+      "objectClass": "launcher",
+      "summary": "Самоходная зенитная система",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная зенитная система",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-fk2000",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "FK-2000",
+      "objectClass": "launcher",
+      "summary": "Зенитная ракетно-пушечная система",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитная ракетно-пушечная система",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-fk3000",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "FK-3000",
+      "objectClass": "launcher",
+      "summary": "Мобильная система ПВО",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильная система ПВО",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-zr1500",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "ZR-1500",
+      "objectClass": "unmanned-ground",
+      "summary": "Модульная наземная беспилотная платформа",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульная наземная беспилотная платформа",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-wj700",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "WJ-700",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-tianying",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Tianying / 天鹰",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gq680",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQ-680",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gq580",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQ-580",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gq320",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQ-320",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-hw620",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "HW-620",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-casic-2022"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-casic-2022",
+            "locator": "Разделы «反无人机体系» / «无人作战体系» / «预警指挥体系»",
+            "scope": "Портфель CASIC 2022 года; не доказательство принятия на вооружение.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-wingloong1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Wing Loong-1",
+      "objectClass": "unmanned-air",
+      "summary": "Средневысотный многоцелевой БПЛА",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-wingloong-issuer"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средневысотный многоцелевой БПЛА",
+            "unit": null,
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 280,
+            "unit": "km/h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大飞行速度",
+            "scope": "Максимальная скорость конкретного обозначения по заявлению производителя 2023 года; высота и нагрузка не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 24,
+            "unit": "h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大续航时间",
+            "scope": "Заявленная максимальная продолжительность полёта; не время над целью и не совместная гарантия с максимальной скоростью.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-wingloong1d",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Wing Loong-1D",
+      "objectClass": "unmanned-air",
+      "summary": "Средневысотный многоцелевой БПЛА",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "variant",
+      "parentModel": "cn-r-wingloong1",
+      "sources": [
+        "cn-r-wingloong-issuer"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средневысотный многоцелевой БПЛА",
+            "unit": null,
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 280,
+            "unit": "km/h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大飞行速度",
+            "scope": "Максимальная скорость конкретного обозначения по заявлению производителя 2023 года; высота и нагрузка не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 35,
+            "unit": "h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大续航时间",
+            "scope": "Заявленная максимальная продолжительность полёта; не время над целью и не совместная гарантия с максимальной скоростью.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-wingloong2",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Wing Loong-2",
+      "objectClass": "unmanned-air",
+      "summary": "Средневысотный многоцелевой БПЛА",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-wingloong-issuer"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средневысотный многоцелевой БПЛА",
+            "unit": null,
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 370,
+            "unit": "km/h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大飞行速度",
+            "scope": "Максимальная скорость конкретного обозначения по заявлению производителя 2023 года; высота и нагрузка не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 28,
+            "unit": "h",
+            "source": "cn-r-wingloong-issuer",
+            "locator": "Вопрос 5: 最大续航时间",
+            "scope": "Заявленная максимальная продолжительность полёта; не время над целью и не совместная гарантия с максимальной скоростью.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-wingloong2h",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Wing Loong-2H",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА аварийной связи и обследования бедствий",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "variant",
+      "parentModel": "cn-r-wingloong2",
+      "sources": [
+        "cn-r-wingloong2h"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА аварийной связи и обследования бедствий",
+            "unit": null,
+            "source": "cn-r-wingloong2h",
+            "locator": "Последний абзац; aerial mobile base station",
+            "scope": "Гражданская аварийно-спасательная конфигурация 2021 года, основанная на Wing Loong II. Время отдельного вылета не принято за паспортную автономность.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ag600",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "AG600 Kunlong — серийная конфигурация 2025",
+      "objectClass": "aircraft",
+      "summary": "Самолёт-амфибия для пожаротушения и спасения",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-ag600"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт-амфибия для пожаротушения и спасения",
+            "unit": null,
+            "source": "cn-r-ag600",
+            "locator": "Абзацы с данными AVIC",
+            "scope": "Публикация о серийном выпуске 2025 года, не ранний прототип.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 38.9,
+            "unit": "m",
+            "source": "cn-r-ag600",
+            "locator": "Абзацы 3–4",
+            "scope": "Конфигурация публикации 2025 года; размах записан как ширина.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 38.8,
+            "unit": "m",
+            "source": "cn-r-ag600",
+            "locator": "Абзацы 3–4",
+            "scope": "Конфигурация публикации 2025 года; размах записан как ширина.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 11.7,
+            "unit": "m",
+            "source": "cn-r-ag600",
+            "locator": "Абзацы 3–4",
+            "scope": "Конфигурация публикации 2025 года; размах записан как ширина.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 60000,
+            "unit": "kg",
+            "source": "cn-r-ag600",
+            "locator": "Абзацы 3–4",
+            "scope": "Конфигурация публикации 2025 года; размах записан как ширина.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 4500,
+            "unit": "km",
+            "source": "cn-r-ag600",
+            "locator": "Абзац: maximum practical range",
+            "scope": "Максимальная практическая дальность; нагрузка, резерв топлива и профиль не сообщены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-z20",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Z-20",
+      "objectClass": "helicopter",
+      "summary": "Средний многоцелевой вертолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-z20"
+      ],
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средний многоцелевой вертолёт",
+            "unit": null,
+            "source": "cn-r-z20",
+            "locator": "Основной текст, слова chief technologist",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя китайского производства",
+            "unit": null,
+            "source": "cn-r-z20",
+            "locator": "Абзац Li Linhua",
+            "scope": "Сообщение AVIC 2019 года; модель двигателя и запас топлива не уточнены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j20",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-20",
+      "objectClass": "aircraft",
+      "summary": "Малозаметный истребитель",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Малозаметный истребитель",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j35a",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-35A",
+      "objectClass": "aircraft",
+      "summary": "Малозаметный многоцелевой истребитель",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Малозаметный многоцелевой истребитель",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j35",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-35",
+      "objectClass": "aircraft",
+      "summary": "Малозаметный палубный истребитель",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Малозаметный палубный истребитель",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j15t",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-15T",
+      "objectClass": "aircraft",
+      "summary": "Палубный истребитель",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Палубный истребитель",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j16d",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-16D",
+      "objectClass": "electronic-warfare",
+      "summary": "Самолёт радиоэлектронного противодействия",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт радиоэлектронного противодействия",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j15dh",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-15DH",
+      "objectClass": "electronic-warfare",
+      "summary": "Палубный самолёт радиоэлектронного противодействия",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Палубный самолёт радиоэлектронного противодействия",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-j15dt",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "J-15DT",
+      "objectClass": "electronic-warfare",
+      "summary": "Палубный самолёт радиоэлектронного противодействия",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Палубный самолёт радиоэлектронного противодействия",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-yy20a",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "YY-20A / 运油-20A",
+      "objectClass": "aircraft",
+      "summary": "Самолёт-заправщик и транспорт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-aviation-2025"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт-заправщик и транспорт",
+            "unit": null,
+            "source": "cn-r-aviation-2025",
+            "locator": "Разделы «歼击机梯队» / «舰载机梯队» / 运油-20A",
+            "scope": "Идентификация и роль в публикации сентября 2025 года; полётные максимумы и вооружение не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-99a",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 99A",
+      "objectClass": "tank",
+      "summary": "Основной танк",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-land-2018"
+      ],
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк",
+            "unit": null,
+            "source": "cn-r-land-2018",
+            "locator": "Раздел «陆战家族»",
+            "scope": "Обозначения из обзора 2018 года. Другие варианты семейства не наследуют характеристики.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-04a",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 04A",
+      "objectClass": "ifv",
+      "summary": "Гусеничная БМП",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-land-2018"
+      ],
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная БМП",
+            "unit": null,
+            "source": "cn-r-land-2018",
+            "locator": "Раздел «陆战家族»",
+            "scope": "Обозначения из обзора 2018 года. Другие варианты семейства не наследуют характеристики.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-08ifv",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 08 — БМП",
+      "objectClass": "ifv",
+      "summary": "Колёсная БМП",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-land-2018"
+      ],
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная БМП",
+            "unit": null,
+            "source": "cn-r-land-2018",
+            "locator": "Раздел «陆战家族»",
+            "scope": "Обозначения из обзора 2018 года. Другие варианты семейства не наследуют характеристики.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-052c",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 052C",
+      "objectClass": "surface-vessel",
+      "summary": "Эскадренный миноносец",
+      "relatedOrganizations": [
+        "cn-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-navy-equipment"
+      ],
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Эскадренный миноносец",
+            "unit": null,
+            "source": "cn-r-navy-equipment",
+            "locator": "Абзацы об эсминцах / Type 075",
+            "scope": "Обзор 2022 года; класс кораблей, индивидуальные борта не перечисляются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-052d",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 052D",
+      "objectClass": "surface-vessel",
+      "summary": "Эскадренный миноносец",
+      "relatedOrganizations": [
+        "cn-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-navy-equipment"
+      ],
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Эскадренный миноносец",
+            "unit": null,
+            "source": "cn-r-navy-equipment",
+            "locator": "Абзацы об эсминцах / Type 075",
+            "scope": "Обзор 2022 года; класс кораблей, индивидуальные борта не перечисляются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-055",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 055",
+      "objectClass": "surface-vessel",
+      "summary": "Эскадренный миноносец",
+      "relatedOrganizations": [
+        "cn-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-navy-equipment"
+      ],
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Эскадренный миноносец",
+            "unit": null,
+            "source": "cn-r-navy-equipment",
+            "locator": "Абзацы об эсминцах / Type 075",
+            "scope": "Обзор 2022 года; класс кораблей, индивидуальные борта не перечисляются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-075",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Type 075",
+      "objectClass": "surface-vessel",
+      "summary": "Десантный вертолётоносный корабль",
+      "relatedOrganizations": [
+        "cn-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-navy-equipment"
+      ],
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Десантный вертолётоносный корабль",
+            "unit": null,
+            "source": "cn-r-navy-equipment",
+            "locator": "Абзацы об эсминцах / Type 075",
+            "scope": "Обзор 2022 года; класс кораблей, индивидуальные борта не перечисляются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-xuanlong",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "Xuanlong / 玄龙",
+      "objectClass": "unmanned-surface",
+      "summary": "Надводный беспилотный катер",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "cn-r-cssc-2024"
+      ],
+      "passport": {
+        "profile": "unmanned-surface",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Надводный беспилотный катер",
+            "unit": null,
+            "source": "cn-r-cssc-2024",
+            "locator": "Абзац 系统工程研究院、中船电科、智海院",
+            "scope": "Выставочный портфель CSSC 2024 года; скорость и автономность не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-sg60",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "SG-60",
+      "objectClass": "unmanned-air",
+      "summary": "Корабельный беспилотный самолёт",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-cssc-2024"
+      ],
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Корабельный беспилотный самолёт",
+            "unit": null,
+            "source": "cn-r-cssc-2024",
+            "locator": "Абзац 系统工程研究院、中船电科、智海院",
+            "scope": "Выставочная публикация; комплектация и действующие операторы не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-jy11",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "JY-11",
+      "objectClass": "radar-sensor",
+      "summary": "Радар наблюдения низкого воздушного пространства",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радар наблюдения низкого воздушного пространства",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац JY-11",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ylc12",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "YLC-12",
+      "objectClass": "radar-sensor",
+      "summary": "Многофункциональный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многофункциональный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац YLC-12",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-jyl1",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "JYL-1",
+      "objectClass": "radar-sensor",
+      "summary": "Трёхкоординатный радар наблюдения",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Трёхкоординатный радар наблюдения",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац JYL-1",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-jy27a",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "JY-27A",
+      "objectClass": "radar-sensor",
+      "summary": "Радар воздушного наблюдения",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радар воздушного наблюдения",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац JY-27A",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-jy26",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "JY-26",
+      "objectClass": "radar-sensor",
+      "summary": "Радар воздушного наблюдения",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радар воздушного наблюдения",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац JY-26",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ylc16",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "YLC-16",
+      "objectClass": "radar-sensor",
+      "summary": "Трёхкоординатный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Трёхкоординатный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац YLC-16",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-slc2e",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "SLC-2E",
+      "objectClass": "radar-sensor",
+      "summary": "Многофункциональный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многофункциональный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац SLC-2E",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-jy27v",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "JY-27V",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац JY-27V",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-ylc8e",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "YLC-8E",
+      "objectClass": "radar-sensor",
+      "summary": "Трёхкоординатный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Трёхкоординатный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац YLC-8E",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-slc7",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "SLC-7",
+      "objectClass": "radar-sensor",
+      "summary": "Трёхкоординатный радар",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная идентификация. Паспорт неполный: отсутствующие скорость, запас хода, боекомплект, экипаж и ограничения не восстанавливаются по аналогам. Наличие в реальных частях и готовность не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-radars"
+      ],
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Трёхкоординатный радар",
+            "unit": null,
+            "source": "cn-r-radars",
+            "locator": "Именной абзац SLC-7",
+            "scope": "Портфель CETC мая 2025 года; дальности обнаружения и оценки эффективности не собираются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-hzfq70",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "HZFQ70",
+      "objectClass": "engineering",
+      "summary": "Моторизованный понтонный мост",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Моторизованный понтонный мост",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gzq240",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GZQ240",
+      "objectClass": "engineering",
+      "summary": "Тяжёлый понтонный мост",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый понтонный мост",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gqc003",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQC003",
+      "objectClass": "engineering",
+      "summary": "Колёсный мостоукладчик",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсный мостоукладчик",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gqc191",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQC191",
+      "objectClass": "engineering",
+      "summary": "Лёгкий мостоукладочный комплекс",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий мостоукладочный комплекс",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-hzql51",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "HZQL51",
+      "objectClass": "engineering",
+      "summary": "Механизированный аварийный мост",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Механизированный аварийный мост",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-hzql75",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "HZQL75",
+      "objectClass": "engineering",
+      "summary": "Модульный мост",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульный мост",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cn-r-gql111",
+      "kind": "equipment_model",
+      "countryContext": "CN",
+      "title": "GQL111",
+      "objectClass": "engineering",
+      "summary": "Тяжёлый механизированный мост",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт неполный; не равнозначен характеристикам отдельной машины. Штатные операторы, места и объёмы поставок не приводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "sources": [
+        "cn-r-china-huazhou"
+      ],
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый механизированный мост",
+            "unit": null,
+            "source": "cn-r-china-huazhou",
+            "locator": "Печатная с. 77, таблица 产品名称",
+            "scope": "Идентификация изделия из раскрытия 2019–2020 годов; состав комплекта, скорость носителя и запас хода не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Расширенный частичный справочник КНР: национальная классификация 2024 года, обзор организационных уровней 2019 года, модели и семейства публичных портфелей 2016–2025 годов. Скорость/автономность внесены только из раскрытия производителя; диапазон полёта AG600 — максимальный практический. Ни текущие части, ни операторы, ни эффективность не выводятся. Все паспорта draft, simulationValidated=false.",
+    "gaps": [
+      "Номинальные боекомплекты наземной техники не подтверждены прочитанными первичными публикациями; намеренно не взяты из вторичных таблиц.",
+      "Для большинства моделей не найдены подтверждённые паспортные скорость, запас хода, ёмкость топлива, экипаж и пределы среды. Дальность стрельбы не является запасом хода.",
+      "Для грузовых машин, отдельных радиостанций и подводных платформ пока нет прочитанных первичных карточек конкретных моделей. Инженерные комплексы идентифицированы по раскрытию производителя, без паспортов носителей.",
+      "Тип VN1 в найденном источнике указан как бронемашина; оснащение и точное различие БТР/БМП требуют предметного каталога.",
+      "Организационные уровни не описывают весь штат; ракеты, корабельные подразделения и нижние уровни требуют действующего национального документа.",
+      "Варианты J-20A/S и Y-9 специального назначения не выделены без необходимости: не создаются дубли классов; отдельные паспорта ещё не исследованы."
+    ],
+    "sourceProblems": [
+      "Страницы mod.gov.cn и csic.com.cn часто завершаются тайм-аутом; соответствующие сведения помечены search_excerpt.",
+      "Веб-просмотрщик не декодирует вложение белой книги DOC; официальный файл прочитан локальным textutil.",
+      "Обзор Armed Forces на текущем сайте MOD всё ещё перечисляет Strategic Support Force: заменён национальным сообщением 2024 года для верхнего уровня.",
+      "Раскрытие производителя Wing Loong прочитано в зеркале финансовых публикаций; показатели 24/35/28 часов относятся к документу 2023 года, а не к произвольным вариантам.",
+      "Реклама производителей о превосходстве, вероятности перехвата и поражении исключена. Экспонат 2016 года может быть моделью или макетом."
+    ]
+  }
+}

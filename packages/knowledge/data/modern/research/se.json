@@ -1,0 +1,4510 @@
+{
+  "country": "SE",
+  "sources": [
+    {
+      "id": "se-r-soldat-2023",
+      "title": "Svensk soldat och sjöman 2023, version 10.0",
+      "publisher": "Försvarsmakten",
+      "url": "https://www.forsvarsmakten.se/siteassets/2-om-forsvarsmakten/dokument/publikationer/sv-sold-2023.pdf",
+      "scopeDate": "2023-01-01",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": "Прочитаны разделы 3.9, 4, 4.2–4.4. Используются только общие названия и уровни; география и реальный состав исключены. Редакция 10.0 действует с 2023-01-01 по титульному решению."
+    },
+    {
+      "id": "se-gripen",
+      "title": "Gripen E-series",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/gripen-e-series",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "se-r-cv90",
+      "title": "CV90",
+      "publisher": "BAE Systems Hägglunds",
+      "url": "https://www.baesystems.com/en/product/cv90",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": "Описание семейства; не паспорт единой комплектации."
+    },
+    {
+      "id": "se-r-cv9040d",
+      "title": "Försvarets Forum 05/2020 — Stridsfordon 9040 D",
+      "publisher": "Försvarsmakten",
+      "url": "https://www.forsvarsmakten.se/siteassets/3-aktuellt/forsvarets-forum/2020/forum_2005_lowres.pdf",
+      "scopeDate": "2020",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": "Печатные с. 14–15, фактическая таблица варианта D."
+    },
+    {
+      "id": "se-r-cv90-functions",
+      "title": "Försvarets Forum 4/2014 — Stridsfordon 90",
+      "publisher": "Försvarsmakten",
+      "url": "https://www.forsvarsmakten.se/siteassets/3-aktuellt/forsvarets-forum/2014/forsvarets-forum-nr4-2014-2.pdf",
+      "scopeDate": "2014",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": "Печатные с. 24–25: функциональные исполнения. Не подтверждает нынешнее наличие; общее «свыше 200» не перенесено на конкретный вариант."
+    },
+    {
+      "id": "se-r-vehicle-names",
+      "title": "SäkR Fordon/stridsfordon — наименования разделов",
+      "publisher": "Försvarsmakten",
+      "url": "https://www.forsvarsmakten.se/globalassets/02-om-forsvarsmakten/myndighetsinformation/dokument/reglementen/sakr-fo-strf.pdf",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": "Оглавление и заголовки глав 3–6, 8–11. Только идентификация машин; ограничения разрешённой скорости не трактуются как паспортная максимальная скорость."
+    },
+    {
+      "id": "se-r-strv123",
+      "title": "FMV tar emot uppgraderad Stridsvagn 122",
+      "publisher": "FMV",
+      "url": "https://www.fmv.se/aktuellt--press/aktuella-handelser/fmv-tar-emot-uppgraderad-stridsvagn-122/",
+      "scopeDate": "2026-06-23",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": ""
+    },
+    {
+      "id": "se-r-bvs10",
+      "title": "BvS10",
+      "publisher": "BAE Systems Hägglunds",
+      "url": "https://www.baesystems.com/en/product/bvs10",
+      "scopeDate": "2025",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": "Каталог описывает семейство и функциональные исполнения, численные характеристики не унифицированы."
+    },
+    {
+      "id": "se-r-bvs10-brochure",
+      "title": "BvS10 brochure 2025",
+      "publisher": "BAE Systems Hägglunds",
+      "url": "https://www.baesystems.com/dam/jcr:55818afd-b8dc-4f9b-bfa1-8c92e9ade2eb/DIGITAL_baes_ds_BvS10_2025.pdf",
+      "scopeDate": "2025",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": "С. 7–9: исполнения и BEOWULF. Таблица на с. 9 соседствует с двумя заголовками; числа требуют визуальной проверки принадлежности колонкам и здесь не перенесены."
+    },
+    {
+      "id": "se-r-archer",
+      "title": "ARCHER Mobile Howitzer",
+      "publisher": "BAE Systems Bofors",
+      "url": "https://www.baesystems.com/en/product/archer",
+      "scopeDate": "2026",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": "На странице одновременно показаны 6x6, 8x8 и 10x10; данные мобильности страницы не распространяются на все варианты."
+    },
+    {
+      "id": "se-r-archer6",
+      "title": "ARCHER Mobile Howitzer 6x6 brochure",
+      "publisher": "BAE Systems Bofors",
+      "url": "https://www.baesystems.com/dam/jcr:2f6ba326-1c5a-4263-9eeb-1731a8f8dae4/ARCHER%20Brochure_6x6_6page_2025_lowres.pdf",
+      "scopeDate": "2025",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-archer8",
+      "title": "ARCHER Mobile Howitzer 8x8 brochure",
+      "publisher": "BAE Systems Bofors",
+      "url": "https://www.baesystems.com/dam/jcr:e7b855a1-b9cb-4f52-896a-91dae5da58f5/ARCHER%20Brochure_MAN_6page_2025_NEUTRAL_lowres.pdf",
+      "scopeDate": "2025",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-gripen-c",
+      "title": "Gripen C-series",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/gripen-c-series",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-globaleye",
+      "title": "GlobalEye AEW&C",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/globaleye",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-erieye2000",
+      "title": "Saab 2000 Erieye AEW&C",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/saab-2000-erieye-aewc",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-cb90hsm",
+      "title": "Docksta CB90 Next Generation / CB90HSM",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/docksta-cb90",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-cb90cx",
+      "title": "Combat Boat 90 CX",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/combat-boat-90-cx",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-visby",
+      "title": "Visby-class corvette",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/visby-class-corvette",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-oceanic",
+      "title": "Oceanic range submarines",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/oceanic",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-sabertooth",
+      "title": "Sabertooth",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/sabertooth",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-giraffe1x",
+      "title": "Giraffe 1X",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/giraffe-1x",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-giraffe4a",
+      "title": "Giraffe 4A",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/giraffe-4a",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-arthur",
+      "title": "Arthur D",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/arthur",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-seagiraffe1x",
+      "title": "Sea Giraffe 1X",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/sea-giraffe-1x",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-idas",
+      "title": "IDAS integrated self-protection suite",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/idas",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-sirius",
+      "title": "Sirius Compact R-ESM",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/sirius-compact",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-tacticall",
+      "title": "TactiCall Integrated Communications Solutions",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/tacticall",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-rbs70",
+      "title": "RBS 70 NG",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/rbs-70-ng",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-nlaw",
+      "title": "NLAW",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/nlaw",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-at4",
+      "title": "AT4 family",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/at4",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-carlgustaf",
+      "title": "Carl-Gustaf system",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/products/carl-gustaf-m4",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-naval2024",
+      "title": "Saab Naval product catalogue 2024 — Double Eagle Family",
+      "publisher": "Saab",
+      "url": "https://www.saab.com/contentassets/3c086fb5a19d42d285e84df9a82ac108/saab-0516-naval-product-catalogue_2024_final_241014.pdf",
+      "scopeDate": "2024",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": "Прочитаны Double Eagle Family и сравнительная таблица, с. 82–83. Данные других систем из этого каталога не предполагаются."
+    },
+    {
+      "id": "se-r-skeldar",
+      "title": "SKELDAR V-200 — Technical specification",
+      "publisher": "UMS SKELDAR",
+      "url": "https://umsskeldar.aero/unmanned-vtol-system-v-200-skeldar/",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "manufacturer",
+      "note": ""
+    },
+    {
+      "id": "se-r-hkp15",
+      "title": "Helikoptersimulator flyger igen — Helikopter 15",
+      "publisher": "FMV",
+      "url": "https://www.fmv.se/aktuellt--press/aktuella-handelser/helikoptersimulator-flyger-igen/",
+      "scopeDate": "2025-05-20",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": ""
+    },
+    {
+      "id": "se-r-patgb360",
+      "title": "Stridsfordonsskytt — Stridsfordon 90 och Pansarterrängbil 360",
+      "publisher": "Försvarsmakten",
+      "url": "https://www.forsvarsmakten.se/varnplikt-och-karriar/jobba-i-forsvarsmakten/befattningsguiden/befattningar/stridsfordonsskytt/",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "kind": "national_authority",
+      "note": "Только общее описание типа и экипажа; места обучения исключены."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "se-armed-forces",
+      "country": "SE",
+      "parent": null,
+      "title": "Вооружённые силы Швеции",
+      "nativeName": "Försvarsmakten",
+      "kind": "organization",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-army",
+      "country": "SE",
+      "parent": "se-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Armén",
+      "kind": "service",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-navy",
+      "country": "SE",
+      "parent": "se-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Marinen",
+      "kind": "service",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-air",
+      "country": "SE",
+      "parent": "se-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Flygvapnet",
+      "kind": "service",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-armour",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Танковые подразделения",
+      "nativeName": "Pansarförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-mechanised",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Механизированные подразделения",
+      "nativeName": "Mekaniserade förband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-infantry",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Стрелковые подразделения",
+      "nativeName": "Skytteförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-recon",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Разведка",
+      "nativeName": "Spaningsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-artillery",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Артиллерия",
+      "nativeName": "Artilleriförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-engineers",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Инженерные подразделения",
+      "nativeName": "Ingenjörförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-air-defence",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Противовоздушная оборона",
+      "nativeName": "Luftvärnsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-command",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Связь и управление",
+      "nativeName": "Ledningsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-army-logistics",
+      "country": "SE",
+      "parent": "se-army",
+      "title": "Логистика",
+      "nativeName": "Logistikförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-submarines",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Подводные силы",
+      "nativeName": "Ubåtsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-surface",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Надводные силы",
+      "nativeName": "Ytstridsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-mine",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Противоминные силы",
+      "nativeName": "Minröjningsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-amphibious",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Амфибийные силы",
+      "nativeName": "Amfibieförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-base",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Базовое обеспечение",
+      "nativeName": "Basförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-navy-support",
+      "country": "SE",
+      "parent": "se-navy",
+      "title": "Техническое и тыловое обеспечение",
+      "nativeName": "Underhållsförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-air-combat",
+      "country": "SE",
+      "parent": "se-air",
+      "title": "Боевая авиация",
+      "nativeName": "Stridsflyg",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-air-transport",
+      "country": "SE",
+      "parent": "se-air",
+      "title": "Транспортная авиация",
+      "nativeName": "Transportflyg",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-air-special",
+      "country": "SE",
+      "parent": "se-air",
+      "title": "Специальная авиация",
+      "nativeName": "Specialflyg",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-air-helicopter",
+      "country": "SE",
+      "parent": "se-air",
+      "title": "Вертолётная авиация",
+      "nativeName": "Helikopterförband",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    },
+    {
+      "id": "se-r-air-surveillance",
+      "country": "SE",
+      "parent": "se-air",
+      "title": "Управление и воздушное наблюдение",
+      "nativeName": "Stridsledning och luftbevakning",
+      "kind": "component",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по обзору 2023; не фактическая подчинённость."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "se-hierarchy-research",
+      "country": "SE",
+      "service": "se-army",
+      "status": "draft",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "levels": [
+        {
+          "id": "se-r-level-pair",
+          "title": "Пара",
+          "nativeName": "Stridspar",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Stridspar",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Минимальная парная единица.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-group",
+          "title": "Отделение",
+          "nativeName": "Grupp",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Grupp",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Объединяет несколько пар.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-platoon",
+          "title": "Взвод",
+          "nativeName": "Pluton",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Pluton",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Обычно входит в роту.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-company",
+          "title": "Рота / эскадрон",
+          "nativeName": "Kompani / Skvadron",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Kompani / Skvadron",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Skvadron соответствует kompani.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-battalion",
+          "title": "Батальон",
+          "nativeName": "Bataljon",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Bataljon",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Обычно несколько рот.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-brigade",
+          "title": "Бригада",
+          "nativeName": "Brigad",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Brigad",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Общевойсковое формирование.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Независимый словарь уровней из обзора 2023. Порядок списка не задаёт цепь подчинения. Численность и состав реальных частей исключены; допустимые связи требуют отдельной проверки.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "se-army",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Обзор организационных терминов.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Редакция Svensk soldat 2023; актуальность требует проверки.",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Не современный штат.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-air-levels",
+      "country": "SE",
+      "service": "se-air",
+      "status": "draft",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "levels": [
+        {
+          "id": "se-r-level-air-rote",
+          "title": "Пара самолётов",
+          "nativeName": "Rote",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Rote",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Нижний авиационный термин.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-air-division",
+          "title": "Авиационная эскадрилья",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Division",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Может включать несколько rotar.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-air-squadron",
+          "title": "Вертолётная эскадрилья",
+          "nativeName": "Skvadron",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Skvadron",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Термин вертолётных подразделений.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Независимый словарь уровней из обзора 2023. Порядок списка не задаёт цепь подчинения. Численность и состав реальных частей исключены; допустимые связи требуют отдельной проверки.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "se-air",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Обзор организационных терминов.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Редакция Svensk soldat 2023; актуальность требует проверки.",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Не современный штат.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-navy-levels",
+      "country": "SE",
+      "service": "se-navy",
+      "status": "draft",
+      "sources": [
+        "se-r-soldat-2023"
+      ],
+      "levels": [
+        {
+          "id": "se-r-level-navy-rote",
+          "title": "Корабельная группа",
+          "nativeName": "Rote",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Rote",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Нижний корабельный термин.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-navy-division",
+          "title": "Дивизион",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Division",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Может делиться на rotar.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "se-r-level-navy-flotilla",
+          "title": "Флотилия",
+          "nativeName": "Flottilj",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Flottilj",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Обзор 2023.",
+                "status": "reported"
+              },
+              {
+                "field": "level_definitions",
+                "value": "Несколько дивизионов или отдельные корабли.",
+                "unit": null,
+                "source": "se-r-soldat-2023",
+                "locator": "Раздел 3.9",
+                "scope": "Общее определение; штат не задаётся.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Независимый словарь уровней из обзора 2023. Порядок списка не задаёт цепь подчинения. Численность и состав реальных частей исключены; допустимые связи требуют отдельной проверки.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "se-navy",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Обзор организационных терминов.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Редакция Svensk soldat 2023; актуальность требует проверки.",
+            "unit": null,
+            "source": "se-r-soldat-2023",
+            "locator": "Раздел 3.9",
+            "scope": "Не современный штат.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "se-gripen",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen E-series",
+      "objectClass": "aircraft",
+      "summary": "Семейство самолётов из каталога Saab. Указание производителя не подтверждает конкретную национальную поставку.",
+      "sources": [
+        "se-gripen"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Контекст национального каталога не подтверждает страну разработки, нынешнее наличие или принадлежность конкретной части.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "se-gripen-e",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen E",
+      "objectClass": "aircraft",
+      "summary": "Вариант самолёта семейства Gripen E-series. Справочные размеры и число мест опубликованы производителем.",
+      "sources": [
+        "se-gripen"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Скорость, дальность полёта и вместимость боекомплекта BK27 на прочитанной странице не указаны. Числа E не переносятся на F.",
+      "granularity": "variant",
+      "parentModel": "se-gripen",
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "crew_count",
+            "value": 1,
+            "unit": "person",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen E",
+            "scope": "Данные производителя для Gripen E; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 15.2,
+            "unit": "m",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen E",
+            "scope": "Данные производителя для Gripen E; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 8.6,
+            "unit": "m",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen E",
+            "scope": "Данные производителя для Gripen E; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 16500,
+            "unit": "kg",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen E",
+            "scope": "Данные производителя для Gripen E; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gripen E из сравнительной таблицы производителя",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Key facts",
+            "scope": "Только указанная колонка варианта",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "GE F414G",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Gripen E — The Game Changer",
+            "scope": "Только Gripen E.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "10 точек подвески; AESA, IRST, BK27.",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Key facts, Gripen E; The Game Changer",
+            "scope": "Только E; точки подвески не равны числу ракет.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Пример подвески: до семи Meteor и две IRIS-T.",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Lethality",
+            "scope": "Каталожная конфигурация Gripen E; не текущий остаток и не универсальная загрузка.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-gripen-f",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen F",
+      "objectClass": "aircraft",
+      "summary": "Вариант самолёта семейства Gripen E-series. Справочные размеры и число мест опубликованы производителем.",
+      "sources": [
+        "se-gripen"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Скорость, дальность и номинальный боекомплект F не установлены. Конфигурация семи Meteor и двух IRIS-T из раздела E не наследуется.",
+      "granularity": "variant",
+      "parentModel": "se-gripen",
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen F",
+            "scope": "Данные производителя для Gripen F; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 15.9,
+            "unit": "m",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen F",
+            "scope": "Данные производителя для Gripen F; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 8.6,
+            "unit": "m",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen F",
+            "scope": "Данные производителя для Gripen F; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 16500,
+            "unit": "kg",
+            "source": "se-gripen",
+            "locator": "Key facts — колонка Gripen F",
+            "scope": "Данные производителя для Gripen F; дата редакции таблицы не указана",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gripen F из сравнительной таблицы производителя",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Key facts",
+            "scope": "Только указанная колонка варианта",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "10 точек подвески; в колонке BK27 стоит прочерк.",
+            "unit": null,
+            "source": "se-gripen",
+            "locator": "Key facts — Gripen F",
+            "scope": "Только Gripen F; прочерк не подменён нулевой вместимостью.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-gripen-c-series",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen C-series",
+      "objectClass": "aircraft",
+      "summary": "Семейство многоцелевых самолётов.",
+      "sources": [
+        "se-r-gripen-c"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство многоцелевых самолётов.",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Описание изделия",
+            "scope": "Gripen C-series",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gripen C-series",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-gripen-c",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen C",
+      "objectClass": "aircraft",
+      "summary": "Вариант семейства Gripen C-series.",
+      "sources": [
+        "se-r-gripen-c"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-gripen-c-series",
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант семейства Gripen C-series.",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — колонка C",
+            "scope": "Gripen C",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gripen C",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — колонка C",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 1,
+            "unit": "person",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen C",
+            "scope": "Gripen C; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 14.9,
+            "unit": "m",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen C",
+            "scope": "Gripen C; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 8.4,
+            "unit": "m",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen C",
+            "scope": "Gripen C; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 14000,
+            "unit": "kg",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen C",
+            "scope": "Gripen C; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Восемь точек подвески; BK27 указана.",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen C",
+            "scope": "Gripen C; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-gripen-d",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gripen D",
+      "objectClass": "aircraft",
+      "summary": "Вариант семейства Gripen C-series.",
+      "sources": [
+        "se-r-gripen-c"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-gripen-c-series",
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант семейства Gripen C-series.",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — колонка D",
+            "scope": "Gripen D",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gripen D",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — колонка D",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen D",
+            "scope": "Gripen D; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 15.6,
+            "unit": "m",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen D",
+            "scope": "Gripen D; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 8.4,
+            "unit": "m",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen D",
+            "scope": "Gripen D; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 14000,
+            "unit": "kg",
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen D",
+            "scope": "Gripen D; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Восемь точек подвески; BK27 отмечена прочерком.",
+            "unit": null,
+            "source": "se-r-gripen-c",
+            "locator": "Сравнительная таблица — Gripen D",
+            "scope": "Gripen D; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-globaleye",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "GlobalEye",
+      "objectClass": "aircraft",
+      "summary": "Самолёт дальнего радиолокационного наблюдения и управления.",
+      "sources": [
+        "se-r-globaleye"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт дальнего радиолокационного наблюдения и управления.",
+            "unit": null,
+            "source": "se-r-globaleye",
+            "locator": "Описание изделия",
+            "scope": "GlobalEye",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "GlobalEye",
+            "unit": null,
+            "source": "se-r-globaleye",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 12,
+            "unit": "h",
+            "source": "se-r-globaleye",
+            "locator": "Mission capability; Operational endurance and crew comfort",
+            "scope": "GlobalEye на базе Global 6000/6500; заявленная operational endurance, профиль и нагрузка не детализированы.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Erieye ER, дополнительные активные и пассивные датчики, система C2; база Global 6000/6500.",
+            "unit": null,
+            "source": "se-r-globaleye",
+            "locator": "A national asset for safety and security",
+            "scope": "GlobalEye; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-erieye2000",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Saab 2000 Erieye AEW&C",
+      "objectClass": "aircraft",
+      "summary": "Самолёт радиолокационного наблюдения с Erieye AESA.",
+      "sources": [
+        "se-r-erieye2000"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт радиолокационного наблюдения с Erieye AESA.",
+            "unit": null,
+            "source": "se-r-erieye2000",
+            "locator": "Multi-mission capability; Proven Erieye radar",
+            "scope": "Saab 2000 Erieye AEW&C",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Saab 2000 Erieye AEW&C",
+            "unit": null,
+            "source": "se-r-erieye2000",
+            "locator": "Multi-mission capability; Proven Erieye radar",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-cv90-family",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "CV90",
+      "objectClass": "ifv",
+      "summary": "Семейство гусеничных платформ; численные данные зависят от исполнения.",
+      "sources": [
+        "se-r-cv90"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство гусеничных платформ; численные данные зависят от исполнения.",
+            "unit": null,
+            "source": "se-r-cv90",
+            "locator": "Описание изделия",
+            "scope": "CV90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "CV90",
+            "unit": null,
+            "source": "se-r-cv90",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-cv9040d",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Stridsfordon 9040 D",
+      "objectClass": "ifv",
+      "summary": "БМП варианта 9040 D.",
+      "sources": [
+        "se-r-cv9040d"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-cv90-family",
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БМП варианта 9040 D.",
+            "unit": null,
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Stridsfordon 9040 D",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Stridsfordon 9040 D",
+            "unit": null,
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 23100,
+            "unit": "kg",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 6.55,
+            "unit": "m",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.17,
+            "unit": "m",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.71,
+            "unit": "m",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 70,
+            "unit": "km/h",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, FAKTA STRIDSFORDON 9040 D",
+            "scope": "Только вариант 9040 D в публикации 05/2020; скорость по дороге.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 320,
+            "unit": "km",
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, Aktionsradie",
+            "scope": "9040 D, смешанное движение; показатель назван Aktionsradie, не удваивается.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Дизель Scania V8 14 л.",
+            "unit": null,
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, Motor",
+            "scope": "9040 D, 05/2020; 14 л — объём двигателя, не топливный бак.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Стабилизированная 40-мм пушка, 7,62-мм пулемёт; тепловизор, GPS, система управления, задняя камера.",
+            "unit": null,
+            "source": "se-r-cv9040d",
+            "locator": "С. 15, Beväpning; Övrigt",
+            "scope": "Stridsfordon 9040 D; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-epbv90",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Eldledningspansarbandvagn 90",
+      "objectClass": "support-vehicle",
+      "summary": "Машина управления артиллерийским огнём.",
+      "sources": [
+        "se-r-cv90-functions"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Исполнение платформы 90, описанное в 2014; характеристики 9040 D не наследуются. Скорость, запас хода и номинальный боекомплект не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина управления артиллерийским огнём.",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Eldledningspansarbandvagn 90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Eldledningspansarbandvagn 90",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-stripbv90",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Stridsledningspansarbandvagn 90",
+      "objectClass": "support-vehicle",
+      "summary": "Бронированная командная машина.",
+      "sources": [
+        "se-r-cv90-functions"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Исполнение платформы 90, описанное в 2014; характеристики 9040 D не наследуются. Скорость, запас хода и номинальный боекомплект не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная командная машина.",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Stridsledningspansarbandvagn 90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Stridsledningspansarbandvagn 90",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-lvkv90",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Luftvärnskanonvagn 90",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная зенитная артиллерийская машина.",
+      "sources": [
+        "se-r-cv90-functions"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Исполнение платформы 90 по публикации 2014; характеристики 9040 D не наследуются. Скорость, запас хода и боекомплект не установлены. Использован общий класс самоходной артиллерии: отдельного класса ЗСУ в классификаторе нет.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная зенитная артиллерийская машина.",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Luftvärnskanonvagn 90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Luftvärnskanonvagn 90",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-bgbv90",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Bärgningsbandvagn 90",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничная ремонтно-эвакуационная машина.",
+      "sources": [
+        "se-r-cv90-functions"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Исполнение платформы 90, описанное в 2014; характеристики 9040 D не наследуются. Скорость, запас хода и номинальный боекомплект не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная ремонтно-эвакуационная машина.",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Bärgningsbandvagn 90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Bärgningsbandvagn 90",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-storpbv90",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Störpansarbandvagn 90",
+      "objectClass": "electronic-warfare",
+      "summary": "Машина РЭБ с системой TVA.",
+      "sources": [
+        "se-r-cv90-functions"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Исполнение платформы 90, описанное в 2014; характеристики 9040 D не наследуются. Скорость, запас хода и номинальный боекомплект не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина РЭБ с системой TVA.",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Störpansarbandvagn 90",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Störpansarbandvagn 90",
+            "unit": null,
+            "source": "se-r-cv90-functions",
+            "locator": "С. 25, … och sex varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-strv122",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Stridsvagn 122",
+      "objectClass": "tank",
+      "summary": "Танк, являющийся исходной платформой модернизации 123A.",
+      "sources": [
+        "se-r-strv123"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Танк, являющийся исходной платформой модернизации 123A.",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Описание изделия",
+            "scope": "Stridsvagn 122",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Stridsvagn 122",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-strv123a",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Stridsvagn 123A",
+      "objectClass": "tank",
+      "summary": "Модернизированный вариант Stridsvagn 122.",
+      "sources": [
+        "se-r-strv123"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модернизированный вариант Stridsvagn 122.",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Nyanskaffning; описание модернизации",
+            "scope": "Stridsvagn 123A",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Stridsvagn 123A",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Nyanskaffning; описание модернизации",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Новое орудие с более длинным стволом, цифровые подсистемы, тепловизоры и камеры, APU.",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Описание модернизации",
+            "scope": "Только 123A, публикация 2026-06-23.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-strv123b",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Stridsvagn 123B",
+      "objectClass": "tank",
+      "summary": "Новая модель танка, отдельно названная FMV.",
+      "sources": [
+        "se-r-strv123"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Новая модель танка, отдельно названная FMV.",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Nyanskaffning; описание модернизации",
+            "scope": "Stridsvagn 123B",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Stridsvagn 123B",
+            "unit": null,
+            "source": "se-r-strv123",
+            "locator": "Nyanskaffning; описание модернизации",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-bgbv120",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Bärgningsbandvagn 120",
+      "objectClass": "support-vehicle",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Bärgningsbandvagn 120",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Bärgningsbandvagn 120",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-brobv120",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Brobandvagn 120",
+      "objectClass": "engineering",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Brobandvagn 120",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Brobandvagn 120",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-ingbv120",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Ingenjörbandvagn 120",
+      "objectClass": "engineering",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Ingenjörbandvagn 120",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ingenjörbandvagn 120",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-patgb180",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Pansarterrängbil 180",
+      "objectClass": "apc",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Pansarterrängbil 180",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Pansarterrängbil 180",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-patgb202203",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Pansarterrängbil 202/203",
+      "objectClass": "apc",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "С. 16, Bild 1.1 — Patgb 202/203",
+            "scope": "Pansarterrängbil 202/203",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Pansarterrängbil 202/203",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "С. 16, Bild 1.1 — Patgb 202/203",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-tgb16",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Terrängbil 16",
+      "objectClass": "apc",
+      "summary": "Национальное обозначение машины из официального перечня.",
+      "sources": [
+        "se-r-vehicle-names"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Подтверждено обозначение. Скорость, запас хода и боекомплект не установлены; разрешённые дорожные ограничения не внесены как технический максимум.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное обозначение машины из официального перечня.",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Terrängbil 16",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Terrängbil 16",
+            "unit": null,
+            "source": "se-r-vehicle-names",
+            "locator": "Оглавление; главы 3–5, 8–10",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-patgb360",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Pansarterrängbil 360",
+      "objectClass": "apc",
+      "summary": "Восьмиколёсная машина перевозки стрелков.",
+      "sources": [
+        "se-r-patgb360"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Восьмиколёсная машина перевозки стрелков.",
+            "unit": null,
+            "source": "se-r-patgb360",
+            "locator": "Описание Stridsfordonsskytt",
+            "scope": "Pansarterrängbil 360",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Pansarterrängbil 360",
+            "unit": null,
+            "source": "se-r-patgb360",
+            "locator": "Описание Stridsfordonsskytt",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "se-r-patgb360",
+            "locator": "I fordonets besättning",
+            "scope": "В описании экипажа: командир, водитель и стрелок; не число перевозимых стрелков.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-bvs10",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "BvS10",
+      "objectClass": "apc",
+      "summary": "Семейство сочленённых гусеничных бронированных транспортёров.",
+      "sources": [
+        "se-r-bvs10"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство сочленённых гусеничных бронированных транспортёров.",
+            "unit": null,
+            "source": "se-r-bvs10",
+            "locator": "Описание изделия",
+            "scope": "BvS10",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "BvS10",
+            "unit": null,
+            "source": "se-r-bvs10",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Каталожные исполнения: APC, LOG/Flatbed, ambulance, repair/recovery и другие.",
+            "unit": null,
+            "source": "se-r-bvs10",
+            "locator": "Overview",
+            "scope": "Набор вариантов семейства; не оборудование каждой машины.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-beowulf",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "BvS10 BEOWULF",
+      "objectClass": "support-vehicle",
+      "summary": "Небронированная транспортная платформа семейства Bv.",
+      "sources": [
+        "se-r-bvs10-brochure"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Скорость и дальность из соседней таблицы не перенесены: требуется визуальная проверка её принадлежности BvS10 или BEOWULF.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Небронированная транспортная платформа семейства Bv.",
+            "unit": null,
+            "source": "se-r-bvs10-brochure",
+            "locator": "С. 9, BvS10 BEOWULF",
+            "scope": "BvS10 BEOWULF",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "BvS10 BEOWULF",
+            "unit": null,
+            "source": "se-r-bvs10-brochure",
+            "locator": "С. 9, BvS10 BEOWULF",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-archer-family",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "ARCHER",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Семейство колёсных самоходных гаубиц.",
+      "sources": [
+        "se-r-archer"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство колёсных самоходных гаубиц.",
+            "unit": null,
+            "source": "se-r-archer",
+            "locator": "Описание изделия",
+            "scope": "ARCHER",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ARCHER",
+            "unit": null,
+            "source": "se-r-archer",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-archer6",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "ARCHER 6x6 Volvo",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Вариант 155-мм самоходной гаубицы.",
+      "sources": [
+        "se-r-archer6"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-archer-family",
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант 155-мм самоходной гаубицы.",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3–4",
+            "scope": "ARCHER 6x6 Volvo",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ARCHER 6x6 Volvo",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3–4",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 70,
+            "unit": "km/h",
+            "source": "se-r-archer6",
+            "locator": "С. 4, Mobility",
+            "scope": "ARCHER 6x6 Volvo, скорость по дороге до указанной границы.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 650,
+            "unit": "km",
+            "source": "se-r-archer6",
+            "locator": "С. 4, Mobility",
+            "scope": "ARCHER 6x6 Volvo, до указанного расстояния с бортовым топливом; профиль пути не указан.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 21,
+            "unit": "round",
+            "source": "se-r-archer6",
+            "locator": "С. 4, Effect",
+            "scope": "ARCHER 6x6 Volvo, автоматические магазины: 21 снаряд и модульные заряды; не текущий остаток.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "155-мм снаряды и модульные заряды в автоматических магазинах.",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 4, Effect",
+            "scope": "ARCHER 6x6 Volvo; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Экипаж описан как три или четыре человека.",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3, описание",
+            "scope": "6x6; интервал не подменён одним числом.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-archer8",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "ARCHER 8x8 RMMV",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Вариант 155-мм самоходной гаубицы.",
+      "sources": [
+        "se-r-archer8"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-archer-family",
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант 155-мм самоходной гаубицы.",
+            "unit": null,
+            "source": "se-r-archer8",
+            "locator": "С. 3–4",
+            "scope": "ARCHER 8x8 RMMV",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ARCHER 8x8 RMMV",
+            "unit": null,
+            "source": "se-r-archer8",
+            "locator": "С. 3–4",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 90,
+            "unit": "km/h",
+            "source": "se-r-archer8",
+            "locator": "С. 4, Mobility",
+            "scope": "ARCHER 8x8 RMMV, скорость по дороге до указанной границы.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 800,
+            "unit": "km",
+            "source": "se-r-archer8",
+            "locator": "С. 4, Mobility",
+            "scope": "ARCHER 8x8 RMMV, до указанного расстояния с бортовым топливом; профиль пути не указан.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 21,
+            "unit": "round",
+            "source": "se-r-archer8",
+            "locator": "С. 4, Effect",
+            "scope": "ARCHER 8x8 RMMV, автоматические магазины: 21 снаряд и модульные заряды; не текущий остаток.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "155-мм снаряды и модульные заряды в автоматических магазинах.",
+            "unit": null,
+            "source": "se-r-archer8",
+            "locator": "С. 4, Effect",
+            "scope": "ARCHER 8x8 RMMV; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "se-r-archer8",
+            "locator": "С. 3, описание",
+            "scope": "8x8; трёхчленный экипаж в брошюре 2025.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-archer10",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "ARCHER 10x10 Oshkosh",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Отдельное шасси семейства ARCHER.",
+      "sources": [
+        "se-r-archer"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-archer-family",
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Отдельное шасси семейства ARCHER.",
+            "unit": null,
+            "source": "se-r-archer",
+            "locator": "ARCHER Models",
+            "scope": "ARCHER 10x10 Oshkosh",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ARCHER 10x10 Oshkosh",
+            "unit": null,
+            "source": "se-r-archer",
+            "locator": "ARCHER Models",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-archer-resupply",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "ARCHER ammunition resupply system",
+      "objectClass": "support-vehicle",
+      "summary": "Контейнерная система подвоза боеприпасов.",
+      "sources": [
+        "se-r-archer6"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Контейнерная система подвоза боеприпасов.",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3, Resupply system",
+            "scope": "ARCHER ammunition resupply system",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ARCHER ammunition resupply system",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3, Resupply system",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Модифицированный ISO-контейнер на подходящем контейнеровозе; вместимость до 100 выстрелов.",
+            "unit": null,
+            "source": "se-r-archer6",
+            "locator": "С. 3, Resupply system",
+            "scope": "Каталожная система снабжения; конкретное автомобильное шасси не задано. Вместимость не боекомплект гаубицы.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-visby",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Visby-class corvette",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство корветов.",
+      "sources": [
+        "se-r-visby"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство корветов.",
+            "unit": null,
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Visby-class corvette",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Visby-class corvette",
+            "unit": null,
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 72.7,
+            "unit": "m",
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Каталожная конфигурация Visby; водоизмещение полностью оснащённого корабля.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 10.4,
+            "unit": "m",
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Каталожная конфигурация Visby; водоизмещение полностью оснащённого корабля.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 650000,
+            "unit": "kg",
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Каталожная конфигурация Visby; водоизмещение полностью оснащённого корабля.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 43,
+            "unit": "person",
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Каталожная конфигурация Visby; водоизмещение полностью оснащённого корабля.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость при полном водоизмещении: 35+ узлов.",
+            "unit": null,
+            "source": "se-r-visby",
+            "locator": "Technical specifications",
+            "scope": "Строгая/рекламная граница 35+ сохранена в исходных единицах; перевода нет.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "CODOG; два водомётных движителя.",
+            "unit": null,
+            "source": "se-r-visby",
+            "locator": "Описание силовой установки",
+            "scope": "Visby-class corvette; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-blekinge",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Blekinge-class (A26)",
+      "objectClass": "submarine",
+      "summary": "Проект подводной лодки с Multi Mission Portal.",
+      "sources": [
+        "se-r-oceanic"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Числа общего модельного ряда Oceanic не приписаны этим проектам. Дальность, длительность, скорость и боекомплект не подтверждены.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект подводной лодки с Multi Mission Portal.",
+            "unit": null,
+            "source": "se-r-oceanic",
+            "locator": "The Blekinge-class (A26); The Mid-Life Upgrade of Gotland",
+            "scope": "Blekinge-class (A26)",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Blekinge-class (A26)",
+            "unit": null,
+            "source": "se-r-oceanic",
+            "locator": "The Blekinge-class (A26); The Mid-Life Upgrade of Gotland",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-gotland",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Gotland-class MLU",
+      "objectClass": "submarine",
+      "summary": "Модернизируемое семейство подводных лодок.",
+      "sources": [
+        "se-r-oceanic"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Числа общего модельного ряда Oceanic не приписаны этим проектам. Дальность, длительность, скорость и боекомплект не подтверждены.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модернизируемое семейство подводных лодок.",
+            "unit": null,
+            "source": "se-r-oceanic",
+            "locator": "The Blekinge-class (A26); The Mid-Life Upgrade of Gotland",
+            "scope": "Gotland-class MLU",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Gotland-class MLU",
+            "unit": null,
+            "source": "se-r-oceanic",
+            "locator": "The Blekinge-class (A26); The Mid-Life Upgrade of Gotland",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-cb90hsm",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "CB90HSM / CB90 Next Generation",
+      "objectClass": "surface-vessel",
+      "summary": "Десантно-транспортный катер.",
+      "sources": [
+        "se-r-cb90hsm"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Десантно-транспортный катер.",
+            "unit": null,
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — CB90HSM",
+            "scope": "CB90HSM / CB90 Next Generation",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "CB90HSM / CB90 Next Generation",
+            "unit": null,
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — CB90HSM",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 16.3,
+            "unit": "m",
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — Measurements",
+            "scope": "CB90HSM / CB90 Next Generation; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.8,
+            "unit": "m",
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — Measurements",
+            "scope": "CB90HSM / CB90 Next Generation; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Полная нагрузка: скорость значительно выше 40 узлов; крейсерская 38 узлов при волнении sea state 1 или менее; дальность 300 NM на крейсерской скорости.",
+            "unit": null,
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — Speed and range",
+            "scope": "CB90HSM; исходные узлы и морские мили, без пересчёта. Не распространяется на CB90 CX.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя по 900 hp и два водомёта Mix flow.",
+            "unit": null,
+            "source": "se-r-cb90hsm",
+            "locator": "Technical specifications — Propulsion",
+            "scope": "CB90HSM / CB90 Next Generation; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-cb90cx",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "CB90 CX",
+      "objectClass": "surface-vessel",
+      "summary": "Катер с пилотируемым и беспилотным исполнением.",
+      "sources": [
+        "se-r-cb90cx"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Катер с пилотируемым и беспилотным исполнением.",
+            "unit": null,
+            "source": "se-r-cb90cx",
+            "locator": "Technical specifications",
+            "scope": "CB90 CX",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "CB90 CX",
+            "unit": null,
+            "source": "se-r-cb90cx",
+            "locator": "Technical specifications",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 18,
+            "unit": "m",
+            "source": "se-r-cb90cx",
+            "locator": "Technical specifications",
+            "scope": "CB90 CX; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 4,
+            "unit": "m",
+            "source": "se-r-cb90cx",
+            "locator": "Technical specifications",
+            "scope": "CB90 CX; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость 40+ узлов; экипаж 0–10 человек; Sea Giraffe 1X, Trackfire.",
+            "unit": null,
+            "source": "se-r-cb90cx",
+            "locator": "Technical specifications; Multi-domain situational awareness",
+            "scope": "Только CX; диапазон экипажа не свёрнут в одно число. Скорость без пересчёта.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Пилотируемое и беспилотное управление.",
+            "unit": null,
+            "source": "se-r-cb90cx",
+            "locator": "Key features",
+            "scope": "CB90 CX; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-skeldar",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "SKELDAR V-200",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт с модульной полезной нагрузкой.",
+      "sources": [
+        "se-r-skeldar"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт с модульной полезной нагрузкой.",
+            "unit": null,
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "SKELDAR V-200",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "SKELDAR V-200",
+            "unit": null,
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 140,
+            "unit": "km/h",
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "V-200; длина фюзеляжа, ширина корпуса, не диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 245,
+            "unit": "kg",
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "V-200; длина фюзеляжа, ширина корпуса, не диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 4,
+            "unit": "m",
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "V-200; длина фюзеляжа, ширина корпуса, не диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.2,
+            "unit": "m",
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "V-200; длина фюзеляжа, ширина корпуса, не диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 1.3,
+            "unit": "m",
+            "source": "se-r-skeldar",
+            "locator": "Technical specification",
+            "scope": "V-200; длина фюзеляжа, ширина корпуса, не диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Продолжительность 6+ часов; зависит от конфигурации нагрузки. Радиолиния 100 km+ не является дальностью полёта.",
+            "unit": null,
+            "source": "se-r-skeldar",
+            "locator": "Technical specification — Endurance",
+            "scope": "Граница 6+ сохранена строкой; конкретная нагрузка не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Топливо Jet A-1, JP-5, JP-8.",
+            "unit": null,
+            "source": "se-r-skeldar",
+            "locator": "Technical specification — Fuel",
+            "scope": "SKELDAR V-200; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное пилотирование и автоматические взлёт/посадка.",
+            "unit": null,
+            "source": "se-r-skeldar",
+            "locator": "Ship-based ATOL; Remote Pilot Station",
+            "scope": "SKELDAR V-200; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-sabertooth",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Sabertooth",
+      "objectClass": "unmanned-underwater",
+      "summary": "Семейство гибридных AUV/ROV для инспекции и обслуживания.",
+      "sources": [
+        "se-r-sabertooth"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство гибридных AUV/ROV для инспекции и обслуживания.",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Описание изделия",
+            "scope": "Sabertooth",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Sabertooth",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Описание изделия",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-sabertooth-single",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Sabertooth Single hull",
+      "objectClass": "unmanned-underwater",
+      "summary": "Конструктивный вариант Sabertooth.",
+      "sources": [
+        "se-r-sabertooth"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-sabertooth",
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Конструктивный вариант Sabertooth.",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Single hull",
+            "scope": "Sabertooth Single hull",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Sabertooth Single hull",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Single hull",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 3.6,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Single hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 0.66,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Single hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.45,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Single hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 650,
+            "unit": "kg",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Launch weight",
+            "scope": "Sabertooth Single hull; базовая спусковая масса; максимальная масса зависит от нагрузки.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость вперёд 5 узлов; глубина исполнения 1200 м; аккумулятор 12 kWh.",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Single hull; скорость не названа максимальной; исходные единицы сохранены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-sabertooth-double",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Sabertooth Double hull",
+      "objectClass": "unmanned-underwater",
+      "summary": "Конструктивный вариант Sabertooth.",
+      "sources": [
+        "se-r-sabertooth"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-sabertooth",
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Конструктивный вариант Sabertooth.",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Double hull",
+            "scope": "Sabertooth Double hull",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Sabertooth Double hull",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Double hull",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 4,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Double hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.35,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Double hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.67,
+            "unit": "m",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Double hull; редакция страницы не установлена.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 1300,
+            "unit": "kg",
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications — Launch weight",
+            "scope": "Sabertooth Double hull; базовая спусковая масса; максимальная масса зависит от нагрузки.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость вперёд 4 узлов; глубина исполнения 3000 м; аккумулятор 30 kWh.",
+            "unit": null,
+            "source": "se-r-sabertooth",
+            "locator": "Technical specifications",
+            "scope": "Sabertooth Double hull; скорость не названа максимальной; исходные единицы сохранены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-double-eagle",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Double Eagle",
+      "objectClass": "unmanned-underwater",
+      "summary": "Семейство подводных противоминных аппаратов.",
+      "sources": [
+        "se-r-naval2024"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство подводных противоминных аппаратов.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83",
+            "scope": "Double Eagle",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Double Eagle",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-double-eagle-sarov",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Double Eagle SAROV",
+      "objectClass": "unmanned-underwater",
+      "summary": "Вариант подводного противоминного аппарата.",
+      "sources": [
+        "se-r-naval2024"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-double-eagle",
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант подводного противоминного аппарата.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Double Eagle SAROV",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Double Eagle SAROV",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 3,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle SAROV",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.3,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle SAROV",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.8,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle SAROV",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 730,
+            "unit": "kg",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Weight in air",
+            "scope": "Double Eagle SAROV; масса в воздухе",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Гибрид AUV/ROV; скорость вперёд 0–6 узлов; глубина 300 м.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83",
+            "scope": "Double Eagle SAROV; единицы и диапазоны сохранены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-double-eagle-mds",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Double Eagle MDS",
+      "objectClass": "unmanned-underwater",
+      "summary": "Вариант подводного противоминного аппарата.",
+      "sources": [
+        "se-r-naval2024"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-double-eagle",
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант подводного противоминного аппарата.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Double Eagle MDS",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Double Eagle MDS",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 2.2,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MDS",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.3,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MDS",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.5,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MDS",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 360,
+            "unit": "kg",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Weight in air",
+            "scope": "Double Eagle MDS; масса в воздухе",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Телеуправляемый ROV; скорость вперёд 0–6 узлов; глубина 500 м.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83",
+            "scope": "Double Eagle MDS; единицы и диапазоны сохранены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-double-eagle-mumns",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Double Eagle MuMNS",
+      "objectClass": "unmanned-underwater",
+      "summary": "Вариант подводного противоминного аппарата.",
+      "sources": [
+        "se-r-naval2024"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-double-eagle",
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант подводного противоминного аппарата.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Double Eagle MuMNS",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Double Eagle MuMNS",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83, Technical specifications",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 2.7,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MuMNS",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MuMNS",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.6,
+            "unit": "m",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Dimensions",
+            "scope": "Double Eagle MuMNS",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 415,
+            "unit": "kg",
+            "source": "se-r-naval2024",
+            "locator": "С. 83, Weight in air",
+            "scope": "Double Eagle MuMNS; полностью загруженный аппарат",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "ROV; скорость вперёд 0–4 узла; глубина 300 м.",
+            "unit": null,
+            "source": "se-r-naval2024",
+            "locator": "С. 82–83",
+            "scope": "Double Eagle MuMNS; единицы и диапазоны сохранены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-giraffe1x",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Giraffe 1X",
+      "objectClass": "radar-sensor",
+      "summary": "Наземная многофункциональная трёхмерная РЛС.",
+      "sources": [
+        "se-r-giraffe1x"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Наземная многофункциональная трёхмерная РЛС.",
+            "unit": null,
+            "source": "se-r-giraffe1x",
+            "locator": "Описание; Key features",
+            "scope": "Giraffe 1X",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Giraffe 1X",
+            "unit": null,
+            "source": "se-r-giraffe1x",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Масса всей системы менее 150 кг; topside 100 кг.",
+            "unit": null,
+            "source": "se-r-giraffe1x",
+            "locator": "Small, lightweight, high-performing 3D radar",
+            "scope": "Открытая страница Giraffe 1X; строгая граница сохранена строкой.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-giraffe4a",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Giraffe 4A",
+      "objectClass": "radar-sensor",
+      "summary": "Многофункциональная AESA РЛС.",
+      "sources": [
+        "se-r-giraffe4a"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многофункциональная AESA РЛС.",
+            "unit": null,
+            "source": "se-r-giraffe4a",
+            "locator": "Описание; Key features",
+            "scope": "Giraffe 4A",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Giraffe 4A",
+            "unit": null,
+            "source": "se-r-giraffe4a",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-arthur",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Arthur D",
+      "objectClass": "radar-sensor",
+      "summary": "Радиолокационная система определения положения источников артиллерийского огня.",
+      "sources": [
+        "se-r-arthur"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиолокационная система определения положения источников артиллерийского огня.",
+            "unit": null,
+            "source": "se-r-arthur",
+            "locator": "Описание; Key features",
+            "scope": "Arthur D",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Arthur D",
+            "unit": null,
+            "source": "se-r-arthur",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-seagiraffe1x",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Sea Giraffe 1X",
+      "objectClass": "radar-sensor",
+      "summary": "Корабельная трёхмерная РЛС воздушного и надводного наблюдения.",
+      "sources": [
+        "se-r-seagiraffe1x"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Корабельная трёхмерная РЛС воздушного и надводного наблюдения.",
+            "unit": null,
+            "source": "se-r-seagiraffe1x",
+            "locator": "Описание; Key features",
+            "scope": "Sea Giraffe 1X",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Sea Giraffe 1X",
+            "unit": null,
+            "source": "se-r-seagiraffe1x",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-idas",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "IDAS",
+      "objectClass": "electronic-warfare",
+      "summary": "Комплекс самозащиты воздушных платформ.",
+      "sources": [
+        "se-r-idas"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Комплекс самозащиты воздушных платформ.",
+            "unit": null,
+            "source": "se-r-idas",
+            "locator": "Описание; Key features",
+            "scope": "IDAS",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "IDAS",
+            "unit": null,
+            "source": "se-r-idas",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Предупреждение о радиолокационном, лазерном и ракетном воздействии; управление контрмерами.",
+            "unit": null,
+            "source": "se-r-idas",
+            "locator": "Key features",
+            "scope": "IDAS; редакция страницы не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-sirius",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Sirius Compact R-ESM",
+      "objectClass": "electronic-warfare",
+      "summary": "Семейство пассивных датчиков радиоэлектронной разведки.",
+      "sources": [
+        "se-r-sirius"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство пассивных датчиков радиоэлектронной разведки.",
+            "unit": null,
+            "source": "se-r-sirius",
+            "locator": "Описание; Key features",
+            "scope": "Sirius Compact R-ESM",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Sirius Compact R-ESM",
+            "unit": null,
+            "source": "se-r-sirius",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-tacticall",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "TactiCall",
+      "objectClass": "communications",
+      "summary": "Семейство интегрированных систем голосовой связи и передачи данных.",
+      "sources": [
+        "se-r-tacticall"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство интегрированных систем голосовой связи и передачи данных.",
+            "unit": null,
+            "source": "se-r-tacticall",
+            "locator": "TactiCall Integrated Communications Solutions",
+            "scope": "TactiCall",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "TactiCall",
+            "unit": null,
+            "source": "se-r-tacticall",
+            "locator": "TactiCall Integrated Communications Solutions",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-rbs70",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "RBS 70 NG",
+      "objectClass": "launcher",
+      "summary": "Переносной зенитный ракетный комплекс.",
+      "sources": [
+        "se-r-rbs70"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация комплекса; общий класс launcher. Боеприпас не слит с пусковым устройством. Дальность оружия не внесена как запас хода; номинальная вместимость не установлена.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Переносной зенитный ракетный комплекс.",
+            "unit": null,
+            "source": "se-r-rbs70",
+            "locator": "Описание; Key features",
+            "scope": "RBS 70 NG",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "RBS 70 NG",
+            "unit": null,
+            "source": "se-r-rbs70",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-nlaw",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "NLAW",
+      "objectClass": "launcher",
+      "summary": "Переносной противотанковый ракетный комплекс.",
+      "sources": [
+        "se-r-nlaw"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация комплекса; общий класс launcher. Боеприпас не слит с пусковым устройством. Дальность оружия не внесена как запас хода; номинальная вместимость не установлена.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Переносной противотанковый ракетный комплекс.",
+            "unit": null,
+            "source": "se-r-nlaw",
+            "locator": "Описание; Key features",
+            "scope": "NLAW",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "NLAW",
+            "unit": null,
+            "source": "se-r-nlaw",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-at4",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "AT4",
+      "objectClass": "launcher",
+      "summary": "Семейство одноразовых переносных пусковых систем.",
+      "sources": [
+        "se-r-at4"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация комплекса; общий класс launcher. Боеприпас не слит с пусковым устройством. Дальность оружия не внесена как запас хода; номинальная вместимость не установлена.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство одноразовых переносных пусковых систем.",
+            "unit": null,
+            "source": "se-r-at4",
+            "locator": "Описание; Key features",
+            "scope": "AT4",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "AT4",
+            "unit": null,
+            "source": "se-r-at4",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-carlgustaf",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Carl-Gustaf system",
+      "objectClass": "launcher",
+      "summary": "Семейство переносных безоткатных орудий.",
+      "sources": [
+        "se-r-carlgustaf"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация комплекса; общий класс launcher. Боеприпас не слит с пусковым устройством. Дальность оружия не внесена как запас хода; номинальная вместимость не установлена.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство переносных безоткатных орудий.",
+            "unit": null,
+            "source": "se-r-carlgustaf",
+            "locator": "Описание; Key features",
+            "scope": "Carl-Gustaf system",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Carl-Gustaf system",
+            "unit": null,
+            "source": "se-r-carlgustaf",
+            "locator": "Описание; Key features",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-hkp15",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Helikopter 15",
+      "objectClass": "helicopter",
+      "summary": "Семейство лёгких транспортных и учебных вертолётов.",
+      "sources": [
+        "se-r-hkp15"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство лёгких транспортных и учебных вертолётов.",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 (Hkp 15)",
+            "scope": "Helikopter 15",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Helikopter 15",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 (Hkp 15)",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Восемь мест суммарно для экипажа и пассажиров.",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 — Kapacitet",
+            "scope": "Обзор FMV не разделяет места по функциям или вариантам; passenger_capacity не заполнен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-hkp15a",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Helikopter 15A",
+      "objectClass": "helicopter",
+      "summary": "Вариант для наземных задач.",
+      "sources": [
+        "se-r-hkp15"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-hkp15",
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вариант для наземных задач.",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 — Varianter",
+            "scope": "Helikopter 15A",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Helikopter 15A",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 — Varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "se-r-hkp15b",
+      "kind": "equipment_model",
+      "countryContext": "SE",
+      "title": "Helikopter 15B",
+      "objectClass": "helicopter",
+      "summary": "Морской вариант; аварийные поплавки и оснащение для досмотровых групп.",
+      "sources": [
+        "se-r-hkp15"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Паспорт частичный: скорость, запас хода/длительность и номинальный боекомплект указаны только при отдельном подтверждении; отсутствующее требует исследования. Операторы не устанавливались.",
+      "granularity": "variant",
+      "parentModel": "se-r-hkp15",
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Морской вариант; аварийные поплавки и оснащение для досмотровых групп.",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 — Varianter",
+            "scope": "Helikopter 15B",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Helikopter 15B",
+            "unit": null,
+            "source": "se-r-hkp15",
+            "locator": "Helikopter 15 — Varianter",
+            "scope": "Только названное изделие; без наследования между модификациями.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Открытые национальные обзоры и каталоги производителей: виды ВС, специализации, отдельные организационные уровни, модели земли, воздуха, флота и обеспечения. Карточки не доказывают текущий состав, готовность или поставку; все сведения справочные.",
+    "gaps": [
+      "У большинства карточек отсутствуют подтверждённые скорость, дальность/длительность и вместимость боекомплекта конкретной комплектации. Неизвестное не заменено нулями.",
+      "Нет полных общенациональных классификаций truppslag/vapenslag/flygslag: внесены только функциональные специализации явно перечисленных видов ВС из обзора 2023.",
+      "Организационные уровни установлены как терминологические обзоры 2023; штатные схемы, допустимые связи и современные изменения требуют отдельного исследования.",
+      "Портфель транспорта, инженерных средств, вертолётов, беспилотных наземных/надводных средств и боеприпасов остаётся неполным; не все изделия производителя являются шведскими поставками.",
+      "Gripen E/F: скорость, дальность и боекомплект пушки не найдены на прочитанной странице; поля E не наследуются F.",
+      "Происхождение и операторы требуют самостоятельных утверждений; массивы originCountries/operatorCountries намеренно пусты."
+    ],
+    "sourceProblems": [
+      "Старый официальный адрес materiel-och-teknik перенаправляет на главную; Pocket Guide 2023 по прежнему адресу возвращает 404. Вместо него прочитан Svensk soldat 2023.",
+      "ARCHER: страница даёт до 650 км рядом с описанием 8x8, но отдельная брошюра 8x8 даёт до 800 км. В карточки вариантов внесены значения отдельных брошюр, без усреднения.",
+      "BvS10 brochure: таблица с 65 km/h, 4 km/h и 350 km на с. 9 соседствует с BEOWULF; текстовый порядок не доказывает привязку. Эти числа пока не внесены.",
+      "В статье 2014 CV90 высота 4,17 м не согласуется с 2,71 м для 9040 D в статье 2020; показатели между версиями не смешаны.",
+      "CB90HSM: текущая страница указывает way beyond 40 knots, каталог 2024 — 45 knots. Сохранена формулировка страницы; числа CX не переносятся на HSM.",
+      "Строгие границы (<150 kg, 35+ knots, 6+ hours) и интервалы сохранены строками. Морские мили, узлы и Mach не пересчитывались."
+    ]
+  }
+}

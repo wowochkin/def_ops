@@ -21,6 +21,8 @@ import {
   buildOhm, ohmAssetsDir, ohmFile, OHM_ATTRIBUTION, OHM_DEFAULTS, OHM_FONTS, OHM_RANGES, OHM_SPRITES, type OhmOptions,
 } from './ohm';
 import { ohmStyle } from './ohm-style';
+import { addAtlasRoutes } from './atlas-routes';
+import { addWeatherRoutes } from './environment';
 import { OHM_MAXZOOM, VectorTiles } from './vector';
 
 export interface CartographyOptions {
@@ -81,6 +83,8 @@ export function buildRouter(d: Deps): Router {
   const o: CartographyOptions = { ...DEFAULT_OPTIONS, ...d.options };
   o.ohm = { ...OHM_DEFAULTS, ...d.options?.ohm, userAgent: d.options?.ohm?.userAgent ?? o.xyz.userAgent };
   const r = new Router();
+  addWeatherRoutes(r, store);
+  addAtlasRoutes(r, store, publicPrefix);
 
   const load = async (c: Ctx): Promise<MapSource> => {
     const id = c.params.id;

@@ -15,7 +15,7 @@
  *    (/api для /api/cartography → /cartography): так сервис строит адреса для клиента.
  *  - Настольное приложение (DOWNLOADS_DIR): POST /api/save?name=… — файл игры (журнал, разбор, запись) в папку
  *    «Загрузки» без окна выбора; только со своего окна (Host — этот компьютер, Origin — адрес окна приложения;
- *    защита от DNS rebinding), только .md / .pdf / .json, имя занято — «имя (2)».
+ *    защита от DNS rebinding), только .txt / .md / .pdf / .json, имя занято — «имя (2)».
  */
 import http from 'node:http';
 import { promises as fs } from 'node:fs';
@@ -53,7 +53,7 @@ export interface GatewayConfig {
 }
 
 /** Что можно сохранить в «Загрузки»: файлы игры. */
-const SAVE_EXT = new Set(['.md', '.pdf', '.json']);
+const SAVE_EXT = new Set(['.txt', '.md', '.pdf', '.json']);
 const SAVE_MAX = 50 * 1024 * 1024;
 /** Имя в «Загрузках» — не длиннее (байт UTF-8; предел файловых систем — 255, запас на « (2)»). */
 const NAME_MAX_BYTES = 240;
@@ -123,7 +123,7 @@ async function saveDownload(dir: string, dev: boolean, url: URL, req: http.Incom
   if (req.method !== 'POST') return send(405, { error: { code: 'method', message: 'только POST' } });
   if (!ownWindow(req, dev)) return send(403, { error: { code: 'forbidden', message: 'сохранять может только окно приложения' } });
   const name = saveName(url.searchParams.get('name') ?? '');
-  if (!name) return send(400, { error: { code: 'bad_name', message: 'имя файла: без пути, .md, .pdf или .json' } });
+  if (!name) return send(400, { error: { code: 'bad_name', message: 'Укажите имя файла без пути с расширением .txt, .md, .pdf или .json' } });
   const ext = path.extname(name);
   const chunks: Buffer[] = [];
   let size = 0;

@@ -1,0 +1,138 @@
+{
+  "purpose": "organizational-research-coverage",
+  "complete": false,
+  "countries": [
+    {
+      "country": "US",
+      "templates": 2,
+      "levels": 15,
+      "personnelLevels": 9,
+      "compositionLevels": 14,
+      "pending": []
+    },
+    {
+      "country": "CN",
+      "templates": 6,
+      "levels": 11,
+      "personnelLevels": 1,
+      "compositionLevels": 1,
+      "pending": [
+        "cn-hierarchy-research"
+      ]
+    },
+    {
+      "country": "IN",
+      "templates": 4,
+      "levels": 14,
+      "personnelLevels": 1,
+      "compositionLevels": 14,
+      "pending": [
+        "in-r-hierarchy-army"
+      ]
+    },
+    {
+      "country": "KP",
+      "templates": 2,
+      "levels": 5,
+      "personnelLevels": 1,
+      "compositionLevels": 1,
+      "pending": []
+    },
+    {
+      "country": "UA",
+      "templates": 1,
+      "levels": 2,
+      "personnelLevels": 2,
+      "compositionLevels": 2,
+      "pending": []
+    },
+    {
+      "country": "RU",
+      "templates": 2,
+      "levels": 19,
+      "personnelLevels": 10,
+      "compositionLevels": 12,
+      "pending": []
+    },
+    {
+      "country": "IR",
+      "templates": 3,
+      "levels": 6,
+      "personnelLevels": 0,
+      "compositionLevels": 3,
+      "pending": [
+        "ir-r-irgc-levels-research"
+      ]
+    },
+    {
+      "country": "GB",
+      "templates": 3,
+      "levels": 17,
+      "personnelLevels": 8,
+      "compositionLevels": 13,
+      "pending": []
+    },
+    {
+      "country": "FR",
+      "templates": 1,
+      "levels": 6,
+      "personnelLevels": 6,
+      "compositionLevels": 1,
+      "pending": []
+    },
+    {
+      "country": "DE",
+      "templates": 3,
+      "levels": 23,
+      "personnelLevels": 10,
+      "compositionLevels": 18,
+      "pending": []
+    },
+    {
+      "country": "IT",
+      "templates": 4,
+      "levels": 13,
+      "personnelLevels": 0,
+      "compositionLevels": 5,
+      "pending": [
+        "it-r-it-navy-levels",
+        "it-r-it-carabinieri-levels"
+      ]
+    },
+    {
+      "country": "ES",
+      "templates": 2,
+      "levels": 8,
+      "personnelLevels": 0,
+      "compositionLevels": 8,
+      "pending": []
+    },
+    {
+      "country": "PL",
+      "templates": 2,
+      "levels": 12,
+      "personnelLevels": 1,
+      "compositionLevels": 3,
+      "pending": []
+    },
+    {
+      "country": "SE",
+      "templates": 3,
+      "levels": 13,
+      "personnelLevels": 6,
+      "compositionLevels": 7,
+      "pending": []
+    },
+    {
+      "country": "FI",
+      "templates": 3,
+      "levels": 7,
+      "personnelLevels": 7,
+      "compositionLevels": 7,
+      "pending": [
+        "fi-r-hierarchy-air",
+        "fi-r-hierarchy-navy"
+      ]
+    }
+  ]
+}

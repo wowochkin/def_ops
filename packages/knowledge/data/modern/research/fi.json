@@ -1,0 +1,2723 @@
+{
+  "country": "FI",
+  "sources": [
+    {
+      "id": "fi-r-s-army",
+      "title": "Обзор Army",
+      "publisher": "Maavoimat",
+      "url": "https://maavoimat.fi/en/about-us",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-services",
+      "title": "Materiel and Equipment",
+      "publisher": "Puolustusvoimat",
+      "url": "https://puolustusvoimat.fi/en/equipment",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитано только меню ссылок на три вида ВС; динамический каталог не извлечён."
+    },
+    {
+      "id": "fi-r-s-branches",
+      "title": "Знаки различия: Aselajit/toimialat",
+      "publisher": "Puolustusvoimat",
+      "url": "https://puolustusvoimat.fi/documents/1948673/2258496/PEVIESTOS-Sotilaspuvussa-ja-virkapuvussa-kannettavat-merkit-ja-tunnukset.pdf/449efb5b-7f0e-4919-bf9c-cdbd6b06293f/PEVIESTOS-Sotilaspuvussa-ja-virkapuvussa-kannettavat-merkit-ja-tunnukset.pdf.pdf",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан поисковый фрагмент таблицы родов/направлений; полный PDF не прочитан: размер 45,7 МБ."
+    },
+    {
+      "id": "fi-r-s-6x6",
+      "title": "Patria 6x6 brochure",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/download/patria-6x6-brochure-2",
+      "kind": "manufacturer",
+      "scopeDate": "2025-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-amvxp",
+      "title": "Patria AMV XP brochure",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/download/patria-amv-xp-brochure-2",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-nemo",
+      "title": "Patria NEMO brochure",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/download/patrian-nemo",
+      "kind": "manufacturer",
+      "scopeDate": "2025-09",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-trackx",
+      "title": "Patria TRACKX brochure",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/download/patria-trackx",
+      "kind": "manufacturer",
+      "scopeDate": "2026-04",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Техническая таблица прочитана в поисковом извлечении брошюры 0426; полное чтение PDF не завершено."
+    },
+    {
+      "id": "fi-r-s-gtp",
+      "title": "GTP 4x4: Specifications & capabilities",
+      "publisher": "Sisu Auto",
+      "url": "https://eng.sisuauto.com/4x4/",
+      "kind": "manufacturer",
+      "scopeDate": "2019-09-11",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-sisu",
+      "title": "Sisu: Company history",
+      "publisher": "Sisu Auto",
+      "url": "https://eng.sisuauto.com/company/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-land",
+      "title": "Land Business Unit",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/about-us/business-units/land",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-amos",
+      "title": "Nemo hits by surprise",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/newsroom/patria-magazine/case/nemo-hits-by-surprise",
+      "kind": "manufacturer",
+      "scopeDate": "2016-05-02",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Паспорт XA-361 и 40–60 мин прочитан в поисковом фрагменте; не переносится на NEMO."
+    },
+    {
+      "id": "fi-r-s-tremos",
+      "title": "Patria TREMOS brochure",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/download/patria-tremos-brochurepdf",
+      "kind": "manufacturer",
+      "scopeDate": "2025-10",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-intel",
+      "title": "Defence and Weapon Systems",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/products-and-services/defence-and-weapon-systems",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-candl",
+      "title": "Patria CANDL securing UAV networks",
+      "publisher": "Patria",
+      "url": "https://www.patriagroup.com/newsroom/patria-magazine/tech/patria-candl-securing-uav-networks-in-contested-environments",
+      "kind": "manufacturer",
+      "scopeDate": "2026-05-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-senop",
+      "title": "Target acquisition and surveillance systems",
+      "publisher": "Senop",
+      "url": "https://senop.fi/defence-security/target-acquisition-and-surveillance-systems/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-senop-dismounted",
+      "title": "Dismounted soldier systems",
+      "publisher": "Senop",
+      "url": "https://senop.fi/defence-security/dismounted-soldier-systems/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-senop-shelter",
+      "title": "Shelter systems and platforms",
+      "publisher": "Senop",
+      "url": "https://senop.fi/defence-security/shelter-systems-and-platforms/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-millog",
+      "title": "Millog: services and product portfolio",
+      "publisher": "Millog",
+      "url": "https://millog.fi/en/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-hornet",
+      "title": "Aircraft Fact Sheet: F/A-18C/D Hornet",
+      "publisher": "Ilmavoimat",
+      "url": "https://ilmavoimat.fi/documents/1951206/2016308/Finnish%2BAir%2BForce%2BFact%2BSheet%2B-%2BFA-18CD%2BHornet%2B%28JAN%2B18%29.pdf/6eb2f056-12a1-4182-ae1a-3705e8a25b47/Finnish%2BAir%2BForce%2BFact%2BSheet%2B-%2BFA-18CD%2BHornet%2B%28JAN%2B18%29.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2018-01",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-air-types",
+      "title": "Finnish Air Force to train actively at end of August",
+      "publisher": "Ilmavoimat / Valtioneuvosto",
+      "url": "https://valtioneuvosto.fi/en/-/1951206/finnish-air-force-to-train-actively-at-the-end-of-august?languageId=fi_FI",
+      "kind": "national_authority",
+      "scopeDate": "2024",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Использованы только названия типов, без участников, мест, численности и готовности."
+    },
+    {
+      "id": "fi-r-s-nh90",
+      "title": "NH90 technical information",
+      "publisher": "Airbus",
+      "url": "https://www.airbus.com/en/products-services/helicopters/military-helicopters/nh90/nh90-technical-information",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-orbiter",
+      "title": "Orbiter 2 ISR",
+      "publisher": "Aeronautics",
+      "url": "https://aeronautics-sys.com/systems/orbiter-2isr/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-m18",
+      "title": "Watercat M18 AMC",
+      "publisher": "Marine Alutech",
+      "url": "https://www.marinealutech.com/products/watercat-m18-amc/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан развёрнутый поисковый текст; прямое открытие вернуло 502."
+    },
+    {
+      "id": "fi-r-s-m12",
+      "title": "Watercat M12",
+      "publisher": "Marine Alutech",
+      "url": "https://www.marinealutech.com/products/watercat-m12/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан развёрнутый поисковый текст; прямое открытие вернуло 502."
+    },
+    {
+      "id": "fi-r-s-rmc",
+      "title": "Pohjanmaa: основные данные проекта",
+      "publisher": "Rauma Marine Constructions",
+      "url": "https://rmcfinland.fi/fi/rmc-aloitti-toisen-monitoimikorvetin-rakentamisen/",
+      "kind": "manufacturer",
+      "scopeDate": "2024-10-10",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-hamina",
+      "title": "Upgrade of Hamina-class craft",
+      "publisher": "Merivoimat / Valtioneuvosto",
+      "url": "https://valtioneuvosto.fi/sv/-/1951215/uppgradering-av-fartygen-av-hamina-klass-starker-den-marina-slagformagan?languageId=en_US",
+      "kind": "national_authority",
+      "scopeDate": "2023-12-12",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-navy-report",
+      "title": "Government Defence Report",
+      "publisher": "Правительство Финляндии",
+      "url": "https://julkaisut.valtioneuvosto.fi/server/api/core/bitstreams/8a3950d4-4c34-45e7-847d-795bccdb22c2/content",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Фрагмент подтверждает обозначения Hamina, Pansio, Katanpää; технических чисел нет."
+    },
+    {
+      "id": "fi-r-s-naval-components",
+      "title": "Squadron 2020 strategic project",
+      "publisher": "Министерство обороны Финляндии",
+      "url": "https://www.defmin.fi/files/3819/Squadron_2020_The_Finnish_Defence_Forces_strategic_project.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2017",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-artillery",
+      "title": "155 mm propelling charges",
+      "publisher": "Министерство обороны Финляндии / Valtioneuvosto",
+      "url": "https://valtioneuvosto.fi/en/-/236553176/finnish-defence-forces-places-order-with-nammo-lapua-for-full-charges-for-artillery-1",
+      "kind": "national_authority",
+      "scopeDate": "2025-03-20",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    },
+    {
+      "id": "fi-r-s-k9",
+      "title": "Hanwha Defense brochure: K9 Thunder",
+      "publisher": "Hanwha Aerospace",
+      "url": "https://www.hanwhaaerospace.com/assets/content/library/download/Hanwha%20Defense%20Brochure_EN.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Печатные с.18–19, общая конфигурация K9; не паспорт финской модернизации. Опечатка единицы размеров в таблице не используется."
+    },
+    {
+      "id": "fi-r-s-levels",
+      "title": "Suomen osallistuminen EU:n taisteluosastoihin",
+      "publisher": "Министерство обороны Финляндии",
+      "url": "https://www.defmin.fi/files/330/2531_2307_Taisteluosastot_1_.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2004-12-08",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Первичный открытый источник; пересказ ограничен идентификацией и паспортными сведениями."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "fi-armed-forces",
+      "country": "FI",
+      "parent": null,
+      "title": "Силы обороны Финляндии",
+      "nativeName": "Puolustusvoimat",
+      "kind": "organization",
+      "sources": [
+        "fi-r-s-services"
+      ],
+      "status": "draft",
+      "note": "Корень справочной классификации."
+    },
+    {
+      "id": "fi-army",
+      "country": "FI",
+      "parent": "fi-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Maavoimat",
+      "kind": "service",
+      "sources": [
+        "fi-r-s-services"
+      ],
+      "status": "draft",
+      "note": "Вид ВС; классификация не задаёт реальные связи подчинения."
+    },
+    {
+      "id": "fi-navy",
+      "country": "FI",
+      "parent": "fi-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Merivoimat",
+      "kind": "service",
+      "sources": [
+        "fi-r-s-services"
+      ],
+      "status": "draft",
+      "note": "Вид ВС; классификация не задаёт реальные связи подчинения."
+    },
+    {
+      "id": "fi-air",
+      "country": "FI",
+      "parent": "fi-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Ilmavoimat",
+      "kind": "service",
+      "sources": [
+        "fi-r-s-services"
+      ],
+      "status": "draft",
+      "note": "Вид ВС; классификация не задаёт реальные связи подчинения."
+    },
+    {
+      "id": "fi-r-infantry",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Пехота",
+      "nativeName": "Jalkaväki",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-artillery",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Полевая артиллерия",
+      "nativeName": "Kenttätykistö",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-air-defence",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Противовоздушная оборона",
+      "nativeName": "Ilmatorjunta",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-engineers",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Инженерные войска",
+      "nativeName": "Pioneeri",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-signals",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Связь",
+      "nativeName": "Viesti",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-logistics",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Тыловое обеспечение",
+      "nativeName": "Huolto",
+      "kind": "branch",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная таблица Aselajit/toimialat; список родов отдельно от уровней формирований."
+    },
+    {
+      "id": "fi-r-army-aviation",
+      "country": "FI",
+      "parent": "fi-army",
+      "title": "Армейская авиация",
+      "nativeName": "Maavoimien ilmailu",
+      "kind": "component",
+      "sources": [
+        "fi-r-s-branches"
+      ],
+      "status": "draft",
+      "note": "Направление из Aselajit/toimialat; самостоятельным видом ВС не объявляется."
+    },
+    {
+      "id": "fi-r-fleet",
+      "country": "FI",
+      "parent": "fi-navy",
+      "title": "Морской компонент",
+      "nativeName": "Fleet",
+      "kind": "component",
+      "sources": [
+        "fi-r-s-naval-components"
+      ],
+      "status": "draft",
+      "note": "Общие компоненты морского обзора 2017 года; не фактический состав флота."
+    },
+    {
+      "id": "fi-r-coastal",
+      "country": "FI",
+      "parent": "fi-navy",
+      "title": "Береговые войска",
+      "nativeName": "Coastal troops",
+      "kind": "component",
+      "sources": [
+        "fi-r-s-naval-components"
+      ],
+      "status": "draft",
+      "note": "Общие компоненты морского обзора 2017 года; не фактический состав флота."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "fi-hierarchy-research",
+      "country": "FI",
+      "service": "fi-army",
+      "status": "draft",
+      "sources": [
+        "fi-r-s-levels"
+      ],
+      "levels": [
+        {
+          "id": "fi-r-level-ryhma",
+          "title": "Отделение",
+          "nativeName": "Ryhmä",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Ryhmä",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-joukkue",
+          "title": "Взвод",
+          "nativeName": "Joukkue",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Joukkue",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-komppania",
+          "title": "Рота",
+          "nativeName": "Komppania",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Komppania",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-pataljoona",
+          "title": "Батальон",
+          "nativeName": "Pataljoona",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Pataljoona",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-taisteluosasto",
+          "title": "Тактическая группа",
+          "nativeName": "Taisteluosasto",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Taisteluosasto",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-prikaati",
+          "title": "Бригада",
+          "nativeName": "Prikaati",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Prikaati",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fi-r-level-armeijakunta",
+          "title": "Корпус",
+          "nativeName": "Armeijakunta",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Armeijakunta",
+                "unit": null,
+                "source": "fi-r-s-levels",
+                "locator": "С.1, таблица 1",
+                "scope": "Обзор Минобороны 08.12.2004",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Терминологический обзор 2004 года, не подтверждение современной штатной схемы. Taisteluosasto — гибкая форма, а не обязательная ступень между батальоном и бригадой. Порядок записей не задаёт подчинение. Численности не извлекались.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "Общие сухопутные организационные термины",
+            "unit": null,
+            "source": "fi-r-s-levels",
+            "locator": "С.1",
+            "scope": "Только таблица 1",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Документ 08.12.2004; современная применимость требует проверки",
+            "unit": null,
+            "source": "fi-r-s-levels",
+            "locator": "С.1",
+            "scope": "Не текущая штатная схема",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-hierarchy-air",
+      "country": "FI",
+      "service": "fi-air",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Общая национальная схема уровней не подтверждена. Конкретные командования, авиакрылья и флотилии не используются для вывода обязательной цепочки.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "fi-r-hierarchy-navy",
+      "country": "FI",
+      "service": "fi-navy",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Общая национальная схема уровней не подтверждена. Конкретные командования, авиакрылья и флотилии не используются для вывода обязательной цепочки.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "fi-patria6x6",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria 6x6",
+      "objectClass": "apc",
+      "summary": "Модульная колёсная платформа для перевозки личного состава.",
+      "sources": [
+        "fi-r-s-6x6"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульная колёсная платформа для перевозки личного состава.",
+            "unit": null,
+            "source": "fi-r-s-6x6",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Базовый APC: водитель и командир",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 10,
+            "unit": "person",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "До 10 в заднем отделении",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "mass_kg",
+            "value": 24000,
+            "unit": "kg",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Максимальная боевая масса",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "length_m",
+            "value": 7.5,
+            "unit": "m",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Брошюра 0725",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.9,
+            "unit": "m",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Брошюра 0725",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.5,
+            "unit": "m",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Высота корпуса",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 700,
+            "unit": "km",
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Operating distance; маршрут и нагрузка не уточнены",
+            "status": "reported",
+            "qualifier": "greater_than"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max. speed >100 km/h; Swimming (optional) 7 km/h",
+            "unit": null,
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Условия максимальной сухопутной скорости не названы; плавучесть — опция",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Пятицилиндровый рядный дизель; автоматическая трансмиссия 7+2",
+            "unit": null,
+            "source": "fi-r-s-6x6",
+            "locator": "Technical specifications",
+            "scope": "Брошюра 0725",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-amv-xp",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria AMV XP",
+      "objectClass": "apc",
+      "summary": "Семейство модульных колёсных платформ 8x8.",
+      "sources": [
+        "fi-r-s-amvxp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство модульных колёсных платформ 8x8.",
+            "unit": null,
+            "source": "fi-r-s-amvxp",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 32000,
+            "unit": "kg",
+            "source": "fi-r-s-amvxp",
+            "locator": "Technical specifications",
+            "scope": "Максимальная боевая масса",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max. speed >100 km/h; Operating range 800–1000 km; Swimming optional 6–9 km/h",
+            "unit": null,
+            "source": "fi-r-s-amvxp",
+            "locator": "Technical specifications",
+            "scope": "Условия скорости и запаса хода не уточнены; диапазоны не сведены к одному числу",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.8,
+            "unit": "m",
+            "source": "fi-r-s-amvxp",
+            "locator": "Technical specifications",
+            "scope": "Таблица габаритов",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Длина 8,1 м или опционально 8,5 м; высота корпуса 2,4 или 2,7 м",
+            "unit": null,
+            "source": "fi-r-s-amvxp",
+            "locator": "Technical specifications",
+            "scope": "Модульные варианты; числа не наследуются на AMV/XA-360",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Шестицилиндровый рядный дизель, автоматическая коробка 7+2, полный привод",
+            "unit": null,
+            "source": "fi-r-s-amvxp",
+            "locator": "Technical specifications",
+            "scope": "Общее описание производителя",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-amv",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria AMV",
+      "objectClass": "apc",
+      "summary": "Семейство модульных бронемашин; отдельное от AMV XP.",
+      "sources": [
+        "fi-r-s-land"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство модульных бронемашин; отдельное от AMV XP.",
+            "unit": null,
+            "source": "fi-r-s-land",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-trackx",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria TRACKX",
+      "objectClass": "apc",
+      "summary": "Гусеничная транспортная платформа, конфигурация APC.",
+      "sources": [
+        "fi-r-s-trackx"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная транспортная платформа, конфигурация APC.",
+            "unit": null,
+            "source": "fi-r-s-trackx",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "APC: водитель и командир",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 10,
+            "unit": "person",
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "APC: места для десанта",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 15000,
+            "unit": "kg",
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "Combat weight, брошюра 0426",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "Operational range; маршрут и нагрузка не названы",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max. speed 80 km/h; swimming speed 4 km/h",
+            "unit": null,
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "Максимум не обозначен шоссейным; скорость плавания без слова maximum",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "Температурный диапазон −46…+44 °C",
+            "unit": null,
+            "source": "fi-r-s-trackx",
+            "locator": "Technical specifications",
+            "scope": "Брошюра 0426",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-gtp",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Sisu GTP 4x4",
+      "objectClass": "support-vehicle",
+      "summary": "Модульная защищённая машина с взаимозаменяемыми кузовами.",
+      "sources": [
+        "fi-r-s-gtp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульная защищённая машина с взаимозаменяемыми кузовами.",
+            "unit": null,
+            "source": "fi-r-s-gtp",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max speed ≥100 km/h; рассадка 2+8 (squad), 2+2/2+3 (recon), 2 (utility)",
+            "unit": null,
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Таблица 2019; значения зависят от варианта, условия скорости не названы",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 700,
+            "unit": "km",
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Range over 700 km; маршрут/нагрузка не названы",
+            "status": "reported",
+            "qualifier": "greater_than"
+          },
+          {
+            "field": "mass_kg",
+            "value": 14000,
+            "unit": "kg",
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Gross weight; может отличаться между вариантами",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 6,
+            "unit": "m",
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Таблица 2019",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.5,
+            "unit": "m",
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Таблица 2019",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.55,
+            "unit": "m",
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Таблица 2019",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Шестицилиндровый четырёхтактный дизель, шестиступенчатая автоматическая коробка",
+            "unit": null,
+            "source": "fi-r-s-gtp",
+            "locator": "Technical specifications",
+            "scope": "Общая таблица",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-e13tp",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Sisu E13TP 8x8",
+      "objectClass": "support-vehicle",
+      "summary": "Защищённый четырёхосный грузовой автомобиль.",
+      "sources": [
+        "fi-r-s-sisu"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Защищённый четырёхосный грузовой автомобиль.",
+            "unit": null,
+            "source": "fi-r-s-sisu",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-leopard2a6",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Leopard 2A6",
+      "objectClass": "tank",
+      "summary": "Тип техники, названный в официальном обзорном каталоге Army.",
+      "sources": [
+        "fi-r-s-army"
+      ],
+      "relatedOrganizations": [
+        "fi-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип техники, названный в официальном обзорном каталоге Army.",
+            "unit": null,
+            "source": "fi-r-s-army",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-leopard2a4",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Leopard 2A4",
+      "objectClass": "tank",
+      "summary": "Тип техники, названный в официальном обзорном каталоге Army.",
+      "sources": [
+        "fi-r-s-army"
+      ],
+      "relatedOrganizations": [
+        "fi-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип техники, названный в официальном обзорном каталоге Army.",
+            "unit": null,
+            "source": "fi-r-s-army",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-cv9030",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "CV9030 FIN",
+      "objectClass": "ifv",
+      "summary": "Тип техники, названный в официальном обзорном каталоге Army.",
+      "sources": [
+        "fi-r-s-army"
+      ],
+      "relatedOrganizations": [
+        "fi-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип техники, названный в официальном обзорном каталоге Army.",
+            "unit": null,
+            "source": "fi-r-s-army",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-bmp2m",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "BMP 2M",
+      "objectClass": "ifv",
+      "summary": "Тип техники, названный в официальном обзорном каталоге Army.",
+      "sources": [
+        "fi-r-s-army"
+      ],
+      "relatedOrganizations": [
+        "fi-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип техники, названный в официальном обзорном каталоге Army.",
+            "unit": null,
+            "source": "fi-r-s-army",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-k9",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "K9 Thunder (общий паспорт)",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная 155-мм самоходная гаубица K9; общий каталог производителя.",
+      "sources": [
+        "fi-r-s-k9",
+        "fi-r-s-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общие цифры Hanwha не удостоверяют комплектацию финского 155 PSH K9. Национальное обозначение подтверждено отдельной государственной публикацией.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная 155-мм самоходная гаубица K9; общий каталог производителя.",
+            "unit": null,
+            "source": "fi-r-s-k9",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 360,
+            "unit": "km",
+            "source": "fi-r-s-k9",
+            "locator": "Печатные с.18–19",
+            "scope": "Cruising range общего K9; не дальность стрельбы",
+            "status": "reported",
+            "qualifier": "greater_than"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 48,
+            "unit": "round",
+            "source": "fi-r-s-k9",
+            "locator": "Печатные с.18–19",
+            "scope": "On-board ammunition общего K9; не текущий остаток",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max. speed 67 KPH",
+            "unit": null,
+            "source": "fi-r-s-k9",
+            "locator": "Печатные с.18–19",
+            "scope": "Условия скорости не названы; не объявлена шоссейной",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 47000,
+            "unit": "kg",
+            "source": "fi-r-s-k9",
+            "locator": "Печатные с.18–19",
+            "scope": "Combat weight общего K9",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-155k98",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "155 K 98",
+      "objectClass": "towed-artillery",
+      "summary": "155-мм полевое артиллерийское орудие, указанное в публикации о метательных зарядах.",
+      "sources": [
+        "fi-r-s-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "155-мм полевое артиллерийское орудие, указанное в публикации о метательных зарядах.",
+            "unit": null,
+            "source": "fi-r-s-artillery",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-155k83",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "155 K 83-97",
+      "objectClass": "towed-artillery",
+      "summary": "155-мм полевое артиллерийское орудие, указанное в публикации о метательных зарядах.",
+      "sources": [
+        "fi-r-s-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "155-мм полевое артиллерийское орудие, указанное в публикации о метательных зарядах.",
+            "unit": null,
+            "source": "fi-r-s-artillery",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-nemo",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria NEMO",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Дистанционно управляемая 120-мм миномётная башенная система для установки на платформу.",
+      "sources": [
+        "fi-r-s-nemo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Класс обозначает самоходный способ интеграции; эта запись — башенная система без заданного шасси. Скорость и запас хода относятся к носителю и не заданы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Дистанционно управляемая 120-мм миномётная башенная система для установки на платформу.",
+            "unit": null,
+            "source": "fi-r-s-nemo",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 1900,
+            "unit": "kg",
+            "source": "fi-r-s-nemo",
+            "locator": "Technical specifications",
+            "scope": "Масса башни, не всей машины",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "50–60 мин на борту; вместимость зависит от платформы",
+            "unit": null,
+            "source": "fi-r-s-nemo",
+            "locator": "Technical specifications",
+            "scope": "Брошюра 0925; диапазон, не точный универсальный боекомплект",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление башней",
+            "unit": null,
+            "source": "fi-r-s-nemo",
+            "locator": "Technical specifications",
+            "scope": "Без указания управления носителем",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-xa361",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "XA-361 AMV с AMOS",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Колёсная платформа с двухствольной миномётной системой AMOS.",
+      "sources": [
+        "fi-r-s-amos"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная платформа с двухствольной миномётной системой AMOS.",
+            "unit": null,
+            "source": "fi-r-s-amos",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 5,
+            "unit": "person",
+            "source": "fi-r-s-amos",
+            "locator": "Technical specifications",
+            "scope": "XA-361, публикация 2016",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Обычно 40–60 мин в кормовой укладке",
+            "unit": null,
+            "source": "fi-r-s-amos",
+            "locator": "Technical specifications",
+            "scope": "Typical number, XA-361; не точный универсальный боекомплект",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-tremos",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria TREMOS",
+      "objectClass": "self-propelled-artillery",
+      "summary": "120-мм миномётная система для интеграции с колёсными или лёгкими гусеничными носителями.",
+      "sources": [
+        "fi-r-s-tremos"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "120-мм миномётная система для интеграции с колёсными или лёгкими гусеничными носителями.",
+            "unit": null,
+            "source": "fi-r-s-tremos",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Носители 4x4, 6x6, 8x8 и лёгкие гусеничные платформы",
+            "unit": null,
+            "source": "fi-r-s-tremos",
+            "locator": "Technical specifications",
+            "scope": "Выбор носителя отдельно; его скорость и запас хода не заданы",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-aris",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria ARIS",
+      "objectClass": "electronic-warfare",
+      "summary": "Система радиоэлектронной разведки ELINT.",
+      "sources": [
+        "fi-r-s-intel"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Система радиоэлектронной разведки ELINT.",
+            "unit": null,
+            "source": "fi-r-s-intel",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-catchr",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria CATCHR",
+      "objectClass": "electronic-warfare",
+      "summary": "Система электронного наблюдения ESM.",
+      "sources": [
+        "fi-r-s-intel"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Система электронного наблюдения ESM.",
+            "unit": null,
+            "source": "fi-r-s-intel",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-muscl",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria MUSCL",
+      "objectClass": "radar-sensor",
+      "summary": "Пассивная радиолокационная система.",
+      "sources": [
+        "fi-r-s-intel"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пассивная радиолокационная система.",
+            "unit": null,
+            "source": "fi-r-s-intel",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-candl",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Patria CANDL",
+      "objectClass": "communications",
+      "summary": "Компактная авиационная сетевая линия передачи данных.",
+      "sources": [
+        "fi-r-s-candl"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Компактная авиационная сетевая линия передачи данных.",
+            "unit": null,
+            "source": "fi-r-s-candl",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-lisa",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop LISA",
+      "objectClass": "radar-sensor",
+      "summary": "Ручной оптикоэлектронный прибор наблюдения из каталога Senop.",
+      "sources": [
+        "fi-r-s-senop"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ручной оптикоэлектронный прибор наблюдения из каталога Senop.",
+            "unit": null,
+            "source": "fi-r-s-senop",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-lilly",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop LILLY",
+      "objectClass": "radar-sensor",
+      "summary": "Ручной оптикоэлектронный прибор наблюдения из каталога Senop.",
+      "sources": [
+        "fi-r-s-senop"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ручной оптикоэлектронный прибор наблюдения из каталога Senop.",
+            "unit": null,
+            "source": "fi-r-s-senop",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-luke-soldier",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop LUKE Soldier’s Laser Sight",
+      "objectClass": "radar-sensor",
+      "summary": "Лазерный прицел.",
+      "sources": [
+        "fi-r-s-senop-dismounted"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лазерный прицел.",
+            "unit": null,
+            "source": "fi-r-s-senop-dismounted",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-luke-tactical",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop LUKE Tactical Laser Sight",
+      "objectClass": "radar-sensor",
+      "summary": "Тактический лазерный прицел.",
+      "sources": [
+        "fi-r-s-senop-dismounted"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тактический лазерный прицел.",
+            "unit": null,
+            "source": "fi-r-s-senop-dismounted",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-vv3x",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop VV3X",
+      "objectClass": "radar-sensor",
+      "summary": "Ночной прицел.",
+      "sources": [
+        "fi-r-s-senop-dismounted"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ночной прицел.",
+            "unit": null,
+            "source": "fi-r-s-senop-dismounted",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-eva40",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop EVA 40",
+      "objectClass": "radar-sensor",
+      "summary": "Очки ночного видения.",
+      "sources": [
+        "fi-r-s-senop-dismounted"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Очки ночного видения.",
+            "unit": null,
+            "source": "fi-r-s-senop-dismounted",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-arcticfox",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Senop Arctic Fox",
+      "objectClass": "support-vehicle",
+      "summary": "Модульная алюминиевая контейнерная платформа для интеграции оборудования.",
+      "sources": [
+        "fi-r-s-senop-shelter"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Не автомобильное шасси: класс машины обеспечения использован как ближайший класс контейнерной платформы. Движитель и экипаж не приписаны.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульная алюминиевая контейнерная платформа для интеграции оборудования.",
+            "unit": null,
+            "source": "fi-r-s-senop-shelter",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-safecel",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Millog SAFECEL",
+      "objectClass": "communications",
+      "summary": "Модульное защищённое помещение для обработки информации; проект Millog и Parmaco.",
+      "sources": [
+        "fi-r-s-millog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Класс связи обозначает инфраструктурный контекст; это помещение, не радиостанция и не автомобиль.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульное защищённое помещение для обработки информации; проект Millog и Parmaco.",
+            "unit": null,
+            "source": "fi-r-s-millog",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-hornet",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "F/A-18C/D Hornet (финский обзор)",
+      "objectClass": "aircraft",
+      "summary": "Семейство двухдвигательных многоцелевых самолётов C/D.",
+      "sources": [
+        "fi-r-s-hornet"
+      ],
+      "relatedOrganizations": [
+        "fi-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство двухдвигательных многоцелевых самолётов C/D.",
+            "unit": null,
+            "source": "fi-r-s-hornet",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1300,
+            "unit": "km/h",
+            "source": "fi-r-s-hornet",
+            "locator": "С.3 Technical Data",
+            "scope": "На малой высоте, таблица JAN 2018",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "На высоте: максимальная скорость Mach 1,8; пушка M61 Vulcan 20 мм; APG-73 и Link 16",
+            "unit": null,
+            "source": "fi-r-s-hornet",
+            "locator": "С.3 Technical Data",
+            "scope": "Таблица C/D, JAN 2018; Mach не пересчитан",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 12,
+            "unit": "item",
+            "source": "fi-r-s-hornet",
+            "locator": "С.3 Armament",
+            "scope": "Максимум AIM-9 и/или AIM-120 на внешних узлах для воздушной конфигурации; не любая загрузка",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "length_m",
+            "value": 17.1,
+            "unit": "m",
+            "source": "fi-r-s-hornet",
+            "locator": "С.3",
+            "scope": "Общая таблица C/D",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 11.43,
+            "unit": "m",
+            "source": "fi-r-s-hornet",
+            "locator": "С.3",
+            "scope": "Размах крыла",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-hawk",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "BAE Hawk",
+      "objectClass": "aircraft",
+      "summary": "Учебный реактивный самолёт; модификации требуют отдельной сверки.",
+      "sources": [
+        "fi-r-s-air-types"
+      ],
+      "relatedOrganizations": [
+        "fi-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Учебный реактивный самолёт; модификации требуют отдельной сверки.",
+            "unit": null,
+            "source": "fi-r-s-air-types",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-c295",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "C-295M",
+      "objectClass": "aircraft",
+      "summary": "Транспортный самолёт.",
+      "sources": [
+        "fi-r-s-air-types"
+      ],
+      "relatedOrganizations": [
+        "fi-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный самолёт.",
+            "unit": null,
+            "source": "fi-r-s-air-types",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-pc12",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Pilatus PC-12NG",
+      "objectClass": "aircraft",
+      "summary": "Связной самолёт.",
+      "sources": [
+        "fi-r-s-air-types"
+      ],
+      "relatedOrganizations": [
+        "fi-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Связной самолёт.",
+            "unit": null,
+            "source": "fi-r-s-air-types",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-learjet",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Learjet 35A/S",
+      "objectClass": "aircraft",
+      "summary": "Семейство служебных реактивных самолётов.",
+      "sources": [
+        "fi-r-s-air-types"
+      ],
+      "relatedOrganizations": [
+        "fi-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство служебных реактивных самолётов.",
+            "unit": null,
+            "source": "fi-r-s-air-types",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-nh90",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "NH90 (общий паспорт)",
+      "objectClass": "helicopter",
+      "summary": "Двухдвигательный многоцелевой вертолёт; общий паспорт семейства.",
+      "sources": [
+        "fi-r-s-nh90",
+        "fi-r-s-air-types"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Общая таблица Airbus не удостоверяет финский TTH. Отдельная государственная публикация подтверждает только обозначение NH90.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухдвигательный многоцелевой вертолёт; общий паспорт семейства.",
+            "unit": null,
+            "source": "fi-r-s-nh90",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 300,
+            "unit": "km/h",
+            "source": "fi-r-s-nh90",
+            "locator": "Performance",
+            "scope": "Максимальная крейсерская при массе 10 000 кг",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 982,
+            "unit": "km",
+            "source": "fi-r-s-nh90",
+            "locator": "Performance",
+            "scope": "Максимальная дальность с внутренним топливом; без переноса на финскую комплектацию",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1600,
+            "unit": "km",
+            "source": "fi-r-s-nh90",
+            "locator": "Performance",
+            "scope": "Перегоночная дальность с дополнительными внутренними баками",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 5,
+            "unit": "h",
+            "source": "fi-r-s-nh90",
+            "locator": "Performance",
+            "scope": "Максимальная длительность со стандартными баками",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "length_m",
+            "value": 19.56,
+            "unit": "m",
+            "source": "fi-r-s-nh90",
+            "locator": "Technical specifications",
+            "scope": "Внешний габарит с вращающимися винтами",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 16.3,
+            "unit": "m",
+            "source": "fi-r-s-nh90",
+            "locator": "Technical specifications",
+            "scope": "С вращающимися винтами",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-orbiter2",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Orbiter 2 ISR (каталог производителя)",
+      "objectClass": "unmanned-air",
+      "summary": "Электрический беспилотный самолёт наблюдения.",
+      "sources": [
+        "fi-r-s-orbiter"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочный технологический контекст; версия Orbiter 2 ISR не отождествлена с финским Orbiter 2B. Наличие в Финляндии этим источником не подтверждено.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Электрический беспилотный самолёт наблюдения.",
+            "unit": null,
+            "source": "fi-r-s-orbiter",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 3,
+            "unit": "h",
+            "source": "fi-r-s-orbiter",
+            "locator": "Technical specifications",
+            "scope": "Maximum endurance каталожного Orbiter 2 ISR",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 13,
+            "unit": "kg",
+            "source": "fi-r-s-orbiter",
+            "locator": "Technical specifications",
+            "scope": "MTOW, каталог Orbiter 2 ISR",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max speed 50 kts",
+            "unit": null,
+            "source": "fi-r-s-orbiter",
+            "locator": "Technical specifications",
+            "scope": "Исходные узлы сохранены; не переносится на финский Orbiter 2B",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электрическая силовая установка",
+            "unit": null,
+            "source": "fi-r-s-orbiter",
+            "locator": "Technical specifications",
+            "scope": "Каталог производителя",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-m18",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Watercat M18 AMC",
+      "objectClass": "surface-vessel",
+      "summary": "Модульный транспортный катер.",
+      "sources": [
+        "fi-r-s-m18"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульный транспортный катер.",
+            "unit": null,
+            "source": "fi-r-s-m18",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 19.9,
+            "unit": "m",
+            "source": "fi-r-s-m18",
+            "locator": "Technical specifications",
+            "scope": "LOA каталога",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 4.3,
+            "unit": "m",
+            "source": "fi-r-s-m18",
+            "locator": "Technical specifications",
+            "scope": "Beam",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 32000,
+            "unit": "kg",
+            "source": "fi-r-s-m18",
+            "locator": "Technical specifications",
+            "scope": "Полная нагрузка",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed >35 kn; Range 200 nm",
+            "unit": null,
+            "source": "fi-r-s-m18",
+            "locator": "Technical specifications",
+            "scope": "Скорость без уточнения maximum; дальность в исходных морских милях",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два дизеля Scania по 660 кВт; водомёты Rolls-Royce",
+            "unit": null,
+            "source": "fi-r-s-m18",
+            "locator": "Technical specifications",
+            "scope": "Каталог производителя",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-m12",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Watercat M12",
+      "objectClass": "surface-vessel",
+      "summary": "Транспортный катер для береговых подразделений.",
+      "sources": [
+        "fi-r-s-m12"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный катер для береговых подразделений.",
+            "unit": null,
+            "source": "fi-r-s-m12",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 14.25,
+            "unit": "m",
+            "source": "fi-r-s-m12",
+            "locator": "Technical specifications",
+            "scope": "LOA; длина корпуса отдельно 13,10 м",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.65,
+            "unit": "m",
+            "source": "fi-r-s-m12",
+            "locator": "Technical specifications",
+            "scope": "Beam",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 13800,
+            "unit": "kg",
+            "source": "fi-r-s-m12",
+            "locator": "Technical specifications",
+            "scope": "Displacement; отдельно weight 10,4 ton",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max speed >35 kn; cruising >30 kn; range >180 nm; 20 мест на носовой палубе",
+            "unit": null,
+            "source": "fi-r-s-m12",
+            "locator": "Technical specifications",
+            "scope": "Морские единицы сохранены; 20 мест не объявлены общей вместимостью всего катера",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-pohjanmaa",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Pohjanmaa (проект корвета)",
+      "objectClass": "surface-vessel",
+      "summary": "Проект многоцелевого корвета; параметры проекта из публикации 2024.",
+      "sources": [
+        "fi-r-s-rmc"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект многоцелевого корвета; параметры проекта из публикации 2024.",
+            "unit": null,
+            "source": "fi-r-s-rmc",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 117,
+            "unit": "m",
+            "source": "fi-r-s-rmc",
+            "locator": "Technical specifications",
+            "scope": "Основные данные проекта",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 16.5,
+            "unit": "m",
+            "source": "fi-r-s-rmc",
+            "locator": "Technical specifications",
+            "scope": "Основные данные проекта",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 70,
+            "unit": "person",
+            "source": "fi-r-s-rmc",
+            "locator": "Technical specifications",
+            "scope": "Проектная величина, не фактическая численность экипажа",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость 26 узлов (48 км/ч в самом источнике)",
+            "unit": null,
+            "source": "fi-r-s-rmc",
+            "locator": "Technical specifications",
+            "scope": "Источник не называет её максимальной; числовое поле максимума не заполняется",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-hamina",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Hamina, модернизация 2018–2023",
+      "objectClass": "surface-vessel",
+      "summary": "Класс ракетных катеров с обновлённым оборудованием.",
+      "sources": [
+        "fi-r-s-hamina"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс ракетных катеров с обновлённым оборудованием.",
+            "unit": null,
+            "source": "fi-r-s-hamina",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "TP47, гидроакустическая система переменной глубины VDS, обновлённая боевая система",
+            "unit": null,
+            "source": "fi-r-s-hamina",
+            "locator": "Technical specifications",
+            "scope": "Состояние описанной модернизации 2018–2023; без текущей готовности",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-pansio",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Pansio",
+      "objectClass": "surface-vessel",
+      "summary": "Класс минных транспортных судов, названный в государственном обзоре.",
+      "sources": [
+        "fi-r-s-navy-report"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс минных транспортных судов, названный в государственном обзоре.",
+            "unit": null,
+            "source": "fi-r-s-navy-report",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fi-r-katanpaa",
+      "kind": "equipment_model",
+      "countryContext": "FI",
+      "title": "Katanpää",
+      "objectClass": "surface-vessel",
+      "summary": "Класс противоминных кораблей, названный в государственном обзоре.",
+      "sources": [
+        "fi-r-s-navy-report"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Текущие операторы, наличие в частях и комплектация не выводятся. Незаполненные поля требуют исследования.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс противоминных кораблей, названный в государственном обзоре.",
+            "unit": null,
+            "source": "fi-r-s-navy-report",
+            "locator": "Описание изделия",
+            "scope": "Общая идентификация",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Широкий частичный открытый каталог трёх видов ВС и финских производителей; классификация родов, общие уровни и модели техники разделены. Национальный контекст не доказывает нынешнего оператора. Все паспорта справочные, без входов симуляции.",
+    "gaps": [
+      "По каждой карточке незаполненные базовые поля (условия среды, конкретная комплектация, экипаж, габариты, энергия) остаются неизвестными; нули и оценки не подставлялись.",
+      "Номинальный боекомплект подтверждён только у общего K9 (48); у NEMO и XA-361 опубликованы диапазоны, оставленные текстом. Для танков, БМП, самолётной пушки и корабельного вооружения вместимость требует отдельных первичных паспортов.",
+      "Скорости наземных Patria/Sisu/K9 не названы в прочитанных таблицах шоссейными; сохранены текстом. Максимумы вне дорог и на воде отдельно не установлены.",
+      "Запас хода/длительность большинства старых машин, инженерных и связных систем, транспортной авиации и кораблей не установлены; морские мили не переводились.",
+      "Общие паспорта NH90/K9/Orbiter 2 ISR не перенесены на национальные модификации. Orbiter 2B требует отдельного финского источника и паспорта.",
+      "Не закрыты MLRS, NASAMS/ITO12, Stinger, RBS70, мостовые и ремонтно-эвакуационные Leopard, XA180/185/202, MD500, Grob, мины, радиостанции, радиолокаторы, корабельные подводные беспилотные аппараты.",
+      "Каталог Millog описывает главным образом услуги; модель оборудования не выдумывалась из названия услуги. Arctic Fox и SAFECEL требуют уточнения подходящего класса объектов.",
+      "Схемы уровней ВВС/ВМС и их специальные национальные направления требуют дальнейших источников. Сухопутный обзор 2004 года требует актуализации; происхождение и операторы всех моделей оставлены пустыми."
+    ],
+    "sourceProblems": [
+      "Puolustusvoimat equipment: 403 при одном открытии, затем только оболочка меню; не подтверждает модели техники.",
+      "Ряд предполагаемых URL Maavoimat branches, Ilmavoimat aircraft/materiel и Merivoimat equipment/fleet недоступен; факты по ним не внесены.",
+      "Полный PDF знаков различия не извлечён из-за размера; таблица родов имеет search_excerpt.",
+      "Marine Alutech: прямое чтение 502; использованы только развёрнутые поисковые фрагменты с честным readLevel.",
+      "У недатированных портфелей scopeDate=null; дата обращения не объявлена датой актуальности.",
+      "В брошюре Hanwha единица размеров ошибочно указана mm; размеры не внесены. TRACKX имеет иные цифры в отчёте 2025: карточка ограничена конкретной брошюрой 0426, без усреднения."
+    ]
+  }
+}

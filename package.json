@@ -63,7 +63,9 @@
     "expo:history": "tsx scripts/expo-history.ts",
     "expo:briefing": "tsx scripts/expo-briefing.ts",
     "portable:mac": "node --import tsx scripts/portable-build-mac.mjs",
-    "portable:library": "node scripts/portable-release.mjs"
+    "portable:library": "node scripts/portable-release.mjs",
+    "gis:prepare": "node scripts/cartography-runtime.mjs prepare",
+    "gis:windows-wheels": "node scripts/cartography-runtime.mjs windows-wheels"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.3",

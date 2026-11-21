@@ -1,0 +1,727 @@
+{
+  "version": 1,
+  "purpose": "reference-passports",
+  "note": "Минимум документальных справочных полей. Это не полный набор параметров боевой модели и не допуск к созданию проверенного агента.",
+  "fields": [
+    {
+      "id": "role_description",
+      "title": "Назначение",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "mobility_medium",
+      "title": "Среда и способ движения",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "energy_supply",
+      "title": "Источник энергии и обеспечение",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "environment_limits",
+      "title": "Документированные ограничения среды",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "control_mode",
+      "title": "Способ управления",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "configuration_scope",
+      "title": "Модификация и комплектация",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "national_designation",
+      "title": "Национальные обозначения уровней",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "service_scope",
+      "title": "Вид ВС и область применения схемы",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "level_definitions",
+      "title": "Определения организационных уровней",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "parent_options",
+      "title": "Допустимые вышестоящие уровни",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "child_options",
+      "title": "Допустимые нижестоящие уровни",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "composition_basis",
+      "title": "Основание и варианты организационного состава",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "validity_scope",
+      "title": "Период действия схемы",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "crew_count",
+      "title": "Экипаж",
+      "unit": "person",
+      "valueType": "number"
+    },
+    {
+      "id": "passenger_capacity",
+      "title": "Максимальная вместимость десанта или пассажиров",
+      "unit": "person",
+      "valueType": "number"
+    },
+    {
+      "id": "mass_kg",
+      "title": "Масса в указанной комплектации",
+      "unit": "kg",
+      "valueType": "number"
+    },
+    {
+      "id": "length_m",
+      "title": "Длина",
+      "unit": "m",
+      "valueType": "number"
+    },
+    {
+      "id": "width_m",
+      "title": "Ширина или размах",
+      "unit": "m",
+      "valueType": "number"
+    },
+    {
+      "id": "height_m",
+      "title": "Высота",
+      "unit": "m",
+      "valueType": "number"
+    },
+    {
+      "id": "maximum_takeoff_mass_kg",
+      "title": "Максимальная взлётная масса",
+      "unit": "kg",
+      "valueType": "number"
+    },
+    {
+      "id": "displacement_kg",
+      "title": "Водоизмещение в указанной комплектации",
+      "unit": "kg",
+      "valueType": "number"
+    },
+    {
+      "id": "speed_road_max_kmh",
+      "title": "Максимальная скорость по шоссе",
+      "unit": "km/h",
+      "valueType": "number"
+    },
+    {
+      "id": "speed_cross_country_max_kmh",
+      "title": "Максимальная скорость вне дорог",
+      "unit": "km/h",
+      "valueType": "number"
+    },
+    {
+      "id": "speed_water_max_kmh",
+      "title": "Максимальная скорость на воде",
+      "unit": "km/h",
+      "valueType": "number"
+    },
+    {
+      "id": "speed_air_max_kmh",
+      "title": "Максимальная скорость в воздухе",
+      "unit": "km/h",
+      "valueType": "number"
+    },
+    {
+      "id": "speed_cruise_kmh",
+      "title": "Крейсерская скорость в указанных условиях",
+      "unit": "km/h",
+      "valueType": "number"
+    },
+    {
+      "id": "range_reference_km",
+      "title": "Запас хода / дальность полёта в указанных условиях",
+      "unit": "km",
+      "valueType": "number"
+    },
+    {
+      "id": "endurance_reference_h",
+      "title": "Продолжительность работы / полёта в указанных условиях",
+      "unit": "h",
+      "valueType": "number"
+    },
+    {
+      "id": "fuel_capacity_l",
+      "title": "Вместимость топливных баков",
+      "unit": "l",
+      "valueType": "number"
+    },
+    {
+      "id": "ammunition_main_capacity",
+      "title": "Номинальный боекомплект основного вооружения",
+      "unit": "round",
+      "valueType": "number"
+    },
+    {
+      "id": "ammunition_secondary_capacity",
+      "title": "Номинальный боекомплект дополнительного вооружения",
+      "unit": "round",
+      "valueType": "number"
+    },
+    {
+      "id": "missile_capacity",
+      "title": "Номинальная вместимость ракет",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "ammunition_configuration",
+      "title": "Состав и условия номинального боекомплекта",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "propulsion_description",
+      "title": "Силовая установка",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "equipment_description",
+      "title": "Состав оборудования и особые единицы измерения",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "personnel_min",
+      "title": "Опубликованная нижняя граница численности",
+      "unit": "person",
+      "valueType": "number"
+    },
+    {
+      "id": "personnel_max",
+      "title": "Опубликованная верхняя граница численности",
+      "unit": "person",
+      "valueType": "number"
+    },
+    {
+      "id": "personnel_reference",
+      "title": "Численность в обзорном примере",
+      "unit": "person",
+      "valueType": "number"
+    },
+    {
+      "id": "component_count_min",
+      "title": "Нижняя граница числа подчинённых элементов",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "component_count_max",
+      "title": "Верхняя граница числа подчинённых элементов",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "component_count_reference",
+      "title": "Число элементов в обзорном примере",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "component_level_name",
+      "title": "Название подчинённых элементов",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "composition_description",
+      "title": "Опубликованный состав",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "equipment_type_name",
+      "title": "Тип техники в организационном примере",
+      "unit": null,
+      "valueType": "string"
+    },
+    {
+      "id": "equipment_count_reference",
+      "title": "Номинальное количество техники в примере",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "equipment_count_min",
+      "title": "Нижняя граница количества техники в примере",
+      "unit": "item",
+      "valueType": "number"
+    },
+    {
+      "id": "equipment_count_max",
+      "title": "Верхняя граница количества техники в примере",
+      "unit": "item",
+      "valueType": "number"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "tank",
+      "title": "Танк",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "ifv",
+      "title": "БМП",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply",
+        "passenger_capacity"
+      ]
+    },
+    {
+      "id": "apc",
+      "title": "БТР",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply",
+        "passenger_capacity"
+      ]
+    },
+    {
+      "id": "self-propelled-artillery",
+      "title": "Самоходная артиллерия",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "towed-artillery",
+      "title": "Буксируемая артиллерия",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "rocket-artillery",
+      "title": "Реактивная артиллерия",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "launcher",
+      "title": "Пусковая установка",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "aircraft",
+      "title": "Самолёт",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "length_m",
+        "width_m",
+        "maximum_takeoff_mass_kg",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "helicopter",
+      "title": "Вертолёт",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "length_m",
+        "width_m",
+        "maximum_takeoff_mass_kg",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "surface-vessel",
+      "title": "Надводный корабль",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "length_m",
+        "width_m",
+        "displacement_kg",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "submarine",
+      "title": "Подводная лодка",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "length_m",
+        "width_m",
+        "displacement_kg",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "unmanned-air",
+      "title": "Беспилотный воздушный аппарат",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "control_mode",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "unmanned-ground",
+      "title": "Наземная беспилотная платформа",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "control_mode",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "unmanned-surface",
+      "title": "Надводная беспилотная платформа",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "control_mode",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "unmanned-underwater",
+      "title": "Подводная беспилотная платформа",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "control_mode",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "electronic-warfare",
+      "title": "Средство РЭБ",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "radar-sensor",
+      "title": "Радиолокационное и сенсорное средство",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "communications",
+      "title": "Средство связи",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "engineering",
+      "title": "Инженерное средство",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "support-vehicle",
+      "title": "Машина обеспечения",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "munition",
+      "title": "Боеприпас",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "mine",
+      "title": "Мина",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "minefield",
+      "title": "Минное поле",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m"
+      ]
+    },
+    {
+      "id": "wheeled-gun-vehicle",
+      "title": "Колёсная боевая машина с орудием",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "crew_count",
+        "mobility_medium",
+        "mass_kg",
+        "length_m",
+        "width_m",
+        "height_m",
+        "energy_supply"
+      ]
+    },
+    {
+      "id": "organization-levels",
+      "title": "Организационные уровни",
+      "required": [
+        "national_designation",
+        "service_scope",
+        "level_definitions",
+        "parent_options",
+        "child_options",
+        "composition_basis",
+        "validity_scope"
+      ]
+    },
+    {
+      "id": "small-arms",
+      "title": "Стрелковое оружие",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "mortar",
+      "title": "Миномёт",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "armoured-car",
+      "title": "Бронеавтомобиль и разведывательная машина",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "air-defence-system",
+      "title": "Комплекс ПВО",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "anti-tank-weapon",
+      "title": "Противотанковое средство",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "grenade-launcher",
+      "title": "Гранатомёт",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "personal-equipment",
+      "title": "Индивидуальное снаряжение",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    },
+    {
+      "id": "unclassified-equipment",
+      "title": "Категория требует уточнения",
+      "required": [
+        "role_description",
+        "configuration_scope",
+        "environment_limits",
+        "equipment_description"
+      ]
+    }
+  ]
+}

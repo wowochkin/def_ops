@@ -1,4 +1,6 @@
 import path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { createService, env, log, onShutdown, persistent } from '@def-ops/service-kit';
 import { MemoryRepo, type MapRepo } from './repo';
 import { PgRepo } from './pg-repo';
@@ -29,6 +31,14 @@ const MB = 1024 * 1024;
 const bus = new EventBus();
 const jobs = new JobRunner(repo, bus, { log: (e) => log('cartography', { level: 'error', error: String((e as Error)?.stack || e) }) });
 const store = new TileStore(env('TILES_DIR', './data/tiles'));
+const bundledMapAssets = import.meta.url.endsWith('.ts')
+  ? fileURLToPath(new URL('../../../apps/desktop/server/gis/assets', import.meta.url))
+  : fileURLToPath(new URL('../gis/assets', import.meta.url));
+if (await fs.access(bundledMapAssets).then(() => true, () => false)) {
+  await fs.mkdir(path.join(store.root, '.ohm-assets'), { recursive: true });
+  await fs.cp(bundledMapAssets, path.join(store.root, '.ohm-assets'), { recursive: true, force: false, errorOnExist: false });
+}
+
 // сборка театров: THEATRE_BUILD=off — выключить; THEATRE_PYTHON, THEATRE_CACHE — свои пути
 const theatre = env('THEATRE_BUILD', 'on') === 'off' ? undefined : new TheatreBuilder({ python: process.env.THEATRE_PYTHON, cache: process.env.THEATRE_CACHE });
 

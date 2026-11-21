@@ -11,6 +11,7 @@ import { act } from './voice/registry';
 import type { Llm } from './shared';
 import type { Section } from './sections';
 import { ExpoSetup } from './expo/ExpoSetup';
+import { AppModeSwitch, type AppMode } from './AppMode';
 
 const WHAT: { id: Exclude<Section, 'start'>; text: string }[] = [
   { id: 'replay', text: 'Рассчитать операцию, сравнить с историей, принять командование — с любой ступени, от Ставки до дивизии' },
@@ -60,11 +61,12 @@ function StartMap() {
   );
 }
 
-export function StartView({ llm }: { llm: Llm }) {
+export function StartView({ llm, onModeChange }: { llm: Llm; onModeChange(mode: AppMode): void }) {
   const [intro] = useIntroSetting();
   const st = llm.check.state;
   return (
     <div className="page" data-tour="section-start">
+      <div className="workspace-toolbar"><span>Штабные игры</span><AppModeSwitch mode="historical" onChange={onModeChange} /></div>
       <header className="start-hero">
         <StartMap />
         <div className="start-hero-in">

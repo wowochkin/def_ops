@@ -471,6 +471,9 @@ describe('шлюз: сохранение файла в «Загрузки» (н�
       expect(r1.json.path).toBe(join(dir, 'разбор.md'));
       expect(await fs.readFile(r1.json.path!, 'utf8')).toBe('# Разбор');
       expect((await raw(a.port, 'разбор.md', 'второй', own(a.port))).json.path).toBe(join(dir, 'разбор (2).md'));
+      const journal = await raw(a.port, 'Сторона А.txt', 'Личный журнал', own(a.port));
+      expect(journal.status).toBe(200);
+      expect(await fs.readFile(journal.json.path!, 'utf8')).toBe('Личный журнал');
       // localhost — тот же компьютер
       expect((await raw(a.port, 'журнал.md', 'x', { Host: `localhost:${a.port}`, Origin: `http://localhost:${a.port}` })).status).toBe(200);
     } finally { a.g.close(); await fs.rm(dir, { recursive: true, force: true }); }

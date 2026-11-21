@@ -38,6 +38,14 @@ for (const dir of [join(cargoTarget, 'release/portable'), join(cargoTarget, trip
   rmSync(dir, { recursive: true, force: true });
 }
 
+// GIS дополнения лежат отдельно от TTS и попадают в ресурсы server/gis.
+const gisMarker = join(app, 'server/gis/addons/defops-gis-runtime.json');
+let gisReady = false;
+try { const m = JSON.parse(readFileSync(gisMarker, 'utf8')); gisReady = m.platform === process.platform && m.arch === process.arch; } catch { /* первая подготовка */ }
+if (!gisReady) run(process.execPath, [join(root, 'scripts/cartography-runtime.mjs'), 'prepare']);
+
+run(process.execPath, ['--import', 'tsx', join(root, 'scripts/cartography-assets.ts')]);
+
 // редактор
 run(process.execPath, [join(dirname(require.resolve('vite/package.json')), 'bin/vite.js'), 'build'], { cwd: join(root, 'apps/editor') });
 
@@ -49,6 +57,7 @@ mkdirSync(dist, { recursive: true });
 const entries = [
   ...['documents', 'render', 'registry', 'cartography', 'gateway'].map((s) => [`services/${s}/src/main.ts`, `${s}.mjs`]),
   ['services/cartography/src/ohm-worker.ts', 'ohm-worker.mjs'],
+  ['services/cartography/src/atlas-worker.ts', 'atlas-worker.mjs'],
   ['scripts/expo-preflight.ts', 'expo-preflight.mjs'],
 ];
 for (const [entry, out] of entries) {
@@ -76,4 +85,7 @@ mkdirSync(voice, { recursive: true });
 for (const file of readdirSync(join(root, 'services/voice'), { withFileTypes: true })) {
   if (file.isFile() && /\.(py|json|txt|ps1|sh)$/.test(file.name)) copyFileSync(join(root, 'services/voice', file.name), join(voice, file.name));
 }
+const gis = join(app, 'server/gis');
+mkdirSync(gis, { recursive: true });
+for (const name of ['convert.py', 'requirements.txt', 'install.py', 'install-windows.cmd']) copyFileSync(join(root, 'services/cartography/tools', name), join(gis, name));
 console.log(`сервисы: ${dist}; зависимости: ${[...copied].join(', ')}`);

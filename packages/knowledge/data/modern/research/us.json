@@ -1,0 +1,3972 @@
+{
+  "country": "US",
+  "sources": [
+    {
+      "id": "us-r-src-portfolio",
+      "title": "U.S. Army Acquisition Program Portfolio 2024",
+      "publisher": "U.S. Army",
+      "url": "https://api.army.mil/e2/c/downloads/2024/07/19/ab2038a9/u-s-army-portfolio-2024.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2024",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны соответствующие карточки PDF; закупочная программа не доказывает наличие у конкретной части. Печатные и PDF-страницы совпадают."
+    },
+    {
+      "id": "us-r-src-handbook",
+      "title": "Weapon Systems Handbook 2020–2021 — технические паспорта",
+      "publisher": "U.S. Army",
+      "url": "https://www.army.mil/e2/downloads/rv7/2020-2021_Weapon_Systems_Handbook.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2020–2021",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Полное издание прочитано локально: выбранные разделы Abrams (59), AMPV (80), UH/HH-60M (104), Bradley (106), CH-47F (122), CRS-H (132), Gray Eagle/ER (152), FMTV (164), HERCULES (198), HIMARS (204), ISV (216), JLTV (244), M777 (262), MTRS (268), T-9 (276), MLRS (290), Paladin (307), PLS (308–309), M160 (330), Sentinel (338), S-MET (344), Stryker (354). Параметры редакции не доказывают текущую комплектацию; печатная с. 198 также проверена изображением."
+    },
+    {
+      "id": "us-r-src-services",
+      "title": "Learn about the U.S. military branches",
+      "publisher": "USAGov",
+      "url": "https://www.usa.gov/us-military",
+      "kind": "national_authority",
+      "scopeDate": "2025-08-27",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-branches",
+      "title": "DA PAM 600-3: Army branches and functional areas",
+      "publisher": "U.S. Army G-1",
+      "url": "https://www.army.mil/G-1",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Взяты только позиции, прямо названные Branch или Corps; Functional Areas не превращены в рода войск. Обзор кадровых специализаций, не командная структура."
+    },
+    {
+      "id": "us-hierarchy",
+      "title": "U.S. Army Ranks — Organization",
+      "publisher": "U.S. Army",
+      "url": "https://www.army.mil/ranks/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Организационные названия доступны в индексированных фрагментах; полная полученная страница теперь преимущественно описывает звания. Требуется повторное чтение организационного раздела."
+    },
+    {
+      "id": "us-r-src-m1a2",
+      "title": "Abrams M1A2 — Features & Specifications",
+      "publisher": "General Dynamics Land Systems",
+      "url": "https://international.gdls.com/english/products/ABRAMS/M1A2.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Период каталожного листа не указан; не паспорт M1A2 SEP v3."
+    },
+    {
+      "id": "us-r-src-apache",
+      "title": "AH-64E Apache Specifications",
+      "publisher": "Boeing",
+      "url": "https://www.boeing.com/content/theboeingcompany/us/en/defense/military-rotorcraft/ah-64-apache.html",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-himars",
+      "title": "HIMARS — Versatile Munitions",
+      "publisher": "Lockheed Martin",
+      "url": "https://www.lockheedmartin.com/en-us/products/himars.html",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Полная страница 403; прочитан официальный индексированный фрагмент."
+    },
+    {
+      "id": "us-r-src-c17",
+      "title": "C-17 Globemaster III — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/1529726/c-17-globemaster-iii/c-17-globemaster-iii/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-c130",
+      "title": "C-130J Hercules — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/1555054/c-130-hercules/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-f16",
+      "title": "F-16 Fighting Falcon — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-f22",
+      "title": "F-22 Raptor — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104506/f-22-raptor/About-Us/f-22-raptor/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-f35",
+      "title": "F-35A Lightning II — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/478441/f-35a-lightning-ii/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-f15e",
+      "title": "F-15E Strike Eagle — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104499/f-15e-strike-eagle/viewType/Print/viewClass/f-15e-strike-eagle/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-b52",
+      "title": "B-52H Stratofortress — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104465/b-52-stratofortress/dom/prime/src/b-52h-stratofortress/",
+      "kind": "national_authority",
+      "scopeDate": "2019-06",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-kc135",
+      "title": "KC-135 Stratotanker — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/1529736/kc-135-stratotanker/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-rq4",
+      "title": "RQ-4 Global Hawk — Fact Sheet",
+      "publisher": "U.S. Air Force",
+      "url": "https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104516/rq-4-global-hawk/mod/rq-4-global-hawk/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Официальный индексированный текст; прямое чтение части сайта блокируется. Текущие части и численность не извлекались."
+    },
+    {
+      "id": "us-r-src-mq9",
+      "title": "MQ-9A Reaper — Specifications",
+      "publisher": "NAVAIR",
+      "url": "https://www.navair.navy.mil/product/MQ-9A-Reaper",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-triton",
+      "title": "MQ-4C Triton",
+      "publisher": "NAVAIR",
+      "url": "https://www.navair.navy.mil/product/MQ-4C",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-p8",
+      "title": "P-8 Poseidon — Specifications",
+      "publisher": "Boeing",
+      "url": "https://www.boeing.com/defense/patrol-early-warning-and-battle-management/p-8-poseidon",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "В таблице противоречивы 490 knots / 459+ KTAS / 850 kph; численный нормализованный максимум не внесён."
+    },
+    {
+      "id": "us-r-src-fa18",
+      "title": "F/A-18 Super Hornet & EA-18 Growler",
+      "publisher": "Boeing",
+      "url": "https://www.boeing.com/defense/fighters-and-bombers/fa-18-super-hornet-and-ea-18-growler",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Две таблицы вариантов в текстовом представлении не связаны явно с переключателями; скорость не распределена между ними."
+    },
+    {
+      "id": "us-r-src-ssn",
+      "title": "Attack Submarines — SSN",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169558/attack-submarines-ssn/",
+      "kind": "national_authority",
+      "scopeDate": "2025-11-24",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Использованы только General Characteristics классов; список кораблей и пунктов базирования исключён."
+    },
+    {
+      "id": "us-r-src-ddg",
+      "title": "Destroyers DDG 51",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169871/destroyers-ddg/linkId/100000015603088/no/destroyers-ddg-51/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-cvn",
+      "title": "Aircraft Carriers CVN",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169795/aircraft-carriers-cvn/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-lhd",
+      "title": "Amphibious Assault Ships LHD/LHA(R)",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2169814/amphibious-assault-ships-lhdlhar/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-lcs",
+      "title": "Littoral Combat Ship Class LCS",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/Resources/Fact-Files/Display-FactFiles/Article/2171607/littoral-combat-ship-class-lcs/source/littoral-combat-ship-class-lcs/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-ssbn",
+      "title": "Fleet Ballistic Missile Submarines SSBN",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/DesktopModules/ArticleCS/Print.aspx?Article=2169580&ModuleId=724&PortalId=1",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-knifefish",
+      "title": "Knifefish UUV Program Achieves Milestone C",
+      "publisher": "NAVSEA",
+      "url": "https://www.navsea.navy.mil/Media/News/Article-View/Article/1944024/us-navys-knifefish-uuv-program-achieves-milestone-c/",
+      "kind": "national_authority",
+      "scopeDate": "2019",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "us-r-src-mcmusv",
+      "title": "Mine Countermeasures Unmanned Surface Vehicle",
+      "publisher": "U.S. Navy",
+      "url": "https://www.navy.mil/DesktopModules/ArticleCS/Print.aspx?Article=2167996&ModuleId=724&PortalId=1",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    }
+  ],
+  "organizations": [
+    {
+      "id": "us-armed-forces",
+      "country": "US",
+      "parent": null,
+      "title": "Вооружённые силы США",
+      "nativeName": "Вооружённые силы США",
+      "kind": "organization",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Корень справочной классификации; не орган управления."
+    },
+    {
+      "id": "us-army",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Army",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-navy",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Navy",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-marines",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Корпус морской пехоты",
+      "nativeName": "Marine Corps",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-air",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Air Force",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-space",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Космические силы",
+      "nativeName": "Space Force",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-coast-guard",
+      "country": "US",
+      "parent": "us-armed-forces",
+      "title": "Береговая охрана",
+      "nativeName": "Coast Guard",
+      "kind": "service",
+      "sources": [
+        "us-r-src-services"
+      ],
+      "status": "draft",
+      "note": "Вид вооружённых сил в официальном обзоре USAGov; родитель задаёт справочную классификацию, не оперативное подчинение."
+    },
+    {
+      "id": "us-r-branch-infantry",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Пехота",
+      "nativeName": "Infantry Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-armor",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Бронетанковые войска",
+      "nativeName": "Armor Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-artillery",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Полевая артиллерия",
+      "nativeName": "Field Artillery Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-air-defence",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Артиллерия ПВО",
+      "nativeName": "Air Defense Artillery Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-aviation",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Армейская авиация",
+      "nativeName": "Aviation Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-engineers",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Инженерные войска",
+      "nativeName": "Corps of Engineers Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-chemical",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Химические войска",
+      "nativeName": "Chemical Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-police",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Военная полиция",
+      "nativeName": "Military Police Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-signal",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Войска связи",
+      "nativeName": "Signal Corps Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-intelligence",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Военная разведка",
+      "nativeName": "Military Intelligence Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-cyber",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Кибервойска",
+      "nativeName": "Cyber Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-transport",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Транспортная служба",
+      "nativeName": "Transportation Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-ordnance",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Служба вооружения",
+      "nativeName": "Ordnance Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-quartermaster",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Квартирмейстерская служба",
+      "nativeName": "Quartermaster Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-logistics",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Логистическая служба",
+      "nativeName": "Logistics Corps Officer Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-adjutant",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Адъютантская служба",
+      "nativeName": "Adjutant General Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-finance",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Финансовая служба",
+      "nativeName": "Finance and Comptroller Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-special-forces",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Силы специального назначения",
+      "nativeName": "Special Forces Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-civil-affairs",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Гражданские связи",
+      "nativeName": "Civil Affairs Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    },
+    {
+      "id": "us-r-branch-psychological",
+      "country": "US",
+      "parent": "us-army",
+      "title": "Психологические операции",
+      "nativeName": "Psychological Operations Branch",
+      "kind": "branch",
+      "sources": [
+        "us-r-src-branches"
+      ],
+      "status": "draft",
+      "note": "Национальная кадровая специализация DA PAM 600-3. Не организационный уровень и не фактический состав подразделений."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "us-army-overview",
+      "country": "US",
+      "service": "us-army",
+      "status": "draft",
+      "sources": [
+        "us-hierarchy"
+      ],
+      "levels": [
+        {
+          "id": "squad",
+          "title": "Отделение",
+          "nativeName": "Squad",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Squad",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Squad",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "platoon",
+          "title": "Взвод",
+          "nativeName": "Platoon",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Platoon",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Platoon",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "company",
+          "title": "Рота",
+          "nativeName": "Company",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Company",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Company",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "battalion",
+          "title": "Батальон",
+          "nativeName": "Battalion",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Battalion",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Battalion",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "Brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Brigade",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Brigade",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "division",
+          "title": "Дивизия",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Division",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Division",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "corps",
+          "title": "Корпус",
+          "nativeName": "Corps",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Corps",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Corps",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "army",
+          "title": "Армия",
+          "nativeName": "Army",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Army",
+                "unit": null,
+                "source": "us-hierarchy",
+                "locator": "Обзор организационных уровней: Army",
+                "scope": "Уровень в национальной схеме us-army-overview; не состав и не подчинённость конкретного формирования",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Обзор уровней из источника, не штат и не обязательная линейная цепочка подчинения. Размеры и фактический состав не задаются.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "national_designation",
+            "value": "Squad; Platoon; Company; Battalion; Brigade; Division; Corps; Army",
+            "unit": null,
+            "source": "us-hierarchy",
+            "locator": "Обзор организационных уровней",
+            "scope": "Только уровни из указанного источника; не штат конкретного подразделения",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "us-abrams",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Abrams",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 115, DESCRIPTION",
+            "scope": "Abrams; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A1 SA: номинальная вместимость 120-мм выстрелов; не текущий остаток и не параметр всех Abrams.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A2 SEPv2: номинальная вместимость 120-мм выстрелов; не переносится на SEPv3, SEPv4 или базовый M1A2.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 900,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, .50 caliber: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; не суммировать с 7,62-мм выстрелами.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 11400,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, 7.62 mm: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; отдельная величина от .50 caliber.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 42 mph; x-country: 30 mph.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Общая таблица нескольких вариантов Abrams. Тип 42 mph и модификация для каждой скорости не разделены; параметры не наследуются отдельным карточкам.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-bradley",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Bradley M2A4",
+      "objectClass": "ifv",
+      "summary": "Гусеничная БМП.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная БМП.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 119, DESCRIPTION",
+            "scope": "Bradley M2A4; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, DESCRIPTION",
+            "scope": "M2A4, справочник 2020–2021; экипаж.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, DESCRIPTION",
+            "scope": "M2A4, справочник 2020–2021; места перевозимого отделения.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 370.15,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, SPECIFICATIONS: Range 230 miles",
+            "scope": "M2A4, 2020–2021; справочная дальность движения; 230 × 1,609344, округление. Условия не указаны.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "В графе Speed указано 38 mph; тип скорости не уточнён.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, SPECIFICATIONS",
+            "scope": "M2A4, 2020–2021; не перенесено в поле максимальной шоссейной скорости.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 36287,
+            "unit": "kg",
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, SPECIFICATIONS: Weight 80,000 pounds",
+            "scope": "Только M2A4 в редакции справочника 2020–2021; не M2A2, M2A3 или M2A4E1. Пересчёт 80 000 фунтов по 0,45359237 кг/фунт; округлено до килограмма. Исходная величина округлённая.",
+            "status": "reported",
+            "qualifier": "approximate"
+          },
+          {
+            "field": "mobility_medium",
+            "value": "Наземное гусеничное шасси",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, DESCRIPTION: full-tracked",
+            "scope": "Только M2A4 в редакции справочника 2020–2021; не M2A2, M2A3 или M2A4E1.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Bradley M2A4; параметры других вариантов не перенесены",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "С. 106, заголовок",
+            "scope": "Только M2A4 в редакции справочника 2020–2021; не M2A2, M2A3 или M2A4E1.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-stryker",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Stryker",
+      "objectClass": "apc",
+      "summary": "Семейство колёсных бронемашин.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство колёсных бронемашин.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 123, DESCRIPTION",
+            "scope": "Stryker; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 531.08,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 354, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Stryker Family of Vehicles: Range 330 miles; 330 × 1,609344. Карточка включает разные шасси и варианты, конфигурация для числа не уточнена; не паспорт каждого варианта.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Top speed: 60 mph.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 354, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Общий паспорт Stryker 2020–2021; модификация и покрытие не уточнены, численный шоссейный максимум конкретного варианта не заявлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ampv",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "AMPV",
+      "objectClass": "apc",
+      "summary": "Многоцелевая бронемашина.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевая бронемашина.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 117, DESCRIPTION",
+            "scope": "AMPV; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 362.1,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "SPECIFICATIONS, AMPV: cruising range at 30 mph, 225 miles",
+            "scope": "AMPV в редакции 2020–2021; запас хода при 30 mph; 225 × 1,609344. Вариант семейства не уточнён.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 69,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 80, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только Mortar Carrier variant: вместимость 120-мм миномётных выстрелов; не все AMPV. Не текущий остаток.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Sustained speed: 34–38 mph; crew size: 2–4. General Purpose: 2 члена экипажа и 6 пассажиров; Mortar Carrier: 2 члена экипажа и 2 члена расчёта миномёта.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 80, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Различные модификации AMPV. Диапазоны и разные категории людей сохранены без усреднения и без переноса между вариантами.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m88",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M88A2 HERCULES",
+      "objectClass": "support-vehicle",
+      "summary": "Бронированная ремонтно-эвакуационная машина.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная ремонтно-эвакуационная машина.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 120, DESCRIPTION",
+            "scope": "M88A2 HERCULES; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 198, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. M88A2 HERCULES; экипаж машины; не нынешнее укомплектование.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 4,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 198, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. M88A2: дополнительное место для четырёх пассажиров, отдельно от экипажа из трёх человек.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 482.8,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 198, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. M88A2: Cruising Range 300 miles; 300 × 1,609344, округлено до 0,1 км. Запас хода, не дальность действия оборудования.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed (no load): 30 mph; Speed (with load): 26 mph с 70-ton load. Cruising Range: 300 miles, 413 gallons.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 198, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. M88A2; скорости без груза и с грузом не объявлены в источнике шоссейными максимумами. 413 gallons сохранены без неподтверждённого выбора типа галлона.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-isv",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Infantry Squad Vehicle",
+      "objectClass": "support-vehicle",
+      "summary": "Лёгкий транспорт пехоты.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий транспорт пехоты.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 121, DESCRIPTION",
+            "scope": "Infantry Squad Vehicle; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-hmee",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "HMEE-IV",
+      "objectClass": "engineering",
+      "summary": "Инженерный экскаватор.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Инженерный экскаватор.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 76, DESCRIPTION",
+            "scope": "HMEE-IV; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m160",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M160 Robotic Mine Flail",
+      "objectClass": "unmanned-ground",
+      "summary": "Роботизированный минный трал.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Роботизированный минный трал.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 78, DESCRIPTION",
+            "scope": "M160 Robotic Mine Flail; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-smet",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "S-MET",
+      "objectClass": "unmanned-ground",
+      "summary": "Роботизированный транспорт снаряжения.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Роботизированный транспорт снаряжения.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 79, DESCRIPTION",
+            "scope": "S-MET; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 96.56,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 344, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. S-MET: operates 60-plus miles in 72 hours. Не менее 60 × 1,609344 км в описанном 72-часовом цикле; не максимальный запас хода при непрерывном движении.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 72,
+            "unit": "h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 344, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. S-MET: описанный цикл работы с пробегом 60-plus miles. Это продолжительность заявленного цикла, не 72 часа непрерывного движения и не доказанная автономность батареи.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-t9",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "T-9 Medium Dozer",
+      "objectClass": "engineering",
+      "summary": "Гусеничный бульдозер.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничный бульдозер.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 80, DESCRIPTION",
+            "scope": "T-9 Medium Dozer; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Maximum speed: 6.6 mph forward; 8.4 mph reverse.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 276, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. T-9; максимальные скорости вперёд и назад. Тип покрытия не указан; не превращены в шоссейную скорость или скорость по пересечённой местности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-uh60",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "UH/HH-60M Black Hawk",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой транспортный вертолёт.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой транспортный вертолёт.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 83, DESCRIPTION",
+            "scope": "UH/HH-60M Black Hawk; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 279.65,
+            "unit": "km/h",
+            "source": "us-r-src-handbook",
+            "locator": "С. 104, SPECIFICATIONS",
+            "scope": "UH/HH-60M в редакции 2020–2021; максимум 151 knots × 1,852; условия высоты/нагрузки не указаны.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 511.15,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "С. 104, SPECIFICATIONS",
+            "scope": "UH/HH-60M в редакции 2020–2021; максимальная крейсерская дальность 276 nautical miles × 1,852; конфигурация не уточнена.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 104, SPECIFICATIONS",
+            "scope": "UH/HH-60M в редакции 2020–2021; штатный экипаж в общей карточке.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 11,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 104, SPECIFICATIONS",
+            "scope": "Utility version, редакция 2020–2021; перевозимые военнослужащие; не конфигурация санитарной эвакуации.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ch47",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "CH-47F Chinook",
+      "objectClass": "helicopter",
+      "summary": "Тяжёлый транспортный вертолёт.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый транспортный вертолёт.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 84, DESCRIPTION",
+            "scope": "CH-47F Chinook; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 296.32,
+            "unit": "km/h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 122, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. CH-47F Block I и Block II: Maximum cruise speed 160 knots; 160 × 1,852. Максимальная крейсерская, не абсолютная максимальная скорость.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 122, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. CH-47F Block I и Block II: Minimum crew 3 (pilot, copilot, flight engineer). Нижняя граница минимального экипажа, не фиксированная численность при любой задаче.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 36,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 122, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. CH-47F Block I и Block II: Capacity 36; пассажирская конфигурация. Отдельно источник указывает 24 носилок; эти конфигурации не суммируются.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-gray-eagle",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MQ-1C Gray Eagle",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный беспилотный самолёт.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный беспилотный самолёт.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 87, DESCRIPTION",
+            "scope": "MQ-1C Gray Eagle; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Endurance: 27+ часов; ER: 42,5 часа. Maximum speed: 130 knots. Range: 2500 nautical miles via satellite communications.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "С. 152, SPECIFICATIONS",
+            "scope": "Справочник 2020–2021; различия Gray Eagle / ER сохранены строкой. Дальность с оговоркой спутниковой связи не принята за запас хода, скорость не распределена между вариантами.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 240.76,
+            "unit": "km/h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 152, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Общая карточка MQ-1C Gray Eagle/ER: Maximum speed 130 knots; 130 × 1,852. Раздельных максимумов вариантов источник не даёт.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 27,
+            "unit": "h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 152, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Базовый MQ-1C Gray Eagle: Endurance 27-plus hours. Открытая нижняя граница, не точные 27 часов и не показатель ER.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 42.5,
+            "unit": "h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 152, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только Gray Eagle ER: Endurance 42.5 hours. Условия полезной нагрузки не указаны; не переносится на базовый аппарат.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 4,
+            "unit": "item",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 152, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Карточка MQ-1C Gray Eagle/ER: payloads up to four HELLFIRE missiles. Максимальная совместимая подвеска в указанной конфигурации, не фактическая загрузка.",
+            "status": "reported",
+            "qualifier": "at_most"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m777",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M777A2",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая 155-мм гаубица.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая 155-мм гаубица.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 95, DESCRIPTION",
+            "scope": "M777A2; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-q53",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "AN/TPQ-53",
+      "objectClass": "radar-sensor",
+      "summary": "РЛС обнаружения артиллерийских снарядов.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "РЛС обнаружения артиллерийских снарядов.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 97, DESCRIPTION",
+            "scope": "AN/TPQ-53; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 480,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "AN/TPQ-53, SPECIFICATIONS: Max cruising range",
+            "scope": "2020–2021; около 480 км для подвижного комплекса, не дальность обнаружения.",
+            "status": "reported",
+            "qualifier": "approximate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-himars",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M142 HIMARS",
+      "objectClass": "rocket-artillery",
+      "summary": "Колёсная ракетная пусковая установка.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook",
+        "us-r-src-himars"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная ракетная пусковая установка.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 99, DESCRIPTION",
+            "scope": "M142 HIMARS; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 483,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "HIMARS, SPECIFICATIONS",
+            "scope": "Редакция 2020–2021; максимальная паспортная дальность движения, не дальность стрельбы. На новые варианты не распространяется.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "В источнике максимальная скорость 94 km/h; дорожное покрытие не уточнено.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "HIMARS, SPECIFICATIONS",
+            "scope": "Редакция 2020–2021; среда измерения не уточнена, поэтому максимум не назван шоссейным.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Один пакет: 6 GMLRS либо 2 PrSM либо 1 ATACMS.",
+            "unit": null,
+            "source": "us-r-src-himars",
+            "locator": "Versatile Munitions",
+            "scope": "HIMARS; альтернативная номинальная загрузка одного пускового пакета, не сумма и не текущий остаток.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-mlrs",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M270 MLRS",
+      "objectClass": "rocket-artillery",
+      "summary": "Гусеничная ракетная пусковая установка.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная ракетная пусковая установка.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 103, DESCRIPTION",
+            "scope": "M270 MLRS; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 640,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "MLRS, SPECIFICATIONS",
+            "scope": "Редакция 2020–2021; максимальная паспортная дальность движения, не дальность стрельбы. На новые варианты не распространяется.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "В источнике максимальная скорость 65 km/h; дорожное покрытие не уточнено.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "MLRS, SPECIFICATIONS",
+            "scope": "Редакция 2020–2021; среда измерения не уточнена, поэтому максимум не назван шоссейным.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m109",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M109A7 Paladin",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная 155-мм гаубица.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная 155-мм гаубица.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 106, DESCRIPTION",
+            "scope": "M109A7 Paladin; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, SPECIFICATIONS, столбец M109A7; On-board Ammmunition",
+            "scope": "Редакция 2020–2021; номинальное число перевозимых артиллерийских выстрелов, не текущий остаток.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 363.71,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, Cruising Range, 226 miles",
+            "scope": "Редакция 2020–2021; запас хода 226 × 1,609344; не дальность орудия.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, Crew",
+            "scope": "Редакция 2020–2021; экипаж соответствующего варианта.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m992",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "M992A3 CAT",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничный транспорт боеприпасов.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничный транспорт боеприпасов.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 106, DESCRIPTION",
+            "scope": "M992A3 CAT; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 95,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, SPECIFICATIONS, столбец M992A3; On-board Ammmunition",
+            "scope": "Редакция 2020–2021; номинальное число перевозимых артиллерийских выстрелов, не текущий остаток.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 363.71,
+            "unit": "km",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, Cruising Range, 226 miles",
+            "scope": "Редакция 2020–2021; запас хода 226 × 1,609344; не дальность орудия.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "us-r-src-handbook",
+            "locator": "С. 307, Crew",
+            "scope": "Редакция 2020–2021; экипаж соответствующего варианта.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-mfew",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MFEW-AL",
+      "objectClass": "electronic-warfare",
+      "summary": "Авиационный контейнер РЭБ.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Авиационный контейнер РЭБ.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 110, DESCRIPTION",
+            "scope": "MFEW-AL; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ltamds",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "LTAMDS",
+      "objectClass": "radar-sensor",
+      "summary": "Многофункциональная РЛС ПВО.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многофункциональная РЛС ПВО.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 60, DESCRIPTION",
+            "scope": "LTAMDS; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-sentinel",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "AN/MPQ-64 Sentinel A3/A4",
+      "objectClass": "radar-sensor",
+      "summary": "РЛС воздушного наблюдения.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "РЛС воздушного наблюдения.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 63, DESCRIPTION",
+            "scope": "AN/MPQ-64 Sentinel A3/A4; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-stout",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "SGT STOUT",
+      "objectClass": "launcher",
+      "summary": "Самоходный комплекс ПВО.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходный комплекс ПВО.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 64, DESCRIPTION",
+            "scope": "SGT STOUT; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-hms",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "HMS tactical radios",
+      "objectClass": "communications",
+      "summary": "Семейство тактических радиостанций.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство тактических радиостанций.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 131, DESCRIPTION",
+            "scope": "HMS tactical radios; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-satcom",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "SATCOM Family of Terminals",
+      "objectClass": "communications",
+      "summary": "Семейство спутниковых терминалов.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство спутниковых терминалов.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 136, DESCRIPTION",
+            "scope": "SATCOM Family of Terminals; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-crsh",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Common Robotic System Heavy",
+      "objectClass": "unmanned-ground",
+      "summary": "Тяжёлая роботизированная платформа.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлая роботизированная платформа.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 157, DESCRIPTION",
+            "scope": "Common Robotic System Heavy; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 7,
+            "unit": "h",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 132, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. CRS-H: Platform endurance >7 hours. Открытая нижняя граница заявленной продолжительности платформы; условия нагрузки не указаны.",
+            "status": "reported",
+            "qualifier": "greater_than"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Platform speed >6 mph.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 132, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. CRS-H: открытая нижняя граница скорости платформы. Источник не называет её максимальной, крейсерской или скоростью на конкретном покрытии.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-crsi",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Common Robotic System Individual",
+      "objectClass": "unmanned-ground",
+      "summary": "Переносная роботизированная платформа.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Переносная роботизированная платформа.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 158, DESCRIPTION",
+            "scope": "Common Robotic System Individual; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-mtrs",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MTRS Increment II",
+      "objectClass": "unmanned-ground",
+      "summary": "Средняя роботизированная платформа.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средняя роботизированная платформа.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 159, DESCRIPTION",
+            "scope": "MTRS Increment II; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-fmtv",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "FMTV A2",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство средних грузовиков.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство средних грузовиков.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 184, DESCRIPTION",
+            "scope": "FMTV A2; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-jltv",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "JLTV",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство лёгких тактических автомобилей.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство лёгких тактических автомобилей.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 185, DESCRIPTION",
+            "scope": "JLTV; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "CTV — четырёхместный Combat Tactical Vehicle; CSV — двухместный Combat Support Vehicle.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 244, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Число мест не разделено на экипаж и пассажиров, поэтому не внесено как crew_count или passenger_capacity.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ehets",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "EHETS M1300/M1302",
+      "objectClass": "support-vehicle",
+      "summary": "Тяжёлый автопоезд.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый автопоезд.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 183, DESCRIPTION",
+            "scope": "EHETS M1300/M1302; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-pls",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Palletized Load System",
+      "objectClass": "support-vehicle",
+      "summary": "Грузовик со сменными грузовыми платформами.",
+      "sources": [
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Грузовик со сменными грузовыми платформами.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 186, DESCRIPTION",
+            "scope": "Palletized Load System; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Maximum speed: 60 mph at gross combined vehicle weight on flat terrain.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 309, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. PLS A1 (M1074A1/M1075A1), продолжение SPECIFICATIONS со с. 308; максимальная скорость при полной массе автопоезда на ровной местности. Покрытие не уточнено.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-jab",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Joint Assault Bridge",
+      "objectClass": "engineering",
+      "summary": "Мостоукладчик.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мостоукладчик.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 77, DESCRIPTION",
+            "scope": "Joint Assault Bridge; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-rebs",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Rapidly Emplaced Bridge System",
+      "objectClass": "engineering",
+      "summary": "Мобильный мостовой комплект.",
+      "sources": [
+        "us-r-src-portfolio"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильный мостовой комплект.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 77, DESCRIPTION",
+            "scope": "Rapidly Emplaced Bridge System; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-m1a2",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Abrams M1A2",
+      "objectClass": "tank",
+      "summary": "Основной танк M1A2.",
+      "sources": [
+        "us-r-src-m1a2"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": "us-abrams",
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк M1A2.",
+            "unit": null,
+            "source": "us-r-src-m1a2",
+            "locator": "Features & Specifications",
+            "scope": "Abrams M1A2; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "us-r-src-m1a2",
+            "locator": "Описание",
+            "scope": "Экипаж M1A2.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "speed_cross_country_max_kmh",
+            "value": 48.28,
+            "unit": "km/h",
+            "source": "us-r-src-m1a2",
+            "locator": "PERFORMANCE: Cross Country 30 mph",
+            "scope": "M1A2; графа Cross Country, 30 × 1,609344; условия не уточнены.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 426.48,
+            "unit": "km",
+            "source": "us-r-src-m1a2",
+            "locator": "PERFORMANCE: Cruising Range, 265 mi",
+            "scope": "M1A2; каталожный запас хода, 265 × 1,609344; режим и топливный запас не указаны.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Газотурбинный двигатель 1500 hp.",
+            "unit": null,
+            "source": "us-r-src-m1a2",
+            "locator": "POWER TRAIN & SUSPENSION",
+            "scope": "Каталожный M1A2.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Maximum Speed 42 mph (Governed); покрытие не названо.",
+            "unit": null,
+            "source": "us-r-src-m1a2",
+            "locator": "PERFORMANCE",
+            "scope": "M1A2; максимальная скорость с регулятором, не объявляется максимумом на конкретном покрытии.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-apache",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "AH-64E Apache",
+      "objectClass": "helicopter",
+      "summary": "Ударный вертолёт.",
+      "sources": [
+        "us-r-src-apache"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ударный вертолёт.",
+            "unit": null,
+            "source": "us-r-src-apache",
+            "locator": "AH-64E Apache Specifications",
+            "scope": "AH-64E Apache; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "us-r-src-apache",
+            "locator": "Standard Crew",
+            "scope": "Стандартный экипаж AH-64E.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 1200,
+            "unit": "round",
+            "source": "us-r-src-apache",
+            "locator": "Ordnance",
+            "scope": "Номинальная вместимость для 30-мм пушки AH-64E; не фактическая загрузка.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Каталог перечисляет 16 Hellfire, 76 ракет 2,75 дюйма и 1200 выстрелов 30 мм; совместная максимальная загрузка не подтверждена.",
+            "unit": null,
+            "source": "us-r-src-apache",
+            "locator": "Ordnance",
+            "scope": "AH-64E; альтернативы подвески не суммируются.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Maximum Level Flight Speed: 150+ knots (279+ kph).",
+            "unit": null,
+            "source": "us-r-src-apache",
+            "locator": "Maximum Level Flight Speed",
+            "scope": "AH-64E; открытая нижняя граница максимальной скорости горизонтального полёта, не точное число.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-c17",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "C-17 Globemaster III",
+      "objectClass": "aircraft",
+      "summary": "Военно-транспортный самолёт.",
+      "sources": [
+        "us-r-src-c17"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Военно-транспортный самолёт.",
+            "unit": null,
+            "source": "us-r-src-c17",
+            "locator": "General Characteristics",
+            "scope": "C-17 Globemaster III; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "us-r-src-c17",
+            "locator": "Crew",
+            "scope": "Два пилота и оператор погрузки.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 833.4,
+            "unit": "km/h",
+            "source": "us-r-src-c17",
+            "locator": "Speed / описание: 450 knots at 28,000 ft",
+            "scope": "Крейсерская скорость при 8534 м; 450 × 1,852, не максимум.",
+            "status": "reported",
+            "qualifier": "approximate"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 4444.8,
+            "unit": "km",
+            "source": "us-r-src-c17",
+            "locator": "Описание: 2400 nautical miles",
+            "scope": "Без дозаправки, груз 74797 кг, начальная высота 8534 м; 2400 × 1,852.",
+            "status": "reported",
+            "qualifier": "approximate"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 102,
+            "unit": "person",
+            "source": "us-r-src-c17",
+            "locator": "Load",
+            "scope": "Перевозка военнослужащих/парашютистов, альтернативная конфигурация грузовой кабины.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-c130",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "C-130J Hercules",
+      "objectClass": "aircraft",
+      "summary": "Военно-транспортный самолёт.",
+      "sources": [
+        "us-r-src-c130"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Военно-транспортный самолёт.",
+            "unit": null,
+            "source": "us-r-src-c130",
+            "locator": "General Characteristics",
+            "scope": "C-130J Hercules; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 3333.6,
+            "unit": "km",
+            "source": "us-r-src-c130",
+            "locator": "Range at Maximum Normal Payload: C-130J, 1800 nautical miles",
+            "scope": "Только C-130J, не J-30; нормальная нагрузка 15422 кг; 1800 × 1,852.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 362 KTAS / 417 mph при 22 000 ft.",
+            "unit": null,
+            "source": "us-r-src-c130",
+            "locator": "Speed: C-130J",
+            "scope": "Только C-130J; источник не называет эту скорость максимальной или крейсерской.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "us-r-src-c130",
+            "locator": "Crew: C-130J/J-30",
+            "scope": "Два пилота и оператор погрузки.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-f16",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "F-16 Fighting Falcon",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой истребитель.",
+      "sources": [
+        "us-r-src-f16"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой истребитель.",
+            "unit": null,
+            "source": "us-r-src-f16",
+            "locator": "General Characteristics",
+            "scope": "F-16 Fighting Falcon; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-f22",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "F-22 Raptor",
+      "objectClass": "aircraft",
+      "summary": "Истребитель.",
+      "sources": [
+        "us-r-src-f22"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Истребитель.",
+            "unit": null,
+            "source": "us-r-src-f22",
+            "locator": "General Characteristics",
+            "scope": "F-22 Raptor; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-f35",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "F-35A Lightning II",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой истребитель.",
+      "sources": [
+        "us-r-src-f35"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой истребитель.",
+            "unit": null,
+            "source": "us-r-src-f35",
+            "locator": "General Characteristics",
+            "scope": "F-35A Lightning II; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: Mach 1.6; Range: more than 1350 miles on internal fuel.",
+            "unit": null,
+            "source": "us-r-src-f35",
+            "locator": "Speed; Range",
+            "scope": "F-35A; условия для Mach не даны; нижняя граница дальности сохранена строкой. Дальность не боевой радиус.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-f15e",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "F-15E Strike Eagle",
+      "objectClass": "aircraft",
+      "summary": "Двухместный многоцелевой самолёт.",
+      "sources": [
+        "us-r-src-f15e"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухместный многоцелевой самолёт.",
+            "unit": null,
+            "source": "us-r-src-f15e",
+            "locator": "General Characteristics",
+            "scope": "F-15E Strike Eagle; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: Mach 2.5 plus (1875 mph по карточке).",
+            "unit": null,
+            "source": "us-r-src-f15e",
+            "locator": "Speed",
+            "scope": "F-15E; условия скорости не даны, пересчёта Mach нет.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-b52",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "B-52H Stratofortress",
+      "objectClass": "aircraft",
+      "summary": "Тяжёлый бомбардировщик.",
+      "sources": [
+        "us-r-src-b52"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый бомбардировщик.",
+            "unit": null,
+            "source": "us-r-src-b52",
+            "locator": "General Characteristics",
+            "scope": "B-52H Stratofortress; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 14162.23,
+            "unit": "km",
+            "source": "us-r-src-b52",
+            "locator": "Range: 8800 miles",
+            "scope": "Редакция июнь 2019; 8800 × 1,609344, условия загрузки не указаны; не боевой радиус.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 650 mph (Mach 0.84).",
+            "unit": null,
+            "source": "us-r-src-b52",
+            "locator": "Speed",
+            "scope": "B-52H, июнь 2019; тип скорости не уточнён.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-kc135",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "KC-135 Stratotanker",
+      "objectClass": "aircraft",
+      "summary": "Самолёт-заправщик.",
+      "sources": [
+        "us-r-src-kc135"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт-заправщик.",
+            "unit": null,
+            "source": "us-r-src-kc135",
+            "locator": "General Characteristics",
+            "scope": "KC-135 Stratotanker; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2419,
+            "unit": "km",
+            "source": "us-r-src-kc135",
+            "locator": "Range",
+            "scope": "При 68039 кг передаваемого топлива; исходное значение в километрах. Не перегонная дальность.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 530 mph при 30 000 ft.",
+            "unit": null,
+            "source": "us-r-src-kc135",
+            "locator": "Speed",
+            "scope": "KC-135 с CFM56 по карточке; максимум и крейсерская скорость явно не разграничены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-rq4",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "RQ-4 Global Hawk",
+      "objectClass": "unmanned-air",
+      "summary": "Высотный беспилотный разведывательный самолёт.",
+      "sources": [
+        "us-r-src-rq4"
+      ],
+      "relatedOrganizations": [
+        "us-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Высотный беспилотный разведывательный самолёт.",
+            "unit": null,
+            "source": "us-r-src-rq4",
+            "locator": "General Characteristics",
+            "scope": "RQ-4 Global Hawk; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 310 knots; endurance 30+ hours.",
+            "unit": null,
+            "source": "us-r-src-rq4",
+            "locator": "Speed; описание",
+            "scope": "RQ-4; нижняя граница продолжительности, вариант и режим скорости в фрагменте не уточнены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-mq9",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MQ-9A Reaper Block V",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный разведывательный самолёт.",
+      "sources": [
+        "us-r-src-mq9"
+      ],
+      "relatedOrganizations": [
+        "us-marines"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный разведывательный самолёт.",
+            "unit": null,
+            "source": "us-r-src-mq9",
+            "locator": "Description; Specifications",
+            "scope": "MQ-9A Reaper Block V; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 444.48,
+            "unit": "km/h",
+            "source": "us-r-src-mq9",
+            "locator": "Max Air Speed: 240 KTAS",
+            "scope": "Block V в карточке NAVAIR; истинная воздушная скорость 240 × 1,852.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 27,
+            "unit": "h",
+            "source": "us-r-src-mq9",
+            "locator": "Max Endurance",
+            "scope": "Block V; максимальная каталожная продолжительность; условия полезной нагрузки не заданы.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 4763,
+            "unit": "kg",
+            "source": "us-r-src-mq9",
+            "locator": "Max Gross Takeoff Weight",
+            "scope": "Block V; максимальная взлётная масса, не эксплуатационная.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "MTS-B EO/IR, Lynx и морская РЛС, AIS, ретранслятор связи.",
+            "unit": null,
+            "source": "us-r-src-mq9",
+            "locator": "Payloads",
+            "scope": "Block V по NAVAIR; набор полезных нагрузок, не обязательная одновременная комплектация.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-triton",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MQ-4C Triton",
+      "objectClass": "unmanned-air",
+      "summary": "Морской беспилотный разведывательный самолёт.",
+      "sources": [
+        "us-r-src-triton"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Морской беспилотный разведывательный самолёт.",
+            "unit": null,
+            "source": "us-r-src-triton",
+            "locator": "Description",
+            "scope": "MQ-4C Triton; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 13704.8,
+            "unit": "km",
+            "source": "us-r-src-triton",
+            "locator": "Description: 7400 nautical miles",
+            "scope": "MQ-4C; дальность 7400 × 1,852; не боевой радиус, режим не указан.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Продолжительность 24+ часа; Rolls-Royce AE3007H.",
+            "unit": null,
+            "source": "us-r-src-triton",
+            "locator": "Description; Propulsion",
+            "scope": "MQ-4C; открытая нижняя граница, не точное 24 часа.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-p8",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "P-8 Poseidon",
+      "objectClass": "aircraft",
+      "summary": "Морской патрульный самолёт.",
+      "sources": [
+        "us-r-src-p8"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Морской патрульный самолёт.",
+            "unit": null,
+            "source": "us-r-src-p8",
+            "locator": "Capabilities; Specifications",
+            "scope": "P-8 Poseidon; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Текст: максимум 490 knots; таблица также приводит 459+ KTAS и 850 kph, неэквивалентные значения.",
+            "unit": null,
+            "source": "us-r-src-p8",
+            "locator": "Specifications: Max Speed",
+            "scope": "Семейство P-8; противоречие первоисточника сохранено, не усреднено.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-fa18",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "F/A-18E/F Super Hornet",
+      "objectClass": "aircraft",
+      "summary": "Палубный многоцелевой самолёт.",
+      "sources": [
+        "us-r-src-fa18"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Палубный многоцелевой самолёт.",
+            "unit": null,
+            "source": "us-r-src-fa18",
+            "locator": "Capabilities and Features",
+            "scope": "F/A-18E/F Super Hornet; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ea18",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "EA-18G Growler",
+      "objectClass": "aircraft",
+      "summary": "Палубный самолёт радиоэлектронной борьбы.",
+      "sources": [
+        "us-r-src-fa18"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Палубный самолёт радиоэлектронной борьбы.",
+            "unit": null,
+            "source": "us-r-src-fa18",
+            "locator": "Capabilities and Features",
+            "scope": "EA-18G Growler; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-virginia",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Virginia",
+      "objectClass": "submarine",
+      "summary": "Класс атомных многоцелевых подводных лодок.",
+      "sources": [
+        "us-r-src-ssn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных многоцелевых подводных лодок.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "General Characteristics, Virginia Class",
+            "scope": "Virginia; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Один ядерный реактор, один вал.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Propulsion",
+            "scope": "Общее описание класса; параметры реактора отсутствуют.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 25+ knots (46.3+ kph).",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Speed",
+            "scope": "Нижняя граница открытой характеристики; режим поверхности/погружения не уточнён, не точный максимум.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 145,
+            "unit": "person",
+            "source": "us-r-src-ssn",
+            "locator": "Crew",
+            "scope": "Справочная численность экипажа класса; не реальное укомплектование.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-seawolf",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Seawolf",
+      "objectClass": "submarine",
+      "summary": "Класс атомных многоцелевых подводных лодок.",
+      "sources": [
+        "us-r-src-ssn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных многоцелевых подводных лодок.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "General Characteristics, Seawolf Class",
+            "scope": "Seawolf; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Один ядерный реактор, один вал.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Propulsion",
+            "scope": "Общее описание класса; параметры реактора отсутствуют.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 25+ knots (46.3+ kph).",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Speed",
+            "scope": "Нижняя граница открытой характеристики; режим поверхности/погружения не уточнён, не точный максимум.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 140,
+            "unit": "person",
+            "source": "us-r-src-ssn",
+            "locator": "Crew",
+            "scope": "Справочная численность экипажа класса; не реальное укомплектование.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-losangeles",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Los Angeles",
+      "objectClass": "submarine",
+      "summary": "Класс атомных многоцелевых подводных лодок.",
+      "sources": [
+        "us-r-src-ssn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных многоцелевых подводных лодок.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "General Characteristics, Los Angeles Class",
+            "scope": "Los Angeles; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Один ядерный реактор, один вал.",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Propulsion",
+            "scope": "Общее описание класса; параметры реактора отсутствуют.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 25+ knots (46.3+ kph).",
+            "unit": null,
+            "source": "us-r-src-ssn",
+            "locator": "Speed",
+            "scope": "Нижняя граница открытой характеристики; режим поверхности/погружения не уточнён, не точный максимум.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 143,
+            "unit": "person",
+            "source": "us-r-src-ssn",
+            "locator": "Crew",
+            "scope": "Справочная численность экипажа класса; не реальное укомплектование.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-ddg51",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Arleigh Burke DDG 51",
+      "objectClass": "surface-vessel",
+      "summary": "Класс эскадренных миноносцев.",
+      "sources": [
+        "us-r-src-ddg"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс эскадренных миноносцев.",
+            "unit": null,
+            "source": "us-r-src-ddg",
+            "locator": "General Characteristics",
+            "scope": "Arleigh Burke DDG 51; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: in excess of 30 knots.",
+            "unit": null,
+            "source": "us-r-src-ddg",
+            "locator": "Speed",
+            "scope": "Класс DDG 51; открытая нижняя граница, не точный максимум.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-nimitz",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Nimitz",
+      "objectClass": "surface-vessel",
+      "summary": "Класс атомных авианосцев.",
+      "sources": [
+        "us-r-src-cvn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных авианосцев.",
+            "unit": null,
+            "source": "us-r-src-cvn",
+            "locator": "Description / Background",
+            "scope": "Nimitz; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ford",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Gerald R. Ford",
+      "objectClass": "surface-vessel",
+      "summary": "Класс атомных авианосцев.",
+      "sources": [
+        "us-r-src-cvn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных авианосцев.",
+            "unit": null,
+            "source": "us-r-src-cvn",
+            "locator": "Description / Background",
+            "scope": "Gerald R. Ford; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-wasp",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Wasp LHD",
+      "objectClass": "surface-vessel",
+      "summary": "Класс универсальных десантных кораблей.",
+      "sources": [
+        "us-r-src-lhd"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс универсальных десантных кораблей.",
+            "unit": null,
+            "source": "us-r-src-lhd",
+            "locator": "Description",
+            "scope": "Wasp LHD; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-america",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "America LHA",
+      "objectClass": "surface-vessel",
+      "summary": "Класс универсальных десантных кораблей.",
+      "sources": [
+        "us-r-src-lhd"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс универсальных десантных кораблей.",
+            "unit": null,
+            "source": "us-r-src-lhd",
+            "locator": "Description",
+            "scope": "America LHA; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-lcs",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Littoral Combat Ship",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство кораблей прибрежной зоны.",
+      "sources": [
+        "us-r-src-lcs"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство кораблей прибрежной зоны.",
+            "unit": null,
+            "source": "us-r-src-lcs",
+            "locator": "Description",
+            "scope": "Littoral Combat Ship; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-ohio",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Ohio SSBN",
+      "objectClass": "submarine",
+      "summary": "Класс атомных ракетных подводных лодок.",
+      "sources": [
+        "us-r-src-ssbn"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Класс атомных ракетных подводных лодок.",
+            "unit": null,
+            "source": "us-r-src-ssbn",
+            "locator": "Background",
+            "scope": "Ohio SSBN; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 20,
+            "unit": "item",
+            "source": "us-r-src-ssbn",
+            "locator": "Background: maximum of 20 missiles",
+            "scope": "Ohio SSBN после деактивации четырёх шахт по описанной в источнике конфигурации; номинальная вместимость SLBM, не текущая загрузка. Не SSGN.",
+            "status": "reported",
+            "qualifier": "exact"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-knifefish",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Knifefish",
+      "objectClass": "unmanned-underwater",
+      "summary": "Подводный аппарат поиска мин.",
+      "sources": [
+        "us-r-src-knifefish"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Подводный аппарат поиска мин.",
+            "unit": null,
+            "source": "us-r-src-knifefish",
+            "locator": "Описание системы",
+            "scope": "Knifefish; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "us-r-mcmusv",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "MCM USV / UISS",
+      "objectClass": "unmanned-surface",
+      "summary": "Беспилотная платформа противоминного оборудования.",
+      "sources": [
+        "us-r-src-mcmusv"
+      ],
+      "relatedOrganizations": [
+        "us-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-surface",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная платформа противоминного оборудования.",
+            "unit": null,
+            "source": "us-r-src-mcmusv",
+            "locator": "Description; General Characteristics UISS",
+            "scope": "MCM USV / UISS; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Частичный справочный каталог США: портфель армии 2024, отдельные паспорта 2020–2021, официальные карточки авиации и флота. Указаны семейства/модели, 6 видов ВС и армейские кадровые рода отдельно от организационных уровней. Реальные части, подчинённость, дислокация, готовность и расчёт боевой эффективности исключены. Страны происхождения и операторы намеренно не предполагаются.",
+    "gaps": [
+      "Каталог расширен существенно, но не исчерпывает все программы Army portfolio, корабли, авиацию, боеприпасы и мины; программы без установленной модели не выданы за модели.",
+      "Нужны паспорта скорости/запаса хода/боекомплекта для большинства идентифицированных моделей; неизвестные поля оставлены пустыми.",
+      "Нужны отдельные подтверждённые организационные уровни Navy, Marines, Air Force, Space Force, Coast Guard и национальные специализации вне Army.",
+      "Структура Army branches основана на кадровом обзоре, не на действующей полной нормативной схеме.",
+      "Варианты Stryker, AMPV, FMTV, Black Hawk и Chinook не получили общих неподтверждённых технических чисел.",
+      "Требуется актуализация паспортов 2020–2021; старые значения не гарантируют современную комплектацию.",
+      "Дополнительный проход по справочнику 2020–2021: у HMEE-IV нет перенесённых параметров HMEE-I/III; у инженерных и связных средств без численных паспортов характеристики остаются неизвестными. Общие строки семейства не наследуются новым модификациям."
+    ],
+    "sourceProblems": [
+      "Прямое чтение ряда Navy/USAF/Lockheed Martin страниц возвращает 403; такие источники честно помечены search_excerpt.",
+      "Army ranks полная полученная страница преимущественно о званиях, организационная схема подтверждается лишь индексированными фрагментами.",
+      "Boeing P-8: неэквивалентные значения максимальной скорости в одной таблице; нормализованное число не выбрано.",
+      "Boeing F/A-18/EA-18: в извлечённом тексте неоднозначна привязка двух таблиц скоростей к вариантам; числа не распределены.",
+      "Скорости с +, >, around и без режима не превращены в точные максимальные/крейсерские значения; Mach без условий не пересчитан.",
+      "Проверено полное локальное издание Army Handbook 2020–2021: скорости без режима/покрытия оставлены контекстными строками, диапазоны экипажа и разные вместимости вариантов не усреднялись. Для M88A2 дополнительно визуально проверена печатная с. 198."
+    ]
+  }
+}

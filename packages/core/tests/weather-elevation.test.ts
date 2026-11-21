@@ -1,0 +1,4 @@
+import {it,expect} from 'vitest';
+import {weatherWithElevation} from '../src/weather-elevation';
+it('высота влияет на температуру и давление относительно опорной высоты',()=>{const state={provenance:'synthetic' as const,temperature:15,pressure:1013};const result=weatherWithElevation(state,1000,{referenceM:0,lapseKPerKm:6.5});expect(result.temperature).toBe(8.5);expect(result.pressure).toBeGreaterThan(890);expect(result.pressure).toBeLessThan(910);expect(result.terrainApplied).toBe(true);});
+it('архив не получает повторную поправку; неизвестная высота не равна нулю',()=>{expect(weatherWithElevation({provenance:'reanalysis',temperature:15,pressure:1013},1000,{referenceM:0,lapseKPerKm:6.5}).temperature).toBe(15);expect(weatherWithElevation({provenance:'synthetic',temperature:15},null,{referenceM:0,lapseKPerKm:6.5}).terrainApplied).toBe(false);});

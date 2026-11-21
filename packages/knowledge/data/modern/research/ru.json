@@ -1,0 +1,3758 @@
+{
+  "country": "RU",
+  "sources": [
+    {
+      "id": "ru-r-btr82a",
+      "title": "Бронетранспортёр БТР-82А — основные характеристики",
+      "publisher": "Росгвардия",
+      "url": "https://www.rosguard.gov.ru/page/index/bronetransporter-btr82a",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-t90ms",
+      "title": "T-90MS — catalogue sheet",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_4436.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-bmp3",
+      "title": "BMP-3 — catalogue sheet",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_4442.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-brem1m",
+      "title": "Уралвагонзавод отгрузил заказчику партию БРЭМ-1М — справочные характеристики",
+      "publisher": "Госкорпорация «Ростех»",
+      "url": "https://www.rostec.ru/media/news/uralvagonzavod-otgruzil-zakazchiku-partiyu-brem-1m/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-12-23",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-imr3m",
+      "title": "Инженерная машина разграждения ИМР-3М — описание производителя",
+      "publisher": "Госкорпорация «Ростех»",
+      "url": "https://www.rostec.ru/media/news/rostekh-otpravil-v-voyska-inzhenernye-mashiny-razgrazhdeniya-imr-3m/",
+      "kind": "manufacturer",
+      "scopeDate": "2026-01-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-msta",
+      "title": "Msta-S — 152mm self-propelled howitzer",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_1903.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-smerch",
+      "title": "Smerch — multiple rocket launcher system",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_1895.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-tigr",
+      "title": "ASN-233115 / AMN-233114 — special purpose armored vehicles",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_1970.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-typhoon-line",
+      "title": "Российские изделия на MILEX — транспортные модели",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/upload/pdf/11402_post.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-su35",
+      "title": "Су-35 — лётно-технические характеристики",
+      "publisher": "ПАО «ОАК»",
+      "url": "https://uacrussia.ru/ru/aircraft/lineup/lineup/su-35/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-su34e",
+      "title": "Су-34 — таблица характеристик Су-34Э",
+      "publisher": "ПАО «ОАК»",
+      "url": "https://uacrussia.ru/ru/aircraft/lineup/military/su-34/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-yak130",
+      "title": "Як-130 — лётно-технические характеристики",
+      "publisher": "ПАО «ОАК»",
+      "url": "https://uacrussia.ru/ru/aircraft/lineup/li/yak-130/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-il76",
+      "title": "Ил-76МД-90А / Ил-78М-90А — характеристики",
+      "publisher": "ПАО «ОАК»",
+      "url": "https://uacrussia.ru/ru/aircraft/lineup/transport/IL-76MD-90A/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-uac-line",
+      "title": "Военная авиация — продуктовый портфель",
+      "publisher": "ПАО «ОАК»",
+      "url": "https://uacrussia.ru/ru/aircraft/lineup/military/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-mi171sh",
+      "title": "Ми-171Ш — современный облик",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_250.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-ka52",
+      "title": "Ka-52 — mission and primary tasks",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_4679.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-mi28ne",
+      "title": "Mi-28NE — catalogue sheet",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_1983.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-mi26t2",
+      "title": "Ми-26Т2 — характеристики транспортной модификации",
+      "publisher": "Госкорпорация «Ростех»",
+      "url": "https://rostec.ru/media/news/rostekh-peredal-spasatelyam-pervyy-modernizirovannyy-vertolet-gigant-mi-26t2-/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-heli-portfolio",
+      "title": "Военные вертолеты на HeliRussia 2024 — портфель",
+      "publisher": "Госкорпорация «Ростех»",
+      "url": "https://rostec.ru/media/news/rosoboroneksport-pokazhet-sovremennye-rossiyskie-voennye-vertolety-na-vystavke-helirussia-2024/",
+      "kind": "manufacturer",
+      "scopeDate": "2024",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-orlan10e",
+      "title": "Orlan-10E — multifunctional complex",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://www.roe.ru/en/production/complexes-with-uavs/orlan-10e/?redirect=Y",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-orione",
+      "title": "Orion-E — manufacturer brochure",
+      "publisher": "АО «Кронштадт»",
+      "url": "https://kronshtadt.ru/assets/files/productfiles/Orion_eng.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-uran6",
+      "title": "Uran-6 — robot to save lives",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_7169.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-junona",
+      "title": "АНПА «Юнона» — характеристики и комплектация",
+      "publisher": "АО «ЦКБ МТ «Рубин»",
+      "url": "https://ckb-rubin.ru/proekty/robototekhnika/anpa_junona/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-credо",
+      "title": "Кредо-1Е — унифицированная РЛС",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_329.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-podlet",
+      "title": "Podlet-K1KE — radar",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_7764.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-r168",
+      "title": "R-168-5UTE — VHF vehicle radio set",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_2071.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-r16825",
+      "title": "Р-168-25У — модернизированные средства связи",
+      "publisher": "Госкорпорация «Ростех»",
+      "url": "https://rostec.ru/media/pressrelease/4517791/",
+      "kind": "manufacturer",
+      "scopeDate": "2016-02-26",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-repellent",
+      "title": "Репеллент-Патруль — экспортное описание",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_7254.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-11356",
+      "title": "Project 11356 frigate — design bureau brochure",
+      "publisher": "АО «Северное ПКБ»",
+      "url": "https://severnoepkb.ru/wp-content/uploads/2020/12/11356_en-1.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-amur",
+      "title": "Проект Амур 1650 — основной и с ВНЭУ",
+      "publisher": "АО «ЦКБ МТ «Рубин»",
+      "url": "https://ckb-rubin.ru/fileadmin/editor/Mediacentr/Informacja_o_produkcii/Voennoe_korablestroenie/Buklety_i_listovki/Amur_1650_rus.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2019",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-636",
+      "title": "Project 636 — export submarine",
+      "publisher": "АО «Рособоронэкспорт»",
+      "url": "https://roe.ru/pdfs/pdf_6484.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-snsz",
+      "title": "Военная продукция Средне-Невского судостроительного завода",
+      "publisher": "АО «Средне-Невский судостроительный завод»",
+      "url": "https://snsz.ru/products-civil.html",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан текст официального каталога."
+    },
+    {
+      "id": "ru-r-charter",
+      "title": "Общевоинские уставы — указ №1495, официальный ведомственный экземпляр",
+      "publisher": "МЧС России; Указ Президента РФ",
+      "url": "https://noginsky-sc.organizations.mchs.gov.ru/uploads/document/2022-06-22/3c62dc796b1ddb79237099723b61f118.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2007-11-10; редакция размещённого экземпляра требует проверки",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-mod-army",
+      "title": "Национальные специализации Сухопутных войск — официальный канал Минобороны",
+      "publisher": "Минобороны России",
+      "url": "https://t.me/s/mod_russia?before=57163",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    },
+    {
+      "id": "ru-r-bps",
+      "title": "Официальное сообщение о решении сформировать отдельный род войск беспилотных систем",
+      "publisher": "Минобороны России",
+      "url": "https://t.me/s/mod_russia/47140",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан официальный поисковый фрагмент; полный оригинал требует повторного доступа."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "ru-r-army-motor",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Мотострелковые войска",
+      "nativeName": "Мотострелковые войска",
+      "kind": "branch",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-tank",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Танковые войска",
+      "nativeName": "Танковые войска",
+      "kind": "branch",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-artillery",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Ракетные войска и артиллерия",
+      "nativeName": "Ракетные войска и артиллерия",
+      "kind": "branch",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-airdef",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Войска противовоздушной обороны Сухопутных войск",
+      "nativeName": "Войска противовоздушной обороны Сухопутных войск",
+      "kind": "branch",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-recon",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Разведывательные соединения и воинские части",
+      "nativeName": "Разведывательные соединения и воинские части",
+      "kind": "component",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-engineer",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Инженерные войска",
+      "nativeName": "Инженерные войска",
+      "kind": "component",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-nbc",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Войска радиационной, химической и биологической защиты",
+      "nativeName": "Войска радиационной, химической и биологической защиты",
+      "kind": "component",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-army-signal",
+      "country": "RU",
+      "parent": "ru-army",
+      "title": "Войска связи",
+      "nativeName": "Войска связи",
+      "kind": "component",
+      "sources": [
+        "ru-r-mod-army"
+      ],
+      "status": "draft",
+      "note": "Справочная специализация из официального перечня состава Сухопутных войск. Это классификация, не связь подчинения конкретного формирования; компоненты обеспечения не объявляются самостоятельными видами ВС. Дата публикации фрагмента требует сверки."
+    },
+    {
+      "id": "ru-r-unmanned",
+      "country": "RU",
+      "parent": "ru-armed-forces",
+      "title": "Войска беспилотных систем — объявленный отдельный род",
+      "nativeName": "Войска беспилотных систем",
+      "kind": "independent_branch",
+      "sources": [
+        "ru-r-bps"
+      ],
+      "status": "draft",
+      "note": "Фрагмент официального сообщения подтверждает решение о формировании отдельного рода войск. Дата завершения формирования, действующая структура и текущий состав не устанавливались."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "ru-r-charter-levels",
+      "country": "RU",
+      "service": null,
+      "status": "draft",
+      "sources": [
+        "ru-r-charter"
+      ],
+      "levels": [
+        {
+          "id": "ru-r-level-1",
+          "title": "Взвод",
+          "nativeName": "Взвод",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Взвод",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-2",
+          "title": "Рота",
+          "nativeName": "Рота",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Рота",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-3",
+          "title": "Батальон",
+          "nativeName": "Батальон",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Батальон",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-4",
+          "title": "Отдельный батальон",
+          "nativeName": "Отдельный батальон",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Отдельный батальон",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-5",
+          "title": "Полк",
+          "nativeName": "Полк",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Полк",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-6",
+          "title": "Дивизия",
+          "nativeName": "Дивизия",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Дивизия",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ru-r-level-7",
+          "title": "Корпус",
+          "nativeName": "Корпус",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Корпус",
+                "unit": null,
+                "source": "ru-r-charter",
+                "locator": "Дисциплинарный устав, пункты 27–28",
+                "scope": "Название уровня упомянуто через должность командира. Не устанавливает реальное подчинение, штатный состав или обязательную цепочку.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Указанные в уставе типовые названия. Порядок списка не задает подчиненность; отсутствуют штаты, численность и реальные формирования. Не полная схема всех видов ВС.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "Общевоинская терминология; не отдельный штат Сухопутных войск.",
+            "unit": null,
+            "source": "ru-r-charter",
+            "locator": "Дисциплинарный устав, пункты 27–28",
+            "scope": "Опубликованный МЧС экземпляр; текущая редакция не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "ru-btr82a",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "БТР-82А",
+      "objectClass": "apc",
+      "summary": "Колёсный бронетранспортёр.",
+      "sources": [
+        "ru-r-btr82a"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсный бронетранспортёр.",
+            "unit": null,
+            "source": "ru-r-btr82a",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "БТР-82А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "БТР-82А",
+            "unit": null,
+            "source": "ru-r-btr82a",
+            "locator": "Название модели",
+            "scope": "БТР-82А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ru-r-btr82a",
+            "locator": "Боевой расчёт: командир, наводчик-оператор, водитель",
+            "scope": "БТР-82А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "ru-r-btr82a",
+            "locator": "Боевой расчёт: 7 стрелков",
+            "scope": "БТР-82А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 16000,
+            "unit": "kg",
+            "source": "ru-r-btr82a",
+            "locator": "Масса 16 т; перевод т × 1000",
+            "scope": "БТР-82А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 80,
+            "unit": "km/h",
+            "source": "ru-r-btr82a",
+            "locator": "Скорость: по шоссе не менее 80 км/ч",
+            "scope": "БТР-82А; нижняя граница заявленной дорожной скорости, не точный максимум.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 9,
+            "unit": "km/h",
+            "source": "ru-r-btr82a",
+            "locator": "Скорость: на плаву не менее 9 км/ч",
+            "scope": "БТР-82А; нижняя граница заявленной скорости на плаву, не точный максимум.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 700,
+            "unit": "km",
+            "source": "ru-r-btr82a",
+            "locator": "Запас хода: по шоссе не менее 700 км",
+            "scope": "БТР-82А; нижняя граница запаса хода по шоссе.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 12,
+            "unit": "h",
+            "source": "ru-r-btr82a",
+            "locator": "Запас хода: на плаву не менее 12 ч",
+            "scope": "БТР-82А; продолжительность движения на плаву не менее 12 ч. Не время непрерывной работы всех систем.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-t90ms",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Т-90МС",
+      "objectClass": "tank",
+      "summary": "Экспортная модель основного танка.",
+      "sources": [
+        "ru-r-t90ms"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная модель основного танка.",
+            "unit": null,
+            "source": "ru-r-t90ms",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Т-90МС; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Т-90МС",
+            "unit": null,
+            "source": "ru-r-t90ms",
+            "locator": "Название модели",
+            "scope": "Т-90МС; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ru-r-t90ms",
+            "locator": "Crew",
+            "scope": "Т-90МС; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 70,
+            "unit": "km/h",
+            "source": "ru-r-t90ms",
+            "locator": "Road speed: not more than 70",
+            "scope": "Т-90МС; шоссе, не более 70 км/ч.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "ru-r-t90ms",
+            "locator": "Fuel endurance (road): not less than 500",
+            "scope": "Т-90МС; запас хода по дороге не менее 500 км.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "ru-r-t90ms",
+            "locator": "Gun: not less than 40 rounds",
+            "scope": "Т-90МС; 125-мм орудие 2А46М-5/2А46М-5-01 либо 2А46М-6; номинальная вместимость не менее 40 выстрелов, не текущий остаток.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Средняя скорость по бездорожью 35–40 км/ч.",
+            "unit": null,
+            "source": "ru-r-t90ms",
+            "locator": "Average off-road speed",
+            "scope": "Средняя скорость сохранена текстом: это не максимальная скорость по пересеченной местности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-bmp3",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "БМП-3 — экспортное описание",
+      "objectClass": "ifv",
+      "summary": "Гусеничная плавающая боевая машина пехоты.",
+      "sources": [
+        "ru-r-bmp3"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная плавающая боевая машина пехоты.",
+            "unit": null,
+            "source": "ru-r-bmp3",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "БМП-3 — экспортное описание",
+            "unit": null,
+            "source": "ru-r-bmp3",
+            "locator": "Название модели",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ru-r-bmp3",
+            "locator": "Crew",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "ru-r-bmp3",
+            "locator": "Troops: 7 (+ two additional seats)",
+            "scope": "Каталог БМП-3 указывает 7 десантников и отдельно два дополнительных места; дополнительные места не прибавлены к основному значению.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 18700,
+            "unit": "kg",
+            "source": "ru-r-bmp3",
+            "locator": "Combat weight 18.7 t; ×1000",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 70,
+            "unit": "km/h",
+            "source": "ru-r-bmp3",
+            "locator": "Maximum speed: highway",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 10,
+            "unit": "km/h",
+            "source": "ru-r-bmp3",
+            "locator": "Maximum speed: afloat",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 600,
+            "unit": "km",
+            "source": "ru-r-bmp3",
+            "locator": "Cruising range (highway)",
+            "scope": "БМП-3; запас хода по шоссе из экспортного листка.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "ru-r-bmp3",
+            "locator": "HE rounds: 22 in conveyor + 18 in stowage",
+            "scope": "БМП-3; номинально 40 100-мм выстрелов: 22+18; ракеты учтены отдельно.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 500,
+            "unit": "round",
+            "source": "ru-r-bmp3",
+            "locator": "30mm automatic cannon: ammunition",
+            "scope": "БМП-3; номинальный боекомплект 30-мм пушки 2А72, не пулеметов.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 8,
+            "unit": "item",
+            "source": "ru-r-bmp3",
+            "locator": "ATGMs: 8",
+            "scope": "БМП-3; номинально 8 управляемых ракет, 3 в механизированной укладке.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Для трёх 7,62-мм ПКТМ указано по 2000 патронов; отдельный от пушек показатель.",
+            "unit": null,
+            "source": "ru-r-bmp3",
+            "locator": "7.62mm machine gun: rounds",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Многотопливный дизель УТД-29Т; гидромеханическая трансмиссия; два водомётных движителя.",
+            "unit": null,
+            "source": "ru-r-bmp3",
+            "locator": "Engine; mobility",
+            "scope": "БМП-3 — экспортное описание; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-brem1m",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "БРЭМ-1М",
+      "objectClass": "support-vehicle",
+      "summary": "Бронированная ремонтно-эвакуационная машина.",
+      "sources": [
+        "ru-r-brem1m"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная ремонтно-эвакуационная машина.",
+            "unit": null,
+            "source": "ru-r-brem1m",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "БРЭМ-1М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "БРЭМ-1М",
+            "unit": null,
+            "source": "ru-r-brem1m",
+            "locator": "Название модели",
+            "scope": "БРЭМ-1М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 60,
+            "unit": "km/h",
+            "source": "ru-r-brem1m",
+            "locator": "Максимальная скорость по шоссе не менее 60",
+            "scope": "БРЭМ-1М описания 2021 года; нижняя граница заявленной максимальной скорости.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 700,
+            "unit": "km",
+            "source": "ru-r-brem1m",
+            "locator": "Запас хода с учетом дополнительных бочек",
+            "scope": "БРЭМ-1М; запас хода 700 км с дополнительными бочками; не без них.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Многотопливный дизель В-92С2.",
+            "unit": null,
+            "source": "ru-r-brem1m",
+            "locator": "Двигатель",
+            "scope": "БРЭМ-1М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Лебёдка, гидравлический кран, электросварочное оборудование и грузовая платформа.",
+            "unit": null,
+            "source": "ru-r-brem1m",
+            "locator": "Оснащение",
+            "scope": "БРЭМ-1М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-imr3m",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "ИМР-3М",
+      "objectClass": "engineering",
+      "summary": "Инженерная машина разграждения на шасси Т-90.",
+      "sources": [
+        "ru-r-imr3m"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Инженерная машина разграждения на шасси Т-90.",
+            "unit": null,
+            "source": "ru-r-imr3m",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "ИМР-3М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "ИМР-3М",
+            "unit": null,
+            "source": "ru-r-imr3m",
+            "locator": "Название модели",
+            "scope": "ИМР-3М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Колейный минный трал с электромагнитной приставкой.",
+            "unit": null,
+            "source": "ru-r-imr3m",
+            "locator": "Состав оборудования",
+            "scope": "ИМР-3М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-msta",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Мста-С — 152-мм каталожная конфигурация",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная 152-мм гаубица; точный индекс модернизации в прочитанном фрагменте не установлен.",
+      "sources": [
+        "ru-r-msta"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная 152-мм гаубица; точный индекс модернизации в прочитанном фрагменте не установлен.",
+            "unit": null,
+            "source": "ru-r-msta",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Мста-С — 152-мм каталожная конфигурация; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Мста-С — 152-мм каталожная конфигурация",
+            "unit": null,
+            "source": "ru-r-msta",
+            "locator": "Название модели",
+            "scope": "Мста-С — 152-мм каталожная конфигурация; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "ru-r-msta",
+            "locator": "Range, not less than",
+            "scope": "Для описания Msta-S; запас хода не менее 500 км; маршрутные условия не раскрыты.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "crew_count",
+            "value": 5,
+            "unit": "person",
+            "source": "ru-r-msta",
+            "locator": "Gun crew: 5 (7 when firing from the ground)",
+            "scope": "Пять человек в основном расчёте; дополнительное число семь для иной конфигурации обслуживания не перенесено в основное значение.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость 60 км/ч; среда движения в доступном фрагменте не уточнена.",
+            "unit": null,
+            "source": "ru-r-msta",
+            "locator": "Max speed",
+            "scope": "Msta-S каталожной конфигурации; без присвоения дорожного максимума.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-smerch",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Смерч — пусковая машина из экспортного каталога",
+      "objectClass": "rocket-artillery",
+      "summary": "Боевая машина 300-мм реактивной системы.",
+      "sources": [
+        "ru-r-smerch"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Боевая машина 300-мм реактивной системы.",
+            "unit": null,
+            "source": "ru-r-smerch",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Смерч — пусковая машина из экспортного каталога; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Смерч — пусковая машина из экспортного каталога",
+            "unit": null,
+            "source": "ru-r-smerch",
+            "locator": "Название модели",
+            "scope": "Смерч — пусковая машина из экспортного каталога; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "ru-r-smerch",
+            "locator": "Crew",
+            "scope": "Смерч — пусковая машина из экспортного каталога; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 43700,
+            "unit": "kg",
+            "source": "ru-r-smerch",
+            "locator": "Weight loaded LV with crew not more than 43.7 t; ×1000",
+            "scope": "Боевая машина с экипажем и загрузкой; масса не более 43,7 т.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Пакет из 12 направляющих; номинальная загрузка полного пакета отдельно не подтверждена. Максимальная скорость машины 60 км/ч; тип дороги в фрагменте не указан.",
+            "unit": null,
+            "source": "ru-r-smerch",
+            "locator": "Number of launch tubes; Max speed",
+            "scope": "Смерч — пусковая машина из экспортного каталога; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-tigr114",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Тигр-М АМН-233114",
+      "objectClass": "support-vehicle",
+      "summary": "Колёсный специальный бронированный автомобиль для перевозки людей, грузов и размещения оборудования.",
+      "sources": [
+        "ru-r-tigr"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсный специальный бронированный автомобиль для перевозки людей, грузов и размещения оборудования.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Тигр-М АМН-233114; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Тигр-М АМН-233114",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Название модели",
+            "scope": "Тигр-М АМН-233114; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Дизельный двигатель и механическая пятиступенчатая коробка передач.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Power plant / transmission",
+            "scope": "Тигр-М АМН-233114; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Централизованная система регулирования давления в шинах и лебёдка.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Standard equipment",
+            "scope": "Тигр-М АМН-233114; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-tigr115",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Тигр-М АСН-233115",
+      "objectClass": "support-vehicle",
+      "summary": "Колёсный специальный бронированный автомобиль для перевозки людей, грузов и размещения оборудования.",
+      "sources": [
+        "ru-r-tigr"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсный специальный бронированный автомобиль для перевозки людей, грузов и размещения оборудования.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Тигр-М АСН-233115; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Тигр-М АСН-233115",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Название модели",
+            "scope": "Тигр-М АСН-233115; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Дизельный двигатель и механическая пятиступенчатая коробка передач.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Power plant / transmission",
+            "scope": "Тигр-М АСН-233115; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Централизованная система регулирования давления в шинах и лебёдка.",
+            "unit": null,
+            "source": "ru-r-tigr",
+            "locator": "Standard equipment",
+            "scope": "Тигр-М АСН-233115; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-typhoon53949",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Тайфун К-53949",
+      "objectClass": "support-vehicle",
+      "summary": "Защищённая колёсная машина из экспортного портфеля.",
+      "sources": [
+        "ru-r-typhoon-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Защищённая колёсная машина из экспортного портфеля.",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Тайфун К-53949; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Тайфун К-53949",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Название модели",
+            "scope": "Тайфун К-53949; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-typhoonvdv",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Тайфун-ВДВ",
+      "objectClass": "support-vehicle",
+      "summary": "Защищённая колёсная машина из экспортного портфеля.",
+      "sources": [
+        "ru-r-typhoon-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Защищённая колёсная машина из экспортного портфеля.",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Тайфун-ВДВ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Тайфун-ВДВ",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Название модели",
+            "scope": "Тайфун-ВДВ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-linza",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Линза",
+      "objectClass": "support-vehicle",
+      "summary": "Защищённая санитарная машина.",
+      "sources": [
+        "ru-r-typhoon-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Защищённая санитарная машина.",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Линза; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Линза",
+            "unit": null,
+            "source": "ru-r-typhoon-line",
+            "locator": "Название модели",
+            "scope": "Линза; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-su35",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Су-35 — каталожная модель",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой одноместный самолёт.",
+      "sources": [
+        "ru-r-su35"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой одноместный самолёт.",
+            "unit": null,
+            "source": "ru-r-su35",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Каталожный Су-35; источник отдельно называет Су-35С российской модификацией. Числа не переносятся автоматически на Су-35С.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Су-35 — каталожная модель",
+            "unit": null,
+            "source": "ru-r-su35",
+            "locator": "Название модели",
+            "scope": "Каталожный Су-35; источник отдельно называет Су-35С российской модификацией. Числа не переносятся автоматически на Су-35С.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 1,
+            "unit": "person",
+            "source": "ru-r-su35",
+            "locator": "Экипаж",
+            "scope": "Каталожный Су-35; источник отдельно называет Су-35С российской модификацией. Числа не переносятся автоматически на Су-35С.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1400,
+            "unit": "km/h",
+            "source": "ru-r-su35",
+            "locator": "Максимальная скорость у земли",
+            "scope": "Каталог Су-35, максимальная скорость у земли; не максимум на высоте.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 3600,
+            "unit": "km",
+            "source": "ru-r-su35",
+            "locator": "Дальность на высоте крейсерского полета без дозаправки",
+            "scope": "Каталог Су-35; максимальная дальность на высоте крейсерского полета без дозаправки.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальное число М на высоте крейсерского полёта — 2,25; в км/ч не пересчитано.",
+            "unit": null,
+            "source": "ru-r-su35",
+            "locator": "Лётно-технические характеристики",
+            "scope": "Каталожный Су-35; источник отдельно называет Су-35С российской модификацией. Числа не переносятся автоматически на Су-35С.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два ТРДДФ 117С.",
+            "unit": null,
+            "source": "ru-r-su35",
+            "locator": "Силовая установка",
+            "scope": "Каталожный Су-35; источник отдельно называет Су-35С российской модификацией. Числа не переносятся автоматически на Су-35С.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-su34e",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Су-34Э",
+      "objectClass": "aircraft",
+      "summary": "Экспортный двухместный истребитель-бомбардировщик.",
+      "sources": [
+        "ru-r-su34e"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортный двухместный истребитель-бомбардировщик.",
+            "unit": null,
+            "source": "ru-r-su34e",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Таблица на странице Су-34 явно помечена как экспортный Су-34Э; на Су-34 и Су-34М значения не переносятся.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Су-34Э",
+            "unit": null,
+            "source": "ru-r-su34e",
+            "locator": "Название модели",
+            "scope": "Таблица на странице Су-34 явно помечена как экспортный Су-34Э; на Су-34 и Су-34М значения не переносятся.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "ru-r-su34e",
+            "locator": "Количество членов экипажа",
+            "scope": "Таблица на странице Су-34 явно помечена как экспортный Су-34Э; на Су-34 и Су-34М значения не переносятся.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1100,
+            "unit": "km/h",
+            "source": "ru-r-su34e",
+            "locator": "Максимальная скорость полета у земли без подвесок",
+            "scope": "Су-34Э; у земли и без подвесок.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 4250,
+            "unit": "km",
+            "source": "ru-r-su34e",
+            "locator": "Перегоночная дальность",
+            "scope": "Су-34Э; перегоночная дальность, не боевой радиус.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость на высоте без подвесок — М=1,5; без пересчёта в км/ч.",
+            "unit": null,
+            "source": "ru-r-su34e",
+            "locator": "Лётно-технические характеристики",
+            "scope": "Таблица на странице Су-34 явно помечена как экспортный Су-34Э; на Су-34 и Су-34М значения не переносятся.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя АЛ-31Ф.",
+            "unit": null,
+            "source": "ru-r-su34e",
+            "locator": "Силовая установка",
+            "scope": "Таблица на странице Су-34 явно помечена как экспортный Су-34Э; на Су-34 и Су-34М значения не переносятся.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-yak130",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Як-130",
+      "objectClass": "aircraft",
+      "summary": "Двухместный учебно-боевой самолёт.",
+      "sources": [
+        "ru-r-yak130"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухместный учебно-боевой самолёт.",
+            "unit": null,
+            "source": "ru-r-yak130",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Як-130",
+            "unit": null,
+            "source": "ru-r-yak130",
+            "locator": "Название модели",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "ru-r-yak130",
+            "locator": "Экипаж",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 10290,
+            "unit": "kg",
+            "source": "ru-r-yak130",
+            "locator": "Взлетная масса макс",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1060,
+            "unit": "km/h",
+            "source": "ru-r-yak130",
+            "locator": "Максимальная скорость истинная",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1600,
+            "unit": "km",
+            "source": "ru-r-yak130",
+            "locator": "Максимальная дальность полета",
+            "scope": "Як-130; максимальная дальность без указанных в следующей строке ПТБ.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2100,
+            "unit": "km",
+            "source": "ru-r-yak130",
+            "locator": "Максимальная дальность полета с ПТБ",
+            "scope": "Як-130; максимальная дальность с подвесными топливными баками; отдельная конфигурация.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя АИ-222-25.",
+            "unit": null,
+            "source": "ru-r-yak130",
+            "locator": "Тип двигателя",
+            "scope": "Як-130; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-il76",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ил-76МД-90А",
+      "objectClass": "aircraft",
+      "summary": "Тяжёлый военно-транспортный самолёт.",
+      "sources": [
+        "ru-r-il76"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый военно-транспортный самолёт.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ил-76МД-90А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ил-76МД-90А",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Название модели",
+            "scope": "Ил-76МД-90А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 210000,
+            "unit": "kg",
+            "source": "ru-r-il76",
+            "locator": "Максимальный взлетный вес 210 т; ×1000",
+            "scope": "Ил-76МД-90А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 5000,
+            "unit": "km",
+            "source": "ru-r-il76",
+            "locator": "Дальность полета с полезной нагрузкой 52 т",
+            "scope": "Ил-76МД-90А; дальность с полезной нагрузкой 52 т, не с максимальной 60 т.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 9700,
+            "unit": "km",
+            "source": "ru-r-il76",
+            "locator": "Дальность полета перегоночная",
+            "scope": "Ил-76МД-90А; перегоночная конфигурация.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Крейсерская скорость 750–780 км/ч; диапазон сохранён без усреднения.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Летные характеристики",
+            "scope": "Ил-76МД-90А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Четыре двигателя ПС-90А-76.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Силовая установка",
+            "scope": "Ил-76МД-90А; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-il78",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ил-78М-90А",
+      "objectClass": "aircraft",
+      "summary": "Конвертируемый самолёт-заправщик.",
+      "sources": [
+        "ru-r-il76"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Конвертируемый самолёт-заправщик.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Только таблица Ил-78М-90А, а не параметры транспортного Ил-76МД-90А.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ил-78М-90А",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Название модели",
+            "scope": "Только таблица Ил-78М-90А, а не параметры транспортного Ил-76МД-90А.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Крейсерская скорость 750–780 км/ч; после снятия заправочного оборудования возможна транспортная конфигурация.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Отдельный раздел Ил-78М-90А",
+            "scope": "Только таблица Ил-78М-90А, а не параметры транспортного Ил-76МД-90А.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Четыре двигателя ПС-90А-76.",
+            "unit": null,
+            "source": "ru-r-il76",
+            "locator": "Отдельная таблица Ил-78М-90А",
+            "scope": "Только таблица Ил-78М-90А, а не параметры транспортного Ил-76МД-90А.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-su57",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Су-57",
+      "objectClass": "aircraft",
+      "summary": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+      "sources": [
+        "ru-r-uac-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Су-57; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Су-57",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Название модели",
+            "scope": "Су-57; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-su75",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Су-75",
+      "objectClass": "aircraft",
+      "summary": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+      "sources": [
+        "ru-r-uac-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Су-75; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Су-75",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Название модели",
+            "scope": "Су-75; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mig35",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "МиГ-35",
+      "objectClass": "aircraft",
+      "summary": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+      "sources": [
+        "ru-r-uac-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "МиГ-35; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "МиГ-35",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Название модели",
+            "scope": "МиГ-35; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-su30sme",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Су-30СМЭ",
+      "objectClass": "aircraft",
+      "summary": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+      "sources": [
+        "ru-r-uac-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Су-30СМЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Су-30СМЭ",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Название модели",
+            "scope": "Су-30СМЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-yak152",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Як-152",
+      "objectClass": "aircraft",
+      "summary": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+      "sources": [
+        "ru-r-uac-line"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модель из открытого портфеля военной авиации ОАК; стадия разработки и точные характеристики отдельно не проверены.",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Як-152; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Як-152",
+            "unit": null,
+            "source": "ru-r-uac-line",
+            "locator": "Название модели",
+            "scope": "Як-152; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi171sh",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-171Ш",
+      "objectClass": "helicopter",
+      "summary": "Военно-транспортный вертолёт.",
+      "sources": [
+        "ru-r-mi171sh"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Военно-транспортный вертолёт.",
+            "unit": null,
+            "source": "ru-r-mi171sh",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-171Ш; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-171Ш",
+            "unit": null,
+            "source": "ru-r-mi171sh",
+            "locator": "Название модели",
+            "scope": "Ми-171Ш; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 13500,
+            "unit": "kg",
+            "source": "ru-r-mi171sh",
+            "locator": "Максимальная взлетная масса",
+            "scope": "Ми-171Ш; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 280,
+            "unit": "km/h",
+            "source": "ru-r-mi171sh",
+            "locator": "Максимальная скорость",
+            "scope": "Ми-171Ш; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 610,
+            "unit": "km",
+            "source": "ru-r-mi171sh",
+            "locator": "Дальность полета с внутренними ТБ",
+            "scope": "Ми-171Ш; внутренние топливные баки; не перегоночная дальность.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 37,
+            "unit": "person",
+            "source": "ru-r-mi171sh",
+            "locator": "Десантников до 37",
+            "scope": "Ми-171Ш; не более 37 человек в грузовой кабине; конкретное оборудование перевозки не раскрыто.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-ka52",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ка-52 — экспортный листок",
+      "objectClass": "helicopter",
+      "summary": "Двухместный вертолёт.",
+      "sources": [
+        "ru-r-ka52"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухместный вертолёт.",
+            "unit": null,
+            "source": "ru-r-ka52",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ка-52 — экспортный листок",
+            "unit": null,
+            "source": "ru-r-ka52",
+            "locator": "Название модели",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "ru-r-ka52",
+            "locator": "Crew",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 10800,
+            "unit": "kg",
+            "source": "ru-r-ka52",
+            "locator": "Max takeoff weight",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 300,
+            "unit": "km/h",
+            "source": "ru-r-ka52",
+            "locator": "Max speed",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 260,
+            "unit": "km/h",
+            "source": "ru-r-ka52",
+            "locator": "Cruising speed",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 460,
+            "unit": "km",
+            "source": "ru-r-ka52",
+            "locator": "Range with internal fuel tanks",
+            "scope": "Ка-52 каталожной комплектации; дальность с внутренними баками, не Ка-52Э или Ка-52М.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два ВК-2500 либо ВК-2500П; альтернативы каталога.",
+            "unit": null,
+            "source": "ru-r-ka52",
+            "locator": "Powerplant",
+            "scope": "Ка-52 — экспортный листок; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi28ne",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-28НЭ",
+      "objectClass": "helicopter",
+      "summary": "Экспортный вертолёт модели Ми-28НЭ.",
+      "sources": [
+        "ru-r-mi28ne"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортный вертолёт модели Ми-28НЭ.",
+            "unit": null,
+            "source": "ru-r-mi28ne",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-28НЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-28НЭ",
+            "unit": null,
+            "source": "ru-r-mi28ne",
+            "locator": "Название модели",
+            "scope": "Ми-28НЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 12100,
+            "unit": "kg",
+            "source": "ru-r-mi28ne",
+            "locator": "Max takeoff weight",
+            "scope": "Ми-28НЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 315,
+            "unit": "km/h",
+            "source": "ru-r-mi28ne",
+            "locator": "Max speed",
+            "scope": "Ми-28НЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 425,
+            "unit": "km",
+            "source": "ru-r-mi28ne",
+            "locator": "Flight range internal fuel tanks",
+            "scope": "Ми-28НЭ; дальность с внутренними топливными баками.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi26t2",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-26Т2",
+      "objectClass": "helicopter",
+      "summary": "Тяжёлый транспортный вертолёт; описание спасательной комплектации.",
+      "sources": [
+        "ru-r-mi26t2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлый транспортный вертолёт; описание спасательной комплектации.",
+            "unit": null,
+            "source": "ru-r-mi26t2",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-26Т2; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-26Т2",
+            "unit": null,
+            "source": "ru-r-mi26t2",
+            "locator": "Название модели",
+            "scope": "Ми-26Т2; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 56000,
+            "unit": "kg",
+            "source": "ru-r-mi26t2",
+            "locator": "Максимальная взлетная масса 56 т; ×1000",
+            "scope": "Ми-26Т2; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 295,
+            "unit": "km/h",
+            "source": "ru-r-mi26t2",
+            "locator": "Максимальная скорость",
+            "scope": "Ми-26Т2; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 255,
+            "unit": "km/h",
+            "source": "ru-r-mi26t2",
+            "locator": "Крейсерская скорость",
+            "scope": "Ми-26Т2; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 800,
+            "unit": "km",
+            "source": "ru-r-mi26t2",
+            "locator": "Дальность с нормальной нагрузкой",
+            "scope": "Ми-26Т2 в описании для спасателей; нормальная нагрузка, не максимальная.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1905,
+            "unit": "km",
+            "source": "ru-r-mi26t2",
+            "locator": "Перегоночная дальность",
+            "scope": "Ми-26Т2; перегоночная конфигурация, не дальность с грузом 20 т.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi35m",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-35М",
+      "objectClass": "helicopter",
+      "summary": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+      "sources": [
+        "ru-r-heli-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-35М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-35М",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Название модели",
+            "scope": "Ми-35М; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi35p",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-35П",
+      "objectClass": "helicopter",
+      "summary": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+      "sources": [
+        "ru-r-heli-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-35П; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-35П",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Название модели",
+            "scope": "Ми-35П; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-ka52e",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ка-52Э",
+      "objectClass": "helicopter",
+      "summary": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+      "sources": [
+        "ru-r-heli-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ка-52Э; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ка-52Э",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Название модели",
+            "scope": "Ка-52Э; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-mi28nme",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Ми-28НМЭ",
+      "objectClass": "helicopter",
+      "summary": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+      "sources": [
+        "ru-r-heli-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная модификация вертолёта из портфеля HeliRussia 2024; идентификация без переноса чисел других модификаций.",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Ми-28НМЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Ми-28НМЭ",
+            "unit": null,
+            "source": "ru-r-heli-portfolio",
+            "locator": "Название модели",
+            "scope": "Ми-28НМЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-orlan10e",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Орлан-10Е",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт в составе комплекса наблюдения.",
+      "sources": [
+        "ru-r-orlan10e"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт в составе комплекса наблюдения.",
+            "unit": null,
+            "source": "ru-r-orlan10e",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Орлан-10Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Орлан-10Е",
+            "unit": null,
+            "source": "ru-r-orlan10e",
+            "locator": "Название модели",
+            "scope": "Орлан-10Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 18.6,
+            "unit": "kg",
+            "source": "ru-r-orlan10e",
+            "locator": "Maximum takeoff weight",
+            "scope": "Орлан-10Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 10,
+            "unit": "h",
+            "source": "ru-r-orlan10e",
+            "locator": "Maximum flight endurance not less than 10",
+            "scope": "Орлан-10Е; заявленная максимальная продолжительность не менее 10 ч; тип нагрузки не раскрыт.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Крейсерская скорость 100±10 км/ч; радиус радиоканала не отождествляется с дальностью полёта.",
+            "unit": null,
+            "source": "ru-r-orlan10e",
+            "locator": "Cruise speed; radius",
+            "scope": "Орлан-10Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Двигатель внутреннего сгорания.",
+            "unit": null,
+            "source": "ru-r-orlan10e",
+            "locator": "Type of power plant",
+            "scope": "Орлан-10Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-orione",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Орион-Э — разведывательная конфигурация буклета",
+      "objectClass": "unmanned-air",
+      "summary": "Средневысотный беспилотный самолёт длительного полёта.",
+      "sources": [
+        "ru-r-orione"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средневысотный беспилотный самолёт длительного полёта.",
+            "unit": null,
+            "source": "ru-r-orione",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Орион-Э — разведывательная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Орион-Э — разведывательная конфигурация буклета",
+            "unit": null,
+            "source": "ru-r-orione",
+            "locator": "Название модели",
+            "scope": "Орион-Э — разведывательная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 1000,
+            "unit": "kg",
+            "source": "ru-r-orione",
+            "locator": "MTOW",
+            "scope": "Орион-Э — разведывательная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 120,
+            "unit": "km/h",
+            "source": "ru-r-orione",
+            "locator": "Cruise speed",
+            "scope": "Орион-Э — разведывательная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 24,
+            "unit": "h",
+            "source": "ru-r-orione",
+            "locator": "Endurance with payload 60 kg",
+            "scope": "Орион-Э из буклета: полезная нагрузка 60 кг; не новые варианты с иной взлётной массой и нагрузкой.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-uran6",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Уран-6",
+      "objectClass": "unmanned-ground",
+      "summary": "Наземная дистанционно управляемая платформа для разминирования.",
+      "sources": [
+        "ru-r-uran6"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Наземная дистанционно управляемая платформа для разминирования.",
+            "unit": null,
+            "source": "ru-r-uran6",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Уран-6; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Уран-6",
+            "unit": null,
+            "source": "ru-r-uran6",
+            "locator": "Название модели",
+            "scope": "Уран-6; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 6000,
+            "unit": "kg",
+            "source": "ru-r-uran6",
+            "locator": "Curb weight",
+            "scope": "Уран-6; снаряжённая масса из каталога, не масса с каждым навесным орудием.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление и передача видео.",
+            "unit": null,
+            "source": "ru-r-uran6",
+            "locator": "Control and video transmission",
+            "scope": "Уран-6; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Четыре основные видеокамеры; дополнительная камера на съёмном бульдозерном отвале с захватом.",
+            "unit": null,
+            "source": "ru-r-uran6",
+            "locator": "Number of video cameras",
+            "scope": "Уран-6; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-junona",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Юнона",
+      "objectClass": "unmanned-underwater",
+      "summary": "Автономный подводный аппарат для поиска, картографирования и обследования акваторий.",
+      "sources": [
+        "ru-r-junona"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-underwater",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Автономный подводный аппарат для поиска, картографирования и обследования акваторий.",
+            "unit": null,
+            "source": "ru-r-junona",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Юнона; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Юнона",
+            "unit": null,
+            "source": "ru-r-junona",
+            "locator": "Название модели",
+            "scope": "Юнона; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 87,
+            "unit": "kg",
+            "source": "ru-r-junona",
+            "locator": "Масса",
+            "scope": "Юнона; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 6,
+            "unit": "h",
+            "source": "ru-r-junona",
+            "locator": "Автономность до 6 ч",
+            "scope": "Юнона; автономность не более 6 ч.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 30,
+            "unit": "km",
+            "source": "ru-r-junona",
+            "locator": "Дальность хода на маршрутной скорости до 30 км",
+            "scope": "Юнона; при маршрутной скорости от 1 до 1,5 м/с, не при максимальной скорости.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 10.8,
+            "unit": "km/h",
+            "source": "ru-r-junona",
+            "locator": "Максимальная скорость 3 м/с; ×3,6",
+            "scope": "Юнона; скорость подводного хода, точное преобразование м/с в км/ч.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автономная работа с программным контролем и сопровождением миссии.",
+            "unit": null,
+            "source": "ru-r-junona",
+            "locator": "Основные особенности",
+            "scope": "Юнона; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Гидролокаторы бокового обзора, фотокамера, инерциальная навигация и гидроакустический модем.",
+            "unit": null,
+            "source": "ru-r-junona",
+            "locator": "Стандартная комплектация",
+            "scope": "Юнона; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-credo",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Кредо-1Е",
+      "objectClass": "radar-sensor",
+      "summary": "Радиолокационная станция наблюдения за движущимися объектами.",
+      "sources": [
+        "ru-r-credо"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиолокационная станция наблюдения за движущимися объектами.",
+            "unit": null,
+            "source": "ru-r-credо",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Кредо-1Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Кредо-1Е",
+            "unit": null,
+            "source": "ru-r-credо",
+            "locator": "Название модели",
+            "scope": "Кредо-1Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 100,
+            "unit": "kg",
+            "source": "ru-r-credо",
+            "locator": "Масса",
+            "scope": "Кредо-1Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Приёмопередатчик с антенной, привод, блок обработки и пульт; предусмотрено автономное размещение на треноге или установка на машину.",
+            "unit": null,
+            "source": "ru-r-credо",
+            "locator": "Состав; варианты размещения",
+            "scope": "Кредо-1Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление по линиям связи.",
+            "unit": null,
+            "source": "ru-r-credо",
+            "locator": "Интерфейсы",
+            "scope": "Кредо-1Е; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-podlet",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Подлёт-К1КЕ",
+      "objectClass": "radar-sensor",
+      "summary": "Экспортная радиолокационная станция обнаружения и сопровождения воздушных объектов.",
+      "sources": [
+        "ru-r-podlet"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортная радиолокационная станция обнаружения и сопровождения воздушных объектов.",
+            "unit": null,
+            "source": "ru-r-podlet",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Подлёт-К1КЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Подлёт-К1КЕ",
+            "unit": null,
+            "source": "ru-r-podlet",
+            "locator": "Название модели",
+            "scope": "Подлёт-К1КЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Твердотельные приемопередающие модули, цифровая обработка и волоконно-оптические линии связи.",
+            "unit": null,
+            "source": "ru-r-podlet",
+            "locator": "Описание технологий",
+            "scope": "Подлёт-К1КЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-r168",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Р-168-5УТЕ",
+      "objectClass": "communications",
+      "summary": "Возимая УКВ-радиостанция для голосовой связи и передачи данных.",
+      "sources": [
+        "ru-r-r168"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Возимая УКВ-радиостанция для голосовой связи и передачи данных.",
+            "unit": null,
+            "source": "ru-r-r168",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Р-168-5УТЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Р-168-5УТЕ",
+            "unit": null,
+            "source": "ru-r-r168",
+            "locator": "Название модели",
+            "scope": "Р-168-5УТЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Поддерживает телефонную связь и обмен данными; предусмотрено дистанционное управление.",
+            "unit": null,
+            "source": "ru-r-r168",
+            "locator": "Types of operation; modes",
+            "scope": "Р-168-5УТЕ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-r16825",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Р-168-25У — модернизация 2016 года",
+      "objectClass": "communications",
+      "summary": "Цифровая радиостанция для установки на подвижной технике.",
+      "sources": [
+        "ru-r-r16825"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Цифровая радиостанция для установки на подвижной технике.",
+            "unit": null,
+            "source": "ru-r-r16825",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Р-168-25У — модернизация 2016 года; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Р-168-25У — модернизация 2016 года",
+            "unit": null,
+            "source": "ru-r-r16825",
+            "locator": "Название модели",
+            "scope": "Р-168-25У — модернизация 2016 года; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "От −40 до +50 °C в испытаниях, упомянутых производителем.",
+            "unit": null,
+            "source": "ru-r-r16825",
+            "locator": "Условия испытаний",
+            "scope": "Р-168-25У — модернизация 2016 года; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Программно определяемая платформа.",
+            "unit": null,
+            "source": "ru-r-r16825",
+            "locator": "Описание модернизации",
+            "scope": "Р-168-25У — модернизация 2016 года; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-repellent",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Репеллент-Патруль",
+      "objectClass": "electronic-warfare",
+      "summary": "Средство обнаружения сигналов БЛА и радиоэлектронного противодействия.",
+      "sources": [
+        "ru-r-repellent"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Средство обнаружения сигналов БЛА и радиоэлектронного противодействия.",
+            "unit": null,
+            "source": "ru-r-repellent",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Репеллент-Патруль; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Репеллент-Патруль",
+            "unit": null,
+            "source": "ru-r-repellent",
+            "locator": "Название модели",
+            "scope": "Репеллент-Патруль; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Мобильное либо стационарное исполнение; числовые параметры шасси не установлены.",
+            "unit": null,
+            "source": "ru-r-repellent",
+            "locator": "Варианты поставки",
+            "scope": "Репеллент-Патруль; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-11356",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Фрегат проекта 11356 — экспортная конфигурация буклета",
+      "objectClass": "surface-vessel",
+      "summary": "Проект надводного многоцелевого корабля.",
+      "sources": [
+        "ru-r-11356"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект надводного многоцелевого корабля.",
+            "unit": null,
+            "source": "ru-r-11356",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Фрегат проекта 11356 — экспортная конфигурация буклета",
+            "unit": null,
+            "source": "ru-r-11356",
+            "locator": "Название модели",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 124.8,
+            "unit": "m",
+            "source": "ru-r-11356",
+            "locator": "Length",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 15.2,
+            "unit": "m",
+            "source": "ru-r-11356",
+            "locator": "Beam",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 3620000,
+            "unit": "kg",
+            "source": "ru-r-11356",
+            "locator": "Standard Displacement 3620 t; ×1000",
+            "scope": "Проект 11356; стандартное водоизмещение, не полное.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 720,
+            "unit": "h",
+            "source": "ru-r-11356",
+            "locator": "Endurance 30 days; ×24",
+            "scope": "Проект 11356; автономность 30 суток; не длительность полного хода.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Полный ход 30±0,5 узла; дальность 4850 миль. Скорость и дальность сохранены в исходных единицах: вид мили и условия дальности требуют проверки оригинала.",
+            "unit": null,
+            "source": "ru-r-11356",
+            "locator": "Full Speed; Range",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 8,
+            "unit": "item",
+            "source": "ru-r-11356",
+            "locator": "Club-N system 8 missiles",
+            "scope": "Экспортная конфигурация буклета: номинально 8 ракет комплекса Club-N; не суммарный боекомплект всех систем.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Газотурбинная установка.",
+            "unit": null,
+            "source": "ru-r-11356",
+            "locator": "Propulsion",
+            "scope": "Фрегат проекта 11356 — экспортная конфигурация буклета; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-amur",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Амур 1650 — базовый проект",
+      "objectClass": "submarine",
+      "summary": "Экспортный проект неатомной подводной лодки.",
+      "sources": [
+        "ru-r-amur"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортный проект неатомной подводной лодки.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Амур 1650 — базовый проект; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Амур 1650 — базовый проект",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Название модели",
+            "scope": "Амур 1650 — базовый проект; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 35,
+            "unit": "person",
+            "source": "ru-r-amur",
+            "locator": "Экипаж",
+            "scope": "Амур 1650 — базовый проект; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 1080,
+            "unit": "h",
+            "source": "ru-r-amur",
+            "locator": "Автономность 45 / 60 суток; ×24",
+            "scope": "Амур 1650 — базовый проект; автономность по отдельной колонке буклета, не время подводного хода.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Полный подводный ход около 21 узлов; без замены скоростью другой конфигурации.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Скорость полного подводного хода",
+            "scope": "Амур 1650 — базовый проект; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Боезапас 18 изделий калибра 533 мм в различном сочетании ракет, торпед и мин; это общая вместимость, не 18 ракет.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Боезапас оружия калибра 533 мм",
+            "scope": "Амур 1650 — базовый проект; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-amuraip",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Амур 1650 — проект с ВНЭУ",
+      "objectClass": "submarine",
+      "summary": "Экспортный проект неатомной подводной лодки.",
+      "sources": [
+        "ru-r-amur"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Экспортный проект неатомной подводной лодки.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Амур 1650 — проект с ВНЭУ; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Амур 1650 — проект с ВНЭУ",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Название модели",
+            "scope": "Амур 1650 — проект с ВНЭУ; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 38,
+            "unit": "person",
+            "source": "ru-r-amur",
+            "locator": "Экипаж",
+            "scope": "Амур 1650 — проект с ВНЭУ; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 1440,
+            "unit": "h",
+            "source": "ru-r-amur",
+            "locator": "Автономность 45 / 60 суток; ×24",
+            "scope": "Амур 1650 — проект с ВНЭУ; автономность по отдельной колонке буклета, не время подводного хода.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Полный подводный ход около 19 узлов; без замены скоростью другой конфигурации.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Скорость полного подводного хода",
+            "scope": "Амур 1650 — проект с ВНЭУ; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Боезапас 18 изделий калибра 533 мм в различном сочетании ракет, торпед и мин; это общая вместимость, не 18 ракет.",
+            "unit": null,
+            "source": "ru-r-amur",
+            "locator": "Боезапас оружия калибра 533 мм",
+            "scope": "Амур 1650 — проект с ВНЭУ; отдельная колонка буклета 2019 года; проектное предложение, не подтверждение реализованной машины.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-636",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Подводная лодка проекта 636 — экспортный листок",
+      "objectClass": "submarine",
+      "summary": "Проект дизель-электрической подводной лодки.",
+      "sources": [
+        "ru-r-636"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект дизель-электрической подводной лодки.",
+            "unit": null,
+            "source": "ru-r-636",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Экспортная конфигурация проекта 636; не автоматически 636.3.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Подводная лодка проекта 636 — экспортный листок",
+            "unit": null,
+            "source": "ru-r-636",
+            "locator": "Название модели",
+            "scope": "Экспортная конфигурация проекта 636; не автоматически 636.3.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость под водой / на поверхности: 19 / 11 узлов; дальность на дизелях / батареях: 7500 / 400 миль; скорости режимов дальности в фрагменте не установлены.",
+            "unit": null,
+            "source": "ru-r-636",
+            "locator": "Speed submerged/surface; Range diesels/batteries",
+            "scope": "Экспортная конфигурация проекта 636; не автоматически 636.3.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Каталог раздельно указывает номинальные варианты: 18 торпед / 12 ракет / 24 мины; это альтернативные загрузки, не суммарный запас.",
+            "unit": null,
+            "source": "ru-r-636",
+            "locator": "Ammunition load for 533 mm launching units",
+            "scope": "Экспортная конфигурация проекта 636; не автоматически 636.3.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-12701",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Проект 12701",
+      "objectClass": "surface-vessel",
+      "summary": "Противоминный корабль базовой зоны.",
+      "sources": [
+        "ru-r-snsz"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Противоминный корабль базовой зоны.",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Проект 12701; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Проект 12701",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Название модели",
+            "scope": "Проект 12701; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-107503",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Проект 107503",
+      "objectClass": "surface-vessel",
+      "summary": "Рейдовый тральщик; обозначение именно так приведено в списке производителя, требует проверки индивидуальной карточки.",
+      "sources": [
+        "ru-r-snsz"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Рейдовый тральщик; обозначение именно так приведено в списке производителя, требует проверки индивидуальной карточки.",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Проект 107503; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Проект 107503",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Название модели",
+            "scope": "Проект 107503; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-12418",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Проект 12418",
+      "objectClass": "surface-vessel",
+      "summary": "Ракетный катер.",
+      "sources": [
+        "ru-r-snsz"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ракетный катер.",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Проект 12418; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Проект 12418",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Название модели",
+            "scope": "Проект 12418; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ru-r-266me",
+      "kind": "equipment_model",
+      "countryContext": "RU",
+      "title": "Проект 266МЭ",
+      "objectClass": "surface-vessel",
+      "summary": "Морской тральщик.",
+      "sources": [
+        "ru-r-snsz"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог не подтверждает нынешних операторов, наличие в частях или готовность. Неприведенные характеристики, включая скорость, запас хода и боекомплект, не установлены; числовые значения не наследуются другими модификациями.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Морской тральщик.",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Назначение / заголовок карточки",
+            "scope": "Проект 266МЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Проект 266МЭ",
+            "unit": null,
+            "source": "ru-r-snsz",
+            "locator": "Название модели",
+            "scope": "Проект 266МЭ; открытое каталожное описание, редакция и комплектация не установлены.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Открытые официальные продуктовые каталоги и типовая национальная терминология; только общие справочные карточки, без текущего состава, дислокации, готовности, тактики и оценок эффективности.",
+    "gaps": [
+      "Большинство первичных сайтов не удалось открыть полностью; карточки с search_excerpt требуют чтения оригинала.",
+      "Не сформирован исчерпывающий перечень всех модификаций и классов российского портфеля; отдельные записи намеренно содержат только идентификацию.",
+      "Штаты и состав реальных формирований не исследуются. Для ВКС и ВМФ остаются пробелы национальных родов и организационных обозначений.",
+      "Индивидуальная паспортная комплектация транспорта, РЭБ, средств связи, кораблей и ряда авиационных моделей остаётся неполной.",
+      "Число М, узлы и неуточнённые мили сохранены текстом; числовой запас хода не выводится из боевого радиуса или дальности оружия."
+    ],
+    "sourceProblems": [
+      "Roe, UAC, Rostec, Rubin и Kronshtadt: неоднократные timeout/502 при чтении полных страниц; depth search_excerpt сохранён честно.",
+      "У Мста-С в фрагменте не указана среда максимальной скорости; значение сохранено только текстом перед сдачей.",
+      "Устав размещён официальным учреждением МЧС, но дата редакции экземпляра не установлена; перечень уровней не является актуальным штатным нормативом.",
+      "Проект 107503 воспроизведён с общей страницы СНСЗ без исправления на предположительное другое обозначение."
+    ]
+  }
+}

@@ -1,0 +1,1807 @@
+{
+  "country": "KP",
+  "sources": [
+    {
+      "id": "kp-dia",
+      "title": "North Korea Military Power",
+      "publisher": "Defense Intelligence Agency; официальная копия U.S. Government Publishing Office",
+      "url": "https://www.govinfo.gov/content/pkg/GOVPUB-D5_200-PURL-gpo172971/pdf/GOVPUB-D5_200-PURL-gpo172971.pdf",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2021",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Полностью прочитан текст официальной копии GovInfo. Прямой адрес DIA вернул 403. Только внешняя оценка 2021 года; текущая структура, наличие и готовность не подтверждаются."
+    },
+    {
+      "id": "kp-r-src-weg2011",
+      "title": "Worldwide Equipment Guide, Volume 1, December 2011",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://cgsc.contentdm.oclc.org/digital/api/collection/p4013coll11/id/2089/download",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2011-12",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан поисковый фрагмент карточки VTT-323, с. 3-24. Архив U.S. Army CGSC. Прямое скачивание вернуло HTML. Историческая внешняя оценка; не переносить на другие модификации."
+    },
+    {
+      "id": "kp-r-src-koksan",
+      "title": "M-1978 Koksan North Korea 170mm Self-Propelled Gun (SPG)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/89896f0850bce546e3e07c9d8656ef9d",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-05-27",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-chonma",
+      "title": "Chonma-Ho North Korean Main Battle Tank (MBT)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/21494e237ed7b970adafc21b128fa491",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-03-11",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-m2010",
+      "title": "M2010 North Korean Amphibious Armored Personnel Carrier (APC)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/eb4215547a001539d304b688d9b18e26",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-12-20",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-m1985-240",
+      "title": "M-1985 North Korean 240mm Multiple Rocket Launcher",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/aec661f6d87253bcb7103eab86385170",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-04-22",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-m1985-122",
+      "title": "M-1985 North Korean 122mm Multiple Rocket Launcher (MRL)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/e7945a5b85629a9e582c1b78d3173ae0",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-03-27",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-kn09",
+      "title": "KN-09 North Korean 300mm Rocket Artillery System",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/4b1fef7427ecce027aee2ad36d9ddf19",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-09-29",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-kn06",
+      "title": "KN-06 Pon’gae-5 North Korean Surface-to-Air Missile (SAM) System",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/6787ad99144fc6f306597e5daa686fd4",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-06-10",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-najin",
+      "title": "Najin Class North Korean Frigate",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/bad004f96bae4a3838e2f2402ecca9ae",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-04-17",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-sariwon",
+      "title": "Sariwon Class North Korean Corvette",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/Sariwon_Class_North_Korean_Corvette-9",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-04-22",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-hanchon",
+      "title": "Hanchon Class North Korean Landing Craft Utility (LCU)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/2adc352f15df671b27e9aa2a50af1768",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-08-29",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-yugo",
+      "title": "Yugo Class North Korean Diesel-Electric Midget Submarine",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/42c1e129fd5491a125912045dab56b3b",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-04-26",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-sango",
+      "title": "Sang-O Class North Korean Diesel-Electric Submarine",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/27fc0cf80a0c516e5a85c3d524205b88",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-05-09",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-panghyon",
+      "title": "ASN-105 Chinese Unmanned Aerial Vehicle (UAV): Panghyon-2",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/ASN-105_Chinese_Unmanned_Aerial_Vehicle",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-06-13",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-hwasong6",
+      "title": "Hwasong-6 (Scud-C) North Korean Short-Range Ballistic Missile",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/81aa9439633b040e9cfb7a5f163cfffe",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-07-16",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-hwasong10",
+      "title": "Hwasong-10 (Musudan) North Korean Intermediate-Range Ballistic Missile",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/4c9b59abd6bd92dcae92015fd30a3a19",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-07-09",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-hwasong18",
+      "title": "Hwasong-18 North Korean Intercontinental Ballistic Missile (ICBM)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/baa4f5c8614940314abb6267e4e19be9",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2025-09-04",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава."
+    },
+    {
+      "id": "kp-r-src-bulsae3",
+      "title": "Bulsae-3 (AT-14 Spriggan) North Korean Anti-Tank Guided Missile (ATGM)",
+      "publisher": "U.S. Army, ODIN / Worldwide Equipment Guide",
+      "url": "https://odin.t2com.army.mil/WEG/Asset/a08bea0650eb832240e4fa2d6e4e1a39",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2024-08-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Внешняя государственная справочная оценка; не паспорт изготовителя и не подтверждение текущего состава. Карточка смешивает Bulsae-3 с Kornet и Kornet-EM; числовые характеристики не приняты."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "kp-kpa",
+      "country": "KP",
+      "parent": null,
+      "title": "Корейская народная армия",
+      "nativeName": "Корейская народная армия",
+      "kind": "organization",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Корень справочной классификации; не описание текущей оперативной подчинённости."
+    },
+    {
+      "id": "kp-army",
+      "country": "KP",
+      "parent": "kp-kpa",
+      "title": "Сухопутные войска КНА",
+      "nativeName": "Ground Forces",
+      "kind": "reported_service",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Статус service по классификации внешнего отчёта DIA 2021 года; не приравнивается к национальному юридическому статусу."
+    },
+    {
+      "id": "kp-air",
+      "country": "KP",
+      "parent": "kp-kpa",
+      "title": "Военно-воздушные силы КНА",
+      "nativeName": "Air Force",
+      "kind": "reported_service",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Статус service по классификации внешнего отчёта DIA 2021 года; не приравнивается к национальному юридическому статусу."
+    },
+    {
+      "id": "kp-navy",
+      "country": "KP",
+      "parent": "kp-kpa",
+      "title": "Военно-морские силы КНА",
+      "nativeName": "Navy",
+      "kind": "reported_service",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Статус service по классификации внешнего отчёта DIA 2021 года; не приравнивается к национальному юридическому статусу."
+    },
+    {
+      "id": "kp-special",
+      "country": "KP",
+      "parent": "kp-kpa",
+      "title": "Силы специальных операций КНА",
+      "nativeName": "Special Operations",
+      "kind": "reported_service",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Статус service по классификации внешнего отчёта DIA 2021 года; не приравнивается к национальному юридическому статусу."
+    },
+    {
+      "id": "kp-strategic",
+      "country": "KP",
+      "parent": "kp-kpa",
+      "title": "Стратегические силы КНА",
+      "nativeName": "Strategic Force",
+      "kind": "reported_service",
+      "sources": [
+        "kp-dia"
+      ],
+      "status": "draft",
+      "note": "Статус service по классификации внешнего отчёта DIA 2021 года; не приравнивается к национальному юридическому статусу."
+    },
+    {
+      "id": "kp-r-armor",
+      "country": "KP",
+      "parent": "kp-army",
+      "title": "Бронетанковые войска",
+      "nativeName": "Armor",
+      "kind": "branch",
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Обобщённые специализации по DIA 2021, приложение B, с. 42; юридический национальный статус не установлен."
+    },
+    {
+      "id": "kp-r-infantry",
+      "country": "KP",
+      "parent": "kp-army",
+      "title": "Пехота",
+      "nativeName": "Infantry",
+      "kind": "branch",
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Обобщённые специализации по DIA 2021, приложение B, с. 42; юридический национальный статус не установлен."
+    },
+    {
+      "id": "kp-r-artillery",
+      "country": "KP",
+      "parent": "kp-army",
+      "title": "Артиллерия",
+      "nativeName": "Artillery",
+      "kind": "branch",
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Обобщённые специализации по DIA 2021, приложение B, с. 42; юридический национальный статус не установлен."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "kp-hierarchy-research",
+      "country": "KP",
+      "service": "kp-army",
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "levels": [
+        {
+          "id": "corps",
+          "title": "Корпус",
+          "nativeName": "Corps",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Corps",
+                "unit": null,
+                "source": "kp-dia",
+                "locator": "с. 42",
+                "scope": "Английское обозначение уровня во внешнем отчёте 2021 года; национальное корейское наименование не установлено.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "division",
+          "title": "Дивизия",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Division",
+                "unit": null,
+                "source": "kp-dia",
+                "locator": "с. 42",
+                "scope": "Английское обозначение уровня во внешнем отчёте 2021 года; национальное корейское наименование не установлено.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "Brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Brigade",
+                "unit": null,
+                "source": "kp-dia",
+                "locator": "с. 42",
+                "scope": "Английское обозначение уровня во внешнем отчёте 2021 года; национальное корейское наименование не установлено.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "regiment",
+          "title": "Полк",
+          "nativeName": "Regiment",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "Regiment",
+                "unit": null,
+                "source": "kp-dia",
+                "locator": "с. 42",
+                "scope": "Английское обозначение уровня во внешнем отчёте 2021 года; национальное корейское наименование не установлено.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Перечень независимо упомянутых уровней сухопутных сил DIA 2021. Порядок не задаёт подчинение, обязательную цепочку, штат или численность. Воздушные и морские схемы требуют отдельного исследования.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "Сухопутные силы КНА в обзоре DIA.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "приложение B, с. 42",
+            "scope": "Внешняя оценка 2021 года.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "2021",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "титульный лист; приложение B",
+            "scope": "Период публикации; современная актуальность не подтверждена.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "kp-r-chonma-ho",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Chonma-ho",
+      "objectClass": "tank",
+      "summary": "Семейство танков.",
+      "relatedOrganizations": [
+        "kp-r-armor"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-chonma"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство танков.",
+            "unit": null,
+            "source": "kp-r-src-chonma",
+            "locator": "Notes; Variants",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-koksan",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M1978 / M1989 Koksan",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Семейство 170-мм самоходных орудий.",
+      "relatedOrganizations": [
+        "kp-r-artillery"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-koksan"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство 170-мм самоходных орудий.",
+            "unit": null,
+            "source": "kp-r-src-koksan",
+            "locator": "Notes; Variants / M-1989",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-m2010",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M2010",
+      "objectClass": "apc",
+      "summary": "Семейство колёсных плавающих БТР.",
+      "relatedOrganizations": [
+        "kp-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-m2010"
+      ],
+      "note": "Внешние обозначения. Данные вариантов M2018 и M2020 не наследуются; связь с BTR-80A в карточке не подтверждает одинаковые характеристики.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство колёсных плавающих БТР.",
+            "unit": null,
+            "source": "kp-r-src-m2010",
+            "locator": "Notes; Variants",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-m2018",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M2018 — носитель управляемых ракет",
+      "objectClass": "launcher",
+      "summary": "Колёсный носитель управляемых ракет.",
+      "relatedOrganizations": [
+        "kp-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-m2010"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсный носитель управляемых ракет.",
+            "unit": null,
+            "source": "kp-r-src-m2010",
+            "locator": "Variants / M2018",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 8,
+            "unit": "item",
+            "source": "kp-r-src-m2010",
+            "locator": "Variants / M2018",
+            "scope": "Восемь ракет в башенной установке по внешней оценке; не текущий остаток. Тип ракеты в источнике предположительный.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-m2020-mgs",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M2020 Mobile Gun System",
+      "objectClass": "wheeled-gun-vehicle",
+      "summary": "Колёсная машина с орудием.",
+      "relatedOrganizations": [
+        "kp-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-m2010"
+      ],
+      "note": "Только обозначение и классификация из карточки; отсутствуют надёжно привязанные к варианту паспортные числа.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "wheeled-gun-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная машина с орудием.",
+            "unit": null,
+            "source": "kp-r-src-m2010",
+            "locator": "Variants / M2020 Mobile Gun System (MGS)",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-m1985-240",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M1985 / M1991, 240 мм",
+      "objectClass": "rocket-artillery",
+      "summary": "Семейство 240-мм РСЗО.",
+      "relatedOrganizations": [
+        "kp-r-artillery"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-m1985-240"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство 240-мм РСЗО.",
+            "unit": null,
+            "source": "kp-r-src-m1985-240",
+            "locator": "Notes; Variants / M1991",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "M1985: 12 направляющих; M1991: 22 направляющие.",
+            "unit": null,
+            "source": "kp-r-src-m1985-240",
+            "locator": "Notes; Variants / M1991",
+            "scope": "Разные конфигурации пускового пакета; запас на транспортной машине не суммируется.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-m1985-122",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "M1985, 122 мм",
+      "objectClass": "rocket-artillery",
+      "summary": "122-мм РСЗО на грузовом шасси.",
+      "relatedOrganizations": [
+        "kp-r-artillery"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-m1985-122"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "122-мм РСЗО на грузовом шасси.",
+            "unit": null,
+            "source": "kp-r-src-m1985-122",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 5,
+            "unit": "person",
+            "source": "kp-r-src-m1985-122",
+            "locator": "System / Crew",
+            "scope": "Экипаж карточки ODIN.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "kp-r-src-m1985-122",
+            "locator": "Notes",
+            "scope": "Номинальная вместимость пусковой установки; предположительный пакет перезаряжания не включён.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-kn09",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "KN-09",
+      "objectClass": "rocket-artillery",
+      "summary": "300-мм РСЗО.",
+      "relatedOrganizations": [
+        "kp-r-artillery"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-kn09",
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "300-мм РСЗО.",
+            "unit": null,
+            "source": "kp-r-src-kn09",
+            "locator": "System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 5,
+            "unit": "person",
+            "source": "kp-r-src-kn09",
+            "locator": "System / Crew",
+            "scope": "Экипаж карточки ODIN.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Шасси HOWO 6×6.",
+            "unit": null,
+            "source": "kp-r-src-kn09",
+            "locator": "System / Chassis; Configuration",
+            "scope": "Указанное в карточке шасси; характеристики гражданской машины не наследуются.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 8,
+            "unit": "round",
+            "source": "kp-dia",
+            "locator": "с. 44, 64",
+            "scope": "Конфигурация 300-мм РСЗО в DIA 2021: два пакета, суммарно восемь направляющих; не текущий остаток.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-vtt323",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "VTT-323 (M1973)",
+      "objectClass": "apc",
+      "summary": "Гусеничный плавающий БТР.",
+      "relatedOrganizations": [
+        "kp-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-weg2011"
+      ],
+      "note": "Исторические оценки WEG 2011; другие редакции дают иные экипаж и вместимость. Интервал Max Off-Road 70–80 км/ч не превращён в одно число. Числа не означают актуальный паспорт любой модификации.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничный плавающий БТР.",
+            "unit": null,
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 80,
+            "unit": "km/h",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Speed / Max Road",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Максимальная шоссейная скорость.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 10,
+            "unit": "km/h",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Speed / Max Swim",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Максимальная скорость на плаву.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 450,
+            "unit": "km",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Cruising Range",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Справочный запас хода, режим и условия не раскрыты.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 1000,
+            "unit": "round",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Weapons & Ammunition Types / Typical Combat load",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Суммарный номинальный боекомплект двух 14,5-мм пулемётов; не текущий остаток.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Description / Crew",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Экипаж в редакции 2011 года.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 9,
+            "unit": "person",
+            "source": "kp-r-src-weg2011",
+            "locator": "с. 3-24, Description / Troop Capacity",
+            "scope": "WEG December 2011, конфигурация карточки VTT-323. Перевозимые пассажиры, отдельно от экипажа.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-kn06",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "KN-06 / Pon’gae-5",
+      "objectClass": "launcher",
+      "summary": "Зенитный ракетный комплекс.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-kn06"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитный ракетный комплекс.",
+            "unit": null,
+            "source": "kp-r-src-kn06",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Мобильная пусковая установка и РЛС с фазированной антенной решёткой, описанной как Flap Lid type.",
+            "unit": null,
+            "source": "kp-r-src-kn06",
+            "locator": "Notes",
+            "scope": "Внешняя идентификация; сходство не означает тождество российской системе.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig29",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-29",
+      "objectClass": "aircraft",
+      "summary": "Истребитель.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Истребитель.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig23",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-23",
+      "objectClass": "aircraft",
+      "summary": "Перехватчик.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Перехватчик.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-su25",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Су-25",
+      "objectClass": "aircraft",
+      "summary": "Штурмовик.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Штурмовик.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-il28",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Ил-28",
+      "objectClass": "aircraft",
+      "summary": "Бомбардировщик.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бомбардировщик.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig21",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-21",
+      "objectClass": "aircraft",
+      "summary": "Самолёт.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig19",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-19",
+      "objectClass": "aircraft",
+      "summary": "Самолёт.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig17",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-17",
+      "objectClass": "aircraft",
+      "summary": "Самолёт.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-mig15",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "МиГ-15",
+      "objectClass": "aircraft",
+      "summary": "Самолёт.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-an2",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Ан-2",
+      "objectClass": "aircraft",
+      "summary": "Транспортный биплан.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный биплан.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 45",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sa2",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "SA-2",
+      "objectClass": "launcher",
+      "summary": "Зенитная ракетная система.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитная ракетная система.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 47",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sa3",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "SA-3",
+      "objectClass": "launcher",
+      "summary": "Зенитная ракетная система.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитная ракетная система.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 47",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sa5",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "SA-5",
+      "objectClass": "launcher",
+      "summary": "Зенитная ракетная система.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитная ракетная система.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 47",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sa13",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "SA-13",
+      "objectClass": "launcher",
+      "summary": "Зенитная ракетная система.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Зенитная ракетная система.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 47",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-romeo",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Romeo",
+      "objectClass": "submarine",
+      "summary": "Дизель-электрическая подлодка.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-dia"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Дизель-электрическая подлодка.",
+            "unit": null,
+            "source": "kp-dia",
+            "locator": "с. 48, 53",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sango",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Sang-O",
+      "objectClass": "submarine",
+      "summary": "Прибрежная дизель-электрическая подлодка.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-sango"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Прибрежная дизель-электрическая подлодка.",
+            "unit": null,
+            "source": "kp-r-src-sango",
+            "locator": "Notes",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-yugo",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Yugo",
+      "objectClass": "submarine",
+      "summary": "Сверхмалая дизель-электрическая подлодка.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-yugo"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Сверхмалая дизель-электрическая подлодка.",
+            "unit": null,
+            "source": "kp-r-src-yugo",
+            "locator": "Notes; title",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-najin",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Najin",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство фрегатов.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-najin"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство фрегатов.",
+            "unit": null,
+            "source": "kp-r-src-najin",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 180,
+            "unit": "person",
+            "source": "kp-r-src-najin",
+            "locator": "System / Crew",
+            "scope": "Общая оценка класса; вариант и дата переоборудования не раскрыты.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-sariwon",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Sariwon",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство корветов.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-sariwon"
+      ],
+      "note": "Идентификация по указанной внешней оценке. Скорость, запас хода и номинальный боекомплект не установлены для этой записи. Текущие операторы и наличие не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство корветов.",
+            "unit": null,
+            "source": "kp-r-src-sariwon",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 70,
+            "unit": "person",
+            "source": "kp-r-src-sariwon",
+            "locator": "System / Crew",
+            "scope": "Оценка карточки класса; не фактическое комплектование корабля.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-hanchon",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Hanchon",
+      "objectClass": "surface-vessel",
+      "summary": "Десантный катер LCU.",
+      "relatedOrganizations": [
+        "kp-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-hanchon"
+      ],
+      "note": "Источник прямо называет характеристики оценочными. Приблизительная вместимость 200 человек на коротком переходе не принята как проверенный максимум; скорость и дальность не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Десантный катер LCU.",
+            "unit": null,
+            "source": "kp-r-src-hanchon",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-panghyon2",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Panghyon-2",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный аппарат.",
+      "relatedOrganizations": [
+        "kp-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-panghyon"
+      ],
+      "note": "Только идентификация варианта на базе ASN-105. Скорость, длительность и схема управления китайской базовой модели не перенесены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный аппарат.",
+            "unit": null,
+            "source": "kp-r-src-panghyon",
+            "locator": "Variants / Panghyon-2",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-hw6",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Hwasong-6 / Scud-C",
+      "objectClass": "munition",
+      "summary": "Баллистическая ракета малой дальности.",
+      "relatedOrganizations": [
+        "kp-strategic"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-hwasong6"
+      ],
+      "note": "Только справочная идентификация. Дальность оружия не записывается как запас хода платформы. Параметры поражения и эффективность не собираются; текущий состав и операторы не устанавливаются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "munition",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Баллистическая ракета малой дальности.",
+            "unit": null,
+            "source": "kp-r-src-hwasong6",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-hw10",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Hwasong-10 / Musudan",
+      "objectClass": "munition",
+      "summary": "Баллистическая ракета промежуточной дальности.",
+      "relatedOrganizations": [
+        "kp-strategic"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-hwasong10"
+      ],
+      "note": "Только справочная идентификация. Дальность оружия не записывается как запас хода платформы. Параметры поражения и эффективность не собираются; текущий состав и операторы не устанавливаются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "munition",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Баллистическая ракета промежуточной дальности.",
+            "unit": null,
+            "source": "kp-r-src-hwasong10",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-hw18",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Hwasong-18",
+      "objectClass": "munition",
+      "summary": "Межконтинентальная баллистическая ракета.",
+      "relatedOrganizations": [
+        "kp-strategic"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-hwasong18"
+      ],
+      "note": "Только справочная идентификация. Дальность оружия не записывается как запас хода платформы. Параметры поражения и эффективность не собираются; текущий состав и операторы не устанавливаются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "munition",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Межконтинентальная баллистическая ракета.",
+            "unit": null,
+            "source": "kp-r-src-hwasong18",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kp-r-bulsae3",
+      "kind": "equipment_model",
+      "countryContext": "KP",
+      "title": "Bulsae-3",
+      "objectClass": "munition",
+      "summary": "Противотанковая управляемая ракета.",
+      "relatedOrganizations": [
+        "kp-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "sources": [
+        "kp-r-src-bulsae3"
+      ],
+      "note": "Только справочная идентификация. Дальность оружия не записывается как запас хода платформы. Параметры поражения и эффективность не собираются; текущий состав и операторы не устанавливаются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "munition",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Противотанковая управляемая ракета.",
+            "unit": null,
+            "source": "kp-r-src-bulsae3",
+            "locator": "Notes; System",
+            "scope": "Идентификация в пределах периода источника; не оценка эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Справочный каталог КНДР: внешняя государственная идентификация техники и классов, уровни сухопутных сил. DIA 2021 прочитан полностью; ODIN и WEG — поисковые фрагменты. Никаких реестров действующих частей, дислокаций, готовности или эффективности. Приоритетные числа скорости, запаса хода и номинального боекомплекта добавлены только при прямом наличии в прочитанном источнике.",
+    "gaps": [
+      "Нет открытого подтверждённого полного каталога изготовителей КНДР; полнота не заявляется.",
+      "Нет надёжно привязанных паспортов скорости, длительности, запаса хода и номинального боекомплекта для большинства моделей.",
+      "Инженерные, связные, РЭБ, транспортные машины и отдельные РЛС не заполнены: модельные первичные документы не найдены; гражданские базовые характеристики не переносятся.",
+      "Не подтверждены модельные паспорта вертолётов и новых БПЛА Saetbyol, надводных и подводных беспилотных систем; неизвестные обозначения не превращены в модели.",
+      "Схемы ВВС и ВМС, корейские наименования уровней и национальный юридический статус родов требуют первоисточников.",
+      "Все originCountries и operatorCountries оставлены пустыми; страна контекста не доказывает происхождение или текущего оператора."
+    ],
+    "sourceProblems": [
+      "Прямой PDF DIA возвращает 403; полный документ прочитан через официальное зеркало GovInfo.",
+      "Страницы ODIN при открытии не дают читаемых строк; использованы явно помеченные поисковые фрагменты с датой изменения карточки. Дата изменения — период редакции, не доказательство актуальности техники.",
+      "Архив WEG 2011 не отдал PDF напрямую; цифры VTT-323 взяты из подробного индексированного фрагмента с. 3-24. Более поздние пересказы расходятся по экипажу и вместимости.",
+      "ODIN M1985 57 мм противоречит сам себе (одно/два орудия); карточка исключена. ODIN M2008 смешивает вариант с базовым BM-21; числа не перенесены.",
+      "ODIN Bulsae-3 смешивает обозначения, изготовителя и характеристики Kornet/Kornet-EM; оставлена только идентификация.",
+      "Первичные страницы KCNA недоступны; коммерческие и общественные пересказы новых изделий не использованы вместо оригинала."
+    ]
+  }
+}

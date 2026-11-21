@@ -1,0 +1,3448 @@
+{
+  "country": "PL",
+  "sources": [
+    {
+      "id": "pl-r-mon",
+      "title": "Siły Zbrojne RP",
+      "publisher": "Ministerstwo Obrony Narodowej",
+      "url": "https://www.gov.pl/web/obrona-narodowa/sily-zbrojne-rp",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-army",
+      "title": "Wojska Lądowe",
+      "publisher": "Ministerstwo Obrony Narodowej",
+      "url": "https://www.gov.pl/web/obrona-narodowa/wojska-ladowe",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-air",
+      "title": "Siły Powietrzne",
+      "publisher": "Ministerstwo Obrony Narodowej",
+      "url": "https://www.gov.pl/web/obrona-narodowa/sily-powietrzne",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-levels",
+      "title": "Poradnik szeregowego — Rodzaje Sił Zbrojnych",
+      "publisher": "Wojsko Polskie",
+      "url": "https://15pplot.wp.mil.pl/u/Poradnik_szeregowego_KAP6D7d.pdf",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан поисковый фрагмент страницы 16; старая классификация видов ВС не переносится. Используются только названия организационных уровней, без численности и штатных связей."
+    },
+    {
+      "id": "pl-r-hsw-artillery",
+      "title": "Wojska Rakietowe i Artyleria — каталог",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/wojska-rakietowe-i-artyleria/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-krab",
+      "title": "155 mm samobieżna haubica KRAB",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/155-mm-samobiezna-haubica-krab/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-borsuk",
+      "title": "Bojowy Wóz Piechoty BORSUK",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/nowy-bojowy-plywajacy-woz-piechoty-borsuk/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-09-02",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-rak",
+      "title": "Moździerze samobieżne M120K",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/mozdzierze-samobiezne-m120g-m120k/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-langusta",
+      "title": "Wyrzutnia rakiet LANGUSTA WR-40",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/wyrzutnia-rakiet-langusta/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-baobab",
+      "title": "Pojazd minowania narzutowego BAOBAB-K",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/pojazd-minowania-narzutowego-baobab-k/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-umi",
+      "title": "Uniwersalna maszyna inżynieryjna UMI 9.50",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/uniwersalna-maszyna-inzynieryjna-koparko-ladowarka-umi-9-50-oferta-remontowa/",
+      "kind": "manufacturer",
+      "scopeDate": "2021-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-waran",
+      "title": "Taktyczny Pojazd Wielozadaniowy 4×4 WARAN",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/wielozadaniowy-pojazd-taktyczny-4x4-waran/",
+      "kind": "manufacturer",
+      "scopeDate": "2024-06-12",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-heron",
+      "title": "HERON 6×6",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/heron-6x6/",
+      "kind": "manufacturer",
+      "scopeDate": "2026-10-26",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-wa",
+      "title": "WA",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/woz-amunicyjny-wa/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-awa",
+      "title": "AWA",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/artyleryjski-woz-amunicyjny-awa/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-awr",
+      "title": "AWR",
+      "publisher": "Huta Stalowa Wola",
+      "url": "https://www.hsw.pl/produkty/artyleryjski-woz-rozpoznawczy-awr/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-rosomak",
+      "title": "KTO Rosomak — wersja bazowa",
+      "publisher": "Rosomak S.A.",
+      "url": "https://www.rosomaksa.pl/kto-rosomak-wersja-bazowa",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан полный видимый поисковый фрагмент таблицы. Прямое открытие вернуло 502/тайм-аут."
+    },
+    {
+      "id": "pl-r-flyeye",
+      "title": "Bezzałogowy system powietrzny FLYEYE",
+      "publisher": "GRUPA WB",
+      "url": "https://www.wbgroup.pl/produkt/bezzalogowy-system-powietrzny-klasy-mini-flyeye/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-ft5",
+      "title": "BSP FT5",
+      "publisher": "GRUPA WB",
+      "url": "https://www.wbgroup.pl/produkt/bezzalogowy-system-powietrzny-ft5/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-stormrider",
+      "title": "StormRider",
+      "publisher": "GRUPA WB",
+      "url": "https://www.wbgroup.pl/produkt/stormrider/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-wb-c4i",
+      "title": "Systemy dowodzenia i komunikacji",
+      "publisher": "GRUPA WB",
+      "url": "https://www.wbgroup.pl/kategoria-produktow/systemy-lacznosci-i-dowodzenia/?cookie-closed=1",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-pit-catalog",
+      "title": "Radiolokacyjne systemy rozpoznania",
+      "publisher": "PIT-RADWAR",
+      "url": "https://www.pitradwar.com/oferta/kategoria/4,radiolokacyjne-systemy-rozpoznania",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-m28",
+      "title": "M28-05 — Technical data",
+      "publisher": "PZL Mielec",
+      "url": "https://pzlmielec.pl/en/offer/m28-05/technical-data",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-bryza",
+      "title": "M28B Bryza — Technical data",
+      "publisher": "PZL Mielec",
+      "url": "https://pzlmielec.pl/en/offer/m28b-bryza/technical-data",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-s70",
+      "title": "S-70 Black Hawk — Technical data",
+      "publisher": "PZL Mielec",
+      "url": "https://pzlmielec.pl/en/offer/s-70-black-hawk/technical-data",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; период применимости параметров уточняется по модификации."
+    },
+    {
+      "id": "pl-r-mon-equipment-2023",
+      "title": "Najnowocześniejszy sprzęt w Wojsku Polskim",
+      "publisher": "Ministerstwo Obrony Narodowej / Wojskowy Instytut Wydawniczy",
+      "url": "https://www.gov.pl/attachment/8ea47bf7-99f9-4c2d-8b4b-ab6e21bb0ec5",
+      "kind": "national_authority",
+      "scopeDate": "2023",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Официальный иллюстрированный каталог 2023 года; не описание нынешнего состава. Краткие идентификации и выборочные паспортные показатели."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "pl-armed-forces",
+      "country": "PL",
+      "parent": null,
+      "title": "Вооружённые силы Польши",
+      "nativeName": "Siły Zbrojne Rzeczypospolitej Polskiej",
+      "kind": "organization",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-army",
+      "country": "PL",
+      "parent": "pl-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Wojska Lądowe",
+      "kind": "service",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-navy",
+      "country": "PL",
+      "parent": "pl-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Marynarka Wojenna",
+      "kind": "service",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-air",
+      "country": "PL",
+      "parent": "pl-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Siły Powietrzne",
+      "kind": "service",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-special",
+      "country": "PL",
+      "parent": "pl-armed-forces",
+      "title": "Силы специальных операций",
+      "nativeName": "Wojska Specjalne",
+      "kind": "service",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-territorial",
+      "country": "PL",
+      "parent": "pl-armed-forces",
+      "title": "Войска территориальной обороны",
+      "nativeName": "Wojska Obrony Terytorialnej",
+      "kind": "service",
+      "sources": [
+        "pl-r-mon"
+      ],
+      "status": "draft",
+      "note": "Национальный вид ВС; место в справочной классификации не означает оперативное подчинение."
+    },
+    {
+      "id": "pl-r-army-armour",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Бронетанковые",
+      "nativeName": "Pancerne",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-mechanized",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Механизированные",
+      "nativeName": "Zmechanizowane",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-airborne",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Воздушно-десантные",
+      "nativeName": "Powietrzno-desantowe",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-aeromobile",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Аэромобильные",
+      "nativeName": "Aeromobilne",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-recon",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Разведывательные",
+      "nativeName": "Rozpoznawcze",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-artillery",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Артиллерийские",
+      "nativeName": "Artylerii",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-air-defence",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Противовоздушной обороны",
+      "nativeName": "Przeciwlotnicze",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-engineer",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Инженерные",
+      "nativeName": "Inżynieryjne",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-chemical",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Химические",
+      "nativeName": "Chemiczne",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-army-signals",
+      "country": "PL",
+      "parent": "pl-army",
+      "title": "Связи",
+      "nativeName": "Łączności",
+      "kind": "branch",
+      "sources": [
+        "pl-r-army"
+      ],
+      "status": "draft",
+      "note": "Национальная специализация из общего описания MON; не конкретное формирование."
+    },
+    {
+      "id": "pl-r-air-aviation",
+      "country": "PL",
+      "parent": "pl-air",
+      "title": "Авиационные войска",
+      "nativeName": "Wojska Lotnicze",
+      "kind": "branch",
+      "sources": [
+        "pl-r-air"
+      ],
+      "status": "draft",
+      "note": "Род войск в составе ВВС по общему описанию MON."
+    },
+    {
+      "id": "pl-r-air-air-defence",
+      "country": "PL",
+      "parent": "pl-air",
+      "title": "Войска ПВО",
+      "nativeName": "Wojska Obrony Przeciwlotniczej",
+      "kind": "branch",
+      "sources": [
+        "pl-r-air"
+      ],
+      "status": "draft",
+      "note": "Род войск в составе ВВС по общему описанию MON."
+    },
+    {
+      "id": "pl-r-air-radar",
+      "country": "PL",
+      "parent": "pl-air",
+      "title": "Радиотехнические войска",
+      "nativeName": "Wojska Radiotechniczne",
+      "kind": "branch",
+      "sources": [
+        "pl-r-air"
+      ],
+      "status": "draft",
+      "note": "Род войск в составе ВВС по общему описанию MON."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "pl-hierarchy-research",
+      "country": "PL",
+      "service": null,
+      "status": "draft",
+      "sources": [
+        "pl-r-levels"
+      ],
+      "levels": [
+        {
+          "id": "pl-r-level-corps",
+          "title": "Корпус",
+          "nativeName": "korpus",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Оперативное объединение",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-division",
+          "title": "Дивизия",
+          "nativeName": "dywizja",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Тактическое соединение",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-flotilla",
+          "title": "Флотилия",
+          "nativeName": "flotylla",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Тактическое соединение",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-brigade",
+          "title": "Бригада",
+          "nativeName": "brygada",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Часть",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-regiment",
+          "title": "Полк",
+          "nativeName": "pułk",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Часть",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-squadron",
+          "title": "Эскадра",
+          "nativeName": "eskadra",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Часть в терминологии источника",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-battalion",
+          "title": "Батальон / дивизион",
+          "nativeName": "batalion / dywizjon",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Подразделение; самостоятельный батальон/дивизион может относиться к частям",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-company",
+          "title": "Рота / батарея",
+          "nativeName": "kompania / bateria",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Подразделение",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "pl-r-level-platoon",
+          "title": "Взвод",
+          "nativeName": "pluton",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Подразделение",
+                "unit": null,
+                "source": "pl-r-levels",
+                "locator": "с. 16, поисковый фрагмент",
+                "scope": "Терминологический обзор указанной редакции; штатные цепочки и численность не задаются.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Независимый перечень национальных уровней из старого официального учебного пособия. Не устанавливает нынешнюю структуру или обязательную последовательность вложения.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "composition_basis",
+            "value": "Уровни перечислены независимо; конкретный состав и связи требуют отдельного документа.",
+            "unit": null,
+            "source": "pl-r-levels",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "pl-r-awd-wheel",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AWD (колёсный)",
+      "objectClass": "support-vehicle",
+      "summary": "Колёсная артиллерийская командная машина.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная артиллерийская командная машина.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-wd",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "WDSZ / WD",
+      "objectClass": "support-vehicle",
+      "summary": "Командно-штабная / командная машина.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Командно-штабная / командная машина.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-awd-tracked",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AWD (гусеничный)",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничная артиллерийская командная машина.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная артиллерийская командная машина.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-awru",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AWRU",
+      "objectClass": "support-vehicle",
+      "summary": "Артиллерийская машина ремонта вооружения.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Артиллерийская машина ремонта вооружения.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-wrue",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "WRUE",
+      "objectClass": "support-vehicle",
+      "summary": "Мастерская ремонта вооружения и электроники.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мастерская ремонта вооружения и электроники.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-niedzwiedz",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Niedźwiedź",
+      "objectClass": "ifv",
+      "summary": "Тяжёлая боевая машина пехоты; каталожный проект.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тяжёлая боевая машина пехоты; каталожный проект.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-langusta-ii",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Langusta II",
+      "objectClass": "rocket-artillery",
+      "summary": "Программа модернизации реактивных установок BM-21, RM-70 и WR-40.",
+      "sources": [
+        "pl-r-hsw-artillery"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Программа модернизации реактивных установок BM-21, RM-70 и WR-40.",
+            "unit": null,
+            "source": "pl-r-hsw-artillery",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-krab",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Krab",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная самоходная гаубица 155 мм.",
+      "sources": [
+        "pl-r-krab"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная самоходная гаубица 155 мм.",
+            "unit": null,
+            "source": "pl-r-krab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "MTU MT 881 Ka 500; трансмиссия ALLISON X1100-5A3.",
+            "unit": null,
+            "source": "pl-r-krab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "TOPAZ, FONET, TALIN 5000, GPS; вспомогательный агрегат.",
+            "unit": null,
+            "source": "pl-r-krab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-borsuk",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Borsuk",
+      "objectClass": "ifv",
+      "summary": "Плавающая боевая машина пехоты.",
+      "sources": [
+        "pl-r-borsuk",
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Плавающая боевая машина пехоты.",
+            "unit": null,
+            "source": "pl-r-borsuk",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "mobility_medium",
+            "value": "Наземная плавающая платформа.",
+            "unit": null,
+            "source": "pl-r-borsuk",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 16",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 6,
+            "unit": "person",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 16",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "По твёрдому покрытию — более 65 км/ч.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 16",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-rak",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Rak M120K",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходный 120-мм миномёт на колёсном шасси Rosomak.",
+      "sources": [
+        "pl-r-rak"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходный 120-мм миномёт на колёсном шасси Rosomak.",
+            "unit": null,
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 80,
+            "unit": "km/h",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Максимум по дорогам шасси M120K.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 500,
+            "unit": "km",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "На полных баках; источник min. 500 km.",
+            "status": "reported",
+            "qualifier": "at_least"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 46,
+            "unit": "round",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Номинальный перевозимый запас: 20 в вращающемся магазине и 26 в боеприпасном отделении; сумма двух указанных ёмкостей.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "20 в магазине + 26 в отделении; 120 мм.",
+            "unit": null,
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 24500,
+            "unit": "kg",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Максимальная боевая масса.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "length_m",
+            "value": 7.7,
+            "unit": "m",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Длина носителя, без переноса на габарит ствола.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.8,
+            "unit": "m",
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Ширина носителя.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "SCANIA DI1249A03P, 294 кВт.",
+            "unit": null,
+            "source": "pl-r-rak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-langusta",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "WR-40 Langusta",
+      "objectClass": "rocket-artillery",
+      "summary": "122-мм реактивная установка на Jelcz 6×6.",
+      "sources": [
+        "pl-r-langusta"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "122-мм реактивная установка на Jelcz 6×6.",
+            "unit": null,
+            "source": "pl-r-langusta",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "40 направляющих 122 мм; перезарядный запас отдельно не установлен.",
+            "unit": null,
+            "source": "pl-r-langusta",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-baobab",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Baobab-K",
+      "objectClass": "engineering",
+      "summary": "Инженерный заградитель на Jelcz 8×8.",
+      "sources": [
+        "pl-r-baobab"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Инженерный заградитель на Jelcz 8×8.",
+            "unit": null,
+            "source": "pl-r-baobab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "pl-r-baobab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "Номинальная общая вместимость — 600 мин.",
+            "unit": null,
+            "source": "pl-r-baobab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "FONET, RRC 9311AP, GPS.",
+            "unit": null,
+            "source": "pl-r-baobab",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-umi",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "UMI 9.50",
+      "objectClass": "engineering",
+      "summary": "Универсальная инженерная машина — экскаватор-погрузчик.",
+      "sources": [
+        "pl-r-umi"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Универсальная инженерная машина — экскаватор-погрузчик.",
+            "unit": null,
+            "source": "pl-r-umi",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Погрузочное, вилочное и экскаваторное оборудование; дополнительные насадки опциональны.",
+            "unit": null,
+            "source": "pl-r-umi",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-waran",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Waran 4×4",
+      "objectClass": "apc",
+      "summary": "Многоцелевая бронированная колёсная платформа; показанная командная комплектация.",
+      "sources": [
+        "pl-r-waran"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевая бронированная колёсная платформа; показанная командная комплектация.",
+            "unit": null,
+            "source": "pl-r-waran",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 110,
+            "unit": "km/h",
+            "source": "pl-r-waran",
+            "locator": "Описание и технические данные",
+            "scope": "Показанная версия, твёрдое покрытие.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Запас хода на полном топливном комплекте — более 650 км; Furgon вмещает 2+6 человек.",
+            "unit": null,
+            "source": "pl-r-waran",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-heron",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Heron 6×6",
+      "objectClass": "support-vehicle",
+      "summary": "Модульная бронированная платформа для специализированных машин.",
+      "sources": [
+        "pl-r-heron"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульная бронированная платформа для специализированных машин.",
+            "unit": null,
+            "source": "pl-r-heron",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 120,
+            "unit": "km/h",
+            "source": "pl-r-heron",
+            "locator": "Описание и технические данные",
+            "scope": "До 120 км/ч, твёрдое покрытие.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 600,
+            "unit": "km",
+            "source": "pl-r-heron",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожный запас хода; нагрузка и дорожный цикл не уточнены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-wa",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "WA",
+      "objectClass": "support-vehicle",
+      "summary": "Машина перевозки и механизированной перегрузки 155-мм боеприпасов.",
+      "sources": [
+        "pl-r-wa"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина перевозки и механизированной перегрузки 155-мм боеприпасов.",
+            "unit": null,
+            "source": "pl-r-wa",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Jelcz 882.53, платформа с креплениями шести специальных палет.",
+            "unit": null,
+            "source": "pl-r-wa",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-awa",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AWA",
+      "objectClass": "support-vehicle",
+      "summary": "Машина перевозки и механизированной перегрузки 120-мм боеприпасов.",
+      "sources": [
+        "pl-r-awa"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина перевозки и механизированной перегрузки 120-мм боеприпасов.",
+            "unit": null,
+            "source": "pl-r-awa",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Jelcz 882.53, платформа с креплениями шести специальных палет.",
+            "unit": null,
+            "source": "pl-r-awa",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-awr",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AWR",
+      "objectClass": "support-vehicle",
+      "summary": "Артиллерийская разведывательная машина с радиолокационным и оптоэлектронным оборудованием.",
+      "sources": [
+        "pl-r-awr"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Артиллерийская разведывательная машина с радиолокационным и оптоэлектронным оборудованием.",
+            "unit": null,
+            "source": "pl-r-awr",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Бортовой и выносной комплекты наблюдения; FONET и TOPAZ.",
+            "unit": null,
+            "source": "pl-r-awr",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-rosomak",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Rosomak — базовая версия",
+      "objectClass": "apc",
+      "summary": "Базовый колёсный бронетранспортёр.",
+      "sources": [
+        "pl-r-rosomak"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Базовый колёсный бронетранспортёр.",
+            "unit": null,
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 100,
+            "unit": "km/h",
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная максимальная скорость базовой версии; в таблице без отдельного дорожного цикла.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 10,
+            "unit": "km/h",
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Максимальная скорость плавания.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Каталожный запас хода 500–700 км; масса 16–26 т в зависимости от исполнения.",
+            "unit": null,
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 7.8,
+            "unit": "m",
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.8,
+            "unit": "m",
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.4,
+            "unit": "m",
+            "source": "pl-r-rosomak",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-flyeye",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "FlyEye",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотная наблюдательная платформа.",
+      "sources": [
+        "pl-r-flyeye"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная наблюдательная платформа.",
+            "unit": null,
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 120,
+            "unit": "km/h",
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 12,
+            "unit": "kg",
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Взлётная масса, не объявленная максимальной.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 1.8,
+            "unit": "m",
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.6,
+            "unit": "m",
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Размах крыла.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Гарантированный полёт 4,5+ ч; альтернативный старт 6 ч; максимальный 10+ ч. Знак + сохранён; это разные условия.",
+            "unit": null,
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Электродвигатель, литий-полимерные аккумуляторы.",
+            "unit": null,
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматические режимы и ручное управление с наземной станции.",
+            "unit": null,
+            "source": "pl-r-flyeye",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-ft5",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "FT5",
+      "objectClass": "unmanned-air",
+      "summary": "Двухдвигательная беспилотная платформа.",
+      "sources": [
+        "pl-r-ft5"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухдвигательная беспилотная платформа.",
+            "unit": null,
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 10,
+            "unit": "h",
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Продолжительность по таблице; нагрузка не оговорена.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 85,
+            "unit": "kg",
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Масса собственная, не максимальная взлётная.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 3.1,
+            "unit": "m",
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 6.4,
+            "unit": "m",
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Размах крыла.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя внутреннего сгорания.",
+            "unit": null,
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Автоматический полёт и управление с наземной станции.",
+            "unit": null,
+            "source": "pl-r-ft5",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-stormrider",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "StormRider",
+      "objectClass": "unmanned-surface",
+      "summary": "Надводная беспилотная платформа.",
+      "sources": [
+        "pl-r-stormrider"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-surface",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Надводная беспилотная платформа.",
+            "unit": null,
+            "source": "pl-r-stormrider",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное или полуавтономное.",
+            "unit": null,
+            "source": "pl-r-stormrider",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Навигационная РЛС, сонар, оптоэлектронная головка.",
+            "unit": null,
+            "source": "pl-r-stormrider",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-fonet",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "FONET",
+      "objectClass": "communications",
+      "summary": "Цифровая платформа бортовой связи.",
+      "sources": [
+        "pl-r-wb-c4i"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Цифровая платформа бортовой связи.",
+            "unit": null,
+            "source": "pl-r-wb-c4i",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-fonet-navy",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "FONET-NAVY",
+      "objectClass": "communications",
+      "summary": "Морская платформа связи семейства FONET.",
+      "sources": [
+        "pl-r-wb-c4i"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Морская платформа связи семейства FONET.",
+            "unit": null,
+            "source": "pl-r-wb-c4i",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-ugate",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "U-GATE",
+      "objectClass": "communications",
+      "summary": "Индивидуальная система командования и наблюдения.",
+      "sources": [
+        "pl-r-wb-c4i"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Индивидуальная система командования и наблюдения.",
+            "unit": null,
+            "source": "pl-r-wb-c4i",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-topaz",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "TOPAZ",
+      "objectClass": "communications",
+      "summary": "Интегрированная информационная система управления.",
+      "sources": [
+        "pl-r-wb-c4i"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Интегрированная информационная система управления.",
+            "unit": null,
+            "source": "pl-r-wb-c4i",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-p18pl",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "P-18PL",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильная РЛС предварительного обнаружения.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильная РЛС предварительного обнаружения.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-warta",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "WARTA",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильная трёхкоординатная РЛС.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильная трёхкоординатная РЛС.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-spl",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "System Pasywnej Lokacji",
+      "objectClass": "radar-sensor",
+      "summary": "Система пассивной локации.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Система пассивной локации.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-prp25",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "PRP-25",
+      "objectClass": "radar-sensor",
+      "summary": "Станция разведки бортовых электронных систем.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Станция разведки бортовых электронных систем.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-n22",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "N22-N(3D)",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильная трёхкоординатная РЛС.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильная трёхкоординатная РЛС.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-bystra",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "BYSTRA",
+      "objectClass": "radar-sensor",
+      "summary": "Перебазируемая РЛС.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Перебазируемая РЛС.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-sola",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "SOŁA",
+      "objectClass": "radar-sensor",
+      "summary": "Перебазируемая РЛС.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Перебазируемая РЛС.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-ars800",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "ARS-800",
+      "objectClass": "radar-sensor",
+      "summary": "Радар морского патрульного самолёта.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радар морского патрульного самолёта.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-trs15m",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "TRS-15M",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильная трёхкоординатная обзорная РЛС.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильная трёхкоординатная обзорная РЛС.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-liwiec",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "LIWIEC",
+      "objectClass": "radar-sensor",
+      "summary": "Радиолокационный комплекс артиллерийской разведки.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Радиолокационный комплекс артиллерийской разведки.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-rm100",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "RM-100",
+      "objectClass": "radar-sensor",
+      "summary": "Мобильный радар.",
+      "sources": [
+        "pl-r-pit-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мобильный радар.",
+            "unit": null,
+            "source": "pl-r-pit-catalog",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-m28",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "M28-05",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт; каталог указанной версии.",
+      "sources": [
+        "pl-r-m28"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт; каталог указанной версии.",
+            "unit": null,
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 244,
+            "unit": "km/h",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Long Range Cruise Speed.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная эксплуатационная скорость VMO — 355 км/ч; не абсолютный максимум. До 6 ч на внутреннем топливе.",
+            "unit": null,
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 6,
+            "unit": "h",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "До шести часов на внутреннем топливе.",
+            "status": "reported",
+            "qualifier": "at_most"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 7500,
+            "unit": "kg",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 13.1,
+            "unit": "m",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 22.06,
+            "unit": "m",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Размах крыла.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 4.9,
+            "unit": "m",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 19,
+            "unit": "person",
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Пассажирская конфигурация 18+1.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два PT6A-65B.",
+            "unit": null,
+            "source": "pl-r-m28",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-bryza",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "M28B Bryza",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт; каталог указанной версии.",
+      "sources": [
+        "pl-r-bryza"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт; каталог указанной версии.",
+            "unit": null,
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1220,
+            "unit": "km",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Высота 3000 м, резерв топлива на 45 минут; без резерва 1400 км — не смешивается.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "VMO 350 км/ч; 4 ч 10 мин при дальности с резервом, 4 ч 50 мин без резерва.",
+            "unit": null,
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 1960,
+            "unit": "l",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 6,
+            "unit": "person",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Два пилота, механик, три оператора; патрульная комплектация страницы.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 7500,
+            "unit": "kg",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 16.04,
+            "unit": "m",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "С FLIR.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 22.3,
+            "unit": "m",
+            "source": "pl-r-bryza",
+            "locator": "Описание и технические данные",
+            "scope": "Размах крыла.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-s70",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "S-70 Black Hawk",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой вертолёт.",
+      "sources": [
+        "pl-r-s70"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой вертолёт.",
+            "unit": null,
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 296,
+            "unit": "km/h",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Максимальная крейсерская, стандартный день, уровень моря.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 578,
+            "unit": "km",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Максимум без резерва и дополнительных баков; зависит от комплектации.",
+            "status": "reported"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 1362,
+            "unit": "l",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Базовая топливная ёмкость.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 9979,
+            "unit": "kg",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 5376,
+            "unit": "kg",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Пустая масса без 11 десантных сидений.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 12,
+            "unit": "person",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Utility: два пилота, два члена кабинного экипажа и 12 перевозимых военнослужащих.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Utility: два пилота и два члена кабинного экипажа.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Vne 357 км/ч — ограничение скорости, не измеренный максимум.",
+            "unit": null,
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два T700-GE-701D.",
+            "unit": null,
+            "source": "pl-r-s70",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-abrams",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "M1A2 SEPv3 Abrams",
+      "objectClass": "tank",
+      "summary": "Танк.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Танк.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 5",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-leopard",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Leopard 2PL",
+      "objectClass": "tank",
+      "summary": "Танк.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Танк.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 60000,
+            "unit": "kg",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 18",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported",
+            "qualifier": "approximate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-himars",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "HIMARS",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная установка.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная установка.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "6 GMLRS или 1 ATACMS.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 4",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-patriot",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Patriot/IBCS — пусковая",
+      "objectClass": "launcher",
+      "summary": "Пусковая установка ПВО.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковая установка ПВО.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 12,
+            "unit": "item",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 6",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-narew",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Mała Narew — пусковая",
+      "objectClass": "launcher",
+      "summary": "Пусковая установка CAMM.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковая установка CAMM.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 8,
+            "unit": "item",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 6",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-poprad",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Poprad",
+      "objectClass": "launcher",
+      "summary": "Самоходная пусковая установка ПВО.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная пусковая установка ПВО.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 4,
+            "unit": "item",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 7",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-aw101",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AW101 ZOP/CSAR",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой вертолёт.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой вертолёт.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 280,
+            "unit": "km/h",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 10",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported",
+            "qualifier": "approximate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-aw149",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "AW149",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой вертолёт.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой вертолёт.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 310,
+            "unit": "km/h",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 11",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported",
+            "qualifier": "approximate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-wizjer",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Wizjer",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный наблюдательный аппарат.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный наблюдательный аппарат.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 140,
+            "unit": "km/h",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 12",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-kormoran",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Kormoran II",
+      "objectClass": "surface-vessel",
+      "summary": "Проект противоминного корабля.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект противоминного корабля.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость 15 узлов; дальность 2500 морских миль.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 14",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-miecznik",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Miecznik",
+      "objectClass": "surface-vessel",
+      "summary": "Проект фрегата.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект фрегата.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Дальность 8000 морских миль.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 14",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-slazak",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "Ślązak",
+      "objectClass": "surface-vessel",
+      "summary": "Проект патрульного корабля.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект патрульного корабля.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Дальность 4500 морских миль.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 15",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-b860",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "B860",
+      "objectClass": "surface-vessel",
+      "summary": "Проект буксира.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Наличие у конкретных частей не утверждается. Незаполненные паспортные поля требуют отдельного источника.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект буксира.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "Описание и технические данные",
+            "scope": "Каталожная комплектация модели; условия производителем подробнее не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 29.2,
+            "unit": "m",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 20",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-f35",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "F-35A",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог 2023 года; текущие операторы и состав частей не устанавливаются. Недостающие поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 10",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимум 1,6 Ma без внешнего вооружения.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 10",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-fa50",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "FA-50 Fighting Eagle",
+      "objectClass": "aircraft",
+      "summary": "Лёгкий боевой самолёт.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог 2023 года; текущие операторы и состав частей не устанавливаются. Недостающие поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий боевой самолёт.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 18",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость 1,5 Ma.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 18",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-k2",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "K2 Black Panther",
+      "objectClass": "tank",
+      "summary": "Танк.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог 2023 года; текущие операторы и состав частей не устанавливаются. Недостающие поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Танк.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 17",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 17",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pl-r-k9",
+      "kind": "equipment_model",
+      "countryContext": "PL",
+      "title": "K9A1 Thunder",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная гаубица 155 мм.",
+      "sources": [
+        "pl-r-mon-equipment-2023"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Каталог 2023 года; текущие операторы и состав частей не устанавливаются. Недостающие поля требуют исследования.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная гаубица 155 мм.",
+            "unit": null,
+            "source": "pl-r-mon-equipment-2023",
+            "locator": "PDF, с. 17",
+            "scope": "Каталожная версия 2023 года.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Расширенный открытый справочный каталог Польши: национальные виды и специализации, независимые уровни, артиллерия, бронемашины, инженерные и вспомогательные платформы, авиация, РЛС, связь, беспилотные и морские проекты. Не реестр текущих частей или поставок.",
+    "gaps": [
+      "Каталог частичный: импортная техника, подводные лодки, РЭБ, транспорт Jelcz и часть морских средств требуют дальнейшего чтения специализированных первоисточников.",
+      "Для большинства каталожных идентификаций не опубликованы проверенные скорость, запас хода и боекомплект по модификации; поля намеренно оставлены пустыми.",
+      "Нужна свежая общая схема уровней: старая национальная терминология не доказывает нынешние штаты и цепочки подчинения.",
+      "Численные диапазоны, строгие неравенства и специальные единицы сохранены текстом; запас хода не заменён дальностью стрельбы или радиолинии."
+    ],
+    "sourceProblems": [
+      "Rosomak: прямая страница дала 502/тайм-аут, поэтому её таблица отмечена search_excerpt.",
+      "Часть страниц WB недоступна прямому HTTP-клиенту, но прочитана средствами веб-поиска.",
+      "FlyEye: современная страница WB и каталог MON 2023 содержат разные длительности; в карточке используется только актуальная версия страницы WB без смешения редакций.",
+      "M28B Bryza: страница объединяет семейство и патрульную комплектацию; параметры не перенесены на все версии.",
+      "Krab: старую запись не обогащали скоростью и боекомплектом старого шасси SPG-1 из публикации 2013 года."
+    ]
+  }
+}

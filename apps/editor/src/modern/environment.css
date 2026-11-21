@@ -1,0 +1,106 @@
+.env-view{max-width:1600px;margin:auto;padding:36px 44px 64px;color:#dce8e5;font-family:Arial,sans-serif;font-size:14px}.env-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:28px}.env-heading h1{font-size:42px;margin:5px 0 12px}.env-heading p{color:#9cb2b4;margin:0}.env-kicker{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#64cbc5!important}.env-tabs{display:flex;gap:6px}.env-view button,.env-file-button{background:#1c3339;border:1px solid #476068;border-radius:5px;color:#deeeeb;padding:10px 14px;cursor:pointer;font:inherit;display:inline-block;line-height:1.3}.env-view button:hover,.env-file-button:hover{background:#294952;color:#fff}.env-view button[aria-pressed=true]{background:#bddad5;color:#14302e;border-color:#bddad5}.env-view button:disabled{opacity:.5;cursor:wait}.env-view h2{font-size:18px;font-weight:600;margin:0 0 18px}.env-view p{line-height:1.6}.env-columns{display:grid;grid-template-columns:330px minmax(0,1fr);gap:22px;align-items:start}.env-panel{background:#142a30;border:1px solid #30474f;border-radius:8px;padding:23px;margin-bottom:22px;min-width:0}.env-panel>p{color:#a5bbbb}.env-panel>h2:not(:first-child){margin-top:28px}.env-view label{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;color:#b2c6c8;font-size:12px}.env-view input,.env-view select{width:100%;box-sizing:border-box;min-height:37px;border:1px solid #476068;border-radius:4px;background:#102127;color:#e9efeb;padding:8px 10px;font:14px Arial,sans-serif;min-width:0}.env-view input[type=range]{accent-color:#64cbc5;padding:0}.env-view input[type=checkbox]{width:16px;min-height:16px;height:16px;accent-color:#64cbc5}.env-input-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.env-coordinates{display:flex;gap:16px;align-items:center;margin-bottom:15px}.env-coordinates label{max-width:160px}.env-coordinates span{font-size:12px;color:#9cb2b4}.env-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}.env-actions label{margin-bottom:0}.env-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:26px 0 18px;gap:1px;background:#30474f;border:1px solid #30474f;border-radius:5px;overflow:hidden}.env-metrics>div{background:#142a30;padding:16px 18px}.env-metrics dt{color:#9cb2b4;font-size:11px;min-height:26px}.env-metrics dd{font-size:24px;color:#c1e5df;margin:8px 0 0}.env-note{font-size:12px;color:#9cb2b4!important;line-height:1.6}.env-error{background:#512f2c;border:1px solid #98574c;color:#ffd8cc;padding:14px;border-radius:5px;overflow-wrap:anywhere}.env-timeline-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.env-timeline-title time{font-family:monospace;color:#8bcfc8}.env-chart{width:100%;height:155px;color:#8ba5a9}.env-chart text{fill:currentColor;font:12px Arial}.env-file-button{position:relative;margin:8px 0 12px!important;display:inline-flex!important;color:#dce8e5!important}.env-file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}.env-list-item{padding:12px 0 18px;border-bottom:1px solid #30474f}.env-list-item small{display:block;margin:10px 0;color:#9cb2b4}.env-map{height:560px;border:1px solid #476068;border-radius:8px;background:#ede8d8;overflow:hidden}.env-map .maplibregl-ctrl-attrib{font:11px Arial;color:#263b34}.env-map-label{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;margin:8px 0!important;font-size:13px!important;color:#d5e2df!important}.env-map-group{margin:18px 0}.env-map-group>strong{display:block;font-size:14px;margin-bottom:12px}.env-source-link{color:#9ce2d9;text-decoration:none}.env-job progress{width:100%;accent-color:#64cbc5}.env-job{padding:14px;border:1px solid #476068;border-radius:5px;margin-top:12px}.env-job p{margin:6px 0;font-size:12px;overflow-wrap:anywhere}.env-map-summary{display:flex;justify-content:space-between;gap:14px;color:#9cb2b4;margin:14px 0;font-size:12px}.env-view details summary{cursor:pointer;color:#b6d5cf;margin-bottom:12px}.env-view code{overflow-wrap:anywhere}.env-map .maplibregl-ctrl button{padding:0;background:#fff;color:#222}.env-empty-map{height:560px;border:1px dashed #476068;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;box-sizing:border-box;color:#9cb2b4}.env-catalog-card{padding:12px 0;border-bottom:1px solid #30474f}.env-catalog-card p{font-size:12px;margin:5px 0;color:#9cb2b4}@media(max-width:1050px){.env-view{padding:24px}.env-columns{grid-template-columns:280px minmax(0,1fr)}.env-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.env-heading{align-items:flex-start}.env-map{height:500px}}@media(max-width:760px){.env-columns{grid-template-columns:1fr}.env-heading{flex-direction:column}.env-view{padding:20px 14px}.env-timeline-title{flex-direction:column}.env-metrics dd{font-size:21px}}
+.env-view header.env-heading{background:transparent;border:0;position:static;padding:0;color:inherit}.env-view aside{background:transparent;border:0}.env-view code{background:transparent;color:#a4c5c2;white-space:normal}.env-view .env-heading h1{color:#e2eeeb}.env-view .env-actions button{white-space:normal}
+@media(min-width:1051px){.env-map,.env-empty-map{height:440px}}
+.coordinate-backdrop{position:fixed;inset:0;background:#0009;z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px}.env-view .coordinate-dialog{width:min(1100px,95vw);max-height:94vh;overflow:auto;background:#142a30;border:1px solid #526c70;border-radius:10px;padding:24px;box-shadow:0 15px 70px #0008}.coordinate-heading,.coordinate-footer{display:flex;justify-content:space-between;align-items:center;gap:16px}.coordinate-heading h2{margin:0}.coordinate-map{height:min(48vh,460px);margin:16px 0;background:#e8e6dc;border-radius:6px;overflow:hidden}.coordinate-map .maplibregl-ctrl button{padding:0;background:white;color:#222}.coordinate-footer output{color:#bfe1db;font-family:monospace}.coordinate-map .maplibregl-ctrl-attrib{color:#222;font-size:11px}.coordinate-map .maplibregl-ctrl-attrib a{color:#222}
+.weather-field-grid{display:grid;gap:3px}.env-view .weather-field-grid button{padding:12px 3px;border:1px solid #ffffff25;color:#fff;font-variant-numeric:tabular-nums}.env-view .weather-field-grid button:hover{outline:2px solid #d6efea;outline-offset:-2px}
+.weather-sidebar{max-height:80vh;overflow:auto;margin-top:16px}.env-view .env-weather-embedded{padding:0;font-size:12px}.env-weather-embedded .env-columns{display:block}.env-weather-embedded .env-heading{display:block}.env-weather-embedded .env-heading h1,.env-weather-embedded .env-heading>div>p{display:none}.env-weather-embedded .env-coordinates{flex-wrap:wrap}.env-weather-embedded .env-coordinates label{max-width:130px}.env-weather-embedded .env-panel{padding:14px}.env-weather-embedded .env-metrics{grid-template-columns:1fr 1fr}.env-weather-embedded .weather-field-grid,.env-weather-embedded .env-weather-field>p{display:none}.env-weather-embedded .env-timeline-title{display:block}.env-weather-embedded .env-chart{height:100px}.weather-sidebar[hidden]{display:none}
+
+/* В рабочем пространстве карты прокручивается только открытая панель инструментов. */
+.modern-workspace:has(.atlas-workbench){display:flex;flex-direction:column;overflow:hidden}
+.modern-workspace:has(.atlas-workbench)>.workspace-toolbar,.modern-workspace:has(.atlas-workbench)>.modern-nav{flex:none}
+.env-view.atlas-workbench{display:flex;flex:1;flex-direction:column;min-height:0;width:100%;max-width:none;margin:0;padding:0;box-sizing:border-box}
+.atlas-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 22px;border-bottom:1px solid #34474f}
+.atlas-bar h1{margin:0;font-size:22px;color:#e2eeeb}
+.atlas-desk{flex:1;display:grid;min-height:0;grid-template-columns:clamp(286px,25vw,375px) minmax(0,1fr)}
+.env-view aside.atlas-inspector{min-height:0;display:flex;flex-direction:column;padding:0;border-right:1px solid #34474f;background:#14272d;overflow:hidden}
+.atlas-tabs{display:flex;flex:none;border-bottom:1px solid #34474f}
+.env-view .atlas-tabs button{flex:1;border:0;border-radius:0;border-bottom:3px solid transparent;background:transparent;padding:14px 5px}
+.env-view .atlas-tabs button[aria-pressed=true]{border-color:#8fd4c9;background:#203b40;color:white}
+.atlas-panel,.atlas-panel.weather-sidebar{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:18px;margin:0;max-height:none}
+.atlas-panel[hidden]{display:none}
+.atlas-panel .env-panel{padding:0 0 14px;background:transparent;border:0;border-bottom:1px solid #34474f;border-radius:0;margin:16px 0}
+.atlas-panel .env-heading{margin-bottom:14px}
+.atlas-panel summary{padding:6px 0}
+.atlas-panel .env-map-group{border-top:1px solid #34474f;margin:0;padding:8px 0}
+.atlas-panel .env-map-group .env-note{margin:4px 0 7px}
+.atlas-viewport{min-height:0;position:relative;overflow:hidden}
+.atlas-viewport>.env-map{width:100%;height:100%;border:0;border-radius:0}
+.atlas-viewport>.env-note{position:absolute;bottom:32px;left:12px;right:12px;background:#14272d;color:white!important;padding:6px 10px}
+@media(max-width:660px){.atlas-desk{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.95fr) minmax(0,1fr)}.atlas-viewport{grid-row:1}.atlas-bar{padding:6px 10px}.atlas-bar h1{font-size:18px}.atlas-panel{padding:10px 14px}.atlas-tabs button{padding:8px}}
+.atlas-weather-key{position:absolute;left:12px;bottom:28px;display:grid;gap:5px;max-width:calc(100% - 62px);padding:8px 12px;border:1px solid #50646a;border-radius:6px;background:#10242bf2;color:#eef6f5;box-shadow:0 2px 8px #13252e30}
+.atlas-weather-key select{font:inherit;font-weight:600;color:inherit;background:#162e37;border:0;cursor:pointer}
+.atlas-weather-key small{font-size:12px}
+.atlas-weather-scale{display:flex;gap:1px}
+.atlas-weather-scale span{min-width:27px;flex:1;border-top:5px solid;text-align:center;font-size:11px;font-variant-numeric:tabular-nums}
+.weather-map-tools,.weather-film{color:#edf4fa;background:#14202def;border:1px solid #516076;box-shadow:0 2px 8px #18253733}
+.weather-map-tools{position:absolute;top:12px;left:12px;max-width:calc(100% - 72px);display:flex;align-items:center;gap:2px;padding:4px;border-radius:20px;overflow-x:auto;scrollbar-width:thin}
+.env-view .weather-map-tools button{background:transparent;color:#d4e0ed;white-space:nowrap;border:0;border-radius:16px;padding:7px 11px;font:600 13px Arial,sans-serif}
+.env-view .weather-map-tools button[aria-pressed=true]{background:#b7d9e5;color:#142336}
+.weather-film-host{position:absolute;bottom:24px;left:12px;right:12px}
+.weather-film{display:flex;align-items:center;gap:12px;border-radius:8px;padding:8px 12px}
+.env-view .weather-film button{background:#2e4155;color:white;border:0;border-radius:50%;width:30px;height:30px;padding:0;flex-shrink:0}
+.weather-film-track{flex:1;min-width:0}
+.weather-film-title,.weather-film-ticks{display:flex;align-items:center;justify-content:space-between;font-variant-numeric:tabular-nums}
+.weather-film-title{font-size:12px;font-weight:600}
+.weather-film-ticks{font-size:10px;color:#b6c4d0}
+.env-view .weather-film input[type=range]{display:block;width:100%;margin:3px 0;accent-color:#8dd3ef;padding:0}
+.atlas-viewport:has(.weather-film) .atlas-weather-key{bottom:102px}
+.atlas-weather-key strong{font-size:13px}
+@media(max-width:660px){.weather-film{gap:5px;padding:5px}.weather-map-tools{top:5px;left:5px}.atlas-weather-key{left:5px;padding:4px 6px}.weather-film-host{left:5px;right:5px}.env-view .weather-map-tools button{padding:5px 8px}}
+
+.weather-map-footer{position:absolute;bottom:26px;left:12px;right:12px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.weather-map-footer>.atlas-weather-key{position:static;order:-1;align-self:flex-start;max-width:100%;pointer-events:auto}
+.weather-map-footer>.weather-film-host{position:static;pointer-events:auto}
+.weather-film-host:empty{display:none}
+
+.env-view .layer-transparency {display:grid;gap:3px;margin:6px 0 0;font-size:12px}
+.layer-transparency span{display:flex;align-items:baseline;justify-content:space-between;gap:1em}
+.layer-transparency output{font-variant-numeric:tabular-nums}
+.env-view .layer-transparency input[type=range]{width:100%;min-height:20px;margin:0;padding:0;accent-color:#82ced3}
+.seasonal-atlas section{border-top:1px solid #395059;padding:8px 0}
+.seasonal-atlas .env-map-label i{height:9px;width:9px;border-radius:50%;display:inline-block}
+.seasonal-atlas article{margin:10px 0 0;padding:0 0 0 10px;border-left:2px solid #405d66}
+.seasonal-atlas article p{font-size:14px;margin:5px 0}
+.seasonal-atlas article a{color:#92d5dc;font-size:13px}
+
+.area-climate dl{display:grid;grid-template-columns:repeat(4,1fr);margin:8px 0;gap:8px}
+.area-climate dt{font-size:12px;color:#a7babe}
+.area-climate dd{margin:2px 0;font-size:16px;font-variant-numeric:tabular-nums}
+.area-climate small{color:#a7babe}
+
+.atlas-catalog .atlas-region {border:1px solid #39535a;border-radius:8px;padding:.65rem .8rem;margin:.55rem 0}
+.atlas-region>summary {cursor:pointer;overflow-wrap:anywhere}
+.atlas-region>summary small {display:block;margin:.22rem 0 0 1rem;color:#aec1c5;font-weight:400}
+.atlas-region[open]>summary {margin-bottom:.75rem}
+.atlas-region .env-map-group {margin:.6rem 0;padding:.65rem 0;border-top:1px solid #39535a}
+.atlas-region button[aria-pressed=true] {background:#c5dfdb;color:#152d31}
+.season-scale {display:flex;gap:2px;margin:.45rem 0}
+.season-scale small {flex:1;border-top:5px solid;padding-top:3px;min-width:0;overflow-wrap:anywhere}
+
+.atlas-empty-search {display:none}
+.atlas-catalog:has(input[type=search]):not(:has(.atlas-region)) .atlas-empty-search {display:block}
+
+.atlas-current-region {margin-right:auto;color:#c5d8da;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+.weather-map-tools{flex-wrap:wrap;max-width:calc(100% - 112px);border-radius:15px}.env-weather-embedded .env-tabs{flex-wrap:wrap}.env-panel fieldset{border:0;padding:0;margin:0;min-width:0}
+.atlas-inspector .atlas-tabs{flex-wrap:wrap}
+.env-view .region-layer{display:flex;flex-direction:row;align-items:flex-start;gap:9px;margin:0;padding:11px 0;border-bottom:1px solid #30464b;cursor:pointer}
+.env-view .region-layer input{width:auto;margin:2px 0 0;flex:none}
+.region-layer small{display:block;margin-top:3px;color:#abc0c1;overflow-wrap:anywhere}
+.region-data>button{margin:3px 4px 3px 0}
+
+.atlas-object-themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: .35rem .65rem;
+  margin: .85rem 0 .5rem;
+  padding: .45rem 0;
+  border: 0;
+}
+.atlas-object-themes legend { padding: 0; font-weight: 600; }
+.atlas-object-themes .env-map-label { margin: 0; }
+
+.region-osm-package{border:1px solid #476468;border-radius:6px;padding:12px;margin:10px 0}
+.region-osm-package h3,.region-osm-package p{margin:0 0 8px}
+.region-osm-package details,.region-osm-package small{display:block;margin:8px 0}
+.region-osm-package details p{overflow-wrap:anywhere}

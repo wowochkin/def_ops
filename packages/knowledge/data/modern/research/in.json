@@ -1,0 +1,3747 @@
+{
+  "country": "IN",
+  "sources": [
+    {
+      "id": "in-pinaka",
+      "title": "AHSP Transfer of Pinaka Weapon System",
+      "publisher": "Press Information Bureau India",
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1659118&lang=1&reg=1",
+      "kind": "national_authority",
+      "scopeDate": "2020",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "in-blt",
+      "title": "Bridge Layer Tank BLT Arjun",
+      "publisher": "DRDO",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/bridge-layer-tank-blt-arjun",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": ""
+    },
+    {
+      "id": "in-tejas-ddp",
+      "title": "LCA Tejas — Product Specifications",
+      "publisher": "Department of Defence Production, Ministry of Defence, India",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/lca-tejas",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны описание вариантов и общая таблица. Она не разделяет характеристики по всем версиям; не приписывать её каждому варианту."
+    },
+    {
+      "id": "in-r-arjun-avnl",
+      "title": "MBT Arjun — таблица Mk-1A",
+      "publisher": "Armoured Vehicles Nigam Limited",
+      "url": "https://www.avnl.co.in/products/mbt-arjun",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-avnl-portfolio",
+      "title": "AVNL — годовой отчёт 2021–2022, Products of AVNL",
+      "publisher": "Armoured Vehicles Nigam Limited",
+      "url": "https://www.avnl.co.in/files/avnl_documents/2021-2022-29.12.2022.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2021–2022",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-avnl-brochure",
+      "title": "AVNL Complete — Bhishma и Sarath",
+      "publisher": "Armoured Vehicles Nigam Limited",
+      "url": "https://avnl.co.in/files/avnl_documents/AVNL_Complete2.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-lch-ddp",
+      "title": "Light Combat Helicopter (LCH) — DDP",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/light-combat-helicopter-lch",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-dhruv-mk3-ddp",
+      "title": "ALH Dhruv Mk III — DDP",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/hi/node/6844",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-hal-ar-luh",
+      "title": "HAL Annual Report 2019–20 — LUH",
+      "publisher": "Hindustan Aeronautics Limited",
+      "url": "https://hal-india.co.in/backend/wp-content/uploads/2023/02/HAL_AR-2019-20-Final.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2019–2020",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-hal-division",
+      "title": "HAL — Aircraft Division Bangalore",
+      "publisher": "Hindustan Aeronautics Limited",
+      "url": "https://hal-india.co.in/production-unit-details/aircraft-division-bangalore",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-icg-air",
+      "title": "Indian Coast Guard — Air Craft",
+      "publisher": "Indian Coast Guard",
+      "url": "https://indiancoastguard.gov.in/air-craft",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-mdl-destroyer",
+      "title": "MDL Stealth Guided Missile Destroyer — DDP",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/stealth-guided-missile-destroyer",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-mdl-fpv",
+      "title": "MDL Fast Patrol Vessel 48.5 m — DDP",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/fast-patrol-vessel",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-kalvari",
+      "title": "PIB — Project-75 Kalvari-class",
+      "publisher": "Press Information Bureau, Government of India",
+      "url": "https://www.pib.gov.in/PressNoteDetails.aspx?ModuleId=3&NoteId=156310&id=156310&lang=1&reg=37",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-ctcs-drdo",
+      "title": "Compact Trans-horizon Communication System (CTCS) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/compact-trans-horizon-communication-system-ctcs",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-ssbs-drdo",
+      "title": "Short Span Bridging System (SSBS) 5 m — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/short-span-bridging-system-ssbs",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-uxor-drdo",
+      "title": "Unexploded Ordnance Handling Robot (UXOR) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/unexploded-ordnance-handling-robot-uxor",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-atags-drdo",
+      "title": "Advanced Towed Artillery Gun System (ATAGS) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/advanced-towed-artillery-gun-system-atags",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-netra-drdo",
+      "title": "NETRA AEW&C на EMB-145 — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/netra",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-pinaka-lcr-drdo",
+      "title": "Pinaka Loader cum Replenishment Vehicle (LCR) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/pinaka-ammunition-support-vehicles",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-ipmv-drdo",
+      "title": "Infantry Protected Mobility Vehicle (IPMV) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/infantry-protected-mobility-vehicle-ipmv",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-hmsx2-drdo",
+      "title": "HMS-X2 — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/hms-x2-compact-hull-mounted-sonar-small-surface-vessels",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-bfsr-drdo",
+      "title": "BFSR-SR — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/battle-field-surveillance-radar",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-rkad-drdo",
+      "title": "Robotic Kit for Automated Driving (RKAD) — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/robotic-kit-automated-driving-rkad",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-rohini-drdo",
+      "title": "Rohini — DRDO",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/3-d-medium-range-surveillance-radar-airforce-rohini",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-nishant-pib",
+      "title": "NISHANT — PIB 12 February 2009",
+      "publisher": "Press Information Bureau, Ministry of Defence",
+      "url": "https://www.pib.gov.in/newsite/erelcontent.aspx?lang=2&reg=3&relid=47445",
+      "kind": "national_authority",
+      "scopeDate": "2009-02-12",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-rustom1-pib",
+      "title": "Rustom-1 — пятый полёт",
+      "publisher": "Press Information Bureau, Ministry of Defence",
+      "url": "https://www.pib.gov.in/newsite/printrelease.aspx?lang=2&reg=48&relid=77118",
+      "kind": "national_authority",
+      "scopeDate": "2011-11-11",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-tapas-pib",
+      "title": "DRDO at Aero India 2023 — TAPAS-BH",
+      "publisher": "Press Information Bureau, Ministry of Defence",
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1897717&lang=2&reg=48",
+      "kind": "national_authority",
+      "scopeDate": "2023",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-daksh-export",
+      "title": "DRDO Products for Export 2021 — Daksh Scout",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://www.drdo.gov.in/drdo/sites/default/files/schemes_services/DRDO-Product-for-Export-2021_web.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2021",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-drdo-index",
+      "title": "DRDO — каталог Products",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "url": "https://drdo.gov.in/drdo/offerings/products?field_product_type_target_id=8",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан указатель; подтверждает только каталожные названия. Паспорта по этим карточкам ещё не прочитаны."
+    },
+    {
+      "id": "in-r-pib-products2018",
+      "title": "PIB — перечень продукции DRDO",
+      "publisher": "Press Information Bureau, Ministry of Defence",
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1526763&lang=2&reg=48",
+      "kind": "national_authority",
+      "scopeDate": "2018",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-dams",
+      "title": "DAMS 3300A — DDP",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/digital-audio-management-system-dams-3300a",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-dhanush-pib",
+      "title": "Dhanush — PIB production clearance",
+      "publisher": "Press Information Bureau, Ministry of Defence",
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1565315&lang=2&reg=48",
+      "kind": "national_authority",
+      "scopeDate": "2019-02-19",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-pinaka-ddp",
+      "title": "Pinaka MBRL — DDP L&T",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "url": "https://www.ddpmod.gov.in/en/resources/products/pinaka-multi-barrel-rocket-launch-system",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-army-class",
+      "title": "Employment News — Careers as Officer in the Indian Armed Forces",
+      "publisher": "Employment News, Ministry of Information and Broadcasting",
+      "url": "https://employmentnews.gov.in/newemp/MoreContentNew.aspx?k=100365&n=InDepthJobs",
+      "kind": "national_authority",
+      "scopeDate": "2024-12-07/2024-12-13",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Авторская обзорная статья в государственном издании; не нормативный полный перечень родов войск. Прочитан раздел The Arms and the Services."
+    },
+    {
+      "id": "in-r-iaf-branches",
+      "title": "IAF AFCAT 02/2025 notification",
+      "publisher": "Indian Air Force",
+      "url": "https://www.careerairforce.gov.in/sites/default/files/2025-05/Notification%20for%20AFCAT%20Cycle%2002-2025.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2025; набор на курсы июля 2026",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-navy-branches",
+      "title": "Indian Navy Calendar 2025 — officer entries",
+      "publisher": "Indian Navy",
+      "url": "https://www.joinindiannavy.gov.in/files/Indian_Navy_Calendar_2025.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2025",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Открытый каталог; сведения об изделии не подтверждают его наличие или готовность в конкретной части."
+    },
+    {
+      "id": "in-r-k9-lt",
+      "title": "K9 Vajra-T — L&T press release",
+      "url": "https://www.larsentoubro.com/pressreleases/2024-12-23-lt-precision-engineering-systems-wins-major-order-for-k9-vajra-t-artillery-platforms",
+      "publisher": "Larsen & Toubro",
+      "readLevel": "search_excerpt",
+      "scopeDate": "2024-12-23",
+      "accessedOn": "2026-11-17",
+      "kind": "manufacturer",
+      "note": "Справочная открытая публикация; не подтверждает состояние или наличие техники в конкретной части."
+    },
+    {
+      "id": "in-r-mbpv-ddp",
+      "title": "Medium Bullet Proof Vehicle — DDP/BEML",
+      "url": "https://www.ddpmod.gov.in/hi/node/7131",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "readLevel": "search_excerpt",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "kind": "national_authority",
+      "note": "Справочная открытая публикация; не подтверждает состояние или наличие техники в конкретной части."
+    },
+    {
+      "id": "in-r-beml4x4-ddp",
+      "title": "DDP — High Mobility Vehicle 4×4 by BEML",
+      "url": "https://www.ddpmod.gov.in/en?wpmobileexternal=true",
+      "publisher": "Department of Defence Production, Ministry of Defence",
+      "readLevel": "search_excerpt",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "kind": "national_authority",
+      "note": "Справочная открытая публикация; не подтверждает состояние или наличие техники в конкретной части."
+    },
+    {
+      "id": "in-r-70t-drdo",
+      "title": "70 T Tank Transporter for MBT Arjun",
+      "url": "https://drdo.gov.in/drdo/en/offerings/products/70-t-tank-transporter-mbt-arjun",
+      "publisher": "DRDO, Министерство обороны Индии",
+      "readLevel": "search_excerpt",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "kind": "national_authority",
+      "note": "Справочная открытая публикация; не подтверждает состояние или наличие техники в конкретной части."
+    },
+    {
+      "id": "in-r-hvf",
+      "title": "Heavy Vehicles Factory — Products",
+      "url": "https://www.avnl.co.in/index.php/heavy-vehicles-factory",
+      "publisher": "Armoured Vehicles Nigam Limited",
+      "readLevel": "search_excerpt",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "kind": "manufacturer",
+      "note": "Справочная открытая публикация; не подтверждает состояние или наличие техники в конкретной части."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "in-armed-forces",
+      "country": "IN",
+      "parent": null,
+      "title": "Вооружённые силы Индии",
+      "nativeName": "Вооружённые силы Индии",
+      "kind": "organization",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Корень справочной классификации; не описание текущей оперативной подчинённости."
+    },
+    {
+      "id": "in-army",
+      "country": "IN",
+      "parent": "in-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Indian Army",
+      "kind": "service",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "in-navy",
+      "country": "IN",
+      "parent": "in-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Indian Navy",
+      "kind": "service",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "in-air",
+      "country": "IN",
+      "parent": "in-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Indian Air Force",
+      "kind": "service",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "in-r-army-infantry",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Пехота",
+      "nativeName": "Infantry",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-artillery",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Артиллерия",
+      "nativeName": "Artillery",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-armour",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Бронетанковый корпус",
+      "nativeName": "Armoured Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-signals",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Войска связи",
+      "nativeName": "Corps of Signals",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-engineers",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Инженерные войска",
+      "nativeName": "Corps of Engineers",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-asc",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Служба снабжения и транспорта",
+      "nativeName": "Army Service Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-ordnance",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Служба вооружения",
+      "nativeName": "Ordnance Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-eme",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Электротехническая и механическая служба",
+      "nativeName": "Electrical and Mechanical Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-medical",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Медицинская служба",
+      "nativeName": "Army Medical Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-education",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Образовательная служба",
+      "nativeName": "Army Education Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-veterinary",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Ремонтная и ветеринарная служба",
+      "nativeName": "Remount and Veterinary Corps",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-army-jag",
+      "country": "IN",
+      "parent": "in-army",
+      "title": "Военно-юридическая служба",
+      "nativeName": "Judge Advocate General Branch",
+      "kind": "branch",
+      "sources": [
+        "in-r-army-class"
+      ],
+      "status": "draft",
+      "note": "Обзорная национальная специализация по разделу Arms and Services; не организационный уровень и не подчинённость конкретных частей."
+    },
+    {
+      "id": "in-r-air-flying",
+      "country": "IN",
+      "parent": "in-air",
+      "title": "Лётная ветвь",
+      "nativeName": "Flying",
+      "kind": "branch_group",
+      "sources": [
+        "in-r-iaf-branches"
+      ],
+      "status": "draft",
+      "note": "Карьерная классификация ветвей IAF из объявления; не боевая организационная иерархия."
+    },
+    {
+      "id": "in-r-air-technical",
+      "country": "IN",
+      "parent": "in-air",
+      "title": "Наземная техническая ветвь",
+      "nativeName": "Ground Duty (Technical)",
+      "kind": "branch_group",
+      "sources": [
+        "in-r-iaf-branches"
+      ],
+      "status": "draft",
+      "note": "Карьерная классификация ветвей IAF из объявления; не боевая организационная иерархия."
+    },
+    {
+      "id": "in-r-air-nontechnical",
+      "country": "IN",
+      "parent": "in-air",
+      "title": "Наземная нетехническая ветвь",
+      "nativeName": "Ground Duty (Non-Technical)",
+      "kind": "branch_group",
+      "sources": [
+        "in-r-iaf-branches"
+      ],
+      "status": "draft",
+      "note": "Карьерная классификация ветвей IAF из объявления; не боевая организационная иерархия."
+    },
+    {
+      "id": "in-r-navy-executive",
+      "country": "IN",
+      "parent": "in-navy",
+      "title": "Командная ветвь",
+      "nativeName": "Executive",
+      "kind": "branch",
+      "sources": [
+        "in-r-navy-branches"
+      ],
+      "status": "draft",
+      "note": "Ветвь подготовки и службы офицеров; схема неполная, организационные уровни не выводятся."
+    },
+    {
+      "id": "in-r-navy-engineering",
+      "country": "IN",
+      "parent": "in-navy",
+      "title": "Инженерная ветвь",
+      "nativeName": "Engineering (General Service)",
+      "kind": "branch",
+      "sources": [
+        "in-r-navy-branches"
+      ],
+      "status": "draft",
+      "note": "Ветвь подготовки и службы офицеров; схема неполная, организационные уровни не выводятся."
+    },
+    {
+      "id": "in-r-navy-electrical",
+      "country": "IN",
+      "parent": "in-navy",
+      "title": "Электротехническая ветвь",
+      "nativeName": "Electrical (General Service)",
+      "kind": "branch",
+      "sources": [
+        "in-r-navy-branches"
+      ],
+      "status": "draft",
+      "note": "Ветвь подготовки и службы офицеров; схема неполная, организационные уровни не выводятся."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "in-r-hierarchy-army",
+      "country": "IN",
+      "service": "in-army",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни требуют отдельного официального общего руководства. Ветви службы и список изделий не используются как штатная цепочка.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "in-r-hierarchy-air",
+      "country": "IN",
+      "service": "in-air",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни требуют отдельного официального общего руководства. Ветви службы и список изделий не используются как штатная цепочка.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "in-r-hierarchy-navy",
+      "country": "IN",
+      "service": "in-navy",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни требуют отдельного официального общего руководства. Ветви службы и список изделий не используются как штатная цепочка.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "in-pinaka",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Pinaka",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерийская система, разработанная DRDO.",
+      "sources": [
+        "in-pinaka",
+        "in-r-pinaka-ddp",
+        "in-r-daksh-export"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Контекст национального каталога не подтверждает страну разработки, нынешнее наличие или принадлежность конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерийская система, разработанная DRDO.",
+            "unit": null,
+            "source": "in-pinaka",
+            "locator": "Назначение и идентификация модели",
+            "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+            "status": "reported"
+          },
+          {
+            "field": "mobility_medium",
+            "value": "Колёсное шасси 8×8",
+            "unit": null,
+            "source": "in-r-pinaka-ddp",
+            "locator": "Product Description",
+            "scope": "Пусковая Pinaka L&T; дальность ракет не является запасом хода.",
+            "status": "reported"
+          },
+          {
+            "field": "missile_capacity",
+            "value": 12,
+            "unit": "item",
+            "source": "in-r-daksh-export",
+            "locator": "2.2 Pinaka Weapon System / mobile launching platform",
+            "scope": "Pinaka в каталоге DRDO 2021, раздел 2.2: 12 неуправляемых реактивных снарядов в двух пакетах. Счётная номинальная вместимость пусковой; поле missile_capacity охватывает ракеты/реактивные снаряды, не текущий остаток.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-blt-arjun",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "BLT Arjun",
+      "objectClass": "engineering",
+      "summary": "Мостоукладчик на платформе Arjun; отдельный представитель инженерных средств.",
+      "sources": [
+        "in-blt"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Контекст национального каталога не подтверждает страну разработки, нынешнее наличие или принадлежность конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мостоукладчик на платформе Arjun; отдельный представитель инженерных средств.",
+            "unit": null,
+            "source": "in-blt",
+            "locator": "Назначение и идентификация модели",
+            "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "in-blt",
+            "locator": "Salient Features — Crew of two",
+            "scope": "Описание DRDO: командир и водитель",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-tejas",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "LCA Tejas — семейство",
+      "objectClass": "aircraft",
+      "summary": "Семейство самолётов с одноместными и учебными вариантами; общий паспорт источника не является паспортом Mk1A.",
+      "relatedOrganizations": [
+        "in-air",
+        "in-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочные сведения; требуется проверка конкретной модификации. Наличие в подразделениях и готовность агента не установлены.",
+      "granularity": "family",
+      "parentModel": null,
+      "sources": [
+        "in-tejas-ddp"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "configuration_scope",
+            "value": "Общая карточка семейства; одноместные и учебные варианты разделены",
+            "unit": null,
+            "source": "in-tejas-ddp",
+            "locator": "Product Description",
+            "scope": "Общая таблица LCA Tejas на странице DDP; конкретный вариант для размеров и массы не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 13.2,
+            "unit": "m",
+            "source": "in-tejas-ddp",
+            "locator": "Product Specification / Basic Information: Length",
+            "scope": "Общая таблица LCA Tejas на странице DDP; конкретный вариант для размеров и массы не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 8.2,
+            "unit": "m",
+            "source": "in-tejas-ddp",
+            "locator": "Product Specification / Basic Information: Width",
+            "scope": "Общая таблица LCA Tejas на странице DDP; конкретный вариант для размеров и массы не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 4.4,
+            "unit": "m",
+            "source": "in-tejas-ddp",
+            "locator": "Product Specification / Basic Information: Height",
+            "scope": "Общая таблица LCA Tejas на странице DDP; конкретный вариант для размеров и массы не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 13500,
+            "unit": "kg",
+            "source": "in-tejas-ddp",
+            "locator": "Product Specification / Basic Information: Max Takeoff Mass",
+            "scope": "Общая таблица LCA Tejas на странице DDP; конкретный вариант для размеров и массы не указан.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-tejas-air-single",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Tejas — одноместный вариант для ВВС",
+      "objectClass": "aircraft",
+      "summary": "Вариант из перечня DDP; точная версия и комплектация требуют проверки.",
+      "relatedOrganizations": [
+        "in-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочные сведения; требуется проверка конкретной модификации. Наличие в подразделениях и готовность агента не установлены.",
+      "granularity": "variant",
+      "parentModel": "in-tejas",
+      "sources": [
+        "in-tejas-ddp"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "crew_count",
+            "value": 1,
+            "unit": "person",
+            "source": "in-tejas-ddp",
+            "locator": "Product Description: single seater / twin seater for Air Force",
+            "scope": "Только число мест указанного варианта; общие размеры семейства не наследуются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-tejas-air-trainer",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Tejas — учебный вариант для ВВС",
+      "objectClass": "aircraft",
+      "summary": "Вариант из перечня DDP; точная версия и комплектация требуют проверки.",
+      "relatedOrganizations": [
+        "in-air"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочные сведения; требуется проверка конкретной модификации. Наличие в подразделениях и готовность агента не установлены.",
+      "granularity": "variant",
+      "parentModel": "in-tejas",
+      "sources": [
+        "in-tejas-ddp"
+      ],
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "in-tejas-ddp",
+            "locator": "Product Description: single seater / twin seater for Air Force",
+            "scope": "Только число мест указанного варианта; общие размеры семейства не наследуются.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-arjun-mk1a",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Arjun Mk-1A",
+      "objectClass": "tank",
+      "summary": "Основной танк; паспорт относится к Mk-1A.",
+      "sources": [
+        "in-r-arjun-avnl"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк; паспорт относится к Mk-1A.",
+            "unit": null,
+            "source": "in-r-arjun-avnl",
+            "locator": "Название / описание изделия",
+            "scope": "Arjun Mk-1A",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Crew",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 68000,
+            "unit": "kg",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Weight: 68 Tonnes",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 10.642,
+            "unit": "m",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Overall length",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.95,
+            "unit": "m",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Overall width",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.182,
+            "unit": "m",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Overall height",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 58,
+            "unit": "km/h",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Maximum road speed",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 39,
+            "unit": "round",
+            "source": "in-r-arjun-avnl",
+            "locator": "Technical Specifications / Ammunition: 39 (FSAPDS / HESH)",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Mk-1A",
+            "unit": null,
+            "source": "in-r-arjun-avnl",
+            "locator": "Описание Mk-1A",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "120-мм нарезное орудие; номинально 39 выстрелов FSAPDS/HESH; 7,62-мм спаренный и 12,7-мм NSVT на RCWS. Вместимость пулемётных боеприпасов не указана.",
+            "unit": null,
+            "source": "in-r-arjun-avnl",
+            "locator": "Gun Bore / Ammunition / Machine Gun",
+            "scope": "Arjun Mk-1A: таблица AVNL при описании Mk-1A; не переносится на Mk-1.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-t72",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Ajeya T-72",
+      "objectClass": "tank",
+      "summary": "Национальное каталожное обозначение танка; модернизация не уточнена.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Национальное каталожное обозначение танка; модернизация не уточнена.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Ajeya T-72",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-cmt",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Carrier Mortar Tracked (CMT)",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничный носитель миномёта из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничный носитель миномёта из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Carrier Mortar Tracked (CMT)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-ccpt",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Carrier Command Post Tracked (CCPT)",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничная командно-штабная машина из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная командно-штабная машина из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Carrier Command Post Tracked (CCPT)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-aerv",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Armoured Engineering Reconnaissance Vehicle (AERV)",
+      "objectClass": "engineering",
+      "summary": "Бронированная инженерная разведывательная машина из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная инженерная разведывательная машина из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Armoured Engineering Reconnaissance Vehicle (AERV)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-aat",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Armoured Ambulance Tracked (AAT)",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничная бронированная санитарная машина из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная бронированная санитарная машина из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Armoured Ambulance Tracked (AAT)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-stallion",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Stallion 5/7.5 Ton",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство транспортных машин, перечисленное AVNL; два класса нагрузки не получают общего числового паспорта.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство транспортных машин, перечисленное AVNL; два класса нагрузки не получают общего числового паспорта.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Stallion 5/7.5 Ton",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-lpta",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "LPTA 2.5 Ton",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортная машина из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортная машина из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "LPTA 2.5 Ton",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-water-bowser",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "2KL Water Bowser",
+      "objectClass": "support-vehicle",
+      "summary": "Машина для перевозки воды из портфеля AVNL.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Машина для перевозки воды из портфеля AVNL.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "2KL Water Bowser",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-sharang",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Sharang M46",
+      "objectClass": "towed-artillery",
+      "summary": "Каталожная модернизация M46 до калибра 155 мм.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожная модернизация M46 до калибра 155 мм.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Название / описание изделия",
+            "scope": "Sharang M46",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-t90",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "T-90 Bhishma",
+      "objectClass": "tank",
+      "summary": "Танк в исполнении, описанном в брошюре AVNL; индекс последующей модернизации не установлен.",
+      "sources": [
+        "in-r-avnl-brochure"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Танк в исполнении, описанном в брошюре AVNL; индекс последующей модернизации не установлен.",
+            "unit": null,
+            "source": "in-r-avnl-brochure",
+            "locator": "Название / описание изделия",
+            "scope": "T-90 Bhishma",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "in-r-avnl-brochure",
+            "locator": "T 90 BHISHMA / CREW",
+            "scope": "T-90 Bhishma, таблица AVNL Complete; период брошюры не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 46500,
+            "unit": "kg",
+            "source": "in-r-avnl-brochure",
+            "locator": "T 90 BHISHMA / WEIGHT 46.5 TONNES",
+            "scope": "T-90 Bhishma, таблица AVNL Complete; период брошюры не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 60,
+            "unit": "km/h",
+            "source": "in-r-avnl-brochure",
+            "locator": "T 90 BHISHMA / MAXIMUM ROAD SPEED",
+            "scope": "T-90 Bhishma, таблица AVNL Complete; период брошюры не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 43,
+            "unit": "round",
+            "source": "in-r-avnl-brochure",
+            "locator": "T 90 BHISHMA / AMMUNITION 43",
+            "scope": "T-90 Bhishma, таблица AVNL Complete; период брошюры не установлен.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "43 позиции основного боекомплекта: guided missile / FSAPDS / HEAT / HE; распределение между типами не указано.",
+            "unit": null,
+            "source": "in-r-avnl-brochure",
+            "locator": "T 90 BHISHMA / AMMUNITION",
+            "scope": "T-90 Bhishma, таблица AVNL Complete; период брошюры не установлен.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-sarath",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Sarath BMP-II",
+      "objectClass": "ifv",
+      "summary": "Гусеничная плавающая БМП; параметры не относятся автоматически к BMP2M или командным вариантам.",
+      "sources": [
+        "in-r-avnl-brochure"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная плавающая БМП; параметры не относятся автоматически к BMP2M или командным вариантам.",
+            "unit": null,
+            "source": "in-r-avnl-brochure",
+            "locator": "Название / описание изделия",
+            "scope": "Sarath BMP-II",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 65,
+            "unit": "km/h",
+            "source": "in-r-avnl-brochure",
+            "locator": "SARATH / Maximum Speed Over Highway",
+            "scope": "Базовая SARATH в брошюре AVNL; максимум на шоссе и на плаву разделены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 7,
+            "unit": "km/h",
+            "source": "in-r-avnl-brochure",
+            "locator": "SARATH / Maximum Speed Afloat",
+            "scope": "Базовая SARATH в брошюре AVNL; максимум на шоссе и на плаву разделены.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-lch",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Light Combat Helicopter (LCH)",
+      "objectClass": "helicopter",
+      "summary": "Вертолёт HAL: боевой.",
+      "sources": [
+        "in-r-lch-ddp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вертолёт HAL: боевой.",
+            "unit": null,
+            "source": "in-r-lch-ddp",
+            "locator": "Название / описание изделия",
+            "scope": "Light Combat Helicopter (LCH)",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 5800,
+            "unit": "kg",
+            "source": "in-r-lch-ddp",
+            "locator": "Product Specification / Max Take-off Weight",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 270,
+            "unit": "km/h",
+            "source": "in-r-lch-ddp",
+            "locator": "Product Specification / Max Cruise Speed",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 580,
+            "unit": "km",
+            "source": "in-r-lch-ddp",
+            "locator": "Product Specification / Range",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 4,
+            "unit": "h",
+            "source": "in-r-lch-ddp",
+            "locator": "Product Specification / Endurance",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя Shakti (Ardiden 1H1).",
+            "unit": null,
+            "source": "in-r-lch-ddp",
+            "locator": "Power plant",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "VNE 337 км/ч — ограничение never exceed, не максимальная установившаяся скорость. Топливо 1055 кг; в литры не пересчитано.",
+            "unit": null,
+            "source": "in-r-lch-ddp",
+            "locator": "Never Exceed Speed / Fuel tank capacity",
+            "scope": "Light Combat Helicopter (LCH); каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-dhruv-mk3",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "ALH Dhruv Mk III",
+      "objectClass": "helicopter",
+      "summary": "Вертолёт HAL: многоцелевой транспортный.",
+      "sources": [
+        "in-r-dhruv-mk3-ddp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Вертолёт HAL: многоцелевой транспортный.",
+            "unit": null,
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Название / описание изделия",
+            "scope": "ALH Dhruv Mk III",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 5500,
+            "unit": "kg",
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Product Specification / Max Take-off Weight",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 250,
+            "unit": "km/h",
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Product Specification / Max Cruise Speed",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 630,
+            "unit": "km",
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Product Specification / Range",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 3.75,
+            "unit": "h",
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Product Specification / Endurance",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два двигателя Shakti (Ardiden 1H1).",
+            "unit": null,
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Power plant",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "VNE 292 км/ч — ограничение never exceed, не максимальная установившаяся скорость. Топливо 1055 кг; в литры не пересчитано.",
+            "unit": null,
+            "source": "in-r-dhruv-mk3-ddp",
+            "locator": "Never Exceed Speed / Fuel tank capacity",
+            "scope": "ALH Dhruv Mk III; каталожная таблица HAL/DDP, масса полезной нагрузки и профиль полёта для дальности не указаны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-luh",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Light Utility Helicopter (LUH)",
+      "objectClass": "helicopter",
+      "summary": "Однодвигательный лёгкий многоцелевой вертолёт; документ описывает этап разработки.",
+      "sources": [
+        "in-r-hal-ar-luh"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Однодвигательный лёгкий многоцелевой вертолёт; документ описывает этап разработки.",
+            "unit": null,
+            "source": "in-r-hal-ar-luh",
+            "locator": "Название / описание изделия",
+            "scope": "Light Utility Helicopter (LUH)",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 350,
+            "unit": "km",
+            "source": "in-r-hal-ar-luh",
+            "locator": "LIGHT UTILITY HELICOPTER (LUH)",
+            "scope": "HAL 2019–20: дальность с нагрузкой 500 кг; не утверждение о нынешней серийной конфигурации.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "В документе: способен лететь со скоростью 220 км/ч; вид скорости не определён, поэтому значение не отнесено к максимуму или крейсерской скорости.",
+            "unit": null,
+            "source": "in-r-hal-ar-luh",
+            "locator": "LIGHT UTILITY HELICOPTER (LUH)",
+            "scope": "HAL 2019–20; проектная конфигурация.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-htt40",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "HTT-40",
+      "objectClass": "aircraft",
+      "summary": "Базовый учебный самолёт из производственного портфеля HAL.",
+      "sources": [
+        "in-r-hal-division"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Базовый учебный самолёт из производственного портфеля HAL.",
+            "unit": null,
+            "source": "in-r-hal-division",
+            "locator": "Название / описание изделия",
+            "scope": "HTT-40",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-jaguar-darin3",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Jaguar DARIN III",
+      "objectClass": "aircraft",
+      "summary": "Модернизация авионики Jaguar в портфеле HAL; параметры иных Jaguar не наследуются.",
+      "sources": [
+        "in-r-hal-division"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модернизация авионики Jaguar в портфеле HAL; параметры иных Jaguar не наследуются.",
+            "unit": null,
+            "source": "in-r-hal-division",
+            "locator": "Название / описание изделия",
+            "scope": "Jaguar DARIN III",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-hawk132",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Hawk Mk 132",
+      "objectClass": "aircraft",
+      "summary": "Самолёт в перечне модернизации HAL; параметры модификации в прочитанном материале отсутствуют.",
+      "sources": [
+        "in-r-hal-division"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "variant",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт в перечне модернизации HAL; параметры модификации в прочитанном материале отсутствуют.",
+            "unit": null,
+            "source": "in-r-hal-division",
+            "locator": "Название / описание изделия",
+            "scope": "Hawk Mk 132",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-do228",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "HAL Dornier Do-228 — семейство",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой двухдвигательный турбовинтовой самолёт; в источнике различаются серии 100 и 200 без раздельных паспортов.",
+      "sources": [
+        "in-r-icg-air"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой двухдвигательный турбовинтовой самолёт; в источнике различаются серии 100 и 200 без раздельных паспортов.",
+            "unit": null,
+            "source": "in-r-icg-air",
+            "locator": "Название / описание изделия",
+            "scope": "HAL Dornier Do-228 — семейство",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-chetak",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Chetak (SE 3160 Alouette III)",
+      "objectClass": "helicopter",
+      "summary": "Лицензионный вертолёт HAL; сведения об иных версиях Alouette не перенесены.",
+      "sources": [
+        "in-r-icg-air"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лицензионный вертолёт HAL; сведения об иных версиях Alouette не перенесены.",
+            "unit": null,
+            "source": "in-r-icg-air",
+            "locator": "Название / описание изделия",
+            "scope": "Chetak (SE 3160 Alouette III)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mdl-destroyer",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "MDL Stealth Guided Missile Destroyer",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный проект эсминца MDL; не карточка конкретного корпуса.",
+      "sources": [
+        "in-r-mdl-destroyer"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный проект эсминца MDL; не карточка конкретного корпуса.",
+            "unit": null,
+            "source": "in-r-mdl-destroyer",
+            "locator": "Название / описание изделия",
+            "scope": "MDL Stealth Guided Missile Destroyer",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 163.95,
+            "unit": "m",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Length Overall",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 17.7,
+            "unit": "m",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Beam",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 7500000,
+            "unit": "kg",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Displacement, перевод тонн в кг",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 290,
+            "unit": "person",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Crew",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 55.56,
+            "unit": "km/h",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Maximum Speed, knots × 1.852",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 6111.6,
+            "unit": "km",
+            "source": "in-r-mdl-destroyer",
+            "locator": "Basic Information / Range, NM × 1.852",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан. Для дальности: 3300 морских миль при 18 узлах.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "COGAG, реверсивные газовые турбины.",
+            "unit": null,
+            "source": "in-r-mdl-destroyer",
+            "locator": "Propulsion Plant",
+            "scope": "MDL Stealth Guided Missile Destroyer; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mdl-fpv",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "MDL Fast Patrol Vessel 48.5 m",
+      "objectClass": "surface-vessel",
+      "summary": "Каталожный проект патрульного корабля MDL; не карточка конкретного корпуса.",
+      "sources": [
+        "in-r-mdl-fpv"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Каталожный проект патрульного корабля MDL; не карточка конкретного корпуса.",
+            "unit": null,
+            "source": "in-r-mdl-fpv",
+            "locator": "Название / описание изделия",
+            "scope": "MDL Fast Patrol Vessel 48.5 m",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 48.5,
+            "unit": "m",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Length Overall",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 7.2,
+            "unit": "m",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Beam",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 280000,
+            "unit": "kg",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Displacement, перевод тонн в кг",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 35,
+            "unit": "person",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Crew",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 64.82000000000001,
+            "unit": "km/h",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Maximum Speed, knots × 1.852",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2778.0,
+            "unit": "km",
+            "source": "in-r-mdl-fpv",
+            "locator": "Basic Information / Range, NM × 1.852",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан. Для дальности: 1500 морских миль при 16 узлах.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Три водомёта, привод по 2720 кВт.",
+            "unit": null,
+            "source": "in-r-mdl-fpv",
+            "locator": "Propulsion Plant",
+            "scope": "MDL Fast Patrol Vessel 48.5 m; каталожная конфигурация MDL, конкретный национальный проект/вариант не указан.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-kalvari",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Kalvari / Project-75 — семейство",
+      "objectClass": "submarine",
+      "summary": "Семейство дизель-электрических подводных лодок; технический паспорт конкретного корпуса не установлен.",
+      "sources": [
+        "in-r-kalvari"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство дизель-электрических подводных лодок; технический паспорт конкретного корпуса не установлен.",
+            "unit": null,
+            "source": "in-r-kalvari",
+            "locator": "Название / описание изделия",
+            "scope": "Kalvari / Project-75 — семейство",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-ctcs",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Compact Trans-horizon Communication System (CTCS)",
+      "objectClass": "communications",
+      "summary": "Переносная тропосферная система связи C-диапазона для связи за пределами прямой видимости.",
+      "sources": [
+        "in-r-ctcs-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Переносная тропосферная система связи C-диапазона для связи за пределами прямой видимости.",
+            "unit": null,
+            "source": "in-r-ctcs-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Compact Trans-horizon Communication System (CTCS)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-ssbs",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Short Span Bridging System (SSBS) 5 m",
+      "objectClass": "engineering",
+      "summary": "Механизированная однопролётная мостовая система; длина мостового пролёта 5 м, класс MLC 70; это не размеры транспортной машины.",
+      "sources": [
+        "in-r-ssbs-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Механизированная однопролётная мостовая система; длина мостового пролёта 5 м, класс MLC 70; это не размеры транспортной машины.",
+            "unit": null,
+            "source": "in-r-ssbs-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Short Span Bridging System (SSBS) 5 m",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-uxor",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Unexploded Ordnance Handling Robot (UXOR)",
+      "objectClass": "unmanned-ground",
+      "summary": "Дистанционно управляемая платформа для обращения с неразорвавшимися боеприпасами; комплекс включает машину управления и перевозчик.",
+      "sources": [
+        "in-r-uxor-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Дистанционно управляемая платформа для обращения с неразорвавшимися боеприпасами; комплекс включает машину управления и перевозчик.",
+            "unit": null,
+            "source": "in-r-uxor-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Unexploded Ordnance Handling Robot (UXOR)",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление",
+            "unit": null,
+            "source": "in-r-uxor-drdo",
+            "locator": "Описание изделия",
+            "scope": "Unexploded Ordnance Handling Robot (UXOR)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-atags",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Advanced Towed Artillery Gun System (ATAGS)",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая система 155 мм/52 с электрическими приводами и механизированной обработкой боеприпасов.",
+      "sources": [
+        "in-r-atags-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая система 155 мм/52 с электрическими приводами и механизированной обработкой боеприпасов.",
+            "unit": null,
+            "source": "in-r-atags-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Advanced Towed Artillery Gun System (ATAGS)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-netra",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "NETRA AEW&C на EMB-145",
+      "objectClass": "aircraft",
+      "summary": "Самолётный комплекс раннего предупреждения на EMB-145; не одноимённый малый БПЛА.",
+      "sources": [
+        "in-r-netra-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолётный комплекс раннего предупреждения на EMB-145; не одноимённый малый БПЛА.",
+            "unit": null,
+            "source": "in-r-netra-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "NETRA AEW&C на EMB-145",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-pinaka-lcr",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Pinaka Loader cum Replenishment Vehicle (LCR)",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортно-перегружающая машина обеспечения Pinaka.",
+      "sources": [
+        "in-r-pinaka-lcr-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортно-перегружающая машина обеспечения Pinaka.",
+            "unit": null,
+            "source": "in-r-pinaka-lcr-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Pinaka Loader cum Replenishment Vehicle (LCR)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-pinaka-rv",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Pinaka Replenishment Vehicle (RV)",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортная машина пополнения Pinaka; отдельное изделие от LCR.",
+      "sources": [
+        "in-r-pinaka-lcr-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортная машина пополнения Pinaka; отдельное изделие от LCR.",
+            "unit": null,
+            "source": "in-r-pinaka-lcr-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Pinaka Replenishment Vehicle (RV)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-ipmv",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Infantry Protected Mobility Vehicle (IPMV)",
+      "objectClass": "apc",
+      "summary": "Колёсная платформа 8×8 с двигателем 600 hp, автоматической трансмиссией и дистанционным модулем 7,62 мм.",
+      "sources": [
+        "in-r-ipmv-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная платформа 8×8 с двигателем 600 hp, автоматической трансмиссией и дистанционным модулем 7,62 мм.",
+            "unit": null,
+            "source": "in-r-ipmv-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Infantry Protected Mobility Vehicle (IPMV)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-hmsx2",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "HMS-X2",
+      "objectClass": "radar-sensor",
+      "summary": "Компактная подкильная активная и пассивная гидроакустическая система для малых надводных кораблей.",
+      "sources": [
+        "in-r-hmsx2-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Компактная подкильная активная и пассивная гидроакустическая система для малых надводных кораблей.",
+            "unit": null,
+            "source": "in-r-hmsx2-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "HMS-X2",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-bfsr",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "BFSR-SR",
+      "objectClass": "radar-sensor",
+      "summary": "Переносная радиолокационная станция наблюдения с батарейным питанием.",
+      "sources": [
+        "in-r-bfsr-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Переносная радиолокационная станция наблюдения с батарейным питанием.",
+            "unit": null,
+            "source": "in-r-bfsr-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "BFSR-SR",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 27,
+            "unit": "kg",
+            "source": "in-r-bfsr-drdo",
+            "locator": "Описание: about 27 kg",
+            "scope": "BFSR-SR: приблизительная масса системы, два переносимых модуля.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-rkad",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Robotic Kit for Automated Driving (RKAD)",
+      "objectClass": "unmanned-ground",
+      "summary": "Модульный комплект роботизации пилотируемого автомобиля; самостоятельное шасси не задано.",
+      "sources": [
+        "in-r-rkad-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульный комплект роботизации пилотируемого автомобиля; самостоятельное шасси не задано.",
+            "unit": null,
+            "source": "in-r-rkad-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Robotic Kit for Automated Driving (RKAD)",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление; предусмотрена автономизация",
+            "unit": null,
+            "source": "in-r-rkad-drdo",
+            "locator": "Описание изделия",
+            "scope": "Robotic Kit for Automated Driving (RKAD)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-rohini",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Rohini",
+      "objectClass": "radar-sensor",
+      "summary": "Наземная трёхкоординатная импульсно-доплеровская РЛС воздушного наблюдения с механическим сканированием.",
+      "sources": [
+        "in-r-rohini-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Наземная трёхкоординатная импульсно-доплеровская РЛС воздушного наблюдения с механическим сканированием.",
+            "unit": null,
+            "source": "in-r-rohini-drdo",
+            "locator": "Название / описание изделия",
+            "scope": "Rohini",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-nishant",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "NISHANT",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный самолёт наблюдения; паспорт по публикации этапа разработки 2009 года.",
+      "sources": [
+        "in-r-nishant-pib"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный самолёт наблюдения; паспорт по публикации этапа разработки 2009 года.",
+            "unit": null,
+            "source": "in-r-nishant-pib",
+            "locator": "Название / описание изделия",
+            "scope": "NISHANT",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 185,
+            "unit": "km/h",
+            "source": "in-r-nishant-pib",
+            "locator": "Tactical highlights of NISHANT",
+            "scope": "Максимальная скорость по публикации 2009 года; не Rustom.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 4.5,
+            "unit": "h",
+            "source": "in-r-nishant-pib",
+            "locator": "endurance capacity of 4 hours and 30 minutes",
+            "scope": "Продолжительность NISHANT по публикации 2009 года, нагрузка не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-rustom1",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Rustom-1",
+      "objectClass": "unmanned-air",
+      "summary": "Технологический демонстратор БПЛА; источник разделяет выполненный полёт и ожидаемые возможности.",
+      "sources": [
+        "in-r-rustom1-pib"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Технологический демонстратор БПЛА; источник разделяет выполненный полёт и ожидаемые возможности.",
+            "unit": null,
+            "source": "in-r-rustom1-pib",
+            "locator": "Название / описание изделия",
+            "scope": "Rustom-1",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Выполненный пятый полёт: 100 узлов, 25 минут. Показатели 150 узлов и 12–15 ч в том же документе относятся к ожидаемой полностью разработанной системе и не приняты как достигнутые.",
+            "unit": null,
+            "source": "in-r-rustom1-pib",
+            "locator": "Текст сообщения и заключительный абзац",
+            "scope": "Этап 2011 года; не TAPAS-BH-201.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-tapas",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "TAPAS-BH",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА класса средней высоты и большой продолжительности; количественные достигнутые показатели в прочитанном фрагменте не установлены.",
+      "sources": [
+        "in-r-tapas-pib"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА класса средней высоты и большой продолжительности; количественные достигнутые показатели в прочитанном фрагменте не установлены.",
+            "unit": null,
+            "source": "in-r-tapas-pib",
+            "locator": "Название / описание изделия",
+            "scope": "TAPAS-BH",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-daksh-scout",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Daksh Scout",
+      "objectClass": "unmanned-ground",
+      "summary": "Малый гусеничный дистанционно управляемый робот наблюдения; отдельная модель от базового DAKSH.",
+      "sources": [
+        "in-r-daksh-export"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Малый гусеничный дистанционно управляемый робот наблюдения; отдельная модель от базового DAKSH.",
+            "unit": null,
+            "source": "in-r-daksh-export",
+            "locator": "Название / описание изделия",
+            "scope": "Daksh Scout",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 2,
+            "unit": "h",
+            "source": "in-r-daksh-export",
+            "locator": "2.33 / Endurance",
+            "scope": "Daksh Scout: работа с перезаряжаемыми батареями; условия нагрузки не уточнены.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "До 1,2 км/ч на ровной поверхности; вид покрытия не указан. Дальность радиоуправления 200 м LOS — не запас хода.",
+            "unit": null,
+            "source": "in-r-daksh-export",
+            "locator": "2.33 / Speed / Range",
+            "scope": "Daksh Scout; показатель скорости не обозначен шоссейным.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-abhyas",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Abhyas",
+      "objectClass": "unmanned-air",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Abhyas",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-lakshya",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Lakshya",
+      "objectClass": "unmanned-air",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Lakshya",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-whap",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "WhAP 8×8",
+      "objectClass": "apc",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "WhAP 8×8",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-cbrn-mini",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "CBRN Mini UGV",
+      "objectClass": "unmanned-ground",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "CBRN Mini UGV",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-sarvatra",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "SARVATRA",
+      "objectClass": "engineering",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "SARVATRA",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-modular-bridge",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Modular Bridging System",
+      "objectClass": "engineering",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Modular Bridging System",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-aiffb",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Advanced Infantry Floating Foot Bridge",
+      "objectClass": "engineering",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Advanced Infantry Floating Foot Bridge",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mfme2",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Minefield Marking Equipment Mk-II",
+      "objectClass": "engineering",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Minefield Marking Equipment Mk-II",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-cbrn-recce2",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "CBRN Recce Vehicle Mk-II (Tracked)",
+      "objectClass": "support-vehicle",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "CBRN Recce Vehicle Mk-II (Tracked)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mounted155",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Mounted Gun System 155 mm/52",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Mounted Gun System 155 mm/52",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-wlr",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Weapon Locating Radar (WLR)",
+      "objectClass": "radar-sensor",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Weapon Locating Radar (WLR)",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-revathi",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Revathi",
+      "objectClass": "radar-sensor",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Revathi",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-bharani",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Bharani Mk I",
+      "objectClass": "radar-sensor",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Bharani Mk I",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-aslesha",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Aslesha Mk I",
+      "objectClass": "radar-sensor",
+      "summary": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+      "sources": [
+        "in-r-drdo-index"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация только по указателю. Скорость, запас хода/длительность, номинальный боекомплект и физический паспорт не установлены. Класс справочный и не подтверждает применение в конкретной части.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Изделие в официальном указателе DRDO; числовые характеристики и точная комплектация требуют чтения карточки.",
+            "unit": null,
+            "source": "in-r-drdo-index",
+            "locator": "Название / описание изделия",
+            "scope": "Aslesha Mk I",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-himshakti",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Himshakti",
+      "objectClass": "electronic-warfare",
+      "summary": "Названная в официальном перечне система РЭБ.",
+      "sources": [
+        "in-r-pib-products2018"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "electronic-warfare",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Названная в официальном перечне система РЭБ.",
+            "unit": null,
+            "source": "in-r-pib-products2018",
+            "locator": "Название / описание изделия",
+            "scope": "Himshakti",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-abhay",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Abhay",
+      "objectClass": "radar-sensor",
+      "summary": "Компактная корабельная гидроакустическая система из перечня DRDO.",
+      "sources": [
+        "in-r-pib-products2018"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Компактная корабельная гидроакустическая система из перечня DRDO.",
+            "unit": null,
+            "source": "in-r-pib-products2018",
+            "locator": "Название / описание изделия",
+            "scope": "Abhay",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-humsa",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "HUMSA",
+      "objectClass": "radar-sensor",
+      "summary": "Корабельная подкильная гидроакустическая система; не объединена с HUMSA-NG.",
+      "sources": [
+        "in-r-pib-products2018"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Корабельная подкильная гидроакустическая система; не объединена с HUMSA-NG.",
+            "unit": null,
+            "source": "in-r-pib-products2018",
+            "locator": "Название / описание изделия",
+            "scope": "HUMSA",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-troposcatter",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Upgraded Troposcatter Communication System",
+      "objectClass": "communications",
+      "summary": "Тропосферная система связи из официального перечня; отдельная от CTCS карточка.",
+      "sources": [
+        "in-r-pib-products2018"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тропосферная система связи из официального перечня; отдельная от CTCS карточка.",
+            "unit": null,
+            "source": "in-r-pib-products2018",
+            "locator": "Название / описание изделия",
+            "scope": "Upgraded Troposcatter Communication System",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-dams",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "DAMS 3300A",
+      "objectClass": "communications",
+      "summary": "Бортовая цифровая система внутренней связи и управления радиостанциями; содержит блок обработки APU и блоки управления ACU.",
+      "sources": [
+        "in-r-dams"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бортовая цифровая система внутренней связи и управления радиостанциями; содержит блок обработки APU и блоки управления ACU.",
+            "unit": null,
+            "source": "in-r-dams",
+            "locator": "Название / описание изделия",
+            "scope": "DAMS 3300A",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-dhanush",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "Dhanush 155 mm/45",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая артиллерийская система с инерциальным ориентированием и вспомогательным самоходным агрегатом.",
+      "sources": [
+        "in-r-dhanush-pib"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная каталожная запись. Скорость, запас хода, длительность и номинальный боекомплект, не приведённые в паспорте, не установлены. Текущий состав и операторы не выводятся из каталога.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая артиллерийская система с инерциальным ориентированием и вспомогательным самоходным агрегатом.",
+            "unit": null,
+            "source": "in-r-dhanush-pib",
+            "locator": "Название / описание изделия",
+            "scope": "Dhanush 155 mm/45",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-k9",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "K9 Vajra-T",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная самоходная артиллерийская платформа 155 мм/52, адаптация K9 Thunder по описанию L&T; числовой паспорт Thunder не перенесён.",
+      "sources": [
+        "in-r-k9-lt"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная самоходная артиллерийская платформа 155 мм/52, адаптация K9 Thunder по описанию L&T; числовой паспорт Thunder не перенесён.",
+            "unit": null,
+            "source": "in-r-k9-lt",
+            "locator": "Описание изделия",
+            "scope": "K9 Vajra-T",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mbpv",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "BEML Medium Bullet Proof Vehicle",
+      "objectClass": "apc",
+      "summary": "Бронированная колёсная машина на шасси BEML 4×4; таблица не разделяет транспортное, санитарное и командное исполнения.",
+      "sources": [
+        "in-r-mbpv-ddp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная колёсная машина на шасси BEML 4×4; таблица не разделяет транспортное, санитарное и командное исполнения.",
+            "unit": null,
+            "source": "in-r-mbpv-ddp",
+            "locator": "Описание изделия",
+            "scope": "BEML Medium Bullet Proof Vehicle",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max Speed 80 км/ч; дорожные условия не уточнены. Вместимость обозначена 2+8 без определения ролей мест; не принята за достоверное число экипажа.",
+            "unit": null,
+            "source": "in-r-mbpv-ddp",
+            "locator": "Max Speed / Seating capacity",
+            "scope": "MBPV, общая карточка BEML/DDP; вариант не уточнён.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 6.55,
+            "unit": "m",
+            "source": "in-r-mbpv-ddp",
+            "locator": "Overall length 6550 mm",
+            "scope": "MBPV, общая таблица; мм переведены в м.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.75,
+            "unit": "m",
+            "source": "in-r-mbpv-ddp",
+            "locator": "Overall width 2750 mm",
+            "scope": "MBPV, общая таблица; мм переведены в м.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.29,
+            "unit": "m",
+            "source": "in-r-mbpv-ddp",
+            "locator": "Overall height 3290 mm",
+            "scope": "MBPV, общая таблица; мм переведены в м.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-beml4x4",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "BEML High Mobility Vehicle 4×4",
+      "objectClass": "support-vehicle",
+      "summary": "Транспортная высокоподвижная машина BEML; конкретная версия и режим паспортной нагрузки не указаны.",
+      "sources": [
+        "in-r-beml4x4-ddp"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортная высокоподвижная машина BEML; конкретная версия и режим паспортной нагрузки не указаны.",
+            "unit": null,
+            "source": "in-r-beml4x4-ddp",
+            "locator": "Описание изделия",
+            "scope": "BEML High Mobility Vehicle 4×4",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Каталог указывает payload 8800 кг и top speed 80 км/ч; тип покрытия для скорости не указан, поэтому шоссейным максимумом значение не объявлено.",
+            "unit": null,
+            "source": "in-r-beml4x4-ddp",
+            "locator": "HIGH MOBILITY VEHICLE 4X4 BY BEML",
+            "scope": "Каталожный блок DDP; точная модификация не установлена.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-70t-transporter",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "70 T Tank Transporter for MBT Arjun",
+      "objectClass": "support-vehicle",
+      "summary": "Комплекс тягача и полного прицепа для дорожной перевозки Arjun; DRDO описывает разработанный VRDE прицеп.",
+      "sources": [
+        "in-r-70t-drdo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Комплекс тягача и полного прицепа для дорожной перевозки Arjun; DRDO описывает разработанный VRDE прицеп.",
+            "unit": null,
+            "source": "in-r-70t-drdo",
+            "locator": "Описание изделия",
+            "scope": "70 T Tank Transporter for MBT Arjun",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mpv4",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "AVNL Mine Protected Vehicle 4×4",
+      "objectClass": "apc",
+      "summary": "Колёсная защищённая машина 4×4 из портфеля AVNL; параметры исполнения 6×6 не наследуются.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная защищённая машина 4×4 из портфеля AVNL; параметры исполнения 6×6 не наследуются.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Описание изделия",
+            "scope": "AVNL Mine Protected Vehicle 4×4",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-mpv6",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "AVNL Mine Protected Vehicle 6×6",
+      "objectClass": "apc",
+      "summary": "Колёсная защищённая машина 6×6 из портфеля AVNL; параметры исполнения 4×4 не наследуются.",
+      "sources": [
+        "in-r-avnl-portfolio"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная защищённая машина 6×6 из портфеля AVNL; параметры исполнения 4×4 не наследуются.",
+            "unit": null,
+            "source": "in-r-avnl-portfolio",
+            "locator": "Описание изделия",
+            "scope": "AVNL Mine Protected Vehicle 6×6",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "in-r-blt-t72",
+      "kind": "equipment_model",
+      "countryContext": "IN",
+      "title": "T-72 Bridge Layer Tank",
+      "objectClass": "engineering",
+      "summary": "Мостоукладчик на T-72 из производственного перечня HVF; не BLT Arjun.",
+      "sources": [
+        "in-r-hvf"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка. Не приведённые скорость, запас хода, длительность и номинальный боекомплект не установлены; параметры соседних моделей не наследуются.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мостоукладчик на T-72 из производственного перечня HVF; не BLT Arjun.",
+            "unit": null,
+            "source": "in-r-hvf",
+            "locator": "Описание изделия",
+            "scope": "T-72 Bridge Layer Tank",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Индия: отдельный справочный каталог национальных изделий по DRDO, DDP, HAL, AVNL и PIB. Включает танки, БМП, транспорт/обеспечение, артиллерию, авиацию, корабельные проекты, подводные лодки, робототехнику, РЛС/гидроакустику, связь и РЭБ. Только паспортные и идентификационные данные; все черновики, simulationValidated false. Скорость на воде переведена из узлов ×1,852, морская дальность из NM ×1,852; VNE хранится отдельно от максимальной скорости. Топливная масса не переводится в литры. Дальность оружия не используется как запас хода.",
+    "gaps": [
+      "Каталог не исчерпывает все индийские портфели; для части изделий прочитан только указатель, паспорта остаются явно неполными.",
+      "Нужны полные паспорта HTT-40, Do-228 по сериям, Su-30MKI и морских классов; числовые показатели Tejas не переносятся на Mk1A.",
+      "Номинальный боекомплект установлен для Arjun Mk-1A, T-90 Bhishma и пусковой Pinaka; у остальных машин не установлен.",
+      "Не установлены национальные организационные уровни трёх видов ВС; оставлены три независимых pending_research без численности или подчинения.",
+      "Нужны отдельные официальные карточки беспилотных морских и подводных аппаратов; наличие таких систем не выведено из перспективных программ.",
+      "Происхождение и страны-операторы требуют отдельных утверждений: соответствующие массивы намеренно пусты."
+    ],
+    "sourceProblems": [
+      "DRDO возвращал тайм-ауты/502 для части индивидуальных карточек и PDF; такие ошибки не использованы как доказательство. Идентификация некоторых изделий опирается на прочитанный каталог, не на недоступную карточку.",
+      "Старые адреса HAL с ContentTemplate могут перенаправлять на главную; LUH подтверждён доступным фрагментом годового отчёта HAL с указанным периодом.",
+      "Общая дата Last Updated сайта DDP/AVNL меняется и не принята за период технической конфигурации; scopeDate при отсутствии периода null.",
+      "Публикации newspaper clippings на сервере DRDO являются перепечатками СМИ и исключены из доказательств.",
+      "Статья Employment News содержит личные взгляды автора: используется лишь как предварительное основание неполной классификации, не как нормативный штат."
+    ]
+  }
+}

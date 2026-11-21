@@ -1,0 +1,4414 @@
+{
+  "country": "IR",
+  "sources": [
+    {
+      "id": "ir-r-dia-2019",
+      "title": "Iran Military Power",
+      "publisher": "Defense Intelligence Agency / GovInfo",
+      "url": "https://www.govinfo.gov/content/pkg/GOVPUB-D5_200-PURL-gpo128931/pdf/GOVPUB-D5_200-PURL-gpo128931.pdf",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2019-08",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны общие институциональные разделы и приложения B, D, E, I. Внешняя оценка со срезом августа 2019 года; не современная ведомость состава. Рекламные заявления не приняты за измеренные характеристики."
+    },
+    {
+      "id": "ir-r-tradoc-cards-2019",
+      "title": "Worldwide Equipment Identification Cards: Iran Edition, GTA 20-17-002",
+      "publisher": "US Army Training and Doctrine Command",
+      "url": "https://rdl.train.army.mil/catalog-ws/view/100.ATSC/AC7DE2EE-BCA1-4DB8-B061-67002AA4B8B0-1566311312396/gta20_17_002.pdf",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2019-08",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Карточки идентификации. Использованы наименования и общие типы; неоднозначные дальности из поля Main Weapon Range не превращены в запас хода. В отдельных карточках замечены сомнительные калибры, они не перенесены."
+    },
+    {
+      "id": "ir-r-army-bmp2-1989",
+      "title": "ARMOR, January–February 1989: BMP-2 characteristics poster",
+      "publisher": "US Army, Fort Knox, Threat Division",
+      "url": "https://www.benning.army.mil/Armor/eARMOR/content/issues/1989/JAN_FEB/ArmorJanuaryFebruary1989web.pdf",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "1989-01/1989-02",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Техническая таблица базовой советской БМП-2 на заключительном плакате. Не паспорт иранской модернизации; неоднозначные строки распознанного текста о вспомогательном боекомплекте не использованы."
+    },
+    {
+      "id": "ir-r-oir-2022",
+      "title": "Operation Inherent Resolve: Lead Inspector General report, July–September 2022",
+      "publisher": "US Department of Defense / Department of State / USAID Inspectors General",
+      "url": "https://www.stateoig.gov/uploads/report/report_pdf_file/oir_q4_sep22_gold_508.pdf",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2022-07/2022-09",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Использована только справочная диаграмма Iranian-produced UAVs, печатная с. 31. Заголовок поисковой выдачи ошибочно обозначает II квартал; обложка и содержание относятся к III кварталу."
+    },
+    {
+      "id": "ir-r-antonov-an74",
+      "title": "АН-74: характеристики базового самолёта",
+      "publisher": "Антонов",
+      "url": "https://www.antonov.com/en/history/an-74",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан поисковый фрагмент таблицы производителя; прямая страница вернула 502. Интервалы не заменены произвольной точкой и не перенесены на все специальные варианты Ан-74."
+    },
+    {
+      "id": "ir-r-dia-uav-2023",
+      "title": "DIA report confirms Russia’s use of lethal Iranian unmanned aerial vehicles in Ukraine",
+      "publisher": "Defense Intelligence Agency",
+      "url": "https://www.dia.mil/News-Features/Articles/Article-View/Article/3297418/dia-report-confirms-russias-use-of-lethal-iranian-unmanned-aerial-vehicles-in-u/",
+      "kind": "foreign_official_assessment",
+      "scopeDate": "2023-02-14",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Доступен поисковый фрагмент официального сообщения о визуальной идентификации Shahed-131, Shahed-136 и Mohajer-6; технические скорости из него не следуют."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "ir-armed-forces",
+      "country": "IR",
+      "parent": null,
+      "title": "Вооружённые силы Ирана",
+      "nativeName": "Вооружённые силы Ирана",
+      "kind": "organization",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Параллельные институты Artesh и IRGC сохранены раздельно; источник — внешний обзор со срезом августа 2019 года. Это классификация, а не текущая цепь командования."
+    },
+    {
+      "id": "ir-artesh",
+      "country": "IR",
+      "parent": "ir-armed-forces",
+      "title": "Регулярные вооружённые силы",
+      "nativeName": "Artesh",
+      "kind": "organization",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Параллельные институты Artesh и IRGC сохранены раздельно; источник — внешний обзор со срезом августа 2019 года. Это классификация, а не текущая цепь командования."
+    },
+    {
+      "id": "ir-irgc",
+      "country": "IR",
+      "parent": "ir-armed-forces",
+      "title": "Корпус стражей исламской революции",
+      "nativeName": "Islamic Revolutionary Guard Corps",
+      "kind": "organization",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Параллельные институты Artesh и IRGC сохранены раздельно; источник — внешний обзор со срезом августа 2019 года. Это классификация, а не текущая цепь командования."
+    },
+    {
+      "id": "ir-r-artesh-ground",
+      "country": "IR",
+      "parent": "ir-artesh",
+      "title": "Сухопутные войска Artesh",
+      "nativeName": "Islamic Republic of Iran Ground Force (IRIGF)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-air",
+      "country": "IR",
+      "parent": "ir-artesh",
+      "title": "Военно-воздушные силы Artesh",
+      "nativeName": "Islamic Republic of Iran Air Force (IRIAF)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-navy",
+      "country": "IR",
+      "parent": "ir-artesh",
+      "title": "Военно-морские силы Artesh",
+      "nativeName": "Islamic Republic of Iran Navy (IRIN)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-airdef",
+      "country": "IR",
+      "parent": "ir-artesh",
+      "title": "Войска противовоздушной обороны Artesh",
+      "nativeName": "Islamic Republic of Iran Air Defense Force (IRIADF)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-ground",
+      "country": "IR",
+      "parent": "ir-irgc",
+      "title": "Сухопутные силы КСИР",
+      "nativeName": "IRGC Ground Force (IRGCGF)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-navy",
+      "country": "IR",
+      "parent": "ir-irgc",
+      "title": "Военно-морские силы КСИР",
+      "nativeName": "IRGC Navy (IRGCN)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-aerospace",
+      "country": "IR",
+      "parent": "ir-irgc",
+      "title": "Воздушно-космические силы КСИР",
+      "nativeName": "IRGC Aerospace Force (IRGCASF)",
+      "kind": "reported_service",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-qods",
+      "country": "IR",
+      "parent": "ir-irgc",
+      "title": "Силы «Кудс»",
+      "nativeName": "IRGC Qods Force",
+      "kind": "component",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-basij",
+      "country": "IR",
+      "parent": "ir-irgc",
+      "title": "Басидж",
+      "nativeName": "Basij Organization of the Oppressed",
+      "kind": "component",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-ground-infantry",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Пехотная специализация",
+      "nativeName": "Infantry",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-artesh-ground-armor",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Бронетанковая специализация",
+      "nativeName": "Armor",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-artesh-ground-artillery",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Артиллерийская специализация",
+      "nativeName": "Artillery",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-artesh-ground-special",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Специальные силы и коммандос",
+      "nativeName": "Special operations forces / commandos",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-irgc-ground-infantry",
+      "country": "IR",
+      "parent": "ir-r-irgc-ground",
+      "title": "Пехотная специализация",
+      "nativeName": "Infantry",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-irgc-ground-armor",
+      "country": "IR",
+      "parent": "ir-r-irgc-ground",
+      "title": "Бронетанковая специализация",
+      "nativeName": "Armor",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-irgc-ground-artillery",
+      "country": "IR",
+      "parent": "ir-r-irgc-ground",
+      "title": "Артиллерийская специализация",
+      "nativeName": "Artillery",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-irgc-ground-special",
+      "country": "IR",
+      "parent": "ir-r-irgc-ground",
+      "title": "Специальные силы и коммандос",
+      "nativeName": "Special operations forces / commandos",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Группа специализаций, упомянутых в приложениях E–F DIA 2019. Не утверждается отдельный юридический статус рода войск и не задаётся штат."
+    },
+    {
+      "id": "ir-r-artesh-ground-mechanized",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Механизированная пехота",
+      "nativeName": "Mechanized infantry",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-army-aviation",
+      "country": "IR",
+      "parent": "ir-r-artesh-ground",
+      "title": "Армейская авиация Artesh",
+      "nativeName": "Islamic Republic of Iran Army Aviation (IRIAA)",
+      "kind": "component",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-army-aviation",
+      "country": "IR",
+      "parent": "ir-r-irgc-ground",
+      "title": "Армейская авиация КСИР",
+      "nativeName": "IRGCGF Army Aviation",
+      "kind": "component",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-navy-surface",
+      "country": "IR",
+      "parent": "ir-r-artesh-navy",
+      "title": "Надводные силы",
+      "nativeName": "Surface combatants",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-artesh-navy-subsurface",
+      "country": "IR",
+      "parent": "ir-r-artesh-navy",
+      "title": "Подводные силы",
+      "nativeName": "Subsurface platforms",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    },
+    {
+      "id": "ir-r-irgc-navy-smallcraft",
+      "country": "IR",
+      "parent": "ir-r-irgc-navy",
+      "title": "Катера и малые плавсредства",
+      "nativeName": "Fast attack craft / fast inshore attack craft",
+      "kind": "branch_group",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Справочная классификация по внешней оценке DIA 2019; не действующая схема подчинения конкретных частей."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "ir-hierarchy-research",
+      "country": "IR",
+      "service": "ir-r-artesh-ground",
+      "status": "draft",
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "levels": [
+        {
+          "id": "division",
+          "title": "Дивизия",
+          "nativeName": "Division",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Дивизия",
+                "unit": null,
+                "source": "ir-r-dia-2019",
+                "locator": "Печатные с. 73–74, IRIGF",
+                "scope": "Наименование уровня в англоязычной внешней оценке 2019 года. Персидское штатное определение не подтверждено.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "Brigade",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Бригада",
+                "unit": null,
+                "source": "ir-r-dia-2019",
+                "locator": "Печатные с. 73–74, IRIGF",
+                "scope": "Наименование уровня в англоязычной внешней оценке 2019 года. Персидское штатное определение не подтверждено.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "battalion",
+          "title": "Батальон",
+          "nativeName": "Battalion",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "level_definitions",
+                "value": "Батальон",
+                "unit": null,
+                "source": "ir-r-dia-2019",
+                "locator": "Печатные с. 73–74, IRIGF",
+                "scope": "Наименование уровня в англоязычной внешней оценке 2019 года. Персидское штатное определение не подтверждено.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "DIA описывает переход от дивизионного к бригадному построению и упоминает батальоны. Список уровней не задаёт обязательную цепь, состав, численность или фактическое подчинение. Названия приведены в терминах англоязычного источника; нижние уровни требуют национальных документов.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "Сухопутные войска Artesh (IRIGF)",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатные с. 72–74",
+            "scope": "Только исторический обзор организационных уровней со срезом августа 2019 года.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Срез DIA: август 2019 года",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Выходные сведения; Appendix E",
+            "scope": "Не устанавливает действующую структуру.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-irgc-levels-research",
+      "country": "IR",
+      "service": "ir-r-irgc-ground",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Сухопутные силы КСИР исследуются отдельно от Artesh. Не перенесена универсальная лестница подразделений; национальные определения и полный набор уровней не найдены.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "ir-r-zulfiqar",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Zulfiqar",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Zulfiqar",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-karrar-tank",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "T-72 Karrar",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка T-72 Karrar",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-t72s",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Т-72С",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Т-72С",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-chieftain",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Chieftain Mk 3 / Mk 5",
+      "objectClass": "tank",
+      "summary": "Семейство танков.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство танков.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Chieftain Mk 3 / Mk 5",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-scorpion",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Scorpion",
+      "objectClass": "tank",
+      "summary": "Лёгкий разведывательный танк.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий разведывательный танк.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Scorpion",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-cascavel",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "EE-9 Cascavel",
+      "objectClass": "wheeled-gun-vehicle",
+      "summary": "Колёсная разведывательная машина с орудием.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "wheeled-gun-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная разведывательная машина с орудием.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка EE-9 Cascavel",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bmp1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БМП-1",
+      "objectClass": "ifv",
+      "summary": "Боевая машина пехоты.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Боевая машина пехоты.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БМП-1",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bmp2",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БМП-2",
+      "objectClass": "ifv",
+      "summary": "Боевая машина пехоты.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019",
+        "ir-r-army-bmp2-1989"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Боевая машина пехоты.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БМП-2",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Экипаж базовой машины; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 7,
+            "unit": "person",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Вместимость десанта; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 65,
+            "unit": "km/h",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Максимальная шоссейная скорость; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 7,
+            "unit": "km/h",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Скорость на плаву; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 600,
+            "unit": "km",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Шоссейный запас хода; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 500,
+            "unit": "round",
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат, таблица BMP-2 characteristics",
+            "scope": "Номинальная укладка 30-мм пушки; не текущий остаток; внешняя справочная таблица US Army 1989 для советской БМП-2. Иранские доработки и условия испытаний не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Базовая советская БМП-2 по внешнему справочнику 1989 года; параметры иранских модернизаций не установлены.",
+            "unit": null,
+            "source": "ir-r-army-bmp2-1989",
+            "locator": "Заключительный плакат BMP-2 characteristics",
+            "scope": "Не переносить на все модернизации БМП-2.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m113a1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M113A1",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка M113A1",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-btr50",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БТР-50",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БТР-50",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-btr60",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БТР-60",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БТР-60",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-btr80",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БТР-80",
+      "objectClass": "apc",
+      "summary": "Бронетранспортёр.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронетранспортёр.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БТР-80",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m110",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M110",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка M110",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m107",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M107",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка M107",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-2s1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "2С1",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка 2С1",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-raad2",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Thunder-2 / Raad-2",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Thunder-2 / Raad-2",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-d20",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Д-20",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Д-20",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-d30",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Д-30",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Д-30",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m46",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "М-46",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемое полевое орудие.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемое полевое орудие.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка М-46",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m114a1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M114A1",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка M114A1",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m115",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M115",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка M115",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ghn45",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "GHN-45",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая гаубица.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка GHN-45",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-fajr5",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Fajr-5 / Fadjr-5",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Fajr-5 / Fadjr-5",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bm21",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "БМ-21",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка БМ-21",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-type63",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Type 63",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Type 63",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hadid",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Hadid",
+      "objectClass": "rocket-artillery",
+      "summary": "Реактивная артиллерия.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "rocket-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивная артиллерия.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Hadid",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-m109",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "M109",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Самоходная гаубица.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самоходная гаубица.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 75, Key Ground Forces Equipment",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-f4",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "F-4D/E Phantom II",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-f5",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "F-5E/F Tiger II и иранские варианты",
+      "objectClass": "aircraft",
+      "summary": "Семейство многоцелевых самолётов.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство многоцелевых самолётов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-f14",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "F-14A/AM Tomcat",
+      "objectClass": "aircraft",
+      "summary": "Семейство истребителей.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство истребителей.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-su22",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Су-22",
+      "objectClass": "aircraft",
+      "summary": "Истребитель-бомбардировщик.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Истребитель-бомбардировщик.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-su24",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Су-24МК",
+      "objectClass": "aircraft",
+      "summary": "Истребитель-бомбардировщик.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Истребитель-бомбардировщик.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mig29",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "МиГ-29 Fulcrum A",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-miragef1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Mirage F1",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-f7",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "F-7N Airguard",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой самолёт.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 66, Major Iranian Combat Aircraft",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-su25",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Су-25",
+      "objectClass": "aircraft",
+      "summary": "Самолёт непосредственной поддержки.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт непосредственной поддержки.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-emb312",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "EMB-312 Tucano",
+      "objectClass": "aircraft",
+      "summary": "Учебный самолёт.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Учебный самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-y12",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Y-12",
+      "objectClass": "aircraft",
+      "summary": "Транспортный самолёт.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-falcon20",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Dassault Falcon 20",
+      "objectClass": "aircraft",
+      "summary": "Самолёт вспомогательного назначения; комплектация не установлена.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт вспомогательного назначения; комплектация не установлена.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mfi17",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "MFI-17",
+      "objectClass": "aircraft",
+      "summary": "Учебный самолёт.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Учебный самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-il76",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ил-76",
+      "objectClass": "aircraft",
+      "summary": "Транспортный самолёт; модификация не установлена.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный самолёт; модификация не установлена.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-an74",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ан-74",
+      "objectClass": "aircraft",
+      "summary": "Транспортный самолёт.",
+      "relatedOrganizations": [
+        "ir-r-irgc-aerospace"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-antonov-an74"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный самолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 67, авиационный компонент IRGCASF",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Производитель базового Ан-74 указывает крейсерскую скорость 540–560 км/ч и практическую дальность 4320–4600 км.",
+            "unit": null,
+            "source": "ir-r-antonov-an74",
+            "locator": "Flight characteristics: Cruise speed; Operational range",
+            "scope": "Поисковый фрагмент производителя; условия нагрузки не раскрыты. Это интервалы для базового Ан-74, а не установленный паспорт иранского варианта.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-c130",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "C-130 Hercules",
+      "objectClass": "aircraft",
+      "summary": "Семейство транспортных самолётов.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство транспортных самолётов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 87, Aircraft Sector",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ah1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "AH-1 Cobra",
+      "objectClass": "helicopter",
+      "summary": "Ударный вертолёт.",
+      "relatedOrganizations": [
+        "ir-r-artesh-army-aviation"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ударный вертолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 74, IRIAA",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bell214",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Bell 214",
+      "objectClass": "helicopter",
+      "summary": "Транспортный вертолёт.",
+      "relatedOrganizations": [
+        "ir-r-artesh-army-aviation"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный вертолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 74, IRIAA",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ch47",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "CH-47 Chinook",
+      "objectClass": "helicopter",
+      "summary": "Транспортный вертолёт.",
+      "relatedOrganizations": [
+        "ir-r-artesh-army-aviation"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Транспортный вертолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 74, IRIAA",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ab206",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "AB 206",
+      "objectClass": "helicopter",
+      "summary": "Лёгкий вертолёт.",
+      "relatedOrganizations": [
+        "ir-r-artesh-army-aviation"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий вертолёт.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 74, IRIAA",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mi17",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ми-17",
+      "objectClass": "helicopter",
+      "summary": "Семейство вертолётов.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство вертолётов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 87, Aircraft Sector",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-toufan-helicopter",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Toufan — вертолёт",
+      "objectClass": "helicopter",
+      "summary": "Ударный вертолёт.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Ударный вертолёт.",
+            "unit": null,
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Toufan",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ababil2",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ababil-2",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 2,
+            "unit": "h",
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Ababil-2",
+            "scope": "Продолжительность из карточки 2019 года; нагрузка, профиль и условия полёта не раскрыты. Внешняя оценка, не результат независимого испытания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ababil3",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ababil-3",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-qasef1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Qasef-1",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-shahed129",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Shahed-129",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный и ударный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный и ударный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 24,
+            "unit": "h",
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Shahed-129",
+            "scope": "Продолжительность из карточки 2019 года; нагрузка, профиль и условия полёта не раскрыты. Внешняя оценка, не результат независимого испытания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-shahed123",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Shahed-123",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mohajer2",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Mohajer-2",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 1.5,
+            "unit": "h",
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Mohajer-2",
+            "scope": "Продолжительность из карточки 2019 года; нагрузка, профиль и условия полёта не раскрыты. Внешняя оценка, не результат независимого испытания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-sadegh",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Sadegh",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mohajer4",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Mohajer-4",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 6,
+            "unit": "h",
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Mohajer-4",
+            "scope": "Продолжительность из карточки 2019 года; нагрузка, профиль и условия полёта не раскрыты. Внешняя оценка, не результат независимого испытания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mohajer6",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Mohajer-6",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный и ударный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019",
+        "ir-r-tradoc-cards-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный и ударный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 12,
+            "unit": "h",
+            "source": "ir-r-tradoc-cards-2019",
+            "locator": "GTA 20-17-002, карточка Mohajer-6",
+            "scope": "Продолжительность из карточки 2019 года; нагрузка, профиль и условия полёта не раскрыты. Внешняя оценка, не результат независимого испытания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-toufan1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Toufan 1 — БПЛА",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА одностороннего применения.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА одностороннего применения.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-fotros",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Fotros",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный и ударный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный и ударный БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-karrar-uav",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Karrar — БПЛА",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hemaseh",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Hemaseh",
+      "objectClass": "unmanned-air",
+      "summary": "Многоцелевой БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-irn170",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "IRN-170 — семейство",
+      "objectClass": "unmanned-air",
+      "summary": "Семейство БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство БПЛА.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 68, Major Iranian UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-shahed131",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Shahed-131",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА одностороннего применения.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-oir-2022",
+        "ir-r-dia-uav-2023"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА одностороннего применения.",
+            "unit": null,
+            "source": "ir-r-oir-2022",
+            "locator": "Печатная с. 31, Iranian-produced UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-shahed136",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Shahed-136",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА одностороннего применения.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-oir-2022",
+        "ir-r-dia-uav-2023"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА одностороннего применения.",
+            "unit": null,
+            "source": "ir-r-oir-2022",
+            "locator": "Печатная с. 31, Iranian-produced UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Диаграмма указывает дальность 2000–2200 км.",
+            "unit": null,
+            "source": "ir-r-oir-2022",
+            "locator": "Печатная с. 31, Shahed-136, Range",
+            "scope": "Внешняя оценка 2022 года одностороннего полёта; условия и нагрузка не раскрыты, не запас топлива и не радиус возврата.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kas04",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "KAS-04 / Samad",
+      "objectClass": "unmanned-air",
+      "summary": "БПЛА одностороннего применения.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-oir-2022"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "БПЛА одностороннего применения.",
+            "unit": null,
+            "source": "ir-r-oir-2022",
+            "locator": "Печатная с. 31, Iranian-produced UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-yasir",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Yasir",
+      "objectClass": "unmanned-air",
+      "summary": "Разведывательный БПЛА.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-oir-2022"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Разведывательный БПЛА.",
+            "unit": null,
+            "source": "ir-r-oir-2022",
+            "locator": "Печатная с. 31, Iranian-produced UAVs",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kilo",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Kilo / проект 877",
+      "objectClass": "submarine",
+      "summary": "Семейство подводных лодок.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство подводных лодок.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-fateh",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Fateh",
+      "objectClass": "submarine",
+      "summary": "Прибрежная подводная лодка.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Прибрежная подводная лодка.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ghadir",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Yono / Ghadir",
+      "objectClass": "submarine",
+      "summary": "Семейство малых подводных лодок.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство малых подводных лодок.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-nahang",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Nahang",
+      "objectClass": "submarine",
+      "summary": "Малая подводная лодка.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Малая подводная лодка.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-mowj",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Mowj / Jamaran",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство надводных кораблей.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство надводных кораблей.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-vosper",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Vosper Mk 5",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство надводных кораблей.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство надводных кораблей.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bayandor",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "PF 103 / Bayandor",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство надводных кораблей.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство надводных кораблей.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kaman",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Combattante II / Kaman",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство ракетных катеров.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство ракетных катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hendijan",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Hendijan",
+      "objectClass": "surface-vessel",
+      "summary": "Патрульное и вспомогательное семейство.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Патрульное и вспомогательное семейство.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-parvin",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "PGM-71 / Parvin",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство патрульных катеров.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство патрульных катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kayvan",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Cape / Kayvan",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство патрульных катеров.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство патрульных катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hengham",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Hengham",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство десантных кораблей.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство десантных кораблей.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-karbala",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Karbala",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство десантных транспортов.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство десантных транспортов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-wellington",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Wellington Mk 4 / Mk 5",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство судов на воздушной подушке.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство судов на воздушной подушке.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bandarabbas",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Bandar Abbas",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство судов снабжения.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство судов снабжения.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-delvar",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Delvar",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство вспомогательных судов.",
+      "relatedOrganizations": [
+        "ir-r-artesh-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство вспомогательных судов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 50, перечень типов IRIN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-houdong",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Houdong / Thondor",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-peykaap",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Peykaap I / II / III",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-tir",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Tir",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-tarlan",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Tarlan",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kashdom",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Kashdom II",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ashoora",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ashoora",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-cougar",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Cougar",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ribr33",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "FB RIB-33",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-gashti",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Gashti",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-kuch",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Kuch",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-siraj",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Bladerunner / Siraj",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-boghammar",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Boghammar",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство катеров.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство катеров.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hormuz",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Hormuz 21 / 24",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство десантных судов.",
+      "relatedOrganizations": [
+        "ir-r-irgc-navy"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство десантных судов.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 53, перечень типов IRGCN; без численности",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-s300",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "С-300ПМУ2",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-s200",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "С-200",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-bavar373",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Bavar-373",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-hawk-mersad",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "I-HAWK / Mersad",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-csa1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "CSA-1",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-khordad3",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Third of Khordad",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-raad-sam",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Raad — ЗРК",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-talash",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Talash",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-torm1",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Тор-М1",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-rapier",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Rapier",
+      "objectClass": "launcher",
+      "summary": "Пусковое оборудование зенитного комплекса.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "launcher",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Пусковое оборудование зенитного комплекса.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Идентифицирован комплекс; конкретная пусковая машина и её паспорт не выделены.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 71, Iranian Air Defense Systems",
+            "scope": "Класс launcher используется для пускового оборудования. Размеры и масса всего комплекса не приписываются одиночной машине.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-fath14",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Fath 14",
+      "objectClass": "radar-sensor",
+      "summary": "Обзорная радиолокационная система.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Обзорная радиолокационная система.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 86, Air Defense Sector",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ir-r-ghadir-radar",
+      "kind": "equipment_model",
+      "countryContext": "IR",
+      "title": "Ghadir — РЛС",
+      "objectClass": "radar-sensor",
+      "summary": "Обзорная радиолокационная система.",
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "sources": [
+        "ir-r-dia-2019"
+      ],
+      "status": "draft",
+      "note": "Идентификация по указанному источнику и его периоду; наличие в сегодняшнем составе не утверждается. Скорость, запас хода, продолжительность и номинальный боекомплект неизвестны, если не приведены отдельными характеристиками. Происхождение и операторы отдельно не аттестованы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Обзорная радиолокационная система.",
+            "unit": null,
+            "source": "ir-r-dia-2019",
+            "locator": "Печатная с. 86, Air Defense Sector",
+            "scope": "Общая идентификация модели/семейства, только период указанного документа; без оценки эффективности.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Расширенный справочный каталог Ирана: раздельные Artesh и IRGC, документированные виды и группы специализаций, сухопутные модели, транспортная и боевая авиация, вертолёты, БПЛА, классы кораблей и подлодок, зенитное пусковое оборудование и РЛС. Основной каталог — внешние государственные оценки 2019 года с отдельной сверкой БПЛА по 2022–2023 годам. Все записи draft; сведения не являются текущей ведомостью и не предназначены для расчётной модели.",
+    "gaps": [
+      "Полного доступного первичного иранского технического каталога DIO/MODAFL/IEI не найдено. Идентификация по внешней оценке не делает паспорт полным.",
+      "Для большинства национальных моделей отсутствуют надёжные паспортные скорости, запас хода, топливные ёмкости и номинальный боекомплект. Рекламные максимумы и пересказы СМИ не заполнены числами.",
+      "Числа базовой советской БМП-2 явно отделены от неизвестной иранской комплектации; их нельзя наследовать модернизациям.",
+      "Инженерные машины, наземные средства обеспечения, связь, РЭБ, наземные/морские/подводные беспилотные платформы остаются пробелом: конкретные модели не внесены без достаточной официальной идентификации.",
+      "Не установлены национальные юридические определения всех родов и организационных уровней; специализации не объявлены самостоятельными родами войск.",
+      "Не исследованы сплошная современная номенклатура боеприпасов и мин, полный каталог ракет и все варианты зенитных комплексов. Дальности оружия не записывались как запас хода.",
+      "Классы и модели судов не подтверждают сохранение конкретных кораблей в эксплуатации."
+    ],
+    "sourceProblems": [
+      "DIA 2019 — внешняя оценка с cutoff August 2019; не актуализирует структуру и наличие техники на 2026 год. Прямой PDF DIA вернул 403, прочитан официальный архив GovInfo.",
+      "GTA 20-17-002 содержит неоднозначное поле Main Weapon Range с километрами и часами для БПЛА; внесены только явно выраженные часы, километры не интерпретировались как радиус или запас хода. В карточках М-46 и AT-3 замечены подозрительные калибры, они исключены.",
+      "В диаграмме OIR 2022 не всегда различены радиус, дальность связи и полная дальность; числа для возвратных БПЛА не перенесены в range_reference_km.",
+      "Прямая страница Антонова возвращала 502; сведения оставлены на уровне search_excerpt, интервалы скорости и дальности сохранены текстом.",
+      "Прямое сообщение DIA о визуальном сравнении БПЛА возвращало 403; использован только доступный поисковый фрагмент для идентификации.",
+      "Открытый Threat Tactics Report: Iran 2016 не использован как подтверждение моделей: замечены сомнительные строки калибров и корабельного списка."
+    ]
+  }
+}

@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } fr
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { voicePython } from './voice-platform.mjs';
 import { startVoice } from './voice.mjs';
 import { prepareVoiceDirectory } from './voice-files.mjs';
 import { installLibrary, verifyRuntime } from './portable-library.mjs';
@@ -89,6 +90,8 @@ const services = [
   // нарезка карты OpenHistoricalMap всего театра держит в памяти объекты района (≈ 1 ГБ на пике):
   // куча — с запасом, иначе предел V8 по умолчанию на машинах с 8 ГБ
   { name: 'cartography', env: { STORAGE: 'file', DATA_DIR: data, TILES_DIR: join(data, 'tiles'), THEATRE_BUILD: 'off',
+    GIS_PYTHON: process.env.GIS_PYTHON || (process.env.DEFOPS_VOICE_RUNTIME ? voicePython('', process.platform, process.env.DEFOPS_VOICE_RUNTIME) : ''),
+    GIS_ADDONS: process.env.GIS_ADDONS || (existsSync(join(here, 'gis/addons/defops-gis-runtime.json')) ? join(here, 'gis/addons') : ''),
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'gateway', env: {
     DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'),

@@ -1,0 +1,4398 @@
+{
+  "country": "IT",
+  "sources": [
+    {
+      "id": "it-services",
+      "title": "Codice ordinamento militare decreto legislativo 66 2010",
+      "publisher": "Ministero della Difesa Italia",
+      "url": "https://www.difesa.it/assets/allegati/26819/decreto_legislativo_66_2010.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2010",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Базовый нормативный текст; последующие изменения нуждаются в сверке."
+    },
+    {
+      "id": "it-centauro",
+      "title": "CalendEsercito 2019 — Centauro 2",
+      "publisher": "Esercito Italiano",
+      "url": "https://www.esercito.difesa.it/comunicazione/calendesercito/Documents/CalendEsercito2019.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2019",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": ""
+    },
+    {
+      "id": "it-centauro-idv",
+      "title": "Centauro II — Specifications",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/land-armoured-vehicles/centauro-ii/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны Specifications, Mobility и Crew. Публикация не фиксирует дату конфигурации; данные массы и длины отличаются от армейского каталога."
+    },
+    {
+      "id": "it-centauro-army",
+      "title": "Blindo Centauro 2 — каталог Esercito Italiano",
+      "publisher": "Esercito Italiano",
+      "url": "https://www.esercito.difesa.it/equipaggiamenti/veicoli-blindati-e-corazzati-da-combattimento/veicoli-da-combattimento/blindo-centauro-2/122297.html",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан индексированный фрагмент. Полная страница недоступна при проверке; значения предварительные. Не смешивать с конфигурацией IDV."
+    },
+    {
+      "id": "it-organization-2023",
+      "title": "D.P.R. 90/2010 — artt. 147–152, редакция 30.05.2023",
+      "publisher": "Ministero della Difesa, Italia",
+      "url": "https://www.difesa.it/assets/allegati/1036/b26710e7-e996-4f21-903e-789b6dc1c3eb.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2023-05-30",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитаны статьи 147–152, PDF с. 115–117. Это указанная редакция, не доказательство отсутствия последующих изменений; не штат и не текущая дислокация."
+    },
+    {
+      "id": "it-r-src-ariete-c2",
+      "title": "Ariete C2 — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/land-armoured-vehicles/ariete-c2/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-ariete-c1",
+      "title": "Ariete MBT — CIO",
+      "publisher": "CIO",
+      "url": "https://www.iveco-otomelara.com/docs/Ariete-MBT.pdf",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-freccia",
+      "title": "VBM Freccia AIFV/ATGM — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/land-armoured-vehicles/vbm-freccia-aifv-atgm/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-superav",
+      "title": "Superav — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/amphibious-armoured-vehicles/superav-amphibious-armoured-vehicle-8x8/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-lmv2",
+      "title": "LMV2 — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/multirole-vehicles/lmv2-light-multirole-vehicle/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-mtv",
+      "title": "MTV — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/multirole-vehicles/mtv-medium-tactical-vehicle/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-trucks",
+      "title": "Modular Military Range — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/defence-trucks/modular-military-range/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-eurocargo",
+      "title": "Eurocargo — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/defence-trucks/eurocargo/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-idv-catalog",
+      "title": "Products — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-viking",
+      "title": "Viking — IDV",
+      "publisher": "IDV",
+      "url": "https://www.idvgroup.com/products/uncrewed-ground-vehicles/viking/",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-pzh",
+      "title": "PzH2000 — KNDS",
+      "publisher": "KNDS",
+      "url": "https://knds.com/en/products/systems/pzh-2000",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-material-register",
+      "title": "TER.I-92-00-MATERIALI-001-R001",
+      "publisher": "Ministero della Difesa",
+      "url": "https://www.difesa.it/assets/allegati/49309/ter-i-92-00-materiali-001-r001.2024.03.12.14.53.17.323.pdf",
+      "kind": "national_authority",
+      "scopeDate": "2021-05-07",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-fh70",
+      "title": "Obice155/39 FH-70 — Esercito",
+      "publisher": "Esercito Italiano",
+      "url": "https://www.esercito.difesa.it/equipaggiamenti/obice-da-15539-fh-70/83547.html",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан индексированный фрагмент страницы; паспортная таблица не получена."
+    },
+    {
+      "id": "it-r-src-m346",
+      "title": "M-346 — Leonardo brochure",
+      "publisher": "Leonardo",
+      "url": "https://aeronautics.leonardo.com/documents/30508878/30801269/Aermacchi%2BM-346_brochure_ENG_new.pdf?t=1757688443771",
+      "kind": "manufacturer",
+      "scopeDate": "2020-01",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-m345",
+      "title": "M-345 Facts and Figures",
+      "publisher": "Leonardo",
+      "url": "https://www.leonardo.com/documents/15646808/0/LDO_PressNote_SPEC_M-345_12_06_2025_ENG.pdf?t=1749742725716",
+      "kind": "manufacturer",
+      "scopeDate": "2025-06-12",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-c27j",
+      "title": "C-27J Next Generation brochure",
+      "publisher": "Leonardo",
+      "url": "https://aircraft.leonardo.com/documents/16114715/17990486/C-27J%2BNext%2BGen_brochure_new_ENG.pdf/3d33b87c-a7bc-52b5-831d-5a2b12ab5c83?t=1647512362260",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-typhoon",
+      "title": "Eurofighter Typhoon — Aeronautica",
+      "publisher": "Aeronautica Militare",
+      "url": "https://www.aeronautica.difesa.it/2024/06/21/eurofighter-typhoon/",
+      "kind": "national_authority",
+      "scopeDate": "2024-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-f35",
+      "title": "F-35 — Aeronautica",
+      "publisher": "Aeronautica Militare",
+      "url": "https://www.aeronautica.difesa.it/2024/06/21/f-35/",
+      "kind": "national_authority",
+      "scopeDate": "2024-06-21",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитан индексированный Dati Tecnici; полная страница timeout. Явно сомнительная масса 8000/6000 кг исключена."
+    },
+    {
+      "id": "it-r-src-kc767",
+      "title": "KC-767A — Aeronautica",
+      "publisher": "Aeronautica Militare",
+      "url": "https://www.aeronautica.difesa.it/2024/06/27/kc-767a-2/",
+      "kind": "national_authority",
+      "scopeDate": "2024-06-27",
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитано индексированное описание; полная страница timeout."
+    },
+    {
+      "id": "it-r-src-air-catalog",
+      "title": "Personale e Aeromobili — Aeronautica",
+      "publisher": "Aeronautica Militare",
+      "url": "https://www.aeronautica.difesa.it/home/noi-siamo-l-am/personale-e-mezzi/",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитаны индексированные описания; полная страница timeout."
+    },
+    {
+      "id": "it-r-src-aw101",
+      "title": "AW101 brochure",
+      "publisher": "Leonardo",
+      "url": "https://helicopters.leonardo.com/documents/16114711/0/AW101%20Brochure.pdf?t=1671119907399",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-aw169m",
+      "title": "AW169M characteristics",
+      "publisher": "Leonardo",
+      "url": "https://uk.leonardo.com/documents/16114711/0/AW169M_digitalVersion.pdf/b83dbf4c-8ac2-395e-2950-d8dbbc56ac15?t=1732699736606",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-aw249",
+      "title": "AW249 brochure",
+      "publisher": "Leonardo",
+      "url": "https://helicopters.leonardo.com/documents/16114711/0/LDO_UK25_01309_AW249%2BBrochure_FINAL%2BLQ.pdf?t=1750146337215",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-falco-evo",
+      "title": "Falco EVO datasheet",
+      "publisher": "Leonardo",
+      "url": "https://uncrewed.leonardo.com/documents/16277715/0/FALCO%2BEVO_%28MM07818%29-VEL.pdf?t=1719474115211",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-falco-family",
+      "title": "Falco family brochure",
+      "publisher": "Leonardo",
+      "url": "https://uncrewed.leonardo.com/documents/16277715/18577372/Falco%2BFamily%2B%28MM09053%29_LQ.pdf?t=1719474758473",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-awhero",
+      "title": "AWHERO brochure",
+      "publisher": "Leonardo",
+      "url": "https://uncrewed.leonardo.com/documents/16277715/0/Brochure_AWHero%2B%28new%29_.pdf/031802ec-0e7f-e3ba-e6af-549c91f31376?t=1695107850210",
+      "kind": "manufacturer",
+      "scopeDate": "2023",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-mirach40",
+      "title": "Mirach40 datasheet",
+      "publisher": "Leonardo",
+      "url": "https://aeronautics.leonardo.com/documents/30508878/30801272/MIRACH_40_Integrated_Aerial_Target_System_MM08519-VEL.pdf?t=1760351011978",
+      "kind": "manufacturer",
+      "scopeDate": "2022",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-rat31",
+      "title": "RAT31DL/M datasheet2022",
+      "publisher": "Leonardo",
+      "url": "https://electronics.leonardo.com/documents/16277707/18337842/RAT31%2BDL_M%2B%28mm07950%29%2B2022.pdf?t=1674470152446",
+      "kind": "manufacturer",
+      "scopeDate": "2022",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-swave",
+      "title": "Land/Naval Defence Communications",
+      "publisher": "Leonardo",
+      "url": "https://electronics.leonardo.com/documents/16277707/18312576/body_Land_Naval_Defence_Communications_LQ_mm08772_.pdf?t=1635865292950",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-fremm",
+      "title": "FREMM Fincantieri datasheet2025",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/globalassets/prodotti-servizi/repository/bb1_fincantieri_scheda_naval_vessels_fremm_2025.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2025-05",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-ppa",
+      "title": "PPA manufacturer characteristics2024",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/en/newsroom/press-releases/2024/fincantieri-contract-signed-for-the-supply-of-two-ppas-to-indonesia",
+      "kind": "manufacturer",
+      "scopeDate": "2024-03-28",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-cavour",
+      "title": "Cavour class datasheet2025",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/globalassets/prodotti-servizi/repository/bb1_fincantieri_scheda_naval_vessels_cavour_2025.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2025-05",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-vulcano",
+      "title": "Vulcano class LSS datasheet",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/globalassets/prodotti-servizi/navi-militari/2022/web-scheda-militari_m-06-22_vulcano-class_logistic-support-ship.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2022-06",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-trieste",
+      "title": "Trieste — Fincantieri",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/it/business/prodotti/navi-per-la-difesa/Portaerei-navi-anfibie/Trieste",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Каталожная страница прочитана в поисковом фрагменте; полный URL404."
+    },
+    {
+      "id": "it-r-src-u212a",
+      "title": "U212A Todaro class — Fincantieri",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/en/business/products/naval-vessels/submarines/u212a-todaro-class",
+      "kind": "manufacturer",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-u212nfs",
+      "title": "U212NFS datasheet2025",
+      "publisher": "Fincantieri",
+      "url": "https://www.fincantieri.com/globalassets/prodotti-servizi/repository/bb1_fincantieri_scheda_naval_vessels_u212-nfs_2025.pdf",
+      "kind": "manufacturer",
+      "scopeDate": "2025-05",
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-carabinieri-org",
+      "title": "Organizzazione dell’Arma dei Carabinieri",
+      "publisher": "Arma dei Carabinieri",
+      "url": "https://www.carabinieri.it/CHI-SIAMO/oggi/organizzazione",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "page",
+      "note": "Прочитан открытый каталог; комплектация и редакция ограничены указанным источником."
+    },
+    {
+      "id": "it-r-src-army-arms",
+      "title": "Armi e Corpi dell’Esercito",
+      "publisher": "Esercito Italiano",
+      "url": "https://www.esercito.difesa.it/organizzazione/armi-e-corpi/83317.html",
+      "kind": "national_authority",
+      "scopeDate": null,
+      "accessedOn": "2026-11-17",
+      "readLevel": "search_excerpt",
+      "note": "Прочитана индексированная обзорная страница; полное чтение timeout. Перечень отражает номенклатуру страницы; актуальность медицинского корпуса требует нормативной сверки."
+    }
+  ],
+  "organizations": [
+    {
+      "id": "it-armed-forces",
+      "country": "IT",
+      "parent": null,
+      "title": "Вооружённые силы Италии",
+      "nativeName": "Вооружённые силы Италии",
+      "kind": "organization",
+      "sources": [
+        "it-services"
+      ],
+      "status": "draft",
+      "note": "Корень справочной классификации; не описание текущей оперативной подчинённости."
+    },
+    {
+      "id": "it-army",
+      "country": "IT",
+      "parent": "it-armed-forces",
+      "title": "Сухопутные войска",
+      "nativeName": "Esercito Italiano",
+      "kind": "service",
+      "sources": [
+        "it-services"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "it-navy",
+      "country": "IT",
+      "parent": "it-armed-forces",
+      "title": "Военно-морские силы",
+      "nativeName": "Marina Militare",
+      "kind": "service",
+      "sources": [
+        "it-services"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "it-air",
+      "country": "IT",
+      "parent": "it-armed-forces",
+      "title": "Военно-воздушные силы",
+      "nativeName": "Aeronautica Militare",
+      "kind": "service",
+      "sources": [
+        "it-services"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "it-carabinieri",
+      "country": "IT",
+      "parent": "it-armed-forces",
+      "title": "Карабинеры",
+      "nativeName": "Arma dei Carabinieri",
+      "kind": "service",
+      "sources": [
+        "it-services"
+      ],
+      "status": "draft",
+      "note": "Перевод названия для каталога; схема неполная и требует предметной проверки."
+    },
+    {
+      "id": "it-infantry",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Пехота",
+      "nativeName": "Arma di fanteria",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Национальная номенклатура указанной редакции; требуется актуализация.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-infantry-grenadiers",
+      "country": "IT",
+      "parent": "it-infantry",
+      "title": "Гренадеры",
+      "nativeName": "granatieri",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-infantry-bersaglieri",
+      "country": "IT",
+      "parent": "it-infantry",
+      "title": "Берсальеры",
+      "nativeName": "bersaglieri",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-infantry-alpini",
+      "country": "IT",
+      "parent": "it-infantry",
+      "title": "Альпийские войска",
+      "nativeName": "alpini",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-infantry-paratroops",
+      "country": "IT",
+      "parent": "it-infantry",
+      "title": "Парашютные подразделения",
+      "nativeName": "paracadutisti",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-infantry-lagunari",
+      "country": "IT",
+      "parent": "it-infantry",
+      "title": "Лагунари",
+      "nativeName": "lagunari",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-cavalry",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Кавалерия",
+      "nativeName": "Arma di cavalleria",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Национальная номенклатура указанной редакции; требуется актуализация.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-cavalry-line",
+      "country": "IT",
+      "parent": "it-cavalry",
+      "title": "Линейная кавалерия",
+      "nativeName": "cavalleria di linea",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-cavalry-tank",
+      "country": "IT",
+      "parent": "it-cavalry",
+      "title": "Танковые подразделения",
+      "nativeName": "carristi",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-artillery",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Артиллерия",
+      "nativeName": "Arma di artiglieria",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Национальная номенклатура указанной редакции; требуется актуализация.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-artillery-land",
+      "country": "IT",
+      "parent": "it-artillery",
+      "title": "Наземная артиллерия",
+      "nativeName": "artiglieria terrestre",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-artillery-air-defence",
+      "country": "IT",
+      "parent": "it-artillery",
+      "title": "Зенитная артиллерия",
+      "nativeName": "artiglieria contraerea",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-engineers",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Инженерные войска",
+      "nativeName": "Arma del genio",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Национальная номенклатура указанной редакции; требуется актуализация.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-engineers-pioneers",
+      "country": "IT",
+      "parent": "it-engineers",
+      "title": "Пионеры",
+      "nativeName": "pionieri",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-engineers-bridging",
+      "country": "IT",
+      "parent": "it-engineers",
+      "title": "Мостовые подразделения",
+      "nativeName": "pontieri",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-engineers-railway",
+      "country": "IT",
+      "parent": "it-engineers",
+      "title": "Железнодорожные подразделения",
+      "nativeName": "ferrovieri",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-engineers-sappers",
+      "country": "IT",
+      "parent": "it-engineers",
+      "title": "Сапёры",
+      "nativeName": "guastatori",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-signals",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Войска связи",
+      "nativeName": "Arma delle trasmissioni",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Национальная номенклатура указанной редакции; требуется актуализация.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-signals-telematics",
+      "country": "IT",
+      "parent": "it-signals",
+      "title": "Телематика",
+      "nativeName": "telematica",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-signals-ew",
+      "country": "IT",
+      "parent": "it-signals",
+      "title": "Радиоэлектронная борьба",
+      "nativeName": "guerra elettronica",
+      "kind": "branch",
+      "status": "draft",
+      "note": "Специализация в национальной классификации источника.",
+      "sources": [
+        "it-organization-2023"
+      ]
+    },
+    {
+      "id": "it-r-carabinieri-central",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Центральная организация",
+      "nativeName": "Organizzazione centrale",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-carabinieri-territorial",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Территориальная организация",
+      "nativeName": "Organizzazione territoriale",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-carabinieri-training",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Учебная организация",
+      "nativeName": "Organizzazione addestrativa",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-carabinieri-mobile-special",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Мобильная и специальная организация",
+      "nativeName": "Organizzazione mobile e speciale",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-carabinieri-forest",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Охрана лесов,окружающей среды и агропродовольственной сферы",
+      "nativeName": "Tutela forestale,ambientale e agroalimentare",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-carabinieri-specific",
+      "country": "IT",
+      "parent": "it-carabinieri",
+      "title": "Компоненты для специальных потребностей",
+      "nativeName": "Reparti e unità per esigenze specifiche",
+      "kind": "component",
+      "sources": [
+        "it-r-src-carabinieri-org"
+      ],
+      "status": "draft",
+      "note": "Область национальной организации; не общевойсковой род и не последовательный уровень подчинения. Конкретные части не перечисляются."
+    },
+    {
+      "id": "it-r-transport-material",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Транспорт и материальные средства",
+      "nativeName": "Arma dei trasporti e materiali",
+      "kind": "branch",
+      "sources": [
+        "it-r-src-army-arms"
+      ],
+      "status": "draft",
+      "note": "Номенклатура страницы Esercito; corpo означает профессиональный корпус, не армейский корпус как уровень. Длямедицинской категории требуется сверка реформпосле 2023."
+    },
+    {
+      "id": "it-r-engineer-corps",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Инженерный корпус",
+      "nativeName": "Corpo degli ingegneri",
+      "kind": "component",
+      "sources": [
+        "it-r-src-army-arms"
+      ],
+      "status": "draft",
+      "note": "Номенклатура страницы Esercito; corpo означает профессиональный корпус, не армейский корпус как уровень. Длямедицинской категории требуется сверка реформпосле 2023."
+    },
+    {
+      "id": "it-r-commissariat",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Комиссариатский корпус",
+      "nativeName": "Corpo di commissariato",
+      "kind": "component",
+      "sources": [
+        "it-r-src-army-arms"
+      ],
+      "status": "draft",
+      "note": "Номенклатура страницы Esercito; corpo означает профессиональный корпус, не армейский корпус как уровень. Длямедицинской категории требуется сверка реформпосле 2023."
+    },
+    {
+      "id": "it-r-medical",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Медицинский корпус",
+      "nativeName": "Corpo sanitario",
+      "kind": "component",
+      "sources": [
+        "it-r-src-army-arms"
+      ],
+      "status": "draft",
+      "note": "Номенклатура страницы Esercito; corpo означает профессиональный корпус, не армейский корпус как уровень. Длямедицинской категории требуется сверка реформпосле 2023."
+    },
+    {
+      "id": "it-r-aviation",
+      "country": "IT",
+      "parent": "it-army",
+      "title": "Армейская авиация",
+      "nativeName": "Aviazione dell’Esercito",
+      "kind": "component",
+      "sources": [
+        "it-r-src-army-arms"
+      ],
+      "status": "draft",
+      "note": "Номенклатура страницы Esercito; corpo означает профессиональный корпус, не армейский корпус как уровень. Длямедицинской категории требуется сверка реформпосле 2023."
+    }
+  ],
+  "hierarchyTemplates": [
+    {
+      "id": "it-hierarchy-research",
+      "country": "IT",
+      "service": "it-army",
+      "status": "draft",
+      "sources": [
+        "it-organization-2023"
+      ],
+      "levels": [
+        {
+          "id": "squad",
+          "title": "Отделение",
+          "nativeName": "squadra",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "squadra",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "platoon",
+          "title": "Взвод / секция",
+          "nativeName": "plotone / sezione",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "plotone / sezione",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "company",
+          "title": "Рота / эскадрон / батарея",
+          "nativeName": "compagnia / squadrone / batteria",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "compagnia / squadrone / batteria",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "battalion",
+          "title": "Батальон / группа",
+          "nativeName": "battaglione / gruppo squadroni / gruppo",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "battaglione / gruppo squadroni / gruppo",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "regiment",
+          "title": "Полк",
+          "nativeName": "reggimento",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "reggimento",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "brigade",
+          "title": "Бригада",
+          "nativeName": "brigata",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "brigata",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "division",
+          "title": "Дивизия",
+          "nativeName": "divisione",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "divisione",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        },
+        {
+          "id": "corps",
+          "title": "Корпус",
+          "nativeName": "corpo d’armata",
+          "passport": {
+            "profile": "organization-levels",
+            "simulationValidated": false,
+            "characteristics": [
+              {
+                "field": "national_designation",
+                "value": "corpo d’armata",
+                "unit": null,
+                "source": "it-organization-2023",
+                "locator": "Ст. 152, PDF с. 116–117",
+                "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+                "status": "reported"
+              }
+            ]
+          }
+        }
+      ],
+      "note": "Перечень национальных уровней из ст. 152. Названия взвода, роты и батальона имеют варианты для артиллерии и кавалерии; схема не задаёт штат и не охватывает все специальные случаи.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "service_scope",
+            "value": "Сухопутные войска",
+            "unit": null,
+            "source": "it-organization-2023",
+            "locator": "Ст. 152, PDF с. 116–117",
+            "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+            "status": "reported"
+          },
+          {
+            "field": "validity_scope",
+            "value": "Редакция 30.05.2023; последующие изменения требуют проверки",
+            "unit": null,
+            "source": "it-organization-2023",
+            "locator": "Ст. 152, PDF с. 116–117",
+            "scope": "Обзор it-hierarchy-research; перечисление уровней не задаёт текущий штат и обязательную линейную цепочку подчинения.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-it-navy-levels",
+      "country": "IT",
+      "service": "it-navy",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни этого вида требуют отдельного нормативного исследования; порядоккаталога не образует цепочку.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "it-r-it-air-levels",
+      "country": "IT",
+      "service": "it-air",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни этого вида требуют отдельного нормативного исследования; порядоккаталога не образует цепочку.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    },
+    {
+      "id": "it-r-it-carabinieri-levels",
+      "country": "IT",
+      "service": "it-carabinieri",
+      "status": "pending_research",
+      "sources": [],
+      "levels": [],
+      "note": "Национальные организационные уровни этого вида требуют отдельного нормативного исследования; порядоккаталога не образует цепочку.",
+      "passport": {
+        "profile": "organization-levels",
+        "simulationValidated": false,
+        "characteristics": []
+      }
+    }
+  ],
+  "representatives": [
+    {
+      "id": "it-centauro2",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Centauro II",
+      "objectClass": "wheeled-gun-vehicle",
+      "summary": "Колёсная боевая машина с орудийным вооружением. Национальное обозначение и модификации проверяются отдельно.",
+      "sources": [
+        "it-centauro",
+        "it-centauro-idv",
+        "it-centauro-army"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Источники дают 30 т (Gross Vehicle Weight, IDV) и 32 т (Peso massimo, армейский каталог), длину 8,26 и 8,48 м. Причина различий не установлена; не усреднять и не выбирать молча. Для армейского каталога доступен только поисковый фрагмент.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "wheeled-gun-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Колёсная боевая машина с орудийным вооружением. Национальное обозначение и модификации проверяются отдельно.",
+            "unit": null,
+            "source": "it-centauro",
+            "locator": "Назначение и идентификация модели",
+            "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "it-centauro-idv",
+            "locator": "Specifications: Crew 1 + 3; Crew: 4 personnel",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 30000,
+            "unit": "kg",
+            "source": "it-centauro-idv",
+            "locator": "Specifications: Gross Vehicle Weight",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены. Именно Gross Vehicle Weight, не максимальная масса из другого каталога.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 8.26,
+            "unit": "m",
+            "source": "it-centauro-idv",
+            "locator": "Specifications: Total length 8260 mm",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.12,
+            "unit": "m",
+            "source": "it-centauro-idv",
+            "locator": "Specifications: Overall width 3120 mm",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.65,
+            "unit": "m",
+            "source": "it-centauro-idv",
+            "locator": "Specifications: Total height 3650 mm",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены. Не высота корпуса 2100 мм.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Дизельное топливо / JP8",
+            "unit": null,
+            "source": "it-centauro-idv",
+            "locator": "Mobility: Fuel",
+            "scope": "Конфигурация из таблицы IDV; дата редакции и полный состав оснащения не установлены.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 32000,
+            "unit": "kg",
+            "source": "it-centauro-army",
+            "locator": "Индексированный фрагмент таблицы: Peso massimo 32 t",
+            "scope": "Предварительное значение армейского каталога: максимальная масса, комплектация не указана. Полная страница не прочитана.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 8.48,
+            "unit": "m",
+            "source": "it-centauro-army",
+            "locator": "Индексированный фрагмент таблицы: Lunghezza 8,48 m",
+            "scope": "Предварительное значение армейского каталога; метод измерения не уточнён. Полная страница не прочитана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость по шоссе >105 км/ч; запас хода по шоссе при 70 км/ч >800 км.",
+            "unit": null,
+            "source": "it-centauro-idv",
+            "locator": "Performance: Max. speed (paved road); Range on road (70 km/h)",
+            "scope": "Именно неравенства каталога IDV, не точные максимумы; условия загрузки не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 31,
+            "unit": "round",
+            "source": "it-centauro-idv",
+            "locator": "Armament: 120mm L/45 (31 rounds)",
+            "scope": "Номинальная вместимость для 120-мм варианта каталога; не текущий остаток.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 750,
+            "unit": "round",
+            "source": "it-centauro-idv",
+            "locator": "Secondary armament:7.62mm coaxial machine gun",
+            "scope": "Номинальный запас патронов спаренного 7,62-мм пулемёта; прочие установки опциональны.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-ariete-c2",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Ariete C2",
+      "objectClass": "tank",
+      "summary": "Модернизированный основной танк семейства Ariete.",
+      "sources": [
+        "it-r-src-ariete-c2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модернизированный основной танк семейства Ariete.",
+            "unit": null,
+            "source": "it-r-src-ariete-c2",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "C2; масса с комплектами MPK и PSO",
+            "unit": null,
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 62500,
+            "unit": "kg",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Max.GVW с MPK и PSO, не базовая масса.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 9.905,
+            "unit": "m",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Длина с пушкой; без пушки 7,990 м.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.61,
+            "unit": "m",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "С надгусеничными полками.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.011,
+            "unit": "m",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "С башней и панорамным прицелом.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 550,
+            "unit": "km",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Range on road; шоссе.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Номинальная укладка 120-мм выстрелов.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость приблизительно 60 км/ч; спаренные и зенитные пулемёты: >2400 патронов.",
+            "unit": null,
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "IVECO V-12,1103 кВт (1500hp); дизельное топливо",
+            "unit": null,
+            "source": "it-r-src-ariete-c2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-ariete-mbt",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Ariete MBT (паспорт CIO)",
+      "objectClass": "tank",
+      "summary": "Основной танк Ariete в базовой конфигурации каталога CIO.",
+      "sources": [
+        "it-r-src-ariete-c1"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Основной танк Ariete в базовой конфигурации каталога CIO.",
+            "unit": null,
+            "source": "it-r-src-ariete-c1",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 54000,
+            "unit": "kg",
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "GVW base configuration; не C2.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 4,
+            "unit": "person",
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "Seats1+3; три человека в башне плюс водитель.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 550,
+            "unit": "km",
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "Range on road.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max speed65 км/ч; тип поверхности в строке не указан. Пулемётный запас >2400 патронов.",
+            "unit": null,
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "Укладка 120 мм; не текущая загрузка.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Дизельное топливо",
+            "unit": null,
+            "source": "it-r-src-ariete-c1",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-freccia",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "VBM Freccia AIFV/ATGM",
+      "objectClass": "ifv",
+      "summary": "Семейство колёсных БМП 8×8 с вариантами пушечного и ракетного оборудования.",
+      "sources": [
+        "it-r-src-freccia"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство колёсных БМП 8×8 с вариантами пушечного и ракетного оборудования.",
+            "unit": null,
+            "source": "it-r-src-freccia",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Водитель и два человека в башне.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 8,
+            "unit": "person",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "До 8 перевозимых бойцов; не экипаж.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 31500,
+            "unit": "kg",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Максимальная GVW; пустая масса 22000 кг.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 8.56,
+            "unit": "m",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.99,
+            "unit": "m",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.18,
+            "unit": "m",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Полная высота; не высота корпуса 2,04 м.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 110,
+            "unit": "km/h",
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Paved road.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Запас хода по шоссе при 70 км/ч >800 км. Башня 25/30 мм; ракетное оборудование опционально; номинальный боекомплект не указан.",
+            "unit": null,
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Дизельное топливо/JP8",
+            "unit": null,
+            "source": "it-r-src-freccia",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-superav",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Superav",
+      "objectClass": "apc",
+      "summary": "Амфибийная колёсная бронированная платформа 8×8; исходная платформа, не паспорт конкретного VBA.",
+      "sources": [
+        "it-r-src-superav"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Амфибийная колёсная бронированная платформа 8×8; исходная платформа, не паспорт конкретного VBA.",
+            "unit": null,
+            "source": "it-r-src-superav",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 3,
+            "unit": "person",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 13,
+            "unit": "person",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "До 13 бойцов.",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 31500,
+            "unit": "kg",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "GVW; пустая 27500 кг.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 8.75,
+            "unit": "m",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.12,
+            "unit": "m",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.79,
+            "unit": "m",
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max speed on land >105 км/ч; max range on road ≥700 км. Морская строка 6kn содержит неясный знак >; точный предел не извлечён.",
+            "unit": null,
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "environment_limits",
+            "value": "Температура эксплуатации −32…+49°C; амфибийная возможность заявлена для волнения выше sea state3.",
+            "unit": null,
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "FPT Cursor16,700hp; многотопливный двигатель",
+            "unit": null,
+            "source": "it-r-src-superav",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-lmv2",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "LMV2",
+      "objectClass": "support-vehicle",
+      "summary": "Защищённая лёгкая многоцелевая машина 4×4.",
+      "sources": [
+        "it-r-src-lmv2"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Защищённая лёгкая многоцелевая машина 4×4.",
+            "unit": null,
+            "source": "it-r-src-lmv2",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 8200,
+            "unit": "kg",
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Total mass on ground.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 4.85,
+            "unit": "m",
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 2.275,
+            "unit": "m",
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Max width.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 2.2,
+            "unit": "m",
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Высота кабины.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_road_max_kmh",
+            "value": 110,
+            "unit": "km/h",
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Шоссе, high range; low range65 км/ч.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Кабина вмещает до 5 экипированных человек; распределение экипажа/пассажиров не задано. Запас хода и боекомплект не указаны.",
+            "unit": null,
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Дизель IVECO F1C,220hp; автоматическая 8-ступенчатая трансмиссия",
+            "unit": null,
+            "source": "it-r-src-lmv2",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-mtv",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "MTV",
+      "objectClass": "support-vehicle",
+      "summary": "Модульное семейство средних тактических автомобилей 4×4.",
+      "sources": [
+        "it-r-src-mtv"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Модульное семейство средних тактических автомобилей 4×4.",
+            "unit": null,
+            "source": "it-r-src-mtv",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Hard-top, soft-top, pick-up, медицинский, транспортный и командный варианты",
+            "unit": null,
+            "source": "it-r-src-mtv",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "До 1+7 мест в зависимости от версии; числовые скорость, запас хода и боекомплект в прочитанной части не установлены.",
+            "unit": null,
+            "source": "it-r-src-mtv",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "EURO III,280hp; автоматизированная трансмиссия",
+            "unit": null,
+            "source": "it-r-src-mtv",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-military-trucks",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "IDV Modular Military Range",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство военных грузовиков общего модульного шасси.",
+      "sources": [
+        "it-r-src-trucks"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство военных грузовиков общего модульного шасси.",
+            "unit": null,
+            "source": "it-r-src-trucks",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "В каталоге варианты 4×4 и более тяжёлые исполнения; единый паспорт семейства не задаёт конкретную грузоподъёмность.",
+            "unit": null,
+            "source": "it-r-src-trucks",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Для 4×4: двигатели C9–C13,337–445hp; разрешённая GVW до 18 т. Скорость и запас хода не установлены.",
+            "unit": null,
+            "source": "it-r-src-trucks",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-eurocargo",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Eurocargo (военное портфолио IDV)",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство транспортных грузовиков с различными кабинами и трансмиссиями.",
+      "sources": [
+        "it-r-src-eurocargo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство транспортных грузовиков с различными кабинами и трансмиссиями.",
+            "unit": null,
+            "source": "it-r-src-eurocargo",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "Каталог объединяет 7 вариантов GVW,7 трансмиссий и 3 кабины; числовые показатели нельзя переносить на все исполнения.",
+            "unit": null,
+            "source": "it-r-src-eurocargo",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-muv",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "MUV",
+      "objectClass": "support-vehicle",
+      "summary": "Семейство военных утилитарных автомобилей IDV.",
+      "sources": [
+        "it-r-src-idv-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Включено по каталогу производителя. Страница MUV/Superav Land возвращает 404; паспортные скорость, запас хода, масса и вместимость требуют отдельного источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство военных утилитарных автомобилей IDV.",
+            "unit": null,
+            "source": "it-r-src-idv-catalog",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-daily",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Daily homeland security",
+      "objectClass": "support-vehicle",
+      "summary": "Автомобили для охраны и обеспечения в портфолио IDV.",
+      "sources": [
+        "it-r-src-idv-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Включено по каталогу производителя. Страница MUV/Superav Land возвращает 404; паспортные скорость, запас хода, масса и вместимость требуют отдельного источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Автомобили для охраны и обеспечения в портфолио IDV.",
+            "unit": null,
+            "source": "it-r-src-idv-catalog",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-superav-land",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Superav Land",
+      "objectClass": "apc",
+      "summary": "Сухопутная бронеплатформа из каталога IDV; не отождествляется с амфибийной Superav.",
+      "sources": [
+        "it-r-src-idv-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Включено по каталогу производителя. Страница MUV/Superav Land возвращает 404; паспортные скорость, запас хода, масса и вместимость требуют отдельного источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Сухопутная бронеплатформа из каталога IDV; не отождествляется с амфибийной Superav.",
+            "unit": null,
+            "source": "it-r-src-idv-catalog",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-guarani",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Guarani",
+      "objectClass": "apc",
+      "summary": "Амфибийная бронеплатформа в международном портфолио IDV; контекст каталога не означает итальянского оператора.",
+      "sources": [
+        "it-r-src-idv-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Включено по каталогу производителя. Страница MUV/Superav Land возвращает 404; паспортные скорость, запас хода, масса и вместимость требуют отдельного источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Амфибийная бронеплатформа в международном портфолио IDV; контекст каталога не означает итальянского оператора.",
+            "unit": null,
+            "source": "it-r-src-idv-catalog",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-viking",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Viking",
+      "objectClass": "unmanned-ground",
+      "summary": "Гибридная беспилотная наземная платформа 6×6.",
+      "sources": [
+        "it-r-src-viking"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-ground",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гибридная беспилотная наземная платформа 6×6.",
+            "unit": null,
+            "source": "it-r-src-viking",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 2000,
+            "unit": "kg",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "GVW, не собственная масса.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 3,
+            "unit": "m",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.8,
+            "unit": "m",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.9,
+            "unit": "m",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 300,
+            "unit": "km",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Hybrid range; нагрузка и цикл не уточнены.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 30,
+            "unit": "km",
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Только электрический режим; не гибридный запас хода.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Каталог указывает 45 км/ч без явного определения поверхности/вида скорости.",
+            "unit": null,
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление, телеприсутствие и автоматические режимы следования.",
+            "unit": null,
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Последовательная дизель-электрическая гибридная установка; внешняя зарядка и собственная генерация",
+            "unit": null,
+            "source": "it-r-src-viking",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-pzh2000",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "PzH2000",
+      "objectClass": "self-propelled-artillery",
+      "summary": "Гусеничная 155-мм самоходная гаубица; общий паспорт производителя, не национальная комплектация.",
+      "sources": [
+        "it-r-src-pzh"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "self-propelled-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная 155-мм самоходная гаубица; общий паспорт производителя, не национальная комплектация.",
+            "unit": null,
+            "source": "it-r-src-pzh",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "mass_kg",
+            "value": 57000,
+            "unit": "kg",
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Combat weight производителя.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 11.7,
+            "unit": "m",
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 3.5,
+            "unit": "m",
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 3.4,
+            "unit": "m",
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 60,
+            "unit": "round",
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Номинальный магазин 60 снарядов; отдельно 288 модульных зарядов, не 288 полных выстрелов.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость на дороге >60 км/ч; запас хода >420 км. Экипаж 3+2 резервных; не постоянные 5.",
+            "unit": null,
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_configuration",
+            "value": "60 снарядов;288 модульных зарядов или эквивалентные заряды иных типов",
+            "unit": null,
+            "source": "it-r-src-pzh",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-leopard-pion",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Leopard1 Carro Pioniere",
+      "objectClass": "engineering",
+      "summary": "Инженерная машина на базе Leopard1.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Инженерная машина на базе Leopard1.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.7, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-leopard-arv",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Leopard1 Carrosoccorso",
+      "objectClass": "support-vehicle",
+      "summary": "Бронированная ремонтно-эвакуационная машина на базе Leopard1.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Бронированная ремонтно-эвакуационная машина на базе Leopard1.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.8, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-biber",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Leopard1 Biber",
+      "objectClass": "engineering",
+      "summary": "Мостоукладчик Leopard1 с мостом Biber.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мостоукладчик Leopard1 с мостом Biber.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.12, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-euromach",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Euromach ES35.2-ZT",
+      "objectClass": "engineering",
+      "summary": "Мини-экскаватор из реестра материалов.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "engineering",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Мини-экскаватор из реестра материалов.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.9, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-dardo",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "VCC80 Dardo",
+      "objectClass": "ifv",
+      "summary": "Гусеничная боевая машина пехоты Dardo.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "ifv",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная боевая машина пехоты Dardo.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.16",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-bv206",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "BV206",
+      "objectClass": "support-vehicle",
+      "summary": "Гусеничный транспортёр BV206; конкретная модификация не указана.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "support-vehicle",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничный транспортёр BV206; конкретная модификация не указана.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.5, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-aav7",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "AAV7",
+      "objectClass": "apc",
+      "summary": "Амфибийный транспортёр AAV7; вариант не уточнён.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Амфибийный транспортёр AAV7; вариант не уточнён.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.1, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-m113",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "M113",
+      "objectClass": "apc",
+      "summary": "Гусеничная бронеплатформа M113; модификация не уточнена.",
+      "sources": [
+        "it-r-src-material-register"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Реестр подтверждает идентификацию; скорость, запас хода, номинальный боекомплект и физический паспорт не опубликованы в выбранной строке. Не доказательство текущего состава.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "apc",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Гусеничная бронеплатформа M113; модификация не уточнена.",
+            "unit": null,
+            "source": "it-r-src-material-register",
+            "locator": "Приложение A,3.7.14, печатнаяс.37",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-fh70",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "FH-70",
+      "objectClass": "towed-artillery",
+      "summary": "Буксируемая 155/39-мм гаубица армейского каталога.",
+      "sources": [
+        "it-r-src-fh70"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация из поискового фрагмента. Скорость тягача не приписана гаубице; собственные скорость/запас хода и боекомплект не установлены.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "towed-artillery",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Буксируемая 155/39-мм гаубица армейского каталога.",
+            "unit": null,
+            "source": "it-r-src-fh70",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-m346",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "M-346 (учебный)",
+      "objectClass": "aircraft",
+      "summary": "Реактивный учебный самолёт; данные trainer отделены от M-346FA.",
+      "sources": [
+        "it-r-src-m346"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Ramp maximum9600 кг не перенесён в максимальную взлётную массу; режимы дальности раздельны.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивный учебный самолёт; данные trainer отделены от M-346FA.",
+            "unit": null,
+            "source": "it-r-src-m346",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 11.49,
+            "unit": "m",
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 9.72,
+            "unit": "m",
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Размах учебного варианта.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1090,
+            "unit": "km/h",
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Max level speed low altitude; не limit speed1060 км/ч.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1925,
+            "unit": "km",
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Перегоночная,10%резерв, только внутреннее топливо.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2550,
+            "unit": "km",
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Перегоночная,10%резерв,3 внешних бака.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два Honeywell F124-GA-200",
+            "unit": null,
+            "source": "it-r-src-m346",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-m345",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "M-345",
+      "objectClass": "aircraft",
+      "summary": "Реактивный учебный самолёт системы подготовки Leonardo.",
+      "sources": [
+        "it-r-src-m345"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Реактивный учебный самолёт системы подготовки Leonardo.",
+            "unit": null,
+            "source": "it-r-src-m345",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 704,
+            "unit": "km/h",
+            "source": "it-r-src-m345",
+            "locator": "Техническая таблица",
+            "scope": "Максимальная на малой высоте.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 787,
+            "unit": "km/h",
+            "source": "it-r-src-m345",
+            "locator": "Техническая таблица",
+            "scope": "Максимальная на 20000ft.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1850,
+            "unit": "km",
+            "source": "it-r-src-m345",
+            "locator": "Техническая таблица",
+            "scope": "До 1850 км с внешними баками; не боевой радиус.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Williams FJ44-4M-34",
+            "unit": null,
+            "source": "it-r-src-m345",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-c27j-ng",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "C-27J Next Generation",
+      "objectClass": "aircraft",
+      "summary": "Многоцелевой транспортный турбовинтовой самолёт в конфигурации Next Generation.",
+      "sources": [
+        "it-r-src-c27j"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой транспортный турбовинтовой самолёт в конфигурации Next Generation.",
+            "unit": null,
+            "source": "it-r-src-c27j",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 32500,
+            "unit": "kg",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "MTOW из таблицы NG.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 602,
+            "unit": "km/h",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "Top cruising speed,325KIAS по подписи производителя; не Vmax.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 5056,
+            "unit": "km",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "Груз 4536 кг, MTOW normal, ISA.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 5852,
+            "unit": "km",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "Max range; нагрузка этой строки не уточнена.",
+            "status": "reported"
+          },
+          {
+            "field": "fuel_capacity_l",
+            "value": 12320,
+            "unit": "l",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "passenger_capacity",
+            "value": 60,
+            "unit": "person",
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "До 60 бойцов в high-density; обычная схема 46.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Два Rolls-Royce AE2100-D2A",
+            "unit": null,
+            "source": "it-r-src-c27j",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-typhoon",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Eurofighter Typhoon / F-2000A",
+      "objectClass": "aircraft",
+      "summary": "Семейство европейских многоцелевых самолётов; обзорная страница ВВС Италии.",
+      "sources": [
+        "it-r-src-typhoon"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство европейских многоцелевых самолётов; обзорная страница ВВС Италии.",
+            "unit": null,
+            "source": "it-r-src-typhoon",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 15.96,
+            "unit": "m",
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 5.28,
+            "unit": "m",
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 23500,
+            "unit": "kg",
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 2495,
+            "unit": "km/h",
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Velocità massima; высота/нагрузка не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 2900,
+            "unit": "km",
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Autonomia massima, профиль и баки не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Экипаж 1/2 пилота в зависимости от исполнения. Размах 14,74 м в источнике выглядит сомнительно и в числовой паспорт не перенесён.",
+            "unit": null,
+            "source": "it-r-src-typhoon",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-f35",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "F-35 Lightning II (обзор A/B)",
+      "objectClass": "aircraft",
+      "summary": "Семейство самолётов F-35A CTOL и F-35B STOVL в обзорной карточке ВВС.",
+      "sources": [
+        "it-r-src-f35"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Смешанный паспорт A/B; сомнительная взлётная масса не перенесена. Отдельные варианты, дальность и боекомплект требуют проверки.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство самолётов F-35A CTOL и F-35B STOVL в обзорной карточке ВВС.",
+            "unit": null,
+            "source": "it-r-src-f35",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 1970,
+            "unit": "km/h",
+            "source": "it-r-src-f35",
+            "locator": "Техническая таблица",
+            "scope": "Общая строка A/B, высота и нагрузка не указаны; предварительно.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 1,
+            "unit": "person",
+            "source": "it-r-src-f35",
+            "locator": "Техническая таблица",
+            "scope": "1 пилот для A/B в поисковом фрагменте.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-kc767",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "KC-767A",
+      "objectClass": "aircraft",
+      "summary": "Самолёт-заправщик и транспортная версия Boeing767-200ER.",
+      "sources": [
+        "it-r-src-kc767"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Идентификация подтверждена фрагментом; паспортная скорость/дальность/экипаж требуют полной таблицы.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Самолёт-заправщик и транспортная версия Boeing767-200ER.",
+            "unit": null,
+            "source": "it-r-src-kc767",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-tornado",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "PA200 Tornado",
+      "objectClass": "aircraft",
+      "summary": "Двухдвигательный двухместный самолёт с изменяемой геометрией крыла.",
+      "sources": [
+        "it-r-src-air-catalog"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "aircraft",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухдвигательный двухместный самолёт с изменяемой геометрией крыла.",
+            "unit": null,
+            "source": "it-r-src-air-catalog",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 2,
+            "unit": "person",
+            "source": "it-r-src-air-catalog",
+            "locator": "Техническая таблица",
+            "scope": "Бипосто в обзорном описании, вариант не уточнён.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-aw101",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "AW101",
+      "objectClass": "helicopter",
+      "summary": "Многоцелевой тяжёлый вертолёт; общий паспорт платформы Leonardo.",
+      "sources": [
+        "it-r-src-aw101"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Многоцелевой тяжёлый вертолёт; общий паспорт платформы Leonardo.",
+            "unit": null,
+            "source": "it-r-src-aw101",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 15600,
+            "unit": "kg",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Maximum gross weight.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 22.83,
+            "unit": "m",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Overall length.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 18.6,
+            "unit": "m",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Диаметр несущего винта.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 6.66,
+            "unit": "m",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 277,
+            "unit": "km/h",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Max cruise speed, SL, MCP, ISA, MGW; все двигатели работают.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1363,
+            "unit": "km",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "All engine cruise; без резерва, стандартные баки,6000ft.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 1500,
+            "unit": "km",
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Twin engine cruise; без резерва, стандартные баки,6000ft.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Кокпит 2 места; кабина 25+мест. Максимальная продолжительность twin-engine cruise6 ч 50 мин, без резерва, стандартные баки,6000ft.",
+            "unit": null,
+            "source": "it-r-src-aw101",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-aw169m",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "AW169M",
+      "objectClass": "helicopter",
+      "summary": "Лёгкий многоцелевой военный вертолёт.",
+      "sources": [
+        "it-r-src-aw169m"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Лёгкий многоцелевой военный вертолёт.",
+            "unit": null,
+            "source": "it-r-src-aw169m",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 4800,
+            "unit": "kg",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Стандартная MGW;5100 кг с опциональным комплектом отдельно не предполагается.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 14.65,
+            "unit": "m",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Rotor turning.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 12.12,
+            "unit": "m",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Диаметр винта.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 4.3,
+            "unit": "m",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Rotor turning.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 261,
+            "unit": "km/h",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Max cruise,5000ft, ISA, MGW, MCP.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 701,
+            "unit": "km",
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Max range,5000ft, ISA, MGW.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Экипаж 1–2; до 8 тяжело/10 легко экипированных бойцов; max endurance3 ч 46 мин при 5000ft, ISA, MGW.",
+            "unit": null,
+            "source": "it-r-src-aw169m",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-aw249",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "AW249",
+      "objectClass": "helicopter",
+      "summary": "Двухместный боевой вертолёт нового семейства Leonardo; справочный каталог, не текущая готовность.",
+      "sources": [
+        "it-r-src-aw249"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "helicopter",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Двухместный боевой вертолёт нового семейства Leonardo; справочный каталог, не текущая готовность.",
+            "unit": null,
+            "source": "it-r-src-aw249",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 8300,
+            "unit": "kg",
+            "source": "it-r-src-aw249",
+            "locator": "Техническая таблица",
+            "scope": "MTOW.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 17.63,
+            "unit": "m",
+            "source": "it-r-src-aw249",
+            "locator": "Техническая таблица",
+            "scope": "Tip-to-tip, rotor turning.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 14.6,
+            "unit": "m",
+            "source": "it-r-src-aw249",
+            "locator": "Техническая таблица",
+            "scope": "Диаметр несущего винта; не ширина 4,60 м сдержателями.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 287,
+            "unit": "km/h",
+            "source": "it-r-src-aw249",
+            "locator": "Техническая таблица",
+            "scope": "Max cruise speed, ISA, SL; условия сноски требуют проверки.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-falco-evo",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Falco EVO",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотная самолётная платформа многосенсорного наблюдения.",
+      "sources": [
+        "it-r-src-falco-evo"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная самолётная платформа многосенсорного наблюдения.",
+            "unit": null,
+            "source": "it-r-src-falco-evo",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 6.2,
+            "unit": "m",
+            "source": "it-r-src-falco-evo",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 12.5,
+            "unit": "m",
+            "source": "it-r-src-falco-evo",
+            "locator": "Техническая таблица",
+            "scope": "Размах.",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 650,
+            "unit": "kg",
+            "source": "it-r-src-falco-evo",
+            "locator": "Техническая таблица",
+            "scope": "MTOW, не пустая масса.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Продолжительность 20+часов при ISA; это нижняя граница, не точное время. Дальность линии связи 200+км не является запасом хода.",
+            "unit": null,
+            "source": "it-r-src-falco-evo",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Дистанционное управление; автоматические взлёт, посадка и управление полётом",
+            "unit": null,
+            "source": "it-r-src-falco-evo",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-falco-xplorer",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Falco Xplorer",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотная платформа длительного многосенсорного наблюдения.",
+      "sources": [
+        "it-r-src-falco-family"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная платформа длительного многосенсорного наблюдения.",
+            "unit": null,
+            "source": "it-r-src-falco-family",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Продолжительность >24 ч; полезная нагрузка >350 кг. Эти неравенства не заменены точными числами.",
+            "unit": null,
+            "source": "it-r-src-falco-family",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Наземная станция управления; спутниковая линия управления",
+            "unit": null,
+            "source": "it-r-src-falco-family",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-awhero",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "AWHERO",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотный вертолёт морского и наземного применения.",
+      "sources": [
+        "it-r-src-awhero"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотный вертолёт морского и наземного применения.",
+            "unit": null,
+            "source": "it-r-src-awhero",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 6,
+            "unit": "h",
+            "source": "it-r-src-awhero",
+            "locator": "Техническая таблица",
+            "scope": "Продолжительность из таблицы; профиль и нагрузка не указаны.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "MTOW — класс 200 кг, не точная масса; coverage100 км относится к линии связи, не запасу хода.",
+            "unit": null,
+            "source": "it-r-src-awhero",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "energy_supply",
+            "value": "Heavy fuel",
+            "unit": null,
+            "source": "it-r-src-awhero",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Наземная/корабельная станция; автоматические палубные взлёт и посадка",
+            "unit": null,
+            "source": "it-r-src-awhero",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-mirach40",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Mirach40",
+      "objectClass": "unmanned-air",
+      "summary": "Беспилотная воздушная мишень с пневматическим катапультным стартом.",
+      "sources": [
+        "it-r-src-mirach40"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "unmanned-air",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Беспилотная воздушная мишень с пневматическим катапультным стартом.",
+            "unit": null,
+            "source": "it-r-src-mirach40",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "maximum_takeoff_mass_kg",
+            "value": 70,
+            "unit": "kg",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "MTOW.",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 2.52,
+            "unit": "m",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 1.58,
+            "unit": "m",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "Размах.",
+            "status": "reported"
+          },
+          {
+            "field": "height_m",
+            "value": 0.5,
+            "unit": "m",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_air_max_kmh",
+            "value": 720,
+            "unit": "km/h",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "До 720 км/ч, ISA.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 1,
+            "unit": "h",
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "60 минут по таблице ISA.",
+            "status": "reported"
+          },
+          {
+            "field": "control_mode",
+            "value": "Управление со станции Mirach",
+            "unit": null,
+            "source": "it-r-src-mirach40",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-rat31",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "RAT31DL/M",
+      "objectClass": "radar-sensor",
+      "summary": "Перевозимая трёхкоординатная обзорная РЛС L-диапазона.",
+      "sources": [
+        "it-r-src-rat31"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "radar-sensor",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Перевозимая трёхкоординатная обзорная РЛС L-диапазона.",
+            "unit": null,
+            "source": "it-r-src-rat31",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "AESA; два 20-футовых ISO-контейнера и вспомогательный генератор. Не паспорт грузовика.",
+            "unit": null,
+            "source": "it-r-src-rat31",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Автономность генератора как минимум 24 ч; нижняя граница, не точное время системы.",
+            "unit": null,
+            "source": "it-r-src-rat31",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-swave",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "SWave SDR",
+      "objectClass": "communications",
+      "summary": "Семейство переносных и автомобильных программно-определяемых радиостанций.",
+      "sources": [
+        "it-r-src-swave"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "communications",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство переносных и автомобильных программно-определяемых радиостанций.",
+            "unit": null,
+            "source": "it-r-src-swave",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "configuration_scope",
+            "value": "HH/HH-E ручные; MB1 переносная двухканальная; VB1 автомобильная двухканальная; VM3 автомобильная одноканальная.",
+            "unit": null,
+            "source": "it-r-src-swave",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Масса, габариты и время работы конкретной конфигурации требуют отдельных паспортов; не наследуются между модификациями.",
+            "unit": null,
+            "source": "it-r-src-swave",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-fremm",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "FREMM (итальянский каталог)",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство многоцелевых фрегатов GP/ASW; типовые характеристики каталога.",
+      "sources": [
+        "it-r-src-fremm"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство многоцелевых фрегатов GP/ASW; типовые характеристики каталога.",
+            "unit": null,
+            "source": "it-r-src-fremm",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 144,
+            "unit": "m",
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "Overall.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 19.7,
+            "unit": "m",
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "Max breadth.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 145,
+            "unit": "person",
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "Crew; всего 200 мест размещения.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 11112,
+            "unit": "km",
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "6000nm×1,852; дальность при 15kn, не дальность вооружения.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 1080,
+            "unit": "h",
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "45 суток×24; автономность по каталогу.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Полное водоизмещение около 6500 т; максимальная непрерывная скорость GT >27kn; электрический режим 16kn. Приближённые/неравные величины сохранены строкой.",
+            "unit": null,
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "CODLAG:1×32MW газовая турбина,2×2,2MW электродвигателя",
+            "unit": null,
+            "source": "it-r-src-fremm",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-ppa",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "PPA / Multipurpose Combat Ship",
+      "objectClass": "surface-vessel",
+      "summary": "Семейство многоцелевых кораблей; не паспорт отдельного борта.",
+      "sources": [
+        "it-r-src-ppa"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство многоцелевых кораблей; не паспорт отдельного борта.",
+            "unit": null,
+            "source": "it-r-src-ppa",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 143,
+            "unit": "m",
+            "source": "it-r-src-ppa",
+            "locator": "Техническая таблица",
+            "scope": "Overall; публикация озаказе дляИндонезии.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Скорость >32kn по конфигурации и условиям; экипаж около 170. Не точные универсальные параметры.",
+            "unit": null,
+            "source": "it-r-src-ppa",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "CODAG плюс электрическая тяга",
+            "unit": null,
+            "source": "it-r-src-ppa",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-cavour",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Cavour class",
+      "objectClass": "surface-vessel",
+      "summary": "Тип авианесущего корабля с ангаром/гаражом; карточка проекта.",
+      "sources": [
+        "it-r-src-cavour"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип авианесущего корабля с ангаром/гаражом; карточка проекта.",
+            "unit": null,
+            "source": "it-r-src-cavour",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 244,
+            "unit": "m",
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 39,
+            "unit": "m",
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Moulded breadth.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 28100000,
+            "unit": "kg",
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Full load28100 т.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 486,
+            "unit": "person",
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Ship’s complement; не включает авиационный/десантный/штабной состав.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 12964,
+            "unit": "km",
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "7000nm×1,852, при 16kn.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Max sustained speed >29kn при 85%MCR; не точное значение.",
+            "unit": null,
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "COGAG,4×22MW AVIO/GE LM2500",
+            "unit": null,
+            "source": "it-r-src-cavour",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-vulcano",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Vulcano class LSS",
+      "objectClass": "surface-vessel",
+      "summary": "Тип корабля комплексного снабжения с медицинскими помещениями.",
+      "sources": [
+        "it-r-src-vulcano"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип корабля комплексного снабжения с медицинскими помещениями.",
+            "unit": null,
+            "source": "it-r-src-vulcano",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 193,
+            "unit": "m",
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 24,
+            "unit": "m",
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "Moulded breadth.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 27200000,
+            "unit": "kg",
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "Full load.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 12964,
+            "unit": "km",
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "7000nm×1,852, при 16kn.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_cruise_kmh",
+            "value": 29.632,
+            "unit": "km/h",
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "16kn×1,852; крейсерская.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Максимальная скорость около 20kn;235 человек это экипаж вместе с дополнительным персоналом, не чистый экипаж.",
+            "unit": null,
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "CODLAD, два дизеля и два электродвигателя",
+            "unit": null,
+            "source": "it-r-src-vulcano",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-trieste",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "Trieste LHD (проект)",
+      "objectClass": "surface-vessel",
+      "summary": "Тип многоцелевого десантного корабля с авиационным оборудованием.",
+      "sources": [
+        "it-r-src-trieste"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Данные предварительны изпоискового фрагмента;1064 человека внем объединяют экипаж иперевозимый персонал.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "surface-vessel",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип многоцелевого десантного корабля с авиационным оборудованием.",
+            "unit": null,
+            "source": "it-r-src-trieste",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 46.3,
+            "unit": "km/h",
+            "source": "it-r-src-trieste",
+            "locator": "Техническая таблица",
+            "scope": "25kn×1,852; Speed max изпоискового каталога.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 12964,
+            "unit": "km",
+            "source": "it-r-src-trieste",
+            "locator": "Техническая таблица",
+            "scope": "7000nm×1,852 при 16kn согласно Speed max/range25/16.",
+            "status": "reported"
+          },
+          {
+            "field": "endurance_reference_h",
+            "value": 720,
+            "unit": "h",
+            "source": "it-r-src-trieste",
+            "locator": "Техническая таблица",
+            "scope": "30 суток×24; непродолжительность одного плавания.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-u212a",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "U212A / Todaro class",
+      "objectClass": "submarine",
+      "summary": "Тип дизель-электрической подводной лодки с топливными элементами AIP.",
+      "sources": [
+        "it-r-src-u212a"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Тип дизель-электрической подводной лодки с топливными элементами AIP.",
+            "unit": null,
+            "source": "it-r-src-u212a",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 57.15,
+            "unit": "m",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Overall.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 7,
+            "unit": "m",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Диаметр/ширина прочного корпуса.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 1509000,
+            "unit": "kg",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Надводное 1509 т.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 1720000,
+            "unit": "kg",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Подводное 1720 т.",
+            "status": "reported"
+          },
+          {
+            "field": "range_reference_km",
+            "value": 14816,
+            "unit": "km",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "8000nm×1,852 на поверхности при 8kn.",
+            "status": "reported"
+          },
+          {
+            "field": "speed_water_max_kmh",
+            "value": 22.224,
+            "unit": "km/h",
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Надводный максимум 12kn×1,852.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Подводный максимум >16kn. Total27 человек вкаталоге включает 3 дополнительных; числовой чистыйэкипаж невыведен.",
+            "unit": null,
+            "source": "it-r-src-u212a",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-r-u212nfs",
+      "kind": "equipment_model",
+      "countryContext": "IT",
+      "title": "U212NFS (проект2025)",
+      "objectClass": "submarine",
+      "summary": "Проект подводной лодки следующего этапа U212; не описание фактической готовности.",
+      "sources": [
+        "it-r-src-u212nfs"
+      ],
+      "relatedOrganizations": [],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Частичный справочный паспорт. Неуказанные характеристики не установлены; принадлежность реальным операторам и состав частей не выводятся.",
+      "granularity": "model",
+      "parentModel": null,
+      "passport": {
+        "profile": "submarine",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Проект подводной лодки следующего этапа U212; не описание фактической готовности.",
+            "unit": null,
+            "source": "it-r-src-u212nfs",
+            "locator": "Идентификация и назначение",
+            "scope": "Область каталога; не описание конкретного экземпляра",
+            "status": "reported"
+          },
+          {
+            "field": "length_m",
+            "value": 58.35,
+            "unit": "m",
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Overall, редакция M-05-25.",
+            "status": "reported"
+          },
+          {
+            "field": "width_m",
+            "value": 7,
+            "unit": "m",
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Диаметр прочного корпуса.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 1550000,
+            "unit": "kg",
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Надводное ready to dive.",
+            "status": "reported"
+          },
+          {
+            "field": "displacement_kg",
+            "value": 1750000,
+            "unit": "kg",
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Подводное.",
+            "status": "reported"
+          },
+          {
+            "field": "crew_count",
+            "value": 29,
+            "unit": "person",
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "7 офицеров и 22 прочих.",
+            "status": "reported"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Подводная дальность >1000nm при 4kn;6 торпедных аппаратов и 12 торпед (6 ваппаратах+6 вотсеке). Не ракеты ине артиллерийские выстрелы.",
+            "unit": null,
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          },
+          {
+            "field": "propulsion_description",
+            "value": "Дизель-электрическая установка, AIP натопливных элементах",
+            "unit": null,
+            "source": "it-r-src-u212nfs",
+            "locator": "Техническая таблица",
+            "scope": "Конфигурация из указанной таблицы производителя; дата редакции не указана.",
+            "status": "reported"
+          }
+        ]
+      }
+    }
+  ],
+  "findings": {
+    "scope": "Каталог моделей/семейств Италии и международного портфолио итальянских производителей; сухопутная техника, авиация, флот, транспорт, инженерные и беспилотные средства, РЛС и связь. Не реестроператоров. Существующие организация/схема 2023 и альтернативные параметры Centauro сохранены. Неравенства и приближённые величины записаны строками, а не точными числами.",
+    "gaps": [
+      "Большая часть боекомплектов отсутствует в открытых паспортных таблицах; номинальная вместимость не означает текущийостаток.",
+      "Не проверены отдельные паспорта Dardo, M113, BV206, AAV7, инженерных машин, MUV, SuperavLand и всех грузовых конфигураций.",
+      "Не завершены национальные классификацииВМС/ВВС, а также их организационные уровни; не построена искусственная единая цепочка видов.",
+      "Морские беспилотные средства, отдельные средстваРЭБ и номенклатура боеприпасов требуют дополнительного официального исследования.",
+      "Схема Esercito2023 не объявлена действующей на 2026; медицинские корпуса требуют сверки последующей реформы."
+    ],
+    "sourceProblems": [
+      "Esercito/Marina/Aeronautica часто timeout; фрагменты помечены search_excerpt. MUV/SuperavLand и старый Trieste URL возвращали 404.",
+      "CentauroII:30 т/8,26 м IDV и 32 т/8,48 м армейского каталога сохранены раздельно; причинырасхождения не установлены.",
+      "Typhoon:размах 14,74 м вкарточкеВВС выглядит сомнительно, не включён. F-35:указанная там MTOW8000/6000 кг исключена.",
+      "U212NFS:каталог Fincantieri2025 даёт 58,35 м/1550 т; другие официальные обзоры используют приближённые 59 м/1600 т. Здесь сохранена конкретная редакция 2025.",
+      "AW169M и AW101:отдельные изданиякаталогов различаются; использованы индивидуальные паспорта без усреднения."
+    ]
+  }
+}
