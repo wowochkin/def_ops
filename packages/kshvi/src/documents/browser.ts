@@ -7,4 +7,4 @@ export * from './cascade';
 export * from './template';
 export * from './template-fill';
 export * from './continuity';
-export * from './manual-decision';
+export { makeManualDecision, type Calculation as DocumentCalculation } from './manual-decision';
