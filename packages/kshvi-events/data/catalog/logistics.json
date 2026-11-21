@@ -1,0 +1,3288 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "LOGISTICS",
+  "title": "МТО, транспорт, склады и маршруты подвоза",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-01-loading-queue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Очередь на погрузку",
+      "description": "Пункт имеет ограниченную пропускную способность, поэтому поставка ожидает погрузку и не считается отправленной до фактического перехода.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как учесть очередь погрузки в сроке подтверждённой доставки?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: LOADING_NODE_THROUGHPUT_QUEUE."
+      },
+      "trainingAssumption": "Для учебного события «Очередь на погрузку» механизм LOADING_NODE_THROUGHPUT_QUEUE и границы параметра «Задержка погрузки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.loading.queue_state",
+          "operator": "EQUALS",
+          "value": "SATURATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии SATURATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка погрузки",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 60
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-02-transport-capacity-split"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "delaySupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "LOADING_NODE_THROUGHPUT_QUEUE",
+          "reason": "Пункт имеет ограниченную пропускную способность, поэтому поставка ожидает погрузку и не считается отправленной до фактического перехода.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "LOADING_QUEUE_OBSERVATION",
+          "sourceRequirement": "LOADING_QUEUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "LOADING_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "delaySupply",
+          "method": "RELEASE_LOADING_CAPACITY_AND_DISPATCH",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.loading.queue_state": "SATURATED"
+        },
+        "unsuitableFacts": {
+          "logistics.loading.queue_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-02-transport-capacity-split",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недостаток транспортной ёмкости",
+      "description": "Заявка превышает доступную грузоподъёмность, и система предлагает разделение поставки без создания дополнительного ресурса или транспорта.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как разделить заявку при недостатке транспортной ёмкости?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_REQUEST_CAPACITY_SPLIT_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Недостаток транспортной ёмкости» механизм SUPPLY_REQUEST_CAPACITY_SPLIT_REVIEW и границы параметра «Объём заявки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_REQUEST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.transport.capacity_check",
+          "operator": "EQUALS",
+          "value": "INSUFFICIENT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии INSUFFICIENT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Объём заявки",
+          "unit": "t",
+          "min": 1,
+          "max": 500,
+          "default": 80
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_REQUEST_CAPACITY_SPLIT_REVIEW",
+          "reason": "Заявка превышает доступную грузоподъёмность, и система предлагает разделение поставки без создания дополнительного ресурса или транспорта.",
+          "durationParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TRANSPORT_CAPACITY_OBSERVATION",
+          "sourceRequirement": "TRANSPORT_CAPACITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SUPPLY_SPLIT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "AUTHORIZE_SPLIT_OR_REDUCE_REQUEST",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.transport.capacity_check": "INSUFFICIENT"
+        },
+        "unsuitableFacts": {
+          "logistics.transport.capacity_check": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-03-transit-breakdown",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Поломка транспорта в пути",
+      "description": "Транспортная единица получает DEGRADED на маршруте, а груз остаётся связанным с поставкой в пути до эвакуации или перегрузки.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как сохранить баланс груза и продолжить поставку после поломки транспорта?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: IN_TRANSIT_VEHICLE_BREAKDOWN_WITH_CARGO."
+      },
+      "trainingAssumption": "Для учебного события «Поломка транспорта в пути» механизм IN_TRANSIT_VEHICLE_BREAKDOWN_WITH_CARGO и границы параметра «Задержка поставки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_MOVEMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.transit.vehicle_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка поставки",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-04-supply-route-closed"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "IN_TRANSIT_VEHICLE_BREAKDOWN_WITH_CARGO",
+          "reason": "Транспортная единица получает DEGRADED на маршруте, а груз остаётся связанным с поставкой в пути до эвакуации или перегрузки.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TRANSIT_BREAKDOWN_OBSERVATION",
+          "sourceRequirement": "TRANSIT_BREAKDOWN_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "TRANSIT_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "RECOVER_VEHICLE_OR_TRANSFER_CARGO",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.transit.vehicle_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "logistics.transit.vehicle_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-04-supply-route-closed",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Закрытие маршрута подвоза",
+      "description": "Дорожное событие закрывает назначенный маршрут, и поставка пересчитывает оставшийся путь от фактической позиции без возврата на склад.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как перенаправить поставку после закрытия маршрута?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_ROUTE_CLOSURE_REROUTE."
+      },
+      "trainingAssumption": "Для учебного события «Закрытие маршрута подвоза» механизм SUPPLY_ROUTE_CLOSURE_REROUTE и границы параметра «Срок перенаправления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.route.access_state",
+          "operator": "EQUALS",
+          "value": "CLOSED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CLOSED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "rerouting",
+          "name": "Срок перенаправления",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "redirectSupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_ROUTE_CLOSURE_REROUTE",
+          "reason": "Дорожное событие закрывает назначенный маршрут, и поставка пересчитывает оставшийся путь от фактической позиции без возврата на склад.",
+          "durationParameter": "rerouting"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPLY_ROUTE_OBSERVATION",
+          "sourceRequirement": "SUPPLY_ROUTE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SUPPLY_REROUTE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "rerouting",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "redirectSupply",
+          "method": "RESTORE_ORIGINAL_OR_CONFIRM_NEW_ROUTE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.route.access_state": "CLOSED"
+        },
+        "unsuitableFacts": {
+          "logistics.route.access_state": "OPEN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-05-partial-delivery",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Частичная разгрузка поставки",
+      "description": "Принимающий пункт подтверждает только часть груза, а остаток остаётся в состоянии поставки и не включается в доступный запас.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как учесть частичную поставку в балансе и повторной заявке?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PARTIAL_UNLOAD_CONFIRMED_RECEIPT."
+      },
+      "trainingAssumption": "Для учебного события «Частичная разгрузка поставки» механизм PARTIAL_UNLOAD_CONFIRMED_RECEIPT и границы параметра «Остаток к разгрузке» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.delivery.unload_state",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "remainder",
+          "name": "Остаток к разгрузке",
+          "unit": "t",
+          "min": 1,
+          "max": 200,
+          "default": 20
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-06-warehouse-capacity"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceSupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PARTIAL_UNLOAD_CONFIRMED_RECEIPT",
+          "reason": "Принимающий пункт подтверждает только часть груза, а остаток остаётся в состоянии поставки и не включается в доступный запас.",
+          "durationParameter": "remainder"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PARTIAL_DELIVERY_OBSERVATION",
+          "sourceRequirement": "PARTIAL_DELIVERY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PARTIAL_RECEIPT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "remainder",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceSupply",
+          "method": "COMPLETE_UNLOAD_OR_RETURN_REMAINDER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.delivery.unload_state": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "logistics.delivery.unload_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-06-warehouse-capacity",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Превышение ёмкости склада при приёме",
+      "description": "Свободная ёмкость пункта меньше поступающего объёма, поэтому подтверждение приёма блокируется до освобождения или перенаправления.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как предотвратить превышение ёмкости склада при доставке?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: WAREHOUSE_RECEIPT_CAPACITY_BLOCK."
+      },
+      "trainingAssumption": "Для учебного события «Превышение ёмкости склада при приёме» механизм WAREHOUSE_RECEIPT_CAPACITY_BLOCK и границы параметра «Недостающая ёмкость» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "WAREHOUSE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.warehouse.capacity_state",
+          "operator": "EQUALS",
+          "value": "FULL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии FULL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Недостающая ёмкость",
+          "unit": "t",
+          "min": 1,
+          "max": 300,
+          "default": 40
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateSupplyNode",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "WAREHOUSE_RECEIPT_CAPACITY_BLOCK",
+          "reason": "Свободная ёмкость пункта меньше поступающего объёма, поэтому подтверждение приёма блокируется до освобождения или перенаправления.",
+          "durationParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "WAREHOUSE_CAPACITY_OBSERVATION",
+          "sourceRequirement": "WAREHOUSE_CAPACITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "WAREHOUSE_CAPACITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateSupplyNode",
+          "method": "FREE_CAPACITY_OR_REDIRECT_RECEIPT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.warehouse.capacity_state": "FULL"
+        },
+        "unsuitableFacts": {
+          "logistics.warehouse.capacity_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-07-unit-mismatch",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Несовместимые единицы в заявке",
+      "description": "Потребность и выделенный ресурс записаны в несовместимых единицах, и автоматическая проводка отклоняется до явного преобразования профилем.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как устранить несовместимость единиц без выдуманного коэффициента?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_UNIT_MISMATCH_REJECTION."
+      },
+      "trainingAssumption": "Для учебного события «Несовместимые единицы в заявке» механизм SUPPLY_UNIT_MISMATCH_REJECTION и границы параметра «Срок проверки единиц» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_REQUEST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.request.unit_consistency",
+          "operator": "EQUALS",
+          "value": "MISMATCHED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISMATCHED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки единиц",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-08-fuel-deficit"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_UNIT_MISMATCH_REJECTION",
+          "reason": "Потребность и выделенный ресурс записаны в несовместимых единицах, и автоматическая проводка отклоняется до явного преобразования профилем.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "UNIT_MISMATCH_OBSERVATION",
+          "sourceRequirement": "UNIT_MISMATCH_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "UNIT_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "AUTHORIZE_UNIT_CONVERSION_OR_CORRECT_REQUEST",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.request.unit_consistency": "MISMATCHED"
+        },
+        "unsuitableFacts": {
+          "logistics.request.unit_consistency": "MATCHED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-08-fuel-deficit",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дефицит топлива при исполнении задачи",
+      "description": "Фактического остатка недостаточно для запланированного расхода, и система фиксирует дефицит и влияние на задачу без отрицательного значения.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как перераспределить топливо и пересмотреть задачу при дефиците?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FUEL_CONSUMPTION_DEFICIT_RECORD."
+      },
+      "trainingAssumption": "Для учебного события «Дефицит топлива при исполнении задачи» механизм FUEL_CONSUMPTION_DEFICIT_RECORD и границы параметра «Учебная потребность» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.fuel.balance_state",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Учебная потребность",
+          "unit": "l",
+          "min": 100,
+          "max": 20000,
+          "default": 2500
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "consumeResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FUEL_CONSUMPTION_DEFICIT_RECORD",
+          "reason": "Фактического остатка недостаточно для запланированного расхода, и система фиксирует дефицит и влияние на задачу без отрицательного значения.",
+          "quantityParameter": "amount",
+          "allowNegative": false
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FUEL_DEFICIT_OBSERVATION",
+          "sourceRequirement": "FUEL_DEFICIT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FUEL_SHORTAGE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "consumeResource",
+          "method": "ALLOCATE_FUEL_OR_REDUCE_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.fuel.balance_state": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "logistics.fuel.balance_state": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-09-water-demand-increase",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Рост потребности в воде",
+      "description": "Изменение задачи увеличивает потребление воды, и новая потребность создаёт заявку до списания с подтверждённым источником пополнения.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как обеспечить возросшую потребность в воде без скрытого дефицита?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: WATER_DEMAND_INCREASE_REQUEST."
+      },
+      "trainingAssumption": "Для учебного события «Рост потребности в воде» механизм WATER_DEMAND_INCREASE_REQUEST и границы параметра «Дополнительная потребность» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.water.demand_state",
+          "operator": "EQUALS",
+          "value": "INCREASED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии INCREASED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Дополнительная потребность",
+          "unit": "l",
+          "min": 100,
+          "max": 15000,
+          "default": 1200
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-10-unloading-queue"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordResourceDeficit",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "WATER_DEMAND_INCREASE_REQUEST",
+          "reason": "Изменение задачи увеличивает потребление воды, и новая потребность создаёт заявку до списания с подтверждённым источником пополнения.",
+          "durationParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "WATER_DEMAND_OBSERVATION",
+          "sourceRequirement": "WATER_DEMAND_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "WATER_REQUIREMENT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordResourceDeficit",
+          "method": "SUPPLY_OR_REDUCE_WATER_REQUIREMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.water.demand_state": "INCREASED"
+        },
+        "unsuitableFacts": {
+          "logistics.water.demand_state": "BASELINE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-10-unloading-queue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Очередь на разгрузку",
+      "description": "Поставка прибыла, но пункт не может начать разгрузку, поэтому груз остаётся в пути до подтверждённого начала обработки.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как отличить прибытие транспорта от поступления ресурса на склад?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNLOADING_QUEUE_NOT_CONFIRMED_RECEIPT."
+      },
+      "trainingAssumption": "Для учебного события «Очередь на разгрузку» механизм UNLOADING_QUEUE_NOT_CONFIRMED_RECEIPT и границы параметра «Задержка разгрузки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.unloading.queue_state",
+          "operator": "EQUALS",
+          "value": "WAITING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии WAITING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка разгрузки",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 60
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "delaySupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNLOADING_QUEUE_NOT_CONFIRMED_RECEIPT",
+          "reason": "Поставка прибыла, но пункт не может начать разгрузку, поэтому груз остаётся в пути до подтверждённого начала обработки.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "UNLOADING_QUEUE_OBSERVATION",
+          "sourceRequirement": "UNLOADING_QUEUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "UNLOADING_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "delaySupply",
+          "method": "START_UNLOADING_AND_CONFIRM_RECEIPT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.unloading.queue_state": "WAITING"
+        },
+        "unsuitableFacts": {
+          "logistics.unloading.queue_state": "PROCESSING"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-11-confirmation-missing",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отсутствие подтверждения поступления",
+      "description": "Транспортный доклад отправлен, а подтверждение разгрузки отсутствует; система не увеличивает остаток получателя до фактического подтверждения.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как проверить неподтверждённую доставку без двойного поступления?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: RECEIPT_CONFIRMATION_PENDING."
+      },
+      "trainingAssumption": "Для учебного события «Отсутствие подтверждения поступления» механизм RECEIPT_CONFIRMATION_PENDING и границы параметра «Ожидание подтверждения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_MOVEMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.receipt.confirmation_state",
+          "operator": "EQUALS",
+          "value": "MISSING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISSING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание подтверждения",
+          "unit": "min",
+          "min": 5,
+          "max": 240,
+          "default": 45
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-12-cancel-before-loading"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "reviseObservation",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "RECEIPT_CONFIRMATION_PENDING",
+          "reason": "Транспортный доклад отправлен, а подтверждение разгрузки отсутствует; система не увеличивает остаток получателя до фактического подтверждения.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RECEIPT_CONFIRMATION_OBSERVATION",
+          "sourceRequirement": "RECEIPT_CONFIRMATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "UNCONFIRMED_RECEIPT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "reviseObservation",
+          "method": "CONFIRM_OR_INVESTIGATE_RECEIPT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.receipt.confirmation_state": "MISSING"
+        },
+        "unsuitableFacts": {
+          "logistics.receipt.confirmation_state": "CONFIRMED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-12-cancel-before-loading",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отмена заявки до погрузки",
+      "description": "Отмена освобождает зарезервированный ресурс и транспорт, поскольку движение ещё не началось, и сохраняет отдельную проводку отмены.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как освободить резерв при отмене до отправки без лишней поставки?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CANCEL_BEFORE_LOADING_RELEASE_RESERVE."
+      },
+      "trainingAssumption": "Для учебного события «Отмена заявки до погрузки» механизм CANCEL_BEFORE_LOADING_RELEASE_RESERVE и границы параметра «Срок освобождения резерва» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_REQUEST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.cancellation.stage_state",
+          "operator": "EQUALS",
+          "value": "BEFORE_LOADING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BEFORE_LOADING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок освобождения резерва",
+          "unit": "min",
+          "min": 1,
+          "max": 60,
+          "default": 10
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "releaseCapacity",
+          "target": {
+            "domain": "capacity",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CANCEL_BEFORE_LOADING_RELEASE_RESERVE",
+          "reason": "Отмена освобождает зарезервированный ресурс и транспорт, поскольку движение ещё не началось, и сохраняет отдельную проводку отмены.",
+          "quantityParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CANCELLATION_OBSERVATION",
+          "sourceRequirement": "CANCELLATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RESERVE_RELEASE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "releaseCapacity",
+          "method": "RECREATE_REQUEST_IF_NEED_RETURNS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.cancellation.stage_state": "BEFORE_LOADING"
+        },
+        "unsuitableFacts": {
+          "logistics.cancellation.stage_state": "AFTER_DISPATCH"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-13-cancel-after-dispatch",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отмена после отправки не возвращает груз мгновенно",
+      "description": "Поставка получает команду отмены в пути, но ресурс остаётся связанным с движением до фактического возврата или нового назначения.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как обработать отмену после отправки с сохранением массы в пути?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CANCEL_AFTER_DISPATCH_IN_TRANSIT_RETURN."
+      },
+      "trainingAssumption": "Для учебного события «Отмена после отправки не возвращает груз мгновенно» механизм CANCEL_AFTER_DISPATCH_IN_TRANSIT_RETURN и границы параметра «Срок возврата» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_MOVEMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.cancellation.stage_state",
+          "operator": "EQUALS",
+          "value": "AFTER_DISPATCH",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии AFTER_DISPATCH; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "return",
+          "name": "Срок возврата",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-14-duplicate-receipt"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "redirectSupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CANCEL_AFTER_DISPATCH_IN_TRANSIT_RETURN",
+          "reason": "Поставка получает команду отмены в пути, но ресурс остаётся связанным с движением до фактического возврата или нового назначения.",
+          "durationParameter": "return"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "AFTER_DISPATCH_CANCEL_OBSERVATION",
+          "sourceRequirement": "AFTER_DISPATCH_CANCEL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RETURN_MOVEMENT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "return",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "redirectSupply",
+          "method": "CONFIRM_RETURN_OR_NEW_DESTINATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.cancellation.stage_state": "AFTER_DISPATCH"
+        },
+        "unsuitableFacts": {
+          "logistics.cancellation.stage_state": "BEFORE_LOADING"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-14-duplicate-receipt",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повторное подтверждение поступления",
+      "description": "Повтор содержит тот же идемпотентный ключ поставки, поэтому журнал фиксирует дубликат, а остаток получателя увеличивается только один раз.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как выявить повторное поступление одной поставки?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DUPLICATE_RECEIPT_IDEMPOTENT_BALANCE."
+      },
+      "trainingAssumption": "Для учебного события «Повторное подтверждение поступления» механизм DUPLICATE_RECEIPT_IDEMPOTENT_BALANCE и границы параметра «Срок сверки дубликата» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_MOVEMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.receipt.duplicate_state",
+          "operator": "EQUALS",
+          "value": "DUPLICATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DUPLICATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки дубликата",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceSupply",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DUPLICATE_RECEIPT_IDEMPOTENT_BALANCE",
+          "reason": "Повтор содержит тот же идемпотентный ключ поставки, поэтому журнал фиксирует дубликат, а остаток получателя увеличивается только один раз.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DUPLICATE_RECEIPT_OBSERVATION",
+          "sourceRequirement": "DUPLICATE_RECEIPT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DUPLICATE_RECEIPT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceSupply",
+          "method": "MARK_DUPLICATE_WITHOUT_STOCK_INCREASE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.receipt.duplicate_state": "DUPLICATED"
+        },
+        "unsuitableFacts": {
+          "logistics.receipt.duplicate_state": "UNIQUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-15-priority-reallocation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Перераспределение приоритетного ресурса",
+      "description": "Новый приоритет меняет получателя ограниченной партии, сохраняя общий остаток и создавая отдельные проводки снятия и назначения резерва.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как изменить приоритет снабжения без создания дополнительного ресурса?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PRIORITY_REALLOCATION_BALANCED_TRANSFER."
+      },
+      "trainingAssumption": "Для учебного события «Перераспределение приоритетного ресурса» механизм PRIORITY_REALLOCATION_BALANCED_TRANSFER и границы параметра «Перераспределяемый объём» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.priority.allocation_state",
+          "operator": "EQUALS",
+          "value": "REASSIGNED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REASSIGNED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Перераспределяемый объём",
+          "unit": "t",
+          "min": 1,
+          "max": 100,
+          "default": 10
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-16-reservation-expiry"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transferResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PRIORITY_REALLOCATION_BALANCED_TRANSFER",
+          "reason": "Новый приоритет меняет получателя ограниченной партии, сохраняя общий остаток и создавая отдельные проводки снятия и назначения резерва.",
+          "quantityParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PRIORITY_REALLOCATION_OBSERVATION",
+          "sourceRequirement": "PRIORITY_REALLOCATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RESOURCE_TRANSFER_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transferResource",
+          "method": "RESTORE_OR_CONFIRM_NEW_ALLOCATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.priority.allocation_state": "REASSIGNED"
+        },
+        "unsuitableFacts": {
+          "logistics.priority.allocation_state": "ORIGINAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-16-reservation-expiry",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Истечение резерва без отправки",
+      "description": "Срок действия резерва заканчивается до погрузки, поэтому ресурс остаётся на складе, транспорт освобождается, а потребность возвращается в состояние неудовлетворённой заявки.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как обработать истёкший резерв без ложной доставки или списания ресурса?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_RESERVATION_EXPIRY_WITHOUT_DISPATCH."
+      },
+      "trainingAssumption": "Для учебного события «Истечение резерва без отправки» механизм SUPPLY_RESERVATION_EXPIRY_WITHOUT_DISPATCH и границы параметра «Срок пересмотра заявки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_REQUEST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.reservation.expiry_state",
+          "operator": "EQUALS",
+          "value": "EXPIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии EXPIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок пересмотра заявки",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 20
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "releaseCapacity",
+          "target": {
+            "domain": "capacity",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_RESERVATION_EXPIRY_WITHOUT_DISPATCH",
+          "reason": "Срок действия резерва заканчивается до погрузки, поэтому ресурс остаётся на складе, транспорт освобождается, а потребность возвращается в состояние неудовлетворённой заявки.",
+          "quantityParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RESERVATION_EXPIRY_OBSERVATION",
+          "sourceRequirement": "RESERVATION_EXPIRY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RESERVATION_RELEASE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "releaseCapacity",
+          "method": "RENEW_RESERVATION_OR_REPLAN_SUPPLY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.reservation.expiry_state": "EXPIRED"
+        },
+        "unsuitableFacts": {
+          "logistics.reservation.expiry_state": "ACTIVE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-17-supply-node-degraded",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Деградация пункта снабжения",
+      "description": "Пункт продолжает учитывать запасы, но снижает скорость обработки заявок и формирует очередь с отдельным состоянием восстановления.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как перестроить обеспечение при деградации пункта снабжения?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_NODE_PROCESSING_DEGRADATION."
+      },
+      "trainingAssumption": "Для учебного события «Деградация пункта снабжения» механизм SUPPLY_NODE_PROCESSING_DEGRADATION и границы параметра «Срок деградации» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.supply_node.processing_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок деградации",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-18-supply-node-restored"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateSupplyNode",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_NODE_PROCESSING_DEGRADATION",
+          "reason": "Пункт продолжает учитывать запасы, но снижает скорость обработки заявок и формирует очередь с отдельным состоянием восстановления.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPLY_NODE_STATE_OBSERVATION",
+          "sourceRequirement": "SUPPLY_NODE_STATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SUPPLY_NODE_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateSupplyNode",
+          "method": "RESTORE_SUPPLY_NODE_PROCESSING",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.supply_node.processing_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "logistics.supply_node.processing_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-18-supply-node-restored",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Восстановление пункта снабжения",
+      "description": "После подтверждённых работ пункт возвращает обработку, но накопленная очередь исполняется последовательно без мгновенного закрытия всех заявок.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как обработать накопленную очередь после восстановления пункта?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_NODE_RESTORATION_WITH_BACKLOG."
+      },
+      "trainingAssumption": "Для учебного события «Восстановление пункта снабжения» механизм SUPPLY_NODE_RESTORATION_WITH_BACKLOG и границы параметра «Срок обработки очереди» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SUPPLY_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.supply_node.restoration_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "backlog",
+          "name": "Срок обработки очереди",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateSupplyNode",
+          "target": {
+            "domain": "supply",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_NODE_RESTORATION_WITH_BACKLOG",
+          "reason": "После подтверждённых работ пункт возвращает обработку, но накопленная очередь исполняется последовательно без мгновенного закрытия всех заявок.",
+          "durationParameter": "backlog"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPLY_NODE_RESTORATION_OBSERVATION",
+          "sourceRequirement": "SUPPLY_NODE_RESTORATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "BACKLOG_PROCESSING_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "backlog",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateSupplyNode",
+          "method": "REINTRODUCE_BACKLOG_LIMIT_IF_OVERLOADED",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.supply_node.restoration_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "logistics.supply_node.restoration_state": "DEGRADED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-19-repair-parts-shortage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Нехватка запасных частей",
+      "description": "Заявка на ремонт не может перейти к работам из-за дефицита номенклатуры, и оборудование остаётся UNDER_REPAIR без ложного возврата в строй.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как обеспечить ремонт при нехватке запасных частей?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_PARTS_SHORTAGE_BLOCKS_WORK."
+      },
+      "trainingAssumption": "Для учебного события «Нехватка запасных частей» механизм REPAIR_PARTS_SHORTAGE_BLOCKS_WORK и границы параметра «Недостающие комплекты» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.repair_parts.balance_state",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Недостающие комплекты",
+          "unit": "unit",
+          "min": 1,
+          "max": 50,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "logistics-20-stock-discrepancy"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordResourceDeficit",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_PARTS_SHORTAGE_BLOCKS_WORK",
+          "reason": "Заявка на ремонт не может перейти к работам из-за дефицита номенклатуры, и оборудование остаётся UNDER_REPAIR без ложного возврата в строй.",
+          "durationParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_PARTS_OBSERVATION",
+          "sourceRequirement": "REPAIR_PARTS_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPAIR_PARTS_SHORTAGE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordResourceDeficit",
+          "method": "SUPPLY_PARTS_OR_REVISE_REPAIR_PLAN",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.repair_parts.balance_state": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "logistics.repair_parts.balance_state": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "logistics-20-stock-discrepancy",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Расхождение учётного и фактического остатка",
+      "description": "Сверка выявляет разницу остатков, и ручная корректировка оформляется отдельной проводкой с основанием и утверждением, а не перезаписью начального запаса.",
+      "category": "LOGISTICS",
+      "educationalQuestion": "Как оформить расхождение склада с сохранением аудита?",
+      "source": {
+        "sourceId": "spec-logistics",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: STOCK_DISCREPANCY_MANUAL_LEDGER_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Расхождение учётного и фактического остатка» механизм STOCK_DISCREPANCY_MANUAL_LEDGER_REVIEW и границы параметра «Учебная величина расхождения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "WAREHOUSE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "logistics.stock.reconciliation_state",
+          "operator": "EQUALS",
+          "value": "DISCREPANT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DISCREPANT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "difference",
+          "name": "Учебная величина расхождения",
+          "unit": "unit",
+          "min": 1,
+          "max": 100,
+          "default": 5
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "logistics-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "STOCK_DISCREPANCY_MANUAL_LEDGER_REVIEW",
+          "reason": "Сверка выявляет разницу остатков, и ручная корректировка оформляется отдельной проводкой с основанием и утверждением, а не перезаписью начального запаса.",
+          "durationParameter": "difference"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "STOCK_DISCREPANCY_OBSERVATION",
+          "sourceRequirement": "STOCK_DISCREPANCY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STOCK_RECONCILIATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "difference",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "APPROVE_OR_REJECT_LEDGER_CORRECTION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "logistics.stock.reconciliation_state": "DISCREPANT"
+        },
+        "unsuitableFacts": {
+          "logistics.stock.reconciliation_state": "MATCHED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

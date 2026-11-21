@@ -1,0 +1,3307 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "CONTROL",
+  "title": "Управление, пункты управления и связь",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-01-channel-queue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Перегрузка основного канала связи",
+      "description": "Очередь сообщений превышает учебную ёмкость основного канала, а новые донесения получают задержку без потери уже доставленных фактов.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как сохранить доведение срочных донесений при перегрузке основного канала?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: QUEUE_OVERFLOW_WITH_PRESERVED_DELIVERY."
+      },
+      "trainingAssumption": "Для учебного события «Перегрузка основного канала связи» механизм QUEUE_OVERFLOW_WITH_PRESERVED_DELIVERY и границы параметра «Длительность перегрузки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMUNICATION_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.primary_channel.queue_state",
+          "operator": "EQUALS",
+          "value": "OVERLOADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии OVERLOADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность перегрузки",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-02-relay-outage"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyCommunicationFailure",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "QUEUE_OVERFLOW_WITH_PRESERVED_DELIVERY",
+          "reason": "Очередь сообщений превышает учебную ёмкость основного канала, а новые донесения получают задержку без потери уже доставленных фактов.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CHANNEL_QUEUE_OBSERVATION",
+          "sourceRequirement": "CHANNEL_QUEUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMMUNICATION_LOAD_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyCommunicationFailure",
+          "method": "RESTORE_PRIMARY_CHANNEL_THROUGHPUT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.primary_channel.queue_state": "OVERLOADED"
+        },
+        "unsuitableFacts": {
+          "communication.primary_channel.queue_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-02-relay-outage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недоступность промежуточного узла",
+      "description": "Промежуточный узел выпадает из маршрута, поэтому затрагиваются только зависящие от него направления и выполняется новый расчёт пути сообщений.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как перестроить маршруты сообщений после потери промежуточного узла?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DEPENDENT_ROUTE_INVALIDATION."
+      },
+      "trainingAssumption": "Для учебного события «Недоступность промежуточного узла» механизм DEPENDENT_ROUTE_INVALIDATION и границы параметра «Срок восстановления узла» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMUNICATION_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.relay_node.reachability",
+          "operator": "EQUALS",
+          "value": "UNREACHABLE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии UNREACHABLE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "recovery",
+          "name": "Срок восстановления узла",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyCommunicationFailure",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DEPENDENT_ROUTE_INVALIDATION",
+          "reason": "Промежуточный узел выпадает из маршрута, поэтому затрагиваются только зависящие от него направления и выполняется новый расчёт пути сообщений.",
+          "durationParameter": "recovery"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RELAY_REACHABILITY_OBSERVATION",
+          "sourceRequirement": "RELAY_REACHABILITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ROUTE_RECALCULATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "recovery",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyCommunicationFailure",
+          "method": "RESTORE_RELAY_AND_RECALCULATE_ROUTES",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.relay_node.reachability": "UNREACHABLE"
+        },
+        "unsuitableFacts": {
+          "communication.relay_node.reachability": "REACHABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-03-duplicate-retry",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дубликат сообщения после повторной передачи",
+      "description": "Повторная попытка создаёт вторую транспортную запись с тем же доменным ключом, но не повторяет приказ или списание ресурса.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как отличить дубль доставки от повторного доменного исполнения?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: IDEMPOTENT_RETRY_DUPLICATE."
+      },
+      "trainingAssumption": "Для учебного события «Дубликат сообщения после повторной передачи» механизм IDEMPOTENT_RETRY_DUPLICATE и границы параметра «Срок разбора дубликата» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "MESSAGE_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.retry.duplicate_detected",
+          "operator": "EQUALS",
+          "value": "YES",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии YES; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок разбора дубликата",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-04-partial-cascade"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "rerouteMessage",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "IDEMPOTENT_RETRY_DUPLICATE",
+          "reason": "Повторная попытка создаёт вторую транспортную запись с тем же доменным ключом, но не повторяет приказ или списание ресурса.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DUPLICATE_ATTEMPT_OBSERVATION",
+          "sourceRequirement": "DUPLICATE_ATTEMPT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DELIVERY_ATTEMPT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "rerouteMessage",
+          "method": "MARK_DUPLICATE_WITHOUT_DOMAIN_REPLAY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.retry.duplicate_detected": "YES"
+        },
+        "unsuitableFacts": {
+          "communication.retry.duplicate_detected": "NO"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-04-partial-cascade",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Частичная доставка каскадной вводной",
+      "description": "Вышестоящая инстанция получила вводную, а одно нижестоящее плечо осталось недоставленным и сохраняет самостоятельный статус.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как организовать контроль каждого плеча каскадной доставки?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: INDEPENDENT_CASCADE_BRANCH_DELIVERY."
+      },
+      "trainingAssumption": "Для учебного события «Частичная доставка каскадной вводной» механизм INDEPENDENT_CASCADE_BRANCH_DELIVERY и границы параметра «Срок повторной выдачи» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.cascade.delivery_coverage",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "deadline",
+          "name": "Срок повторной выдачи",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createDocumentRevision",
+          "target": {
+            "domain": "documents",
+            "ref": "scenario-target"
+          },
+          "mechanism": "INDEPENDENT_CASCADE_BRANCH_DELIVERY",
+          "reason": "Вышестоящая инстанция получила вводную, а одно нижестоящее плечо осталось недоставленным и сохраняет самостоятельный статус.",
+          "durationParameter": "deadline"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CASCADE_BRANCH_OBSERVATION",
+          "sourceRequirement": "CASCADE_BRANCH_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CASCADE_DELIVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "deadline",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createDocumentRevision",
+          "method": "REISSUE_ONLY_UNDELIVERED_BRANCH",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.cascade.delivery_coverage": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "command.cascade.delivery_coverage": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-05-missed-report",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Пропуск срочного донесения",
+      "description": "Предельный срок донесения истёк без отправки, поэтому создаются наблюдаемый факт пропуска и напоминание без автоматического заполнения текста.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как различить неотправленное донесение и отсутствие самого события?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MISSED_REPORT_WITHOUT_CONTENT_FABRICATION."
+      },
+      "trainingAssumption": "Для учебного события «Пропуск срочного донесения» механизм MISSED_REPORT_WITHOUT_CONTENT_FABRICATION и границы параметра «Просрочка донесения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "REPORT_SCHEDULE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "reports.urgent.submission_state",
+          "operator": "EQUALS",
+          "value": "NOT_SUBMITTED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии NOT_SUBMITTED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Просрочка донесения",
+          "unit": "min",
+          "min": 1,
+          "max": 120,
+          "default": 15
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-06-approval-conflict"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "markReportOverdue",
+          "target": {
+            "domain": "reports",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MISSED_REPORT_WITHOUT_CONTENT_FABRICATION",
+          "reason": "Предельный срок донесения истёк без отправки, поэтому создаются наблюдаемый факт пропуска и напоминание без автоматического заполнения текста.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPORT_DEADLINE_OBSERVATION",
+          "sourceRequirement": "REPORT_DEADLINE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "OVERDUE_REPORT_NOTICE",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "markReportOverdue",
+          "method": "CLOSE_OVERDUE_AFTER_ACTUAL_SUBMISSION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "reports.urgent.submission_state": "NOT_SUBMITTED"
+        },
+        "unsuitableFacts": {
+          "reports.urgent.submission_state": "SUBMITTED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-06-approval-conflict",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Разногласие двух ветвей согласования",
+      "description": "Командная и функциональная ветви дали несовместимые замечания, и документ остаётся несогласованным до решения полномочной инстанции.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как разрешить конфликт без подмены согласия службы согласием командира?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DUAL_CHAIN_CONFLICT_ESCALATION."
+      },
+      "trainingAssumption": "Для учебного события «Разногласие двух ветвей согласования» механизм DUAL_CHAIN_CONFLICT_ESCALATION и границы параметра «Срок рассмотрения конфликта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "documents.approval.branches_state",
+          "operator": "EQUALS",
+          "value": "CONFLICTING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFLICTING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "decision",
+          "name": "Срок рассмотрения конфликта",
+          "unit": "h",
+          "min": 1,
+          "max": 12,
+          "default": 2
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DUAL_CHAIN_CONFLICT_ESCALATION",
+          "reason": "Командная и функциональная ветви дали несовместимые замечания, и документ остаётся несогласованным до решения полномочной инстанции.",
+          "durationParameter": "decision"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "APPROVAL_CONFLICT_OBSERVATION",
+          "sourceRequirement": "APPROVAL_CONFLICT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "APPROVAL_CONFLICT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "decision",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "RESOLVE_CONFLICT_BY_AUTHORIZED_NODE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "documents.approval.branches_state": "CONFLICTING"
+        },
+        "unsuitableFacts": {
+          "documents.approval.branches_state": "ALIGNED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-07-superseded-order",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Поздняя замена подписанной редакции",
+      "description": "Новая редакция заменяет ранее подписанную через отдельную связь supersedes, сохраняя прежние подписи, выдачу и подтверждения в журнале.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как изменить приказ без незаметной перезаписи подписанного документа?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SIGNED_REVISION_SUPERSESSION."
+      },
+      "trainingAssumption": "Для учебного события «Поздняя замена подписанной редакции» механизм SIGNED_REVISION_SUPERSESSION и границы параметра «Срок согласования новой редакции» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "DOCUMENT_REPOSITORY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "documents.signed_revision.replacement_state",
+          "operator": "EQUALS",
+          "value": "SUPERSEDES_PENDING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии SUPERSEDES_PENDING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок согласования новой редакции",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-08-reserve-capacity"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createDocumentRevision",
+          "target": {
+            "domain": "documents",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SIGNED_REVISION_SUPERSESSION",
+          "reason": "Новая редакция заменяет ранее подписанную через отдельную связь supersedes, сохраняя прежние подписи, выдачу и подтверждения в журнале.",
+          "durationParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REVISION_CHAIN_OBSERVATION",
+          "sourceRequirement": "REVISION_CHAIN_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DOCUMENT_REPLACEMENT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createDocumentRevision",
+          "method": "CANCEL_REPLACEMENT_BEFORE_ISSUE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "documents.signed_revision.replacement_state": "SUPERSEDES_PENDING"
+        },
+        "unsuitableFacts": {
+          "documents.signed_revision.replacement_state": "STABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-08-reserve-capacity",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Снижение ёмкости резервного канала",
+      "description": "После перехода на резерв выясняется его ограниченная ёмкость, поэтому низкоприоритетные сообщения остаются в очереди, а начатая передача не вытесняется.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как распределить трафик при ограниченной ёмкости резервного канала?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: RESERVE_QUEUE_PRIORITY_LIMIT."
+      },
+      "trainingAssumption": "Для учебного события «Снижение ёмкости резервного канала» механизм RESERVE_QUEUE_PRIORITY_LIMIT и границы параметра «Длительность ограничения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMUNICATION_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.reserve_channel.capacity_state",
+          "operator": "EQUALS",
+          "value": "REDUCED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REDUCED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность ограничения",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyCommunicationFailure",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "RESERVE_QUEUE_PRIORITY_LIMIT",
+          "reason": "После перехода на резерв выясняется его ограниченная ёмкость, поэтому низкоприоритетные сообщения остаются в очереди, а начатая передача не вытесняется.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RESERVE_CAPACITY_OBSERVATION",
+          "sourceRequirement": "RESERVE_CAPACITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RESERVE_LOAD_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyCommunicationFailure",
+          "method": "RESTORE_RESERVE_OR_REDISTRIBUTE_FLOW",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.reserve_channel.capacity_state": "REDUCED"
+        },
+        "unsuitableFacts": {
+          "communication.reserve_channel.capacity_state": "FULL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-09-cp-relocation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Перемещение пункта управления",
+      "description": "Пункт управления переходит в режим перемещения, и обработка поступающих документов приостанавливается до развёртывания, хотя сообщения сохраняются в очереди.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как сохранить непрерывность управления при перемещении пункта управления?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMMAND_POST_RELOCATION_PROCESSING_PAUSE."
+      },
+      "trainingAssumption": "Для учебного события «Перемещение пункта управления» механизм COMMAND_POST_RELOCATION_PROCESSING_PAUSE и границы параметра «Длительность перемещения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_POST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.post.mobility_state",
+          "operator": "EQUALS",
+          "value": "RELOCATING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии RELOCATING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "relocation",
+          "name": "Длительность перемещения",
+          "unit": "min",
+          "min": 20,
+          "max": 360,
+          "default": 90
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-10-paper-conflict"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordCommandNodeState",
+          "target": {
+            "domain": "command",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMMAND_POST_RELOCATION_PROCESSING_PAUSE",
+          "reason": "Пункт управления переходит в режим перемещения, и обработка поступающих документов приостанавливается до развёртывания, хотя сообщения сохраняются в очереди.",
+          "durationParameter": "relocation"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMMAND_POST_STATE_OBSERVATION",
+          "sourceRequirement": "COMMAND_POST_STATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMMAND_CONTINUITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "relocation",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordCommandNodeState",
+          "method": "COMPLETE_COMMAND_POST_DEPLOYMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.post.mobility_state": "RELOCATING"
+        },
+        "unsuitableFacts": {
+          "command.post.mobility_state": "DEPLOYED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-10-paper-conflict",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Расхождение бумажного и электронного обмена",
+      "description": "После восстановления рабочего места бумажный оригинал и электронная очередь содержат разные статусы, требующие сверки без повторного приказа.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как ввести факт бумажного обмена без дублирования доменного эффекта?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PAPER_ELECTRONIC_RECONCILIATION."
+      },
+      "trainingAssumption": "Для учебного события «Расхождение бумажного и электронного обмена» механизм PAPER_ELECTRONIC_RECONCILIATION и границы параметра «Срок сверки записей» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "DOCUMENT_REPOSITORY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "documents.paper_exchange.reconciliation_state",
+          "operator": "EQUALS",
+          "value": "CONFLICTING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFLICTING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки записей",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PAPER_ELECTRONIC_RECONCILIATION",
+          "reason": "После восстановления рабочего места бумажный оригинал и электронная очередь содержат разные статусы, требующие сверки без повторного приказа.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PAPER_EXCHANGE_OBSERVATION",
+          "sourceRequirement": "PAPER_EXCHANGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PAPER_RECONCILIATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CONFIRM_SINGLE_DOMAIN_VERSION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "documents.paper_exchange.reconciliation_state": "CONFLICTING"
+        },
+        "unsuitableFacts": {
+          "documents.paper_exchange.reconciliation_state": "MATCHED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-11-urgent-route-loss",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недоступность маршрута срочного донесения",
+      "description": "Назначенный маршрут срочного донесения исчезает, и табель требует выбора разрешённого обходного канала с отдельной фиксацией новой попытки.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как выбрать обходной маршрут срочного донесения и сохранить срок контроля?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: URGENT_REPORT_ALTERNATE_ROUTE."
+      },
+      "trainingAssumption": "Для учебного события «Недоступность маршрута срочного донесения» механизм URGENT_REPORT_ALTERNATE_ROUTE и границы параметра «Срок перехода на обходной канал» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "MESSAGE_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.urgent_route.state",
+          "operator": "EQUALS",
+          "value": "UNAVAILABLE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии UNAVAILABLE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "rerouting",
+          "name": "Срок перехода на обходной канал",
+          "unit": "min",
+          "min": 1,
+          "max": 60,
+          "default": 10
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-12-expired-channel"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "rerouteMessage",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "URGENT_REPORT_ALTERNATE_ROUTE",
+          "reason": "Назначенный маршрут срочного донесения исчезает, и табель требует выбора разрешённого обходного канала с отдельной фиксацией новой попытки.",
+          "durationParameter": "rerouting"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "URGENT_ROUTE_OBSERVATION",
+          "sourceRequirement": "URGENT_ROUTE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "URGENT_DELIVERY_ATTEMPT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "rerouting",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "rerouteMessage",
+          "method": "RESTORE_ORIGINAL_URGENT_ROUTE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.urgent_route.state": "UNAVAILABLE"
+        },
+        "unsuitableFacts": {
+          "communication.urgent_route.state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-12-expired-channel",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Завершение периода действия канала",
+      "description": "Канал достигает конца сценарного периода действия, поэтому новые сообщения не принимаются, а ранее доставленные факты остаются неизменными.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как учитывать временной периметр канала при выдаче документов?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CHANNEL_ACTIVE_PERIOD_EXPIRY."
+      },
+      "trainingAssumption": "Для учебного события «Завершение периода действия канала» механизм CHANNEL_ACTIVE_PERIOD_EXPIRY и границы параметра «Срок проверки нового периода» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMUNICATION_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.channel.period_state",
+          "operator": "EQUALS",
+          "value": "EXPIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии EXPIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки нового периода",
+          "unit": "min",
+          "min": 5,
+          "max": 60,
+          "default": 15
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyCommunicationFailure",
+          "target": {
+            "domain": "communications",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CHANNEL_ACTIVE_PERIOD_EXPIRY",
+          "reason": "Канал достигает конца сценарного периода действия, поэтому новые сообщения не принимаются, а ранее доставленные факты остаются неизменными.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CHANNEL_PERIOD_OBSERVATION",
+          "sourceRequirement": "CHANNEL_PERIOD_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CHANNEL_EXPIRY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyCommunicationFailure",
+          "method": "AUTHORIZE_NEW_CHANNEL_PERIOD",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.channel.period_state": "EXPIRED"
+        },
+        "unsuitableFacts": {
+          "communication.channel.period_state": "ACTIVE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-13-unacknowledged-delivery",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Доставка без подтверждения ознакомления",
+      "description": "Сообщение доставлено адресату, но отметка ознакомления отсутствует; система не приравнивает транспортный статус к пониманию или исполнению.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как отделять доставку от ознакомления и начала исполнения?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DELIVERED_BUT_NOT_ACKNOWLEDGED."
+      },
+      "trainingAssumption": "Для учебного события «Доставка без подтверждения ознакомления» механизм DELIVERED_BUT_NOT_ACKNOWLEDGED и границы параметра «Ожидание подтверждения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "MESSAGE_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.message.acknowledgement",
+          "operator": "EQUALS",
+          "value": "MISSING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISSING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание подтверждения",
+          "unit": "min",
+          "min": 1,
+          "max": 90,
+          "default": 15
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-14-processing-backlog"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "markReportOverdue",
+          "target": {
+            "domain": "reports",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DELIVERED_BUT_NOT_ACKNOWLEDGED",
+          "reason": "Сообщение доставлено адресату, но отметка ознакомления отсутствует; система не приравнивает транспортный статус к пониманию или исполнению.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "ACKNOWLEDGEMENT_GAP_OBSERVATION",
+          "sourceRequirement": "ACKNOWLEDGEMENT_GAP_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ACKNOWLEDGEMENT_REMINDER",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "markReportOverdue",
+          "method": "RECORD_ACTUAL_ACKNOWLEDGEMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.message.acknowledgement": "MISSING"
+        },
+        "unsuitableFacts": {
+          "communication.message.acknowledgement": "RECEIVED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-14-processing-backlog",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Очередь обработки в инстанции",
+      "description": "Документы доставлены, но инстанция не успевает их обработать, из-за чего время начала исполнения смещается независимо от транспортной задержки.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как выявить задержку обработки после успешной доставки?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: INBOX_PROCESSING_BACKLOG."
+      },
+      "trainingAssumption": "Для учебного события «Очередь обработки в инстанции» механизм INBOX_PROCESSING_BACKLOG и границы параметра «Длительность обработки очереди» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.node.inbox_state",
+          "operator": "EQUALS",
+          "value": "BACKLOGGED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BACKLOGGED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Длительность обработки очереди",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordCommandNodeState",
+          "target": {
+            "domain": "command",
+            "ref": "scenario-target"
+          },
+          "mechanism": "INBOX_PROCESSING_BACKLOG",
+          "reason": "Документы доставлены, но инстанция не успевает их обработать, из-за чего время начала исполнения смещается независимо от транспортной задержки.",
+          "durationParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "INBOX_BACKLOG_OBSERVATION",
+          "sourceRequirement": "INBOX_BACKLOG_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PROCESSING_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordCommandNodeState",
+          "method": "CLEAR_INBOX_AND_CONFIRM_PROCESSING",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.node.inbox_state": "BACKLOGGED"
+        },
+        "unsuitableFacts": {
+          "command.node.inbox_state": "CLEAR"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-15-stale-arrival",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Позднее прибытие устаревшего сообщения",
+      "description": "После восстановления ретрансляции приходит сообщение с истёкшей актуальностью; оно журналируется, но не отменяет более новую редакцию решения.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как обработать запоздавшее сообщение без отката текущего решения?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: STALE_MESSAGE_ARRIVAL_NO_ROLLBACK."
+      },
+      "trainingAssumption": "Для учебного события «Позднее прибытие устаревшего сообщения» механизм STALE_MESSAGE_ARRIVAL_NO_ROLLBACK и границы параметра «Срок проверки актуальности» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "MESSAGE_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.restored_traffic.freshness",
+          "operator": "EQUALS",
+          "value": "STALE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии STALE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки актуальности",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-16-blocked-attachment"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createDocumentRevision",
+          "target": {
+            "domain": "documents",
+            "ref": "scenario-target"
+          },
+          "mechanism": "STALE_MESSAGE_ARRIVAL_NO_ROLLBACK",
+          "reason": "После восстановления ретрансляции приходит сообщение с истёкшей актуальностью; оно журналируется, но не отменяет более новую редакцию решения.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "STALE_MESSAGE_OBSERVATION",
+          "sourceRequirement": "STALE_MESSAGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STALE_DELIVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createDocumentRevision",
+          "method": "ARCHIVE_STALE_COPY_WITH_LINK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.restored_traffic.freshness": "STALE"
+        },
+        "unsuitableFacts": {
+          "communication.restored_traffic.freshness": "CURRENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-16-blocked-attachment",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Блокировка вложения вне видимости",
+      "description": "Проверка выдачи находит в приложении данные вне проекции адресата и блокирует документ до изменения вложения или уполномоченного маршрута.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как предотвратить утечку скрытых данных через приложение к документу?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ATTACHMENT_VISIBILITY_BLOCK."
+      },
+      "trainingAssumption": "Для учебного события «Блокировка вложения вне видимости» механизм ATTACHMENT_VISIBILITY_BLOCK и границы параметра «Срок проверки вложения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "DOCUMENT_REPOSITORY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "documents.attachment.visibility_check",
+          "operator": "EQUALS",
+          "value": "BLOCKED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки вложения",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ATTACHMENT_VISIBILITY_BLOCK",
+          "reason": "Проверка выдачи находит в приложении данные вне проекции адресата и блокирует документ до изменения вложения или уполномоченного маршрута.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "VISIBILITY_BLOCK_OBSERVATION",
+          "sourceRequirement": "VISIBILITY_BLOCK_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "VISIBILITY_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "REMOVE_OR_AUTHORIZE_RESTRICTED_ATTACHMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "documents.attachment.visibility_check": "BLOCKED"
+        },
+        "unsuitableFacts": {
+          "documents.attachment.visibility_check": "ALLOWED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-17-signal-version",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Несовпадение версий таблицы сигналов",
+      "description": "Взаимодействующие инстанции используют разные редакции таблицы сигналов, поэтому обработка команды требует сверки версии, а не догадки по обозначению.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как восстановить единое понимание сигналов при разных редакциях таблицы?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SIGNAL_TABLE_VERSION_RECONCILIATION."
+      },
+      "trainingAssumption": "Для учебного события «Несовпадение версий таблицы сигналов» механизм SIGNAL_TABLE_VERSION_RECONCILIATION и границы параметра «Срок сверки таблицы» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.signal_table.version_state",
+          "operator": "EQUALS",
+          "value": "MISMATCHED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISMATCHED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "coordination",
+          "name": "Срок сверки таблицы",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-18-reserve-cp-delay"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordCoordination",
+          "target": {
+            "domain": "interaction",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SIGNAL_TABLE_VERSION_RECONCILIATION",
+          "reason": "Взаимодействующие инстанции используют разные редакции таблицы сигналов, поэтому обработка команды требует сверки версии, а не догадки по обозначению.",
+          "durationParameter": "coordination"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SIGNAL_VERSION_OBSERVATION",
+          "sourceRequirement": "SIGNAL_VERSION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SIGNAL_RECONCILIATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "coordination",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordCoordination",
+          "method": "ALIGN_SIGNAL_TABLE_VERSIONS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.signal_table.version_state": "MISMATCHED"
+        },
+        "unsuitableFacts": {
+          "command.signal_table.version_state": "MATCHED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-18-reserve-cp-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Задержка развёртывания запасного пункта",
+      "description": "Запасной пункт управления получает задачу, но не завершает развёртывание к сроку, поэтому передача функций остаётся частичной и наблюдаемой.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как передать управление при неполной готовности запасного пункта?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: RESERVE_POST_PARTIAL_ACTIVATION."
+      },
+      "trainingAssumption": "Для учебного события «Задержка развёртывания запасного пункта» механизм RESERVE_POST_PARTIAL_ACTIVATION и границы параметра «Задержка развёртывания» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_POST"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.reserve_post.readiness",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "deployment",
+          "name": "Задержка развёртывания",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordCommandNodeState",
+          "target": {
+            "domain": "command",
+            "ref": "scenario-target"
+          },
+          "mechanism": "RESERVE_POST_PARTIAL_ACTIVATION",
+          "reason": "Запасной пункт управления получает задачу, но не завершает развёртывание к сроку, поэтому передача функций остаётся частичной и наблюдаемой.",
+          "durationParameter": "deployment"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RESERVE_POST_OBSERVATION",
+          "sourceRequirement": "RESERVE_POST_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RESERVE_ACTIVATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "deployment",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordCommandNodeState",
+          "method": "COMPLETE_RESERVE_POST_ACTIVATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.reserve_post.readiness": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "command.reserve_post.readiness": "READY"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-19-functional-disagreement",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Функциональное указание противоречит решению",
+      "description": "Функциональная служба выдала указание, несовместимое с решением командира; система сохраняет обе позиции и направляет разногласие по дереву полномочий.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как зафиксировать и разрешить межслужебное противоречие без автоматического приоритета?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FUNCTIONAL_COMMAND_AUTHORITY_CONFLICT."
+      },
+      "trainingAssumption": "Для учебного события «Функциональное указание противоречит решению» механизм FUNCTIONAL_COMMAND_AUTHORITY_CONFLICT и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "command.functional_order.consistency",
+          "operator": "EQUALS",
+          "value": "CONTRADICTORY",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONTRADICTORY; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "decision",
+          "name": "Срок рассмотрения",
+          "unit": "h",
+          "min": 1,
+          "max": 8,
+          "default": 2
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "control-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "control-20-domain-key-collision"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FUNCTIONAL_COMMAND_AUTHORITY_CONFLICT",
+          "reason": "Функциональная служба выдала указание, несовместимое с решением командира; система сохраняет обе позиции и направляет разногласие по дереву полномочий.",
+          "durationParameter": "decision"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FUNCTIONAL_CONFLICT_OBSERVATION",
+          "sourceRequirement": "FUNCTIONAL_CONFLICT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "AUTHORITY_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "decision",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "AUTHORIZE_CONSISTENT_FUNCTIONAL_ORDER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "command.functional_order.consistency": "CONTRADICTORY"
+        },
+        "unsuitableFacts": {
+          "command.functional_order.consistency": "CONSISTENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "control-20-domain-key-collision",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Конфликт доменного ключа повторной команды",
+      "description": "Две транспортные попытки имеют один доменный ключ, но разное содержимое; автоматическое исполнение блокируется до ручного разрешения расхождения.",
+      "category": "CONTROL",
+      "educationalQuestion": "Как защитить идемпотентность при одинаковом ключе и разных командах?",
+      "source": {
+        "sourceId": "spec-com",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: IDEMPOTENCY_KEY_CONTENT_COLLISION."
+      },
+      "trainingAssumption": "Для учебного события «Конфликт доменного ключа повторной команды» механизм IDEMPOTENCY_KEY_CONTENT_COLLISION и границы параметра «Срок разбора ключа» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "MESSAGE_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "communication.domain_key.consistency",
+          "operator": "EQUALS",
+          "value": "COLLIDING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии COLLIDING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок разбора ключа",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "control-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "IDEMPOTENCY_KEY_CONTENT_COLLISION",
+          "reason": "Две транспортные попытки имеют один доменный ключ, но разное содержимое; автоматическое исполнение блокируется до ручного разрешения расхождения.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DOMAIN_KEY_COLLISION_OBSERVATION",
+          "sourceRequirement": "DOMAIN_KEY_COLLISION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DOMAIN_KEY_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "ASSIGN_CORRECT_DOMAIN_COMMAND_KEY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "communication.domain_key.consistency": "COLLIDING"
+        },
+        "unsuitableFacts": {
+          "communication.domain_key.consistency": "CONSISTENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

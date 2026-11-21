@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": 1,
+  "policy": {
+    "language": "ru",
+    "mode": "FULL_SIMULATION",
+    "numericBasis": "Все диапазоны, значения по умолчанию, веса, тяжести и сроки являются явными учебными допущениями каталога, а не действующими или историческими нормативами.",
+    "realPeople": "Каталог не содержит медицинской или психологической диагностики реальных людей. МПС и медицинские записи описывают только виртуальные силы и сценарные процессы.",
+    "review": "Статус APPROVED означает авторскую методическую проверку записи и независимую автоматическую проверку контракта, отпечатка механизма и двух репетиций состояний; полный доменный прогон выполняется отдельно."
+  },
+  "sources": [
+    {
+      "sourceId": "spec-com",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Каналы, отказы связи, донесения и автономный каталог",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-COM-01", "KSHVI-F-COM-06", "KSHVI-F-COM-07", "KSHVI-F-COM-10", "KSHVI-F-AUTO-02"],
+      "numericUse": "Только учебные допущения отдельных шаблонов."
+    },
+    {
+      "sourceId": "spec-recon",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Разведывательные наблюдения, неопределённость и проекции",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-SIM-11", "KSHVI-F-SIM-12", "KSHVI-F-PREP-14", "KSHVI-F-AUTO-02"],
+      "numericUse": "Только учебные допущения отдельных шаблонов."
+    },
+    {
+      "sourceId": "spec-formation",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Оперативное построение, движение и исполнение задач",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ORG-14", "KSHVI-F-ORG-15", "KSHVI-F-ORG-16", "KSHVI-F-SIM-07", "KSHVI-F-SIM-08"],
+      "numericUse": "Только учебные допущения отдельных шаблонов."
+    },
+    {
+      "sourceId": "spec-simulation",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Агрегированные эпизоды, расчёты и объяснимые исходы",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-SIM-03", "KSHVI-F-SIM-04", "KSHVI-F-SIM-09", "KSHVI-F-SIM-10", "KSHVI-F-SIM-14", "KSHVI-F-SIM-15"],
+      "numericUse": "Только учебные допущения отдельных шаблонов; никакого универсального порога соотношения сил."
+    },
+    {
+      "sourceId": "spec-terrain",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Инженерные изменения и динамическая местность",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ENV-18", "KSHVI-F-ENV-19", "KSHVI-F-ENV-20", "KSHVI-F-ENV-21", "KSHVI-F-SIM-20"],
+      "numericUse": "Только учебные допущения для конкретного класса движения и сценарного объекта."
+    },
+    {
+      "sourceId": "spec-weather",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Погода, гидрология, сезонность и поведение при неизвестных данных",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ENV-06", "KSHVI-F-ENV-09", "KSHVI-F-ENV-10", "KSHVI-F-ENV-11", "KSHVI-F-ENV-21"],
+      "numericUse": "Только учебные допущения; неизвестный показатель не заменяется нормальной погодой."
+    },
+    {
+      "sourceId": "spec-logistics",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Непрерывное МТО, транспорт, склады и баланс поставок",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-LOG-01", "KSHVI-F-LOG-02", "KSHVI-F-LOG-03", "KSHVI-F-LOG-04", "KSHVI-F-LOG-07", "KSHVI-F-SIM-21"],
+      "numericUse": "Только учебные допущения без телепортации и отрицательных остатков."
+    },
+    {
+      "sourceId": "spec-equipment",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Техническая оснащённость, ремонтные переходы и эвакуация",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ORG-09", "KSHVI-F-ORG-11", "KSHVI-F-LOG-05", "KSHVI-F-SIM-19"],
+      "numericUse": "Только учебные допущения; состояния техники не заменяются процентом номинального состава."
+    },
+    {
+      "sourceId": "spec-morale",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Укомплектование и ограниченные переходы МПС виртуальных сил",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-MPS-01", "KSHVI-F-MPS-02", "KSHVI-F-MPS-03", "KSHVI-F-MPS-04", "KSHVI-F-MPS-05", "KSHVI-F-SIM-18"],
+      "numericUse": "Только учебные допущения для виртуальных сил; реальные участники не оцениваются."
+    },
+    {
+      "sourceId": "spec-medical-process",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Медицинское обеспечение как сценарный процесс полной имитации",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-AUTO-02", "KSHVI-F-RUN-05", "KSHVI-F-SIM-01", "KSHVI-F-SIM-06"],
+      "numericUse": "Только учебные допущения для виртуальных случаев и объектов, без диагностики и медицинских рекомендаций."
+    },
+    {
+      "sourceId": "spec-civil-context",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Населённые пункты, инфраструктура и гражданский контекст карты",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ENV-01", "KSHVI-F-ENV-12", "KSHVI-F-ENV-13", "KSHVI-F-PREP-13", "KSHVI-F-PREP-14"],
+      "numericUse": "Только учебные допущения для сценарной инфраструктуры."
+    },
+    {
+      "sourceId": "spec-interaction",
+      "revision": 1,
+      "kind": "PROJECT_SPEC",
+      "title": "Взаимодействие, коалиционные документы и информационные условия",
+      "path": "docs/superpowers/specs/2026-11-20-kshvi-modern-design.md",
+      "requirements": ["KSHVI-F-ORG-01", "KSHVI-F-ORG-03", "KSHVI-F-DOC-10", "KSHVI-F-DOC-12", "KSHVI-F-DOC-16", "KSHVI-F-RUN-06"],
+      "numericUse": "Только учебные допущения; информационные события не раскрывают скрытую истину."
+    }
+  ]
+}
