@@ -5,9 +5,10 @@ const ModernKnowledgeView = lazy(() => import('./modern/ModernKnowledgeView').th
 
 const AtlasView = lazy(() => import('./modern/AtlasView').then(m => ({ default: m.AtlasView })));
 const ReplayView = lazy(() => import('./modern/replay/ReplayView').then(m => ({ default: m.ReplayView })));
+const KshviView = lazy(() => import('./modern/kshvi/KshviView').then(m => ({ default: m.KshviView })));
 
 export type AppMode = 'historical' | 'modern';
-type ModernSection = 'start' | 'knowledge' | 'weather' | 'atlas' | 'replay';
+type ModernSection = 'start' | 'knowledge' | 'weather' | 'atlas' | 'replay' | 'kshvi';
 const MODE_KEY = 'def_ops.app.mode';
 function readMode(): AppMode {
   try { return localStorage.getItem(MODE_KEY) === 'modern' ? 'modern' : 'historical'; }
@@ -25,7 +26,7 @@ export function AppWorkspace({ historical }: { historical(active: boolean, onMod
   const [mode, setMode] = useState<AppMode>(readMode);
   const [openedHistory, setOpenedHistory] = useState(mode === 'historical');
   const [modernSection, setModernSection] = useState<ModernSection>(() => {
-    try { const saved = localStorage.getItem('def_ops.modern.section'); return saved === 'knowledge' || saved === 'weather' || saved === 'atlas' || saved === 'replay' ? saved : 'start'; } catch { return 'start'; }
+    try { const saved = localStorage.getItem('def_ops.modern.section'); return saved === 'knowledge' || saved === 'weather' || saved === 'atlas' || saved === 'replay' || saved === 'kshvi' ? saved : 'start'; } catch { return 'start'; }
   });
   const openModern = (section: ModernSection) => {
     setModernSection(section);
@@ -46,9 +47,10 @@ export function AppWorkspace({ historical }: { historical(active: boolean, onMod
         <button type="button" aria-current={modernSection === 'start' ? 'page' : undefined} onClick={() => openModern('start')}>Начало</button>
         <button type="button" aria-current={modernSection === 'knowledge' ? 'page' : undefined} onClick={() => openModern('knowledge')}>База знаний</button>
         <button type="button" aria-current={modernSection === 'atlas' || modernSection === 'weather' ? 'page' : undefined} onClick={() => openModern('atlas')}>Карта и погода</button>
+        <button type="button" aria-current={modernSection === 'kshvi' ? 'page' : undefined} onClick={() => openModern('kshvi')}>КШВИ</button>
         <button type="button" aria-current={modernSection === 'replay' ? 'page' : undefined} onClick={() => openModern('replay')}>Переигровка</button>
       </nav>
-      {modernSection === 'replay' ? <Suspense fallback={<p className="modern-loading">Открываем переигровку…</p>}><ReplayView /></Suspense> : modernSection === 'weather' || modernSection === 'atlas' ? <Suspense fallback={<p className="modern-loading">Открываем карту и погоду…</p>}><AtlasView /></Suspense> : modernSection === 'knowledge' ? <Suspense fallback={<p className="modern-loading">Открываем базу знаний…</p>}><ModernKnowledgeView /></Suspense> : <section className="modern-welcome">
+      {modernSection === 'replay' ? <Suspense fallback={<p className="modern-loading">Открываем переигровку…</p>}><ReplayView /></Suspense> : modernSection === 'kshvi' ? <Suspense fallback={<p className="modern-loading">Открываем КШВИ…</p>}><KshviView /></Suspense> : modernSection === 'weather' || modernSection === 'atlas' ? <Suspense fallback={<p className="modern-loading">Открываем карту и погоду…</p>}><AtlasView /></Suspense> : modernSection === 'knowledge' ? <Suspense fallback={<p className="modern-loading">Открываем базу знаний…</p>}><ModernKnowledgeView /></Suspense> : <section className="modern-welcome">
         <p className="modern-kicker">Рабочее пространство</p>
         <h1>Современный режим</h1>
         <p>Выберите область в атласе, изучите материалы о странах или начните двустороннюю переигровку.</p>
