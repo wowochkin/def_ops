@@ -1,9 +1,10 @@
 /**
  * Оценка выставочного сеанса по трём осям против истории своего фронта и звание по их сумме.
  *
- * Скорость — средний сдвиг уже случившихся ключевых событий. Событие, которого в ходе ещё нет, в шкалу не входит:
- * календарная дата 1945 года сама по себе не делает его просроченным. Цена — потери фронта (личный состав) против эталона —
- * потерь того же фронта в ходе «как было» на тот же час. Замысел — доля состоявшихся ключевых событий из тех, что к
+ * Скорость — средний сдвиг уже случившихся ключевых событий; на итоговом досчёте просроченное несвершившееся событие
+ * считается опоздавшим. До итога календарная дата 1945 года сама по себе не делает событие просроченным. Цена — потери фронта (личный состав) против эталона —
+ * потерь того же фронта в ходе «как было» на тот же час, делённые на долю выполненных задач: экономия на невыполненном
+ * не в счёт. Замысел — доля состоявшихся ключевых событий из тех, что к
  * этому часу уже случились в истории (или случились в ходе). Каждая ось — от −1 (много хуже истории) до +1.
  */
 import type { EventResult } from '@def-ops/sim';
@@ -28,8 +29,9 @@ export const COST_FULL_SHARE = 0.3;
 
 /**
  * Оси на момент `now` (ISO, время хода): ключевые события `keys`, потери фронта `loss` и эталон `refLoss` на тот же час.
+ * На итоговом досчёте (`finished`) несвершившееся просроченное событие входит в скорость с опозданием к этому часу.
  */
-export function axes(events: EventResult[], keys: string[], now: string, loss: number, refLoss: number | null): AxesDetail {
+export function axes(events: EventResult[], keys: string[], now: string, loss: number, refLoss: number | null, finished = false): AxesDetail {
   const t = dayOf(now);
   const shifts: number[] = [];
   let done = 0;
@@ -42,13 +44,17 @@ export function axes(events: EventResult[], keys: string[], now: string, loss: n
       done++;
       due++;
       shifts.push(e.days!);
-    } else if (dayOf(e.historical) < t) due++;
+    } else if (dayOf(e.historical) < t) {
+      due++;
+      if (finished) shifts.push(Math.round((t - dayOf(e.historical)) / 86_400_000));
+    }
   }
   const days = shifts.length ? shifts.reduce((a, b) => a + b, 0) / shifts.length : null;
   const lossRatio = refLoss && refLoss > 0 ? loss / refLoss : null;
+  const completion = due ? Math.max(done / due, 0.25) : 1;
   return {
     speed: days === null ? 0 : clamp(-days / SPEED_FULL_DAYS),
-    cost: lossRatio === null ? 0 : clamp((1 - lossRatio) / COST_FULL_SHARE),
+    cost: lossRatio === null ? 0 : clamp((1 - lossRatio / completion) / COST_FULL_SHARE),
     intent: due ? clamp((2 * done) / due - 1) : 0,
     days,
     lossRatio,
