@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "LOCAL_POSTGRESQL_FUNCTIONAL_DRILL",
+  "measuredAt": "2026-11-21T23:00:24.018Z",
+  "command": "TEST_DATABASE_URL=… npx vitest run services/kshvi/tests/recovery-drill.test.ts",
+  "confirmedEvents": 1,
+  "duplicateEventsAfterRetry": 0,
+  "confirmedEventsLost": 0,
+  "rpo": 0,
+  "restartMs": 0.6581250000000125,
+  "restartTargetMs": 300000,
+  "nodeRestoreMs": 1.8575840000000028,
+  "nodeRestoreTargetMs": 1800000,
+  "verifiedBackupFiles": 5,
+  "isolatedRestore": true,
+  "divergence": {
+    "allowed": false,
+    "requiredReport": "DIVERGENCE",
+    "preservedSequence": 140
+  },
+  "limitations": [
+    "Проверены транзакционный PostgreSQL, повтор команды и файловое восстановление на локальном узле.",
+    "Полная потеря физического узла, нагрузка 50 рабочих мест и сетевые задержки этой репетицией не проверялись.",
+    "Измерения не заменяют стендовый протокол NF-12 и AC-16 на эталонном наборе данных."
+  ]
+}

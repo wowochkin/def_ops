@@ -1,0 +1,6 @@
+{
+  "package": "pdfmake",
+  "version": "0.2.23",
+  "license": "MIT",
+  "runtime": "local-node_modules"
+}

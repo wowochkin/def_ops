@@ -1,0 +1,6 @@
+{
+  "package": "python-docx",
+  "version": "1.2.0",
+  "license": "MIT",
+  "runtime": "local-managed-python"
+}

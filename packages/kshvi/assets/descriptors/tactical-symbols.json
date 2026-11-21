@@ -1,0 +1,6 @@
+{
+  "package": "@def-ops/tactical-symbols",
+  "version": "0.1.0",
+  "catalog": "packages/tactical-symbols/data/sets",
+  "runtime": "local-workspace"
+}

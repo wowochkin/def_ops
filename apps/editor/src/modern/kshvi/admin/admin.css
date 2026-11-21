@@ -1,0 +1,26 @@
+.kshvi-admin { min-width: 0; }
+.kshvi-admin h2 { margin-bottom: 16px; }
+.kshvi-admin h3 { margin: 16px 0 10px; }
+.kshvi-admin p { margin: 7px 0; }
+.kshvi-operations-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.kshvi-operations-grid > article, .kshvi-admin-card, .kshvi-notification { min-width: 0; padding: 16px; border: 1px solid #496168; border-radius: 7px; background: #182b31; }
+.kshvi-operations-grid dl { margin: 0; }
+.kshvi-operations-grid dl div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #385157; }
+.kshvi-operations-grid dd { margin: 0; font-weight: 600; }
+.kshvi-admin code { display: block; margin-top: 8px; overflow-wrap: anywhere; color: #b9ccc6; font-size: 12px; }
+.kshvi-admin-table { max-width: 100%; max-height: 60vh; overflow: auto; margin-top: 16px; border: 1px solid #496168; }
+.kshvi-admin-table table { width: 100%; border-collapse: collapse; }
+.kshvi-admin-table th, .kshvi-admin-table td { padding: 10px; border-bottom: 1px solid #385157; text-align: left; vertical-align: top; }
+.kshvi-alert-list { margin-bottom: 16px; }
+.kshvi-notification { margin: 12px 0; border-left: 4px solid #e6ac79; }
+.kshvi-async-state, .kshvi-offline-banner { padding: 18px; border: 1px solid #607b7c; border-radius: 6px; background: #182b31; color: #e8f0eb; }
+.kshvi-dialog-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgb(3 12 16 / 82%); }
+.kshvi-admin-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 24px; border: 2px solid #e2c28f; border-radius: 8px; background: #11242a; color: #e8f0eb; box-shadow: 0 20px 70px #000; }
+.kshvi-admin-dialog h2 { margin: 0 0 12px; }
+.kshvi-admin-dialog label { display: block; margin-top: 20px; }
+.kshvi-admin-dialog input { display: block; width: 100%; margin-top: 6px; padding: 10px; border: 1px solid #91aca6; background: #fff; color: #111; font: inherit; }
+.kshvi-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.kshvi-dialog-actions button { min-height: 42px; padding: 9px 15px; }
+.kshvi-admin-dialog button:focus-visible, .kshvi-admin-dialog input:focus-visible, .kshvi-admin button:focus-visible { outline: 3px solid #f4c87d; outline-offset: 3px; }
+@media (max-width: 1100px) { .kshvi-operations-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .kshvi-operations-grid { grid-template-columns: 1fr; } }

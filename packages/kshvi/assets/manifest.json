@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "font-pt-sans-narrow",
+      "kind": "FONT",
+      "name": "PT Sans Narrow, кириллица",
+      "source": "Локальный пакет @fontsource/pt-sans-narrow",
+      "version": "5.3.0",
+      "license": "OFL-1.1",
+      "path": "fonts/pt-sans-narrow-cyrillic-400-normal.woff2",
+      "sha256": "ff565657aca50b0d3ad4dd38ae9121543149796ea8db25b6a0b6ad78d11e3bcc",
+      "attribution": "Copyright 2009 ParaType Ltd.; распространение Fontsource",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "library-react",
+      "kind": "LIBRARY",
+      "name": "React",
+      "source": "Локальный пакет react",
+      "version": "19.3.0",
+      "license": "MIT",
+      "path": "descriptors/react.json",
+      "sha256": "556d3c2f9234f09ce54144a4a180de93545eac87eab0eebb5536dd8336b22fea",
+      "attribution": "React and contributors",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "atlas-training-empty",
+      "kind": "ATLAS",
+      "name": "Учебная пустая топооснова",
+      "source": "Проектный учебный набор",
+      "version": "1.0.0",
+      "license": "CC0-1.0",
+      "path": "data/training-atlas.json",
+      "sha256": "e436775027030ea18ac35deb2d0e33964d0d9d864f8518e7b56af2e5e748e871",
+      "attribution": "Учебный набор КШВИ; не картографический эталон",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "weather-training-no-data",
+      "kind": "WEATHER",
+      "name": "Учебный погодный набор без данных",
+      "source": "Проектный учебный набор",
+      "version": "1.0.0",
+      "license": "CC0-1.0",
+      "path": "data/training-weather.json",
+      "sha256": "bb030640250182809f87f1db77fe9db164b636c6fdaca0f86ceabac2167f5b92",
+      "attribution": "Учебный набор КШВИ; отсутствие данных сохраняется явно",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "generator-pdfmake",
+      "kind": "PDF_GENERATOR",
+      "name": "pdfmake",
+      "source": "Локальный пакет pdfmake",
+      "version": "0.2.23",
+      "license": "MIT",
+      "path": "descriptors/pdfmake.json",
+      "sha256": "2d4deaff1bbe365bd3e8e147c1f6f0e5c09243a61bd44ba9ea45afb91f876b79",
+      "attribution": "Bartek Pampuch and contributors",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "generator-python-docx",
+      "kind": "DOCX_GENERATOR",
+      "name": "python-docx",
+      "source": "Локальный управляемый Python",
+      "version": "1.2.0",
+      "license": "MIT",
+      "path": "descriptors/python-docx.json",
+      "sha256": "853b7e6c55903e13e4b596e7ee1cc7244fdae94fffb8d20fa3c4f862d032ab26",
+      "attribution": "python-docx contributors",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "symbols-local",
+      "kind": "SYMBOLS",
+      "name": "Локальный реестр тактических знаков",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "Проектная лицензия",
+      "path": "descriptors/tactical-symbols.json",
+      "sha256": "b9ab96d79d55e6b25c9538892ddc1638a27247ba3a349cec5937b6450b4c8107",
+      "attribution": "Реестр источников тактических знаков проекта",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    },
+    {
+      "id": "reference-local",
+      "kind": "REFERENCE",
+      "name": "Локальная база знаний",
+      "source": "packages/knowledge/data",
+      "version": "0.1.0",
+      "license": "По записям источников проекта",
+      "path": "descriptors/knowledge.json",
+      "sha256": "aa272314df918de3578386cb67734464b934111f4efe5d1eff2af48342d73e38",
+      "attribution": "Атрибуция хранится в записях локальной базы знаний",
+      "offlineReady": true,
+      "autonomousArchive": "ALLOWED"
+    }
+  ]
+}
