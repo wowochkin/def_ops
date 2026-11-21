@@ -28,3 +28,23 @@ export * from './forces/morale-state';
 export * from './forces/morale-effects';
 export * from './forces/morale-projection';
 export * from './forces/modern-import';
+export {
+  operationalAt as operationalClockAt,
+  orderActions,
+  executeJump,
+  jumpApplied,
+  applyStopMode,
+  applyDelegation,
+  proposeInput,
+  evaluateTrigger,
+  validateTriggerGraph,
+  resolveConflict,
+  type OperationalClock,
+  type ScheduledAction,
+  type JumpTransaction,
+  type StopState,
+  type StopMode,
+  type AdaptiveInput,
+  type Delegation,
+  type TriggerCondition,
+} from './runtime/index';
