@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://def-ops.local/schemas/kshvi/model.schema.json",
+  "title": "Канонические сущности КШВИ",
+  "definitions": {
+    "VersionRef": {
+      "type": "object",
+      "required": ["id", "revision", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "Quantity": {
+      "type": "object",
+      "required": ["value", "unit", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": ["number", "null"] },
+        "unit": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["KNOWN", "UNKNOWN"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "status": { "const": "UNKNOWN" } } }, "then": { "properties": { "value": { "type": "null" } } } }
+      ]
+    },
+    "Exercise": { "type": "object", "required": ["id", "purpose", "scale", "method", "ownerId"] },
+    "ScenarioVersion": { "type": "object", "required": ["id", "exerciseId", "revision", "sha256"] },
+    "EnvironmentSnapshot": { "type": "object", "required": ["id", "region", "weather", "contentHashes", "sha256"] },
+    "Instance": { "type": "object", "required": ["id", "scenarioVersion", "kind", "state", "branchId"] },
+    "InitialSituationMap": { "type": "object", "required": ["id", "initialAt", "environment", "truthLayers", "sha256"] },
+    "TerrainState": { "type": "object", "required": ["id", "version", "effectiveAt", "passability", "capacity"] },
+    "CommandNode": { "type": "object", "required": ["id", "sideId", "decisionSource"] },
+    "Force": { "type": "object", "required": ["id", "sideId", "ownerNodeId", "position"] },
+    "ModernKnowledgeImport": { "type": "object", "required": ["id", "sourceRecord", "unknownFields", "reviewStatus"] },
+    "EquipmentHolding": { "type": "object", "required": ["id", "forceId", "characteristics", "authorized", "actual"] },
+    "MoralePsychState": { "type": "object", "required": ["id", "forceId", "components", "scale", "measuredAt"] },
+    "ReadinessState": { "type": "object", "required": ["id", "subjectId", "initialLevel", "requiredLevel", "readiness"] },
+    "FormationPlan": { "type": "object", "required": ["id", "orderDocumentId", "echelons", "routes", "executionState"] },
+    "ResourceLedgerEntry": { "type": "object", "required": ["id", "resourceId", "ownerId", "quantity", "causeIds", "idempotencyKey"] },
+    "SupplyNode": { "type": "object", "required": ["id", "stocks", "capacity", "state", "visibility"] },
+    "SupplyMovement": { "type": "object", "required": ["id", "requestId", "route", "remainingInTransit"] },
+    "EventTemplate": { "type": "object", "required": ["id", "category", "educationalQuestion", "source", "effects", "version"] },
+    "EventCandidateTrace": { "type": "object", "required": ["id", "interval", "category", "candidates", "randomKey", "createdEventIds"] },
+    "AutonomyProfile": { "type": "object", "required": ["id", "intensities", "limits", "seed", "version"] },
+    "ElectronicIntermediaryAssignment": { "type": "object", "required": ["id", "systemIdentity", "nodeIds", "mode", "projection", "authorities"] },
+    "AgentDecisionTrace": { "type": "object", "required": ["id", "inputProjection", "inputHash", "options", "commands", "explanation"] },
+    "Document": { "type": "object", "required": ["id", "type", "content", "revision", "supersedes", "sha256"] },
+    "Input": { "type": "object", "required": ["id", "kind", "sourceRole", "addresseeIds", "state"] },
+    "Channel": { "type": "object", "required": ["id", "nodeIds", "capacity", "delay", "activePeriod"] },
+    "Message": { "type": "object", "required": ["id", "content", "senderRole", "addresseeIds", "domainKey"] },
+    "Decision": { "type": "object", "required": ["id", "nodeId", "basis", "options", "objectives", "executionState"] },
+    "Calculation": { "type": "object", "required": ["id", "mode", "inputHash", "model", "result", "state"] },
+    "DomainEvent": { "type": "object", "required": ["eventId", "instanceId", "branchId", "sequence", "type", "schemaVersion", "payload", "hash"] },
+    "Snapshot": { "type": "object", "required": ["id", "branchId", "sequence", "stateHash", "environment", "state"] },
+    "Assessment": { "type": "object", "required": ["id", "criterion", "subjectId", "factEventIds", "manualGrade", "author"] },
+    "ResearchRecord": { "type": "object", "required": ["id", "question", "hypothesis", "method", "limitations", "conclusion"] },
+    "ExpositionProgram": { "type": "object", "required": ["id", "source", "chapters", "audience", "demonstrationBranchId"] },
+    "SymbolSet": { "type": "object", "required": ["id", "version", "sourceDocuments", "fileHashes", "methodologicalApproval"] },
+    "SymbolDefinition": { "type": "object", "required": ["id", "code", "russianName", "vectorGeometry", "source", "status", "version"] },
+    "Participant": { "type": "object", "required": ["id", "accountId", "organizationId", "state"] },
+    "RoleAssignment": { "type": "object", "required": ["id", "participantId", "nodeId", "role", "activePeriod", "authorities"] },
+    "ApprovalRequest": { "type": "object", "required": ["id", "kind", "diff", "consequences", "decision", "rationale"] }
+  }
+}
