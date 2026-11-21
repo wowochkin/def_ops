@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "scenarioHash": "4b5719cbf3b5e80e3e3607b49a18a1a6cf66a5f8b2d6f99f9db1b18e36d7f414",
+  "environmentHash": "36e094af7b640d3eb431a8710c95276700287ce8c453b9ef99f77020650cd103",
+  "checks": [
+    "AC-01",
+    "AC-11",
+    "AC-03",
+    "AC-04:partial",
+    "AC-06:partial",
+    "AC-05",
+    "AC-07",
+    "AC-09",
+    "AC-15",
+    "AC-18"
+  ],
+  "coverage": {
+    "AC-01": "passed",
+    "AC-03": "passed",
+    "AC-04": "partial",
+    "AC-05": "passed",
+    "AC-06": "partial",
+    "AC-07": "passed",
+    "AC-09": "passed",
+    "AC-11": "passed",
+    "AC-15": "passed",
+    "AC-18": "passed"
+  },
+  "events": [
+    {
+      "eventId": "g2-session-A-1",
+      "sequence": 1,
+      "type": "instance.started.v1",
+      "payload": {
+        "scenarioHash": "4b5719cbf3b5e80e3e3607b49a18a1a6cf66a5f8b2d6f99f9db1b18e36d7f414",
+        "environmentHash": "36e094af7b640d3eb431a8710c95276700287ce8c453b9ef99f77020650cd103"
+      },
+      "prevHash": null,
+      "hash": "b68512a57ac91bb4bf21f2fa6a0231c8ee37c419495eb1142afa9ef48e5565dc",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-B-1",
+      "sequence": 1,
+      "type": "instance.started.v1",
+      "payload": {
+        "scenarioHash": "4b5719cbf3b5e80e3e3607b49a18a1a6cf66a5f8b2d6f99f9db1b18e36d7f414",
+        "environmentHash": "36e094af7b640d3eb431a8710c95276700287ce8c453b9ef99f77020650cd103"
+      },
+      "prevHash": null,
+      "hash": "8a8d269092b321d9be8ebbf72a8244bf5bb2eb7e2390ca3911c6a1dc697085fc",
+      "instanceId": "session-B",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-2",
+      "sequence": 2,
+      "type": "decision.accepted.v1",
+      "payload": {
+        "decisionId": "decision-blue-1",
+        "sideId": "blue",
+        "cycleElements": [
+          "DECISION_ADJUSTMENT",
+          "EXECUTION_CONTROL",
+          "DOCUMENT_COORDINATION",
+          "DECISION_FORMALIZATION",
+          "COURSE_COMPARISON",
+          "SUBORDINATE_TASKS",
+          "CAPABILITY_ASSESSMENT",
+          "SITUATION_REVIEW",
+          "TASK_CLARIFICATION"
+        ]
+      },
+      "prevHash": "b68512a57ac91bb4bf21f2fa6a0231c8ee37c419495eb1142afa9ef48e5565dc",
+      "hash": "c4a26a1f1327750aa6df5aaa08defcfe6719856f536dffb0175540b2391cca1a",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-3",
+      "sequence": 3,
+      "type": "decision.accepted.v1",
+      "payload": {
+        "decisionId": "decision-red-1",
+        "sideId": "red",
+        "cycleElements": [
+          "TASK_CLARIFICATION"
+        ]
+      },
+      "prevHash": "c4a26a1f1327750aa6df5aaa08defcfe6719856f536dffb0175540b2391cca1a",
+      "hash": "e8276f7fb2fa0d8905fb2f49b9b04aeff984b668ca237d92f11ffd567d1ab078",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-4",
+      "sequence": 4,
+      "type": "order.delivered.v1",
+      "payload": {
+        "orderId": "order-blue-1",
+        "receivedAt": "2030-01-01T01:05:00Z"
+      },
+      "prevHash": "e8276f7fb2fa0d8905fb2f49b9b04aeff984b668ca237d92f11ffd567d1ab078",
+      "hash": "a0c71bad610ca24c4327dae5b48d27c93478976caf4c6db4974b458cc431f9df",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-5",
+      "sequence": 5,
+      "type": "order.execution.started.v1",
+      "payload": {
+        "orderId": "order-blue-1",
+        "position": {
+          "remainingMeters": 5000,
+          "travelledMeters": 0
+        }
+      },
+      "prevHash": "a0c71bad610ca24c4327dae5b48d27c93478976caf4c6db4974b458cc431f9df",
+      "hash": "2313e6123f39d29ab55dad72e70e89f48142e976dac4bdad528a9f63eea05903",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-6",
+      "sequence": 6,
+      "type": "order.cost.recorded.v1",
+      "payload": {
+        "orderId": "order-blue-1",
+        "actualCosts": {
+          "timeMinutes": 10,
+          "resources": {
+            "fuel": 2
+          }
+        },
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        }
+      },
+      "prevHash": "2313e6123f39d29ab55dad72e70e89f48142e976dac4bdad528a9f63eea05903",
+      "hash": "644a1ebb0d14f3cb3f3bde8c6840a931f690e8fdab69ef0876cac6f4efb4eb5b",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-7",
+      "sequence": 7,
+      "type": "order.cancelled.v1",
+      "payload": {
+        "orderId": "order-blue-1",
+        "status": "CANCELLED_AFTER_RECEIPT",
+        "costs": {
+          "timeMinutes": 10,
+          "resources": {
+            "fuel": 2
+          }
+        },
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        }
+      },
+      "prevHash": "644a1ebb0d14f3cb3f3bde8c6840a931f690e8fdab69ef0876cac6f4efb4eb5b",
+      "hash": "91bfef7e6adac9a53d7c7782f0096975e485f06d937eb3720b42730e41ebc3d9",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-8",
+      "sequence": 8,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "resourceId": "fuel",
+        "amount": 14,
+        "supplied": 2
+      },
+      "prevHash": "91bfef7e6adac9a53d7c7782f0096975e485f06d937eb3720b42730e41ebc3d9",
+      "hash": "da9f608b155521a3289e7897abcc781d6c15f83bbe954dd0a726a6c3375d2e6e",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-9",
+      "sequence": 9,
+      "type": "calculation.applied.v1",
+      "payload": {
+        "calculationId": "calculation-blue-1",
+        "state": "APPLIED",
+        "appliedEventIds": [
+          "g2-session-A-8"
+        ]
+      },
+      "prevHash": "da9f608b155521a3289e7897abcc781d6c15f83bbe954dd0a726a6c3375d2e6e",
+      "hash": "9be048582b94f3f0b1c08215bad06bcf240dbdaf4595c8093546bc004f0d58af",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-10",
+      "sequence": 10,
+      "type": "order.reported.v1",
+      "payload": {
+        "orderId": "order-blue-1",
+        "outcome": "PARTIALLY_COMPLETED",
+        "reason": "Дефицит fuel: 2 Л",
+        "actualCosts": {
+          "timeMinutes": 10,
+          "resources": {
+            "fuel": 2
+          }
+        }
+      },
+      "prevHash": "9be048582b94f3f0b1c08215bad06bcf240dbdaf4595c8093546bc004f0d58af",
+      "hash": "91e792d624b9ef0717a5acb9c8fe658523e87351ef3d32c26615ae7bea0b6e6a",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-11",
+      "sequence": 11,
+      "type": "jump.applied.v1",
+      "payload": {
+        "jumpId": "g2-jump-memory",
+        "targetOperationalAt": "2030-01-01T03:00:00Z",
+        "snapshotHash": "fe1a8ea1c1d2d4effe90ac9aba96af9381bc5705776980a1416f21e3597cfc46",
+        "manualSupersedes": "calculation-blue-1"
+      },
+      "prevHash": "91e792d624b9ef0717a5acb9c8fe658523e87351ef3d32c26615ae7bea0b6e6a",
+      "hash": "5b9e9fbf2aedc403630336d7a6a74730d37357a6484562ab72abefeba59225ca",
+      "instanceId": "session-A",
+      "idempotent": false
+    },
+    {
+      "eventId": "g2-session-A-12",
+      "sequence": 12,
+      "type": "exercise.completed.v1",
+      "payload": {
+        "status": "COMPLETED",
+        "outcomeAuthority": "EXERCISE_LEADER",
+        "unfinishedEventIds": [
+          "delivery-pending"
+        ]
+      },
+      "prevHash": "5b9e9fbf2aedc403630336d7a6a74730d37357a6484562ab72abefeba59225ca",
+      "hash": "c1224e57cbe090b0a7fa17e1023240b0b19c419dcf21006bbbffd75796a5f1c3",
+      "instanceId": "session-A",
+      "idempotent": false
+    }
+  ]
+}

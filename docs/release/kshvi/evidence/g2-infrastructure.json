@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "postgresql": {
+    "status": "blocked",
+    "attempts": [
+      {
+        "command": "TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/kshvi_test npx vitest run services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "result": "database kshvi_test does not exist"
+      },
+      {
+        "command": "createdb -h 127.0.0.1 -p 5432 -U postgres kshvi_test",
+        "result": "permission denied to create database"
+      },
+      {
+        "command": "TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npx vitest run services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "result": "permission denied for database postgres при создании изолированной схемы"
+      }
+    ],
+    "conclusion": "Сервер принимает соединения, но доступный пользователь не может создать базу или схему. Реальная PostgreSQL-часть G2 не выполнена; статус passed не присваивается."
+  },
+  "cartography": {
+    "status": "not_run",
+    "conclusion": "Внешняя картографическая приёмка в рамках разрешённого набора файлов не запускалась."
+  },
+  "gateway": {
+    "status": "not_run",
+    "conclusion": "Сквозная приёмка через шлюз не запускалась; HTTP calculation-routes проверен отдельным реальным сервером."
+  },
+  "documentAndCommunicationLimits": [
+    "AC-04: двойная документная вертикаль и экспорт PDF/DOCX отсутствуют в исходной ветке; проверены только редакции решений, самостоятельные плечи доставки и получение≠исполнение.",
+    "AC-06: полноценная модель каналов связи отсутствует в исходной ветке; проверены идемпотентность, SSE-дедупликация и отказ доставки с причиной."
+  ]
+}

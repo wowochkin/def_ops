@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "G2",
+  "status": "limited",
+  "verificationStatus": "passed",
+  "generatedAt": "2026-11-21T23:06:44.631Z",
+  "command": "npx vitest run services/kshvi/tests/e2e/conduct-cycle.test.ts apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+  "browserCommand": "KSHVI_BASE_URL=http://127.0.0.1:5174 npx playwright test apps/editor/tests/kshvi-workspaces.spec.ts --reporter=line --workers=1",
+  "tasks": [
+    "Task 32",
+    "Task 33",
+    "Task 34",
+    "Task 35",
+    "Task 36"
+  ],
+  "requirements": [
+    "RUN-13–RUN-18",
+    "GEN-04–GEN-07",
+    "SIM-02–SIM-17",
+    "ROLE-03–ROLE-07",
+    "UI-02–UI-16",
+    "UI-18–UI-19",
+    "UI-22"
+  ],
+  "acceptanceIds": [
+    "AC-01",
+    "AC-03",
+    "AC-04",
+    "AC-05",
+    "AC-06",
+    "AC-07",
+    "AC-09",
+    "AC-11",
+    "AC-15",
+    "AC-18"
+  ],
+  "checks": [
+    "AC-01",
+    "AC-11",
+    "AC-03",
+    "AC-04:partial",
+    "AC-06:partial",
+    "AC-05",
+    "AC-07",
+    "AC-09",
+    "AC-15",
+    "AC-18"
+  ],
+  "coverage": {
+    "AC-01": "passed",
+    "AC-03": "passed",
+    "AC-04": "partial",
+    "AC-05": "passed",
+    "AC-06": "partial",
+    "AC-07": "passed",
+    "AC-09": "passed",
+    "AC-11": "passed",
+    "AC-15": "passed",
+    "AC-18": "passed"
+  },
+  "infrastructure": {
+    "postgresql": "not_run",
+    "cartography": "not_run",
+    "gateway": "not_run"
+  },
+  "scenarioHash": "4b5719cbf3b5e80e3e3607b49a18a1a6cf66a5f8b2d6f99f9db1b18e36d7f414",
+  "environmentHash": "36e094af7b640d3eb431a8710c95276700287ce8c453b9ef99f77020650cd103",
+  "journal": {
+    "eventCount": 13,
+    "sha256": "7cfaeb0956007308bc126b75eeee21da924924e9491d04da31298ee21f205b0f",
+    "finalHash": "c1224e57cbe090b0a7fa17e1023240b0b19c419dcf21006bbbffd75796a5f1c3"
+  },
+  "directOutcomeWrites": false,
+  "artifacts": [
+    "docs/release/kshvi/evidence/g2-journal.json",
+    "docs/release/kshvi/evidence/g2-infrastructure.json",
+    "docs/release/kshvi/evidence/kshvi-trainee-1440.jpg",
+    "docs/release/kshvi/evidence/kshvi-leader-1440.jpg",
+    "docs/release/kshvi/evidence/kshvi-playgroup-1440.jpg",
+    "docs/release/kshvi/evidence/kshvi-intermediary-1440.jpg",
+    "docs/release/kshvi/evidence/kshvi-analyst-1440.jpg",
+    "docs/release/kshvi/evidence/kshvi-projector-1920.jpg"
+  ],
+  "openErrors": [
+    "AC-04: покрытие partial, требуется полный профильный контур",
+    "AC-06: покрытие partial, требуется полный профильный контур",
+    "PostgreSQL: инфраструктурная приёмка not_run",
+    "cartography: инфраструктурная приёмка not_run",
+    "gateway: инфраструктурная приёмка not_run"
+  ]
+}
