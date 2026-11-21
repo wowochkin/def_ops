@@ -9,6 +9,9 @@ data
 !packages/sim/data
 !packages/knowledge/data
 !packages/kshvi-events/data
+# обязательные автономные ресурсы КШВИ — версионируемые исходники
+!packages/kshvi/assets/data
+!packages/kshvi/assets/data/**
 
 # корпоративные сертификаты для сборки (не коммитятся)
 deploy/extra-ca/*.crt

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "id": "training-empty-atlas",
+  "name": "Учебная пустая топооснова",
+  "status": "TRAINING",
+  "features": [],
+  "source": "Учебное допущение, не картографический эталон"
+}

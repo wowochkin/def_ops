@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "id": "training-no-weather",
+  "status": "NO_DATA",
+  "records": [],
+  "note": "Нет данных; нормальная погода и коэффициент 1 не подставляются"
+}
