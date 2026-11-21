@@ -27,3 +27,6 @@ export * from './instances/sealing-service';
 export * from './http/sealing-routes';
 export * from './environment/cartography-provider';
 export * from './environment/snapshot-store';
+export * from './exposition/exposition-service';
+export * from './exposition/exposition-projection';
+export * from './exposition/exposition-export';

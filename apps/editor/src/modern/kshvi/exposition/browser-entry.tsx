@@ -101,6 +101,5 @@ export function BrowserExpositionApp() {
   </div>;
 }
 
-const root = document.getElementById('root');
-if (!root) throw new Error('Не найден корневой элемент экспозиционного browser entry');
-createRoot(root).render(<BrowserExpositionApp />);
+const root = document.getElementById('exposition-browser-root');
+if (root) createRoot(root).render(<BrowserExpositionApp />);

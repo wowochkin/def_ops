@@ -76,7 +76,7 @@ describe('библиотека КШВИ', () => {
 });
 
 describe('оболочка КШВИ и навигация', () => {
-  it('показывает обязательные вкладки, скрывает администрирование по правам и не добавляет Показ', async () => {
+  it('показывает обязательные вкладки и Показ, скрывает администрирование по правам', async () => {
     const client = new ExerciseClient({ fetch: vi.fn(async () => json({ items: [] })) });
     const view = render(<KshviView client={client} authorities={['exercise:read']} />);
     expect(await screen.findByRole('heading', { name: 'КШВИ' })).toBeTruthy();
@@ -84,10 +84,10 @@ describe('оболочка КШВИ и навигация', () => {
       expect(screen.getByRole('button', { name })).toBeTruthy();
     }
     expect(screen.queryByRole('button', { name: 'Администрирование' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Показ' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Показ' })).toBeTruthy();
     view.rerender(<KshviView client={client} authorities={['exercise:read', 'kshvi:admin']} />);
     expect(screen.getByRole('button', { name: 'Администрирование' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Показ' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Показ' })).toBeTruthy();
   });
 
   it('хранит локальный одномашинный черновик отдельно от карты и не называет его сетевым сеансом', async () => {

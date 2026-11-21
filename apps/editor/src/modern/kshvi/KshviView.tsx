@@ -11,9 +11,10 @@ import {
 import { LibraryView, type LibraryExercise } from './LibraryView';
 import { PreparationWorkspace } from './preparation/PreparationWorkspace';
 import { ConductWorkspace } from './conduct/ConductWorkspace';
+import { BrowserExpositionApp } from './exposition/browser-entry';
 import './kshvi.css';
 
-type KshviSection = 'library' | 'preparation' | 'conduct' | 'review' | 'archive' | 'admin';
+type KshviSection = 'library' | 'preparation' | 'conduct' | 'review' | 'archive' | 'exposition' | 'admin';
 const SECTION_KEY = 'def_ops.kshvi.section';
 const LOCAL_EDITOR_KEY = 'def_ops.kshvi.local-editor';
 const sections: readonly { id: KshviSection; label: string }[] = [
@@ -22,6 +23,7 @@ const sections: readonly { id: KshviSection; label: string }[] = [
   { id: 'conduct', label: 'Проведение' },
   { id: 'review', label: 'Разбор' },
   { id: 'archive', label: 'Архив' },
+  { id: 'exposition', label: 'Показ' },
 ];
 const readAuthorities = ['exercise:read'];
 
@@ -247,6 +249,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
         : <p>Выберите последний сеанс в карточке учения. Здесь отображаются только подтверждённые сервером ревизии.</p>}
       <ConductWorkspace />
     </section>}
+    {activeTab === 'exposition' && <BrowserExpositionApp />}
     {activeTab === 'review' && <section className="kshvi-placeholder"><h2>Разбор</h2><p>Общий и частный разбор использует сохранённые редакции и серверные сеансы выбранного учения.</p></section>}
     {activeTab === 'admin' && canAdmin && <section className="kshvi-placeholder"><h2>Администрирование</h2><p>Раздел открыт по назначенному сервером полномочию. Содержание учения само по себе административное право не раскрывает.</p></section>}
   </section>;

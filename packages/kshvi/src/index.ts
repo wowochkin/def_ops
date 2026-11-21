@@ -120,3 +120,12 @@ export {
   type InitialMapScaleAttribute, type InitialMapScaleProfile, type InitialMapScalePreview,
 } from './scenario/initial-map';
 export * from './scenario/sealing';
+export * from './exposition/audience-policy';
+export * from './exposition/camera-route';
+export {
+  createExpositionProgram, expositionDuration,
+  type ExpositionDecision, type ExpositionFrame, type ExpositionChapter, type ExpositionCaption,
+  type ExpositionExplanation, type ExpositionBranch, type PlanFactComparison,
+  type ExpositionProgram as ExpositionProgramModel,
+} from './exposition/exposition-program';
+export * from './exposition/exposition-session';
