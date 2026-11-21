@@ -3,3 +3,8 @@ export * from './model/entities';
 export * from './model/profiles';
 export * from './model/unknown';
 export * from './events/index';
+export * from './events/reducer';
+export * from './events/reducer-registry';
+export * from './model/world';
+export * from './model/assumptions';
+export * from './model/norms';

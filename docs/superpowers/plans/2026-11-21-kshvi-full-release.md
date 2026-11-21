@@ -287,6 +287,7 @@ import { emptyWorld } from '../src/model/world';
 
 it('применяет событие один раз и сохраняет причину', () => {
   const world = emptyWorld('scenario-1');
+  world.resources.fuel = { onHand: 2, consumed: 0, supplied: 0, deficit: 0 };
   const event = { type: 'resource.consumed.v1', eventId: 'e1', payload: { resourceId: 'fuel', amount: 2 }, causeIds: [] } as const;
   const next = reduceWorld(world, event, { reducerVersion: 1 });
   expect(next.resources.fuel.consumed).toBe(2);
