@@ -7,6 +7,14 @@ import { MemoryModernImportStore, registerForceRoutes } from './http/force-route
 import { addEnvironmentRoutes } from './http/environment-routes';
 import { registerSymbolRoutes } from './http/symbol-routes';
 import type { CartographyEnvironmentProvider } from './environment/cartography-provider';
+import { InstanceService } from './instances/instance-service';
+import { CommandService } from './instances/command-service';
+import { ProjectionService } from './instances/projection-service';
+import { SubscriptionService } from './http/subscription-service';
+import { registerInstanceRoutes } from './http/instance-routes';
+import { registerProjectionRoutes } from './http/projection-routes';
+import { registerSseRoutes } from './http/sse';
+import type { ProjectableWorld } from '../../../packages/kshvi/src/projections/project';
 
 function tokenOf(ctx: Ctx): string {
   const bearer = ctx.req.headers.authorization;
@@ -22,9 +30,14 @@ export type BuildRouterOptions = {
   exerciseStore?: ExerciseStore;
   forceStore?: MemoryModernImportStore;
   environmentProvider?: CartographyEnvironmentProvider;
+  instances?: InstanceService;
+  commands?: CommandService;
+  projections?: ProjectionService;
+  subscriptions?: SubscriptionService;
+  projectionWorld?: ProjectableWorld;
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] } }: BuildRouterOptions): Router {
   const router = new Router();
   const participant = async (ctx: Ctx) => sessions.authenticate(tokenOf(ctx));
 
@@ -57,6 +70,9 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerExerciseRoutes(router, { store: exerciseStore, sessions });
   registerForceRoutes(router, forceStore);
   registerSymbolRoutes(router);
+  registerInstanceRoutes(router, instances, commands);
+  registerProjectionRoutes(router, projections, projectionWorld);
+  registerSseRoutes(router, subscriptions);
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
   return router;
 }

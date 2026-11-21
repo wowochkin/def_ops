@@ -12,3 +12,12 @@ it('регистрирует учения, силы и среду в основ�
   expect(router.match('GET', '/kshvi/forces/import?sideId=blue'.split('?')[0])).not.toBeNull();
   expect(router.match('GET', '/kshvi/environment/snapshots/abc')).not.toBeNull();
 });
+
+
+it('регистрирует Instance, проекции и SSE в основном приложении', () => {
+  const sessions = new SessionManager({ store: new InMemorySessionStore() });
+  const router = buildRouter({ sessions });
+  expect(router.match('POST', '/kshvi/instances')).not.toBeNull();
+  expect(router.match('GET', '/kshvi/instances/i1/projection')).not.toBeNull();
+  expect(router.match('GET', '/kshvi/instances/i1/events')).not.toBeNull();
+});
