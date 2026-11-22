@@ -85,3 +85,37 @@ it('повторно проверяет текущую редакцию посл
   expect(restored).toMatchObject({ state: 'DRAFT', revision: 2 });
   expect(restored?.revisions.map(revision => revision.state)).toEqual(['APPROVED', 'DRAFT']);
 });
+
+
+it('не создаёт сеанс из уже неактуальной редакции после асинхронной проверки artifact', async () => {
+  let block = false;
+  let entered!: () => void;
+  let release!: () => void;
+  const enteredGate = new Promise<void>(resolve => { entered = resolve; });
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const provider = serverEvidence();
+  const store = new InMemoryExerciseStore({
+    evidence: {
+      forRevision: async context => {
+        if (block) {
+          entered();
+          await gate;
+        }
+        return provider.forRevision(context);
+      },
+    },
+  });
+  const created = await store.create(actor, { title: 'Гонка createSession', purpose: 'planned', scale: 'operational', payload: linkedExercisePayload() });
+  await approveExercise(store, actor, created);
+  await store.seal(actor, created.id, { expectedRevision: 1 } as any);
+  block = true;
+  const pending = store.createSession(actor, created.id, { revision: 1 });
+  await enteredGate;
+  await store.createRevision(actor, created.id, { expectedRevision: 1, payload: linkedExercisePayload() });
+  release();
+
+  await expect(pending).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+  const restored = await store.get(actor.organizationId, created.id);
+  expect(restored).toMatchObject({ state: 'DRAFT', revision: 2, lastSessionId: null });
+  expect(restored?.sessions).toEqual([]);
+});

@@ -572,6 +572,11 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const revision = record.revisions.find(item => item.revision === input.revision);
     if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
     await verifiedSealedArtifact(actor, exerciseId, record, revision, this.evidence);
+    const current = record.revisions.find(item => item.revision === input.revision);
+    if (record.archivedAt !== null) fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
+    if (record.state !== 'SEALED' || record.revision !== input.revision || current?.id !== revision.id || current.state !== 'SEALED') {
+      fail('REVISION_CONFLICT', 'Редакция изменилась во время проверки артефакта; сеанс не создан');
+    }
     const session: ExerciseSession = {
       id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
       state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,
