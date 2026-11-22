@@ -1,39 +1,48 @@
 import { useState } from 'react';
-import { ConductShell, LinkedPanels } from './shared/browser';
+import { ConductShell } from './shared/ConductShell';
+import { LinkedPanels } from './shared/LinkedPanels';
+import type { ConductCommands, ConductProjection, MassOperationResult } from './shared/types';
 
-const objects = [{ id: 'input-1', allowed: true }, { id: 'input-2', allowed: true }, { id: 'input-3', allowed: false }];
-
-export function PlaygroupWorkspace({ onHandover }: { onHandover?: () => void }) {
+export function PlaygroupWorkspace({ projection, commands, onHandover }: {
+  projection: ConductProjection;
+  commands: Pick<ConductCommands, 'previewInputs' | 'applyInputs'>;
+  onHandover?: () => void | Promise<void>;
+}) {
   const [reason, setReason] = useState('');
-  const [checked, setChecked] = useState(false);
-  const [applied, setApplied] = useState(false);
+  const [selected, setSelected] = useState<string[]>(projection.massOperation.objects.map(object => object.id));
+  const [preview, setPreview] = useState<readonly MassOperationResult[]>([]);
+  const [applied, setApplied] = useState<readonly MassOperationResult[]>([]);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState<string[]>(objects.map(object => object.id));
-  const selectedObjects = objects.filter(object => selected.includes(object.id));
-  const allowedCount = selectedObjects.filter(object => object.allowed).length;
-  const deniedCount = selectedObjects.length - allowedCount;
-  const unselectedCount = objects.length - selectedObjects.length;
-  function validate(): boolean {
-    if (!reason.trim()) { setError('Укажите единое обоснование массовой операции'); return false; }
-    setError(''); return true;
+  function selectedIds(): string[] { return selected; }
+  async function run(kind: 'PREVIEW' | 'APPLY'): Promise<void> {
+    if (!reason.trim()) { setError('Укажите единое обоснование массовой операции'); return; }
+    if (!selectedIds().length) { setError('Выберите хотя бы один объект'); return; }
+    setBusy(true); setError('');
+    try {
+      if (kind === 'PREVIEW') { setPreview(await commands.previewInputs({ objectIds: selectedIds(), reason })); setApplied([]); }
+      else setApplied(await commands.applyInputs({ objectIds: selectedIds(), reason }));
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Серверная команда отклонена'); }
+    finally { setBusy(false); }
   }
-  return <ConductShell title="Группа розыгрыша" onHandover={onHandover}>
-    <LinkedPanels mapTitle="Карта розыгрыша" />
+  return <ConductShell title="Группа розыгрыша" projection={projection} onHandover={onHandover}>
+    <LinkedPanels mapTitle="Карта розыгрыша" events={projection.events} live={projection.live} />
     <div className="kshvi-conduct-grid">
-      <section className="kshvi-conduct-panel"><h2>Очередь вводных и расчётов</h2><p>3 вводные · 2 расчёта · 1 требует утверждения</p></section>
-      <section className="kshvi-conduct-panel"><h2>План наращивания</h2><p>stage-2 · каталог и профиль зафиксированы</p></section>
-      <section className="kshvi-conduct-panel"><h2>Дерево инстанций и связь</h2><p>node-command → node-1, node-2 · резервный канал доступен</p></section>
-      <section className="kshvi-conduct-panel"><h2>Причинные связи</h2><p>order-1 → delivery-1 → task-1 → calculation-1 → report-1</p></section>
+      <section className="kshvi-conduct-panel"><h2>Очередь вводных и расчётов</h2><p>{projection.playgroup?.queue ?? 'Нет данных'}</p></section>
+      <section className="kshvi-conduct-panel"><h2>План наращивания</h2><p>{projection.playgroup?.buildup ?? 'Нет данных'}</p></section>
+      <section className="kshvi-conduct-panel"><h2>Дерево инстанций и связь</h2><p>{projection.playgroup?.tree ?? 'Нет данных'}</p></section>
+      <section className="kshvi-conduct-panel"><h2>Причинные связи</h2><p>{projection.playgroup?.causal ?? 'Нет данных'}</p></section>
     </div>
-    <section className="kshvi-conduct-panel"><h2>Сравнение изменения</h2><div className="kshvi-compare-three"><p>Текущий мир</p><p>Предлагаемое изменение</p><p>Затронутые события: event-2, event-3</p></div></section>
     <section className="kshvi-conduct-panel"><h2>Массовая операция</h2>
-      {objects.map(object => <label key={object.id}><input type="checkbox" checked={selected.includes(object.id)} onChange={() => { setSelected(current => current.includes(object.id) ? current.filter(id => id !== object.id) : [...current, object.id]); setChecked(false); setApplied(false); }} />{object.id}</label>)}
-      <label>Единое обоснование<input value={reason} onChange={event => { setReason(event.target.value); setChecked(false); setApplied(false); }} /></label>
+      {projection.massOperation.objects.map(object => <label key={object.id}><input type="checkbox" checked={selected.includes(object.id)} onChange={() => {
+        setSelected(current => current.includes(object.id) ? current.filter(id => id !== object.id) : [...current, object.id]); setPreview([]); setApplied([]);
+      }} />{object.id}</label>)}
+      <label>Единое обоснование<input value={reason} onChange={event => { setReason(event.target.value); setPreview([]); setApplied([]); }} /></label>
       {error && <p role="alert">{error}</p>}
-      <button type="button" onClick={() => { if (validate()) setChecked(true); }}>Предварительная проверка</button>
-      {checked && <p>Проверено: {allowedCount} допустимо, {deniedCount} требует отдельного утверждения</p>}
-      <button type="button" disabled={!checked} onClick={() => setApplied(true)}>Применить выбранное</button>
-      {applied && <div role="status"><p>Результат: {allowedCount} успешно, {deniedCount} отклонено{unselectedCount > 0 ? `, ${unselectedCount} не выбрано` : ''}</p>{objects.map(object => <p key={object.id}>{object.id}: {!selected.includes(object.id) ? 'не выбрано' : object.allowed ? 'применено' : 'не применено — вне делегирования'}</p>)}</div>}
+      <button type="button" disabled={busy} onClick={() => void run('PREVIEW')}>Предварительная проверка</button>
+      {preview.length > 0 && <section aria-label="Результат предварительной проверки">{preview.map(result => <p key={result.objectId}>{result.objectId}: {result.message}</p>)}</section>}
+      <button type="button" disabled={busy || preview.length === 0} onClick={() => void run('APPLY')}>Применить выбранное</button>
+      {applied.length > 0 && <section aria-label="Подтверждённый сервером результат">{applied.map(result => <p key={result.objectId}>{result.objectId}: {result.message}</p>)}</section>}
     </section>
   </ConductShell>;
 }

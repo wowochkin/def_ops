@@ -15,6 +15,7 @@ const decisionInput = {
   id: 'decision-blue-1',
   sideId: 'blue',
   authorId: 'commander-blue',
+  createdAt: '2030-01-01T01:00:00Z',
   intent: 'Скрытый замысел синих',
   goals: [{ id: 'goal-1', rank: 1, title: 'Удержать рубеж' }],
   tasks: [{ id: 'task-1', assigneeId: 'node-1', title: 'Подготовить позицию' }],
@@ -64,12 +65,13 @@ describe('цикл решения обучаемого', () => {
 
   it('не раскрывает замысел и служебные поля другой стороне', () => {
     const decision = createDecision(decisionInput);
-    const own = projectDecision(decision, { sideId: 'blue', role: 'TRAINEE' });
-    expect(own).toMatchObject({ intent: 'Скрытый замысел синих' });
+    const own = projectDecision(decision, { sideId: 'blue', role: 'TRAINEE', assignedNodeIds: ['node-1'] });
+    expect(own).toMatchObject({ visibility: 'ASSIGNED', tasks: [{ id: 'task-1', assigneeId: 'node-1', title: 'Подготовить позицию' }] });
+    expect(JSON.stringify(own)).not.toContain('Скрытый замысел синих');
     const other = projectDecision(decision, { sideId: 'red', role: 'TRAINEE' });
     expect(JSON.stringify(other)).not.toContain('Скрытый замысел синих');
     expect(JSON.stringify(other)).not.toContain('assumptions');
-    expect(other).toEqual({ id: decision.id, sideId: 'blue', status: 'DRAFT', visibility: 'EXISTS_WITHOUT_CONTENT' });
+    expect(other).toEqual({ id: decision.id, sideId: 'blue', revision: 1, status: 'DRAFT', visibility: 'EXISTS_WITHOUT_CONTENT', tasks: [], deadlines: [], coordination: [] });
     expect(() => projectDecision(decision, { sideId: 'red', role: 'INTERMEDIARY', assignedNodeIds: ['other'] })).toThrow('403');
   });
 

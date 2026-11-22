@@ -103,7 +103,7 @@ describe('режимы и состояния расчёта', () => {
     expect(first.randomKeys).toHaveLength(1);
     expect(first.randomKeys[0]).toMatchObject({ purpose: 'episode-outcome', ordinal: 4, algorithmVersion: 1, seed: '7n' });
     expect(first.randomKeys[0].digest).toMatch(/^[0-9a-f]{64}$/);
-    expect(first.intermediateResults.selectedOutcomeId).toBe(first.intermediateResults.selectedOutcomeId);
+    expect(['delayed', 'planned']).toContain(first.intermediateResults.selectedOutcomeId);
     expect(first.inputHash).toBe(replay.inputHash);
   });
 

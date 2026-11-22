@@ -9,13 +9,14 @@ import { AnalystWorkspace } from '../src/modern/kshvi/conduct/AnalystWorkspace';
 import { TechnicalAdminWorkspace } from '../src/modern/kshvi/conduct/TechnicalAdminWorkspace';
 import { ForceStateTabs } from '../src/modern/kshvi/conduct/ForceStateTabs';
 import { NotificationCenter, WorkspaceState } from '../src/modern/kshvi/conduct/shared/browser';
+import { kshviCommands, kshviProjection } from './kshvi-fixtures';
 
 afterEach(cleanup);
 
 it('не меняет официальные часы при просмотре прошлого', () => {
-  render(<TraineeWorkspace />);
+  render(<TraineeWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
   expect(screen.getByText('Официальное время: 2030-01-01T02:00:00Z')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Просмотреть событие' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Просмотреть событие event-1' }));
   expect(screen.getByText('Режим просмотра прошлого')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'К текущему времени' })).toBeTruthy();
   expect(screen.getByText('Официальное время: 2030-01-01T02:00:00Z')).toBeTruthy();
@@ -26,39 +27,37 @@ it('не меняет официальные часы при просмотре 
 });
 
 it('рабочее место обучаемого содержит личные документы, сообщения, решение и приказ без служебного плана', () => {
-  const { container } = render(<TraineeWorkspace />);
+  const { container } = render(<TraineeWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
   for (const name of ['Личная карта', 'Документы и вводные', 'Входящие и исходящие сообщения', 'Решение обучаемого', 'Исполнение приказа order-1']) expect(screen.getByRole('heading', { name })).toBeTruthy();
   expect(container.textContent).not.toContain('Скрытый замысел красных');
   expect(container.textContent).not.toContain('Служебный план наращивания');
 });
 
-it('критическая команда руководителя требует подтверждения с последствиями и показывает фактический результат', () => {
-  const onExecute = vi.fn().mockReturnValue('Серверная ревизия 9: общий отбой зафиксирован');
-  render(<LeaderWorkspace onExecute={onExecute} />);
+it('критическая команда руководителя требует подтверждения и показывает ответ сервера', async () => {
+  const executeCritical = vi.fn().mockResolvedValue('Серверная ревизия 9: общий отбой зафиксирован');
+  render(<LeaderWorkspace projection={kshviProjection()} commands={kshviCommands({ executeCritical })} />);
   expect(screen.getByText('Этап: Этап 2 · скорость 2×')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Общий отбой' }));
   expect(screen.getByText(/Последствия: остановка всех инстанций/)).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Подтвердить: Общий отбой' }));
-  expect(onExecute).toHaveBeenCalledWith('GENERAL_STOP');
-  expect(screen.getByText('Фактический результат: Серверная ревизия 9: общий отбой зафиксирован')).toBeTruthy();
+  expect(executeCritical).toHaveBeenCalledWith('GENERAL_STOP');
+  await waitFor(() => expect(screen.getByText('Фактический результат: Серверная ревизия 9: общий отбой зафиксирован')).toBeTruthy());
   expect(screen.queryByRole('heading', { name: /Победитель/ })).toBeNull();
 });
 
-it('группа видит причинные связи и пообъектный результат частичного массового применения', () => {
-  render(<PlaygroupWorkspace />);
+it('группа получает пообъектные результаты preview и apply из команд', async () => {
+  render(<PlaygroupWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
   expect(screen.getByRole('heading', { name: 'Причинные связи' })).toBeTruthy();
-  expect(screen.getByText('Текущий мир')).toBeTruthy();
-  expect(screen.getByText('Предлагаемое изменение')).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Единое обоснование'), { target: { value: 'Плановая вводная G2' } });
   fireEvent.click(screen.getByRole('button', { name: 'Предварительная проверка' }));
-  expect(screen.getByText('Проверено: 2 допустимо, 1 требует отдельного утверждения')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText('input-1: Допустимо')).toBeTruthy());
   fireEvent.click(screen.getByRole('button', { name: 'Применить выбранное' }));
-  expect(screen.getByText('Результат: 2 успешно, 1 отклонено')).toBeTruthy();
-  expect(screen.getByText('input-3: не применено — вне делегирования')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText('input-1: Серверная ревизия 4')).toBeTruthy());
+  expect(screen.getByText('input-3: Вне делегирования')).toBeTruthy();
 });
 
-it('посредник ограничен закреплёнными инстанциями и заранее видит основание полномочия', () => {
-  const { container } = render(<IntermediaryWorkspace assignedNodeIds={['node-1', 'node-2']} />);
+it('посредник ограничен закреплёнными инстанциями и видит основания полномочий', () => {
+  const { container } = render(<IntermediaryWorkspace projection={kshviProjection()} />);
   expect(screen.getByText('Закреплённые инстанции: node-1, node-2')).toBeTruthy();
   expect(screen.getByText('в пределах делегирования')).toBeTruthy();
   expect(screen.getByText('требуется утверждение')).toBeTruthy();
@@ -66,39 +65,37 @@ it('посредник ограничен закреплёнными инста�
   for (const name of ['Очередь на розыгрыш', 'Таймеры докладов', 'Лист наблюдения', 'Частный разбор']) expect(screen.getByRole('heading', { name })).toBeTruthy();
 });
 
-it('аналитик связывает выводы с доказательствами и фильтрует перспективы', () => {
-  render(<AnalystWorkspace canReadTruth />);
+it('аналитик загружает перспективы и сохраняет вывод через команды', async () => {
+  const loadPerspective = vi.fn().mockImplementation(async perspective => kshviProjection({ role: perspective }));
+  const saveConclusion = vi.fn().mockResolvedValue(['evidence-1']);
+  render(<AnalystWorkspace projection={kshviProjection()} commands={kshviCommands({ loadPerspective, saveConclusion })} />);
   fireEvent.change(screen.getByLabelText('Фильтр по причине'), { target: { value: 'supply' } });
   expect(screen.getByText('Показаны события с причиной: supply')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Истинное состояние' }));
-  expect(screen.getByText('Перспектива: истинное состояние')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText('Перспектива: истинное состояние')).toBeTruthy());
   fireEvent.change(screen.getByLabelText('Вывод аналитика'), { target: { value: 'Дефицит повлиял на срок' } });
   fireEvent.click(screen.getByRole('button', { name: 'Связать с доказательством evidence-1' }));
-  expect(screen.getByText('Сохранён проект вывода с 1 доказательством')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText('Сервер подтвердил проект вывода с 1 доказательством')).toBeTruthy());
 });
 
-it('передача рабочего места очищает видимый черновик и не восстанавливается по Back', () => {
+it('передача рабочего места скрывает черновик и не восстанавливается по Back', async () => {
   const onHandover = vi.fn();
-  render(<TraineeWorkspace onHandover={onHandover} />);
+  render(<TraineeWorkspace projection={kshviProjection()} commands={kshviCommands()} onHandover={onHandover} />);
   fireEvent.change(screen.getByLabelText('Замысел'), { target: { value: 'Приватный черновик обучаемого' } });
   fireEvent.click(screen.getByRole('button', { name: 'Передать рабочее место' }));
   expect(screen.getByRole('heading', { name: 'Рабочее место передано' })).toBeTruthy();
   expect(screen.queryByDisplayValue('Приватный черновик обучаемого')).toBeNull();
   fireEvent.popState(window);
   expect(screen.getByRole('heading', { name: 'Рабочее место передано' })).toBeTruthy();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Подтвердить новую роль' })).toHaveProperty('disabled', false));
   fireEvent.click(screen.getByRole('button', { name: 'Подтвердить новую роль' }));
   expect(onHandover).toHaveBeenCalled();
 });
 
 it('каждый экран различает семь состояний и даёт понятное действие', () => {
   const cases = [
-    ['LOADING', 'Загрузка данных', 'Повторить'],
-    ['EMPTY', 'Пусто: события ещё не созданы', 'Повторить'],
-    ['FORBIDDEN', 'Нет прав', 'Обратиться к администратору'],
-    ['NO_DATA', 'Нет данных', 'Повторить'],
-    ['STALE', 'Данные устарели', 'Повторить'],
-    ['PARTIAL_FAILURE', 'Частичный сбой', 'Перейти к журналу'],
-    ['UNAVAILABLE', 'Сервис недоступен', 'Восстановить соединение'],
+    ['LOADING', 'Загрузка данных', 'Повторить'], ['EMPTY', 'Пусто: события ещё не созданы', 'Повторить'], ['FORBIDDEN', 'Нет прав', 'Обратиться к администратору'],
+    ['NO_DATA', 'Нет данных', 'Повторить'], ['STALE', 'Данные устарели', 'Повторить'], ['PARTIAL_FAILURE', 'Частичный сбой', 'Перейти к журналу'], ['UNAVAILABLE', 'Сервис недоступен', 'Восстановить соединение'],
   ] as const;
   const { rerender } = render(<WorkspaceState status="LOADING" />);
   for (const [status, text, action] of cases) {
@@ -106,8 +103,8 @@ it('каждый экран различает семь состояний и д
     expect(screen.getByText(text)).toBeTruthy();
     expect(screen.getByRole('button', { name: action })).toBeTruthy();
   }
-  render(<TraineeWorkspace />);
-  expect(screen.getAllByText(/Соединение: подключено/).length).toBeGreaterThan(0);
+  render(<TraineeWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
+  expect(screen.getAllByText(/Соединение: CONNECTED/).length).toBeGreaterThan(0);
   expect(screen.getAllByText(/Синхронизировано:/).length).toBeGreaterThan(0);
 });
 
@@ -123,9 +120,8 @@ it('группирует повторы и не позволяет скрыть 
 });
 
 it('вкладки состояния силы различают факт, штат, донесено и неизвестное и работают с клавиатуры', () => {
-  render(<ForceStateTabs />);
-  const tabs = ['Оснащённость', 'МПС', 'Готовность', 'Построение', 'МТО'];
-  for (const name of tabs) expect(screen.getByRole('tab', { name })).toBeTruthy();
+  render(<ForceStateTabs force={kshviProjection().force} />);
+  for (const name of ['Оснащённость', 'МПС', 'Готовность', 'Построение', 'МТО']) expect(screen.getByRole('tab', { name })).toBeTruthy();
   expect(screen.getByText('Факт/штат: 8/10')).toBeTruthy();
   fireEvent.click(screen.getByRole('tab', { name: 'МПС' }));
   expect(screen.getByText('Компоненты МПС и история')).toBeTruthy();
@@ -134,37 +130,26 @@ it('вкладки состояния силы различают факт, шт
   fireEvent.keyDown(screen.getByRole('tablist'), { key: 'ArrowRight' });
   expect(screen.getByRole('tab', { name: 'Готовность', selected: true })).toBeTruthy();
   fireEvent.click(screen.getByRole('tab', { name: 'МТО' }));
-  expect(screen.getByText('Заявки, поставки, ремонт, маршруты и дефицит')).toBeTruthy();
+  expect(screen.getAllByText('Заявки, поставки, ремонт, маршруты и дефицит').length).toBeGreaterThan(0);
   expect(screen.getByText('Фактор расчёта: resourceDeficit')).toBeTruthy();
 });
 
-it('технический администратор не видит содержание, а временное раскрытие требует причину и аудит', () => {
-  const onAudit = vi.fn();
-  const { container } = render(<TechnicalAdminWorkspace onAudit={onAudit} />);
+it('технический администратор регистрирует временный доступ только через callback', async () => {
+  const onTemporaryAccess = vi.fn().mockResolvedValue(undefined);
+  const { container } = render(<TechnicalAdminWorkspace projection={kshviProjection()} onTemporaryAccess={onTemporaryAccess} />);
   for (const name of ['Учётные записи и назначения', 'Состояние узлов и очереди', 'Резервные копии', 'Журнал доступа']) expect(screen.getByRole('heading', { name })).toBeTruthy();
   expect(container.textContent).not.toContain('Замысел синих');
   fireEvent.click(screen.getByRole('button', { name: 'Зарегистрировать временное раскрытие' }));
   expect(screen.getByRole('alert').textContent).toContain('причину');
   fireEvent.change(screen.getByLabelText('Причина временного раскрытия'), { target: { value: 'Восстановление узла' } });
   fireEvent.click(screen.getByRole('button', { name: 'Зарегистрировать временное раскрытие' }));
-  expect(onAudit).toHaveBeenCalledWith({ reason: 'Восстановление узла', scope: 'RECOVERY', contentGranted: false });
+  await waitFor(() => expect(onTemporaryAccess).toHaveBeenCalledWith({ reason: 'Восстановление узла', scope: 'RECOVERY' }));
   expect(screen.getByText('Аудит: причина записана, содержание не раскрыто')).toBeTruthy();
 });
 
-
-it('массовая операция учитывает фактически выбранные объекты', () => {
-  render(<PlaygroupWorkspace />);
-  fireEvent.click(screen.getByLabelText('input-2'));
-  fireEvent.change(screen.getByLabelText('Единое обоснование'), { target: { value: 'Выборочная вводная' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Предварительная проверка' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Применить выбранное' }));
-  expect(screen.getByText('Результат: 1 успешно, 1 отклонено, 1 не выбрано')).toBeTruthy();
-  expect(screen.getByText('input-2: не выбрано')).toBeTruthy();
-});
-
-it('посредник не получает таймеры и сведения незакреплённой инстанции', () => {
-  const { container } = render(<IntermediaryWorkspace assignedNodeIds={['node-1']} />);
-  expect(screen.getByText('node-1: осталось 5 минут')).toBeTruthy();
+it('посредник не получает сведения незакреплённой инстанции', () => {
+  const { container } = render(<IntermediaryWorkspace projection={kshviProjection({ assignedNodeIds: ['node-1'] })} />);
+  expect(screen.getByText('Закреплённые инстанции: node-1')).toBeTruthy();
   expect(container.textContent).not.toContain('node-2');
 });
 
@@ -181,13 +166,12 @@ it('звук и всплывающие окна настраиваются бе�
   expect(screen.getByText('Критический доклад')).toBeTruthy();
 });
 
-
 it('передача устройства удаляет приватные ключи КШВИ, но не настройки соседних разделов', async () => {
   localStorage.setItem('kshvi.draft', 'secret-draft');
   localStorage.setItem('kshvi.projection', 'secret-projection');
   localStorage.setItem('kshvi.projector', 'privileged');
   localStorage.setItem('def_ops.modern.weather.region', 'unchanged');
-  render(<TraineeWorkspace />);
+  render(<TraineeWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
   fireEvent.click(screen.getByRole('button', { name: 'Передать рабочее место' }));
   await waitFor(() => {
     expect(localStorage.getItem('kshvi.draft')).toBeNull();

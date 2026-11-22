@@ -1,30 +1,24 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-  AnalystWorkspace,
-  IntermediaryWorkspace,
-  LeaderWorkspace,
-  PlaygroupWorkspace,
-  ProjectorWorkspace,
-  TraineeWorkspace,
-} from './browser';
+import { ConductWorkspace, type ConductRole } from './ConductWorkspace';
+import { HttpConductClient } from './conduct-api';
+import './conduct.css';
 
 const roles = [
   ['TRAINEE', 'Обучаемый'], ['LEADER', 'Руководитель'], ['PLAYGROUP', 'Группа розыгрыша'],
   ['INTERMEDIARY', 'Посредник'], ['ANALYST', 'Аналитик'], ['PROJECTOR', 'Проектор'],
 ] as const;
-type PreviewRole = typeof roles[number][0];
 
 function ConductPreview() {
-  const [role, setRole] = useState<PreviewRole>('TRAINEE');
+  const [role, setRole] = useState<ConductRole>('TRAINEE');
+  const context = useMemo(() => {
+    const query = new URLSearchParams(window.location.search);
+    return { instanceId: query.get('instanceId') ?? 'preview-instance', sideId: query.get('sideId') ?? 'blue', role, operationalAt: query.get('operationalAt') ?? undefined };
+  }, [role]);
+  const client = useMemo(() => new HttpConductClient(context), [context]);
   return <div className="kshvi-preview">
     <nav className="kshvi-preview-nav" aria-label="Рабочие места КШВИ">{roles.map(([id, label]) => <button type="button" key={id} aria-current={role === id ? 'page' : undefined} onClick={() => setRole(id)}>{label}</button>)}</nav>
-    {role === 'TRAINEE' && <TraineeWorkspace />}
-    {role === 'LEADER' && <LeaderWorkspace />}
-    {role === 'PLAYGROUP' && <PlaygroupWorkspace />}
-    {role === 'INTERMEDIARY' && <IntermediaryWorkspace />}
-    {role === 'ANALYST' && <AnalystWorkspace canReadTruth />}
-    {role === 'PROJECTOR' && <ProjectorWorkspace />}
+    <ConductWorkspace role={role} client={client} context={context} />
   </div>;
 }
 

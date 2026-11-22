@@ -5,10 +5,14 @@ export function explainCalculation(calculation: Calculation) {
   const numeric = Array.isArray(contributions)
     ? contributions.filter((item): item is { name: string; value: number; direction: 'INCREASE' | 'DECREASE' } => Boolean(item && typeof item === 'object' && typeof (item as { value?: unknown }).value === 'number'))
     : [];
-  const factors = numeric.length ? numeric.map(item => ({ ...item })) : [
-    { name: 'potentialBySide', direction: 'CONTEXT' as const, value: null, note: 'Сопоставление потенциалов не является вероятностью победы' },
-    { name: 'resourceDeficit', direction: 'DECREASE' as const, value: null, note: 'Дефицит ограничивает исполнение; числовой вклад отдельно не вычисляется' },
-  ];
+  const factors: { name: string; direction: 'INCREASE' | 'DECREASE' | 'CONTEXT'; value: number | null; note?: string }[] = numeric.map(item => ({ ...item }));
+  if (!numeric.length) {
+    if (calculation.intermediateResults.potentialBySide) factors.push({ name: 'potentialBySide', direction: 'CONTEXT', value: null, note: 'Сопоставление потенциалов не является вероятностью победы' });
+    const transition = calculation.intermediateResults.resourceTransition as { deficit?: unknown } | undefined;
+    if (typeof transition?.deficit === 'number' && transition.deficit > 0) {
+      factors.push({ name: 'resourceDeficit', direction: 'DECREASE', value: null, note: 'Дефицит ограничивает исполнение; числовой вклад отдельно не вычисляется' });
+    }
+  }
   return {
     basis: calculation.reason,
     inputs: structuredClone(calculation.inputs),

@@ -14,8 +14,10 @@ export type AppendCommandInput = {
   idempotencyKey: string;
   type: string;
   payload: JsonValue;
+  /** ID заранее вычислен только официальной доменной командой; произвольный результат запрещён её контрактом. */
+  eventId?: string;
 };
-export type AppendResult = { eventId: string; sequence: number; hash: string; idempotent: boolean };
+export type AppendResult = { eventId: string; sequence: number; hash: string; prevHash: string | null; idempotent: boolean };
 
 function assertSchema(schema: string): void {
   if (!/^[a-z_][a-z0-9_]*$/.test(schema)) throw new Error('Недопустимое имя схемы КШВИ');
@@ -54,7 +56,7 @@ export class KshviEventStore {
       const currentRevision = Number(previous.rows[0]?.sequence ?? 0);
       if (input.aggregateRevision !== currentRevision) throw new Error(`Устаревшая ревизия агрегата: ${input.aggregateRevision}, актуальная ${currentRevision}`);
       const sequence = currentRevision + 1;
-      const eventId = randomUUID();
+      const eventId = input.eventId ?? randomUUID();
       const prevHash = previous.rows[0]?.hash ?? null;
       const hash = eventHash({ eventId, sequence, type: input.type, payload: input.payload }, prevHash);
       await client.query(
@@ -72,7 +74,7 @@ export class KshviEventStore {
         `insert into ${this.schema}.outbox (id, organization_id, instance_id, event_id, payload, status) values ($1,$2,$3,$4,$5,'pending')`,
         [randomUUID(), input.organizationId, input.instanceId, eventId, event],
       );
-      const response: AppendResult = { eventId, sequence, hash, idempotent: false };
+      const response: AppendResult = { eventId, sequence, hash, prevHash, idempotent: false };
       await client.query(
         `insert into ${this.schema}.commands (organization_id, instance_id, idempotency_key, request_hash, event_id, response)
          values ($1,$2,$3,$4,$5,$6)`,
@@ -85,6 +87,14 @@ export class KshviEventStore {
   async eventCount(instanceId: string): Promise<number> {
     const result = await this.pool.query(`select count(*)::int as count from ${this.schema}.events where instance_id=$1`, [instanceId]);
     return result.rows[0].count;
+  }
+
+  async listEvents(instanceId: string, branchId: string): Promise<ChainEvent[]> {
+    const result = await this.pool.query(
+      `select event_id, sequence, type, payload, prev_hash, hash from ${this.schema}.events where instance_id=$1 and branch_id=$2 order by sequence`,
+      [instanceId, branchId],
+    );
+    return result.rows.map(row => ({ eventId: row.event_id, sequence: Number(row.sequence), type: row.type, payload: row.payload, prevHash: row.prev_hash, hash: row.hash }));
   }
 
   async outboxCount(instanceId: string): Promise<number> {

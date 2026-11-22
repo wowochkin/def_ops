@@ -22,3 +22,21 @@ it('фиксирует команду один раз и отклоняет ус
   expect(repeated.revision).toBe(1);
   await expect(service.execute({ ...input, idempotencyKey: 'cmd-2' })).rejects.toThrow('ревизия');
 });
+
+
+it('принимает официальную типизированную команду через существующий серверный адаптер', async () => {
+  const service = new CommandService();
+  const result = await service.execute({
+    instanceId: 'official-http-session', branchId: 'main', expectedRevision: 0, idempotencyKey: 'official-http-decision', type: 'decision.create',
+    at: '2030-01-01T01:00:00Z',
+    actor: { userId: 'leader', role: 'LEADER', organizationId: 'org', sideId: 'blue', assignedNodeIds: ['node-1'] },
+    payload: { decision: {
+      id: 'official-http-decision', sideId: 'blue', authorId: 'leader', createdAt: '2030-01-01T01:00:00Z', intent: 'Замысел', goals: [],
+      tasks: [{ id: 'task', assigneeId: 'node-1', title: 'Задача' }], resources: [], deadlines: [], coordination: [], reserves: [], transitionConditions: [], assumptions: [],
+    } },
+  });
+  expect(result.revision).toBe(1);
+  const history = await service.history('official-http-session', 'main');
+  expect(history).toHaveLength(1);
+  expect(history[0]).toMatchObject({ eventId: result.eventId, type: 'decision.created.v1', payload: { commandType: 'decision.create', causedBy: 'official-http-decision' } });
+});

@@ -1,18 +1,24 @@
-import { ConductShell, LinkedPanels } from './shared/browser';
+import { ConductShell } from './shared/ConductShell';
+import { LinkedPanels } from './shared/LinkedPanels';
 import { DecisionEditor } from './DecisionEditor';
 import { OrdersPanel } from './OrdersPanel';
 import { ForceStateTabs } from './ForceStateTabs';
+import type { ConductCommands, ConductProjection } from './shared/types';
 
-export function TraineeWorkspace({ onHandover, onOrderCancel }: { onHandover?: () => void; onOrderCancel?: (input: { reason: string }) => void }) {
-  return <ConductShell title="Обучаемый" onHandover={onHandover}>
-    <LinkedPanels mapTitle="Личная карта" />
+export function TraineeWorkspace({ projection, commands, onHandover }: {
+  projection: ConductProjection;
+  commands: Pick<ConductCommands, 'cancelOrder' | 'saveDecision' | 'transitionDecision'>;
+  onHandover?: () => void | Promise<void>;
+}) {
+  return <ConductShell title="Обучаемый" projection={projection} onHandover={onHandover}>
+    <LinkedPanels mapTitle="Личная карта" events={projection.events} live={projection.live} />
     <div className="kshvi-conduct-grid">
-      <section className="kshvi-conduct-panel"><h2>Документы и вводные</h2><p>Донесение node-1 · получено с задержкой 60 с</p><p className="kshvi-data-stale">Устаревшие сведения отмечены отдельно</p></section>
-      <section className="kshvi-conduct-panel"><h2>Задачи и ресурсы</h2><p>Задача task-1 · fuel: донесено 8 Л · остаток маршрута 4000 м</p></section>
-      <section className="kshvi-conduct-panel"><h2>Входящие и исходящие сообщения</h2><p>Входящее: приказ order-1 · исходящее: доклад report-1</p></section>
+      <section className="kshvi-conduct-panel"><h2>Документы и вводные</h2><p>{projection.live.document}</p></section>
+      <section className="kshvi-conduct-panel"><h2>Задачи и ресурсы</h2><p>{projection.live.state}</p></section>
+      <section className="kshvi-conduct-panel"><h2>Входящие и исходящие сообщения</h2><p>{projection.order ? `Приказ ${projection.order.id} · ${projection.order.status}` : 'Нет активных приказов'}</p></section>
     </div>
-    <DecisionEditor />
-    <OrdersPanel order={{ id: 'order-1', status: 'EXECUTING', receivedAt: '2030-01-01T01:05:00Z', actualCosts: { timeMinutes: 10, resources: { fuel: 2 } }, position: { remainingMeters: 4000, travelledMeters: 1000 } }} onCancel={onOrderCancel} />
-    <ForceStateTabs />
+    <DecisionEditor decision={projection.decision} commands={commands} />
+    {projection.order && <OrdersPanel order={projection.order} commands={commands} />}
+    <ForceStateTabs force={projection.force} />
   </ConductShell>;
 }

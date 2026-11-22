@@ -1,4 +1,8 @@
 import { randomUUID } from 'node:crypto';
+import { ConductCommandService } from './conduct-command-service';
+import type { ConductCommand } from '../../../../packages/kshvi/src/commands/conduct';
+import type { ChainEvent } from '../../../../packages/kshvi/src/events/envelope';
+import type { KshviEventStore } from '../store/event-store';
 
 export type InstanceCommand = {
   instanceId: string;
@@ -6,15 +10,42 @@ export type InstanceCommand = {
   expectedRevision: number;
   idempotencyKey: string;
   type: string;
-  actor: { userId: string; role: string; organizationId: string };
+  at?: string;
+  payload?: unknown;
+  actor: { userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] };
 };
 export type CommandResult = { eventId: string; revision: number; idempotent: boolean };
+function normalizeSeedValues(value: unknown, key?: string): unknown {
+  if (key === 'seed' && typeof value === 'string' && /^\d+n?$/.test(value)) return BigInt(value.replace(/n$/, ''));
+  if (Array.isArray(value)) return value.map(item => normalizeSeedValues(item));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([childKey, child]) => [childKey, normalizeSeedValues(child, childKey)]));
+  return value;
+}
+
+const officialTypes = new Set([
+  'decision.create', 'decision.transition', 'decision.revise', 'order.issue', 'order.advance', 'order.cancel',
+  'calculation.create', 'calculation.approve', 'calculation.apply', 'calculation.override', 'calculation.replay',
+  'observation.record', 'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
+]);
 
 export class CommandService {
   private readonly results = new Map<string, CommandResult & { eventId: string }>();
   private readonly revisions = new Map<string, number>();
+  private readonly official: ConductCommandService;
+
+  constructor(options: { store?: KshviEventStore; organizationId?: string } = {}) {
+    this.official = new ConductCommandService(options);
+  }
 
   async execute(input: InstanceCommand): Promise<CommandResult> {
+    if (officialTypes.has(input.type)) {
+      const payload = input.payload && typeof input.payload === 'object' && !Array.isArray(input.payload) ? normalizeSeedValues(input.payload) as Record<string, unknown> : {};
+      const at = input.at ?? (typeof payload.at === 'string' ? payload.at : '');
+      const result = await this.official.execute({
+        sessionId: input.instanceId, branchId: input.branchId, expectedRevision: input.expectedRevision, actor: input.actor,
+      }, { ...payload, type: input.type, commandId: input.idempotencyKey, at } as ConductCommand);
+      return { eventId: result.event.eventId, revision: result.revision, idempotent: result.idempotent };
+    }
     const key = `${input.instanceId}/${input.idempotencyKey}`;
     const existing = this.results.get(key);
     if (existing) return { ...existing, idempotent: true };
@@ -26,5 +57,13 @@ export class CommandService {
     this.results.set(key, result);
     this.revisions.set(branchKey, result.revision);
     return result;
+  }
+
+  async history(instanceId: string, branchId: string): Promise<ChainEvent[]> {
+    return this.official.history(instanceId, branchId);
+  }
+
+  state(instanceId: string, branchId: string) {
+    return this.official.state(instanceId, branchId);
   }
 }
