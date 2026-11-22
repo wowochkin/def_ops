@@ -12,9 +12,24 @@ export type ReducerProfile = {
   registry?: { get(version: number): typeof reduceWorld };
 };
 
+const MAP_COMPONENTS: Readonly<Record<string, string>> = {
+  weather: 'Weather', terrain: 'Terrain', logistics: 'Supply', forces: 'Forces', 'modern-symbols': 'Forces', modernSymbols: 'Forces', routes: 'Tasks',
+};
+
 export function reduceWorld(world: WorldState, event: WorldEvent, profile: ReducerProfile): WorldState {
   if (world.appliedEventIds.includes(event.eventId)) throw new Error('Событие уже применено');
   if (profile.reducerVersion !== 1) throw new Error('Неподдерживаемая версия reducer');
+  if (event.type === 'map.layer.updated.v1') {
+    const payload = event.payload as { layer?: unknown; value?: unknown };
+    const component = typeof payload?.layer === 'string' ? MAP_COMPONENTS[payload.layer] : undefined;
+    if (!component) throw new Error('Неизвестный слой карты в событии');
+    return {
+      ...world,
+      state: { ...world.state, [component]: structuredClone(payload.value) },
+      appliedEventIds: [...world.appliedEventIds, event.eventId],
+      eventCauses: { ...world.eventCauses, [event.eventId]: [...(event.causeIds ?? [])] },
+    };
+  }
   if (event.type !== 'resource.consumed.v1') throw new Error(`Неизвестный тип события: ${event.type}`);
   const payload = event.payload as { resourceId?: unknown; amount?: unknown; supplied?: unknown };
   if (typeof payload.resourceId !== 'string' || !payload.resourceId) throw new Error('Не указан ресурс');

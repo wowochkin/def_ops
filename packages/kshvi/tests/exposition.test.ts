@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { cameraAt, createCameraRoute } from '../src/exposition/camera-route';
 import { createExpositionProgram } from '../src/exposition/exposition-program';
 import {
-  calculatePreparedScenario,
-  continueFromCheckpoint,
+  continueFromCheckpoint as continueFromCheckpointCore,
   controlExposition,
   decisionAt,
   planFactAt,
-  restartAutonomousShow,
+  restartAutonomousShow as restartAutonomousShowCore,
   startArchiveShow,
-  startAutonomousShow,
+  startAutonomousShow as startAutonomousShowCore,
   type PresenterCommand,
 } from '../src/exposition/exposition-session';
-import { expositionProgram, officialArchive } from './fixtures/exposition';
+import { expositionProgram, officialArchive, testFullSimulation } from './fixtures/exposition';
+
+const startAutonomousShow: typeof startAutonomousShowCore = input => startAutonomousShowCore({ ...input, calculate: testFullSimulation });
+const continueFromCheckpoint: typeof continueFromCheckpointCore = (show, checkpointId, options = {}) => continueFromCheckpointCore(show, checkpointId, { ...options, calculate: testFullSimulation });
+const restartAutonomousShow: typeof restartAutonomousShowCore = (show, options) => restartAutonomousShowCore(show, { ...options, calculate: testFullSimulation });
 
 describe('экспозиционные источники и ветви', () => {
   it('выполняет вероятностный расчёт без смешивания с официальным учением', () => {
@@ -63,11 +66,11 @@ describe('экспозиционные источники и ветви', () => 
 
   it('восстанавливает версионный RNG и мир на checkpoint без повторения префикса', () => {
     const archive = officialArchive();
-    const full = calculatePreparedScenario({
+    const full = testFullSimulation({
       scenario: archive.demonstration, seed: 42, branchId: 'exposition-rng-restore',
     });
     const checkpoint = full.checkpoints[0];
-    const continued = calculatePreparedScenario({
+    const continued = testFullSimulation({
       scenario: archive.demonstration, seed: 42, branchId: 'exposition-rng-restore', fromCheckpoint: checkpoint,
     });
     expect(continued.journal).toEqual(full.journal.slice(1));

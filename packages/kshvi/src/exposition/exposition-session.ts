@@ -17,6 +17,7 @@ export type ExpositionJournalEntry = Readonly<{
   type: string;
   payload?: unknown;
   causeIds?: readonly string[];
+  rng?: ExpositionRngSnapshot;
 }>;
 
 export type ExpositionRngSnapshot = Readonly<{
@@ -98,6 +99,7 @@ export type ExpositionSession = Readonly<{
   world: WorldState;
   map: Readonly<Record<string, unknown>>;
   calculation: ExpositionCalculationContext | null;
+  initialRng: ExpositionRngSnapshot | null;
   rng: ExpositionRngSnapshot | null;
   randomOutcomesCreated: number;
   officialAssessmentCreated: false;
@@ -132,6 +134,23 @@ export type AutonomousCalculationResult = Readonly<{
 }>;
 export type AutonomousCalculator = (input: AutonomousCalculationInput) => AutonomousCalculationResult;
 
+export type AutonomousEventCalculationInput = Readonly<{
+  scenario: DemonstrationScenario;
+  event: DemonstrationEvent;
+  world: WorldState;
+  rng: ExpositionRngSnapshot;
+  sequence: number;
+  scenarioCursor: number;
+  agentDecisions: Readonly<Record<string, ExpositionAgentDecision>>;
+}>;
+export type AutonomousEventCalculationResult = Readonly<{
+  world: WorldState;
+  entry: ExpositionJournalEntry;
+  checkpoint: ExpositionCheckpoint | null;
+  rng: ExpositionRngSnapshot;
+  randomOutcomesCreated: number;
+}>;
+
 export type PresenterCommand =
   | Readonly<{ type: 'PLAY' | 'PAUSE' }>
   | Readonly<{ type: 'SET_TEMPO'; tempo: number }>
@@ -157,6 +176,13 @@ function validateBranch(branchId: string, sourceBranchId: string): void {
   if (!branchId.trim() || branchId === sourceBranchId || branchId.startsWith('conduct')) {
     throw new Error('Экспозиции требуется отдельная демонстрационная ветвь');
   }
+}
+
+function validateScenario(scenario: DemonstrationScenario): void {
+  if (scenario.rules.reducerVersion !== 1 || !scenario.rules.profileVersion.startsWith('full-simulation')) {
+    throw new Error('Демонстрационный сценарий должен использовать принятый full-simulation');
+  }
+  if (scenario.systemSides.length === 0) throw new Error('Для автономного показа нужны разрешённые системные агенты сторон');
 }
 
 function initialPlayback(program: ExpositionProgram, atMs = 0): ExpositionPlayback {
@@ -186,15 +212,15 @@ function hash32(text: string): number {
   return (hash ^ (hash >>> 16)) >>> 0;
 }
 
-function initialRng(seed: number, branchId: string, cursor = 0): ExpositionRngSnapshot {
+export function createExpositionRng(seed: number, branchId: string, cursor = 0): ExpositionRngSnapshot {
   return { version: EXPOSITION_RNG_VERSION, seed, branchId, cursor, state: hash32(`${EXPOSITION_RNG_VERSION}|${seed}|${branchId}`) };
 }
 
-function restoredRng(input: AutonomousCalculationInput): ExpositionRngSnapshot {
+export function restoreExpositionRng(input: AutonomousCalculationInput): ExpositionRngSnapshot {
   const saved = input.fromCheckpoint?.rng;
   if (input.fromCheckpoint && !saved) throw new Error('Контрольная точка автономного показа не содержит состояние RNG');
   if (saved && saved.version !== EXPOSITION_RNG_VERSION) throw new Error('Неподдерживаемая версия RNG экспозиции');
-  if (!saved) return initialRng(input.seed, input.branchId);
+  if (!saved) return createExpositionRng(input.seed, input.branchId);
   return {
     version: EXPOSITION_RNG_VERSION,
     seed: input.seed,
@@ -202,7 +228,7 @@ function restoredRng(input: AutonomousCalculationInput): ExpositionRngSnapshot {
     cursor: input.seed === saved.seed ? saved.cursor : 0,
     state: input.seed === saved.seed && input.branchId === saved.branchId
       ? saved.state
-      : initialRng(input.seed, input.branchId).state,
+      : createExpositionRng(input.seed, input.branchId).state,
   };
 }
 
@@ -216,17 +242,15 @@ function decisionKey(eventId: string, agentId: string): string {
   return `${eventId}:${agentId}`;
 }
 
-export const calculatePreparedScenario: AutonomousCalculator = input => {
-  const { scenario, fromCheckpoint } = input;
-  if (scenario.rules.reducerVersion !== 1 || !scenario.rules.profileVersion.startsWith('full-simulation')) {
-    throw new Error('Демонстрационный сценарий должен использовать принятый full-simulation');
+export function calculateAutonomousEvent(input: AutonomousEventCalculationInput): AutonomousEventCalculationResult {
+  const { scenario, event } = input;
+  validateScenario(scenario);
+  const payload = event.payload as { amount?: unknown; supplied?: unknown };
+  if (typeof payload?.amount !== 'number' || !Number.isSafeInteger(payload.amount) || payload.amount <= 0) {
+    throw new Error('Плановое событие полного расчёта должно содержать положительный расход ресурса');
   }
-  if (scenario.systemSides.length === 0) throw new Error('Для автономного показа нужны разрешённые системные агенты сторон');
-  validateSeed(input.seed);
-  let world = cloneWorld(fromCheckpoint?.world ?? scenario.initialWorld);
-  const startCursor = fromCheckpoint?.scenarioCursor ?? fromCheckpoint?.journalCursor ?? 0;
-  let sequence = fromCheckpoint?.journalCursor ?? 0;
-  let rng = restoredRng(input);
+  const baseSupplied = typeof payload.supplied === 'number' ? payload.supplied : 0;
+  let rng = input.rng;
   let randomOutcomesCreated = 0;
   const random = (streamId: string): number => {
     const next = nextRandom(rng, streamId);
@@ -234,58 +258,75 @@ export const calculatePreparedScenario: AutonomousCalculator = input => {
     randomOutcomesCreated += 1;
     return next.value;
   };
+  const factors = scenario.systemSides.map(side => {
+    const decision = input.agentDecisions[decisionKey(event.eventId, side.agentId)];
+    if (!decision) throw new Error(`Отсутствует решение системного агента ${side.agentId} для события ${event.eventId}`);
+    if (!Number.isFinite(decision.consumptionFactor) || decision.consumptionFactor <= 0
+      || !Number.isFinite(decision.supplyFactor) || decision.supplyFactor < 0) {
+      throw new Error(`Системный агент ${side.agentId} вернул некорректное решение`);
+    }
+    return {
+      consumption: decision.consumptionFactor * (0.75 + random(`consumption|${event.eventId}|${side.agentId}`) * 0.5),
+      supply: decision.supplyFactor * (0.75 + random(`supply|${event.eventId}|${side.agentId}`) * 0.5),
+    };
+  });
+  const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const amount = Math.max(1, Math.round(payload.amount * average(factors.map(item => item.consumption))));
+  const supplied = Math.max(0, Math.round(baseSupplied * average(factors.map(item => item.supply))));
+  const calculatedEvent: DemonstrationEvent = {
+    ...event,
+    payload: { ...(typeof event.payload === 'object' && event.payload ? event.payload : {}), amount, supplied },
+    causeIds: [...(event.causeIds ?? []), ...scenario.systemSides.map(side => `agent:${side.agentId}@${side.profileVersion}`)],
+  };
+  const world = reduceWorld(input.world, calculatedEvent, { reducerVersion: scenario.rules.reducerVersion });
+  const sequence = input.sequence + 1;
+  const entry: ExpositionJournalEntry = {
+    eventId: calculatedEvent.eventId,
+    sequence,
+    atMs: calculatedEvent.atMs,
+    type: calculatedEvent.type,
+    payload: structuredClone(calculatedEvent.payload),
+    causeIds: calculatedEvent.causeIds ? [...calculatedEvent.causeIds] : undefined,
+    rng: structuredClone(rng),
+  };
+  const checkpoint = event.checkpointId ? {
+    id: event.checkpointId,
+    atMs: event.atMs,
+    journalCursor: sequence,
+    scenarioCursor: input.scenarioCursor,
+    world: structuredClone(world),
+    rng: structuredClone(rng),
+  } : null;
+  return { world, entry, checkpoint, rng, randomOutcomesCreated };
+}
+
+export const calculatePreparedScenario: AutonomousCalculator = input => {
+  const { scenario, fromCheckpoint } = input;
+  validateScenario(scenario);
+  validateSeed(input.seed);
+  let world = cloneWorld(fromCheckpoint?.world ?? scenario.initialWorld);
+  const startCursor = fromCheckpoint?.scenarioCursor ?? fromCheckpoint?.journalCursor ?? 0;
+  let sequence = fromCheckpoint?.journalCursor ?? 0;
+  let rng = restoreExpositionRng(input);
+  let randomOutcomesCreated = 0;
   const journal: ExpositionJournalEntry[] = [];
   const checkpoints: ExpositionCheckpoint[] = [];
-  scenario.events.slice(startCursor).forEach((event, offset) => {
+  for (const [offset, event] of scenario.events.slice(startCursor).entries()) {
     const scenarioCursor = startCursor + offset + 1;
     if (!Number.isFinite(event.atMs) || event.atMs < (fromCheckpoint?.atMs ?? 0)) {
       throw new Error('Демонстрационные события должны следовать после контрольной точки');
     }
-    const payload = event.payload as { amount?: unknown; supplied?: unknown };
-    if (typeof payload?.amount !== 'number' || !Number.isSafeInteger(payload.amount) || payload.amount <= 0) {
-      throw new Error('Плановое событие полного расчёта должно содержать положительный расход ресурса');
-    }
-    const baseSupplied = typeof payload.supplied === 'number' ? payload.supplied : 0;
-    const factors = scenario.systemSides.map(side => {
-      const decision = input.agentDecisions?.[decisionKey(event.eventId, side.agentId)] ?? { consumptionFactor: 1, supplyFactor: 1 };
-      if (!Number.isFinite(decision.consumptionFactor) || decision.consumptionFactor <= 0
-        || !Number.isFinite(decision.supplyFactor) || decision.supplyFactor < 0) {
-        throw new Error(`Системный агент ${side.agentId} вернул некорректное решение`);
-      }
-      return {
-        consumption: decision.consumptionFactor * (0.75 + random(`consumption|${event.eventId}|${side.agentId}`) * 0.5),
-        supply: decision.supplyFactor * (0.75 + random(`supply|${event.eventId}|${side.agentId}`) * 0.5),
-      };
+    const result = calculateAutonomousEvent({
+      scenario, event, world, rng, sequence, scenarioCursor,
+      agentDecisions: input.agentDecisions ?? {},
     });
-    const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
-    const amount = Math.max(1, Math.round(payload.amount * average(factors.map(item => item.consumption))));
-    const supplied = Math.max(0, Math.round(baseSupplied * average(factors.map(item => item.supply))));
-    const calculatedEvent: DemonstrationEvent = {
-      ...event,
-      payload: { ...(typeof event.payload === 'object' && event.payload ? event.payload : {}), amount, supplied },
-      causeIds: [...(event.causeIds ?? []), ...scenario.systemSides.map(side => `agent:${side.agentId}@${side.profileVersion}`)],
-    };
-    world = reduceWorld(world, calculatedEvent, { reducerVersion: scenario.rules.reducerVersion });
-    sequence += 1;
-    journal.push({
-      eventId: calculatedEvent.eventId,
-      sequence,
-      atMs: calculatedEvent.atMs,
-      type: calculatedEvent.type,
-      payload: structuredClone(calculatedEvent.payload),
-      causeIds: calculatedEvent.causeIds ? [...calculatedEvent.causeIds] : undefined,
-    });
-    if (event.checkpointId) {
-      checkpoints.push({
-        id: event.checkpointId,
-        atMs: event.atMs,
-        journalCursor: sequence,
-        scenarioCursor,
-        world: cloneWorld(world),
-        rng: structuredClone(rng),
-      });
-    }
-  });
+    world = result.world;
+    rng = result.rng;
+    sequence = result.entry.sequence;
+    randomOutcomesCreated += result.randomOutcomesCreated;
+    journal.push(result.entry);
+    if (result.checkpoint) checkpoints.push(result.checkpoint);
+  }
   return { world, journal, checkpoints, rng, randomOutcomesCreated };
 };
 
@@ -301,6 +342,26 @@ export function worldAtExposition(
     .reduce((world, entry) => reduceWorld(world, {
       eventId: entry.eventId, type: entry.type, payload: structuredClone(entry.payload), causeIds: entry.causeIds,
     }, { reducerVersion }), cloneWorld(initialWorld));
+}
+
+const MAP_LAYER_FIELDS: Readonly<Record<string, string>> = {
+  weather: 'weather', terrain: 'terrain', logistics: 'logistics', modernSymbols: 'modernSymbols', forces: 'forces', routes: 'routes',
+  'modern-symbols': 'modernSymbols',
+};
+
+export function mapAtExposition(
+  initialMap: Readonly<Record<string, unknown>>,
+  journal: readonly ExpositionJournalEntry[],
+  atMs: number,
+): Readonly<Record<string, unknown>> {
+  const map: Record<string, unknown> = structuredClone(initialMap);
+  for (const entry of journal.filter(item => item.atMs <= atMs).sort((left, right) => left.sequence - right.sequence)) {
+    if (entry.type !== 'map.layer.updated.v1') continue;
+    const payload = entry.payload as { layer?: unknown; value?: unknown };
+    const field = typeof payload?.layer === 'string' ? MAP_LAYER_FIELDS[payload.layer] : undefined;
+    if (field) map[field] = structuredClone(payload.value);
+  }
+  return map;
 }
 
 type StartArchiveInput = Readonly<{
@@ -328,8 +389,9 @@ export function startArchiveShow(input: StartArchiveInput): ExpositionSession {
     journal: structuredClone(sourceArchive.journal),
     checkpoints: sourceArchive.checkpoints.map(cloneCheckpoint),
     world: worldAtExposition(sourceArchive.demonstration.initialWorld, sourceArchive.journal, playback.atMs, sourceArchive.demonstration.rules.reducerVersion),
-    map: structuredClone(sourceArchive.map),
+    map: mapAtExposition(sourceArchive.map, sourceArchive.journal, playback.atMs),
     calculation: null,
+    initialRng: null,
     rng: null,
     randomOutcomesCreated: 0,
     officialAssessmentCreated: false,
@@ -373,8 +435,9 @@ export function startAutonomousShow(input: StartAutonomousInput): ExpositionSess
     journal: structuredClone(result.journal),
     checkpoints: result.checkpoints.map(cloneCheckpoint),
     world: worldAtExposition(sourceArchive.demonstration.initialWorld, result.journal, playback.atMs, sourceArchive.demonstration.rules.reducerVersion),
-    map: structuredClone(sourceArchive.map),
+    map: mapAtExposition(sourceArchive.map, result.journal, playback.atMs),
     calculation: calculationContext(sourceArchive.demonstration),
+    initialRng: createExpositionRng(input.seed, branchId),
     rng: structuredClone(result.rng),
     randomOutcomesCreated: result.randomOutcomesCreated,
     officialAssessmentCreated: false,
@@ -424,6 +487,7 @@ export function continueFromCheckpoint(
       ...result.checkpoints.map(cloneCheckpoint),
     ],
     world: worldAtExposition(show.sourceArchive.demonstration.initialWorld, journal, playback.atMs, show.sourceArchive.demonstration.rules.reducerVersion),
+    map: mapAtExposition(show.sourceArchive.map, journal, playback.atMs),
     rng: structuredClone(result.rng),
     randomOutcomesCreated: result.randomOutcomesCreated,
     officialAssessmentCreated: false,
@@ -456,6 +520,7 @@ export function restartAutonomousShow(
       ...structuredClone(show),
       sessionId: options.sessionId ?? identifier('exposition-replay'),
       world: worldAtExposition(show.sourceArchive.demonstration.initialWorld, show.journal, playback.atMs, show.sourceArchive.demonstration.rules.reducerVersion),
+      map: mapAtExposition(show.sourceArchive.map, show.journal, playback.atMs),
       randomOutcomesCreated: 0,
       officialAssessmentCreated: false,
       officialAssessments: [],
@@ -475,7 +540,8 @@ export function restartAutonomousShow(
 
 function chapterAt(show: ExpositionSession, atMs: number): ExpositionSession['program']['chapters'][number] {
   return show.program.chapters.find(item => atMs >= item.startMs && atMs < item.endMs)
-    ?? (atMs >= expositionDuration(show.program) ? show.program.chapters.at(-1)! : show.program.chapters[0]);
+    ?? [...show.program.chapters].reverse().find(item => item.endMs <= atMs)
+    ?? show.program.chapters[0];
 }
 
 function atPlayback(show: ExpositionSession, playback: ExpositionPlayback): ExpositionSession {
@@ -488,6 +554,7 @@ function atPlayback(show: ExpositionSession, playback: ExpositionPlayback): Expo
       playback.atMs,
       show.sourceArchive.demonstration.rules.reducerVersion,
     ),
+    map: mapAtExposition(show.sourceArchive.map, show.journal, playback.atMs),
   };
 }
 
@@ -517,31 +584,41 @@ function advance(show: ExpositionSession, elapsedMs: number): ExpositionSession 
   }
 
   let simulationRemaining = wallRemaining * playback.tempo;
+  let guard = 0;
+  const iterationLimit = show.program.chapters.length * 2 + 4;
   while (simulationRemaining > 0 && playback.status === 'PLAYING') {
-    const chapter = show.program.chapters.find(item => item.id === playback.chapterId) ?? chapterAt(show, playback.atMs);
-    const boundary = chapter.endMs;
-    const untilBoundary = Math.max(0, boundary - playback.atMs);
+    guard += 1;
+    if (guard > iterationLimit) throw new Error('Маршрут глав не позволяет продвинуть показ');
     if (playback.atMs >= duration) {
       playback.status = 'PAUSED';
       break;
     }
-    if (simulationRemaining < untilBoundary || untilBoundary === 0 && playback.atMs >= duration) {
-      playback.atMs = Math.min(duration, playback.atMs + simulationRemaining);
+    const atMs = playback.atMs;
+    const chapter = show.program.chapters.find(item => atMs >= item.startMs && atMs < item.endMs);
+    const nextChapter = show.program.chapters.find(item => item.startMs > atMs);
+    let boundary = chapter?.endMs ?? nextChapter?.startMs ?? duration;
+    if (boundary <= atMs) boundary = duration;
+    const untilBoundary = boundary - atMs;
+    if (untilBoundary <= 0) {
+      playback.status = 'PAUSED';
+      break;
+    }
+    if (simulationRemaining < untilBoundary) {
+      playback.atMs = Math.min(duration, atMs + simulationRemaining);
       simulationRemaining = 0;
       playback.chapterId = chapterAt(show, playback.atMs).id;
       break;
     }
     playback.atMs = boundary;
-    simulationRemaining = Math.max(0, simulationRemaining - untilBoundary);
+    simulationRemaining -= untilBoundary;
     if (boundary >= duration) {
       playback.endPauseRemainingMs = show.program.pauseMs;
       playback.status = show.program.pauseMs > 0 ? 'PLAYING' : 'PAUSED';
       simulationRemaining = 0;
       break;
     }
-    playback.pauseRemainingMs = chapter.pauseAfterMs;
-    if (chapter.pauseAfterMs > 0) {
-      // Пауза главы измеряется по wall clock, а не по ускоренным часам мира.
+    if (chapter && boundary === chapter.endMs && chapter.pauseAfterMs > 0) {
+      playback.pauseRemainingMs = chapter.pauseAfterMs;
       const wallLeft = simulationRemaining / playback.tempo;
       const consumed = Math.min(wallLeft, playback.pauseRemainingMs);
       playback.pauseRemainingMs -= consumed;

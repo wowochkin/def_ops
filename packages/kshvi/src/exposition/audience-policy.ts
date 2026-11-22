@@ -7,10 +7,14 @@ export type AudiencePolicy = Readonly<{
   showPlanFact: boolean;
   showExplanations: boolean;
   publicCaptionIds: readonly string[];
+  publicExplanationIds: readonly string[];
   publicDecisionIds: readonly string[];
 }>;
+export type AudiencePolicyInput = Omit<AudiencePolicy, 'publicExplanationIds'> & Readonly<{
+  publicExplanationIds?: readonly string[];
+}>;
 
-export function createAudiencePolicy(input: AudiencePolicy): AudiencePolicy {
+export function createAudiencePolicy(input: AudiencePolicyInput): AudiencePolicy {
   if (!input.id.trim()) throw new Error('Для политики аудитории нужен идентификатор');
   const allowedLayers = [...new Set(input.allowedLayers)];
   if (allowedLayers.some(layer => !AUDIENCE_LAYERS.includes(layer))) throw new Error('Неизвестный слой аудиторной проекции');
@@ -20,6 +24,7 @@ export function createAudiencePolicy(input: AudiencePolicy): AudiencePolicy {
     showPlanFact: input.showPlanFact,
     showExplanations: input.showExplanations,
     publicCaptionIds: [...new Set(input.publicCaptionIds)],
+    publicExplanationIds: [...new Set(input.publicExplanationIds ?? [])],
     publicDecisionIds: [...new Set(input.publicDecisionIds)],
   };
 }

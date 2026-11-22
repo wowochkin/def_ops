@@ -1,5 +1,5 @@
 import { emptyWorld } from '../../src/model/world';
-import type { OfficialExpositionArchive } from '../../src/exposition/exposition-session';
+import { calculatePreparedScenario, type AutonomousCalculator, type OfficialExpositionArchive } from '../../src/exposition/exposition-session';
 import { createCameraRoute } from '../../src/exposition/camera-route';
 import { createExpositionProgram, type ExpositionProgram } from '../../src/exposition/exposition-program';
 
@@ -78,3 +78,15 @@ export function officialArchive(): OfficialExpositionArchive {
     },
   };
 }
+
+
+/** Явные тестовые решения вместо запрещённой нейтральной подстановки production-кода. */
+export const testFullSimulation: AutonomousCalculator = input => {
+  const agentDecisions = Object.fromEntries(input.scenario.events.flatMap(event =>
+    input.scenario.systemSides.map(side => [`${event.eventId}:${side.agentId}`, {
+      consumptionFactor: side.sideId === 'BLUE' ? 1.1 : 0.95,
+      supplyFactor: side.sideId === 'BLUE' ? 1.05 : 0.9,
+    }]),
+  ));
+  return calculatePreparedScenario({ ...input, agentDecisions });
+};
