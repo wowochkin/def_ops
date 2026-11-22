@@ -9,7 +9,7 @@ export type ArchiveJobRun = (context: { signal: AbortSignal; reportProgress: (pr
 export type ArchiveJobTask = { module: string; exportName?: string };
 export type ArchiveJob = {
   id: string;
-  kind: 'EXPORT' | 'IMPORT' | 'VERIFY' | 'BULK_REPLAY';
+  kind: 'EXPORT' | 'ARCHIVE' | 'MASS_CALCULATION' | 'IMPORT' | 'VERIFY' | 'BULK_REPLAY';
   status: ArchiveJobStatus;
   progress: number;
   attempts: number;

@@ -3,7 +3,7 @@ import { appendToChain } from '../../../../packages/kshvi/src/events/hash-chain'
 import type { ChainEvent, ChainEventInput } from '../../../../packages/kshvi/src/events/envelope';
 import { operationalAt, wallClockAt } from '../../../../packages/kshvi/src/model/unknown';
 import { cloneWorld } from '../../../../packages/kshvi/src/model/world';
-import { emptyConductState, executeConductCommand, type ConductActor, type ConductCommand, type ConductExecution, type ConductState } from '../../../../packages/kshvi/src/commands/conduct';
+import { emptyConductState, executeConductCommand, type ConductActor, type ConductCommand, type ConductExecution, type ConductOperations, type ConductState } from '../../../../packages/kshvi/src/commands/conduct';
 import type { KshviEventStore } from '../store/event-store';
 
 export type ConductCommandContext = Readonly<{
@@ -12,7 +12,7 @@ export type ConductCommandContext = Readonly<{
   expectedRevision: number;
   actor: ConductActor;
 }>;
-export type ConductCommandResult = ConductExecution & Readonly<{ idempotent: boolean }>;
+export type ConductCommandResult = Omit<ConductExecution, 'event'> & Readonly<{ event: ChainEvent; idempotent: boolean }>;
 type StoredResult = { request: string; result: ConductCommandResult };
 
 function cloneState(state: ConductState): ConductState {
@@ -28,10 +28,12 @@ export class ConductCommandService {
   private readonly events = new Map<string, ChainEvent[]>();
   private readonly store?: KshviEventStore;
   private readonly organizationId?: string;
+  private readonly operations?: ConductOperations;
 
-  constructor(options: { store?: KshviEventStore; organizationId?: string } = {}) {
+  constructor(options: { store?: KshviEventStore; organizationId?: string; operations?: ConductOperations } = {}) {
     this.store = options.store;
     this.organizationId = options.organizationId;
+    this.operations = options.operations;
   }
 
   private key(sessionId: string, branchId: string): string { return `${sessionId}/${branchId}`; }
@@ -54,7 +56,7 @@ export class ConductCommandService {
     }
     const current = this.state(context.sessionId, context.branchId);
     if (current.revision !== context.expectedRevision) throw new Error(`Устаревшая ревизия: ${context.expectedRevision}, актуальная ${current.revision}`);
-    const execution = await executeConductCommand(current, command, context.actor);
+    const execution = await executeConductCommand(current, command, context.actor, this.operations);
     const draft = execution.event;
     const normalizedWallClock = wallClockAt(draft.wallClockAt ?? command.at);
     const eventInput: ChainEventInput = {

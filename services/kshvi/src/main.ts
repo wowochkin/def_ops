@@ -11,6 +11,7 @@ import { registerAgentRoutes } from './http/agent-routes';
 import { loadConfiguredProductionRuntime } from './runtime/production-config';
 import { FileExpositionRepository } from './exposition/exposition-repository';
 import { createFileExpositionService } from './exposition/exposition-runtime';
+import { publishChainEvent, SubscriptionService } from './http/subscription-service';
 
 const environmentStore = new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment'));
 const persistence = await createKshviPersistence(process.env, { environment: environmentStore });
@@ -29,9 +30,11 @@ const exposition = await createFileExpositionService({
   }),
   runtimePath: env('KSHVI_EXPOSITION_RUNTIME', './data/kshvi/exposition/runtime.json'),
 });
+const subscriptions = new SubscriptionService();
 const commands = new CommandService({
   ...(persistence.eventStore ? { store: persistence.eventStore } : {}),
   organizationId: env('KSHVI_ORGANIZATION_ID', 'default'),
+  eventSink: event => publishChainEvent(subscriptions, event),
 });
 const commandPort = new RevisionTrackingCommandPort(commands);
 const port = Number(env('PORT', '8105'));
@@ -48,6 +51,7 @@ const router = buildTask52Router({
   evidence: persistence.evidence,
   environmentProvider,
   commands,
+  subscriptions,
   wallClock: () => new Date(),
   exposition: { service: exposition, sessions },
   audit: async record => {

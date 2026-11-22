@@ -1,4 +1,5 @@
 import { canReadTruth, type VisibilityActor } from '../../../../packages/kshvi/src/projections/visibility-policy';
+import type { ChainEvent } from '../../../../packages/kshvi/src/events/envelope';
 
 export type SubscriptionEvent = Readonly<{
   eventId: string;
@@ -15,13 +16,20 @@ export class SubscriptionService {
   private readonly events: SubscriptionEvent[] = [];
   private readonly waiters = new Set<() => void>();
 
-  payloadFor(event: Pick<SubscriptionEvent, 'eventId' | 'sequence' | 'type' | 'payload'>, actor: VisibilityActor) {
+  payloadFor(event: Pick<SubscriptionEvent, 'eventId' | 'sequence' | 'type' | 'payload' | 'instanceId' | 'organizationId'>, actor: VisibilityActor) {
     const recipients = event.payload.recipients;
     const addressed = !recipients?.length || recipients.includes(actor.side) || !!actor.nodeId && recipients.includes(actor.nodeId);
-    if (!canReadTruth(actor) && ((event.payload.side && event.payload.side !== actor.side) || !addressed)) {
+    const side = event.payload.side;
+    const hasSide = typeof side === 'string' && side.length > 0;
+    const hasExplicitAudience = hasSide || !!recipients?.length;
+    if (!canReadTruth(actor) && (!hasExplicitAudience || !addressed || hasSide && side !== actor.side)) {
       return { type: 'projection.refresh' as const };
     }
-    return { type: event.type, eventId: event.eventId, sequence: event.sequence, payload: structuredClone(event.payload) };
+    return {
+      type: event.type, eventId: event.eventId, sequence: event.sequence,
+      instanceId: event.instanceId, organizationId: event.organizationId,
+      payload: structuredClone(event.payload),
+    };
   }
 
   seen(eventId: string, sequence: number): boolean {
@@ -32,8 +40,9 @@ export class SubscriptionService {
   }
 
   async publish(input: Omit<SubscriptionEvent, 'eventId' | 'sequence'> & Partial<Pick<SubscriptionEvent, 'eventId' | 'sequence'>>): Promise<SubscriptionEvent> {
-    const sequence = input.sequence ?? (this.events.at(-1)?.sequence ?? 0) + 1;
-    if (!Number.isSafeInteger(sequence) || sequence <= (this.events.at(-1)?.sequence ?? 0)) throw new Error('Нарушена последовательность подписки');
+    const previousSequence = this.events.filter(event => event.instanceId === input.instanceId).at(-1)?.sequence ?? 0;
+    const sequence = input.sequence ?? previousSequence + 1;
+    if (!Number.isSafeInteger(sequence) || sequence <= previousSequence) throw new Error('Нарушена последовательность подписки');
     const event: SubscriptionEvent = {
       ...structuredClone(input),
       eventId: input.eventId ?? `subscription-${sequence}`,
@@ -76,4 +85,24 @@ export class SubscriptionService {
       timer = setTimeout(() => finish(false), timeoutMs);
     });
   }
+}
+
+
+export async function publishChainEvent(subscriptions: SubscriptionService, event: ChainEvent): Promise<void> {
+  const payload = event.payload as Record<string, unknown>;
+  const nestedDecision = payload.decision && typeof payload.decision === 'object' && !Array.isArray(payload.decision)
+    ? payload.decision as Record<string, unknown> : {};
+  const observation = payload.observation && typeof payload.observation === 'object' && !Array.isArray(payload.observation)
+    ? payload.observation as Record<string, unknown> : {};
+  const observationSource = observation.source && typeof observation.source === 'object' && !Array.isArray(observation.source)
+    ? observation.source as Record<string, unknown> : {};
+  const side = (payload.side ?? payload.sideId ?? nestedDecision.sideId ?? observationSource.sideId) as string | undefined;
+  await subscriptions.publish({
+    eventId: event.eventId,
+    instanceId: event.instanceId,
+    organizationId: event.organizationId,
+    sequence: event.sequence,
+    type: event.type,
+    payload: { ...payload, side },
+  });
 }

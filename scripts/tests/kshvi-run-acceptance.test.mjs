@@ -207,3 +207,24 @@ test('устаревший runId доказательства блокирует
   assert.equal(result.status, 1);
   assert.ok(result.results[0].openErrors.some(issue => issue.includes('runId')));
 });
+
+
+test('defaultRunner сохраняет большой протокол и системную ошибку запуска', async () => {
+  const { defaultRunner } = await import('../kshvi-run-acceptance.mjs');
+  assert.equal(typeof defaultRunner, 'function');
+  let options;
+  const output = 'x'.repeat(2 * 1024 * 1024);
+  const completed = await defaultRunner([{ path: 'ac14-load.test.ts' }], process.cwd(), 'run-large', (command, args, actualOptions) => {
+    options = actualOptions;
+    return { status: 0, stdout: output, stderr: '' };
+  });
+  assert.ok(options.maxBuffer >= 64 * 1024 * 1024);
+  assert.equal(completed.status, 0);
+  assert.equal(completed.output, output);
+  const failed = await defaultRunner([{ path: 'ac14-load.test.ts' }], process.cwd(), 'run-error', () => ({
+    status: null, error: new Error('spawnSync ENOBUFS'), stdout: 'partial', stderr: '',
+  }));
+  assert.equal(failed.status, 1);
+  assert.ok(failed.output.includes('ENOBUFS'));
+  assert.ok(failed.output.includes('partial'));
+});

@@ -14,8 +14,21 @@ import { overrideCalculation } from '../simulation/manual-override';
 import { createObservation, type CreateObservationInput } from '../simulation/observation';
 import { projectObservation, type ProjectedObservation } from '../simulation/observation-projection';
 import { executeJump } from '../runtime/jump';
+import { computeDocumentSha256Sync, type DocumentRevision } from '../documents/document';
+import { transitionDocument, type DocumentTransitionAction } from '../documents/document-lifecycle';
+import type { DocumentIssueContext } from '../documents/document-validation';
+import type { Channel, CommunicationMessage, CommunicationNode } from '../communications/channel';
+import { routeMessage } from '../communications/channel';
+import { createMessageAttempt, type MessageAttempt } from '../communications/message';
 
 export type ConductActor = Readonly<{ userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] }>;
+export type ConductOperations = Readonly<{
+  knownInstanceIds: readonly string[];
+  availableChannelIds: readonly string[];
+  channels: readonly Channel[];
+  nodes: readonly CommunicationNode[];
+}>;
+export type DocumentDraftInput = Omit<DocumentRevision, 'state' | 'sha256' | 'signatures' | 'delivery' | 'previousRevision'>;
 export type ConductState = {
   scenarioId: string;
   revision: number;
@@ -24,6 +37,8 @@ export type ConductState = {
   orders: Record<string, OrderExecution>;
   calculations: Record<string, Calculation>;
   observations: Record<string, ProjectedObservation>;
+  documents: Record<string, DocumentRevision>;
+  communications: Record<string, MessageAttempt>;
   jumpSnapshots: Record<string, { state: unknown; hash: string; reports: readonly string[] }>;
   completion: unknown | null;
   stage: { stageId: string; calculationProfileId: string; state: unknown } | null;
@@ -44,6 +59,9 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'calculation.override'; calculationId: string; manualId: string; reason: string; result: unknown }>)
   | (CommandBase & Readonly<{ type: 'calculation.replay'; calculationId: string }>)
   | (CommandBase & Readonly<{ type: 'observation.record'; input: CreateObservationInput }>)
+  | (CommandBase & Readonly<{ type: 'document.create'; revision: DocumentDraftInput }>)
+  | (CommandBase & Readonly<{ type: 'document.transition'; documentId: string; action: DocumentTransitionAction; recipient?: DocumentIssueContext['recipient'] }>)
+  | (CommandBase & Readonly<{ type: 'communication.enqueue'; message: CommunicationMessage }>)
   | (CommandBase & Readonly<{ type: 'time.jump'; jumpId: string; targetOperationalAt: string; currentOperationalAt: string; elapsedMinutes: number }>)
   | (CommandBase & Readonly<{ type: 'stage.assign'; currentStageId: string; currentProfileId: string; nextStageId: string; nextProfileId?: string }>)
   | (CommandBase & Readonly<{ type: 'playbook.evaluate'; playbook: Playbook; condition: PlaybookCondition }>)
@@ -55,12 +73,14 @@ export type ConductExecution = Readonly<{
   decision?: Decision;
   order?: OrderExecution;
   calculation?: Calculation;
+  document?: DocumentRevision;
+  communication?: MessageAttempt;
   completion?: unknown;
   playbook?: PlaybookResult;
 }>;
 
 export function emptyConductState(scenarioId: string): ConductState {
-  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, jumpSnapshots: {}, completion: null, stage: null };
+  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, communications: {}, jumpSnapshots: {}, completion: null, stage: null };
 }
 function json(value: unknown): JsonValue { return JSON.parse(JSON.stringify(value)) as JsonValue; }
 function assertCommand(command: CommandBase): void {
@@ -88,23 +108,23 @@ function assertDecisionActor(actor: ConductActor, decision: DecisionInput): void
   if (decision.tasks.some(task => !assigned.includes(task.assigneeId))) throw new Error('403: Задача вне назначенных инстанций');
 }
 
-export async function executeConductCommand(state: ConductState, command: ConductCommand, actor: ConductActor): Promise<ConductExecution> {
+export async function executeConductCommand(state: ConductState, command: ConductCommand, actor: ConductActor, operations?: ConductOperations): Promise<ConductExecution> {
   assertCommand(command);
   switch (command.type) {
     case 'decision.create': {
       assertDecisionActor(actor, command.decision);
       const decision = createDecision(command.decision);
       if (state.decisions[decision.id]) throw new Error('Решение с таким идентификатором уже существует');
-      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.created.v1', decision.id, { revision: 1 }), revision: state.revision + 1, decision };
+      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.created.v1', decision.id, { revision: 1, sideId: decision.sideId }), revision: state.revision + 1, decision };
     }
     case 'decision.transition': {
       const decision = transitionDecision(required(state.decisions[command.decisionId], 'Решение не найдено'), command.to, command.at);
-      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.status.changed.v1', decision.id, { status: decision.status }), revision: state.revision + 1, decision };
+      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.status.changed.v1', decision.id, { status: decision.status, sideId: decision.sideId }), revision: state.revision + 1, decision };
     }
     case 'decision.revise': {
       const original = required(state.decisions[command.decisionId], 'Исходное решение не найдено');
       const decision = reviseDecision(original, command.changes, command.at, () => command.revisedId);
-      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.revised.v1', decision.id, { supersedes: original.id, revision: decision.revision }), revision: state.revision + 1, decision };
+      return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.revised.v1', decision.id, { supersedes: original.id, revision: decision.revision, sideId: decision.sideId }), revision: state.revision + 1, decision };
     }
     case 'order.issue': {
       const decision = required(state.decisions[command.order.decisionId], 'Приказ должен ссылаться на решение');
@@ -125,7 +145,7 @@ export async function executeConductCommand(state: ConductState, command: Conduc
     case 'calculation.create': {
       if (state.calculations[command.calculationId]) throw new Error('Расчёт с таким идентификатором уже существует');
       const calculation = calculate({ ...command.input, id: command.calculationId, mode: command.mode, createdAt: command.at });
-      return { state: next(state, { calculations: { ...state.calculations, [calculation.id]: calculation } }), event: eventFor(state, command, 'calculation.calculated.v1', calculation.id, { state: calculation.state, inputHash: calculation.inputHash, randomKeys: calculation.randomKeys }), revision: state.revision + 1, calculation };
+      return { state: next(state, { calculations: { ...state.calculations, [calculation.id]: calculation } }), event: eventFor(state, command, 'calculation.calculated.v1', calculation.id, { state: calculation.state, inputHash: calculation.inputHash, randomKeys: calculation.randomKeys, sideId: calculation.sideId, calculation }), revision: state.revision + 1, calculation };
     }
     case 'calculation.approve': {
       const calculation = approveCalculation(required(state.calculations[command.calculationId], 'Расчёт не найден'), { author: actor.userId, authorized: actor.role === 'LEADER', reviewedParameters: command.reviewedParameters });
@@ -167,6 +187,62 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       const observation = createObservation(command.input);
       const projected = projectObservation(observation);
       return { state: next(state, { observations: { ...state.observations, [projected.id]: projected } }), event: eventFor(state, command, 'observation.reported.v1', observation.id, { observation: projected }), revision: state.revision + 1 };
+    }
+    case 'document.create': {
+      const input = command.revision;
+      if (state.documents[input.documentId]) throw new Error('Документ с таким идентификатором уже существует');
+      if (input.requisites.instanceId !== state.scenarioId) throw new Error('Документ относится к другой инстанции');
+      if (actor.role !== 'LEADER' && actor.role !== 'DIRECTOR' && actor.sideId !== input.requisites.sideId) throw new Error('Документ другой стороны недоступен');
+      const unsigned: DocumentRevision = {
+        ...structuredClone(input), state: 'DRAFT', sha256: '', signatures: [], delivery: { state: 'NOT_ISSUED', facts: [] },
+      };
+      const revision = { ...unsigned, sha256: computeDocumentSha256Sync(unsigned) };
+      return {
+        state: next(state, { documents: { ...state.documents, [revision.documentId]: revision } }),
+        event: eventFor(state, command, 'document.created.v1', revision.documentId, { sideId: revision.requisites.sideId, revision: revision.revision, sha256: revision.sha256 }),
+        revision: state.revision + 1, document: revision,
+      };
+    }
+    case 'document.transition': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Переход документа недоступен этой роли');
+      if (actor.role !== 'DIRECTOR' && actor.sideId !== original.requisites.sideId) throw new Error('Документ другой стороны недоступен');
+      if (command.action === 'APPROVE' && actor.userId === original.requisites.authorId) throw new Error('Автор не может утвердить собственный документ');
+      let issue: DocumentIssueContext | undefined;
+      if (command.action === 'ISSUE') {
+        if (!operations) throw new Error('Серверный контекст инстанций и каналов не настроен');
+        issue = {
+          recipient: required(command.recipient, 'Для выдачи нужен адресат'), knownInstanceIds: operations.knownInstanceIds,
+          availableChannelIds: operations.availableChannelIds, senderHasAuthority: true, at: command.at,
+        };
+      }
+      const revision = transitionDocument(original, command.action, {
+        ...(command.action === 'APPROVE' ? { signature: { userId: actor.userId, role: actor.role, signedAt: command.at } } : {}),
+        ...(issue ? { issue } : {}),
+      });
+      const type = command.action === 'APPROVE' ? 'document.approved.v1' : command.action === 'ISSUE' ? 'document.issued.v1' : 'document.status.changed.v1';
+      return {
+        state: next(state, { documents: { ...state.documents, [revision.documentId]: revision } }),
+        event: eventFor(state, command, type, revision.documentId, {
+          sideId: revision.requisites.sideId, revision: revision.revision, sha256: revision.sha256,
+          ...(command.action === 'ISSUE' ? { document: revision } : {}),
+        }),
+        revision: state.revision + 1, document: revision,
+      };
+    }
+    case 'communication.enqueue': {
+      if (!operations) throw new Error('Серверный контекст каналов связи не настроен');
+      if (!actor.sideId) throw new Error('Сторона отправителя не назначена');
+      if (command.message.fromInstanceId !== state.scenarioId) throw new Error('Отправитель сообщения не соответствует сеансу');
+      if (command.message.recipientIds.some(id => !operations.knownInstanceIds.includes(id))) throw new Error('Получатель отсутствует в дереве инстанций');
+      if (state.communications[command.message.id]) throw new Error('Сообщение с таким идентификатором уже существует');
+      const route = routeMessage({ message: command.message, channels: operations.channels, nodes: operations.nodes, at: command.at });
+      const attempt = createMessageAttempt(command.message, route, command.at);
+      return {
+        state: next(state, { communications: { ...state.communications, [attempt.messageId]: attempt } }),
+        event: eventFor(state, command, 'communication.queued.v1', attempt.messageId, { sideId: actor.sideId, recipients: attempt.recipients, attempt }),
+        revision: state.revision + 1, communication: attempt,
+      };
     }
     case 'time.jump': {
       const scenarioState = state.world.state.ScenarioState as Record<string, unknown>;

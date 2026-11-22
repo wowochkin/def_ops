@@ -4,6 +4,7 @@ import { createService } from '@def-ops/service-kit';
 import { afterEach, describe, expect, it } from 'vitest';
 import { InMemorySessionStore, SessionManager } from '../src/auth/sessions';
 import { buildForceRouter, MemoryModernImportStore } from '../src/http/force-routes';
+import { buildRouter } from '../src/app';
 
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -130,4 +131,24 @@ describe('серверный импорт сил', () => {
     const otherSide = await call({}, red);
     expect(await otherSide.json()).toEqual([]);
   });
+});
+
+
+it('основной роутер пропускает авторизованный импорт сил', async () => {
+  const sessions = new SessionManager({ store: new InMemorySessionStore() });
+  await sessions.createAccount({
+    userId: 'main-director', username: 'main-director', password: 'secret123', organizationId: 'org-main',
+    roles: [{ id: 'main-director-role', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise'] }],
+  });
+  const director = await sessions.login('main-director', 'secret123');
+  await sessions.selectRole(director.token, 'main-director-role');
+  const service = createService({ name: 'kshvi-main-force-test', port: 0, router: buildRouter({ sessions }) });
+  const port = await service.listen();
+  closers.push(service.close);
+  const response = await fetch(`http://127.0.0.1:${port}/kshvi/forces/import`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${director.token}`, 'X-CSRF-Token': director.csrfToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source: sourceFor(modernCorpus.representatives[0], 'REPRESENTATIVE'), sideId: 'blue', parentNodeId: 'node-1', scenarioValues: [] }),
+  });
+  expect(response.status, await response.text()).toBe(201);
 });

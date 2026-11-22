@@ -143,7 +143,7 @@ async function runOfficialG2(store: KshviEventStore) {
     await sessions.createAccount({
       userId: ACTOR.userId, username: ACTOR.userId, password: 'g2-password', organizationId: ORG,
       roles: [
-        { id: 'role-leader', role: 'LEADER', sideId: 'blue', authorities: ['exercise:create', 'exercise:read', 'exercise:revise', 'exercise:conduct'] },
+        { id: 'role-leader', role: 'LEADER', sideId: 'blue', authorities: ['exercise:create', 'exercise:read', 'exercise:revise', 'exercise:conduct', 'instance:command'] },
         { id: 'role-author', role: 'AUTHOR', sideId: 'blue', authorities: ['exercise:revise'] },
         { id: 'role-approver', role: 'APPROVER', sideId: 'blue', authorities: ['exercise:revise'] },
         { id: 'role-director', role: 'DIRECTOR', sideId: 'blue', authorities: ['scenario.seal'] },

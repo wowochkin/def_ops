@@ -11,7 +11,8 @@ import type { CartographyEnvironmentProvider } from './environment/cartography-p
 import { InstanceService } from './instances/instance-service';
 import { CommandService } from './instances/command-service';
 import { ProjectionService } from './instances/projection-service';
-import { SubscriptionService } from './http/subscription-service';
+import { publishChainEvent, SubscriptionService } from './http/subscription-service';
+import { authorize } from './auth/authorize';
 import { registerInstanceRoutes } from './http/instance-routes';
 import { registerProjectionRoutes } from './http/projection-routes';
 import { registerSseRoutes } from './http/sse';
@@ -57,8 +58,9 @@ export type BuildRouterOptions = {
   exposition?: { service: ExpositionSessionService; sessions: SessionManager };
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), evidence, forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, wallClock = () => new Date(), admin, exposition }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), evidence, forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands: suppliedCommands, projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, wallClock = () => new Date(), admin, exposition }: BuildRouterOptions): Router {
   const router = new Router();
+  const commands = suppliedCommands ?? new CommandService({ eventSink: event => publishChainEvent(subscriptions, event) });
   const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore, { now: wallClock });
   const integratedAdmin = admin ?? new AdminOverviewService({
     directory: new SessionAccountDirectory(sessions), assignments: new AssignmentService(), configs: new ConfigCatalog(), audit: new SecurityAudit(),
@@ -91,12 +93,29 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
     return reply(204, null, { 'Set-Cookie': clearSessionCookie() });
   });
 
+  const projectionActor = async (ctx: Ctx, instanceId: string) => {
+    const current = await sessions.authenticate(tokenOf(ctx));
+    authorize(current, { action: 'projection:read', organizationId: current.organizationId, scope: 'organization' });
+    return {
+      organizationId: current.organizationId,
+      instanceIds: [instanceId],
+      side: current.sideId ?? 'UNKNOWN',
+      role: current.activeRole ?? 'UNKNOWN',
+      nodeId: current.assignedNodeIds?.[0],
+      scope: current.authorities.includes('TRUTH_READ') ? 'truth' as const : 'own' as const,
+      operationalAt: new Date().toISOString(),
+      authorities: current.authorities,
+    };
+  };
   registerExerciseRoutes(router, { store: exerciseStore, sessions, ...(evidence ? { evidence } : {}) });
-  registerForceRoutes(router, forceStore);
+  registerForceRoutes(router, forceStore, sessions);
   registerSymbolRoutes(router);
-  registerInstanceRoutes(router, instances, commands);
-  registerProjectionRoutes(router, projections, projectionWorld);
-  registerSseRoutes(router, subscriptions);
+  registerInstanceRoutes(router, instances, commands, participant);
+  registerProjectionRoutes(router, projections, projectionWorld, projectionActor);
+  registerSseRoutes(router, subscriptions, async (ctx, instanceId) => ({
+    ...await projectionActor(ctx, instanceId),
+    subscriptionRevision: 1,
+  }));
   registerSealingRoutes(router, sealing);
   registerWorkflowRoutes(router, { sessions, workflow: integratedWorkflow });
   registerArchiveRoutes(router, { sessions, workflow: integratedWorkflow });

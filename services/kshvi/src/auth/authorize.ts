@@ -7,6 +7,7 @@ export type ParticipantContext = {
   organizationId: string;
   roleId?: string | null;
   authorities: readonly string[];
+  assignedNodeIds?: readonly string[];
   sessionId?: string;
   csrfHash?: string;
 };

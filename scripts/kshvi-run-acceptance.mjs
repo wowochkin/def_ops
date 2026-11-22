@@ -13,7 +13,8 @@ const acceptanceIds = ['AC-01', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC
 const officialCommandTypes = new Set([
   'decision.create', 'decision.transition', 'decision.revise', 'order.issue', 'order.advance', 'order.cancel',
   'calculation.create', 'calculation.approve', 'calculation.apply', 'calculation.override', 'calculation.replay',
-  'observation.record', 'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
+  'observation.record', 'document.create', 'document.transition', 'communication.enqueue',
+  'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);
 const requirements = [
   'RUN-13', 'RUN-14', 'RUN-15', 'RUN-16', 'RUN-17', 'RUN-18', 'GEN-04', 'GEN-05', 'GEN-06', 'GEN-07',
@@ -34,13 +35,16 @@ export function acceptanceFiles(from, to) {
     return { id, path: `services/kshvi/tests/acceptance/ac${String(number).padStart(2, '0')}-${slug}.test.ts` };
   });
 }
-function defaultRunner(files, cwd = process.cwd(), runId = '') {
-  const result = spawnSync('npx', ['vitest', 'run', ...files.map(file => file.path)], {
-    cwd, encoding: 'utf8', env: { ...process.env, KSHVI_ACCEPTANCE_RUN_ID: runId },
+export async function defaultRunner(files, cwd = process.cwd(), runId = '', spawn = spawnSync) {
+  const result = spawn('npx', ['vitest', 'run', ...files.map(file => file.path)], {
+    cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, KSHVI_ACCEPTANCE_RUN_ID: runId },
   });
+  const status = typeof result.status === 'number' ? result.status : 1;
+  const executionError = result.error ? `\nСистемная ошибка запуска: ${result.error.stack ?? result.error.message ?? String(result.error)}` : '';
+  const output = `${result.stdout ?? ''}${result.stderr ?? ''}${executionError}`;
   const proofPath = resolve(cwd, 'docs/release/kshvi/acceptance', `${files[0].id}.proof.json`);
-  const evidence = existsSync(proofPath) ? JSON.parse(readFileSync(proofPath, 'utf8')) : undefined;
-  return { status: result.status ?? 1, output: `${result.stdout ?? ''}${result.stderr ?? ''}`, evidence };
+  const evidence = status === 0 && existsSync(proofPath) ? JSON.parse(readFileSync(proofPath, 'utf8')) : undefined;
+  return { status, output, evidence };
 }
 export function prepareFreshAcceptanceWorkspace({ root = process.cwd(), offline = true, installer = spawnSync } = {}) {
   mkdirSync(resolve(root, '.tmp'), { recursive: true });
