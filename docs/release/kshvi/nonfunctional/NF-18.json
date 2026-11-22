@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-18",
+  "status": "passed",
+  "startedAt": "2026-11-22T00:45:25.308Z",
+  "finishedAt": "2026-11-22T00:45:25.959Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "npx vitest run apps/editor/tests/export/local-formats.test.ts",
+  "tests": [
+    "apps/editor/tests/export/local-formats.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ apps/editor/tests/export/local-formats.test.ts (2 tests) 112ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  03:45:25\n   Duration  213ms (tests 68%, transform 20%, import 11%, worker 1%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-18.json"
+  ],
+  "openErrors": []
+}

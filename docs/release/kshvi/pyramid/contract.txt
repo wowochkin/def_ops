@@ -1,0 +1,15 @@
+### schema-api-and-evidence-contracts
+$ npx vitest run packages/kshvi/tests/contracts services/kshvi/tests/contracts/nf-quality.test.ts services/kshvi/tests/contracts/acceptance-scripts.test.ts
+status=passed exit=0
+
+ RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality
+
+ ✓ services/kshvi/tests/contracts/nf-quality.test.ts (2 tests) 12ms
+ ✓ services/kshvi/tests/contracts/acceptance-scripts.test.ts (2 tests) 17ms
+ ✓ packages/kshvi/tests/contracts/schema-purity.test.ts (2 tests) 12ms
+ ✓ packages/kshvi/tests/contracts/archive-migration.test.ts (2 tests) 8ms
+
+ Test Files  4 passed (4)
+      Tests  8 passed (8)
+   Start at  03:42:29
+   Duration  109ms (transform 53%, tests 28%, import 16%, worker 3%)

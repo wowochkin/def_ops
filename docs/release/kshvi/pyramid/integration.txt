@@ -1,0 +1,19 @@
+### postgres-environment-communication-agents-archive
+$ npx vitest run services/kshvi/tests/event-store.test.ts services/kshvi/tests/routes-integration.test.ts services/kshvi/tests/environment-snapshot.test.ts services/kshvi/tests/sse-reconnect.test.ts services/kshvi/tests/opponent-worker.test.ts services/kshvi/tests/intermediary-worker.test.ts services/kshvi/tests/archive-offline.test.ts services/kshvi/tests/archive-roundtrip.test.ts
+status=passed exit=0
+
+ RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality
+
+ ✓ services/kshvi/tests/sse-reconnect.test.ts (2 tests) 2ms
+ ✓ services/kshvi/tests/opponent-worker.test.ts (5 tests) 3ms
+ ✓ services/kshvi/tests/archive-offline.test.ts (1 test) 8ms
+ ✓ services/kshvi/tests/archive-roundtrip.test.ts (6 tests) 16ms
+ ✓ services/kshvi/tests/intermediary-worker.test.ts (6 tests) 71ms
+ ✓ services/kshvi/tests/environment-snapshot.test.ts (5 tests) 37ms
+ ✓ services/kshvi/tests/routes-integration.test.ts (2 tests) 2ms
+ ✓ services/kshvi/tests/event-store.test.ts (6 tests) 125ms
+
+ Test Files  8 passed (8)
+      Tests  33 passed (33)
+   Start at  03:42:29
+   Duration  607ms (transform 72%, import 14%, tests 13%, worker 1%)

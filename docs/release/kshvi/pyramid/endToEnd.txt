@@ -1,0 +1,14 @@
+### critical-role-workspaces
+$ npx playwright test apps/editor/tests/kshvi-replay.spec.ts apps/editor/tests/kshvi-autonomy-ui.spec.ts apps/editor/tests/kshvi-exposition.spec.ts apps/editor/tests/kshvi-projector-accessibility.spec.ts --workers=1
+status=passed exit=0
+
+Running 4 tests using 1 worker
+
+(node:23288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 apps/editor/tests/kshvi-autonomy-ui.spec.ts:6:1 › подготовка автономии и перехват посредника читаются при 1440×900 и 125 % (1.3s)
+  ✓  2 apps/editor/tests/kshvi-exposition.spec.ts:5:1 › AC-28 UI: browser entry управляет показом и выводит только аудиторную проекцию 1920×1080 (401ms)
+  ✓  3 apps/editor/tests/kshvi-projector-accessibility.spec.ts:18:1 › панель и критическая команда доступны при 125 % и 1920×1080 без внешних запросов (257ms)
+  ✓  4 apps/editor/tests/kshvi-replay.spec.ts:5:1 › рабочее место реплея синхронизирует панели при 1440×900 и 125 % (113ms)
+
+  4 passed (2.6s)

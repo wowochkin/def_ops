@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-16",
+  "status": "passed",
+  "startedAt": "2026-11-22T00:45:22.482Z",
+  "finishedAt": "2026-11-22T00:45:23.712Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "npx vitest run apps/editor/tests/i18n/russian-consistency.test.ts",
+  "tests": [
+    "apps/editor/tests/i18n/russian-consistency.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ apps/editor/tests/i18n/russian-consistency.test.ts (3 tests) 13ms\n\n Test Files  1 passed (1)\n      Tests  3 passed (3)\n   Start at  03:45:23\n   Duration  206ms (environment 54%, import 28%, transform 9%, tests 8%, worker 1%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-16.json"
+  ],
+  "openErrors": []
+}
