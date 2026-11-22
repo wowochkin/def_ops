@@ -50,13 +50,13 @@ export type ExpositionProgram = Readonly<{
   planFact: readonly PlanFactComparison[];
 }>;
 
-const REQUIRED_MAP_LAYERS: readonly AudienceLayer[] = ['weather', 'terrain', 'logistics', 'modern-symbols'];
+const MAP_LAYERS: readonly AudienceLayer[] = ['weather', 'terrain', 'logistics', 'modern-symbols', 'forces', 'routes'];
 const idsAreUnique = (ids: readonly string[]) => new Set(ids).size === ids.length;
 
 export function createExpositionProgram(input: ExpositionProgram): ExpositionProgram {
   if (!input.id.trim() || !input.title.trim()) throw new Error('Программе показа нужны идентификатор и название');
-  if (!REQUIRED_MAP_LAYERS.every(layer => input.layers.includes(layer))) {
-    throw new Error('Программа должна включать слои общей карты: погоду, местность, МТО и современные знаки');
+  if (input.layers.length === 0 || input.layers.some(layer => !MAP_LAYERS.includes(layer))) {
+    throw new Error('Программа должна включать хотя бы один корректный слой общей карты');
   }
   if (!Number.isFinite(input.tempo) || input.tempo < 0.25 || input.tempo > 8) throw new Error('Темп показа должен быть от 0,25× до 8×');
   if (!Number.isFinite(input.pauseMs) || input.pauseMs < 0) throw new Error('Пауза показа не может быть отрицательной');
