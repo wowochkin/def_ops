@@ -126,6 +126,9 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'paper.record'; input: Omit<PaperExchangeInput, 'appliedDomainKeys' | 'electronicQueue'> }>)
   | (CommandBase & Readonly<{ type: 'environment.bind'; snapshot: EnvironmentSnapshot }>)
   | (CommandBase & Readonly<{ type: 'weather.change'; changeId: string; effectiveAt: string; reason: string; supersedes: string; scenario: WeatherScenario }>)
+  | (CommandBase & Readonly<{ type: 'time.pause' }>)
+  | (CommandBase & Readonly<{ type: 'time.rate'; rate: number }>)
+  | (CommandBase & Readonly<{ type: 'time.resume' }>)
   | (CommandBase & Readonly<{ type: 'time.jump'; jumpId: string; targetOperationalAt: string; currentOperationalAt: string; elapsedMinutes: number }>)
   | (CommandBase & Readonly<{ type: 'stage.assign'; currentStageId: string; currentProfileId: string; nextStageId: string; nextProfileId?: string }>)
   | (CommandBase & Readonly<{ type: 'playbook.evaluate'; playbook: Playbook; condition: PlaybookCondition }>)
@@ -192,6 +195,10 @@ function assertDecisionActor(actor: ConductActor, decision: DecisionInput): void
 
 export async function executeConductCommand(state: ConductState, command: ConductCommand, actor: ConductActor, operations?: ConductOperations): Promise<ConductExecution> {
   assertCommand(command);
+  const time = state.world.state.Time as { status?: 'ACTIVE' | 'PAUSED' };
+  if (time.status === 'PAUSED' && !['time.resume', 'time.rate', 'time.jump'].includes(command.type)) {
+    throw new Error('На паузе изменение официального мира запрещено');
+  }
   switch (command.type) {
     case 'decision.create': {
       assertDecisionActor(actor, command.decision);
@@ -645,7 +652,31 @@ export async function executeConductCommand(state: ConductState, command: Conduc
         revision: state.revision + 1,
       };
     }
+    case 'time.pause': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Пауза доступна только руководителю');
+      const current = state.world.state.Time as Record<string, unknown>;
+      const world = withResourceAlias({ ...state.world, state: { ...state.world.state, Time: { ...current, status: 'PAUSED', wallClockAt: command.at, playbackRate: current.playbackRate ?? 1 } } });
+      return { state: next(state, { world }), event: eventFor(state, command, 'time.paused.v1', state.scenarioId, { status: 'PAUSED' }), revision: state.revision + 1 };
+    }
+    case 'time.rate': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Изменение скорости доступно только руководителю');
+      if (!Number.isFinite(command.rate) || command.rate <= 0 || command.rate > 16) throw new Error('Скорость должна быть в интервале (0; 16]');
+      const current = state.world.state.Time as Record<string, unknown>;
+      const world = withResourceAlias({ ...state.world, state: { ...state.world.state, Time: { ...current, status: current.status ?? 'ACTIVE', playbackRate: command.rate, wallClockAt: command.at } } });
+      return { state: next(state, { world }), event: eventFor(state, command, 'time.rate.changed.v1', state.scenarioId, { playbackRate: command.rate }), revision: state.revision + 1 };
+    }
+    case 'time.resume': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Возобновление доступно только руководителю');
+      const current = state.world.state.Time as Record<string, unknown>;
+      const world = withResourceAlias({ ...state.world, state: { ...state.world.state, Time: { ...current, status: 'ACTIVE', wallClockAt: command.at, playbackRate: current.playbackRate ?? 1 } } });
+      return { state: next(state, { world }), event: eventFor(state, command, 'time.resumed.v1', state.scenarioId, { status: 'ACTIVE' }), revision: state.revision + 1 };
+    }
     case 'time.jump': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Скачок времени доступен только руководителю');
+      const currentTime = state.world.state.Time as { operationalAt?: string | null; playbackRate?: number };
+      const currentOperationalAt = currentTime.operationalAt ?? command.currentOperationalAt;
+      if (!Number.isFinite(Date.parse(command.targetOperationalAt)) || !Number.isFinite(Date.parse(currentOperationalAt))) throw new Error('Скачок требует корректное оперативное время');
+      if (Date.parse(command.targetOperationalAt) < Date.parse(currentOperationalAt) || command.elapsedMinutes < 0) throw new Error('Обратный перенос официального времени запрещён');
       const scenarioState = state.world.state.ScenarioState as Record<string, unknown>;
       const episode = scenarioState.episode as Record<string, unknown> | undefined;
       const manual = Object.values(state.calculations).find(calculation => calculation.supersedes);
@@ -662,8 +693,8 @@ export async function executeConductCommand(state: ConductState, command: Conduc
         report: async step => { reports.push(step); },
       });
       const snapshot = { state: jumped.world, hash: jumped.hash, reports };
-      const world = { ...state.world, state: { ...state.world.state, Time: { operationalAt: command.targetOperationalAt, wallClockAt: command.at }, ScenarioState: { ...(state.world.state.ScenarioState as Record<string, unknown>), episode: jumped.world } } };
-      return { state: next(state, { world, jumpSnapshots: { ...state.jumpSnapshots, [command.jumpId]: snapshot } }), event: eventFor(state, command, 'time.jump.applied.v1', command.jumpId, { snapshotHash: jumped.hash, reports }), revision: state.revision + 1 };
+      const world = withResourceAlias({ ...state.world, state: { ...state.world.state, Time: { operationalAt: command.targetOperationalAt, wallClockAt: command.at, playbackRate: currentTime.playbackRate ?? 1, status: 'ACTIVE' }, ScenarioState: { ...(state.world.state.ScenarioState as Record<string, unknown>), episode: jumped.world } } });
+      return { state: next(state, { world, jumpSnapshots: { ...state.jumpSnapshots, [command.jumpId]: snapshot } }), event: eventFor(state, command, 'time.jump.applied.v1', command.jumpId, { snapshotHash: jumped.hash, reports, playbackRate: currentTime.playbackRate ?? 1, status: 'ACTIVE' }), revision: state.revision + 1 };
     }
     case 'stage.assign': {
       const stage = assignStageCalculationProfile(

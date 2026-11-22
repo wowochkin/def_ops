@@ -18,7 +18,7 @@ const officialCommandTypes = new Set([
   'input.planned', 'input.reactive', 'input.adaptive', 'input.approve', 'trigger.validate',
   'communication.enqueue', 'communication.admit', 'communication.advance', 'communication.retry', 'communication.failure', 'communication.infrastructure',
   'report.check', 'paper.record', 'environment.bind', 'weather.change',
-  'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
+  'time.pause', 'time.rate', 'time.resume', 'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);
 const requirements = [
   'RUN-13', 'RUN-14', 'RUN-15', 'RUN-16', 'RUN-17', 'RUN-18', 'GEN-04', 'GEN-05', 'GEN-06', 'GEN-07',

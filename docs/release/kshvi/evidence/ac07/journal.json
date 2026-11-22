@@ -1,0 +1,672 @@
+{
+  "runId": "2d1291d1-528e-41f3-98e4-d23ea131cf7c",
+  "commit": "5a4350c6c2bc873acff8424c7e5e5edaac3e9769",
+  "events": [
+    {
+      "eventId": "134ed71c-25b5-425d-8396-3a85ef301546",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "environment.bound.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-11-22T22:52:47.576Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-11-22T22:52:47.576Z",
+        "normalizedAt": "2026-11-22T22:52:47.576Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "bind-environment"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-11-22T22:52:47.576Z",
+        "causedBy": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb",
+        "commandId": "bind-environment",
+        "recipients": [
+          "blue",
+          "red"
+        ],
+        "snapshotId": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb",
+        "supersedes": null,
+        "commandType": "environment.bind",
+        "manifestSha256": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb"
+      },
+      "prevHash": null,
+      "hash": "28b8c66e5c900dc657305726cf7a4c3d776c70daa1d170e5f5ed04a15224cce8",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "d944c32f-1f14-423b-a0c9-7b884bd01f52",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:30:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:30:00.000Z",
+        "normalizedAt": "2030-01-01T01:30:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calculation.create-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "calc-1",
+        "commandId": "calculation.create-1",
+        "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+        "randomKeys": [],
+        "calculation": {
+          "id": "calc-1",
+          "mode": "DETERMINISTIC",
+          "state": "CALCULATED",
+          "units": {},
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 20,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 50
+              },
+              "position": {
+                "remainingMeters": 100,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            }
+          },
+          "nodeId": "node-1",
+          "reason": "Движение и ресурс",
+          "result": {
+            "task": {
+              "id": "task",
+              "status": "PARTIALLY_COMPLETED",
+              "progressPercent": 20
+            },
+            "state": {},
+            "position": {
+              "remainingMeters": 50,
+              "travelledMeters": 50
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 0,
+                "deficit": 2,
+                "consumed": 12,
+                "supplied": 2
+              }
+            },
+            "uncertainty": {},
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:30:00Z",
+          "createdBy": null,
+          "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "revision": 1
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение",
+              "applicability": "AC-07"
+            },
+            "purpose": "Скачок",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Учебный стенд"
+            ]
+          },
+          "requiredInputs": [],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {},
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 0,
+              "deficit": 2,
+              "consumed": 12,
+              "supplied": 2
+            },
+            "actualAdvanceMeters": 50
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "28b8c66e5c900dc657305726cf7a4c3d776c70daa1d170e5f5ed04a15224cce8",
+      "hash": "54881ab77602cdb60f872810ddfe6126c856eec575b0ffb094145792c414a8e2",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "a5616a07-7b98-46e3-bdec-14906f0d4b18",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "calculation.approved.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:31:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:31:00.000Z",
+        "normalizedAt": "2030-01-01T01:31:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calculation.approve-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:31:00Z",
+        "causedBy": "calc-1",
+        "commandId": "calculation.approve-2",
+        "approvedBy": "director",
+        "commandType": "calculation.approve",
+        "recomputedFrom": null
+      },
+      "prevHash": "54881ab77602cdb60f872810ddfe6126c856eec575b0ffb094145792c414a8e2",
+      "hash": "f3123c386d1dbb2a07f176a03b5719888416f693675026995a9ef0521793cd5f",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "3031f86a-1055-45a2-a8e5-7bea4ad5f5a0",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "resource.consumed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:32:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:32:00.000Z",
+        "normalizedAt": "2030-01-01T01:32:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calculation.apply-3"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:32:00Z",
+        "amount": 14,
+        "causedBy": "calc-1",
+        "supplied": 2,
+        "commandId": "calculation.apply-3",
+        "resourceId": "fuel",
+        "commandType": "calculation.apply",
+        "calculationId": "calc-1"
+      },
+      "prevHash": "f3123c386d1dbb2a07f176a03b5719888416f693675026995a9ef0521793cd5f",
+      "hash": "ca6596460ef22e8c47b4278a4e1f368cce8d9fed8a638b51b4729e247ca787f4",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "20ddf871-d0ce-4d2d-9a05-24e6b39e8d0e",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 5,
+      "type": "communication.queued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:32:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:32:00.000Z",
+        "normalizedAt": "2030-01-01T01:32:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.enqueue-4"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:32:00Z",
+        "sideId": "blue",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 100,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "radio",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T01:32:00Z",
+          "domainKey": "order-1",
+          "duplicate": false,
+          "messageId": "message-1",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac07",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-1",
+        "commandId": "communication.enqueue-4",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "communication.enqueue"
+      },
+      "prevHash": "ca6596460ef22e8c47b4278a4e1f368cce8d9fed8a638b51b4729e247ca787f4",
+      "hash": "76bd6cdf8d904998002078e75b455e2cc4049f5ce96482ab996e9d17e837ddda",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "a39793e2-dc4c-4cfb-913e-db65f3dfba2b",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 6,
+      "type": "weather.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T01:00:00.000Z",
+        "normalizedAt": "2026-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "weather.change-5"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T01:00:00Z",
+        "reason": "Плановая погода",
+        "authorId": "director",
+        "causedBy": "weather-1",
+        "changeId": "weather-1",
+        "scenario": {
+          "seed": 17,
+          "cloud": 40,
+          "start": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "humidity": 75,
+          "pressure": 1002,
+          "snowDepth": 0,
+          "windSpeed": 2,
+          "visibility": 7000,
+          "temperature": 10,
+          "variability": 0,
+          "soilMoisture": 0.3,
+          "durationHours": 4,
+          "precipitation": 1,
+          "windDirection": 180,
+          "soilTemperature": -1,
+          "transitionHours": 1
+        },
+        "commandId": "weather.change-5",
+        "recipients": [
+          "blue",
+          "red"
+        ],
+        "supersedes": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb",
+        "commandType": "weather.change",
+        "effectiveAt": "2026-01-01T01:00:00Z"
+      },
+      "prevHash": "76bd6cdf8d904998002078e75b455e2cc4049f5ce96482ab996e9d17e837ddda",
+      "hash": "896428913f1dce77fbf31874749755c6fc0761beefd0f112d9f307b9db9be984",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "3aaaa0e8-bbc0-430c-92b1-602fbdb5b88b",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 7,
+      "type": "calculation.manual.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:33:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:33:00.000Z",
+        "normalizedAt": "2030-01-01T01:33:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calculation.override-6"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:33:00Z",
+        "causedBy": "manual-1",
+        "commandId": "calculation.override-6",
+        "supersedes": "calc-1",
+        "commandType": "calculation.override",
+        "evaluationEffect": "UNCHANGED"
+      },
+      "prevHash": "896428913f1dce77fbf31874749755c6fc0761beefd0f112d9f307b9db9be984",
+      "hash": "24ebb41a6da26cf22c20de4171d61912c59643f0e6dcd78d03ed57f3ca112150",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "6f9ab862-4f64-41ff-b6b8-f9a8a74eabed",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 8,
+      "type": "time.paused.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:34:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:34:00.000Z",
+        "normalizedAt": "2030-01-01T01:34:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "time.pause-7"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:34:00Z",
+        "status": "PAUSED",
+        "causedBy": "ac07",
+        "commandId": "time.pause-7",
+        "commandType": "time.pause"
+      },
+      "prevHash": "24ebb41a6da26cf22c20de4171d61912c59643f0e6dcd78d03ed57f3ca112150",
+      "hash": "a99c29fb7b0569d9445840c72d9321d8410256fe82442e3a3b91a8adc96ba243",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "9b2811ee-0547-4d09-b056-a5a02c1ecabb",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 9,
+      "type": "time.rate.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:36:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:36:00.000Z",
+        "normalizedAt": "2030-01-01T01:36:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "time.rate-8"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:36:00Z",
+        "causedBy": "ac07",
+        "commandId": "time.rate-8",
+        "commandType": "time.rate",
+        "playbackRate": 4
+      },
+      "prevHash": "a99c29fb7b0569d9445840c72d9321d8410256fe82442e3a3b91a8adc96ba243",
+      "hash": "7e80385ab8632d652cd5b6f5c39b565dc3139c2bd71e9ec5ed93d4b7b1d19974",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "62481921-d4b7-4391-8423-09ee99246773",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 10,
+      "type": "time.jump.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:40:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:40:00.000Z",
+        "normalizedAt": "2030-01-01T01:40:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "time.jump-9"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:40:00Z",
+        "status": "ACTIVE",
+        "reports": [
+          "boundary",
+          "stop",
+          "uncertainty",
+          "resume"
+        ],
+        "causedBy": "jump-1",
+        "commandId": "time.jump-9",
+        "commandType": "time.jump",
+        "playbackRate": 4,
+        "snapshotHash": "532b7b43ca541e2095f77b7528f7068616a8f5cbec905ebd52da176cf4bf9dbe"
+      },
+      "prevHash": "7e80385ab8632d652cd5b6f5c39b565dc3139c2bd71e9ec5ed93d4b7b1d19974",
+      "hash": "251fbb28a9d60af17f336876957b40adc64ecc332edcdb7a2f8f5f1a49de8d24",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "fafaa5e5-5f91-47ad-b444-4831391de18b",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 11,
+      "type": "communication.admitted.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T02:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T02:00:00.000Z",
+        "normalizedAt": "2026-01-01T02:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.admit-10"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T02:00:00Z",
+        "causedBy": "radio",
+        "commandId": "communication.admit-10",
+        "queuedIds": [],
+        "commandType": "communication.admit",
+        "inTransitIds": [
+          "message-1"
+        ]
+      },
+      "prevHash": "251fbb28a9d60af17f336876957b40adc64ecc332edcdb7a2f8f5f1a49de8d24",
+      "hash": "964cddb576cbc3494072a0b7dedab0a4a9464cf6c1a608959e5f6073e93acbf2",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "f52b04bc-ae0c-4b42-90b1-05d6905dba63",
+      "organizationId": "org-ac07",
+      "instanceId": "ac07",
+      "branchId": "main",
+      "sequence": 12,
+      "type": "communication.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T02:00:00.100Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T02:00:00.100Z",
+        "normalizedAt": "2026-01-01T02:00:00.100Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.advance-11"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T02:00:00.100Z",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 100,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "radio",
+            "selectedReserve": false
+          },
+          "result": "DELIVERED",
+          "status": "delivered",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T01:32:00Z",
+          "domainKey": "order-1",
+          "duplicate": false,
+          "messageId": "message-1",
+          "sizeBytes": 100,
+          "startedAt": "2026-01-01T02:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2026-01-01T02:00:00.100Z",
+          "domainEffect": "APPLIED",
+          "recipientIds": [
+            "node-1"
+          ],
+          "failureReason": null,
+          "fromInstanceId": "ac07",
+          "recipientResults": {
+            "node-1": "delivered"
+          },
+          "appliedDomainKeys": [
+            "order-1:node-1"
+          ],
+          "domainEffectApplied": true,
+          "deliveryJournalEntry": {
+            "at": "2026-01-01T02:00:00.100Z",
+            "attempt": 1,
+            "domainKey": "order-1",
+            "duplicate": false,
+            "messageId": "message-1"
+          }
+        },
+        "causedBy": "message-1",
+        "commandId": "communication.advance-11",
+        "commandType": "communication.advance"
+      },
+      "prevHash": "964cddb576cbc3494072a0b7dedab0a4a9464cf6c1a608959e5f6073e93acbf2",
+      "hash": "30b33293fab3a78aebce21cb710bd0da86e5f703cc6f61302b1cff2287433d94",
+      "hashVersion": 2
+    }
+  ]
+}

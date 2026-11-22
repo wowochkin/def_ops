@@ -30,7 +30,7 @@ const officialTypes = new Set([
   'input.planned', 'input.reactive', 'input.adaptive', 'input.approve', 'trigger.validate',
   'communication.enqueue', 'communication.admit', 'communication.advance', 'communication.retry', 'communication.failure', 'communication.infrastructure',
   'report.check', 'paper.record', 'environment.bind', 'weather.change',
-  'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
+  'time.pause', 'time.rate', 'time.resume', 'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);
 
 export class CommandService {

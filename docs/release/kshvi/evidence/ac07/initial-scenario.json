@@ -1,0 +1,125 @@
+{
+  "initialRevision": {
+    "id": "ac07-time",
+    "revision": 1,
+    "sha256": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b"
+  },
+  "scenario": {
+    "selection": {
+      "region": {
+        "name": "Район",
+        "bounds": [
+          36,
+          54,
+          38,
+          56
+        ]
+      },
+      "atlases": [
+        {
+          "id": "a1",
+          "exportRights": "ALLOWED",
+          "elevationPoints": [
+            [
+              37,
+              55
+            ]
+          ]
+        }
+      ],
+      "weather": {
+        "mode": "scenario",
+        "scenario": {
+          "version": 1,
+          "seed": 17,
+          "start": "2026-01-01T00:00:00.000Z",
+          "durationHours": 4,
+          "temperature": -2,
+          "humidity": 75,
+          "pressure": 1002,
+          "windSpeed": 2,
+          "windDirection": 180,
+          "cloud": 40,
+          "precipitation": 1,
+          "variability": 0,
+          "transitionHours": 1,
+          "visibility": 7000,
+          "snowDepth": 0,
+          "soilTemperature": -1,
+          "soilMoisture": 0.3
+        }
+      },
+      "elevation": {
+        "adjustmentM": 0,
+        "algorithmVersion": 1
+      },
+      "algorithmVersions": {
+        "snapshot": 1,
+        "weather": 1
+      }
+    },
+    "calculationInput": {
+      "reason": "Движение и ресурс",
+      "inputSnapshot": {
+        "revision": 1
+      },
+      "inputs": {
+        "episode": {
+          "state": {},
+          "forces": {},
+          "task": {
+            "id": "task",
+            "status": "IN_PROGRESS",
+            "progressPercent": 0
+          },
+          "resource": {
+            "id": "fuel",
+            "unit": "L",
+            "onHand": 10,
+            "consumption": 14,
+            "supplied": 2
+          },
+          "elapsedMinutes": 30,
+          "position": {
+            "remainingMeters": 100,
+            "travelledMeters": 0
+          },
+          "uncertainty": {},
+          "effects": {
+            "taskProgressDelta": 20,
+            "positionAdvanceMeters": 50,
+            "stateChanges": {},
+            "uncertaintyChanges": {}
+          }
+        }
+      },
+      "requiredInputs": [],
+      "units": {},
+      "modelVersion": "aggregate-v1",
+      "profileVersions": {},
+      "modelPassport": {
+        "purpose": "Скачок",
+        "limitations": [
+          "Учебный стенд"
+        ],
+        "source": {
+          "kind": "ASSUMPTION",
+          "note": "Учебное допущение",
+          "applicability": "AC-07"
+        },
+        "knownErrors": [],
+        "examples": [
+          {
+            "input": 1,
+            "expected": 1
+          }
+        ],
+        "approvedBy": "Методист",
+        "version": 1
+      },
+      "sideId": "blue",
+      "nodeId": "node-1"
+    },
+    "message": "message-1"
+  }
+}
