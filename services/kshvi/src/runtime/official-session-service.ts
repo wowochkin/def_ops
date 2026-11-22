@@ -84,11 +84,13 @@ export class OfficialSessionService {
   private readonly archives = new Map<string, StoredArchive>();
   private readonly replay = new ReplayService();
   private readonly debrief = new DebriefService();
-  private readonly now: () => Date;
+  private readonly now?: () => Date;
 
   constructor(private readonly store: ExerciseStore, options: { now?: () => Date } = {}) {
-    this.now = options.now ?? (() => new Date());
+    this.now = options.now;
   }
+
+  private timestamp(fallback: string): string { return this.now?.().toISOString() ?? fallback; }
 
   private key(organizationId: string, sessionId: string): string { return `${organizationId}/${sessionId}`; }
 
@@ -162,7 +164,7 @@ export class OfficialSessionService {
     const sequence = record.archive.events.length + 1;
     const event: ReplayEvent = {
       eventId: `${sessionId}-command-${sequence}`, branchId: record.archive.branchId, sequence,
-      type: 'time.change', operationalAt: instant(session.createdAt, sequence), wallClockAt: this.now().toISOString(),
+      type: 'time.change', operationalAt: instant(session.createdAt, sequence), wallClockAt: this.timestamp(session.createdAt),
       payload: { command: input.command, state: session.state, confirmedRevision: session.confirmedRevision },
       changes: [{ domain: 'EventFeed', value: { status: 'KNOWN', items: record.archive.events.map(item => ({ eventId: item.eventId, type: item.type, payload: item.payload })).concat({ eventId: `${sessionId}-command-${sequence}`, type: 'time.change', payload: { command: input.command, state: session.state, confirmedRevision: session.confirmedRevision } }) } }],
       reducerVersion: 1,
@@ -192,10 +194,13 @@ export class OfficialSessionService {
 
   async replayFrame(actor: SessionActor, exerciseId: string, sessionId: string, cursor: number, perspective: 'PARTICIPANT' | 'TRUTH'): Promise<ReplayFrameDto> {
     const record = await this.record(actor, exerciseId, sessionId);
-    const participantFrames = record.participantFrames.map(frame => ({ ...frame, participantId: actor.userId }));
+    const participantFrames = record.participantFrames.map(frame => ({ ...frame, participantId: actor.userId, sideId: actor.sideId ?? 'UNKNOWN' }));
     const projected = this.replay.project({
       archive: record.archive, cursor, participantId: actor.userId, participantFrames,
-      actor: { organizationId: actor.organizationId, userId: actor.userId, sideId: actor.sideId ?? undefined, role: actor.activeRole ?? '', authorities: actor.authorities }, perspective,
+      actor: {
+        organizationId: actor.organizationId, userId: actor.userId, sideId: actor.sideId ?? undefined,
+        role: actor.activeRole === 'DIRECTOR' ? 'LEADER' : actor.activeRole ?? '', authorities: actor.authorities,
+      }, perspective,
     });
     return {
       sequence: projected.sequence, maxSequence: record.archive.events.length,
@@ -222,7 +227,7 @@ export class OfficialSessionService {
           : section === 'GOALS_STAGES' ? { status: 'KNOWN', intent: record.intent }
             : { status: 'UNKNOWN', reason: 'В журнале сеанса нет данных раздела', sourceSequence: index },
       })),
-      referenceIntent: { text: record.intent }, deviations: [],
+      referenceIntent: { instanceId: sessionId, sideId: materialSide, trainingQuestions: ['official-lifecycle'], audience: [audience], content: { text: record.intent } }, deviations: [],
     });
     return { scope, revision: record.card.revisions.find(revision => revision.id === record.archive.versions.model.id)?.revision ?? 1, audience: [audience], referenceIntent: record.intent, package: built };
   }
@@ -245,7 +250,7 @@ export class OfficialSessionService {
     });
     record.assessment = approveAssessment(draft, {
       finalAssessment: input.finalAssessment, comment: input.comment,
-      confirmedBy: { id: actor.userId, role: 'LEADER' }, confirmedAt: this.now().toISOString(),
+      confirmedBy: { id: actor.userId, role: 'LEADER' }, confirmedAt: this.timestamp(session.createdAt),
     });
     record.assessmentKey = input.idempotencyKey;
     return structuredClone(record.assessment);
@@ -274,7 +279,7 @@ export class OfficialSessionService {
     };
     const bundle: ArchiveBundle = {
       manifest: createArchiveManifest({
-        archiveId, kind: 'OFFICIAL', organizationId: actor.organizationId, createdAt: this.now().toISOString(), schemaVersion: 1,
+        archiveId, kind: 'OFFICIAL', organizationId: actor.organizationId, createdAt: this.timestamp(session.createdAt), schemaVersion: 1,
         versions: record.archive.versions, components,
       }),
       files: Object.fromEntries(Object.entries(components).map(([id, component]) => {

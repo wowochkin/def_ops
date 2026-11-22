@@ -45,6 +45,11 @@ it('критическая команда руководителя требуе�
   expect(screen.queryByRole('heading', { name: /Победитель/ })).toBeNull();
 });
 
+it('не подставляет фиктивный этап без серверной проекции', () => {
+  render(<LeaderWorkspace />);
+  expect(screen.getByText('Этап: Нет данных')).toBeTruthy();
+});
+
 it('группа получает пообъектные результаты preview и apply из команд', async () => {
   render(<PlaygroupWorkspace projection={kshviProjection()} commands={kshviCommands()} />);
   expect(screen.getByRole('heading', { name: 'Причинные связи' })).toBeTruthy();

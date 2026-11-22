@@ -15,4 +15,8 @@ export function registerArchiveRoutes(router: Router, options: { sessions: Sessi
     const actor = await routeParticipant(ctx, options.sessions, 'archive.export');
     return options.workflow.archivePackage(actor, ctx.params.archiveId);
   }));
+  router.get(`${KSHVI_ROUTE_PREFIX}/expositions/:archiveId`, routeHandler(async ctx => {
+    const actor = await routeParticipant(ctx, options.sessions, 'exercise:read');
+    return options.workflow.exposition(actor, ctx.params.archiveId);
+  }));
 }

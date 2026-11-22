@@ -24,6 +24,7 @@ export function LeaderWorkspace({ projection, commands: commandBus, onExecute, o
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const leader = projection?.leader;
+  const stage = leader?.stage && projection?.speed ? `${leader.stage} · скорость ${projection.speed}` : 'Нет данных';
   function execute(): void {
     if (!selected || busy) return;
     setBusy(true);
@@ -40,7 +41,7 @@ export function LeaderWorkspace({ projection, commands: commandBus, onExecute, o
     }
   }
   return <ConductShell title="Руководитель учения" projection={projection ?? overviewProjection} onHandover={onHandover}>
-    <section className="kshvi-conduct-panel"><h2>Этап и обстановка</h2><p>Этап: {leader?.stage ?? 'Этап 2 · скорость 2×'}</p><p>Учебные вопросы: {leader?.trainingQuestions ?? 'управление, МТО, взаимодействие'}</p>{!projection && <p>Истина / эталон / факт — отдельные служебные слои</p>}</section>
+    <section className="kshvi-conduct-panel"><h2>Этап и обстановка</h2><p>Этап: {stage}</p><p>Учебные вопросы: {leader?.trainingQuestions ?? 'управление, МТО, взаимодействие'}</p>{!projection && <p>Истина / эталон / факт — отдельные служебные слои</p>}</section>
     <LinkedPanels mapTitle="Общая служебная карта" events={projection?.events ?? []} live={projection?.live ?? overviewProjection.live} />
     <div className="kshvi-conduct-grid">
       <section className="kshvi-conduct-panel"><h2>Отклонения и просрочки</h2><p>{leader?.deviations ?? 'Нет данных'}</p></section>

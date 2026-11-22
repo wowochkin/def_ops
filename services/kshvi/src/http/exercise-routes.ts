@@ -27,8 +27,9 @@ function tokenOf(ctx: Ctx): string {
 function translate(error: unknown): never {
   if (error instanceof ExerciseStoreError) {
     const status = error.code === 'VALIDATION' || error.code === 'SERVER_ASSESSMENT_REQUIRED' ? 422
-      : error.code === 'REVISION_CONFLICT' || error.code === 'ARCHIVED' || error.code === 'SEALED_REQUIRED' ? 409
-        : 404;
+      : error.code === 'FORBIDDEN' ? 403
+        : error.code === 'REVISION_CONFLICT' || error.code === 'ARCHIVED' || error.code === 'SEALED_REQUIRED' ? 409
+          : 404;
     throw new HttpError(status, error.code.toLocaleLowerCase(), error.message);
   }
   throw error;
@@ -64,11 +65,14 @@ function filters(ctx: Ctx): ExerciseFilters {
 
 export function registerExerciseRoutes(router: Router, options: { store: ExerciseStore; sessions: SessionManager }): void {
   const { store, sessions } = options;
-  const participant = async (ctx: Ctx, action: string, mutation = false): Promise<ExerciseActor & { participant: ParticipantContext }> => {
+  const participant = async (ctx: Ctx, action: string, mutation = false): Promise<ExerciseActor & Pick<ParticipantContext, 'activeRole' | 'authorities'> & { participant: ParticipantContext }> => {
     const current = await sessions.authenticate(tokenOf(ctx));
     authorize(current, { action, organizationId: current.organizationId, scope: 'organization' });
     if (mutation) assertCsrf(current, String(ctx.req.headers['x-csrf-token'] ?? ''));
-    return { organizationId: current.organizationId, userId: current.userId, participant: current };
+    return {
+      organizationId: current.organizationId, userId: current.userId,
+      activeRole: current.activeRole, authorities: current.authorities, participant: current,
+    };
   };
   const handle = (handler: (ctx: Ctx) => Promise<unknown>): Handler => async ctx => {
     try { return await handler(ctx); } catch (error) { translate(error); }
@@ -115,6 +119,12 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<CreateRevisionInput>();
     return reply(201, await store.createRevision(actor, exerciseId(ctx), body));
+  }));
+
+  router.post(`${base}/:id/seal`, handle(async ctx => {
+    const actor = await participant(ctx, 'scenario.seal', true);
+    const body = await ctx.json<{ expectedRevision?: number }>() ?? {};
+    return store.seal(actor, exerciseId(ctx), body.expectedRevision as number);
   }));
 
   router.get(`${base}/:id/sessions`, handle(async ctx => {

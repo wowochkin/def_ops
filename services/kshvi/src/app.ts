@@ -21,7 +21,7 @@ import { OfficialSessionService } from './runtime/official-session-service';
 import { registerWorkflowRoutes } from './http/workflow-routes';
 import { registerArchiveRoutes } from './http/archive-routes';
 import { registerExpositionRoutes } from './http/exposition-routes';
-import { createTrainingExpositionService } from './exposition/training-exposition';
+import type { ExpositionSessionService } from './exposition/exposition-session-service';
 import { registerAdminRoutes } from './http/admin-routes';
 import { AdminOverviewService } from './admin/admin-overview-service';
 import { SessionAccountDirectory } from './auth/session-account-directory';
@@ -51,9 +51,10 @@ export type BuildRouterOptions = {
   sealing?: SealingService;
   workflow?: OfficialSessionService;
   admin?: AdminOverviewService;
+  exposition?: { service: ExpositionSessionService; sessions: SessionManager };
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, admin }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, admin, exposition }: BuildRouterOptions): Router {
   const router = new Router();
   const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore);
   const integratedAdmin = admin ?? new AdminOverviewService({
@@ -96,7 +97,7 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerSealingRoutes(router, sealing);
   registerWorkflowRoutes(router, { sessions, workflow: integratedWorkflow });
   registerArchiveRoutes(router, { sessions, workflow: integratedWorkflow });
-  registerExpositionRoutes(router, createTrainingExpositionService());
+  if (exposition) registerExpositionRoutes(router, exposition);
   registerAdminRoutes(router, { sessions, admin: integratedAdmin });
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
 

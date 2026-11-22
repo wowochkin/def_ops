@@ -7,6 +7,7 @@ export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
 export type ExerciseState = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'SEALED' | 'CANCELLED' | 'ARCHIVED';
 export type ExerciseValidation = 'NOT_RUN' | 'OK' | 'WARNING' | 'ERROR';
 export type ExerciseActor = Readonly<{ organizationId: string; userId: string }>;
+export type ExerciseSealActor = ExerciseActor & Readonly<{ activeRole: string | null; authorities: readonly string[] }>;
 
 export type ExerciseSummary = Readonly<{
   id: string;
@@ -114,6 +115,7 @@ export interface ExerciseStore {
   copy(actor: ExerciseActor, exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
+  seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createSession(actor: ExerciseActor, exerciseId: string, input: CreateSessionInput): Promise<ExerciseSession>;
   transitionSession(actor: ExerciseActor, exerciseId: string, sessionId: string, input: TransitionSessionInput): Promise<ExerciseSession>;
   listSessionCommands(organizationId: string, exerciseId: string, sessionId: string): Promise<readonly SessionCommandRecord[]>;
@@ -122,7 +124,7 @@ export interface ExerciseStore {
 }
 
 export type ExerciseStoreErrorCode = 'NOT_FOUND' | 'REVISION_NOT_FOUND' | 'REVISION_CONFLICT' | 'ARCHIVED' | 'VALIDATION'
-  | 'SERVER_ASSESSMENT_REQUIRED' | 'SEALED_REQUIRED';
+  | 'SERVER_ASSESSMENT_REQUIRED' | 'SEALED_REQUIRED' | 'FORBIDDEN';
 export class ExerciseStoreError extends Error {
   constructor(readonly code: ExerciseStoreErrorCode, message: string) { super(message); }
 }
@@ -176,6 +178,22 @@ function validateRevisionInput(input: CreateRevisionInput): void {
   }
   checkDate(input.startsAt, 'начало');
   checkDate(input.endsAt, 'окончание');
+}
+function validateSealActor(actor: ExerciseSealActor): void {
+  if (!actor.organizationId || actor.activeRole !== 'DIRECTOR' || !actor.authorities.includes('scenario.seal')) {
+    fail('FORBIDDEN', 'Недостаточно полномочий для запечатывания сценария');
+  }
+}
+function revisionForSeal(record: ExerciseCard, expectedRevision: number): ExerciseRevision {
+  if (record.state === 'ARCHIVED' || record.archivedAt !== null) fail('ARCHIVED', 'Архивное учение нельзя запечатать');
+  if (record.revision !== expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+  const revision = record.revisions.find(item => item.revision === record.revision);
+  if (!revision) fail('REVISION_NOT_FOUND', 'Текущая редакция сценария не найдена');
+  const assessment = assessmentOf(revision.payload);
+  if (assessment.readiness !== 100 || assessment.validation !== 'OK') {
+    fail('VALIDATION', 'Запечатать можно только редакцию с готовностью 100 и результатом проверки OK');
+  }
+  return revision;
 }
 function validateCreate(input: CreateExerciseInput): void {
   if (!input || typeof input !== 'object') fail('VALIDATION', 'Проверьте данные учения');
@@ -394,6 +412,19 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.revision = revision.revision;
     record.updatedAt = now;
     (record.revisions as ExerciseRevision[]).push(revision);
+    return publicCard(record);
+  }
+
+  async seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
+    validateSealActor(actor);
+    validateRevisionInput({ expectedRevision });
+    const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
+    const revision = revisionForSeal(record, expectedRevision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
+    record.state = 'SEALED';
+    record.readiness = 100;
+    record.validation = 'OK';
+    record.updatedAt = this.now().toISOString();
+    revision.state = 'SEALED';
     return publicCard(record);
   }
 
@@ -633,6 +664,28 @@ export class PgExerciseStore implements ExerciseStore {
          readiness=$9, validation=$10, revision=$11, updated_at=$12 where organization_id=$1 and id=$2`,
         [actor.organizationId, exerciseId, input.title?.trim() ?? current.title, input.purpose ?? current.purpose, input.scale ?? current.scale,
           startsAt, endsAt, revision.state, assessment.readiness, assessment.validation, revision.revision, now],
+      );
+      return requiredCard(db, this.schema, actor.organizationId, exerciseId);
+    });
+  }
+
+  async seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
+    validateSealActor(actor);
+    validateRevisionInput({ expectedRevision });
+    return tx(this.pool, async db => {
+      await lockExercise(db, this.schema, actor.organizationId, exerciseId);
+      const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
+      const revision = revisionForSeal(current, expectedRevision);
+      const now = new Date().toISOString();
+      await db.query(
+        `update ${this.schema}.exercises set state='SEALED', readiness=100, validation='OK', updated_at=$3
+         where organization_id=$1 and id=$2 and revision=$4`,
+        [actor.organizationId, exerciseId, now, expectedRevision],
+      );
+      await db.query(
+        `update ${this.schema}.exercise_revisions set state='SEALED'
+         where organization_id=$1 and exercise_id=$2 and id=$3 and revision=$4`,
+        [actor.organizationId, exerciseId, revision.id, expectedRevision],
       );
       return requiredCard(db, this.schema, actor.organizationId, exerciseId);
     });

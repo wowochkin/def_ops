@@ -46,7 +46,7 @@ export function registerExpositionRoutes(router: Router, options: {
   const { service, sessions } = options;
   const actor = async (ctx: Ctx, action: string, roles: ReadonlySet<string>, mutation = false): Promise<ExpositionActor> => {
     const current = await sessions.authenticate(tokenOf(ctx));
-    authorize(current, { action, organizationId: current.organizationId });
+    authorize(current, { action, organizationId: current.organizationId, scope: 'organization' });
     if (!current.activeRole || !roles.has(current.activeRole)) throw new HttpError(403, 'forbidden', '403: Действие недоступно для этой роли');
     if (mutation) assertCsrf(current, String(ctx.req.headers['x-csrf-token'] ?? ''));
     return { organizationId: current.organizationId, userId: current.userId };

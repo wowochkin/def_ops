@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createService } from '@def-ops/service-kit';
+import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS } from '@def-ops/kshvi';
 import { expect, it } from 'vitest';
 import matrix from '../../../../docs/release/kshvi/functional-contract-matrix.json';
 import { buildRouter } from '../../src/app';
@@ -18,7 +19,7 @@ const contractMatrix = matrix as unknown as {
 };
 const authorities = [
   'exercise:read', 'exercise:create', 'exercise:revise', 'exercise:conduct', 'exercise:archive',
-  'TRUTH_READ', 'archive.export', 'kshvi:admin',
+  'TRUTH_READ', 'archive.export', 'kshvi:admin', 'scenario.seal',
 ];
 
 function existingPath(reference: string): string {
@@ -61,11 +62,11 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
   const sessions = new SessionManager({ store: new InMemorySessionStore() });
   await sessions.createAccount({
     userId: 'leader-1', username: 'leader', password: 'secret123', organizationId: 'org-1',
-    roles: [{ id: 'leader-role', role: 'LEADER', sideId: null, authorities }],
+    roles: [{ id: 'leader-role', role: 'DIRECTOR', sideId: null, authorities }],
   });
   await sessions.createAccount({
     userId: 'trainee-1', username: 'trainee', password: 'secret123', organizationId: 'org-1',
-    roles: [{ id: 'trainee-role', role: 'TRAINEE', sideId: 'blue', authorities: ['exercise:read'] }],
+    roles: [{ id: 'trainee-role', role: 'TRAINEE', sideId: 'blue', authorities: ['exercise:read', 'replay.read'] }],
   });
   const service = createService({ name: 'kshvi-full-contract', port: 0, router: buildRouter({ sessions }) });
   const port = await service.listen();
@@ -88,12 +89,19 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
     });
   }
   try {
-    const createdResponse = await api(leader, 'POST', '/exercises', { title: 'Сквозное учение', purpose: 'planned', scale: 'operational', payload: { intent: 'Замысел руководства', hiddenTruth: 'Скрытый эталон' } });
+    const kit = buildLinkedScenarioKit({
+      documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
+      usesLogistics: true,
+    });
+    const createdResponse = await api(leader, 'POST', '/exercises', {
+      title: 'Сквозное учение', purpose: 'planned', scale: 'operational',
+      payload: { intent: 'Замысел руководства', hiddenTruth: 'Скрытый эталон', kit },
+    });
     expect(createdResponse.status).toBe(201);
     const created = await createdResponse.json() as { id: string };
-    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/revisions`, { expectedRevision: 1, state: 'SEALED', readiness: 100, validation: 'OK' });
-    expect(sealedResponse.status).toBe(201);
-    const sessionResponse = await api(leader, 'POST', `/exercises/${created.id}/sessions`, { revision: 2, optimisticWorld: { hiddenTruth: 'Подделка клиента' } });
+    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/seal`, { expectedRevision: 1 });
+    expect(sealedResponse.status).toBe(200);
+    const sessionResponse = await api(leader, 'POST', `/exercises/${created.id}/sessions`, { revision: 1, optimisticWorld: { hiddenTruth: 'Подделка клиента' } });
     expect(sessionResponse.status).toBe(201);
     const session = await sessionResponse.json() as { id: string; state: string; confirmedRevision: number };
     expect(session).toMatchObject({ state: 'ACTIVE', confirmedRevision: 0 });

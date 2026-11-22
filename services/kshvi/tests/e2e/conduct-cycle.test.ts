@@ -10,6 +10,7 @@ import { MemoryRepo } from '../../../cartography/src/repo';
 import { AtlasStore } from '../../../cartography/src/atlas';
 import { startService } from '../../../cartography/tests/helpers';
 import { verifyEventChain } from '../../../../packages/kshvi/src/events/hash-chain';
+import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS } from '@def-ops/kshvi';
 import { validateExerciseAxes } from '../../../../packages/kshvi/src/model/profiles';
 import { validateCommandTree } from '../../../../packages/kshvi/src/forces/command-tree';
 import { orderActions } from '../../../../packages/kshvi/src/runtime/queue';
@@ -59,6 +60,10 @@ const calculationInput: Omit<CalculateOptions, 'id' | 'mode' | 'createdAt'> = {
 const scenarioPayload = {
   sides: ['blue', 'red'], trainedLevels: 3, stages: ['stage-1', 'stage-2'], forces: ['blue-1', 'red-1'], resources: ['fuel'],
   intermediaries: ['edge-1', 'edge-2'], documents: ['order', 'report'], buildupPlan: 'plan-g2', reviewCriteria: ['criteria-1'], mapZoom: 8,
+  kit: buildLinkedScenarioKit({
+    documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
+    usesLogistics: true,
+  }),
 };
 const scenarioWeather = {
   version: 1 as const, seed: 17, start: '2026-01-01T00:00:00.000Z', durationHours: 2, temperature: -2, humidity: 75, pressure: 1002,
@@ -134,7 +139,13 @@ async function runOfficialG2(store: KshviEventStore) {
     const exercises = new PgExerciseStore({ pool: store.pool, schema: store.schema });
     await exercises.init();
     const sessions = new SessionManager({ store: new InMemorySessionStore(), now: () => new Date('2030-01-01T00:00:00Z') });
-    await sessions.createAccount({ userId: ACTOR.userId, username: ACTOR.userId, password: 'g2-password', organizationId: ORG, roles: [{ id: 'role-leader', role: 'LEADER', sideId: 'blue', authorities: ['exercise:create', 'exercise:read', 'exercise:revise', 'exercise:conduct'] }] });
+    await sessions.createAccount({
+      userId: ACTOR.userId, username: ACTOR.userId, password: 'g2-password', organizationId: ORG,
+      roles: [
+        { id: 'role-leader', role: 'LEADER', sideId: 'blue', authorities: ['exercise:create', 'exercise:read', 'exercise:revise', 'exercise:conduct'] },
+        { id: 'role-director', role: 'DIRECTOR', sideId: 'blue', authorities: ['scenario.seal'] },
+      ],
+    });
     const commands = new CommandService({ store, organizationId: ORG });
     kshviService = createService({ name: 'kshvi-g2', port: 0, router: buildRouter({ sessions, exerciseStore: exercises, commands, environmentProvider }) });
     const kshviPort = await kshviService.listen();
@@ -159,12 +170,12 @@ async function runOfficialG2(store: KshviEventStore) {
     await post('/api/kshvi/auth/role', { roleId: 'role-leader' });
 
     let card = await post<{ id: string; revision: number; state: string; revisions: { id: string; sha256: string }[] }>('/api/kshvi/exercises', { title: 'G2', purpose: 'planned', scale: 'operational', payload: scenarioPayload }, 201);
-    for (const [expectedRevision, state] of [[1, 'IN_REVIEW'], [2, 'APPROVED'], [3, 'SEALED']] as const) {
-      card = await post(`/api/kshvi/exercises/${card.id}/revisions`, { expectedRevision, state, readiness: 100, validation: 'OK' }, 201);
-    }
+    await post('/api/kshvi/auth/role', { roleId: 'role-director' });
+    card = await post(`/api/kshvi/exercises/${card.id}/seal`, { expectedRevision: 1 });
+    await post('/api/kshvi/auth/role', { roleId: 'role-leader' });
     expect(card.state).toBe('SEALED');
-    const firstSession = await post<{ id: string; scenarioRevisionId: string; revision: number }>(`/api/kshvi/exercises/${card.id}/sessions`, { revision: 4, optimisticWorld: { forged: true } }, 201);
-    const secondSession = await post<{ id: string; scenarioRevisionId: string; revision: number }>(`/api/kshvi/exercises/${card.id}/sessions`, { revision: 4 }, 201);
+    const firstSession = await post<{ id: string; scenarioRevisionId: string; revision: number }>(`/api/kshvi/exercises/${card.id}/sessions`, { revision: 1, optimisticWorld: { forged: true } }, 201);
+    const secondSession = await post<{ id: string; scenarioRevisionId: string; revision: number }>(`/api/kshvi/exercises/${card.id}/sessions`, { revision: 1 }, 201);
     expect(firstSession.id).not.toBe(secondSession.id);
     expect(firstSession.scenarioRevisionId).toBe(secondSession.scenarioRevisionId);
     expect(validateExerciseAxes({ scale: 'operational', mapZoom: 8, trainedLevels: 3 })).toEqual([]);
@@ -367,7 +378,7 @@ async function runOfficialG2(store: KshviEventStore) {
 }
 
 const integration = process.env.TEST_DATABASE_URL ? it : it.skip;
-integration('G2: единый официальный контур через PostgreSQL, картографию и шлюз', { timeout: 120_000 }, async () => {
+integration('G2: полный связанный доменный цикл проходит без прямой записи исходов', { timeout: 120_000 }, async () => {
   await withKshviDatabase(async store => {
     const result = await runOfficialG2(store);
     if (process.env.KSHVI_G2_EVIDENCE === '1') {

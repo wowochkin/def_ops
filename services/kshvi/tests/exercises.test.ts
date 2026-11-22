@@ -1,5 +1,5 @@
 import { createPool, dropSchema } from '@def-ops/db';
-import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS } from '@def-ops/kshvi';
+import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS, type JsonValue } from '@def-ops/kshvi';
 import { Router, createService } from '@def-ops/service-kit';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -10,11 +10,12 @@ import {
   PgExerciseStore,
   type CreateExerciseInput,
   type ExerciseActor,
-  type ExerciseCard,
+  type ExerciseSealActor,
 } from '../src/store/exercise-store';
 import { KshviEventStore } from '../src/store/event-store';
 
 const actor: ExerciseActor = { organizationId: 'org1', userId: 'author-1' };
+const director: ExerciseSealActor = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
 const input: CreateExerciseInput = {
   title: 'Учение «Рубеж»',
   purpose: 'planned',
@@ -28,13 +29,12 @@ afterEach(async () => {
   while (closers.length) await closers.pop()?.();
 });
 
-/** Имитирует результат отдельного серверного sealing-контура, не открывая клиентский переход. */
-function sealCurrentForFixture(store: InMemoryExerciseStore, organizationId: string, exerciseId: string): void {
-  const records = (store as unknown as { records: Map<string, ExerciseCard> }).records;
-  const card = records.get(`${organizationId}/${exerciseId}`)!;
-  const mutable = card as unknown as { state: string; revisions: { state: string }[] };
-  mutable.state = 'SEALED';
-  mutable.revisions.at(-1)!.state = 'SEALED';
+function linkedPayload(): { kit: JsonValue } {
+  const kit = buildLinkedScenarioKit({
+    documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
+    usesLogistics: true,
+  });
+  return { kit: kit as unknown as JsonValue };
 }
 
 describe('библиотека учений', () => {
@@ -129,10 +129,47 @@ describe('библиотека учений', () => {
       .rejects.toMatchObject({ code: 'ARCHIVED' });
   });
 
-  it('создаёт только серверные сеансы и изолирует их по организации', async () => {
+  it('запечатывает только текущую редакцию после серверной проверки полного комплекта', async () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, input);
-    sealCurrentForFixture(store, actor.organizationId, exercise.id);
+    const revised = await store.createRevision(actor, exercise.id, { expectedRevision: 1, payload: linkedPayload() });
+    const sealed = await store.seal(director, exercise.id, revised.revision);
+
+    expect(sealed).toMatchObject({ revision: 2, state: 'SEALED', readiness: 100, validation: 'OK' });
+    expect(sealed.revisions.map(revision => revision.state)).toEqual(['DRAFT', 'SEALED']);
+  });
+
+  it('не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
+
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, exercise.id, 1))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(store.seal({ ...director, authorities: [] }, exercise.id, 1))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
+  });
+
+  it('отклоняет запечатывание устаревшей редакции', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
+
+    await expect(store.seal(director, exercise.id, 2)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
+  });
+
+  it('отклоняет запечатывание неполного комплекта', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, input);
+
+    await expect(store.seal(director, exercise.id, 1)).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
+  });
+
+  it('создаёт только серверные сеансы и изолирует их по организации', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
+    await store.seal(director, exercise.id, 1);
     const sessionInput = {
       revision: 1,
       optimisticWorld: { resources: { fuel: 999 } },
@@ -163,7 +200,7 @@ describe('библиотека учений', () => {
       state: 'SEALED',
       readiness: 100,
       validation: 'OK',
-      payload: {},
+      payload: linkedPayload(),
     })).rejects.toMatchObject({ code: 'SERVER_ASSESSMENT_REQUIRED' });
     await expect(store.createSession(actor, exercise.id, { revision: 1 }))
       .rejects.toMatchObject({ code: 'SEALED_REQUIRED' });
@@ -190,11 +227,7 @@ describe('библиотека учений', () => {
 
   it('рассчитывает оценку уже при создании серверной редакции', async () => {
     const store = new InMemoryExerciseStore();
-    const kit = buildLinkedScenarioKit({
-      documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
-      usesLogistics: true,
-    });
-    const created = await store.create(actor, { ...input, payload: { kit: kit as unknown as import('@def-ops/kshvi').JsonValue } });
+    const created = await store.create(actor, { ...input, payload: linkedPayload() });
     expect(created).toMatchObject({ state: 'DRAFT', readiness: 100, validation: 'OK' });
   });
 });
@@ -212,7 +245,7 @@ describe('HTTP API библиотеки', () => {
         id: 'author-role',
         role: 'DIRECTOR',
         sideId: null,
-        authorities: ['exercise:read', 'exercise:create', 'exercise:copy', 'exercise:archive', 'exercise:revise', 'exercise:conduct'],
+        authorities: ['exercise:read', 'exercise:create', 'exercise:copy', 'exercise:archive', 'exercise:revise', 'exercise:conduct', 'scenario.seal'],
       }],
     });
     await sessions.createAccount({
@@ -222,10 +255,19 @@ describe('HTTP API библиотеки', () => {
       organizationId: 'org2',
       roles: [{ id: 'reader-role', role: 'TRAINEE', sideId: null, authorities: ['exercise:read'] }],
     });
+    await sessions.createAccount({
+      userId: 'leader-1',
+      username: 'leader',
+      password: 'secret123',
+      organizationId: actor.organizationId,
+      roles: [{ id: 'leader-role', role: 'LEADER', sideId: null, authorities: ['scenario.seal'] }],
+    });
     const login = await sessions.login('author', 'secret123');
     const outsider = await sessions.login('outsider', 'secret123');
+    const leader = await sessions.login('leader', 'secret123');
     await sessions.selectRole(login.token, 'author-role');
     await sessions.selectRole(outsider.token, 'reader-role');
+    await sessions.selectRole(leader.token, 'leader-role');
     const router = new Router();
     registerExerciseRoutes(router, { store, sessions });
     const service = createService({ name: 'kshvi-exercises-test', version: '0', port: 0, router });
@@ -265,11 +307,31 @@ describe('HTTP API библиотеки', () => {
 
     const revised = await call(`/${created.body.id}/revisions`, {
       method: 'POST',
-      body: JSON.stringify({ expectedRevision: 1, payload: { intent: 'Новая редакция' } }),
+      body: JSON.stringify({ expectedRevision: 1, payload: linkedPayload() }),
     });
     expect(revised.response.status).toBe(201);
     expect(revised.body.revision).toBe(2);
-    sealCurrentForFixture(store, actor.organizationId, created.body.id);
+
+    const clientSeal = await call(`/${created.body.id}/revisions`, {
+      method: 'POST',
+      body: JSON.stringify({ expectedRevision: 2, state: 'SEALED', readiness: 100, validation: 'OK', payload: linkedPayload() }),
+    });
+    expect(clientSeal.response.status).toBe(422);
+    const forbiddenSeal = await call(`/${created.body.id}/seal`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+    }, leader);
+    expect(forbiddenSeal.response.status).toBe(403);
+    const invalidCsrf = await call(`/${created.body.id}/seal`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }), headers: { 'X-CSRF-Token': 'invalid' },
+    });
+    expect(invalidCsrf.response.status).toBe(403);
+
+    const sealed = await call(`/${created.body.id}/seal`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+    });
+    expect(sealed.response.status).toBe(200);
+    expect(sealed.body).toMatchObject({ revision: 2, state: 'SEALED', readiness: 100, validation: 'OK' });
+    expect(sealed.body.revisions.map((revision: { state: string }) => revision.state)).toEqual(['DRAFT', 'SEALED']);
 
     const session = await call(`/${created.body.id}/sessions`, {
       method: 'POST',
@@ -291,6 +353,10 @@ describe('HTTP API библиотеки', () => {
     });
     expect(archived.response.status).toBe(200);
     expect(archived.body.state).toBe('ARCHIVED');
+    const archivedSeal = await call(`/${created.body.id}/seal`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+    });
+    expect(archivedSeal.response.status).toBe(409);
   });
 });
 
@@ -304,17 +370,25 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     await eventStore.init();
     const store = new PgExerciseStore({ pool, schema });
     await store.init();
-    const created = await store.create(actor, { ...input, payload: { scenarioId: randomUUID() } });
+    const created = await store.create(actor, { ...input, payload: linkedPayload() });
     const copied = await store.copy(actor, created.id);
     expect(copied.id).not.toBe(created.id);
     expect(copied.revisions[0].id).not.toBe(created.revisions[0].id);
-    await pool.query(`update ${schema}.exercises set state='SEALED' where organization_id=$1 and id=$2`, [actor.organizationId, created.id]);
-    await pool.query(`update ${schema}.exercise_revisions set state='SEALED' where organization_id=$1 and id=$2`, [actor.organizationId, created.revisions[0].id]);
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, created.id, 1))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    const sealed = await store.seal(director, created.id, 1);
+    expect(sealed).toMatchObject({ state: 'SEALED', readiness: 100, validation: 'OK' });
+    expect(sealed.revisions[0].state).toBe('SEALED');
     const session = await store.createSession(actor, created.id, { revision: 1 });
     await expect(store.getSession('org2', created.id, session.id)).resolves.toBeNull();
     const revised = await store.createRevision(actor, created.id, { expectedRevision: 1, payload: { intent: 'Проверка PostgreSQL' } });
     expect(revised.revisions).toHaveLength(2);
+    expect(revised.revisions[0].state).toBe('SEALED');
+    expect(revised.revisions[1].state).toBe('DRAFT');
+    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await store.archive(actor, created.id, 2)).state).toBe('ARCHIVED');
+    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'ARCHIVED' });
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

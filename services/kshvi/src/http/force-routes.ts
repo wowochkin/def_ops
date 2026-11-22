@@ -67,7 +67,7 @@ export function registerForceRoutes(router: Router, store: MemoryModernImportSto
   const participant = async (ctx: Ctx, action: string, mutation = false): Promise<ParticipantContext> => {
     if (!sessions) throw new HttpError(401, 'unauthorized', '401: Требуется вход в систему');
     const current = await sessions.authenticate(tokenOf(ctx));
-    authorize(current, { action, organizationId: current.organizationId });
+    authorize(current, { action, organizationId: current.organizationId, scope: 'organization' });
     if (mutation) assertCsrf(current, String(ctx.req.headers['x-csrf-token'] ?? ''));
     return current;
   };

@@ -177,7 +177,9 @@ describe('авторизованные API ведущего и проектор�
     expect(exported.data).toMatchObject({ schemaVersion: '1.0.0', archiveId: 'route-derived', playback: { atMs: 0 }, journalCursor: 0 });
     expect(exported.data.journal).toEqual([]);
     expect(exported.data.rng).toMatchObject({ cursor: 0, branchId: autonomous.branchId });
-    expect(exported.data.world).toEqual(autonomous.world);
+    const { resources, ...canonicalWorld } = autonomous.world;
+    expect(exported.data.world).toEqual(canonicalWorld);
+    expect(exported.data.world.state.Resources).toEqual(resources);
     const serialized = JSON.stringify(exported.data);
     for (const forbidden of ['hiddenRationale', 'explanation-secret', 'serviceIntent', 'official-assessment-1', 'Скрытый служебный замысел']) {
       expect(serialized).not.toContain(forbidden);

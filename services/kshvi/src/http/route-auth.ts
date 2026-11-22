@@ -12,7 +12,7 @@ export function routeToken(ctx: Ctx): string {
 
 export async function routeParticipant(ctx: Ctx, sessions: SessionManager, action: string, mutation = false): Promise<ParticipantContext> {
   const participant = await sessions.authenticate(routeToken(ctx));
-  authorize(participant, { action, organizationId: participant.organizationId });
+  authorize(participant, { action, organizationId: participant.organizationId, scope: 'organization' });
   if (mutation) assertCsrf(participant, String(ctx.req.headers['x-csrf-token'] ?? ''));
   return participant;
 }

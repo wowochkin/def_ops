@@ -3,7 +3,6 @@ import { SessionManager } from './auth/sessions';
 import { SecurityAudit } from './auth/security-audit';
 import { CartographyEnvironmentProvider } from './environment/cartography-provider';
 import { EnvironmentSnapshotStore } from './environment/snapshot-store';
-import { registerExpositionRoutes } from './http/exposition-routes';
 import { buildTask52Router } from './http/contracts';
 import { createKshviPersistence } from './persistence';
 import { CommandService } from './instances/command-service';
@@ -47,6 +46,7 @@ const router = buildTask52Router({
   exerciseStore: persistence.exerciseStore,
   environmentProvider,
   commands,
+  exposition: { service: exposition, sessions },
   audit: async record => {
     audit.append({
       actorId: record.actorId,
@@ -59,7 +59,6 @@ const router = buildTask52Router({
   },
 });
 registerAgentRoutes(router, { commands: commandPort, resolveDelegation: production.resolveDelegation });
-registerExpositionRoutes(router, { service: exposition, sessions });
 const service = createService({
   name: 'kshvi',
   version: '0.1.0',
