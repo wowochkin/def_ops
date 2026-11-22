@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { modernCorpus } from '@def-ops/knowledge';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { cpus, totalmem } from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { afterEach, expect, it } from 'vitest';
@@ -159,6 +159,8 @@ it('AC-14: 50 мест, 25 участников, официальный API, per
   if (!databaseUrl) throw new Error('AC-14 требует реальный PostgreSQL через TEST_DATABASE_URL');
   const pool = createPool(databaseUrl, 50);
   const schema = `kshvi_ac14_${randomUUID().replaceAll('-', '')}`;
+  const runId = process.env.KSHVI_ACCEPTANCE_RUN_ID;
+  const acceptanceDirectory = runId ? 'docs/release/kshvi/acceptance' : `.tmp/ac14-${schema}`;
   const store = new KshviEventStore({ pool, schema });
   const subscriptions = new SubscriptionService();
   const operations = {
@@ -320,7 +322,7 @@ it('AC-14: 50 мест, 25 участников, официальный API, per
     const heavyKinds = ['EXPORT', 'ARCHIVE', 'MASS_CALCULATION', 'BULK_REPLAY'] as const;
     const heavySubmissions: { id: string; kind: typeof heavyKinds[number]; exportPath: string }[] = [];
     const submit = (kind: typeof heavyKinds[number], key: string) => {
-      const exportPath = `docs/release/kshvi/acceptance/AC-14.${key}.json.gz`;
+      const exportPath = `${acceptanceDirectory}/AC-14.${key}.json.gz`;
       const job = jobs.submit({
         idempotencyKey: key, kind, payload: { databaseUrl, schema, exportPath, jobKind: kind }, owner,
         task: { module: new URL('./ac14-export-worker.mjs', import.meta.url).href, exportName: 'default' },
@@ -475,11 +477,10 @@ it('AC-14: 50 мест, 25 участников, официальный API, per
       network: 'loopback TCP; внешняя сеть не используется',
       topology: '50 независимых SSE-клиентов и 25 активных HTTP-участников; официальный API КШВИ',
     };
-    await mkdir('docs/release/kshvi/acceptance', { recursive: true });
-    await writeFile('docs/release/kshvi/acceptance/AC-14.metrics.json', JSON.stringify(metrics, null, 2));
-    await writeFile('docs/release/kshvi/acceptance/AC-14.environment.json', JSON.stringify(environment, null, 2));
+    await mkdir(acceptanceDirectory, { recursive: true });
+    await writeFile(`${acceptanceDirectory}/AC-14.metrics.json`, JSON.stringify(metrics, null, 2));
+    await writeFile(`${acceptanceDirectory}/AC-14.environment.json`, JSON.stringify(environment, null, 2));
 
-    const runId = process.env.KSHVI_ACCEPTANCE_RUN_ID;
     if (runId) {
       const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
       const evidenceDirectory = 'docs/release/kshvi/evidence/ac14';
@@ -533,5 +534,6 @@ it('AC-14: 50 мест, 25 участников, официальный API, per
     service = undefined;
     await dropSchema(pool, schema);
     await pool.end();
+    if (!runId) await rm(acceptanceDirectory, { recursive: true, force: true });
   }
 }, 420_000);
