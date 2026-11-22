@@ -29,6 +29,9 @@ const exposition = await createFileExpositionService({
     statePath: env('KSHVI_EXPOSITION_STATE', './data/kshvi/exposition/sessions.json'),
   }),
   runtimePath: env('KSHVI_EXPOSITION_RUNTIME', './data/kshvi/exposition/runtime.json'),
+  archivePath: env('KSHVI_EXPOSITION_ARCHIVE', './data/kshvi/exposition/official-archive.json'),
+  programPath: env('KSHVI_EXPOSITION_PROGRAM', './data/kshvi/exposition/program.json'),
+  allowDemoFixtures: env('KSHVI_MODE', 'development') === 'development' && env('NODE_ENV', 'development') !== 'production',
 });
 const subscriptions = new SubscriptionService();
 const commands = new CommandService({

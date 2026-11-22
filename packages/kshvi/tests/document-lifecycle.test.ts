@@ -8,6 +8,7 @@ import {
   supersedeDocument,
   transitionDocument,
 } from '../src/documents/document-lifecycle';
+import { canonicalJson } from '../src/events/canonical';
 import {
   analyzeDocument,
   assertDocumentIssue,
@@ -102,6 +103,13 @@ describe('реквизиты и готовность документа', () => 
 });
 
 describe('неизменяемые подписанные редакции', () => {
+  it('повторное согласование удаляет прежнее замечание из канонического состояния', () => {
+    const submitted = transitionDocument(revision({ state: 'DRAFT', returnComment: 'Прежнее замечание' }), 'SUBMIT');
+    expect(submitted.returnComment).toBeUndefined();
+    expect('returnComment' in submitted).toBe(false);
+    expect(() => canonicalJson(submitted)).not.toThrow();
+  });
+
   it('фиксирует пользователя, роль, момент, редакцию и хеш', () => {
     const approved = transitionDocument(revision(), 'APPROVE', {
       expectedRevision: 1,

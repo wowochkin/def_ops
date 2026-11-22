@@ -68,7 +68,7 @@ async function gatewayPort() {
   for (const p of [47615, 47625, 47635]) if (!(await portBusy(p))) { writeFileSync(file, String(p)); return p; }
   const p = await freePort(); writeFileSync(file, String(p)); return p;
 }
-const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), gateway: Number(opt('port', 0)) || await gatewayPort() };
+const ports = { documents: await freePort(), render: await freePort(), registry: await freePort(), cartography: await freePort(), kshvi: await freePort(), gateway: Number(opt('port', 0)) || await gatewayPort() };
 const url = (n) => `http://127.0.0.1:${ports[n]}`;
 async function llmUrl() {
   const given = opt('llm', process.env.DEFOPS_LLM_URL || '');
@@ -93,8 +93,9 @@ const services = [
     GIS_PYTHON: process.env.GIS_PYTHON || (process.env.DEFOPS_VOICE_RUNTIME ? voicePython('', process.platform, process.env.DEFOPS_VOICE_RUNTIME) : ''),
     GIS_ADDONS: process.env.GIS_ADDONS || (existsSync(join(here, 'gis/addons/defops-gis-runtime.json')) ? join(here, 'gis/addons') : ''),
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
+  { name: 'kshvi', env: { KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default' } },
   { name: 'gateway', env: {
-    DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'),
+    DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'), KSHVI_URL: url('kshvi'),
     VOICE_STATE: join(data, 'voice', 'state.json'),
     PORTABLE_DATA: data, PORTABLE_ASSETS: portable,
     // файлы игры (журнал, разбор, запись) — в «Загрузки» без окна выбора: окно приложения шлёт их шлюзу

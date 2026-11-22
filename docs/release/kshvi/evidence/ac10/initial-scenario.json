@@ -1,0 +1,159 @@
+{
+  "initialRevision": {
+    "id": "ac10-branch",
+    "revision": 1,
+    "sha256": "5fc86593c9c13649522c0fc46bd60e01ecf1b5e0215f0b0e38d75e79246d0033"
+  },
+  "scenario": {
+    "officialBefore": [
+      {
+        "eventId": "dca4c448-9fa7-4bf0-a4b7-d61dc45aaa6e",
+        "organizationId": "org-ac10",
+        "instanceId": "ac10",
+        "branchId": "main",
+        "sequence": 1,
+        "type": "decision.created.v1",
+        "schemaVersion": 1,
+        "wallClockAt": "2030-01-01T01:00:00.000Z",
+        "operationalAt": {
+          "zone": "UTC",
+          "offset": "+00:00",
+          "originalAt": "2030-01-01T01:00:00.000Z",
+          "normalizedAt": "2030-01-01T01:00:00.000Z"
+        },
+        "actor": {
+          "id": "leader",
+          "kind": "HUMAN"
+        },
+        "causeIds": [
+          "main-decision.create-0"
+        ],
+        "versions": {},
+        "reducerVersion": 1,
+        "payload": {
+          "at": "2030-01-01T01:00:00Z",
+          "sideId": "blue",
+          "causedBy": "official-decision",
+          "revision": 1,
+          "commandId": "main-decision.create-0",
+          "commandType": "decision.create"
+        },
+        "prevHash": null,
+        "hash": "ffd71f8172df22e12900b91997d9fa6500b5f52298f61e8967fbf40a9cf04bf3",
+        "hashVersion": 2
+      },
+      {
+        "eventId": "a4a0e51b-251d-48ce-9839-8e6b68e279d4",
+        "organizationId": "org-ac10",
+        "instanceId": "ac10",
+        "branchId": "main",
+        "sequence": 2,
+        "type": "document.created.v1",
+        "schemaVersion": 1,
+        "wallClockAt": "2030-01-01T01:00:00.000Z",
+        "operationalAt": {
+          "zone": "UTC",
+          "offset": "+00:00",
+          "originalAt": "2030-01-01T01:00:00.000Z",
+          "normalizedAt": "2030-01-01T01:00:00.000Z"
+        },
+        "actor": {
+          "id": "leader",
+          "kind": "HUMAN"
+        },
+        "causeIds": [
+          "main-document.create-1"
+        ],
+        "versions": {},
+        "reducerVersion": 1,
+        "payload": {
+          "at": "2030-01-01T01:00:00Z",
+          "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+          "sideId": "blue",
+          "causedBy": "official-doc",
+          "revision": 1,
+          "commandId": "main-document.create-1",
+          "commandType": "document.create"
+        },
+        "prevHash": "ffd71f8172df22e12900b91997d9fa6500b5f52298f61e8967fbf40a9cf04bf3",
+        "hash": "caabb395f89c174e2c7a47af5dc76e3cfc9c9f9305a596f6a7d19c2e915ecb54",
+        "hashVersion": 2
+      },
+      {
+        "eventId": "99edb2c6-9fd8-444a-8f10-b82ca1dce3e5",
+        "organizationId": "org-ac10",
+        "instanceId": "ac10",
+        "branchId": "main",
+        "sequence": 3,
+        "type": "document.status.changed.v1",
+        "schemaVersion": 1,
+        "wallClockAt": "2030-01-01T01:00:00.000Z",
+        "operationalAt": {
+          "zone": "UTC",
+          "offset": "+00:00",
+          "originalAt": "2030-01-01T01:00:00.000Z",
+          "normalizedAt": "2030-01-01T01:00:00.000Z"
+        },
+        "actor": {
+          "id": "leader",
+          "kind": "HUMAN"
+        },
+        "causeIds": [
+          "main-document.transition-2"
+        ],
+        "versions": {},
+        "reducerVersion": 1,
+        "payload": {
+          "at": "2030-01-01T01:00:00Z",
+          "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+          "sideId": "blue",
+          "causedBy": "official-doc",
+          "revision": 1,
+          "commandId": "main-document.transition-2",
+          "commandType": "document.transition"
+        },
+        "prevHash": "caabb395f89c174e2c7a47af5dc76e3cfc9c9f9305a596f6a7d19c2e915ecb54",
+        "hash": "bb78ac96ef861a05056ccfef8a9569fe13bedcf5ca213518156b32fc5cfda047",
+        "hashVersion": 2
+      },
+      {
+        "eventId": "cb306e3b-22ce-47c5-8383-6410fe27d814",
+        "organizationId": "org-ac10",
+        "instanceId": "ac10",
+        "branchId": "main",
+        "sequence": 4,
+        "type": "document.approved.v1",
+        "schemaVersion": 1,
+        "wallClockAt": "2030-01-01T01:00:00.000Z",
+        "operationalAt": {
+          "zone": "UTC",
+          "offset": "+00:00",
+          "originalAt": "2030-01-01T01:00:00.000Z",
+          "normalizedAt": "2030-01-01T01:00:00.000Z"
+        },
+        "actor": {
+          "id": "leader",
+          "kind": "HUMAN"
+        },
+        "causeIds": [
+          "main-document.transition-3"
+        ],
+        "versions": {},
+        "reducerVersion": 1,
+        "payload": {
+          "at": "2030-01-01T01:00:00Z",
+          "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+          "sideId": "blue",
+          "causedBy": "official-doc",
+          "revision": 1,
+          "commandId": "main-document.transition-3",
+          "commandType": "document.transition"
+        },
+        "prevHash": "bb78ac96ef861a05056ccfef8a9569fe13bedcf5ca213518156b32fc5cfda047",
+        "hash": "a826180c64be06c625d75839b72de5e97de33f47414bc8fc884f5a5b9e26859f",
+        "hashVersion": 2
+      }
+    ],
+    "alternative": "alternative-1"
+  }
+}

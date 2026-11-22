@@ -14,6 +14,15 @@ it('проверяет sequence независимо для каждого ин�
 });
 
 
+it('разделяет последовательности официальной и альтернативной ветвей', async () => {
+  const service = new SubscriptionService();
+  await service.publish({ instanceId: 'exercise', branchId: 'main', sequence: 4, type: 'official', payload: {} });
+  await expect(service.publish({ instanceId: 'exercise', branchId: 'alternative', sequence: 1, type: 'alternative', payload: {} })).resolves.toMatchObject({ sequence: 1 });
+  expect(service.after('exercise', 0)).toHaveLength(1);
+  expect(service.after('exercise', 0, 'alternative')).toHaveLength(1);
+  expect(service.latestSequence('exercise', 'alternative')).toBe(1);
+});
+
 it('не раскрывает доменное событие с неизвестной областью видимости', () => {
   const service = new SubscriptionService();
   const event = { eventId: 'private-1', sequence: 1, type: 'decision.created.v1', payload: { commandId: 'secret-command' } };

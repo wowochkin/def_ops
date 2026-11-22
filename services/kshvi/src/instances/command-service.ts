@@ -12,7 +12,7 @@ export type InstanceCommand = {
   type: string;
   at?: string;
   payload?: unknown;
-  actor: { userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] };
+  actor: { userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[]; authorities?: readonly string[] };
 };
 export type CommandResult = { eventId: string; revision: number; idempotent: boolean };
 function normalizeSeedValues(value: unknown, key?: string): unknown {
@@ -23,7 +23,7 @@ function normalizeSeedValues(value: unknown, key?: string): unknown {
 }
 
 const officialTypes = new Set([
-  'decision.create', 'decision.transition', 'decision.revise', 'order.issue', 'order.advance', 'order.cancel',
+  'decision.create', 'decision.transition', 'decision.revise', 'branch.adopt', 'order.issue', 'order.advance', 'order.cancel',
   'calculation.create', 'calculation.approve', 'calculation.apply', 'calculation.override', 'calculation.replay',
   'observation.record', 'document.create', 'document.transition', 'document.edit', 'document.approval', 'document.conflict.resolve',
   'document.cascade.issue', 'document.cascade.advance', 'document.cascade.fact', 'document.revise',

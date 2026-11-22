@@ -50,7 +50,8 @@ export function transitionDocument(
   assertExpectedRevision(revision, context.expectedRevision);
   if (action === 'SUBMIT') {
     if (revision.state !== 'DRAFT') throw new Error('В согласование можно направить только DRAFT');
-    return { ...revision, state: 'IN_REVIEW', returnComment: undefined };
+    const { returnComment: _returnComment, ...withoutReturnComment } = revision;
+    return { ...withoutReturnComment, state: 'IN_REVIEW' };
   }
   if (action === 'APPROVE') {
     if (revision.state !== 'IN_REVIEW') throw new Error('Утверждается только редакция IN_REVIEW');

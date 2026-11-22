@@ -30,7 +30,7 @@ import { validateWeatherScenario, type WeatherScenario } from '@def-ops/core';
 import { applyDelegation, proposeInput, type AdaptiveInput, type Delegation } from '../runtime/input';
 import { evaluateTrigger, validateTriggerGraph, type TriggerCondition } from '../runtime/triggers';
 
-export type ConductActor = Readonly<{ userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] }>;
+export type ConductActor = Readonly<{ userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[]; authorities?: readonly string[] }>;
 export type ConductOperations = Readonly<{
   knownInstanceIds: readonly string[];
   availableChannelIds: readonly string[];
@@ -93,6 +93,7 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'decision.create'; decision: DecisionInput }>)
   | (CommandBase & Readonly<{ type: 'decision.transition'; decisionId: string; to: Decision['status'] }>)
   | (CommandBase & Readonly<{ type: 'decision.revise'; decisionId: string; revisedId: string; changes: Parameters<typeof reviseDecision>[1] }>)
+  | (CommandBase & Readonly<{ type: 'branch.adopt'; sourceBranchId: string; sourceEventId: string; rationale: string; decision: DecisionInput }>)
   | (CommandBase & Readonly<{ type: 'order.issue'; order: IssueOrderInput }>)
   | (CommandBase & Readonly<{ type: 'order.advance'; orderId: string; action: OrderAction }>)
   | (CommandBase & Readonly<{ type: 'order.cancel'; orderId: string; reason: string }>)
@@ -214,6 +215,19 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       const original = required(state.decisions[command.decisionId], 'Исходное решение не найдено');
       const decision = reviseDecision(original, command.changes, command.at, () => command.revisedId);
       return { state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }), event: eventFor(state, command, 'decision.revised.v1', decision.id, { supersedes: original.id, revision: decision.revision, sideId: decision.sideId }), revision: state.revision + 1, decision };
+    }
+    case 'branch.adopt': {
+      if (actor.role !== 'LEADER' || !actor.authorities?.includes('OFFICIAL_DECISION')) throw new Error('Перенос альтернативы требует OFFICIAL_DECISION');
+      if (!command.rationale.trim()) throw new Error('Для официального решения нужно основание');
+      const decision = createDecision(command.decision);
+      if (state.decisions[decision.id]) throw new Error('Решение с таким идентификатором уже существует');
+      return {
+        state: next(state, { decisions: { ...state.decisions, [decision.id]: decision } }),
+        event: eventFor(state, command, 'branch.decision.adopted.v1', decision.id, {
+          decision, sideId: decision.sideId, sourceBranchId: command.sourceBranchId, sourceEventId: command.sourceEventId, rationale: command.rationale,
+        }),
+        revision: state.revision + 1, decision,
+      };
     }
     case 'order.issue': {
       const decision = required(state.decisions[command.order.decisionId], 'Приказ должен ссылаться на решение');

@@ -5,6 +5,7 @@ export type SubscriptionEvent = Readonly<{
   eventId: string;
   sequence: number;
   type: string;
+  branchId: string;
   instanceId?: string;
   organizationId?: string;
   payload: { side?: string; recipients?: readonly string[] } & Record<string, unknown>;
@@ -39,12 +40,13 @@ export class SubscriptionService {
     return true;
   }
 
-  async publish(input: Omit<SubscriptionEvent, 'eventId' | 'sequence'> & Partial<Pick<SubscriptionEvent, 'eventId' | 'sequence'>>): Promise<SubscriptionEvent> {
-    const previousSequence = this.events.filter(event => event.instanceId === input.instanceId).at(-1)?.sequence ?? 0;
+  async publish(input: Omit<SubscriptionEvent, 'eventId' | 'sequence' | 'branchId'> & Partial<Pick<SubscriptionEvent, 'eventId' | 'sequence' | 'branchId'>>): Promise<SubscriptionEvent> {
+    const branchId = input.branchId ?? 'main';
+    const previousSequence = this.events.filter(event => event.instanceId === input.instanceId && event.branchId === branchId).at(-1)?.sequence ?? 0;
     const sequence = input.sequence ?? previousSequence + 1;
     if (!Number.isSafeInteger(sequence) || sequence <= previousSequence) throw new Error('Нарушена последовательность подписки');
     const event: SubscriptionEvent = {
-      ...structuredClone(input),
+      ...structuredClone(input), branchId,
       eventId: input.eventId ?? `subscription-${sequence}`,
       sequence,
     };
@@ -53,24 +55,24 @@ export class SubscriptionService {
     return event;
   }
 
-  after(instanceId: string, sequence: number): readonly SubscriptionEvent[] {
-    return this.events.filter(event => event.instanceId === instanceId && event.sequence > sequence);
+  after(instanceId: string, sequence: number, branchId = 'main'): readonly SubscriptionEvent[] {
+    return this.events.filter(event => event.instanceId === instanceId && event.branchId === branchId && event.sequence > sequence);
   }
 
-  minSequence(instanceId: string): number {
-    return this.events.find(event => event.instanceId === instanceId)?.sequence ?? 1;
+  minSequence(instanceId: string, branchId = 'main'): number {
+    return this.events.find(event => event.instanceId === instanceId && event.branchId === branchId)?.sequence ?? 1;
   }
 
-  latestSequence(instanceId: string): number {
-    return this.events.filter(event => event.instanceId === instanceId).at(-1)?.sequence ?? 0;
+  latestSequence(instanceId: string, branchId = 'main'): number {
+    return this.events.filter(event => event.instanceId === instanceId && event.branchId === branchId).at(-1)?.sequence ?? 0;
   }
 
-  sequenceOf(instanceId: string, eventId: string): number | null {
-    return this.events.find(event => event.instanceId === instanceId && event.eventId === eventId)?.sequence ?? null;
+  sequenceOf(instanceId: string, eventId: string, branchId = 'main'): number | null {
+    return this.events.find(event => event.instanceId === instanceId && event.branchId === branchId && event.eventId === eventId)?.sequence ?? null;
   }
 
-  async waitForChange(instanceId: string, sequence: number, signal: AbortSignal, timeoutMs = 1000): Promise<boolean> {
-    if (this.after(instanceId, sequence).length > 0) return true;
+  async waitForChange(instanceId: string, sequence: number, signal: AbortSignal, timeoutMs = 1000, branchId = 'main'): Promise<boolean> {
+    if (this.after(instanceId, sequence, branchId).length > 0) return true;
     if (signal.aborted) return false;
     return new Promise(resolve => {
       let timer: ReturnType<typeof setTimeout> | undefined;
@@ -81,7 +83,7 @@ export class SubscriptionService {
         resolve(changed);
       };
       const notify = () => {
-        if (this.after(instanceId, sequence).length > 0) finish(true);
+        if (this.after(instanceId, sequence, branchId).length > 0) finish(true);
       };
       const aborted = () => finish(false);
       this.waiters.add(notify);
@@ -104,6 +106,7 @@ export async function publishChainEvent(subscriptions: SubscriptionService, even
   await subscriptions.publish({
     eventId: event.eventId,
     instanceId: event.instanceId,
+    branchId: event.branchId,
     organizationId: event.organizationId,
     sequence: event.sequence,
     type: event.type,

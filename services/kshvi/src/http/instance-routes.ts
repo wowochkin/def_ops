@@ -1,4 +1,4 @@
-import { HttpError, type Ctx, type Router } from '@def-ops/service-kit';
+import { HttpError, reply, type Ctx, type Router } from '@def-ops/service-kit';
 import type { InstanceService, StartInstanceInput } from '../instances/instance-service';
 import type { CommandService, InstanceCommand } from '../instances/command-service';
 import { authorize, type ParticipantContext } from '../auth/authorize';
@@ -6,6 +6,7 @@ import { assertCsrf } from '../auth/sessions';
 import type { CartographyEnvironmentProvider } from '../environment/cartography-provider';
 import { weatherAtConductWorld } from '../instances/weather-service';
 import { exportDocumentSet, verifyExportSet } from '../../../../packages/kshvi/src/documents/export-set';
+import { BranchDomainService } from '../instances/branch-service';
 
 async function missingResolver(): Promise<never> {
   throw new HttpError(401, 'unauthorized', '401: Требуется вход в систему');
@@ -17,6 +18,7 @@ function commandActor(current: ParticipantContext): InstanceCommand['actor'] {
     role: current.activeRole ?? 'UNKNOWN',
     ...(current.sideId ? { sideId: current.sideId } : {}),
     assignedNodeIds: current.assignedNodeIds ?? [],
+    authorities: current.authorities,
   };
 }
 function coordinate(query: URLSearchParams, key: 'lon' | 'lat'): number {
@@ -33,6 +35,7 @@ export function registerInstanceRoutes(
   commands: CommandService,
   resolveActor: (ctx: Ctx) => Promise<ParticipantContext> = missingResolver,
   environmentProvider?: CartographyEnvironmentProvider,
+  branches = new BranchDomainService(commands),
 ): void {
   const actor = async (ctx: Ctx, action: string): Promise<ParticipantContext> => {
     const current = await resolveActor(ctx);
@@ -45,6 +48,29 @@ export function registerInstanceRoutes(
     const current = await actor(ctx, 'instance:command');
     const body = await ctx.json<Partial<InstanceCommand>>();
     return commands.execute({ ...body, instanceId: ctx.params.id, actor: commandActor(current) } as InstanceCommand);
+  });
+  router.post('/kshvi/instances/:id/branches', async ctx => {
+    const current = await actor(ctx, 'instance:command');
+    const body = await ctx.json<Parameters<BranchDomainService['create']>[2]>();
+    return reply(201, await branches.create(ctx.params.id, commandActor(current), body));
+  });
+  router.post('/kshvi/instances/:id/branches/:branchId/commands', async ctx => {
+    const current = await actor(ctx, 'instance:command');
+    const body = await ctx.json<Partial<InstanceCommand>>();
+    return branches.execute(ctx.params.id, ctx.params.branchId, { ...body, instanceId: ctx.params.id, actor: commandActor(current) } as InstanceCommand);
+  });
+  router.get('/kshvi/instances/:id/branches/:branchId/compare', async ctx => {
+    const current = await actor(ctx, 'projection:read');
+    return branches.compare(ctx.params.id, ctx.query.get('sourceBranchId') ?? 'main', ctx.params.branchId, current.organizationId);
+  });
+  router.post('/kshvi/instances/:id/branches/:branchId/publish', async ctx => {
+    await actor(ctx, 'instance:command');
+    return branches.publish();
+  });
+  router.post('/kshvi/instances/:id/branches/:branchId/adopt', async ctx => {
+    const current = await actor(ctx, 'instance:command');
+    const body = await ctx.json<Parameters<BranchDomainService['adopt']>[2]>();
+    return branches.adopt(ctx.params.id, ctx.params.branchId, body, commandActor(current));
   });
   router.post('/kshvi/instances/:id/environment', async ctx => {
     if (!environmentProvider) throw new HttpError(503, 'environment_unavailable', 'Серверное хранилище среды не настроено');
