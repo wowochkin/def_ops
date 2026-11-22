@@ -36,4 +36,29 @@ export function registerProjectionRoutes(
       throw error;
     }
   });
+  router.get('/kshvi/instances/:id/search', async ctx => {
+    const query = ctx.query.get('q')?.trim();
+    if (!query) throw new HttpError(422, 'search_query_required', 'Укажите непустой поисковый запрос');
+    const actor = await resolveActor(ctx, ctx.params.id);
+    if (!actor.organizationId || !actor.instanceIds.includes(ctx.params.id) || !actor.side || !actor.role) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+    const operationalAt = ctx.query.get('operationalAt') ?? new Date().toISOString();
+    return projections.search(world, { ...actor, operationalAt }, query);
+  });
+  router.get('/kshvi/instances/:id/export', async ctx => {
+    const actor = await resolveActor(ctx, ctx.params.id);
+    if (!actor.organizationId || !actor.instanceIds.includes(ctx.params.id) || !actor.side || !actor.role) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+    const operationalAt = ctx.query.get('operationalAt') ?? new Date().toISOString();
+    return projections.export(world, { ...actor, operationalAt });
+  });
+  router.get('/kshvi/instances/:id/documents/:documentId/attachments/:attachmentId', async ctx => {
+    const actor = await resolveActor(ctx, ctx.params.id);
+    if (!actor.organizationId || !actor.instanceIds.includes(ctx.params.id) || !actor.side || !actor.role) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+    const operationalAt = ctx.query.get('operationalAt') ?? new Date().toISOString();
+    try {
+      return projections.attachment(world, { ...actor, operationalAt }, ctx.params.documentId, ctx.params.attachmentId);
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('403:')) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+      throw error;
+    }
+  });
 }

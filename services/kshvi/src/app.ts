@@ -96,6 +96,9 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   const projectionActor = async (ctx: Ctx, instanceId: string) => {
     const current = await sessions.authenticate(tokenOf(ctx));
     authorize(current, { action: 'projection:read', organizationId: current.organizationId, scope: 'organization' });
+    if (current.assignedInstanceIds && !current.assignedInstanceIds.includes(instanceId)) {
+      throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+    }
     return {
       organizationId: current.organizationId,
       instanceIds: [instanceId],

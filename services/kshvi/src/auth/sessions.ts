@@ -3,7 +3,7 @@ import { HttpError } from '@def-ops/service-kit';
 import { hashPassword, verifyPassword } from './passwords';
 import type { ParticipantContext } from './authorize';
 
-export type RoleAssignment = { id: string; role: string; sideId: string | null; authorities: readonly string[]; assignedNodeIds?: readonly string[] };
+export type RoleAssignment = { id: string; role: string; sideId: string | null; authorities: readonly string[]; assignedNodeIds?: readonly string[]; assignedInstanceIds?: readonly string[] };
 export type AccountRecord = { userId: string; username: string; passwordHash: string; organizationId: string; roles: readonly RoleAssignment[]; state: 'ACTIVE' | 'BLOCKED' | 'ARCHIVED' };
 export type StoredSession = { id: string; userId: string; tokenHash: string; csrfHash: string; activeRoleId: string | null; expiresAt: Date; revokedAt: Date | null };
 
@@ -136,6 +136,7 @@ export class SessionManager {
       roleId: assignment?.id ?? null,
       authorities: assignment?.authorities ?? [],
       assignedNodeIds: assignment?.assignedNodeIds ?? [],
+      assignedInstanceIds: assignment?.assignedInstanceIds,
       sessionId: session.id,
       csrfHash: session.csrfHash,
     };
