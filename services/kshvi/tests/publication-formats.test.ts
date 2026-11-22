@@ -10,7 +10,7 @@ it('PDF и DOCX открываются локально и сохраняют р
   const debrief = new DebriefService().build({
     scope: 'GENERAL', instanceId: 'all', trainingQuestions: ['q'], audience: 'GENERAL', allowedSideIds: ['blue'],
     materials: REQUIRED_DEBRIEF_SECTIONS.map((section, index) => ({
-      id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL'],
+      id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'],
       payload: { text: 'Учебный материал', unit: 's', attribution: 'Локальный атлас', legend: 'Легенда знаков' },
     })),
     referenceIntent: { text: 'Замысел руководства' }, deviations: [],

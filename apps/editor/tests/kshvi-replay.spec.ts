@@ -1,4 +1,5 @@
 import { test, expect } from 'playwright/test';
+import { resolve } from 'node:path';
 
 test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -11,6 +12,7 @@ test('рабочее место реплея синхронизирует пан
   await expect(page.getByTestId('replay-panel')).toHaveCount(22);
   await page.getByLabel('Позиция реплея').fill('3');
   await expect(page.getByTestId('replay-panel').first()).toHaveAttribute('data-sequence', '3');
+  await page.screenshot({ path: resolve('docs/img/modern-kshvi-replay.jpg'), type: 'jpeg', quality: 88, fullPage: false });
   await page.evaluate(() => { document.documentElement.style.zoom = '1.25'; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);

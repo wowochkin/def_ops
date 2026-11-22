@@ -4,7 +4,7 @@ import { ReplayService, type ReplayParticipantFrame } from '../src/replay/replay
 import { reconcileReplayProjection } from '../src/replay/replay-projection';
 
 const participantFrames: ReplayParticipantFrame[] = [{
-  participantId: 'user-blue', branchId: 'official', sequence: 3, policyRevision: 4,
+  participantId: 'user-blue', organizationId: 'org-1', sideId: 'blue', branchId: 'official', sequence: 3, policyRevision: 4,
   allowedEventIds: ['event-1', 'event-2', 'event-3'],
   events: makeReplayArchive().events.slice(0, 3).map(event => ({ ...event, changes: [], payload: { sequence: event.sequence }, randomKey: null })),
   state: { domains: { Map: { items: [{ id: 'observation-blue', source: 'PARTICIPANT' }] } }, appliedEventIds: [], eventCauses: {} },
@@ -14,7 +14,7 @@ it('строит кадр участника только из сохранён�
   const service = new ReplayService();
   const frame = service.project({
     archive: makeReplayArchive(), cursor: 3, participantId: 'user-blue', participantFrames,
-    actor: { role: 'TRAINEE', authorities: [] }, perspective: 'PARTICIPANT',
+    actor: { organizationId: 'org-1', userId: 'user-blue', sideId: 'blue', role: 'TRAINEE', authorities: ['replay.read'] }, perspective: 'PARTICIPANT',
   });
   expect(frame.perspective).toBe('PARTICIPANT');
   expect(frame.source).toBe('RECORDED_PARTICIPANT_PROJECTION');
@@ -27,9 +27,9 @@ it('строит кадр участника только из сохранён�
 it('выдаёт истину только по отдельному праву и постоянно маркирует её', () => {
   const service = new ReplayService();
   const input = { archive: makeReplayArchive(), cursor: 3, participantFrames, participantId: 'leader' };
-  expect(() => service.project({ ...input, actor: { role: 'TECH_ADMIN', authorities: ['TRUTH_READ'] }, perspective: 'TRUTH' })).toThrow('403');
-  expect(() => service.project({ ...input, actor: { role: 'LEADER', authorities: [] }, perspective: 'TRUTH' })).toThrow('403');
-  const truth = service.project({ ...input, actor: { role: 'LEADER', authorities: ['TRUTH_READ'] }, perspective: 'TRUTH' });
+  expect(() => service.project({ ...input, actor: { organizationId: 'org-1', userId: 'admin', role: 'TECH_ADMIN', authorities: ['TRUTH_READ'] }, perspective: 'TRUTH' })).toThrow('403');
+  expect(() => service.project({ ...input, actor: { organizationId: 'org-1', userId: 'leader', role: 'LEADER', authorities: [] }, perspective: 'TRUTH' })).toThrow('403');
+  const truth = service.project({ ...input, actor: { organizationId: 'org-1', userId: 'leader', role: 'LEADER', authorities: ['TRUTH_READ'] }, perspective: 'TRUTH' });
   expect(truth.perspective).toBe('TRUTH');
   expect(truth.label).toBe('Истинное состояние');
   expect(truth.panels.Map.source).toBe('TRUTH');

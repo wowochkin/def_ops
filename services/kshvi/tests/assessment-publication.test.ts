@@ -14,7 +14,7 @@ it('сервис метрик сохраняет доказательства и
 it('локальные PDF, DOCX и JSON соответствуют одной редакции и не содержат черновики', async () => {
   const debrief = new DebriefService().build({
     scope: 'GENERAL', instanceId: 'all', trainingQuestions: ['q'], audience: 'GENERAL', allowedSideIds: ['blue'],
-    materials: REQUIRED_DEBRIEF_SECTIONS.map((section, index) => ({ id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL'], payload: { text: section, unit: 's', attribution: 'Локальный атлас', legend: 'Легенда' } })),
+    materials: REQUIRED_DEBRIEF_SECTIONS.map((section, index) => ({ id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'], payload: { text: section, unit: 's', attribution: 'Локальный атлас', legend: 'Легенда' } })),
     referenceIntent: { text: 'Замысел руководства' }, deviations: [],
   });
   debrief.draftComments = ['Черновой служебный комментарий'];

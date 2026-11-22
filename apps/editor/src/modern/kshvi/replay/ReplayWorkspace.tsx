@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PerspectiveBadge } from './PerspectiveBadge';
 import { ReplayTimeline } from './ReplayTimeline';
 import { SynchronizedPanels } from './SynchronizedPanels';
@@ -21,6 +21,7 @@ export function ReplayWorkspace({ initialFrame, maxSequence, onSeek, onPerspecti
   onTrace?: (eventId: string) => void;
 }) {
   const [frame, setFrame] = useState(initialFrame);
+  useEffect(() => { setFrame(initialFrame); }, [initialFrame]);
   const seek = (sequence: number): void => setFrame(onSeek(sequence));
   return <main className="kshvi-replay-workspace" style={{ display: 'grid', gap: 14, padding: 16, color: '#edf2f4', background: '#111a20', minHeight: '100vh', boxSizing: 'border-box' }}>
     <h1 style={{ margin: 0 }}>Синхронизированный реплей</h1>

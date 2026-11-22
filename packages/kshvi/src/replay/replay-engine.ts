@@ -1,5 +1,6 @@
 import { nearestSnapshot, restoreSnapshot, snapshotStateHash } from './snapshot-restore';
 import { replayClockAt } from './replay-clock';
+import { tagReplayObjectSources } from './perspective';
 import {
   REPLAY_FACT_TYPES,
   type ReplayArchive,
@@ -66,7 +67,8 @@ function cursorParts(archive: ReplayArchive, cursor: number | ReplayCursor): { b
 }
 
 function validateSequence(events: readonly ReplayEvent[], branchId: string, cursor: number): ReplayEvent[] {
-  const selected = events.filter(event => event.branchId === branchId && event.sequence <= cursor);
+  const selected = events.filter(event => event.branchId === branchId && event.sequence <= cursor)
+    .sort((left, right) => left.sequence - right.sequence);
   const ids = new Set<string>();
   selected.forEach((event, index) => {
     if (event.sequence !== index + 1) throw new Error(`Нарушена последовательность событий реплея: ожидалась ${index + 1}, получена ${event.sequence}`);
@@ -78,7 +80,7 @@ function validateSequence(events: readonly ReplayEvent[], branchId: string, curs
 
 function panelsFor(state: ReplayState, sequence: number): ReplayFrame['panels'] {
   return Object.fromEntries(Object.entries(state.domains).map(([domain, value]) => [domain, {
-    sequence, source: 'TRUTH' as const, value: structuredClone(value),
+    sequence, source: 'TRUTH' as const, value: tagReplayObjectSources(value, 'TRUTH'),
   }]));
 }
 
@@ -104,7 +106,7 @@ function incompatibleFrame(
     perspective: 'TRUTH',
     source: 'TRUTH',
     label: 'Истинное состояние',
-    clock: replayClockAt(archive, snapshot.sequence, playbackSpeed),
+    clock: replayClockAt(archive, snapshot.sequence, playbackSpeed, snapshot.branchId),
     panels: panelsFor(state, snapshot.sequence),
     events,
     traces: [],
@@ -129,7 +131,7 @@ export function restoreAt(input: RestoreAtInput): ReplayFrame {
     if (event.savedTrace) traces.push(structuredClone(event.savedTrace));
   }
   const stateHash = snapshotStateHash(state);
-  const controlPoint = archive.controlPoints?.find(point => point.sequence === sequence);
+  const controlPoint = archive.controlPoints?.find(point => point.sequence === sequence && (point.branchId ?? archive.branchId) === branchId);
   if (controlPoint && controlPoint.stateHash !== stateHash) throw new Error('Контрольный хеш состояния реплея не совпадает');
   return {
     archiveId: archive.archiveId,
@@ -145,7 +147,7 @@ export function restoreAt(input: RestoreAtInput): ReplayFrame {
     perspective: 'TRUTH',
     source: 'TRUTH',
     label: 'Истинное состояние',
-    clock: replayClockAt(archive, sequence, playbackSpeed),
+    clock: replayClockAt(archive, sequence, playbackSpeed, branchId),
     panels: panelsFor(state, sequence),
     events: events.map(event => structuredClone(event)),
     traces,

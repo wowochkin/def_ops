@@ -1,18 +1,20 @@
 import { expect, it } from 'vitest';
 import { restoreAt } from '../../../packages/kshvi/src/replay/replay-engine';
 import type { ReplayArchive } from '../../../packages/kshvi/src/replay/types';
-import { completeComponents, archiveVersions, makeArchiveBundle } from '../../../packages/kshvi/tests/fixtures/archive-fixture';
+import { completeComponents, archiveVersions, makeArchiveBundle, fullArchiveExportPolicy } from '../../../packages/kshvi/tests/fixtures/archive-fixture';
 import { exportArchive, serializeArchive, deserializeArchive } from '../src/archive/archive-exporter';
 import { verifyArchive } from '../src/archive/integrity-check';
 import { importArchive } from '../src/archive/archive-importer';
 import { filterParticipantsForExport } from '../src/archive/retention-export';
 
-const actor = { organizationId: 'org-1', authorities: ['archive.export'] };
+const actor = { organizationId: 'org-1', userId: 'exporter-1', authorities: ['archive.export'] };
+const importActor = { organizationId: 'org-1', userId: 'importer-1', authorities: ['archive.import', 'archive.publish'] };
 
 function exported() {
   return exportArchive({
     actor, organizationId: 'org-1', archiveId: 'archive-official-1', kind: 'OFFICIAL', createdAt: '2026-11-21T12:00:00.000Z',
-    versions: archiveVersions, components: completeComponents(), atlasLicense: { offlineExport: true, attribution: 'Локальный атлас' },
+    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy,
+    atlasLicense: { offlineExport: true, attribution: 'Локальный атлас' },
   });
 }
 
@@ -33,7 +35,7 @@ it('неполный пакет доступен только для огран�
   expect(result.autonomous).toBe(false);
   expect(result.missing).toContain('environment.weather');
   expect(result.mode).toBe('LIMITED_RESEARCH');
-  const imported = importArchive(serializeArchive(bundle));
+  const imported = importArchive(serializeArchive(bundle), importActor);
   expect(imported.publicationEligible).toBe(false);
   expect(imported.mode).toBe('LIMITED_RESEARCH');
 });
@@ -43,7 +45,7 @@ it('до публикации обнаруживает изменённый фа
   changed.files['journal/events.json'] = new TextEncoder().encode('{"changed":true}');
   expect(verifyArchive(changed)).toMatchObject({ valid: false, mode: 'REJECTED' });
   expect(verifyArchive(changed).corrupted).toContain('journal/events.json');
-  expect(() => importArchive(serializeArchive(changed))).toThrow('повреждён');
+  expect(() => importArchive(serializeArchive(changed), importActor)).toThrow('повреждён');
 
   const broken = exported();
   broken.manifest.components.find(component => component.id === 'journal.hash-chain')!.references = ['missing.json'];
@@ -55,13 +57,14 @@ it('до публикации обнаруживает изменённый фа
 
 it('не обходит права и лицензию атласа, а ссылочный экспорт явно неавтономен', () => {
   expect(() => exportArchive({
-    actor: { organizationId: 'org-1', authorities: [] }, organizationId: 'org-1', archiveId: 'x', kind: 'OFFICIAL', createdAt: 'x',
-    versions: archiveVersions, components: completeComponents(), atlasLicense: { offlineExport: true, attribution: 'x' },
+    actor: { organizationId: 'org-1', userId: 'forbidden', authorities: [] }, organizationId: 'org-1', archiveId: 'x', kind: 'OFFICIAL', createdAt: 'x',
+    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy,
+    atlasLicense: { offlineExport: true, attribution: 'x' },
   })).toThrow('403');
   expect(() => exportedWithOrgMismatch()).toThrow('403');
   const limited = exportArchive({
     actor, organizationId: 'org-1', archiveId: 'archive-reference', kind: 'OFFICIAL', createdAt: '2026-11-21T12:00:00.000Z',
-    versions: archiveVersions, components: completeComponents(), allowReferenceOnly: true,
+    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy, allowReferenceOnly: true,
     atlasLicense: { offlineExport: false, attribution: 'Ограниченный атлас', reference: { style: 'local-style' } },
   });
   expect(limited.manifest.omissions.some(item => item.componentId === 'environment.tiles')).toBe(true);
@@ -82,10 +85,9 @@ it('список участников ограничен политикой эк
 function exportedWithOrgMismatch() {
   return exportArchive({
     actor, organizationId: 'org-2', archiveId: 'x', kind: 'OFFICIAL', createdAt: 'x', versions: archiveVersions,
-    components: completeComponents(), atlasLicense: { offlineExport: true, attribution: 'x' },
+    components: completeComponents(), exportPolicy: fullArchiveExportPolicy, atlasLicense: { offlineExport: true, attribution: 'x' },
   });
 }
-
 
 it('не принимает формально целый архив с неполным журналом фактов за автономный', () => {
   const components = completeComponents();

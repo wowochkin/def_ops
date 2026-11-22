@@ -7,6 +7,17 @@ export function assertPerspectiveAccess(actor: ReplayActor, perspective: ReplayP
   }
 }
 
+export function tagReplayObjectSources(value: unknown, source: 'TRUTH' | 'PARTICIPANT'): unknown {
+  if (Array.isArray(value)) return value.map(item => tagReplayObjectSources(item, source));
+  if (!value || typeof value !== 'object') return value;
+  return {
+    ...Object.fromEntries(Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== 'source')
+      .map(([key, nested]) => [key, tagReplayObjectSources(nested, source)])),
+    source,
+  };
+}
+
 export function perspectiveLabel(perspective: ReplayPerspective): string {
   return perspective === 'TRUTH'
     ? 'Истинное состояние — постоянная метка'

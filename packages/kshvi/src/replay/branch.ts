@@ -9,6 +9,8 @@ export type BranchVersions = {
 };
 export type Branch = {
   branchId: string;
+  organizationId: string;
+  ownerId?: string;
   parentBranchId: string | null;
   kind: 'OFFICIAL' | 'ALTERNATIVE';
   snapshot: ReplaySnapshot;
@@ -44,6 +46,18 @@ function branchHash(branch: Branch): string {
     branchId: branch.branchId, state: branch.state, events: branch.events, versions: branch.versions,
   })).digest('hex');
 }
+export function branchSequence(branch: Branch): number {
+  return Math.max(branch.snapshot.sequence, ...branch.events.map(event => event.sequence));
+}
+function branchSnapshot(branch: Branch, branchId: string): ReplaySnapshot {
+  const latest = branch.events.at(-1);
+  return {
+    ...structuredClone(branch.snapshot), branchId, sequence: branchSequence(branch),
+    operationalAt: latest?.operationalAt ?? branch.snapshot.operationalAt,
+    wallClockAt: latest?.wallClockAt ?? branch.snapshot.wallClockAt,
+    state: structuredClone(branch.state),
+  };
+}
 
 export function createBranch(official: Branch, input: CreateBranchInput): Branch {
   if (!input.branchId.trim() || input.branchId === official.branchId) throw new Error('Альтернативной ветви нужен новый branchId');
@@ -54,7 +68,7 @@ export function createBranch(official: Branch, input: CreateBranchInput): Branch
     parentBranchId: official.branchId,
     kind: 'ALTERNATIVE',
     state: structuredClone(official.state),
-    snapshot: structuredClone(official.snapshot),
+    snapshot: branchSnapshot(official, input.branchId),
     events: [],
     documents: structuredClone(official.documents),
     assessment: structuredClone(official.assessment),
@@ -72,7 +86,7 @@ export function applyBranchDecision(branch: Branch, decision: BranchDecisionInpu
   if (branch.events.some(event => event.eventId === decision.eventId)) throw new Error('Повторное решение ветви уже применено');
   const event: ReplayEvent = {
     ...structuredClone(decision), branchId: branch.branchId,
-    sequence: branch.snapshot.sequence + branch.events.length + 1,
+    sequence: branchSequence(branch) + 1,
   };
   const reducer = reducerRegistry.find(event.reducerVersion ?? branch.versions.reducerVersion);
   if (!reducer) throw new Error('Неподдерживаемая версия reducer ветви');
@@ -91,17 +105,19 @@ export function publishBranch(_branch: Branch): never {
 
 export function adoptBranchDecision(official: Branch, branch: Branch, actor: ReplayActor, rationale: string): Branch {
   if (official.kind !== 'OFFICIAL' || branch.kind !== 'ALTERNATIVE') throw new Error('Некорректные линии для официального решения');
+  if (actor.organizationId !== official.organizationId || actor.organizationId !== branch.organizationId) throw new Error('403: Другая организация');
   if (actor.role !== 'LEADER' || !actor.authorities.includes('OFFICIAL_DECISION')) throw new Error('403: Требуется право нового официального решения');
   if (!rationale.trim()) throw new Error('Для официального решения нужно основание');
   const source = branch.events.at(-1);
   if (!source) throw new Error('В альтернативной ветви нет решения для переноса');
+  const sequence = branchSequence(official) + 1;
   const event: ReplayEvent = {
     ...structuredClone(source),
-    eventId: `official-decision-${official.snapshot.sequence + official.events.length + 1}`,
+    eventId: `official-decision-${sequence}`,
     branchId: official.branchId,
-    sequence: official.snapshot.sequence + official.events.length + 1,
+    sequence,
     causeIds: [...(source.causeIds ?? []), source.eventId],
-    payload: { ...structuredClone(source.payload), rationale, sourceBranchId: branch.branchId, adoptedBy: 'LEADER' },
+    payload: { ...structuredClone(source.payload), rationale, sourceBranchId: branch.branchId, adoptedBy: actor.userId },
   };
   const reducer = new ReplayReducerRegistry().find(official.versions.reducerVersion);
   if (!reducer) throw new Error('Неподдерживаемая версия reducer официальной линии');

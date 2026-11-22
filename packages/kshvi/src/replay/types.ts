@@ -65,9 +65,10 @@ export type ReplaySnapshot = {
   state: ReplayState;
   stateHash?: string;
 };
-export type ReplayControlPoint = { sequence: number; stateHash: string };
+export type ReplayControlPoint = { branchId?: string; sequence: number; stateHash: string };
 export type ReplayArchive = {
   archiveId: string;
+  organizationId: string;
   schemaVersion: number;
   branchId: string;
   versions: {
@@ -110,5 +111,11 @@ export type ReplayFrame = {
   events: readonly ReplayEvent[];
   traces: readonly ReplaySavedTrace[];
 };
-export type ReplayActor = { role: string; authorities: readonly string[] };
+export type ReplayActor = {
+  organizationId: string;
+  userId: string;
+  sideId?: string;
+  role: string;
+  authorities: readonly string[];
+};
 export type ReplayPerspective = 'PARTICIPANT' | 'TRUTH';

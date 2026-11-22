@@ -12,6 +12,13 @@ function same(left: unknown, right: unknown): boolean {
   if (left === undefined || right === undefined) return left === right;
   return canonicalJson(left) === canonicalJson(right);
 }
+function temporal(branch: Branch): { operationalAt: string; wallClockAt: string } {
+  const latest = [...branch.events].sort((left, right) => right.sequence - left.sequence)[0];
+  return {
+    operationalAt: latest?.operationalAt ?? branch.snapshot.operationalAt,
+    wallClockAt: latest?.wallClockAt ?? branch.snapshot.wallClockAt,
+  };
+}
 
 export function compareBranches(left: Branch, right: Branch): BranchDiff {
   const conditions: BranchDifference[] = [];
@@ -19,8 +26,11 @@ export function compareBranches(left: Branch, right: Branch): BranchDiff {
   if (!same(left.versions.environment, right.versions.environment)) conditions.push({ kind: 'ENVIRONMENT_VERSION', label: `Среда: ${left.versions.environment.revision} → ${right.versions.environment.revision}`, before: left.versions.environment, after: right.versions.environment });
   if (left.versions.reducerVersion !== right.versions.reducerVersion) conditions.push({ kind: 'REDUCER_VERSION', label: `Reducer: ${left.versions.reducerVersion} → ${right.versions.reducerVersion}` });
   const consequences: BranchDifference[] = [];
+  const leftTime = temporal(left);
+  const rightTime = temporal(right);
+  if (!same(leftTime, rightTime)) consequences.push({ kind: 'TIME', label: 'Оперативное/астрономическое время различается', before: leftTime, after: rightTime });
   const domains: readonly [BranchDifferenceKind, string][] = [
-    ['TIME', 'Time'], ['TASKS', 'Tasks'], ['RESOURCES', 'Resources'], ['DOCUMENTS', 'Documents'], ['OUTCOMES', 'Decisions'],
+    ['TASKS', 'Tasks'], ['RESOURCES', 'Resources'], ['DOCUMENTS', 'Documents'], ['OUTCOMES', 'Decisions'],
   ];
   for (const [kind, domain] of domains) {
     const before = domain === 'Documents' ? left.documents : left.state.domains[domain];

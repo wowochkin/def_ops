@@ -39,6 +39,7 @@ export function makeReplayArchive(): ReplayArchive {
   };
   const archive: ReplayArchive = {
     archiveId: 'archive-1',
+    organizationId: 'org-1',
     schemaVersion: 1,
     branchId: 'official',
     versions: { model: version('model'), environment: version('environment'), reducerVersion: 1 },

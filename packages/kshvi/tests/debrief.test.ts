@@ -3,13 +3,13 @@ import { buildDebrief, publishDebrief, REQUIRED_DEBRIEF_SECTIONS, type DebriefMa
 
 const sections = REQUIRED_DEBRIEF_SECTIONS.map((section, index): DebriefMaterial => ({
   id: `material-${index}`, section, instanceId: index === 0 ? 'hq-other' : 'hq-1', sideId: index % 2 ? 'red' : 'blue',
-  trainingQuestions: ['question-1'], audience: ['GENERAL', 'PRIVATE'], payload: { text: `Раздел ${section}` },
+  trainingQuestions: ['question-1'], audience: ['GENERAL', 'PRIVATE', 'PUBLIC', 'commanders'], payload: { text: `Раздел ${section}` },
 }));
 
 it('формирует общий и частный разбор с полными разделами и ограничением инстанции', () => {
   const general = buildDebrief({
     scope: 'GENERAL', instanceId: 'all', trainingQuestions: ['question-1'], audience: 'GENERAL', allowedSideIds: ['blue', 'red'], materials: sections,
-    referenceIntent: { text: 'Замысел руководства' }, deviations: [{ decisionId: 'd1', rationale: 'Обоснование', consequences: ['Последствие'] }],
+    referenceIntent: { text: 'Замысел руководства' }, deviations: [{ decisionId: 'd1', instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['question-1'], audience: ['GENERAL', 'commanders'], rationale: 'Обоснование', consequences: ['Последствие'] }],
   });
   expect(general.materials.map(material => material.section)).toEqual(REQUIRED_DEBRIEF_SECTIONS);
   expect(general.reference.kind).toBe('LEADERSHIP_INTENT');

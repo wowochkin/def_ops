@@ -36,12 +36,18 @@ function timestamp(event: MetricEvent, field: string): number | null {
 export function calculateMetric(definition: MetricDefinition, events: readonly MetricEvent[]): MetricResult {
   const errors = validateMetricDefinition(definition);
   if (errors.length) throw new Error(errors.join('; '));
+  const from = Date.parse(definition.period.from);
+  const to = Date.parse(definition.period.to);
+  const periodEvents = events.filter(event => {
+    const occurredAt = Date.parse(event.occurredAt);
+    return Number.isFinite(occurredAt) && occurredAt >= from && occurredAt <= to;
+  });
   let value: number | 'UNKNOWN' = 'UNKNOWN';
   const missing = new Set<string>();
   const used: MetricEvent[] = [];
   if (definition.operation === 'DELIVERY_DELAY') {
-    const starts = events.filter(event => event.type === definition.startEventType).sort((left, right) => left.sequence - right.sequence);
-    const deliveries = events.filter(event => event.type === definition.endEventType);
+    const starts = periodEvents.filter(event => event.type === definition.startEventType).sort((left, right) => left.sequence - right.sequence);
+    const deliveries = periodEvents.filter(event => event.type === definition.endEventType);
     const delays: number[] = [];
     for (const start of starts) {
       used.push(start);
@@ -61,13 +67,13 @@ export function calculateMetric(definition: MetricDefinition, events: readonly M
     if (!starts.length) missing.add('message.timestamp');
     if (missing.size === 0 && delays.length) value = delays.reduce((sum, delay) => sum + delay, 0) / delays.length;
   } else if (definition.operation === 'RATIO') {
-    const numerator = events.filter(event => event.type === definition.numeratorEventType);
-    const denominator = events.filter(event => event.type === definition.denominatorEventType);
+    const numerator = periodEvents.filter(event => event.type === definition.numeratorEventType);
+    const denominator = periodEvents.filter(event => event.type === definition.denominatorEventType);
     used.push(...numerator, ...denominator);
     if (!denominator.length) missing.add('denominator');
     else value = numerator.length / denominator.length * 100;
   } else {
-    const matching = events.filter(event => definition.sourceEventTypes.includes(event.type));
+    const matching = periodEvents.filter(event => definition.sourceEventTypes.includes(event.type));
     used.push(...matching);
     value = matching.length;
   }

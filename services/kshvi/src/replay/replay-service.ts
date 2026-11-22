@@ -1,6 +1,7 @@
 import {
   assertPerspectiveAccess,
   perspectiveLabel,
+  tagReplayObjectSources,
 } from '../../../../packages/kshvi/src/replay/perspective';
 import { replayClockAt } from '../../../../packages/kshvi/src/replay/replay-clock';
 import {
@@ -17,6 +18,8 @@ import {
 
 export type ReplayParticipantFrame = {
   participantId: string;
+  organizationId: string;
+  sideId: string;
   branchId: string;
   sequence: number;
   policyRevision: number;
@@ -42,18 +45,29 @@ export type ProjectedReplayFrame = Omit<ReplayFrame, 'perspective' | 'source' | 
 
 function participantPanels(state: ReplayState, sequence: number): Record<string, ReplayPanel> {
   return Object.fromEntries(Object.entries(state.domains).map(([domain, value]) => [domain, {
-    sequence, source: 'PARTICIPANT' as const, value: structuredClone(value),
+    sequence, source: 'PARTICIPANT' as const, value: tagReplayObjectSources(value, 'PARTICIPANT'),
   }]));
+}
+function assertParticipantAccess(input: ProjectReplayInput): void {
+  if (input.actor.organizationId !== input.archive.organizationId) throw new Error('403: Другая организация реплея');
+  const own = input.actor.userId === input.participantId;
+  const any = input.actor.role === 'LEADER' && input.actor.authorities.includes('replay.read.any');
+  if (!own && !any) throw new Error('403: Чужая перспектива участника недоступна');
+  if (own && !input.actor.authorities.includes('replay.read') && !any) throw new Error('403: Нет права чтения перспективы');
 }
 
 export class ReplayService {
   project(input: ProjectReplayInput): ProjectedReplayFrame {
+    if (input.actor.organizationId !== input.archive.organizationId) throw new Error('403: Другая организация реплея');
     assertPerspectiveAccess(input.actor, input.perspective);
     if (input.perspective === 'TRUTH') {
       return restoreAt({ archive: input.archive, cursor: input.cursor });
     }
+    assertParticipantAccess(input);
     const recorded = input.participantFrames
       .filter(frame => frame.participantId === input.participantId
+        && frame.organizationId === input.actor.organizationId
+        && (input.actor.userId !== input.participantId || frame.sideId === input.actor.sideId)
         && frame.branchId === input.archive.branchId
         && frame.sequence <= input.cursor)
       .sort((left, right) => right.sequence - left.sequence)[0];
@@ -77,7 +91,7 @@ export class ReplayService {
       perspective: 'PARTICIPANT',
       source: 'RECORDED_PARTICIPANT_PROJECTION',
       label: perspectiveLabel('PARTICIPANT'),
-      clock: replayClockAt(input.archive, input.cursor),
+      clock: replayClockAt(input.archive, input.cursor, 1, recorded.branchId),
       panels: participantPanels(state, recorded.sequence),
       events,
       traces: [],
