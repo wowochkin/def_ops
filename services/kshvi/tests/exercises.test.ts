@@ -13,7 +13,7 @@ import {
   type ExerciseSealActor,
 } from '../src/store/exercise-store';
 import { KshviEventStore } from '../src/store/event-store';
-import { linkedExercisePayload, sealApprovedExercise, validExerciseSealInput } from './helpers/full-seal';
+import { linkedExercisePayload, sealApprovedExercise, serverExerciseEvidence } from './helpers/full-seal';
 
 const actor: ExerciseActor = { organizationId: 'org1', userId: 'author-1' };
 const director: ExerciseSealActor = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
@@ -36,7 +36,7 @@ function linkedPayload(): JsonValue {
 
 describe('библиотека учений', () => {
   it('создаёт карточку, ищет по фильтрам и сохраняет неизменяемые редакции', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const created = await store.create(actor, input);
     expect(created).toMatchObject({
       title: input.title,
@@ -72,7 +72,7 @@ describe('библиотека учений', () => {
   });
 
   it('отклоняет неполные команды русской ошибкой валидации вместо внутренней ошибки', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     await expect(store.create(actor, null as unknown as CreateExerciseInput))
       .rejects.toMatchObject({ code: 'VALIDATION', message: 'Проверьте данные учения' });
     await expect(store.create(actor, { ...input, title: 42 } as unknown as CreateExerciseInput))
@@ -87,7 +87,7 @@ describe('библиотека учений', () => {
   });
 
   it('копирует проект дважды с новыми согласованными UUID и архивирует исходник', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const scenarioId = randomUUID();
     const nodeId = randomUUID();
     const source = await store.create(actor, {
@@ -127,7 +127,7 @@ describe('библиотека учений', () => {
   });
 
   it('запечатывает только текущую редакцию после серверной проверки полного комплекта', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, input);
     const revised = await store.createRevision(actor, exercise.id, { expectedRevision: 1, payload: linkedPayload() });
     const sealed = await sealApprovedExercise(store, director, revised, 2);
@@ -137,36 +137,34 @@ describe('библиотека учений', () => {
   });
 
   it('не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
-    const evidence = validExerciseSealInput(exercise);
 
-    await expect(store.seal({ ...director, activeRole: 'LEADER' }, exercise.id, evidence))
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, exercise.id, { expectedRevision: 1 }))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(store.seal({ ...director, authorities: [] }, exercise.id, evidence))
+    await expect(store.seal({ ...director, authorities: [] }, exercise.id, { expectedRevision: 1 }))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
 
   it('отклоняет запечатывание устаревшей редакции', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
-    const evidence = { ...validExerciseSealInput(exercise), expectedRevision: 2 };
 
-    await expect(store.seal(director, exercise.id, evidence)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    await expect(store.seal(director, exercise.id, { expectedRevision: 2 })).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
 
   it('отклоняет запечатывание неполного комплекта', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, input);
 
-    await expect(store.seal(director, exercise.id, validExerciseSealInput(exercise))).rejects.toMatchObject({ code: 'VALIDATION' });
+    await expect(store.seal(director, exercise.id, { expectedRevision: 1 })).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
 
   it('создаёт только серверные сеансы и изолирует их по организации', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
     await sealApprovedExercise(store, director, exercise);
     const sessionInput = {
@@ -192,7 +190,7 @@ describe('библиотека учений', () => {
   });
 
   it('не принимает от клиента состояние, готовность и результат проверки', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, input);
     await expect(store.createRevision(actor, exercise.id, {
       expectedRevision: 1,
@@ -206,7 +204,7 @@ describe('библиотека учений', () => {
   });
 
   it('рассчитывает готовность и проверку по связанному комплекту на сервере', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const exercise = await store.create(actor, input);
     const revised = await store.createRevision(actor, exercise.id, {
       expectedRevision: 1,
@@ -225,7 +223,7 @@ describe('библиотека учений', () => {
   });
 
   it('рассчитывает оценку уже при создании серверной редакции', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const created = await store.create(actor, { ...input, payload: linkedPayload() });
     expect(created).toMatchObject({ state: 'DRAFT', readiness: 100, validation: 'OK' });
   });
@@ -233,7 +231,7 @@ describe('библиотека учений', () => {
 
 describe('HTTP API библиотеки', () => {
   it('подтверждает изменения сервером, применяет полномочия и не доверяет организации из тела', async () => {
-    const store = new InMemoryExerciseStore();
+    const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
     const sessions = new SessionManager({ store: new InMemorySessionStore() });
     await sessions.createAccount({
       userId: actor.userId,
@@ -315,7 +313,7 @@ describe('HTTP API библиотеки', () => {
     expect(revised.response.status).toBe(201);
     expect(revised.body.revision).toBe(2);
 
-    const sealBody = validExerciseSealInput((await store.get(actor.organizationId, created.body.id))!, 2);
+    const sealBody = { expectedRevision: 2 };
     const clientSeal = await call(`/${created.body.id}/revisions`, {
       method: 'POST',
       body: JSON.stringify({ expectedRevision: 2, state: 'SEALED', readiness: 100, validation: 'OK', payload: linkedPayload() }),
@@ -391,16 +389,15 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
   const eventStore = new KshviEventStore({ pool, schema });
   try {
     await eventStore.init();
-    const store = new PgExerciseStore({ pool, schema });
+    const store = new PgExerciseStore({ pool, schema, evidence: serverExerciseEvidence() });
     await store.init();
     const created = await store.create(actor, { ...input, payload: linkedPayload() });
     const copied = await store.copy(actor, created.id);
     expect(copied.id).not.toBe(created.id);
     expect(copied.revisions[0].id).not.toBe(created.revisions[0].id);
-    const evidence = validExerciseSealInput(created);
-    await expect(store.seal({ ...director, activeRole: 'LEADER' }, created.id, evidence))
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, created.id, { expectedRevision: 1 }))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(store.seal(director, created.id, { ...evidence, expectedRevision: 2 })).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    await expect(store.seal(director, created.id, { expectedRevision: 2 })).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
     const sealed = await sealApprovedExercise(store, director, created);
     expect(sealed).toMatchObject({ state: 'SEALED', readiness: 100, validation: 'OK' });
     expect(sealed.revisions[0].state).toBe('SEALED');
@@ -410,10 +407,9 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     expect(revised.revisions).toHaveLength(2);
     expect(revised.revisions[0].state).toBe('SEALED');
     expect(revised.revisions[1].state).toBe('DRAFT');
-    const revisedEvidence = validExerciseSealInput(revised, 2);
-    await expect(store.seal(director, created.id, revisedEvidence)).rejects.toMatchObject({ code: 'VALIDATION' });
+    await expect(store.seal(director, created.id, { expectedRevision: 2 })).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await store.archive(actor, created.id, 2)).state).toBe('ARCHIVED');
-    await expect(store.seal(director, created.id, revisedEvidence)).rejects.toMatchObject({ code: 'ARCHIVED' });
+    await expect(store.seal(director, created.id, { expectedRevision: 2 })).rejects.toMatchObject({ code: 'ARCHIVED' });
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

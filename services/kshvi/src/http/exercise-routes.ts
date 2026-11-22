@@ -13,6 +13,8 @@ import {
   type ExerciseStore,
 } from '../store/exercise-store';
 import { projectExerciseCard } from '../store/exercise-projection';
+import type { ExerciseConfirmationInput, ExerciseEvidenceService } from '../store/exercise-evidence-service';
+import type { InitialSituationMapModel } from '@def-ops/kshvi';
 import { KSHVI_ROUTE_PREFIX } from './router';
 
 const base = `${KSHVI_ROUTE_PREFIX}/exercises`;
@@ -65,8 +67,8 @@ function filters(ctx: Ctx): ExerciseFilters {
   };
 }
 
-export function registerExerciseRoutes(router: Router, options: { store: ExerciseStore; sessions: SessionManager }): void {
-  const { store, sessions } = options;
+export function registerExerciseRoutes(router: Router, options: { store: ExerciseStore; sessions: SessionManager; evidence?: ExerciseEvidenceService }): void {
+  const { store, sessions, evidence } = options;
   const participant = async (ctx: Ctx, action: string, mutation = false): Promise<ExerciseActor & Pick<ParticipantContext, 'activeRole' | 'authorities'> & { participant: ParticipantContext }> => {
     const current = await sessions.authenticate(tokenOf(ctx));
     authorize(current, { action, organizationId: current.organizationId, scope: 'organization' });
@@ -78,6 +80,25 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   };
   const handle = (handler: (ctx: Ctx) => Promise<unknown>): Handler => async ctx => {
     try { return await handler(ctx); } catch (error) { translate(error); }
+  };
+  const currentRevision = async (ctx: Ctx, actor: ExerciseActor, expectedRevision: number) => {
+    const card = await store.get(actor.organizationId, exerciseId(ctx));
+    const revision = card?.revisions.find(item => item.revision === card.revision);
+    if (!card || !revision || card.revision !== expectedRevision) throw new ExerciseStoreError('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+    return revision;
+  };
+  const evidenceCall = async <T>(action: () => Promise<T>): Promise<T> => {
+    try { return await action(); } catch (error) {
+      if (error instanceof ExerciseStoreError) throw error;
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('полномоч')) throw new HttpError(403, 'forbidden', 'Действие недоступно для назначенной области');
+      const code = /^([A-Z_]+)(?::|$)/.exec(message)?.[1];
+      throw new HttpError(422, 'evidence_rejected', code ? `Доказательство не принято: ${code}` : 'Доказательство не принято сервером');
+    }
+  };
+  const closedBody = (body: object, fields: readonly string[]): void => {
+    const unknown = Object.keys(body).filter(key => !fields.includes(key));
+    if (unknown.length) throw new HttpError(422, 'invalid_evidence', `Недопустимые поля: ${unknown.sort().join(', ')}`);
   };
 
   router.get(base, handle(async ctx => {
@@ -128,6 +149,24 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const body = await ctx.json<ExerciseLifecycleInput>();
     return store.transition(actor, exerciseId(ctx), body);
   }));
+
+  if (evidence) {
+    router.post(`${base}/:id/map-approval`, handle(async ctx => {
+      const actor = await participant(ctx, 'initialMap.approve', true);
+      const body = await ctx.json<{ expectedRevision: number; map: InitialSituationMapModel }>();
+      closedBody(body, ['expectedRevision', 'map']);
+      const revision = await currentRevision(ctx, actor, body.expectedRevision);
+      return evidenceCall(() => evidence.approveMap(actor, exerciseId(ctx), revision, body.map));
+    }));
+    router.post(`${base}/:id/confirmations`, handle(async ctx => {
+      const actor = await participant(ctx, 'readiness.confirm', true);
+      const body = await ctx.json<ExerciseConfirmationInput>();
+      closedBody(body, ['expectedRevision', 'area']);
+      const revision = await currentRevision(ctx, actor, body.expectedRevision);
+      await evidenceCall(() => evidence.confirm(actor, exerciseId(ctx), revision, body));
+      return reply(200, { area: body.area, confirmedBy: actor.userId, role: actor.activeRole, revision: revision.revision });
+    }));
+  }
 
   router.post(`${base}/:id/seal`, handle(async ctx => {
     const actor = await participant(ctx, 'scenario.seal', true);

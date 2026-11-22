@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createService } from '@def-ops/service-kit';
-import { linkedExercisePayload, validExerciseSealInput } from '../helpers/full-seal';
+import { linkedExercisePayload, serverExerciseEvidence, validExerciseSealInput } from '../helpers/full-seal';
+import { InMemoryExerciseStore } from '../../src/store/exercise-store';
 import { expect, it } from 'vitest';
 import matrix from '../../../../docs/release/kshvi/functional-contract-matrix.json';
 import { buildRouter } from '../../src/app';
@@ -75,7 +76,8 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
       { id: 'trainee-red-role', role: 'TRAINEE', sideId: 'red', authorities: ['exercise:read', 'replay.read'] },
     ],
   });
-  const service = createService({ name: 'kshvi-full-contract', port: 0, router: buildRouter({ sessions }) });
+  const exerciseStore = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
+  const service = createService({ name: 'kshvi-full-contract', port: 0, router: buildRouter({ sessions, exerciseStore }) });
   const port = await service.listen();
   const base = `http://127.0.0.1:${port}/kshvi`;
   async function login(username: string, roleId: string) {
@@ -107,7 +109,7 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
     expect((await api(leader, 'POST', '/auth/role', { roleId: 'approver-role' })).status).toBe(200);
     expect((await api(leader, 'POST', `/exercises/${created.id}/transitions`, { expectedRevision: 1, command: 'APPROVE' })).status).toBe(200);
     expect((await api(leader, 'POST', '/auth/role', { roleId: 'leader-role' })).status).toBe(200);
-    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/seal`, validExerciseSealInput(created));
+    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/seal`, { expectedRevision: 1 });
     expect(sealedResponse.status).toBe(200);
     const sessionResponse = await api(leader, 'POST', `/exercises/${created.id}/sessions`, { revision: 1, optimisticWorld: { hiddenTruth: 'Подделка клиента' } });
     expect(sessionResponse.status).toBe(201);
@@ -141,6 +143,11 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
     const truthReplay = await api(leader, 'GET', `${commandBase}/replay?cursor=3&perspective=TRUTH`);
     expect(truthReplay.status).toBe(200);
     expect(await truthReplay.text()).toContain('Скрытый эталон');
+    const privateDebrief = await api(trainee, 'GET', `${commandBase}/debrief?scope=PRIVATE`);
+    expect(privateDebrief.status).toBe(200);
+    const privateDebriefBody = await privateDebrief.text();
+    expect(privateDebriefBody).not.toContain('Скрытый эталон');
+    expect(privateDebriefBody).not.toContain('Замысел руководства');
     expect((await api(trainee, 'POST', '/auth/role', { roleId: 'trainee-red-role' })).status).toBe(200);
     const wrongSideReplay = await api(trainee, 'GET', `${commandBase}/replay?cursor=3&perspective=PARTICIPANT`);
     expect(wrongSideReplay.status).toBe(403);

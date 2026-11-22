@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { OfficialSessionService, type SessionActor } from '../../src/runtime/official-session-service';
 import { PgExerciseStore } from '../../src/store/exercise-store';
-import { sealApprovedExercise } from '../helpers/full-seal';
+import { sealApprovedExercise, serverExerciseEvidence } from '../helpers/full-seal';
 
 const actor: SessionActor = { userId: 'leader-1', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['TRUTH_READ', 'exercise:conduct', 'scenario.seal'] };
 const databaseIntegration = process.env.TEST_DATABASE_URL ? it : it.skip;
@@ -12,7 +12,7 @@ const databaseIntegration = process.env.TEST_DATABASE_URL ? it : it.skip;
 databaseIntegration('после нового экземпляра сервиса повтор команды и реплей используют сохранённый журнал', async () => {
   const pool = createPool(process.env.TEST_DATABASE_URL!, 2);
   const schema = `kshvi_recovery_test_${randomUUID().replaceAll('-', '')}`;
-  const store = new PgExerciseStore({ pool, schema });
+  const store = new PgExerciseStore({ pool, schema, evidence: serverExerciseEvidence() });
   try {
     await store.init();
     const kit = buildLinkedScenarioKit({

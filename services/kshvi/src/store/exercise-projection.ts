@@ -33,9 +33,12 @@ export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContex
   if (actor.activeRole && TRUTH_ROLES.has(actor.activeRole)) return structuredClone(card);
   return {
     ...structuredClone(card),
-    revisions: card.revisions.map((revision): ExerciseRevision => ({
-      ...structuredClone(revision),
-      payload: projectExercisePayload(revision.payload, actor.sideId),
-    })),
+    revisions: card.revisions.map((revision): ExerciseRevision => {
+      const { sealedArtifact: _sealedArtifact, ...serverRevision } = structuredClone(revision);
+      return {
+        ...serverRevision,
+        payload: projectExercisePayload(revision.payload, actor.sideId),
+      };
+    }),
   };
 }

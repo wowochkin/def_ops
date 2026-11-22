@@ -268,23 +268,33 @@ export class OfficialSessionService {
 
   async buildDebrief(actor: SessionActor, exerciseId: string, sessionId: string, scope: 'GENERAL' | 'PRIVATE') {
     const record = await this.record(actor, exerciseId, sessionId);
+    const truth = (actor.activeRole === 'DIRECTOR' || actor.activeRole === 'LEADER') && actor.authorities.includes('TRUTH_READ');
+    if (scope === 'GENERAL' && !truth) throw new HttpError(403, 'forbidden', 'Общий служебный разбор доступен только руководству с правом чтения истины');
     const sideId = actor.sideId ?? 'UNKNOWN';
     const allowedSideIds = scope === 'GENERAL' ? ['blue', 'red', 'UNKNOWN'] : [sideId];
     const materialSide = allowedSideIds[0];
     const audience = scope === 'GENERAL' ? 'GENERAL' : actor.userId;
+    const events = truth ? record.archive.events : this.participantFramesFor(record, actor).at(-1)?.events ?? [];
     const built = this.debrief.build({
       scope, instanceId: sessionId, trainingQuestions: ['official-lifecycle'], audience, allowedSideIds,
       materials: REQUIRED_DEBRIEF_SECTIONS.map((section, index) => ({
         id: `${sessionId}-${section}`, section, instanceId: sessionId, sideId: materialSide,
         trainingQuestions: ['official-lifecycle'], audience: [audience],
         payload: section === 'TIMELINE'
-          ? { status: 'KNOWN', events: record.archive.events.map(event => ({ eventId: event.eventId, sequence: event.sequence, type: event.type, payload: event.payload })) }
-          : section === 'GOALS_STAGES' ? { status: 'KNOWN', intent: record.intent }
-            : { status: 'UNKNOWN', reason: 'В журнале сеанса нет данных раздела', sourceSequence: index },
+          ? { status: 'KNOWN', events: events.map(event => ({ eventId: event.eventId, sequence: event.sequence, type: event.type, payload: event.payload })) }
+          : section === 'GOALS_STAGES' && truth ? { status: 'KNOWN', intent: record.intent }
+            : section === 'GOALS_STAGES' ? { status: 'UNKNOWN', reason: 'Служебный замысел недоступен в этой проекции' }
+              : { status: 'UNKNOWN', reason: 'В журнале сеанса нет данных раздела', sourceSequence: index },
       })),
-      referenceIntent: { instanceId: sessionId, sideId: materialSide, trainingQuestions: ['official-lifecycle'], audience: [audience], content: { text: record.intent } }, deviations: [],
+      referenceIntent: {
+        instanceId: sessionId, sideId: materialSide, trainingQuestions: ['official-lifecycle'], audience: [audience],
+        content: truth ? { text: record.intent } : { status: 'UNKNOWN', reason: 'Эталон доступен только служебному разбору' },
+      }, deviations: [],
     });
-    return { scope, revision: record.card.revisions.find(revision => revision.id === record.archive.versions.model.id)?.revision ?? 1, audience: [audience], referenceIntent: record.intent, package: built };
+    return {
+      scope, revision: record.card.revisions.find(revision => revision.id === record.archive.versions.model.id)?.revision ?? 1,
+      audience: [audience], referenceIntent: truth ? record.intent : null, package: built,
+    };
   }
 
   async approveDebriefAssessment(actor: SessionActor, exerciseId: string, sessionId: string, input: { finalAssessment: string; comment: string; idempotencyKey: string }): Promise<AssessmentSheet> {

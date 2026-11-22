@@ -12,13 +12,14 @@ import { loadConfiguredProductionRuntime } from './runtime/production-config';
 import { FileExpositionRepository } from './exposition/exposition-repository';
 import { createFileExpositionService } from './exposition/exposition-runtime';
 
-const persistence = await createKshviPersistence(process.env);
+const environmentStore = new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment'));
+const persistence = await createKshviPersistence(process.env, { environment: environmentStore });
 const pool = persistence.pool;
 const sessions = new SessionManager({ store: persistence.sessionStore });
 const audit = new SecurityAudit();
 const environmentProvider = new CartographyEnvironmentProvider({
   baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104/cartography'),
-  store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
+  store: environmentStore,
 });
 const exposition = await createFileExpositionService({
   repository: new FileExpositionRepository({
@@ -44,6 +45,7 @@ const production = await loadConfiguredProductionRuntime({
 const router = buildTask52Router({
   sessions,
   exerciseStore: persistence.exerciseStore,
+  evidence: persistence.evidence,
   environmentProvider,
   commands,
   wallClock: () => new Date(),

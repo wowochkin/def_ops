@@ -11,7 +11,9 @@ import {
   type JsonValue,
 } from '@def-ops/kshvi';
 import { VALIDATION_AREAS } from '../../../../packages/kshvi/src/scenario/validation';
-import type { ExerciseCard, ExerciseSealActor, ExerciseSealInput, ExerciseStore } from '../../src/store/exercise-store';
+import type {
+  ExerciseCard, ExerciseEvidenceProvider, ExerciseSealActor, ExerciseStore, ServerExerciseEvidence,
+} from '../../src/store/exercise-store';
 
 export const SEAL_HASH_A = 'a'.repeat(64);
 export const SEAL_HASH_B = 'b'.repeat(64);
@@ -43,7 +45,9 @@ function approvedMap(): ApprovedInitialMap {
   }));
 }
 
-export function validExerciseSealInput(card: ExerciseCard, expectedRevision = card.revision): ExerciseSealInput {
+export type ExerciseEvidenceFixture = ServerExerciseEvidence & { expectedRevision: number };
+
+export function validExerciseSealInput(card: Pick<ExerciseCard, 'revision' | 'revisions'>, expectedRevision = card.revision): ExerciseEvidenceFixture {
   const revision = card.revisions.find(item => item.revision === expectedRevision)!;
   const initialMap = approvedMap();
   return {
@@ -85,7 +89,19 @@ export async function approveExercise(store: ExerciseStore, actor: ExerciseSealA
   return store.transition({ ...actor, activeRole: 'APPROVER', authorities: ['exercise:revise'] }, card.id, { expectedRevision, command: 'APPROVE' });
 }
 
+export function serverExerciseEvidence(mutate?: (evidence: ExerciseEvidenceFixture) => void): ExerciseEvidenceProvider {
+  return {
+    async forRevision({ revision }) {
+      const card = { revision: revision.revision, revisions: [revision] };
+      const evidence = validExerciseSealInput(card);
+      mutate?.(evidence);
+      const { expectedRevision: _expectedRevision, ...serverEvidence } = evidence;
+      return structuredClone(serverEvidence);
+    },
+  };
+}
+
 export async function sealApprovedExercise(store: ExerciseStore, actor: ExerciseSealActor, card: ExerciseCard, expectedRevision = card.revision): Promise<ExerciseCard> {
-  const approved = await approveExercise(store, actor, card, expectedRevision);
-  return store.seal(actor, card.id, validExerciseSealInput(approved, expectedRevision));
+  await approveExercise(store, actor, card, expectedRevision);
+  return store.seal(actor, card.id, { expectedRevision });
 }

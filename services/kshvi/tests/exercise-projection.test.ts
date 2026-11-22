@@ -2,7 +2,8 @@ import { createService, Router } from '@def-ops/service-kit';
 import { afterEach, expect, it } from 'vitest';
 import { InMemorySessionStore, SessionManager } from '../src/auth/sessions';
 import { registerExerciseRoutes } from '../src/http/exercise-routes';
-import { InMemoryExerciseStore } from '../src/store/exercise-store';
+import { InMemoryExerciseStore, type ExerciseCard } from '../src/store/exercise-store';
+import { projectExerciseCard } from '../src/store/exercise-projection';
 
 const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -76,4 +77,23 @@ it('проецирует карточку по роли и стороне и о�
   });
   expect(active.status).toBe(409);
   expect((await active.json()).error.code).toBe('sealed_required');
+});
+
+it('не отдаёт участнику sealed artifact и полный сценарий редакции', async () => {
+  const store = new InMemoryExerciseStore();
+  const created = await store.create({ organizationId: 'org1', userId: 'author' }, {
+    title: 'Скрытый artifact', purpose: 'planned', scale: 'operational', payload: { title: 'Учение' },
+  });
+  const card: ExerciseCard = {
+    ...created,
+    revisions: [{
+      ...created.revisions[0],
+      sealedArtifact: { scenario: { hiddenTruth: 'СЕКРЕТНЫЙ СЦЕНАРИЙ' } } as ExerciseCard['revisions'][number]['sealedArtifact'],
+    }],
+  };
+  const projected = projectExerciseCard(card, {
+    organizationId: 'org1', userId: 'trainee', activeRole: 'TRAINEE', sideId: 'blue', authorities: ['exercise:read'],
+  });
+  expect(JSON.stringify(projected)).not.toContain('СЕКРЕТНЫЙ СЦЕНАРИЙ');
+  expect(JSON.stringify(projected)).not.toContain('sealedArtifact');
 });

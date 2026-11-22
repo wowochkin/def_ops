@@ -30,13 +30,13 @@ import { recordPaperExchange } from '../../../../packages/kshvi/src/communicatio
 import { projectObservationChannels } from '../../../../packages/kshvi/src/simulation/observation-projection';
 import { SubscriptionService } from '../../src/http/subscription-service';
 import { InMemorySessionStore, SessionManager } from '../../src/auth/sessions';
-import { PgExerciseStore } from '../../src/store/exercise-store';
+import { PgExerciseStore, type ExerciseCard } from '../../src/store/exercise-store';
 import { CommandService, type InstanceCommand } from '../../src/instances/command-service';
 import { CartographyEnvironmentProvider } from '../../src/environment/cartography-provider';
 import { EnvironmentSnapshotStore, assertSnapshotComplete } from '../../src/environment/snapshot-store';
 import { buildRouter } from '../../src/app';
 import { withKshviDatabase } from '../helpers/database';
-import { validExerciseSealInput } from '../helpers/full-seal';
+import { serverExerciseEvidence } from '../helpers/full-seal';
 import type { KshviEventStore } from '../../src/store/event-store';
 import type { ConductCommand } from '../../../../packages/kshvi/src/commands/conduct';
 import type { CalculateOptions } from '../../../../packages/kshvi/src/simulation/calculation';
@@ -137,7 +137,7 @@ async function runOfficialG2(store: KshviEventStore) {
     const weather = await environmentProvider.weatherAtOperational(environment, { lon: 37, lat: 55, operationalAt: '2026-01-01T01:00:00Z', playbackRate: 1 });
     expect(weather.quality.algorithm).toBe('simulateWeather');
 
-    const exercises = new PgExerciseStore({ pool: store.pool, schema: store.schema });
+    const exercises = new PgExerciseStore({ pool: store.pool, schema: store.schema, evidence: serverExerciseEvidence() });
     await exercises.init();
     const sessions = new SessionManager({ store: new InMemorySessionStore(), now: () => new Date('2030-01-01T00:00:00Z') });
     await sessions.createAccount({
@@ -172,8 +172,8 @@ async function runOfficialG2(store: KshviEventStore) {
     const post = <T>(path: string, body: unknown, expected = 200) => request<T>('POST', path, body, expected);
     await post('/api/kshvi/auth/role', { roleId: 'role-leader' });
 
-    let card = await post<Parameters<typeof validExerciseSealInput>[0]>('/api/kshvi/exercises', { title: 'G2', purpose: 'planned', scale: 'operational', payload: scenarioPayload }, 201);
-    const sealBody = validExerciseSealInput(card);
+    let card = await post<ExerciseCard>('/api/kshvi/exercises', { title: 'G2', purpose: 'planned', scale: 'operational', payload: scenarioPayload }, 201);
+    const sealBody = { expectedRevision: 1 };
     await post('/api/kshvi/auth/role', { roleId: 'role-author' });
     await post(`/api/kshvi/exercises/${card.id}/transitions`, { expectedRevision: 1, command: 'SUBMIT' });
     await post('/api/kshvi/auth/role', { roleId: 'role-approver' });

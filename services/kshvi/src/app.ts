@@ -3,6 +3,7 @@ import { assertCsrf, clearSessionCookie, publicParticipant, SessionManager } fro
 import { KSHVI_ROUTE_PREFIX } from './http/router';
 import { registerExerciseRoutes } from './http/exercise-routes';
 import { InMemoryExerciseStore, type ExerciseStore } from './store/exercise-store';
+import type { ExerciseEvidenceService } from './store/exercise-evidence-service';
 import { MemoryModernImportStore, registerForceRoutes } from './http/force-routes';
 import { addEnvironmentRoutes } from './http/environment-routes';
 import { registerSymbolRoutes } from './http/symbol-routes';
@@ -41,6 +42,7 @@ function tokenOf(ctx: Ctx): string {
 export type BuildRouterOptions = {
   sessions: SessionManager;
   exerciseStore?: ExerciseStore;
+  evidence?: ExerciseEvidenceService;
   forceStore?: MemoryModernImportStore;
   environmentProvider?: CartographyEnvironmentProvider;
   instances?: InstanceService;
@@ -55,7 +57,7 @@ export type BuildRouterOptions = {
   exposition?: { service: ExpositionSessionService; sessions: SessionManager };
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, wallClock = () => new Date(), admin, exposition }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), evidence, forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, wallClock = () => new Date(), admin, exposition }: BuildRouterOptions): Router {
   const router = new Router();
   const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore, { now: wallClock });
   const integratedAdmin = admin ?? new AdminOverviewService({
@@ -89,7 +91,7 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
     return reply(204, null, { 'Set-Cookie': clearSessionCookie() });
   });
 
-  registerExerciseRoutes(router, { store: exerciseStore, sessions });
+  registerExerciseRoutes(router, { store: exerciseStore, sessions, ...(evidence ? { evidence } : {}) });
   registerForceRoutes(router, forceStore);
   registerSymbolRoutes(router);
   registerInstanceRoutes(router, instances, commands);

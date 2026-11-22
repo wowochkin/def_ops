@@ -84,9 +84,20 @@ export type CreateRevisionInput = Readonly<{
   payload?: JsonValue;
 }>;
 
-export type ExerciseSealInput = Omit<SealScenarioInput,
+export type ServerExerciseEvidence = Omit<SealScenarioInput,
   'id' | 'revision' | 'state' | 'scenario' | 'issues' | 'requiredConfirmations' | 'sealedAt'
-> & Readonly<{ expectedRevision: number; validation: ScenarioValidationInput }>;
+> & Readonly<{ validation: ScenarioValidationInput }>;
+export type ExerciseSealInput = Readonly<{ expectedRevision: number }>;
+export type ExerciseEvidenceContext = Readonly<{
+  actor: ExerciseSealActor;
+  exerciseId: string;
+  revision: ExerciseRevision;
+}>;
+export interface ExerciseEvidenceProvider {
+  /** Внутренний серверный порт: HTTP-клиент не может подставить готовые доказательства. */
+  forRevision(context: ExerciseEvidenceContext): Promise<ServerExerciseEvidence>;
+}
+export type ExerciseStoreOptions = Readonly<{ now?: () => Date; evidence?: ExerciseEvidenceProvider }>;
 export type ExerciseLifecycleInput = Readonly<{ expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }>;
 
 export type ExerciseFilters = Readonly<{
@@ -199,16 +210,11 @@ function validateSealActor(actor: ExerciseSealActor): void {
     fail('FORBIDDEN', 'Недостаточно полномочий для запечатывания сценария');
   }
 }
-const sealInputFields = new Set([
-  'expectedRevision', 'validation', 'confirmations', 'confirmationSubjects', 'warningAcceptances', 'rehearsal',
-  'initialMap', 'environmentSnapshot', 'expectedEnvironmentSha256', 'officialEventLogId', 'hashes',
-]);
 function validateSealInput(input: ExerciseSealInput): void {
   if (!input || typeof input !== 'object' || Array.isArray(input)) fail('VALIDATION', 'Проверьте данные запечатывания');
-  const unknown = Object.keys(input).filter(key => !sealInputFields.has(key));
+  const unknown = Object.keys(input).filter(key => key !== 'expectedRevision');
   if (unknown.length) fail('VALIDATION', `Тело запечатывания содержит недопустимые поля: ${unknown.sort().join(', ')}`);
   validateRevisionInput({ expectedRevision: input.expectedRevision });
-  if (!input.validation || typeof input.validation !== 'object') fail('VALIDATION', 'Укажите полную проверку сценария');
 }
 function revisionForSeal(record: ExerciseCard, expectedRevision: number): ExerciseRevision {
   if (record.state === 'ARCHIVED' || record.archivedAt !== null) fail('ARCHIVED', 'Архивное учение нельзя запечатать');
@@ -221,11 +227,20 @@ function revisionForSeal(record: ExerciseCard, expectedRevision: number): Exerci
   }
   return revision;
 }
-function sealedArtifactFor(record: ExerciseCard, revision: ExerciseRevision, input: ExerciseSealInput, sealedAt: string): SealedScenario {
+async function sealedArtifactFor(
+  actor: ExerciseSealActor,
+  exerciseId: string,
+  record: ExerciseCard,
+  revision: ExerciseRevision,
+  evidence: ExerciseEvidenceProvider | undefined,
+  sealedAt: string,
+): Promise<SealedScenario> {
   if (record.state !== 'APPROVED' || revision.state !== 'APPROVED') {
     fail('SEALED_REQUIRED', 'APPROVED_REQUIRED: запечатать можно только утверждённую текущую редакцию');
   }
   try {
+    if (!evidence) throw new Error('SERVER_EVIDENCE_REQUIRED: не настроен внутренний источник доказательств готовности');
+    const input = await evidence.forRevision({ actor, exerciseId, revision: clone(revision) });
     const validation = validateScenario(input.validation);
     const sealed = sealScenario({
       id: revision.id,
@@ -251,6 +266,39 @@ function sealedArtifactFor(record: ExerciseCard, revision: ExerciseRevision, inp
     if (error instanceof ExerciseStoreError) throw error;
     const message = error instanceof Error ? error.message : String(error);
     fail('VALIDATION', `Предусловия запечатывания не выполнены: ${message}`);
+  }
+}
+function verifiedSealedArtifact(record: ExerciseCard, revision: ExerciseRevision): SealedScenario {
+  const artifact = revision.sealedArtifact;
+  if (record.state !== 'SEALED' || record.revision !== revision.revision || revision.state !== 'SEALED') {
+    fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
+  }
+  if (!artifact) fail('SEALED_REQUIRED', 'SEALED_ARTIFACT_INVALID: серверный артефакт запечатывания отсутствует');
+  try {
+    const reconstructed = sealScenario({
+      id: artifact.id,
+      revision: artifact.revision,
+      state: 'APPROVED',
+      scenario: revision.payload,
+      issues: [],
+      requiredConfirmations: [...READINESS_AREAS],
+      confirmations: [...artifact.confirmations],
+      confirmationSubjects: Object.fromEntries(artifact.confirmations.map(item => [item.area, item.subjectHash])),
+      rehearsal: artifact.rehearsal,
+      initialMap: artifact.initialMap,
+      environmentSnapshot: artifact.environmentSnapshot,
+      expectedEnvironmentSha256: artifact.environmentSnapshot.manifestSha256,
+      officialEventLogId: artifact.rehearsal.officialEventLogId,
+      hashes: artifact.hashes,
+      sealedAt: artifact.sealedAt,
+    });
+    if (artifact.id !== revision.id || artifact.revision !== revision.revision || canonicalJson(reconstructed) !== canonicalJson(artifact)) {
+      throw new Error('артефакт не совпадает с текущей серверной редакцией');
+    }
+    return artifact;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    fail('SEALED_REQUIRED', `SEALED_ARTIFACT_INVALID: ${message}`);
   }
 }
 function lifecycleState(actor: ExerciseSealActor, record: ExerciseCard, input: ExerciseLifecycleInput): Exclude<ExerciseState, 'ARCHIVED'> {
@@ -388,7 +436,11 @@ export class InMemoryExerciseStore implements ExerciseStore {
   private readonly records = new Map<string, ExerciseCard>();
   private readonly sessionCommands = new Map<string, { request: string; session: ExerciseSession; record: SessionCommandRecord }>();
   private readonly now: () => Date;
-  constructor(options: { now?: () => Date } = {}) { this.now = options.now ?? (() => new Date()); }
+  private readonly evidence?: ExerciseEvidenceProvider;
+  constructor(options: ExerciseStoreOptions = {}) {
+    this.now = options.now ?? (() => new Date());
+    this.evidence = options.evidence;
+  }
   private key(organizationId: string, exerciseId: string): string { return `${organizationId}/${exerciseId}`; }
   private required(organizationId: string, exerciseId: string): ExerciseCard {
     const record = this.records.get(this.key(organizationId, exerciseId));
@@ -507,7 +559,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
     const revision = revisionForSeal(record, input.expectedRevision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
     const now = this.now().toISOString();
-    const artifact = sealedArtifactFor(record, revision, input, now);
+    const artifact = await sealedArtifactFor(actor, exerciseId, record, revision, this.evidence, now);
     record.state = 'SEALED';
     record.readiness = 100;
     record.validation = 'OK';
@@ -523,9 +575,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     if (record.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
     const revision = record.revisions.find(item => item.revision === input.revision);
     if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
-    if (record.state !== 'SEALED' || record.revision !== revision.revision || revision.state !== 'SEALED') {
-      fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
-    }
+    verifiedSealedArtifact(record, revision);
     const session: ExerciseSession = {
       id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
       state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,
@@ -654,9 +704,11 @@ async function insertCard(db: Queryable, schema: string, organizationId: string,
 export class PgExerciseStore implements ExerciseStore {
   readonly pool: Pool;
   readonly schema: string;
-  constructor(options: { pool?: Pool; url?: string; schema?: string } = {}) {
+  private readonly evidence?: ExerciseEvidenceProvider;
+  constructor(options: { pool?: Pool; url?: string; schema?: string; evidence?: ExerciseEvidenceProvider } = {}) {
     this.pool = options.pool ?? createPool(options.url);
     this.schema = options.schema ?? 'kshvi';
+    this.evidence = options.evidence;
     if (!/^[a-z_][a-z0-9_]*$/.test(this.schema)) throw new Error('Недопустимое имя схемы КШВИ');
   }
   async init(): Promise<void> { await migrate(this.pool, this.schema, KSHVI_EXERCISE_MIGRATIONS); }
@@ -766,8 +818,10 @@ export class PgExerciseStore implements ExerciseStore {
       const state = lifecycleState(actor, current, input);
       const revision = current.revisions.find(item => item.revision === current.revision)!;
       const now = new Date().toISOString();
-      await db.query(`update ${this.schema}.exercises set state=$3, updated_at=$4 where organization_id=$1 and id=$2`, [actor.organizationId, exerciseId, state, now]);
-      await db.query(`update ${this.schema}.exercise_revisions set state=$4 where organization_id=$1 and exercise_id=$2 and id=$3`, [actor.organizationId, exerciseId, revision.id, state]);
+      const cardUpdate = await db.query(`update ${this.schema}.exercises set state=$3, updated_at=$4 where organization_id=$1 and id=$2 and revision=$5`, [actor.organizationId, exerciseId, state, now, current.revision]);
+      if (cardUpdate.rowCount !== 1) fail('REVISION_CONFLICT', 'Не удалось обновить карточку при переходе; изменения отменены');
+      const revisionUpdate = await db.query(`update ${this.schema}.exercise_revisions set state=$4 where organization_id=$1 and exercise_id=$2 and id=$3 and revision=$5`, [actor.organizationId, exerciseId, revision.id, state, current.revision]);
+      if (revisionUpdate.rowCount !== 1) fail('REVISION_CONFLICT', 'Не удалось обновить редакцию при переходе; изменения отменены');
       return requiredCard(db, this.schema, actor.organizationId, exerciseId);
     });
   }
@@ -780,7 +834,7 @@ export class PgExerciseStore implements ExerciseStore {
       const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
       const revision = revisionForSeal(current, input.expectedRevision);
       const now = new Date().toISOString();
-      const artifact = sealedArtifactFor(current, revision, input, now);
+      const artifact = await sealedArtifactFor(actor, exerciseId, current, revision, this.evidence, now);
       const cardUpdate = await db.query(
         `update ${this.schema}.exercises set state='SEALED', readiness=100, validation='OK', updated_at=$3
          where organization_id=$1 and id=$2 and revision=$4`,
@@ -805,9 +859,7 @@ export class PgExerciseStore implements ExerciseStore {
       if (current.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
       const revision = current.revisions.find(item => item.revision === input.revision);
       if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
-      if (current.state !== 'SEALED' || current.revision !== revision.revision || revision.state !== 'SEALED') {
-        fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
-      }
+      verifiedSealedArtifact(current, revision);
       const session: ExerciseSession = {
         id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
         state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,
