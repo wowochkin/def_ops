@@ -276,7 +276,7 @@ async function runOfficialG2(store: KshviEventStore) {
 
     const mainChannel = channel('main', ['reserve']);
     const reserveChannel = channel('reserve');
-    const message: CommunicationMessage = { id: 'message-order', type: 'ORDER', senderRole: 'LEADER', recipientIds: ['node-blue-1'], sizeBytes: 100, priority: 1, domainKey: 'order-blue-1', createdAt: '2030-01-01T01:20:00Z' };
+    const message: CommunicationMessage = { id: 'message-order', type: 'ORDER', senderRole: 'LEADER', fromInstanceId: 'hq', recipientIds: ['node-blue-1'], sizeBytes: 100, priority: 1, domainKey: 'order-blue-1', createdAt: '2030-01-01T01:20:00Z' };
     const primaryRoute = routeMessage({ message, channels: [mainChannel, reserveChannel], nodes: [{ id: 'main', status: 'AVAILABLE' }, { id: 'reserve', status: 'AVAILABLE' }], at: '2030-01-01T01:20:00Z' });
     let attempt = advanceMessage(createMessageAttempt(message, primaryRoute, '2030-01-01T01:20:00Z'), 'START', { at: '2030-01-01T01:20:01Z' });
     attempt = advanceMessage(attempt, 'DELIVER', { at: '2030-01-01T01:20:02Z' });

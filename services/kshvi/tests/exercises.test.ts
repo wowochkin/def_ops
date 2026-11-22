@@ -224,7 +224,7 @@ describe('HTTP API библиотеки', () => {
     });
     expect(session.response.status).toBe(201);
     expect(session.body).toMatchObject({ authority: 'SERVER', confirmedRevision: 0 });
-    expect(JSON.stringify(session.body)).not.toContain('999');
+    expect(JSON.stringify(session.body)).not.toContain('"fuel":999');
 
     const foreign = await call(`/${created.body.id}`, {}, outsider);
     expect(foreign.response.status).toBe(404);

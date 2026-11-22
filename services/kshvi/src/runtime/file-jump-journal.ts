@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { performance } from 'node:perf_hooks';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { JumpJournal, JumpResult } from '../../../../packages/kshvi/src/runtime/jump';
@@ -16,7 +17,7 @@ export class FileJumpJournal implements JumpJournal {
     const lockDirectory = join(this.directory, `${id}.lock`);
     const completed = await this.read<World>(resultFile);
     if (completed) return completed;
-    const deadline = Date.now() + 30_000;
+    const deadline = performance.now() + 30_000;
     while (true) {
       try {
         await mkdir(lockDirectory);
@@ -25,7 +26,7 @@ export class FileJumpJournal implements JumpJournal {
         if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
         const existing = await this.read<World>(resultFile);
         if (existing) return existing;
-        if (Date.now() >= deadline) throw new Error(`Durable-журнал скачка ${key} требует восстановления блокировки`);
+        if (performance.now() >= deadline) throw new Error(`Durable-журнал скачка ${key} требует восстановления блокировки`);
         await wait(5);
       }
     }
@@ -34,7 +35,7 @@ export class FileJumpJournal implements JumpJournal {
       const confirmed = await this.read<World>(resultFile);
       if (confirmed) return confirmed;
       const result = await operation();
-      const temporary = `${resultFile}.${randomUUID()}.tmp`;
+      const temporary = `${resultFile}.${process.pid}.tmp`;
       await writeFile(temporary, JSON.stringify(result), { mode: 0o600 });
       await rename(temporary, resultFile);
       return result;

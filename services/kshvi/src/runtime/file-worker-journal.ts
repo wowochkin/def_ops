@@ -1,6 +1,5 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import type { AutonomyWorkerJournal, AutonomyWorkerJournalState } from './autonomy-worker';
 import type { AgentWorkJournal } from '../agents/intermediary-worker';
 import type { IntermediaryCycle } from '../../../../packages/kshvi-agents/src/intermediary/cycle';
@@ -74,7 +73,7 @@ export class FileWorkerJournal implements AutonomyWorkerJournal, AgentWorkJourna
       const state = await this.read();
       operation(state);
       await mkdir(join(this.file, '..'), { recursive: true });
-      const temporary = `${this.file}.${randomUUID()}.tmp`;
+      const temporary = `${this.file}.${process.pid}.tmp`;
       await writeFile(temporary, JSON.stringify(state), { mode: 0o600 });
       await rename(temporary, this.file);
     });

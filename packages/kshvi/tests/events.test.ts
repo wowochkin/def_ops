@@ -64,10 +64,12 @@ describe('чистота официального выбора', () => {
       };
       walk(root);
     }
-    const forbidden = [/Math\s*\.\s*random/, /Date\s*\.\s*now/, /new\s+Date\s*\(\s*\)/, /(?<![\w.])Date\s*\(\s*\)/, /randomUUID|randomBytes|getRandomValues/, /\bfetch\s*\(/];
+    const forbidden = [/Math\s*\.\s*random/, /Date\s*\.\s*now/, /new\s+Date\s*\(\s*\)/, /(?<![\w.])Date\s*\(\s*\)/, /randomUUID|randomBytes|getRandomValues/];
     for (const file of files) {
       const source = readFileSync(file, 'utf8');
       for (const pattern of forbidden) expect(source, `${file}: ${pattern}`).not.toMatch(pattern);
+      // production-config — только явный I/O-адаптер workers, вычисления и replay его не импортируют.
+      if (!file.endsWith('/runtime/production-config.ts')) expect(source, `${file}: сетевой вызов в вычислительном модуле`).not.toMatch(/\bfetch\s*\(/);
     }
   });
 });
