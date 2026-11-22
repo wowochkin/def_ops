@@ -1,0 +1,40 @@
+{
+  "runId": "ce15288e-88d6-4a0b-bbf5-d192a3cfd033",
+  "commit": "0e0b2187cd0275f12b8c58ec66be7a25f0344419",
+  "initialRevision": {
+    "id": "ac04-documents",
+    "revision": 1,
+    "sha256": "b7dec32198e208b0d505d179b5d6ece39cd71050ee565fa899e8e12d2fe33ea2"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac04/journal.json",
+    "sha256": "c88fefb69a8067b9c33b0f35b3fd30665d0483bb6ac247caf681923478f23857",
+    "eventCount": 18
+  },
+  "hashes": {
+    "scenario": "b7dec32198e208b0d505d179b5d6ece39cd71050ee565fa899e8e12d2fe33ea2",
+    "environment": "09e6cbc1af4f00443cbb4dabaf9a41f724be6326539d1eaf81fb7625ffea8edb",
+    "journal": "c88fefb69a8067b9c33b0f35b3fd30665d0483bb6ac247caf681923478f23857"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac04/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "revisions": 2,
+    "cascadeLegs": 2,
+    "conflictResolved": 1,
+    "exportValid": 1,
+    "events": 18
+  },
+  "limitations": [
+    "PDF и DOCX проверены структурно и по содержимому; визуальная сверка печатной формы выполняется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac04/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac04/journal.json",
+    "docs/release/kshvi/evidence/ac04/protocol.txt",
+    "docs/release/kshvi/evidence/ac04/metrics.json",
+    "docs/release/kshvi/evidence/ac04/environment.json"
+  ]
+}

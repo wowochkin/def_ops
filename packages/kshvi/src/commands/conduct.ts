@@ -15,7 +15,9 @@ import { createObservation, type CreateObservationInput } from '../simulation/ob
 import { projectObservation, type ProjectedObservation } from '../simulation/observation-projection';
 import { executeJump } from '../runtime/jump';
 import { computeDocumentSha256Sync, type DocumentRevision } from '../documents/document';
-import { transitionDocument, type DocumentTransitionAction } from '../documents/document-lifecycle';
+import { supersedeDocument, transitionDocument, type DocumentTransitionAction } from '../documents/document-lifecycle';
+import { advanceCascadeDelivery, issueCascade, recordCascadeFact, type CascadeIssue, type CascadeLegInput } from '../documents/cascade';
+import { advanceApproval, resolveDualConflict, type DualChainDecision, type DualChainState } from '../documents/dual-chain';
 import type { DocumentIssueContext } from '../documents/document-validation';
 import type { Channel, CommunicationMessage, CommunicationNode } from '../communications/channel';
 import { routeMessage } from '../communications/channel';
@@ -29,6 +31,9 @@ export type ConductOperations = Readonly<{
   availableChannelIds: readonly string[];
   channels: readonly Channel[];
   nodes: readonly CommunicationNode[];
+  approvalAssignments?: Readonly<{ command: readonly string[]; service: readonly string[]; finalApproverId: string }>;
+  treeEdges?: readonly Readonly<{ from: string; to: string }>[];
+  cascadeLegs?: readonly CascadeLegInput[];
 }>;
 export type DocumentDraftInput = Omit<DocumentRevision, 'state' | 'sha256' | 'signatures' | 'delivery' | 'previousRevision'>;
 export type ConductState = {
@@ -40,6 +45,9 @@ export type ConductState = {
   calculations: Record<string, Calculation>;
   observations: Record<string, ProjectedObservation>;
   documents: Record<string, DocumentRevision>;
+  documentRevisions: Record<string, Record<number, DocumentRevision>>;
+  approvalChains: Record<string, DualChainState>;
+  cascades: Record<string, CascadeIssue>;
   communications: Record<string, MessageAttempt>;
   jumpSnapshots: Record<string, { state: unknown; hash: string; reports: readonly string[] }>;
   completion: unknown | null;
@@ -71,6 +79,13 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'observation.record'; input: CreateObservationInput }>)
   | (CommandBase & Readonly<{ type: 'document.create'; revision: DocumentDraftInput }>)
   | (CommandBase & Readonly<{ type: 'document.transition'; documentId: string; action: DocumentTransitionAction; recipient?: DocumentIssueContext['recipient'] }>)
+  | (CommandBase & Readonly<{ type: 'document.edit'; documentId: string; changes: { requisites?: DocumentRevision['requisites']; content?: DocumentRevision['content']; map?: DocumentRevision['map']; attachments?: DocumentRevision['attachments'] } }>)
+  | (CommandBase & Readonly<{ type: 'document.approval'; documentId: string; decision: DualChainDecision }>)
+  | (CommandBase & Readonly<{ type: 'document.conflict.resolve'; documentId: string; decision: { decision: 'APPROVED' | 'CHANGES_REQUESTED'; comment: string } }>)
+  | (CommandBase & Readonly<{ type: 'document.cascade.issue'; documentId: string }>)
+  | (CommandBase & Readonly<{ type: 'document.cascade.advance'; documentId: string; deliveryId: string; action: 'BEGIN' | 'DELIVER' | 'FAIL' | 'CANCEL'; reason?: string }>)
+  | (CommandBase & Readonly<{ type: 'document.cascade.fact'; documentId: string; deliveryId: string; factType: 'ACKNOWLEDGED' | 'EXECUTION_STARTED' }>)
+  | (CommandBase & Readonly<{ type: 'document.revise'; documentId: string; reason: string; changes: { requisites?: DocumentRevision['requisites']; content?: DocumentRevision['content']; map?: DocumentRevision['map']; attachments?: DocumentRevision['attachments'] } }>)
   | (CommandBase & Readonly<{ type: 'communication.enqueue'; message: CommunicationMessage }>)
   | (CommandBase & Readonly<{ type: 'environment.bind'; snapshot: EnvironmentSnapshot }>)
   | (CommandBase & Readonly<{ type: 'weather.change'; changeId: string; effectiveAt: string; reason: string; supersedes: string; scenario: WeatherScenario }>)
@@ -92,7 +107,7 @@ export type ConductExecution = Readonly<{
 }>;
 
 export function emptyConductState(scenarioId: string): ConductState {
-  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, communications: {}, jumpSnapshots: {}, completion: null, stage: null };
+  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, documentRevisions: {}, approvalChains: {}, cascades: {}, communications: {}, jumpSnapshots: {}, completion: null, stage: null };
 }
 function json(value: unknown): JsonValue { return JSON.parse(JSON.stringify(value)) as JsonValue; }
 function assertCommand(command: CommandBase): void {
@@ -108,6 +123,15 @@ function eventFor(state: ConductState, command: CommandBase & { type: string }, 
 }
 function next(state: ConductState, changes: Partial<ConductState> = {}): ConductState {
   return { ...state, ...changes, revision: state.revision + 1 };
+}
+function recordDocument(state: ConductState, revision: DocumentRevision): Partial<ConductState> {
+  return {
+    documents: { ...state.documents, [revision.documentId]: revision },
+    documentRevisions: {
+      ...state.documentRevisions,
+      [revision.documentId]: { ...(state.documentRevisions[revision.documentId] ?? {}), [revision.revision]: revision },
+    },
+  };
 }
 function required<V>(value: V | undefined, message: string): V {
   if (value === undefined) throw new Error(message);
@@ -210,16 +234,29 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       };
       const revision = { ...unsigned, sha256: computeDocumentSha256Sync(unsigned) };
       return {
-        state: next(state, { documents: { ...state.documents, [revision.documentId]: revision } }),
+        state: next(state, {
+          ...recordDocument(state, revision),
+          ...(operations?.approvalAssignments ? {
+            approvalChains: {
+              ...state.approvalChains,
+              [revision.documentId]: { command: 'PENDING', service: 'PENDING', finalApprover: operations.approvalAssignments.finalApproverId },
+            },
+          } : {}),
+        }),
         event: eventFor(state, command, 'document.created.v1', revision.documentId, { sideId: revision.requisites.sideId, revision: revision.revision, sha256: revision.sha256 }),
         revision: state.revision + 1, document: revision,
       };
     }
     case 'document.transition': {
       const original = required(state.documents[command.documentId], 'Документ не найден');
-      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Переход документа недоступен этой роли');
+      const privileged = ['LEADER', 'DIRECTOR'].includes(actor.role);
+      const ownAuthor = actor.role === 'AUTHOR' && actor.userId === original.requisites.authorId;
+      if (!privileged && !ownAuthor) throw new Error('Переход документа недоступен этой роли');
+      if (['APPROVE', 'ISSUE'].includes(command.action) && !privileged) throw new Error('Утверждение и выдача доступны только назначенной инстанции');
       if (actor.role !== 'DIRECTOR' && actor.sideId !== original.requisites.sideId) throw new Error('Документ другой стороны недоступен');
       if (command.action === 'APPROVE' && actor.userId === original.requisites.authorId) throw new Error('Автор не может утвердить собственный документ');
+      const chain = state.approvalChains[command.documentId];
+      if (command.action === 'APPROVE' && chain && chain.state !== 'APPROVED') throw new Error('Двойная вертикаль согласования ещё не завершена');
       let issue: DocumentIssueContext | undefined;
       if (command.action === 'ISSUE') {
         if (!operations) throw new Error('Серверный контекст инстанций и каналов не настроен');
@@ -234,11 +271,107 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       });
       const type = command.action === 'APPROVE' ? 'document.approved.v1' : command.action === 'ISSUE' ? 'document.issued.v1' : 'document.status.changed.v1';
       return {
-        state: next(state, { documents: { ...state.documents, [revision.documentId]: revision } }),
+        state: next(state, recordDocument(state, revision)),
         event: eventFor(state, command, type, revision.documentId, {
           sideId: revision.requisites.sideId, revision: revision.revision, sha256: revision.sha256,
           ...(command.action === 'ISSUE' ? { document: revision } : {}),
         }),
+        revision: state.revision + 1, document: revision,
+      };
+    }
+    case 'document.edit': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      if (!['DRAFT', 'IN_REVIEW'].includes(original.state)) throw new Error('Редактируется только невыданная редакция');
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role) && !(actor.role === 'AUTHOR' && actor.userId === original.requisites.authorId)) throw new Error('Редактирование доступно автору или назначенной инстанции');
+      const unsigned: DocumentRevision = {
+        ...original, ...structuredClone(command.changes), state: 'DRAFT', signatures: [], delivery: { state: 'NOT_ISSUED', facts: [] }, returnComment: undefined,
+      };
+      const revision = { ...unsigned, sha256: computeDocumentSha256Sync(unsigned) };
+      const chain = state.approvalChains[command.documentId];
+      const approvalChains = chain
+        ? { ...state.approvalChains, [command.documentId]: { command: 'PENDING' as const, service: 'PENDING' as const, finalApprover: chain.finalApprover } }
+        : state.approvalChains;
+      return {
+        state: next(state, { ...recordDocument(state, revision), approvalChains }),
+        event: eventFor(state, command, 'document.edited.v1', revision.documentId, { sideId: revision.requisites.sideId, revision: revision.revision, sha256: revision.sha256 }),
+        revision: state.revision + 1, document: revision,
+      };
+    }
+    case 'document.approval': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      if (original.state !== 'IN_REVIEW') throw new Error('Согласование ветвей возможно только для IN_REVIEW');
+      const chain = required(state.approvalChains[command.documentId], 'Двойная вертикаль для документа не настроена');
+      const assignments = required(operations?.approvalAssignments, 'Назначения ветвей согласования не настроены');
+      const branch = required(command.decision.branch, 'Для решения нужно указать ветвь');
+      if (!assignments[branch].includes(actor.userId)) throw new Error('Пользователь не назначен на эту ветвь согласования');
+      const nextChain = advanceApproval(chain, { ...command.decision, actor: actor.userId });
+      return {
+        state: next(state, { approvalChains: { ...state.approvalChains, [command.documentId]: nextChain } }),
+        event: eventFor(state, command, 'document.approval.chain.changed.v1', original.id, { sideId: original.requisites.sideId, chain: nextChain }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'document.conflict.resolve': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      const chain = required(state.approvalChains[command.documentId], 'Двойная вертикаль для документа не настроена');
+      const nextChain = resolveDualConflict(chain, { actor: actor.userId, decision: command.decision.decision, comment: command.decision.comment });
+      return {
+        state: next(state, { approvalChains: { ...state.approvalChains, [command.documentId]: nextChain } }),
+        event: eventFor(state, command, 'document.conflict.resolved.v1', original.id, { sideId: original.requisites.sideId, chain: nextChain }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'document.cascade.issue': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      if (!operations?.treeEdges || !operations.cascadeLegs) throw new Error('Серверный каскад документа не настроен');
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Каскадная выдача недоступна этой роли');
+      const cascade = issueCascade({
+        revision: original, originInstanceId: state.scenarioId, issuedAt: command.at,
+        availableChannelIds: operations.availableChannelIds, treeEdges: operations.treeEdges, legs: operations.cascadeLegs,
+      });
+      return {
+        state: next(state, { cascades: { ...state.cascades, [command.documentId]: cascade } }),
+        event: eventFor(state, command, 'document.cascade.issued.v1', original.id, { sideId: original.requisites.sideId, cascade }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'document.cascade.advance': {
+      const cascade = required(state.cascades[command.documentId], 'Каскад документа не найден');
+      const delivery = required(cascade.deliveries.find(item => item.id === command.deliveryId), 'Плечо каскада не найдено');
+      const advanced = advanceCascadeDelivery(delivery, command.action, { at: command.at, actorId: actor.userId, ...(command.reason ? { reason: command.reason } : {}) });
+      const nextCascade = { ...cascade, deliveries: cascade.deliveries.map(item => item.id === advanced.id ? advanced : item) };
+      return {
+        state: next(state, { cascades: { ...state.cascades, [command.documentId]: nextCascade } }),
+        event: eventFor(state, command, 'document.cascade.advanced.v1', advanced.id, { delivery: advanced }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'document.cascade.fact': {
+      const cascade = required(state.cascades[command.documentId], 'Каскад документа не найден');
+      const delivery = required(cascade.deliveries.find(item => item.id === command.deliveryId), 'Плечо каскада не найдено');
+      const advanced = recordCascadeFact(delivery, command.factType, { at: command.at, actorId: actor.userId });
+      const nextCascade = { ...cascade, deliveries: cascade.deliveries.map(item => item.id === advanced.id ? advanced : item) };
+      return {
+        state: next(state, { cascades: { ...state.cascades, [command.documentId]: nextCascade } }),
+        event: eventFor(state, command, 'document.cascade.fact.recorded.v1', advanced.id, { delivery: advanced }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'document.revise': {
+      const original = required(state.documents[command.documentId], 'Документ не найден');
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Новая редакция доступна только назначенной инстанции');
+      const candidate: DocumentRevision = {
+        ...original, ...structuredClone(command.changes), id: `${original.documentId}:r${original.revision + 1}`, revision: original.revision + 1,
+        state: 'DRAFT', signatures: [], delivery: { state: 'NOT_ISSUED', facts: [] }, previousRevision: undefined,
+      };
+      const revision = supersedeDocument(original, { ...command.changes, reason: command.reason, sha256: computeDocumentSha256Sync(candidate) });
+      const chain = state.approvalChains[command.documentId];
+      const approvalChains = chain
+        ? { ...state.approvalChains, [command.documentId]: { command: 'PENDING' as const, service: 'PENDING' as const, finalApprover: chain.finalApprover } }
+        : state.approvalChains;
+      return {
+        state: next(state, { ...recordDocument(state, revision), approvalChains }),
+        event: eventFor(state, command, 'document.revised.v1', revision.id, { sideId: revision.requisites.sideId, revision: revision.revision, supersedes: revision.supersedes, sha256: revision.sha256, document: revision }),
         revision: state.revision + 1, document: revision,
       };
     }

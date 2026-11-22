@@ -5,6 +5,7 @@ import { authorize, type ParticipantContext } from '../auth/authorize';
 import { assertCsrf } from '../auth/sessions';
 import type { CartographyEnvironmentProvider } from '../environment/cartography-provider';
 import { weatherAtConductWorld } from '../instances/weather-service';
+import { exportDocumentSet, verifyExportSet } from '../../../../packages/kshvi/src/documents/export-set';
 
 async function missingResolver(): Promise<never> {
   throw new HttpError(401, 'unauthorized', '401: Требуется вход в систему');
@@ -69,5 +70,23 @@ export function registerInstanceRoutes(
       ...(ctx.query.get('wallClockAt') ? { wallClockAt: ctx.query.get('wallClockAt')! } : {}),
       ...(ctx.query.get('playbackRate') ? { playbackRate: Number(ctx.query.get('playbackRate')) } : {}),
     });
+  });
+  router.get('/kshvi/instances/:id/documents/:documentId/export', async ctx => {
+    const current = await actor(ctx, 'projection:read');
+    const revisionNumber = Number(ctx.query.get('revision'));
+    if (!Number.isSafeInteger(revisionNumber) || revisionNumber < 1) throw new HttpError(422, 'invalid_revision', 'Укажите номер редакции документа');
+    const state = commands.state(ctx.params.id, ctx.query.get('branchId') ?? 'main');
+    const revision = state.documentRevisions[ctx.params.documentId]?.[revisionNumber];
+    if (!revision) throw new HttpError(404, 'not_found', 'Редакция документа не найдена');
+    if (current.activeRole !== 'DIRECTOR' && current.sideId !== revision.requisites.sideId) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
+    const exportedAt = ctx.query.get('exportedAt') ?? new Date().toISOString();
+    if (!Number.isFinite(Date.parse(exportedAt))) throw new HttpError(422, 'invalid_export_time', 'Некорректное время экспорта');
+    const set = await exportDocumentSet(revision, { exerciseTitle: state.scenarioId, exerciseRevision: state.revision, exportedAt });
+    const verification = await verifyExportSet(set);
+    if (!verification.valid) throw new HttpError(500, 'export_invalid', `Экспорт не прошёл проверку: ${verification.issues.join(', ')}`);
+    return {
+      model: set.model, json: set.json,
+      pdf: Buffer.from(set.pdf).toString('base64'), docx: Buffer.from(set.docx).toString('base64'),
+    };
   });
 }
