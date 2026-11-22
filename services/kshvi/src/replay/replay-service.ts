@@ -18,6 +18,7 @@ import {
 
 export type ReplayParticipantFrame = {
   participantId: string;
+  role?: string;
   organizationId: string;
   sideId: string;
   branchId: string;
@@ -67,6 +68,7 @@ export class ReplayService {
     const recorded = input.participantFrames
       .filter(frame => frame.participantId === input.participantId
         && frame.organizationId === input.actor.organizationId
+        && (!frame.role || frame.role === input.actor.role)
         && (input.actor.userId !== input.participantId || frame.sideId === input.actor.sideId)
         && frame.branchId === input.archive.branchId
         && frame.sequence <= input.cursor)

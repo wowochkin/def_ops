@@ -3,7 +3,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DEFAULT_PLAN = 'docs/superpowers/plans/2026-11-21-kshvi-full-release.md';
-const TEST_DECLARATION = /(?:^|\s)(?:it|test)(?:\.(?!skip\b)\w+)?\s*\(\s*(['"`])([^'"`]+)\1/g;
+const TEST_DECLARATION = /(?:^|\s)(?:it|test|integration)(?:\.(?!skip\b)\w+)?\s*\(\s*(['"`])([^'"`]+)\1/g;
 
 export function collectFunctionalIds(specification) {
   return [...new Set(specification.match(/KSHVI-F-[A-Z]+-\d{2}/g) ?? [])];

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { collectFunctionalIds, evaluateFunctionalMatrix } from '../kshvi-contract-matrix.mjs';
+import { buildFunctionalMatrix, collectFunctionalIds, evaluateFunctionalMatrix } from '../kshvi-contract-matrix.mjs';
 
 const spec = 'KSHVI-F-GEN-01 KSHVI-F-GEN-02 KSHVI-NF-01 KSHVI-AC-01 KSHVI-F-GEN-01';
 
@@ -63,4 +63,19 @@ test('принимает только реальный файл и сущест�
   assert.deepEqual(result.unimplemented, []);
   assert.deepEqual(result.missingTests, []);
   assert.deepEqual(result.missingEvidence, []);
+});
+
+test('сохраняет сквозной E2E integration в тестах и доказательствах', () => {
+  const root = mkdtempSync(join(tmpdir(), 'kshvi-matrix-e2e-'));
+  const path = 'services/kshvi/tests/e2e/conduct-cycle.test.ts';
+  mkdirSync(join(root, 'services/kshvi/tests/e2e'), { recursive: true });
+  writeFileSync(join(root, path), "integration('G2: полный связанный доменный цикл', async () => { expect(true).toBe(true); });\n");
+  const plan = [
+    '### Task 36: Интеграционный контур официального проведения',
+    `**Files:** Create \`${path}\`;`,
+    '**Requirements:** интеграция PREP-05–PREP-05.',
+  ].join('\n');
+  const matrix = buildFunctionalMatrix({ specification: 'KSHVI-F-PREP-05', plan, root });
+  assert.deepEqual(matrix.requirements[0].tests, [path]);
+  assert.deepEqual(matrix.requirements[0].evidence, [`${path}#G2: полный связанный доменный цикл`]);
 });

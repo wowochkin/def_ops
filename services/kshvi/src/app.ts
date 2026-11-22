@@ -50,13 +50,14 @@ export type BuildRouterOptions = {
   projectionWorld?: ProjectableWorld;
   sealing?: SealingService;
   workflow?: OfficialSessionService;
+  wallClock?: () => Date;
   admin?: AdminOverviewService;
   exposition?: { service: ExpositionSessionService; sessions: SessionManager };
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, admin, exposition }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, wallClock = () => new Date(), admin, exposition }: BuildRouterOptions): Router {
   const router = new Router();
-  const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore);
+  const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore, { now: wallClock });
   const integratedAdmin = admin ?? new AdminOverviewService({
     directory: new SessionAccountDirectory(sessions), assignments: new AssignmentService(), configs: new ConfigCatalog(), audit: new SecurityAudit(),
   });

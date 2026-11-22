@@ -78,6 +78,44 @@ const payloadIntent = (card: ExerciseCard, revision: number): { intent: string; 
   return { intent: typeof record.intent === 'string' ? record.intent : 'Замысел не заполнен', reference: structuredClone(record) };
 };
 
+function replayRole(actor: SessionActor): string {
+  return actor.activeRole === 'DIRECTOR' ? 'LEADER' : actor.activeRole ?? 'UNKNOWN';
+}
+function participantPayload(event: ReplayEvent): Record<string, unknown> {
+  return {
+    command: event.payload.command,
+    state: event.payload.state,
+    confirmedRevision: event.payload.confirmedRevision,
+  };
+}
+function participantFrame(record: SessionRecord, actor: SessionActor, sequence: number): ReplayParticipantFrame {
+  const visible = record.archive.events.filter(event => event.sequence <= sequence);
+  const items = visible.map(event => ({ eventId: event.eventId, type: event.type, payload: participantPayload(event) }));
+  const events = visible.map(event => ({
+    ...structuredClone(event),
+    payload: participantPayload(event),
+    changes: [{
+      domain: 'EventFeed' as const,
+      value: { status: 'KNOWN', items: items.filter(item => visible.find(candidate => candidate.eventId === item.eventId)!.sequence <= event.sequence) },
+    }],
+  }));
+  const state = initialState();
+  state.domains.EventFeed = { status: 'KNOWN', items: structuredClone(items) };
+  state.appliedEventIds = events.map(event => event.eventId);
+  return {
+    participantId: actor.userId,
+    role: replayRole(actor),
+    organizationId: actor.organizationId,
+    sideId: actor.sideId ?? 'UNKNOWN',
+    branchId: record.archive.branchId,
+    sequence,
+    policyRevision: Math.max(1, sequence),
+    allowedEventIds: events.map(event => event.eventId),
+    events,
+    state,
+  };
+}
+
 export class OfficialSessionService {
   private readonly records = new Map<string, SessionRecord>();
   private readonly commands = new Map<string, CompletedCommand>();
@@ -90,9 +128,25 @@ export class OfficialSessionService {
     this.now = options.now;
   }
 
-  private timestamp(fallback: string): string { return this.now?.().toISOString() ?? fallback; }
+  private timestamp(): string {
+    if (!this.now) throw new HttpError(503, 'clock_unavailable', 'Серверный wall-clock не настроен');
+    return this.now().toISOString();
+  }
 
   private key(organizationId: string, sessionId: string): string { return `${organizationId}/${sessionId}`; }
+
+  private participantFramesFor(record: SessionRecord, actor: SessionActor): ReplayParticipantFrame[] {
+    const sideId = actor.sideId ?? 'UNKNOWN';
+    const role = replayRole(actor);
+    const own = record.participantFrames.filter(frame => frame.participantId === actor.userId);
+    const matching = own.filter(frame => frame.sideId === sideId && (!frame.role || frame.role === role));
+    if (own.length > 0 && matching.length === 0) throw new HttpError(403, 'forbidden', 'Чужая перспектива участника недоступна');
+    const latest = matching.length ? Math.max(...matching.map(frame => frame.sequence)) : -1;
+    for (let sequence = latest + 1; sequence <= record.archive.events.length; sequence += 1) {
+      record.participantFrames.push(participantFrame(record, actor, sequence));
+    }
+    return record.participantFrames;
+  }
 
   private async record(actor: Pick<SessionActor, 'organizationId' | 'sideId'>, exerciseId: string, sessionId: string): Promise<SessionRecord> {
     const key = this.key(actor.organizationId, sessionId);
@@ -122,13 +176,16 @@ export class OfficialSessionService {
     };
     const record: SessionRecord = {
       organizationId: actor.organizationId, exerciseId, sessionId, archive, card,
-      participantFrames: [{ participantId: 'server-projection', organizationId: actor.organizationId, sideId: actor.sideId ?? 'UNKNOWN', branchId, sequence: 0, policyRevision: 1, allowedEventIds: [], events: [], state: publicDomainsState(state) }],
+      participantFrames: [],
       reference: scenario.reference, intent: scenario.intent,
     };
     for (const command of commandRecords) {
       const sequence = command.confirmedRevision;
-      const payload = { command: command.command, state: command.state, confirmedRevision: command.confirmedRevision };
-      const items = commandRecords.slice(0, sequence).map(item => ({ eventId: `${sessionId}-command-${item.confirmedRevision}`, type: 'time.change', payload: { command: item.command, state: item.state, confirmedRevision: item.confirmedRevision } }));
+      const payload = { command: command.command, state: command.state, confirmedRevision: command.confirmedRevision, reference: structuredClone(record.reference) };
+      const items = commandRecords.slice(0, sequence).map(item => ({
+        eventId: `${sessionId}-command-${item.confirmedRevision}`, type: 'time.change',
+        payload: { command: item.command, state: item.state, confirmedRevision: item.confirmedRevision, reference: structuredClone(record.reference) },
+      }));
       const event: ReplayEvent = {
         eventId: `${sessionId}-command-${sequence}`, branchId, sequence, type: 'time.change',
         operationalAt: instant(session.createdAt, sequence), wallClockAt: command.createdAt, payload,
@@ -137,10 +194,6 @@ export class OfficialSessionService {
       record.archive.events.push(event);
       const frame = restoreAt({ archive: record.archive, cursor: sequence });
       record.archive.controlPoints = [...(record.archive.controlPoints ?? []), { sequence, stateHash: frame.stateHash! }];
-      record.participantFrames.push({
-        participantId: 'server-projection', organizationId: actor.organizationId, sideId: actor.sideId ?? 'UNKNOWN', branchId, sequence, policyRevision: command.confirmedRevision,
-        allowedEventIds: record.archive.events.map(item => item.eventId), events: structuredClone(record.archive.events), state: publicDomainsState(frame.state),
-      });
     }
     this.records.set(key, record);
     return record;
@@ -161,21 +214,21 @@ export class OfficialSessionService {
       this.commands.set(commandKey, { request, session: structuredClone(session) });
       return session;
     }
+    const commandRecords = await this.store.listSessionCommands(actor.organizationId, exerciseId, sessionId);
+    const storedCommand = commandRecords.find(item => item.idempotencyKey === input.idempotencyKey && item.confirmedRevision === session.confirmedRevision);
+    if (!storedCommand) throw new HttpError(409, 'command_record_missing', 'Сохранённая запись команды не найдена');
     const sequence = record.archive.events.length + 1;
+    const payload = { command: input.command, state: session.state, confirmedRevision: session.confirmedRevision, reference: structuredClone(record.reference) };
     const event: ReplayEvent = {
       eventId: `${sessionId}-command-${sequence}`, branchId: record.archive.branchId, sequence,
-      type: 'time.change', operationalAt: instant(session.createdAt, sequence), wallClockAt: this.timestamp(session.createdAt),
-      payload: { command: input.command, state: session.state, confirmedRevision: session.confirmedRevision },
-      changes: [{ domain: 'EventFeed', value: { status: 'KNOWN', items: record.archive.events.map(item => ({ eventId: item.eventId, type: item.type, payload: item.payload })).concat({ eventId: `${sessionId}-command-${sequence}`, type: 'time.change', payload: { command: input.command, state: session.state, confirmedRevision: session.confirmedRevision } }) } }],
+      type: 'time.change', operationalAt: instant(session.createdAt, sequence), wallClockAt: storedCommand.createdAt, payload,
+      changes: [{ domain: 'EventFeed', value: { status: 'KNOWN', items: record.archive.events.map(item => ({ eventId: item.eventId, type: item.type, payload: item.payload })).concat({ eventId: `${sessionId}-command-${sequence}`, type: 'time.change', payload }) } }],
       reducerVersion: 1,
     };
     record.archive.events.push(event);
     const frame = restoreAt({ archive: record.archive, cursor: sequence });
     record.archive.controlPoints = [...(record.archive.controlPoints ?? []), { sequence, stateHash: frame.stateHash! }];
-    record.participantFrames.push({
-      participantId: 'server-projection', organizationId: actor.organizationId, sideId: actor.sideId ?? 'UNKNOWN', branchId: record.archive.branchId, sequence, policyRevision: session.confirmedRevision,
-      allowedEventIds: record.archive.events.map(item => item.eventId), events: structuredClone(record.archive.events), state: publicDomainsState(frame.state),
-    });
+    this.participantFramesFor(record, actor);
     this.commands.set(commandKey, { request, session: structuredClone(session) });
     return session;
   }
@@ -184,22 +237,24 @@ export class OfficialSessionService {
     const [record, session] = await Promise.all([this.record(actor, exerciseId, sessionId), this.store.getSession(actor.organizationId, exerciseId, sessionId)]);
     if (!session) throw new HttpError(404, 'not_found', 'Сеанс не найден');
     const truth = perspective === 'TRUTH';
-    const state = restoreAt({ archive: record.archive, cursor: record.archive.events.length }).state;
+    const participantFrames = truth ? [] : this.participantFramesFor(record, actor);
+    const participant = participantFrames.filter(frame => frame.participantId === actor.userId).at(-1)!;
+    const state = truth ? restoreAt({ archive: record.archive, cursor: record.archive.events.length }).state : participant.state;
     return {
       perspective, session,
-      domains: truth ? publicDomains(state) : publicDomains(record.participantFrames.at(-1)!.state),
+      domains: publicDomains(state),
       reference: truth ? structuredClone(record.reference) : { status: 'UNKNOWN', reason: 'Эталон доступен только служебной проекции' },
     };
   }
 
   async replayFrame(actor: SessionActor, exerciseId: string, sessionId: string, cursor: number, perspective: 'PARTICIPANT' | 'TRUTH'): Promise<ReplayFrameDto> {
     const record = await this.record(actor, exerciseId, sessionId);
-    const participantFrames = record.participantFrames.map(frame => ({ ...frame, participantId: actor.userId, sideId: actor.sideId ?? 'UNKNOWN' }));
+    const participantFrames = perspective === 'PARTICIPANT' ? this.participantFramesFor(record, actor) : record.participantFrames;
     const projected = this.replay.project({
       archive: record.archive, cursor, participantId: actor.userId, participantFrames,
       actor: {
-        organizationId: actor.organizationId, userId: actor.userId, sideId: actor.sideId ?? undefined,
-        role: actor.activeRole === 'DIRECTOR' ? 'LEADER' : actor.activeRole ?? '', authorities: actor.authorities,
+        organizationId: actor.organizationId, userId: actor.userId, sideId: actor.sideId ?? 'UNKNOWN',
+        role: replayRole(actor), authorities: actor.authorities,
       }, perspective,
     });
     return {
@@ -250,7 +305,7 @@ export class OfficialSessionService {
     });
     record.assessment = approveAssessment(draft, {
       finalAssessment: input.finalAssessment, comment: input.comment,
-      confirmedBy: { id: actor.userId, role: 'LEADER' }, confirmedAt: this.timestamp(session.createdAt),
+      confirmedBy: { id: actor.userId, role: 'LEADER' }, confirmedAt: this.timestamp(),
     });
     record.assessmentKey = input.idempotencyKey;
     return structuredClone(record.assessment);
@@ -279,7 +334,7 @@ export class OfficialSessionService {
     };
     const bundle: ArchiveBundle = {
       manifest: createArchiveManifest({
-        archiveId, kind: 'OFFICIAL', organizationId: actor.organizationId, createdAt: this.timestamp(session.createdAt), schemaVersion: 1,
+        archiveId, kind: 'OFFICIAL', organizationId: actor.organizationId, createdAt: this.timestamp(), schemaVersion: 1,
         versions: record.archive.versions, components,
       }),
       files: Object.fromEntries(Object.entries(components).map(([id, component]) => {
@@ -351,8 +406,4 @@ export class OfficialSessionService {
     });
     return { purpose: 'EXPOSITION', archive: stored.record, session, projection };
   }
-}
-
-function publicDomainsState(state: ReplayState): ReplayState {
-  return { domains: publicDomains(state), appliedEventIds: [...state.appliedEventIds], eventCauses: structuredClone(state.eventCauses) };
 }

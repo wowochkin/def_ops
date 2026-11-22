@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createService } from '@def-ops/service-kit';
-import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS } from '@def-ops/kshvi';
+import { linkedExercisePayload, validExerciseSealInput } from '../helpers/full-seal';
 import { expect, it } from 'vitest';
 import matrix from '../../../../docs/release/kshvi/functional-contract-matrix.json';
 import { buildRouter } from '../../src/app';
@@ -62,11 +62,18 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
   const sessions = new SessionManager({ store: new InMemorySessionStore() });
   await sessions.createAccount({
     userId: 'leader-1', username: 'leader', password: 'secret123', organizationId: 'org-1',
-    roles: [{ id: 'leader-role', role: 'DIRECTOR', sideId: null, authorities }],
+    roles: [
+      { id: 'leader-role', role: 'DIRECTOR', sideId: null, authorities },
+      { id: 'author-role', role: 'AUTHOR', sideId: null, authorities },
+      { id: 'approver-role', role: 'APPROVER', sideId: null, authorities },
+    ],
   });
   await sessions.createAccount({
     userId: 'trainee-1', username: 'trainee', password: 'secret123', organizationId: 'org-1',
-    roles: [{ id: 'trainee-role', role: 'TRAINEE', sideId: 'blue', authorities: ['exercise:read', 'replay.read'] }],
+    roles: [
+      { id: 'trainee-role', role: 'TRAINEE', sideId: 'blue', authorities: ['exercise:read', 'replay.read'] },
+      { id: 'trainee-red-role', role: 'TRAINEE', sideId: 'red', authorities: ['exercise:read', 'replay.read'] },
+    ],
   });
   const service = createService({ name: 'kshvi-full-contract', port: 0, router: buildRouter({ sessions }) });
   const port = await service.listen();
@@ -89,17 +96,18 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
     });
   }
   try {
-    const kit = buildLinkedScenarioKit({
-      documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
-      usesLogistics: true,
-    });
     const createdResponse = await api(leader, 'POST', '/exercises', {
       title: 'Сквозное учение', purpose: 'planned', scale: 'operational',
-      payload: { intent: 'Замысел руководства', hiddenTruth: 'Скрытый эталон', kit },
+      payload: linkedExercisePayload({ intent: 'Замысел руководства', hiddenTruth: 'Скрытый эталон' }),
     });
     expect(createdResponse.status).toBe(201);
-    const created = await createdResponse.json() as { id: string };
-    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/seal`, { expectedRevision: 1 });
+    const created = await createdResponse.json() as { id: string } & Parameters<typeof validExerciseSealInput>[0];
+    expect((await api(leader, 'POST', '/auth/role', { roleId: 'author-role' })).status).toBe(200);
+    expect((await api(leader, 'POST', `/exercises/${created.id}/transitions`, { expectedRevision: 1, command: 'SUBMIT' })).status).toBe(200);
+    expect((await api(leader, 'POST', '/auth/role', { roleId: 'approver-role' })).status).toBe(200);
+    expect((await api(leader, 'POST', `/exercises/${created.id}/transitions`, { expectedRevision: 1, command: 'APPROVE' })).status).toBe(200);
+    expect((await api(leader, 'POST', '/auth/role', { roleId: 'leader-role' })).status).toBe(200);
+    const sealedResponse = await api(leader, 'POST', `/exercises/${created.id}/seal`, validExerciseSealInput(created));
     expect(sealedResponse.status).toBe(200);
     const sessionResponse = await api(leader, 'POST', `/exercises/${created.id}/sessions`, { revision: 1, optimisticWorld: { hiddenTruth: 'Подделка клиента' } });
     expect(sessionResponse.status).toBe(201);
@@ -127,7 +135,15 @@ it('проводит SEALED-сценарий через ACTIVE, PAUSED, COMPLETE
 
     const replay = await api(trainee, 'GET', `${commandBase}/replay?cursor=3&perspective=PARTICIPANT`);
     expect(replay.status).toBe(200);
-    expect(await replay.json()).toMatchObject({ sequence: 3, perspective: 'PARTICIPANT', source: 'RECORDED_PARTICIPANT_PROJECTION' });
+    const replayBody = await replay.text();
+    expect(replayBody).toContain('RECORDED_PARTICIPANT_PROJECTION');
+    expect(replayBody).not.toContain('Скрытый эталон');
+    const truthReplay = await api(leader, 'GET', `${commandBase}/replay?cursor=3&perspective=TRUTH`);
+    expect(truthReplay.status).toBe(200);
+    expect(await truthReplay.text()).toContain('Скрытый эталон');
+    expect((await api(trainee, 'POST', '/auth/role', { roleId: 'trainee-red-role' })).status).toBe(200);
+    const wrongSideReplay = await api(trainee, 'GET', `${commandBase}/replay?cursor=3&perspective=PARTICIPANT`);
+    expect(wrongSideReplay.status).toBe(403);
     const debrief = await api(leader, 'GET', `${commandBase}/debrief?scope=GENERAL`);
     expect(debrief.status).toBe(200);
     expect(await debrief.json()).toMatchObject({ scope: 'GENERAL', referenceIntent: 'Замысел руководства' });

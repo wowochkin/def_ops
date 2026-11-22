@@ -1,5 +1,5 @@
 import { createPool, dropSchema } from '@def-ops/db';
-import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS, type JsonValue } from '@def-ops/kshvi';
+import type { JsonValue } from '@def-ops/kshvi';
 import { Router, createService } from '@def-ops/service-kit';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -13,6 +13,7 @@ import {
   type ExerciseSealActor,
 } from '../src/store/exercise-store';
 import { KshviEventStore } from '../src/store/event-store';
+import { linkedExercisePayload, sealApprovedExercise, validExerciseSealInput } from './helpers/full-seal';
 
 const actor: ExerciseActor = { organizationId: 'org1', userId: 'author-1' };
 const director: ExerciseSealActor = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
@@ -29,12 +30,8 @@ afterEach(async () => {
   while (closers.length) await closers.pop()?.();
 });
 
-function linkedPayload(): { kit: JsonValue } {
-  const kit = buildLinkedScenarioKit({
-    documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
-    usesLogistics: true,
-  });
-  return { kit: kit as unknown as JsonValue };
+function linkedPayload(): JsonValue {
+  return linkedExercisePayload();
 }
 
 describe('библиотека учений', () => {
@@ -133,7 +130,7 @@ describe('библиотека учений', () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, input);
     const revised = await store.createRevision(actor, exercise.id, { expectedRevision: 1, payload: linkedPayload() });
-    const sealed = await store.seal(director, exercise.id, revised.revision);
+    const sealed = await sealApprovedExercise(store, director, revised, 2);
 
     expect(sealed).toMatchObject({ revision: 2, state: 'SEALED', readiness: 100, validation: 'OK' });
     expect(sealed.revisions.map(revision => revision.state)).toEqual(['DRAFT', 'SEALED']);
@@ -142,10 +139,11 @@ describe('библиотека учений', () => {
   it('не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal', async () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
+    const evidence = validExerciseSealInput(exercise);
 
-    await expect(store.seal({ ...director, activeRole: 'LEADER' }, exercise.id, 1))
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, exercise.id, evidence))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(store.seal({ ...director, authorities: [] }, exercise.id, 1))
+    await expect(store.seal({ ...director, authorities: [] }, exercise.id, evidence))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
@@ -153,8 +151,9 @@ describe('библиотека учений', () => {
   it('отклоняет запечатывание устаревшей редакции', async () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
+    const evidence = { ...validExerciseSealInput(exercise), expectedRevision: 2 };
 
-    await expect(store.seal(director, exercise.id, 2)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    await expect(store.seal(director, exercise.id, evidence)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
 
@@ -162,14 +161,14 @@ describe('библиотека учений', () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, input);
 
-    await expect(store.seal(director, exercise.id, 1)).rejects.toMatchObject({ code: 'VALIDATION' });
+    await expect(store.seal(director, exercise.id, validExerciseSealInput(exercise))).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await store.get(actor.organizationId, exercise.id))?.state).toBe('DRAFT');
   });
 
   it('создаёт только серверные сеансы и изолирует их по организации', async () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, { ...input, payload: linkedPayload() });
-    await store.seal(director, exercise.id, 1);
+    await sealApprovedExercise(store, director, exercise);
     const sessionInput = {
       revision: 1,
       optimisticWorld: { resources: { fuel: 999 } },
@@ -246,6 +245,10 @@ describe('HTTP API библиотеки', () => {
         role: 'DIRECTOR',
         sideId: null,
         authorities: ['exercise:read', 'exercise:create', 'exercise:copy', 'exercise:archive', 'exercise:revise', 'exercise:conduct', 'scenario.seal'],
+      }, {
+        id: 'author-lifecycle-role', role: 'AUTHOR', sideId: null, authorities: ['exercise:revise'],
+      }, {
+        id: 'approver-role', role: 'APPROVER', sideId: null, authorities: ['exercise:revise'],
       }],
     });
     await sessions.createAccount({
@@ -312,22 +315,42 @@ describe('HTTP API библиотеки', () => {
     expect(revised.response.status).toBe(201);
     expect(revised.body.revision).toBe(2);
 
+    const sealBody = validExerciseSealInput((await store.get(actor.organizationId, created.body.id))!, 2);
     const clientSeal = await call(`/${created.body.id}/revisions`, {
       method: 'POST',
       body: JSON.stringify({ expectedRevision: 2, state: 'SEALED', readiness: 100, validation: 'OK', payload: linkedPayload() }),
     });
     expect(clientSeal.response.status).toBe(422);
+    const injectedSeal = await call(`/${created.body.id}/seal`, {
+      method: 'POST',
+      body: JSON.stringify({ ...sealBody, state: 'SEALED', readiness: 100, validation: 'OK', unknown: true }),
+    });
+    expect(injectedSeal.response.status).toBe(422);
+    expect(injectedSeal.body.error.message).toMatch(/недопустимые поля/);
     const forbiddenSeal = await call(`/${created.body.id}/seal`, {
-      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+      method: 'POST', body: JSON.stringify(sealBody),
     }, leader);
     expect(forbiddenSeal.response.status).toBe(403);
     const invalidCsrf = await call(`/${created.body.id}/seal`, {
-      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }), headers: { 'X-CSRF-Token': 'invalid' },
+      method: 'POST', body: JSON.stringify(sealBody), headers: { 'X-CSRF-Token': 'invalid' },
     });
     expect(invalidCsrf.response.status).toBe(403);
 
+    await sessions.selectRole(login.token, 'author-lifecycle-role');
+    const submitted = await call(`/${created.body.id}/transitions`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2, command: 'SUBMIT' }),
+    });
+    expect(submitted.response.status).toBe(200);
+    expect(submitted.body.state).toBe('IN_REVIEW');
+    await sessions.selectRole(login.token, 'approver-role');
+    const approved = await call(`/${created.body.id}/transitions`, {
+      method: 'POST', body: JSON.stringify({ expectedRevision: 2, command: 'APPROVE' }),
+    });
+    expect(approved.response.status).toBe(200);
+    expect(approved.body.state).toBe('APPROVED');
+    await sessions.selectRole(login.token, 'author-role');
     const sealed = await call(`/${created.body.id}/seal`, {
-      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+      method: 'POST', body: JSON.stringify(sealBody),
     });
     expect(sealed.response.status).toBe(200);
     expect(sealed.body).toMatchObject({ revision: 2, state: 'SEALED', readiness: 100, validation: 'OK' });
@@ -354,7 +377,7 @@ describe('HTTP API библиотеки', () => {
     expect(archived.response.status).toBe(200);
     expect(archived.body.state).toBe('ARCHIVED');
     const archivedSeal = await call(`/${created.body.id}/seal`, {
-      method: 'POST', body: JSON.stringify({ expectedRevision: 2 }),
+      method: 'POST', body: JSON.stringify(sealBody),
     });
     expect(archivedSeal.response.status).toBe(409);
   });
@@ -374,10 +397,11 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     const copied = await store.copy(actor, created.id);
     expect(copied.id).not.toBe(created.id);
     expect(copied.revisions[0].id).not.toBe(created.revisions[0].id);
-    await expect(store.seal({ ...director, activeRole: 'LEADER' }, created.id, 1))
+    const evidence = validExerciseSealInput(created);
+    await expect(store.seal({ ...director, activeRole: 'LEADER' }, created.id, evidence))
       .rejects.toMatchObject({ code: 'FORBIDDEN' });
-    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
-    const sealed = await store.seal(director, created.id, 1);
+    await expect(store.seal(director, created.id, { ...evidence, expectedRevision: 2 })).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    const sealed = await sealApprovedExercise(store, director, created);
     expect(sealed).toMatchObject({ state: 'SEALED', readiness: 100, validation: 'OK' });
     expect(sealed.revisions[0].state).toBe('SEALED');
     const session = await store.createSession(actor, created.id, { revision: 1 });
@@ -386,9 +410,10 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     expect(revised.revisions).toHaveLength(2);
     expect(revised.revisions[0].state).toBe('SEALED');
     expect(revised.revisions[1].state).toBe('DRAFT');
-    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'VALIDATION' });
+    const revisedEvidence = validExerciseSealInput(revised, 2);
+    await expect(store.seal(director, created.id, revisedEvidence)).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await store.archive(actor, created.id, 2)).state).toBe('ARCHIVED');
-    await expect(store.seal(director, created.id, 2)).rejects.toMatchObject({ code: 'ARCHIVED' });
+    await expect(store.seal(director, created.id, revisedEvidence)).rejects.toMatchObject({ code: 'ARCHIVED' });
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

@@ -46,6 +46,7 @@ const router = buildTask52Router({
   exerciseStore: persistence.exerciseStore,
   environmentProvider,
   commands,
+  wallClock: () => new Date(),
   exposition: { service: exposition, sessions },
   audit: async record => {
     audit.append({

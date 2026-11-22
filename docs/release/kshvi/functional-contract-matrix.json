@@ -19,6 +19,7 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-library.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/exercises.test.ts"
       ],
       "evidence": [
@@ -34,6 +35,7 @@
         "apps/editor/tests/kshvi-library.test.tsx#показывает сравнение серверных редакций",
         "apps/editor/tests/kshvi-library.test.tsx#формирует серверные запросы с CSRF и не применяет оптимистичный мир",
         "apps/editor/tests/kshvi-library.test.tsx#хранит локальный одномашинный черновик отдельно от карты и не называет его сетевым сеансом",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/exercises.test.ts#запечатывает только текущую редакцию после серверной проверки полного комплекта",
         "services/kshvi/tests/exercises.test.ts#копирует проект дважды с новыми согласованными UUID и архивирует исходник",
         "services/kshvi/tests/exercises.test.ts#не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal",
@@ -67,7 +69,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/model.test.ts",
-        "packages/kshvi/tests/reducer.test.ts"
+        "packages/kshvi/tests/reducer.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -86,7 +89,8 @@
         "packages/kshvi/tests/reducer.test.ts#повторяет состояние по журналу и версии reducer",
         "packages/kshvi/tests/reducer.test.ts#применяет событие один раз и сохраняет причину",
         "packages/kshvi/tests/reducer.test.ts#реестр выбирает исходный reducer или явно отклоняет несовместимость",
-        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t"
+        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -95,11 +99,13 @@
         "scripts/kshvi-run-acceptance.mjs"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -131,7 +137,8 @@
         "packages/kshvi/tests/debrief.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/metrics.test.ts",
-        "packages/kshvi/tests/playbook.test.ts"
+        "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-assessment.test.tsx#не утверждает автоматический проект без решения человека",
@@ -160,7 +167,8 @@
         "packages/kshvi/tests/playbook.test.ts#воспроизводимо выполняет известное обязательное правило с объяснением",
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
-        "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента"
+        "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -185,6 +193,7 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/instance-commands.test.ts",
         "services/kshvi/tests/projections.test.ts"
       ],
@@ -204,6 +213,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/instance-commands.test.ts#C3: не принимает самоподтверждённый scenarioState без сохранённого артефакта",
         "services/kshvi/tests/instance-commands.test.ts#запускает Instance через порт сохранённого SEALED и сохраняет идемпотентность",
         "services/kshvi/tests/instance-commands.test.ts#принимает официальную типизированную команду через существующий серверный адаптер",
@@ -234,7 +244,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/calculation-replay.test.ts",
         "packages/kshvi/tests/calculations.test.ts",
-        "packages/kshvi/tests/reducer.test.ts"
+        "packages/kshvi/tests/reducer.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -260,7 +271,8 @@
         "packages/kshvi/tests/reducer.test.ts#повторяет состояние по журналу и версии reducer",
         "packages/kshvi/tests/reducer.test.ts#применяет событие один раз и сохраняет причину",
         "packages/kshvi/tests/reducer.test.ts#реестр выбирает исходный reducer или явно отклоняет несовместимость",
-        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t"
+        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -287,7 +299,8 @@
         "packages/kshvi/tests/calculation-replay.test.ts",
         "packages/kshvi/tests/calculations.test.ts",
         "packages/kshvi/tests/reducer.test.ts",
-        "packages/kshvi/tests/weather-effects.test.ts"
+        "packages/kshvi/tests/weather-effects.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -319,7 +332,8 @@
         "packages/kshvi/tests/weather-effects.test.ts#до утверждения разрешает только явно названный режим без учёта влияния",
         "packages/kshvi/tests/weather-effects.test.ts#не подставляет коэффициент 1 при обязательном пробеле",
         "packages/kshvi/tests/weather-effects.test.ts#не рассчитывает по формально APPROVED, но невалидному профилю",
-        "packages/kshvi/tests/weather-effects.test.ts#проверяет единицы, диапазоны, источники, классы и версию поставленного профиля"
+        "packages/kshvi/tests/weather-effects.test.ts#проверяет единицы, диапазоны, источники, классы и версию поставленного профиля",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -350,6 +364,7 @@
         "apps/editor/tests/kshvi-exposition.test.tsx",
         "packages/kshvi/tests/exposition.test.ts",
         "packages/kshvi/tests/model.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/exposition-origin.test.ts",
         "services/kshvi/tests/exposition-privacy.test.ts"
       ],
@@ -379,6 +394,7 @@
         "packages/kshvi/tests/model.test.ts#различает астрономическое и оперативное время",
         "packages/kshvi/tests/model.test.ts#содержит все основные сущности спецификации",
         "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/exposition-origin.test.ts#AC-28: оба показа, продолжение и производный архив не меняют официальный источник и оценки",
         "services/kshvi/tests/exposition-privacy.test.ts#использует отдельный проекторный профиль и не выдаёт ему привилегии ведущего",
         "services/kshvi/tests/exposition-privacy.test.ts#не добавляет скрытые данные в поток после команд ведущего",
@@ -399,7 +415,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/model.test.ts"
+        "packages/kshvi/tests/model.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -411,7 +428,8 @@
         "packages/kshvi/tests/model.test.ts#проверяет только собственные значения независимых осей",
         "packages/kshvi/tests/model.test.ts#различает астрономическое и оперативное время",
         "packages/kshvi/tests/model.test.ts#содержит все основные сущности спецификации",
-        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256"
+        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -435,7 +453,8 @@
         "apps/editor/tests/kshvi-concept.test.tsx",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/model.test.ts",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -455,7 +474,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -479,7 +499,8 @@
         "apps/editor/tests/kshvi-concept.test.tsx",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/model.test.ts",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -499,7 +520,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1126,7 +1148,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/reducer.test.ts"
+        "packages/kshvi/tests/reducer.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1137,7 +1160,8 @@
         "packages/kshvi/tests/reducer.test.ts#повторяет состояние по журналу и версии reducer",
         "packages/kshvi/tests/reducer.test.ts#применяет событие один раз и сохраняет причину",
         "packages/kshvi/tests/reducer.test.ts#реестр выбирает исходный reducer или явно отклоняет несовместимость",
-        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t"
+        "packages/kshvi/tests/reducer.test.ts#содержит все компоненты W_t",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1162,6 +1186,7 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-library.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/exercises.test.ts",
         "services/kshvi/tests/instance-commands.test.ts",
         "services/kshvi/tests/projections.test.ts"
@@ -1179,6 +1204,7 @@
         "apps/editor/tests/kshvi-library.test.tsx#показывает сравнение серверных редакций",
         "apps/editor/tests/kshvi-library.test.tsx#формирует серверные запросы с CSRF и не применяет оптимистичный мир",
         "apps/editor/tests/kshvi-library.test.tsx#хранит локальный одномашинный черновик отдельно от карты и не называет его сетевым сеансом",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/exercises.test.ts#запечатывает только текущую редакцию после серверной проверки полного комплекта",
         "services/kshvi/tests/exercises.test.ts#копирует проект дважды с новыми согласованными UUID и архивирует исходник",
         "services/kshvi/tests/exercises.test.ts#не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal",
@@ -1222,6 +1248,7 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi-agents/tests/opponent.test.ts",
         "packages/kshvi-agents/tests/world-fork.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/opponent-worker.test.ts"
       ],
       "evidence": [
@@ -1234,6 +1261,7 @@
         "packages/kshvi-agents/tests/opponent.test.ts#проверяет новый современный паспорт, а не историческую доктрину",
         "packages/kshvi-agents/tests/world-fork.test.ts#изолированный вариант не меняет официальный мир, outbox и RNG",
         "packages/kshvi-agents/tests/world-fork.test.ts#не принимает форк с каналом записи в официальный мир",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/opponent-worker.test.ts#Rust worker сохраняет bigint seed в JSON-протоколе и возвращает типизированное решение",
         "services/kshvi/tests/opponent-worker.test.ts#пересматривает решение при новой ревизии проекции даже в том же такте",
         "services/kshvi/tests/opponent-worker.test.ts#при недостатке данных не создаёт новых сил, ресурсов и событий",
@@ -1331,11 +1359,13 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/environment-snapshot.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/environment-snapshot.test.ts#AC-15: различает weatherAt и simulateWeather, сохраняет null и качество без нормальной погоды",
         "services/kshvi/tests/environment-snapshot.test.ts#NF-21: ограниченный экспорт явно неполон и не выдаётся за автономный",
         "services/kshvi/tests/environment-snapshot.test.ts#копирует стиль, экспорт, высоты, погоду и атрибуцию и не зависит от удаления атласа",
@@ -1356,11 +1386,20 @@
         "services/kshvi/src/store/snapshot-store.ts"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -1385,6 +1424,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-library.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts",
         "services/kshvi/tests/exercises.test.ts"
       ],
       "evidence": [
@@ -1400,6 +1441,13 @@
         "apps/editor/tests/kshvi-library.test.tsx#показывает сравнение серверных редакций",
         "apps/editor/tests/kshvi-library.test.tsx#формирует серверные запросы с CSRF и не применяет оптимистичный мир",
         "apps/editor/tests/kshvi-library.test.tsx#хранит локальный одномашинный черновик отдельно от карты и не называет его сетевым сеансом",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала",
         "services/kshvi/tests/exercises.test.ts#запечатывает только текущую редакцию после серверной проверки полного комплекта",
         "services/kshvi/tests/exercises.test.ts#копирует проект дважды с новыми согласованными UUID и архивирует исходник",
         "services/kshvi/tests/exercises.test.ts#не позволяет запечатать без роли DIRECTOR и полномочия scenario.seal",
@@ -1434,7 +1482,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-knowledge-import.test.tsx",
         "packages/kshvi/tests/modern-import.test.ts",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -1452,7 +1501,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1475,7 +1525,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-knowledge-import.test.tsx",
         "packages/kshvi/tests/modern-import.test.ts",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -1493,7 +1544,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1510,7 +1562,8 @@
       "tests": [
         "apps/editor/tests/kshvi-concept.test.tsx",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -1522,7 +1575,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1539,7 +1593,8 @@
       "tests": [
         "apps/editor/tests/kshvi-concept.test.tsx",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/scenario-kit.test.ts"
+        "packages/kshvi/tests/scenario-kit.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-concept.test.tsx#использует связи этапа из серверной редакции, а не зашитые идентификаторы",
@@ -1551,7 +1606,8 @@
         "packages/kshvi/tests/scenario-kit.test.ts#не разрешает молчаливо исключить обязательную МТО",
         "packages/kshvi/tests/scenario-kit.test.ts#содержит все 19 частей и фиксирует обоснованные сокращения",
         "packages/kshvi/tests/scenario-kit.test.ts#точно перечисляет затронутые изменением этапа связи",
-        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла"
+        "packages/kshvi/tests/scenario-kit.test.ts#формирует частное задание без публикации общего замысла",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1563,7 +1619,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1584,7 +1641,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1596,7 +1654,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1617,7 +1676,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1629,7 +1689,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1650,7 +1711,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1662,7 +1724,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1683,7 +1746,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1698,7 +1762,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-initial-map.test.tsx",
-        "packages/kshvi/tests/initial-map.test.ts"
+        "packages/kshvi/tests/initial-map.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1727,7 +1792,8 @@
         "packages/kshvi/tests/initial-map.test.ts#создаёт независимые слои и сохраняет прежнюю версию при ручной правке",
         "packages/kshvi/tests/initial-map.test.ts#сохраняет слои, версии знаков и атрибуцию в каноническом содержимом",
         "packages/kshvi/tests/initial-map.test.ts#утверждает только валидную карту и стабильно хеширует содержимое",
-        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты"
+        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1742,7 +1808,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-initial-map.test.tsx",
-        "packages/kshvi/tests/initial-map.test.ts"
+        "packages/kshvi/tests/initial-map.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1771,7 +1838,8 @@
         "packages/kshvi/tests/initial-map.test.ts#создаёт независимые слои и сохраняет прежнюю версию при ручной правке",
         "packages/kshvi/tests/initial-map.test.ts#сохраняет слои, версии знаков и атрибуцию в каноническом содержимом",
         "packages/kshvi/tests/initial-map.test.ts#утверждает только валидную карту и стабильно хеширует содержимое",
-        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты"
+        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1786,7 +1854,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-initial-map.test.tsx",
-        "packages/kshvi/tests/initial-map.test.ts"
+        "packages/kshvi/tests/initial-map.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1815,7 +1884,8 @@
         "packages/kshvi/tests/initial-map.test.ts#создаёт независимые слои и сохраняет прежнюю версию при ручной правке",
         "packages/kshvi/tests/initial-map.test.ts#сохраняет слои, версии знаков и атрибуцию в каноническом содержимом",
         "packages/kshvi/tests/initial-map.test.ts#утверждает только валидную карту и стабильно хеширует содержимое",
-        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты"
+        "packages/kshvi/tests/initial-map.test.ts#формирует предпросмотр слоёв без изменения масштаба учения и карты",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1828,7 +1898,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/readiness.test.ts"
+        "packages/kshvi/tests/readiness.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1840,7 +1911,8 @@
         "packages/kshvi/tests/readiness.test.ts#не подставляет коэффициенты при неизвестном правиле профиля",
         "packages/kshvi/tests/readiness.test.ts#парный сценарий SIM-24: незавершённая готовность меняет первый приказ",
         "packages/kshvi/tests/readiness.test.ts#разрешение руководителя оформляется отдельно и не стирает ограничения",
-        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий"
+        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1853,7 +1925,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/readiness.test.ts"
+        "packages/kshvi/tests/readiness.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1865,7 +1938,8 @@
         "packages/kshvi/tests/readiness.test.ts#не подставляет коэффициенты при неизвестном правиле профиля",
         "packages/kshvi/tests/readiness.test.ts#парный сценарий SIM-24: незавершённая готовность меняет первый приказ",
         "packages/kshvi/tests/readiness.test.ts#разрешение руководителя оформляется отдельно и не стирает ограничения",
-        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий"
+        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -1878,7 +1952,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/readiness.test.ts"
+        "packages/kshvi/tests/readiness.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -1890,7 +1965,8 @@
         "packages/kshvi/tests/readiness.test.ts#не подставляет коэффициенты при неизвестном правиле профиля",
         "packages/kshvi/tests/readiness.test.ts#парный сценарий SIM-24: незавершённая готовность меняет первый приказ",
         "packages/kshvi/tests/readiness.test.ts#разрешение руководителя оформляется отдельно и не стирает ограничения",
-        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий"
+        "packages/kshvi/tests/readiness.test.ts#учитывает доведение сигнала через связь, длительность, доклад и критерий",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -3821,7 +3897,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/clock.test.ts",
         "packages/kshvi/tests/jump.test.ts",
-        "packages/kshvi/tests/queue.test.ts"
+        "packages/kshvi/tests/queue.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -3831,7 +3908,8 @@
         "packages/kshvi/tests/jump.test.ts#выполняет семь шагов скачка один раз и сохраняет остатки",
         "packages/kshvi/tests/jump.test.ts#запрещает обратное официальное время и различает отбой и ABORTED",
         "packages/kshvi/tests/queue.test.ts#не изменяет исходный массив сетевых действий",
-        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка"
+        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -3849,7 +3927,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/clock.test.ts",
         "packages/kshvi/tests/jump.test.ts",
-        "packages/kshvi/tests/queue.test.ts"
+        "packages/kshvi/tests/queue.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -3859,7 +3938,8 @@
         "packages/kshvi/tests/jump.test.ts#выполняет семь шагов скачка один раз и сохраняет остатки",
         "packages/kshvi/tests/jump.test.ts#запрещает обратное официальное время и различает отбой и ABORTED",
         "packages/kshvi/tests/queue.test.ts#не изменяет исходный массив сетевых действий",
-        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка"
+        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -3877,7 +3957,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/clock.test.ts",
         "packages/kshvi/tests/jump.test.ts",
-        "packages/kshvi/tests/queue.test.ts"
+        "packages/kshvi/tests/queue.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -3887,7 +3968,8 @@
         "packages/kshvi/tests/jump.test.ts#выполняет семь шагов скачка один раз и сохраняет остатки",
         "packages/kshvi/tests/jump.test.ts#запрещает обратное официальное время и различает отбой и ABORTED",
         "packages/kshvi/tests/queue.test.ts#не изменяет исходный массив сетевых действий",
-        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка"
+        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -3905,7 +3987,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/clock.test.ts",
         "packages/kshvi/tests/jump.test.ts",
-        "packages/kshvi/tests/queue.test.ts"
+        "packages/kshvi/tests/queue.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -3915,7 +3998,8 @@
         "packages/kshvi/tests/jump.test.ts#выполняет семь шагов скачка один раз и сохраняет остатки",
         "packages/kshvi/tests/jump.test.ts#запрещает обратное официальное время и различает отбой и ABORTED",
         "packages/kshvi/tests/queue.test.ts#не изменяет исходный массив сетевых действий",
-        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка"
+        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -3946,7 +4030,8 @@
         "packages/kshvi-events/tests/scheduler.test.ts",
         "packages/kshvi/tests/inputs.test.ts",
         "packages/kshvi/tests/triggers.test.ts",
-        "services/kshvi/tests/autonomy-worker.test.ts"
+        "services/kshvi/tests/autonomy-worker.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -3987,7 +4072,8 @@
         "services/kshvi/tests/autonomy-worker.test.ts#восстанавливается по журналу после обрыва и доотправляет сохранённые операции без нового выбора",
         "services/kshvi/tests/autonomy-worker.test.ts#использует оперативное время и единую идемпотентную командную очередь",
         "services/kshvi/tests/autonomy-worker.test.ts#не привязан к браузеру и не работает на оперативной паузе",
-        "services/kshvi/tests/autonomy-worker.test.ts#повтор команды скачка не создаёт второй эффект или новый розыгрыш"
+        "services/kshvi/tests/autonomy-worker.test.ts#повтор команды скачка не создаёт второй эффект или новый розыгрыш",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4002,7 +4088,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/inputs.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4011,7 +4098,8 @@
         "packages/kshvi/tests/inputs.test.ts#фиксирует досрочную выдачу, источник, адресатов и отмену без стирания затрат",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4026,7 +4114,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/inputs.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4035,7 +4124,8 @@
         "packages/kshvi/tests/inputs.test.ts#фиксирует досрочную выдачу, источник, адресатов и отмену без стирания затрат",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4059,7 +4149,8 @@
         "packages/kshvi/tests/inputs.test.ts",
         "packages/kshvi/tests/jump.test.ts",
         "packages/kshvi/tests/queue.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4074,7 +4165,8 @@
         "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4098,7 +4190,8 @@
         "packages/kshvi/tests/inputs.test.ts",
         "packages/kshvi/tests/jump.test.ts",
         "packages/kshvi/tests/queue.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4113,7 +4206,8 @@
         "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4137,7 +4231,8 @@
         "packages/kshvi/tests/inputs.test.ts",
         "packages/kshvi/tests/jump.test.ts",
         "packages/kshvi/tests/queue.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4152,7 +4247,8 @@
         "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4176,7 +4272,8 @@
         "packages/kshvi/tests/inputs.test.ts",
         "packages/kshvi/tests/jump.test.ts",
         "packages/kshvi/tests/queue.test.ts",
-        "packages/kshvi/tests/triggers.test.ts"
+        "packages/kshvi/tests/triggers.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4191,7 +4288,8 @@
         "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
         "packages/kshvi/tests/triggers.test.ts#не считает неизвестное ложным и находит цикл",
         "packages/kshvi/tests/triggers.test.ts#различает известное условие и останавливает каскад на рассмотрении",
-        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое"
+        "packages/kshvi/tests/triggers.test.ts#разрешает конфликт сроков и полномочий новым решением, не переписывая прошлое",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4209,7 +4307,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi/tests/clock.test.ts",
         "packages/kshvi/tests/jump.test.ts",
-        "packages/kshvi/tests/queue.test.ts"
+        "packages/kshvi/tests/queue.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -4219,7 +4318,8 @@
         "packages/kshvi/tests/jump.test.ts#выполняет семь шагов скачка один раз и сохраняет остатки",
         "packages/kshvi/tests/jump.test.ts#запрещает обратное официальное время и различает отбой и ABORTED",
         "packages/kshvi/tests/queue.test.ts#не изменяет исходный массив сетевых действий",
-        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка"
+        "packages/kshvi/tests/queue.test.ts#упорядочивает действия независимо от сетевого порядка",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -4256,6 +4356,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4290,6 +4391,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -4332,6 +4434,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4366,6 +4469,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -4408,6 +4512,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4442,6 +4547,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -4484,6 +4590,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4518,6 +4625,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -4560,6 +4668,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4594,6 +4703,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -4636,6 +4746,7 @@
         "packages/kshvi-agents/tests/optional-llm.test.ts",
         "packages/kshvi/tests/decisions.test.ts",
         "packages/kshvi/tests/playbook.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/intermediary-worker.test.ts"
       ],
       "evidence": [
@@ -4670,6 +4781,7 @@
         "packages/kshvi/tests/playbook.test.ts#назначает модель нового этапа явно и сохраняет состояние",
         "packages/kshvi/tests/playbook.test.ts#не выдумывает действие вне плейбука",
         "packages/kshvi/tests/playbook.test.ts#явно разграничивает обязательный плейбук и разрешённое поведение агента",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/intermediary-worker.test.ts#AC-25: три инстанции DELEGATED ведутся без человека, запрет не действует, перехват и повтор не откатывают мир",
         "services/kshvi/tests/intermediary-worker.test.ts#HTTP-транспорт передаёт системного актора, авторизацию и ключ идемпотентности",
         "services/kshvi/tests/intermediary-worker.test.ts#восстанавливает неподтверждённую команду после перезапуска без повторного эффекта",
@@ -9313,7 +9425,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/model.test.ts"
+        "packages/kshvi/tests/model.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -9325,7 +9438,8 @@
         "packages/kshvi/tests/model.test.ts#проверяет только собственные значения независимых осей",
         "packages/kshvi/tests/model.test.ts#различает астрономическое и оперативное время",
         "packages/kshvi/tests/model.test.ts#содержит все основные сущности спецификации",
-        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256"
+        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9341,7 +9455,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/model.test.ts"
+        "packages/kshvi/tests/model.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -9353,7 +9468,8 @@
         "packages/kshvi/tests/model.test.ts#проверяет только собственные значения независимых осей",
         "packages/kshvi/tests/model.test.ts#различает астрономическое и оперативное время",
         "packages/kshvi/tests/model.test.ts#содержит все основные сущности спецификации",
-        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256"
+        "packages/kshvi/tests/model.test.ts#создаёт неизменяемую ссылку с редакцией и SHA-256",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9368,7 +9484,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/events.test.ts"
+        "packages/kshvi/tests/events.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -9377,7 +9494,8 @@
         "packages/kshvi/tests/events.test.ts#канонизирует ключи и отделяет потоки случайности",
         "packages/kshvi/tests/events.test.ts#не зависит от порядка вложенных ключей и сохраняет тип bigint",
         "packages/kshvi/tests/events.test.ts#обнаруживает повреждение предыдущего хеша и разрыв последовательности",
-        "packages/kshvi/tests/events.test.ts#создаёт воспроизводимый хеш неизменяемого факта"
+        "packages/kshvi/tests/events.test.ts#создаёт воспроизводимый хеш неизменяемого факта",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9393,11 +9511,20 @@
         "services/kshvi/src/store/snapshot-store.ts"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -9413,11 +9540,20 @@
         "services/kshvi/src/store/snapshot-store.ts"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -9433,6 +9569,7 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-handover.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/sse-reconnect.test.ts"
       ],
       "evidence": [
@@ -9440,6 +9577,7 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
         "apps/editor/tests/kshvi-handover.test.tsx#очищает привилегированные кэши, черновики и проекторный профиль",
         "apps/editor/tests/kshvi-handover.test.tsx#показывает нейтральный экран без прежней проекции и завершает сессию",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/sse-reconnect.test.ts#создаёт отдельный payload и не включает скрытые UUID в обобщённое уведомление",
         "services/kshvi/tests/sse-reconnect.test.ts#требует новый снимок при смене политики и пропуске sequence"
       ]
@@ -9463,7 +9601,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "services/gateway/tests/kshvi-route.test.ts",
-        "services/kshvi/tests/auth.test.ts"
+        "services/kshvi/tests/auth.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -9474,7 +9613,8 @@
         "services/kshvi/tests/auth.test.ts#отклоняет истёкшую сессию на следующем запросе",
         "services/kshvi/tests/auth.test.ts#формирует cookie и аудит без секретов и скрытого содержания",
         "services/kshvi/tests/auth.test.ts#хеширует пароль scrypt с индивидуальной солью",
-        "services/kshvi/tests/auth.test.ts#хранит только хеши токенов, выбирает назначенную роль и отзывает сессию"
+        "services/kshvi/tests/auth.test.ts#хранит только хеши токенов, выбирает назначенную роль и отзывает сессию",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9496,7 +9636,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "services/gateway/tests/kshvi-route.test.ts",
-        "services/kshvi/tests/auth.test.ts"
+        "services/kshvi/tests/auth.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -9507,7 +9648,8 @@
         "services/kshvi/tests/auth.test.ts#отклоняет истёкшую сессию на следующем запросе",
         "services/kshvi/tests/auth.test.ts#формирует cookie и аудит без секретов и скрытого содержания",
         "services/kshvi/tests/auth.test.ts#хеширует пароль scrypt с индивидуальной солью",
-        "services/kshvi/tests/auth.test.ts#хранит только хеши токенов, выбирает назначенную роль и отзывает сессию"
+        "services/kshvi/tests/auth.test.ts#хранит только хеши токенов, выбирает назначенную роль и отзывает сессию",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9561,6 +9703,7 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "apps/editor/tests/kshvi-handover.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/sse-reconnect.test.ts"
       ],
       "evidence": [
@@ -9568,6 +9711,7 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
         "apps/editor/tests/kshvi-handover.test.tsx#очищает привилегированные кэши, черновики и проекторный профиль",
         "apps/editor/tests/kshvi-handover.test.tsx#показывает нейтральный экран без прежней проекции и завершает сессию",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/sse-reconnect.test.ts#создаёт отдельный payload и не включает скрытые UUID в обобщённое уведомление",
         "services/kshvi/tests/sse-reconnect.test.ts#требует новый снимок при смене политики и пропуске sequence"
       ]
@@ -9600,6 +9744,7 @@
         "apps/editor/tests/kshvi-replay.test.tsx",
         "packages/kshvi/tests/replay-domains.test.ts",
         "packages/kshvi/tests/replay.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
         "services/kshvi/tests/replay-privacy.test.ts",
         "services/kshvi/tests/sse-reconnect.test.ts"
       ],
@@ -9620,6 +9765,7 @@
         "packages/kshvi/tests/replay.test.ts#не создаёт новое событие при повторном восстановлении и идёт от замечания к причинам",
         "packages/kshvi/tests/replay.test.ts#проверяет сохранённые контрольные точки и последовательность событий",
         "packages/kshvi/tests/replay.test.ts#сохраняет полный журнал фактов, отклонённые команды, сбои и две шкалы времени",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
         "services/kshvi/tests/replay-privacy.test.ts#выдаёт истину только по отдельному праву и постоянно маркирует её",
         "services/kshvi/tests/replay-privacy.test.ts#при reconnect применяет новую политику, отсекает пропуски и дубликаты",
         "services/kshvi/tests/replay-privacy.test.ts#строит кадр участника только из сохранённой серверной проекции без скрытого мира",
@@ -9656,7 +9802,9 @@
         "packages/kshvi/tests/archive-manifest.test.ts",
         "services/kshvi/tests/archive-jobs.test.ts",
         "services/kshvi/tests/archive-offline.test.ts",
-        "services/kshvi/tests/archive-roundtrip.test.ts"
+        "services/kshvi/tests/archive-roundtrip.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-archive.test.tsx#отображает состояния заданий, прогресс, отмену и безопасный повтор",
@@ -9676,7 +9824,14 @@
         "services/kshvi/tests/archive-roundtrip.test.ts#не принимает формально целый архив с неполным журналом фактов за автономный",
         "services/kshvi/tests/archive-roundtrip.test.ts#неполный пакет доступен только для ограниченного исследования",
         "services/kshvi/tests/archive-roundtrip.test.ts#полный автономный круговой цикл сохраняет хеши и контрольные точки реплея",
-        "services/kshvi/tests/archive-roundtrip.test.ts#список участников ограничен политикой экспорта"
+        "services/kshvi/tests/archive-roundtrip.test.ts#список участников ограничен политикой экспорта",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -9718,7 +9873,8 @@
         "packages/kshvi/tests/research.test.ts",
         "packages/kshvi/tests/sealing.test.ts",
         "services/kshvi/tests/autonomy-worker.test.ts",
-        "services/kshvi/tests/branch-isolation.test.ts"
+        "services/kshvi/tests/branch-isolation.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-branches.test.tsx#повторное прохождение показывает новый сеанс и не создаёт рейтинг",
@@ -9783,7 +9939,8 @@
         "services/kshvi/tests/autonomy-worker.test.ts#не привязан к браузеру и не работает на оперативной паузе",
         "services/kshvi/tests/autonomy-worker.test.ts#повтор команды скачка не создаёт второй эффект или новый розыгрыш",
         "services/kshvi/tests/branch-isolation.test.ts#сервер исследования сохраняет ограничение причинности",
-        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя"
+        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9825,7 +9982,8 @@
         "packages/kshvi/tests/research.test.ts",
         "packages/kshvi/tests/sealing.test.ts",
         "services/kshvi/tests/autonomy-worker.test.ts",
-        "services/kshvi/tests/branch-isolation.test.ts"
+        "services/kshvi/tests/branch-isolation.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-branches.test.tsx#повторное прохождение показывает новый сеанс и не создаёт рейтинг",
@@ -9890,7 +10048,8 @@
         "services/kshvi/tests/autonomy-worker.test.ts#не привязан к браузеру и не работает на оперативной паузе",
         "services/kshvi/tests/autonomy-worker.test.ts#повтор команды скачка не создаёт второй эффект или новый розыгрыш",
         "services/kshvi/tests/branch-isolation.test.ts#сервер исследования сохраняет ограничение причинности",
-        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя"
+        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -9932,7 +10091,8 @@
         "packages/kshvi/tests/research.test.ts",
         "packages/kshvi/tests/sealing.test.ts",
         "services/kshvi/tests/autonomy-worker.test.ts",
-        "services/kshvi/tests/branch-isolation.test.ts"
+        "services/kshvi/tests/branch-isolation.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-branches.test.tsx#повторное прохождение показывает новый сеанс и не создаёт рейтинг",
@@ -9997,7 +10157,8 @@
         "services/kshvi/tests/autonomy-worker.test.ts#не привязан к браузеру и не работает на оперативной паузе",
         "services/kshvi/tests/autonomy-worker.test.ts#повтор команды скачка не создаёт второй эффект или новый розыгрыш",
         "services/kshvi/tests/branch-isolation.test.ts#сервер исследования сохраняет ограничение причинности",
-        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя"
+        "services/kshvi/tests/branch-isolation.test.ts#хранит альтернативу отдельно и разрешает перенос только новым решением руководителя",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -10024,7 +10185,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi-events/tests/template-schema.test.ts",
         "packages/kshvi-events/tests/template-validation.test.ts",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-agent-privacy.test.tsx#не показывает чужую проекцию и скрытый эталон в DOM",
@@ -10074,7 +10236,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -10101,7 +10264,8 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "packages/kshvi-events/tests/template-schema.test.ts",
         "packages/kshvi-events/tests/template-validation.test.ts",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-agent-privacy.test.tsx#не показывает чужую проекцию и скрытый эталон в DOM",
@@ -10151,7 +10315,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -10173,7 +10338,8 @@
         "apps/editor/tests/kshvi-autonomy-ui.spec.ts",
         "apps/editor/tests/kshvi-autonomy-ui.test.tsx",
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-agent-privacy.test.tsx#не показывает чужую проекцию и скрытый эталон в DOM",
@@ -10200,7 +10366,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -10212,7 +10379,8 @@
       ],
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
-        "packages/kshvi/tests/sealing.test.ts"
+        "packages/kshvi/tests/sealing.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
@@ -10233,7 +10401,8 @@
         "packages/kshvi/tests/sealing.test.ts#требует полный набор контуров независимо от переданного списка",
         "packages/kshvi/tests/sealing.test.ts#устаревают только зависимые подтверждения, а полный прогон обязателен снова",
         "packages/kshvi/tests/sealing.test.ts#фиксирует действительное время SEALED",
-        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах"
+        "packages/kshvi/tests/sealing.test.ts#фиксирует канонический сценарий и хеш исходной карты во всех контейнерах",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов"
       ]
     },
     {
@@ -10390,11 +10559,20 @@
         "services/kshvi/src/store/snapshot-store.ts"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -10410,11 +10588,20 @@
         "services/kshvi/src/store/snapshot-store.ts"
       ],
       "tests": [
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts"
       ],
       "evidence": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: отклонённая критическая команда не считается применённой",
-        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую"
+        "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала"
       ]
     },
     {
@@ -10442,6 +10629,8 @@
       "tests": [
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx",
         "services/kshvi/tests/backup.test.ts",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts",
+        "services/kshvi/tests/event-store.test.ts",
         "services/kshvi/tests/preflight.test.ts",
         "services/kshvi/tests/restart-recovery.test.ts",
         "services/kshvi/tests/restore-divergence.test.ts",
@@ -10452,10 +10641,18 @@
         "apps/editor/tests/kshvi-conduct-cycle.test.tsx#G2 UI: решение, просмотр прошлого и отмена не меняют официальные часы и затраты напрямую",
         "services/kshvi/tests/backup.test.ts#копирует сценарий, среду и назначения, проверяет SHA-256 и обнаруживает повреждение",
         "services/kshvi/tests/backup.test.ts#создаёт инкремент журнала от полной копии и контролирует интервал не более пяти минут",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts#G2: полный связанный доменный цикл проходит без прямой записи исходов",
+        "services/kshvi/tests/event-store.test.ts#атомарно фиксирует событие, ревизию и outbox",
+        "services/kshvi/tests/event-store.test.ts#восстанавливает снимок с проверенным хвостом журнала",
+        "services/kshvi/tests/event-store.test.ts#не повторяет обработчик после зафиксированной at-least-once доставки",
+        "services/kshvi/tests/event-store.test.ts#не принимает устаревшую ревизию агрегата",
+        "services/kshvi/tests/event-store.test.ts#отклоняет повтор ключа с другим содержимым",
+        "services/kshvi/tests/event-store.test.ts#создаёт задание идемпотентно и запрещает изменение журнала",
         "services/kshvi/tests/preflight.test.ts#выполняет предстартовый контроль диска, копий, сертификата, NTP, ресурсов, мест, восстановления и печати",
         "services/kshvi/tests/preflight.test.ts#защищает активный официальный сеанс от обычной перезагрузки",
         "services/kshvi/tests/preflight.test.ts#сохраняет факты инцидента и не приравнивает техническое восстановление к методическому разрешению",
         "services/kshvi/tests/restart-recovery.test.ts#применяет новые права и очищает кэш до досылки, показывая период обрыва",
+        "services/kshvi/tests/restart-recovery.test.ts#сохраняет подтверждённую команду при отказе после COMMIT и восстанавливается новым экземпляром",
         "services/kshvi/tests/restore-divergence.test.ts#восстанавливает только в изолированную область после проверки хешей",
         "services/kshvi/tests/restore-divergence.test.ts#измеряет RPO 0, перезапуск не более пяти минут и узел не более тридцати минут",
         "services/kshvi/tests/restore-divergence.test.ts#не затирает более поздние подтверждённые события старой копией",
@@ -10538,6 +10735,7 @@
         "services/kshvi/tests/preflight.test.ts#защищает активный официальный сеанс от обычной перезагрузки",
         "services/kshvi/tests/preflight.test.ts#сохраняет факты инцидента и не приравнивает техническое восстановление к методическому разрешению",
         "services/kshvi/tests/restart-recovery.test.ts#применяет новые права и очищает кэш до досылки, показывая период обрыва",
+        "services/kshvi/tests/restart-recovery.test.ts#сохраняет подтверждённую команду при отказе после COMMIT и восстанавливается новым экземпляром",
         "services/kshvi/tests/restore-divergence.test.ts#восстанавливает только в изолированную область после проверки хешей",
         "services/kshvi/tests/restore-divergence.test.ts#измеряет RPO 0, перезапуск не более пяти минут и узел не более тридцати минут",
         "services/kshvi/tests/restore-divergence.test.ts#не затирает более поздние подтверждённые события старой копией",
@@ -10575,6 +10773,7 @@
         "services/kshvi/tests/preflight.test.ts#защищает активный официальный сеанс от обычной перезагрузки",
         "services/kshvi/tests/preflight.test.ts#сохраняет факты инцидента и не приравнивает техническое восстановление к методическому разрешению",
         "services/kshvi/tests/restart-recovery.test.ts#применяет новые права и очищает кэш до досылки, показывая период обрыва",
+        "services/kshvi/tests/restart-recovery.test.ts#сохраняет подтверждённую команду при отказе после COMMIT и восстанавливается новым экземпляром",
         "services/kshvi/tests/restore-divergence.test.ts#восстанавливает только в изолированную область после проверки хешей",
         "services/kshvi/tests/restore-divergence.test.ts#измеряет RPO 0, перезапуск не более пяти минут и узел не более тридцати минут",
         "services/kshvi/tests/restore-divergence.test.ts#не затирает более поздние подтверждённые события старой копией",
@@ -10706,6 +10905,7 @@
         "services/kshvi/tests/preflight.test.ts#защищает активный официальный сеанс от обычной перезагрузки",
         "services/kshvi/tests/preflight.test.ts#сохраняет факты инцидента и не приравнивает техническое восстановление к методическому разрешению",
         "services/kshvi/tests/restart-recovery.test.ts#применяет новые права и очищает кэш до досылки, показывая период обрыва",
+        "services/kshvi/tests/restart-recovery.test.ts#сохраняет подтверждённую команду при отказе после COMMIT и восстанавливается новым экземпляром",
         "services/kshvi/tests/restore-divergence.test.ts#восстанавливает только в изолированную область после проверки хешей",
         "services/kshvi/tests/restore-divergence.test.ts#измеряет RPO 0, перезапуск не более пяти минут и узел не более тридцати минут",
         "services/kshvi/tests/restore-divergence.test.ts#не затирает более поздние подтверждённые события старой копией",
@@ -10790,6 +10990,7 @@
         "services/kshvi/tests/preflight.test.ts#защищает активный официальный сеанс от обычной перезагрузки",
         "services/kshvi/tests/preflight.test.ts#сохраняет факты инцидента и не приравнивает техническое восстановление к методическому разрешению",
         "services/kshvi/tests/restart-recovery.test.ts#применяет новые права и очищает кэш до досылки, показывая период обрыва",
+        "services/kshvi/tests/restart-recovery.test.ts#сохраняет подтверждённую команду при отказе после COMMIT и восстанавливается новым экземпляром",
         "services/kshvi/tests/restore-divergence.test.ts#восстанавливает только в изолированную область после проверки хешей",
         "services/kshvi/tests/restore-divergence.test.ts#измеряет RPO 0, перезапуск не более пяти минут и узел не более тридцати минут",
         "services/kshvi/tests/restore-divergence.test.ts#не затирает более поздние подтверждённые события старой копией",

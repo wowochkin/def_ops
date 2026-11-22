@@ -36,6 +36,7 @@ import { CartographyEnvironmentProvider } from '../../src/environment/cartograph
 import { EnvironmentSnapshotStore, assertSnapshotComplete } from '../../src/environment/snapshot-store';
 import { buildRouter } from '../../src/app';
 import { withKshviDatabase } from '../helpers/database';
+import { validExerciseSealInput } from '../helpers/full-seal';
 import type { KshviEventStore } from '../../src/store/event-store';
 import type { ConductCommand } from '../../../../packages/kshvi/src/commands/conduct';
 import type { CalculateOptions } from '../../../../packages/kshvi/src/simulation/calculation';
@@ -143,6 +144,8 @@ async function runOfficialG2(store: KshviEventStore) {
       userId: ACTOR.userId, username: ACTOR.userId, password: 'g2-password', organizationId: ORG,
       roles: [
         { id: 'role-leader', role: 'LEADER', sideId: 'blue', authorities: ['exercise:create', 'exercise:read', 'exercise:revise', 'exercise:conduct'] },
+        { id: 'role-author', role: 'AUTHOR', sideId: 'blue', authorities: ['exercise:revise'] },
+        { id: 'role-approver', role: 'APPROVER', sideId: 'blue', authorities: ['exercise:revise'] },
         { id: 'role-director', role: 'DIRECTOR', sideId: 'blue', authorities: ['scenario.seal'] },
       ],
     });
@@ -169,9 +172,14 @@ async function runOfficialG2(store: KshviEventStore) {
     const post = <T>(path: string, body: unknown, expected = 200) => request<T>('POST', path, body, expected);
     await post('/api/kshvi/auth/role', { roleId: 'role-leader' });
 
-    let card = await post<{ id: string; revision: number; state: string; revisions: { id: string; sha256: string }[] }>('/api/kshvi/exercises', { title: 'G2', purpose: 'planned', scale: 'operational', payload: scenarioPayload }, 201);
+    let card = await post<Parameters<typeof validExerciseSealInput>[0]>('/api/kshvi/exercises', { title: 'G2', purpose: 'planned', scale: 'operational', payload: scenarioPayload }, 201);
+    const sealBody = validExerciseSealInput(card);
+    await post('/api/kshvi/auth/role', { roleId: 'role-author' });
+    await post(`/api/kshvi/exercises/${card.id}/transitions`, { expectedRevision: 1, command: 'SUBMIT' });
+    await post('/api/kshvi/auth/role', { roleId: 'role-approver' });
+    await post(`/api/kshvi/exercises/${card.id}/transitions`, { expectedRevision: 1, command: 'APPROVE' });
     await post('/api/kshvi/auth/role', { roleId: 'role-director' });
-    card = await post(`/api/kshvi/exercises/${card.id}/seal`, { expectedRevision: 1 });
+    card = await post(`/api/kshvi/exercises/${card.id}/seal`, sealBody);
     await post('/api/kshvi/auth/role', { roleId: 'role-leader' });
     expect(card.state).toBe('SEALED');
     const firstSession = await post<{ id: string; scenarioRevisionId: string; revision: number }>(`/api/kshvi/exercises/${card.id}/sessions`, { revision: 1, optimisticWorld: { forged: true } }, 201);

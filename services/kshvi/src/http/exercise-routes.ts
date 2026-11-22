@@ -8,6 +8,8 @@ import {
   type CreateSessionInput,
   type ExerciseActor,
   type ExerciseFilters,
+  type ExerciseLifecycleInput,
+  type ExerciseSealInput,
   type ExerciseStore,
 } from '../store/exercise-store';
 import { projectExerciseCard } from '../store/exercise-projection';
@@ -121,10 +123,16 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     return reply(201, await store.createRevision(actor, exerciseId(ctx), body));
   }));
 
+  router.post(`${base}/:id/transitions`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise', true);
+    const body = await ctx.json<ExerciseLifecycleInput>();
+    return store.transition(actor, exerciseId(ctx), body);
+  }));
+
   router.post(`${base}/:id/seal`, handle(async ctx => {
     const actor = await participant(ctx, 'scenario.seal', true);
-    const body = await ctx.json<{ expectedRevision?: number }>() ?? {};
-    return store.seal(actor, exerciseId(ctx), body.expectedRevision as number);
+    const body = await ctx.json<ExerciseSealInput>();
+    return store.seal(actor, exerciseId(ctx), body);
   }));
 
   router.get(`${base}/:id/sessions`, handle(async ctx => {

@@ -1,6 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createPool, migrate, tx, type Client, type Migration, type Pool } from '@def-ops/db';
-import { canonicalJson, REQUIRED_SCENARIO_ITEMS, validateKit, type JsonValue, type ScenarioKit } from '@def-ops/kshvi';
+import {
+  canonicalJson, READINESS_AREAS, REQUIRED_SCENARIO_ITEMS, sealScenario, transitionLifecycle, validateKit,
+  type JsonValue, type ScenarioKit, type SealScenarioInput, type SealedScenario,
+} from '@def-ops/kshvi';
+import { validateScenario, type ScenarioValidationInput } from '../../../../packages/kshvi/src/scenario/validation';
 
 export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' | 'exposition' | 'custom';
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
@@ -34,6 +38,7 @@ export type ExerciseRevision = Readonly<{
   payload: JsonValue;
   sha256: string;
   state: Exclude<ExerciseState, 'ARCHIVED'>;
+  sealedArtifact?: SealedScenario;
   createdBy: string;
   createdAt: string;
   supersedesId: string | null;
@@ -79,6 +84,11 @@ export type CreateRevisionInput = Readonly<{
   payload?: JsonValue;
 }>;
 
+export type ExerciseSealInput = Omit<SealScenarioInput,
+  'id' | 'revision' | 'state' | 'scenario' | 'issues' | 'requiredConfirmations' | 'sealedAt'
+> & Readonly<{ expectedRevision: number; validation: ScenarioValidationInput }>;
+export type ExerciseLifecycleInput = Readonly<{ expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }>;
+
 export type ExerciseFilters = Readonly<{
   query?: string;
   state?: ExerciseState;
@@ -115,7 +125,8 @@ export interface ExerciseStore {
   copy(actor: ExerciseActor, exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
-  seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
+  transition(actor: ExerciseSealActor, exerciseId: string, input: ExerciseLifecycleInput): Promise<ExerciseCard>;
+  seal(actor: ExerciseSealActor, exerciseId: string, input: ExerciseSealInput): Promise<ExerciseCard>;
   createSession(actor: ExerciseActor, exerciseId: string, input: CreateSessionInput): Promise<ExerciseSession>;
   transitionSession(actor: ExerciseActor, exerciseId: string, sessionId: string, input: TransitionSessionInput): Promise<ExerciseSession>;
   listSessionCommands(organizationId: string, exerciseId: string, sessionId: string): Promise<readonly SessionCommandRecord[]>;
@@ -137,6 +148,10 @@ export const KSHVI_EXERCISE_MIGRATIONS: Migration[] = [{
   id: 4,
   name: 'exercise-session-commands',
   sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/004-session-commands.sql', import.meta.url), 'utf8')),
+}, {
+  id: 5,
+  name: 'exercise-sealed-artifacts',
+  sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/005-sealed-artifacts.sql', import.meta.url), 'utf8')),
 }];
 
 const purposes = new Set<ExercisePurpose>(['planned', 'special', 'inspection', 'research', 'exposition', 'custom']);
@@ -184,6 +199,17 @@ function validateSealActor(actor: ExerciseSealActor): void {
     fail('FORBIDDEN', 'Недостаточно полномочий для запечатывания сценария');
   }
 }
+const sealInputFields = new Set([
+  'expectedRevision', 'validation', 'confirmations', 'confirmationSubjects', 'warningAcceptances', 'rehearsal',
+  'initialMap', 'environmentSnapshot', 'expectedEnvironmentSha256', 'officialEventLogId', 'hashes',
+]);
+function validateSealInput(input: ExerciseSealInput): void {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) fail('VALIDATION', 'Проверьте данные запечатывания');
+  const unknown = Object.keys(input).filter(key => !sealInputFields.has(key));
+  if (unknown.length) fail('VALIDATION', `Тело запечатывания содержит недопустимые поля: ${unknown.sort().join(', ')}`);
+  validateRevisionInput({ expectedRevision: input.expectedRevision });
+  if (!input.validation || typeof input.validation !== 'object') fail('VALIDATION', 'Укажите полную проверку сценария');
+}
 function revisionForSeal(record: ExerciseCard, expectedRevision: number): ExerciseRevision {
   if (record.state === 'ARCHIVED' || record.archivedAt !== null) fail('ARCHIVED', 'Архивное учение нельзя запечатать');
   if (record.revision !== expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
@@ -194,6 +220,55 @@ function revisionForSeal(record: ExerciseCard, expectedRevision: number): Exerci
     fail('VALIDATION', 'Запечатать можно только редакцию с готовностью 100 и результатом проверки OK');
   }
   return revision;
+}
+function sealedArtifactFor(record: ExerciseCard, revision: ExerciseRevision, input: ExerciseSealInput, sealedAt: string): SealedScenario {
+  if (record.state !== 'APPROVED' || revision.state !== 'APPROVED') {
+    fail('SEALED_REQUIRED', 'APPROVED_REQUIRED: запечатать можно только утверждённую текущую редакцию');
+  }
+  try {
+    const validation = validateScenario(input.validation);
+    const sealed = sealScenario({
+      id: revision.id,
+      revision: revision.revision,
+      state: record.state,
+      scenario: revision.payload,
+      issues: validation.issues.map(issue => ({ ...issue })),
+      requiredConfirmations: [...READINESS_AREAS],
+      confirmations: input.confirmations,
+      confirmationSubjects: input.confirmationSubjects,
+      warningAcceptances: input.warningAcceptances,
+      rehearsal: input.rehearsal,
+      initialMap: input.initialMap,
+      environmentSnapshot: input.environmentSnapshot,
+      expectedEnvironmentSha256: input.expectedEnvironmentSha256,
+      officialEventLogId: input.officialEventLogId,
+      hashes: input.hashes,
+      sealedAt,
+    });
+    if (sealed.scenarioSha256 !== revision.sha256) fail('VALIDATION', 'SCENARIO_HASH_INVALID: хеш не совпадает с текущей серверной редакцией');
+    return sealed;
+  } catch (error) {
+    if (error instanceof ExerciseStoreError) throw error;
+    const message = error instanceof Error ? error.message : String(error);
+    fail('VALIDATION', `Предусловия запечатывания не выполнены: ${message}`);
+  }
+}
+function lifecycleState(actor: ExerciseSealActor, record: ExerciseCard, input: ExerciseLifecycleInput): Exclude<ExerciseState, 'ARCHIVED'> {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) fail('VALIDATION', 'Проверьте данные перехода');
+  const unknown = Object.keys(input).filter(key => !['expectedRevision', 'command'].includes(key));
+  if (unknown.length) fail('VALIDATION', `Тело перехода содержит недопустимые поля: ${unknown.sort().join(', ')}`);
+  validateRevisionInput({ expectedRevision: input.expectedRevision });
+  if (!actor.authorities.includes('exercise:revise')) fail('FORBIDDEN', 'Недостаточно полномочий для изменения жизненного цикла');
+  if (record.state === 'ARCHIVED' || record.archivedAt !== null) fail('ARCHIVED', 'Архивное учение нельзя изменить');
+  if (record.revision !== input.expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+  const revision = record.revisions.find(item => item.revision === record.revision);
+  if (!revision) fail('REVISION_NOT_FOUND', 'Текущая редакция сценария не найдена');
+  if (revision.state !== record.state) fail('REVISION_CONFLICT', 'Состояние карточки и текущей редакции не совпадает');
+  try {
+    return transitionLifecycle(record.state, input.command, { serverCommand: true, role: actor.activeRole ?? '' }) as Exclude<ExerciseState, 'ARCHIVED'>;
+  } catch {
+    fail('FORBIDDEN', 'Переход жизненного цикла недоступен для текущего состояния и роли');
+  }
 }
 function validateCreate(input: CreateExerciseInput): void {
   if (!input || typeof input !== 'object') fail('VALIDATION', 'Проверьте данные учения');
@@ -278,8 +353,9 @@ function copiedCard(source: ExerciseCard, actor: ExerciseActor, now: string, tit
   const revisions = source.revisions.map(revision => {
     const id = revisionIds.get(revision.id)!;
     const payload = copyUuids(clone(revision.payload), ids);
+    const { sealedArtifact: _sealedArtifact, ...revisionWithoutSeal } = clone(revision);
     return {
-      ...clone(revision),
+      ...revisionWithoutSeal,
       id,
       exerciseId,
       payload,
@@ -415,16 +491,29 @@ export class InMemoryExerciseStore implements ExerciseStore {
     return publicCard(record);
   }
 
-  async seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
-    validateSealActor(actor);
-    validateRevisionInput({ expectedRevision });
+  async transition(actor: ExerciseSealActor, exerciseId: string, input: ExerciseLifecycleInput): Promise<ExerciseCard> {
     const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
-    const revision = revisionForSeal(record, expectedRevision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
+    const state = lifecycleState(actor, record, input);
+    const revision = record.revisions.find(item => item.revision === record.revision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
+    record.state = state;
+    record.updatedAt = this.now().toISOString();
+    revision.state = state;
+    return publicCard(record);
+  }
+
+  async seal(actor: ExerciseSealActor, exerciseId: string, input: ExerciseSealInput): Promise<ExerciseCard> {
+    validateSealActor(actor);
+    validateSealInput(input);
+    const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
+    const revision = revisionForSeal(record, input.expectedRevision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
+    const now = this.now().toISOString();
+    const artifact = sealedArtifactFor(record, revision, input, now);
     record.state = 'SEALED';
     record.readiness = 100;
     record.validation = 'OK';
-    record.updatedAt = this.now().toISOString();
+    record.updatedAt = now;
     revision.state = 'SEALED';
+    revision.sealedArtifact = artifact;
     return publicCard(record);
   }
 
@@ -508,6 +597,7 @@ function mapRevision(row: ExerciseRow): ExerciseRevision {
   return {
     id: row.id, exerciseId: row.exercise_id, revision: Number(row.revision), payload: row.payload,
     sha256: row.sha256, state: row.state, createdBy: row.created_by, createdAt: instant(row.created_at),
+    ...(row.sealed_artifact ? { sealedArtifact: row.sealed_artifact as SealedScenario } : {}),
     supersedesId: row.supersedes_id ?? null,
   };
 }
@@ -669,24 +759,40 @@ export class PgExerciseStore implements ExerciseStore {
     });
   }
 
-  async seal(actor: ExerciseSealActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
-    validateSealActor(actor);
-    validateRevisionInput({ expectedRevision });
+  async transition(actor: ExerciseSealActor, exerciseId: string, input: ExerciseLifecycleInput): Promise<ExerciseCard> {
     return tx(this.pool, async db => {
       await lockExercise(db, this.schema, actor.organizationId, exerciseId);
       const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
-      const revision = revisionForSeal(current, expectedRevision);
+      const state = lifecycleState(actor, current, input);
+      const revision = current.revisions.find(item => item.revision === current.revision)!;
       const now = new Date().toISOString();
-      await db.query(
+      await db.query(`update ${this.schema}.exercises set state=$3, updated_at=$4 where organization_id=$1 and id=$2`, [actor.organizationId, exerciseId, state, now]);
+      await db.query(`update ${this.schema}.exercise_revisions set state=$4 where organization_id=$1 and exercise_id=$2 and id=$3`, [actor.organizationId, exerciseId, revision.id, state]);
+      return requiredCard(db, this.schema, actor.organizationId, exerciseId);
+    });
+  }
+
+  async seal(actor: ExerciseSealActor, exerciseId: string, input: ExerciseSealInput): Promise<ExerciseCard> {
+    validateSealActor(actor);
+    validateSealInput(input);
+    return tx(this.pool, async db => {
+      await lockExercise(db, this.schema, actor.organizationId, exerciseId);
+      const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
+      const revision = revisionForSeal(current, input.expectedRevision);
+      const now = new Date().toISOString();
+      const artifact = sealedArtifactFor(current, revision, input, now);
+      const cardUpdate = await db.query(
         `update ${this.schema}.exercises set state='SEALED', readiness=100, validation='OK', updated_at=$3
          where organization_id=$1 and id=$2 and revision=$4`,
-        [actor.organizationId, exerciseId, now, expectedRevision],
+        [actor.organizationId, exerciseId, now, input.expectedRevision],
       );
-      await db.query(
-        `update ${this.schema}.exercise_revisions set state='SEALED'
+      if (cardUpdate.rowCount !== 1) fail('REVISION_CONFLICT', 'Не удалось обновить карточку при запечатывании; изменения отменены');
+      const revisionUpdate = await db.query(
+        `update ${this.schema}.exercise_revisions set state='SEALED', sealed_artifact=$5
          where organization_id=$1 and exercise_id=$2 and id=$3 and revision=$4`,
-        [actor.organizationId, exerciseId, revision.id, expectedRevision],
+        [actor.organizationId, exerciseId, revision.id, input.expectedRevision, JSON.stringify(artifact)],
       );
+      if (revisionUpdate.rowCount !== 1) fail('REVISION_CONFLICT', 'Не удалось обновить редакцию при запечатывании; изменения отменены');
       return requiredCard(db, this.schema, actor.organizationId, exerciseId);
     });
   }
