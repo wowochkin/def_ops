@@ -9,6 +9,7 @@ export type StoredSession = { id: string; userId: string; tokenHash: string; csr
 
 export interface SessionStore {
   saveAccount(account: AccountRecord): Promise<void>;
+  listAccounts(organizationId: string): Promise<AccountRecord[]>;
   findAccount(username: string): Promise<AccountRecord | null>;
   findAccountById(userId: string): Promise<AccountRecord | null>;
   saveSession(session: StoredSession): Promise<void>;
@@ -24,6 +25,7 @@ export class InMemorySessionStore implements SessionStore {
   private readonly sessions = new Map<string, StoredSession>();
 
   async saveAccount(account: AccountRecord): Promise<void> { this.accounts.set(account.userId, structuredClone(account)); }
+  async listAccounts(organizationId: string): Promise<AccountRecord[]> { return [...this.accounts.values()].filter(account => account.organizationId === organizationId).map(account => structuredClone(account)); }
   async findAccount(username: string): Promise<AccountRecord | null> { return [...this.accounts.values()].find(account => account.username === username) ?? null; }
   async findAccountById(userId: string): Promise<AccountRecord | null> { return this.accounts.get(userId) ?? null; }
   async saveSession(session: StoredSession): Promise<void> { this.sessions.set(session.tokenHash, structuredClone(session)); }
@@ -91,6 +93,18 @@ export class SessionManager {
       roles: input.roles,
       state: 'ACTIVE',
     });
+  }
+
+  async listAccounts(organizationId: string): Promise<AccountRecord[]> {
+    return this.store.listAccounts(organizationId);
+  }
+
+  async setAccountState(userId: string, state: AccountRecord['state']): Promise<AccountRecord> {
+    const account = await this.store.findAccountById(userId);
+    if (!account) throw new HttpError(404, 'not_found', 'Учётная запись не найдена');
+    const updated = { ...account, state };
+    await this.store.saveAccount(updated);
+    return updated;
   }
 
   async login(username: string, password: string): Promise<{ token: string; csrfToken: string; cookie: string; participant: ParticipantContext }> {

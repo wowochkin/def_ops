@@ -92,6 +92,21 @@ export type CreateSessionInput = Readonly<{
   optimisticWorld?: unknown;
 }>;
 
+export type SessionCommand = 'PAUSE' | 'RESUME' | 'PRIVATE_STOP' | 'GENERAL_STOP' | 'JUMP' | 'COMPLETE' | 'ABORT';
+export type TransitionSessionInput = Readonly<{
+  expectedRevision: number;
+  command: SessionCommand;
+  idempotencyKey: string;
+}>;
+export type SessionCommandRecord = Readonly<{
+  sessionId: string;
+  command: SessionCommand;
+  idempotencyKey: string;
+  confirmedRevision: number;
+  state: ExerciseSession['state'];
+  createdAt: string;
+}>;
+
 export interface ExerciseStore {
   create(actor: ExerciseActor, input: CreateExerciseInput): Promise<ExerciseCard>;
   list(organizationId: string, filters: ExerciseFilters): Promise<readonly ExerciseSummary[]>;
@@ -100,6 +115,8 @@ export interface ExerciseStore {
   archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
   createSession(actor: ExerciseActor, exerciseId: string, input: CreateSessionInput): Promise<ExerciseSession>;
+  transitionSession(actor: ExerciseActor, exerciseId: string, sessionId: string, input: TransitionSessionInput): Promise<ExerciseSession>;
+  listSessionCommands(organizationId: string, exerciseId: string, sessionId: string): Promise<readonly SessionCommandRecord[]>;
   getSession(organizationId: string, exerciseId: string, sessionId: string): Promise<ExerciseSession | null>;
   listSessions(organizationId: string, exerciseId: string): Promise<readonly ExerciseSession[]>;
 }
@@ -114,6 +131,10 @@ export const KSHVI_EXERCISE_MIGRATIONS: Migration[] = [{
   id: 3,
   name: 'exercise-library',
   sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/003-exercises.sql', import.meta.url), 'utf8')),
+}, {
+  id: 4,
+  name: 'exercise-session-commands',
+  sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/004-session-commands.sql', import.meta.url), 'utf8')),
 }];
 
 const purposes = new Set<ExercisePurpose>(['planned', 'special', 'inspection', 'research', 'exposition', 'custom']);
@@ -172,6 +193,26 @@ function validateCopyTitle(title: unknown): void {
 function validateSessionInput(input: CreateSessionInput): void {
   if (!input || typeof input !== 'object') fail('VALIDATION', 'Проверьте данные сеанса');
   validateRevisionInput({ expectedRevision: input.revision });
+}
+function nextSessionState(current: ExerciseSession['state'], command: SessionCommand): ExerciseSession['state'] {
+  if (current === 'COMPLETED' || current === 'ABORTED' || current === 'ARCHIVED') fail('REVISION_CONFLICT', 'Завершённый сеанс нельзя изменить');
+  if (command === 'COMPLETE') return 'COMPLETED';
+  if (command === 'ABORT') return 'ABORTED';
+  if (command === 'JUMP') return current;
+  if (command === 'RESUME') {
+    if (current !== 'PAUSED') fail('REVISION_CONFLICT', 'Продолжить можно только приостановленный сеанс');
+    return 'ACTIVE';
+  }
+  if (command === 'PAUSE' || command === 'PRIVATE_STOP' || command === 'GENERAL_STOP') {
+    if (current !== 'ACTIVE') fail('REVISION_CONFLICT', 'Приостановить можно только активный сеанс');
+    return 'PAUSED';
+  }
+  fail('VALIDATION', 'Неизвестная команда сеанса');
+}
+function validateTransition(input: TransitionSessionInput): void {
+  if (!input || !Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0) fail('VALIDATION', 'Укажите ожидаемую ревизию сеанса');
+  if (typeof input.idempotencyKey !== 'string' || !input.idempotencyKey.trim()) fail('VALIDATION', 'Укажите идемпотентный ключ команды');
+  if (!['PAUSE', 'RESUME', 'PRIVATE_STOP', 'GENERAL_STOP', 'JUMP', 'COMPLETE', 'ABORT'].includes(input.command)) fail('VALIDATION', 'Неизвестная команда сеанса');
 }
 function copyUuids(value: JsonValue, ids: Map<string, string>): JsonValue {
   if (typeof value === 'string' && uuidPattern.test(value)) {
@@ -251,6 +292,7 @@ function copiedCard(source: ExerciseCard, actor: ExerciseActor, now: string, tit
 
 export class InMemoryExerciseStore implements ExerciseStore {
   private readonly records = new Map<string, ExerciseCard>();
+  private readonly sessionCommands = new Map<string, { request: string; session: ExerciseSession; record: SessionCommandRecord }>();
   private readonly now: () => Date;
   constructor(options: { now?: () => Date } = {}) { this.now = options.now ?? (() => new Date()); }
   private key(organizationId: string, exerciseId: string): string { return `${organizationId}/${exerciseId}`; }
@@ -373,6 +415,37 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.lastSessionId = session.id;
     record.updatedAt = session.createdAt;
     return clone(session);
+  }
+
+  async transitionSession(actor: ExerciseActor, exerciseId: string, sessionId: string, input: TransitionSessionInput): Promise<ExerciseSession> {
+    validateTransition(input);
+    const commandKey = `${actor.organizationId}/${sessionId}/${input.idempotencyKey}`;
+    const request = JSON.stringify({ exerciseId, command: input.command, expectedRevision: input.expectedRevision });
+    const previous = this.sessionCommands.get(commandKey);
+    if (previous) {
+      if (previous.request !== request) fail('REVISION_CONFLICT', 'Ключ команды уже использован с другим содержимым');
+      return clone(previous.session);
+    }
+    const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
+    const session = record.sessions.find(item => item.id === sessionId) as ExerciseSession | undefined;
+    if (!session) fail('NOT_FOUND', 'Сеанс не найден');
+    if (session.confirmedRevision !== input.expectedRevision) fail('REVISION_CONFLICT', 'Сеанс изменился, обновите серверную ревизию');
+    const mutable = session as { -readonly [K in keyof ExerciseSession]: ExerciseSession[K] };
+    mutable.state = nextSessionState(session.state, input.command);
+    mutable.confirmedRevision += 1;
+    record.updatedAt = this.now().toISOString();
+    this.sessionCommands.set(commandKey, {
+      request, session: clone(session),
+      record: { sessionId, command: input.command, idempotencyKey: input.idempotencyKey, confirmedRevision: session.confirmedRevision, state: session.state, createdAt: record.updatedAt },
+    });
+    return clone(session);
+  }
+
+  async listSessionCommands(organizationId: string, exerciseId: string, sessionId: string): Promise<readonly SessionCommandRecord[]> {
+    const record = this.required(organizationId, exerciseId);
+    if (!record.sessions.some(session => session.id === sessionId)) fail('NOT_FOUND', 'Сеанс не найден');
+    return [...this.sessionCommands.entries()].filter(([key]) => key.startsWith(`${organizationId}/${sessionId}/`))
+      .map(([, value]) => clone(value.record)).sort((left, right) => left.confirmedRevision - right.confirmedRevision);
   }
 
   async getSession(organizationId: string, exerciseId: string, sessionId: string): Promise<ExerciseSession | null> {
@@ -589,6 +662,45 @@ export class PgExerciseStore implements ExerciseStore {
       await db.query(`update ${this.schema}.exercises set updated_at=$3 where organization_id=$1 and id=$2`, [actor.organizationId, exerciseId, session.createdAt]);
       return session;
     });
+  }
+
+  async transitionSession(actor: ExerciseActor, exerciseId: string, sessionId: string, input: TransitionSessionInput): Promise<ExerciseSession> {
+    validateTransition(input);
+    return tx(this.pool, async db => {
+      await lockExercise(db, this.schema, actor.organizationId, exerciseId);
+      const previous = await db.query(`select exercise_id, command, expected_revision, result from ${this.schema}.exercise_session_commands
+        where organization_id=$1 and session_id=$2 and idempotency_key=$3`, [actor.organizationId, sessionId, input.idempotencyKey]);
+      if (previous.rows[0]) {
+        const row = previous.rows[0];
+        if (row.exercise_id !== exerciseId || row.command !== input.command || Number(row.expected_revision) !== input.expectedRevision) {
+          fail('REVISION_CONFLICT', 'Ключ команды уже использован с другим содержимым');
+        }
+        return clone(row.result as ExerciseSession);
+      }
+      const result = await db.query(`select * from ${this.schema}.exercise_sessions where organization_id=$1 and exercise_id=$2 and id=$3 for update`, [actor.organizationId, exerciseId, sessionId]);
+      if (!result.rows[0]) fail('NOT_FOUND', 'Сеанс не найден');
+      const current = mapSession(result.rows[0]);
+      if (current.confirmedRevision !== input.expectedRevision) fail('REVISION_CONFLICT', 'Сеанс изменился, обновите серверную ревизию');
+      const state = nextSessionState(current.state, input.command);
+      const updated = await db.query(`update ${this.schema}.exercise_sessions set state=$4, confirmed_revision=confirmed_revision+1
+        where organization_id=$1 and exercise_id=$2 and id=$3 and confirmed_revision=$5 returning *`,
+      [actor.organizationId, exerciseId, sessionId, state, input.expectedRevision]);
+      if (!updated.rows[0]) fail('REVISION_CONFLICT', 'Сеанс изменился, обновите серверную ревизию');
+      const stored = mapSession(updated.rows[0]);
+      const now = new Date().toISOString();
+      await db.query(`insert into ${this.schema}.exercise_session_commands
+        (organization_id, exercise_id, session_id, idempotency_key, command, expected_revision, confirmed_revision, result, created_at)
+        values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [actor.organizationId, exerciseId, sessionId, input.idempotencyKey, input.command, input.expectedRevision, stored.confirmedRevision, JSON.stringify(stored), now]);
+      await db.query(`update ${this.schema}.exercises set updated_at=$3 where organization_id=$1 and id=$2`, [actor.organizationId, exerciseId, now]);
+      return stored;
+    });
+  }
+
+  async listSessionCommands(organizationId: string, exerciseId: string, sessionId: string): Promise<readonly SessionCommandRecord[]> {
+    const result = await this.pool.query(`select command, idempotency_key, confirmed_revision, result, created_at from ${this.schema}.exercise_session_commands
+      where organization_id=$1 and exercise_id=$2 and session_id=$3 order by confirmed_revision`, [organizationId, exerciseId, sessionId]);
+    return result.rows.map(row => ({ sessionId, command: row.command, idempotencyKey: row.idempotency_key, confirmedRevision: Number(row.confirmed_revision), state: row.result.state, createdAt: instant(row.created_at) }));
   }
 
   async getSession(organizationId: string, exerciseId: string, sessionId: string): Promise<ExerciseSession | null> {

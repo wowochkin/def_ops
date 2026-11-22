@@ -29,9 +29,15 @@ export class PgSessionStore implements SessionStore {
 
   async saveAccount(value: AccountRecord): Promise<void> {
     await this.pool.query(
-      `insert into ${this.schema}.accounts (user_id, username, password_hash, organization_id, roles, state) values ($1,$2,$3,$4,$5,$6)`,
+      `insert into ${this.schema}.accounts (user_id, username, password_hash, organization_id, roles, state) values ($1,$2,$3,$4,$5,$6)
+       on conflict (user_id) do update set password_hash=excluded.password_hash, organization_id=excluded.organization_id, roles=excluded.roles, state=excluded.state`,
       [value.userId, value.username, value.passwordHash, value.organizationId, JSON.stringify(value.roles), value.state],
     );
+  }
+
+  async listAccounts(organizationId: string): Promise<AccountRecord[]> {
+    const result = await this.pool.query(`select * from ${this.schema}.accounts where organization_id=$1 order by username, user_id`, [organizationId]);
+    return result.rows.map(account);
   }
 
   async findAccount(username: string): Promise<AccountRecord | null> {

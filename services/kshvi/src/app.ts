@@ -17,6 +17,17 @@ import { registerSseRoutes } from './http/sse';
 import { SealingService } from './instances/sealing-service';
 import { registerSealingRoutes } from './http/sealing-routes';
 import type { ProjectableWorld } from '../../../packages/kshvi/src/projections/project';
+import { OfficialSessionService } from './runtime/official-session-service';
+import { registerWorkflowRoutes } from './http/workflow-routes';
+import { registerArchiveRoutes } from './http/archive-routes';
+import { registerExpositionRoutes } from './http/exposition-routes';
+import { createTrainingExpositionService } from './exposition/training-exposition';
+import { registerAdminRoutes } from './http/admin-routes';
+import { AdminOverviewService } from './admin/admin-overview-service';
+import { SessionAccountDirectory } from './auth/session-account-directory';
+import { AssignmentService } from './auth/assignment-service';
+import { ConfigCatalog } from './admin/config-catalog';
+import { SecurityAudit } from './auth/security-audit';
 
 function tokenOf(ctx: Ctx): string {
   const bearer = ctx.req.headers.authorization;
@@ -38,10 +49,16 @@ export type BuildRouterOptions = {
   subscriptions?: SubscriptionService;
   projectionWorld?: ProjectableWorld;
   sealing?: SealingService;
+  workflow?: OfficialSessionService;
+  admin?: AdminOverviewService;
 };
 
-export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService() }: BuildRouterOptions): Router {
+export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStore(), forceStore = new MemoryModernImportStore(), environmentProvider, instances = new InstanceService(), commands = new CommandService(), projections = new ProjectionService(), subscriptions = new SubscriptionService(), projectionWorld = { forces: [] }, sealing = new SealingService(), workflow, admin }: BuildRouterOptions): Router {
   const router = new Router();
+  const integratedWorkflow = workflow ?? new OfficialSessionService(exerciseStore);
+  const integratedAdmin = admin ?? new AdminOverviewService({
+    directory: new SessionAccountDirectory(sessions), assignments: new AssignmentService(), configs: new ConfigCatalog(), audit: new SecurityAudit(),
+  });
   const participant = async (ctx: Ctx) => sessions.authenticate(tokenOf(ctx));
 
   router.post(`${KSHVI_ROUTE_PREFIX}/auth/login`, async ctx => {
@@ -77,6 +94,10 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerProjectionRoutes(router, projections, projectionWorld);
   registerSseRoutes(router, subscriptions);
   registerSealingRoutes(router, sealing);
+  registerWorkflowRoutes(router, { sessions, workflow: integratedWorkflow });
+  registerArchiveRoutes(router, { sessions, workflow: integratedWorkflow });
+  registerExpositionRoutes(router, createTrainingExpositionService());
+  registerAdminRoutes(router, { sessions, admin: integratedAdmin });
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
 
   const match = router.match.bind(router);

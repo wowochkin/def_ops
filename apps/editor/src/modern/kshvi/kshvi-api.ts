@@ -1,3 +1,7 @@
+import type { ExpositionSession } from '../../../../../packages/kshvi/src/exposition/exposition-session';
+import type { AudienceProjectionView } from './exposition/AudienceProjector';
+import type { AdminOverviewService } from '../../../../../services/kshvi/src/admin/admin-overview-service';
+
 export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' | 'exposition' | 'custom';
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
 export type ExerciseState = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'SEALED' | 'CANCELLED' | 'ARCHIVED';
@@ -86,6 +90,24 @@ export type Participant = Readonly<{
   authorities: readonly string[];
 }>;
 
+export type SessionCommand = 'PAUSE' | 'RESUME' | 'PRIVATE_STOP' | 'GENERAL_STOP' | 'JUMP' | 'COMPLETE' | 'ABORT';
+export type ReplayFrame = Readonly<{
+  sequence: number;
+  maxSequence: number;
+  operationalAt: string;
+  wallClockAt: string;
+  perspective: 'PARTICIPANT' | 'TRUTH';
+  source: 'TRUTH' | 'RECORDED_PARTICIPANT_PROJECTION';
+  stateHash: string | null;
+  domains: Record<string, unknown>;
+  events: readonly { eventId: string; type: string; sequence: number }[];
+}>;
+export type DebriefRecord = Readonly<{ scope: 'GENERAL' | 'PRIVATE'; revision: number; audience: readonly string[]; referenceIntent: string }>;
+export type AssessmentRecord = Readonly<{ status: 'DRAFT' | 'APPROVED'; finalAssessment: string | null; finalComment: string | null; confirmation: { id: string; role: string; confirmedAt: string } | null }>;
+export type ArchiveRecord = Readonly<{ archiveId: string; manifestSha256: string; mode: 'AUTONOMOUS' | 'LIMITED_RESEARCH'; missing: readonly string[] }>;
+export type ExpositionRecord = Readonly<{ purpose: 'EXPOSITION'; session: ExpositionSession; projection: AudienceProjectionView }>;
+export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>>;
+
 export interface KshviClient {
   me(): Promise<Participant>;
   list(filters?: ExerciseFilters): Promise<readonly ExerciseSummary[]>;
@@ -97,6 +119,18 @@ export interface KshviClient {
   listSessions(exerciseId: string): Promise<readonly ExerciseSession[]>;
   getSession(exerciseId: string, sessionId: string): Promise<ExerciseSession>;
   createSession(exerciseId: string, input: { revision: number }): Promise<ExerciseSession>;
+  command(exerciseId: string, sessionId: string, input: { command: SessionCommand; expectedRevision: number; idempotencyKey: string }): Promise<ExerciseSession>;
+  replay(exerciseId: string, sessionId: string, input?: { cursor?: number; perspective?: 'PARTICIPANT' | 'TRUTH' }): Promise<ReplayFrame>;
+  debrief(exerciseId: string, sessionId: string, scope: 'GENERAL' | 'PRIVATE'): Promise<DebriefRecord>;
+  approveAssessment(exerciseId: string, sessionId: string, input: { finalAssessment: string; comment: string; idempotencyKey: string }): Promise<AssessmentRecord>;
+  createArchive(exerciseId: string, sessionId: string): Promise<ArchiveRecord>;
+  exportArchive(archiveId: string): Promise<unknown>;
+  exposition(archiveId: string): Promise<ExpositionRecord>;
+  adminOverview(): Promise<AdminOverview>;
+  blockAccount(accountId: string): Promise<unknown>;
+  archiveAccount(accountId: string): Promise<unknown>;
+  revokeAssignment(assignmentId: string): Promise<unknown>;
+  exportAudit(): Promise<readonly unknown[]>;
 }
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -173,5 +207,31 @@ export class ExerciseClient implements KshviClient {
   }
   createSession(exerciseId: string, input: { revision: number }): Promise<ExerciseSession> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/sessions`, { revision: input.revision });
+  }
+  command(exerciseId: string, sessionId: string, input: { command: SessionCommand; expectedRevision: number; idempotencyKey: string }): Promise<ExerciseSession> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/sessions/${encodeURIComponent(sessionId)}/commands`, input);
+  }
+  replay(exerciseId: string, sessionId: string, input: { cursor?: number; perspective?: 'PARTICIPANT' | 'TRUTH' } = {}): Promise<ReplayFrame> {
+    const query = new URLSearchParams({ cursor: String(input.cursor ?? 0), perspective: input.perspective ?? 'PARTICIPANT' });
+    return this.request('GET', `/exercises/${encodeURIComponent(exerciseId)}/sessions/${encodeURIComponent(sessionId)}/replay?${query}`);
+  }
+  debrief(exerciseId: string, sessionId: string, scope: 'GENERAL' | 'PRIVATE'): Promise<DebriefRecord> {
+    return this.request('GET', `/exercises/${encodeURIComponent(exerciseId)}/sessions/${encodeURIComponent(sessionId)}/debrief?scope=${scope}`);
+  }
+  approveAssessment(exerciseId: string, sessionId: string, input: { finalAssessment: string; comment: string; idempotencyKey: string }): Promise<AssessmentRecord> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/sessions/${encodeURIComponent(sessionId)}/debrief/assessment`, input);
+  }
+  createArchive(exerciseId: string, sessionId: string): Promise<ArchiveRecord> {
+    return this.request('POST', '/archives', { exerciseId, sessionId });
+  }
+  exportArchive(archiveId: string): Promise<unknown> { return this.request('GET', `/archives/${encodeURIComponent(archiveId)}/export`); }
+  exposition(archiveId: string): Promise<ExpositionRecord> { return this.request('GET', `/expositions/${encodeURIComponent(archiveId)}`); }
+  adminOverview(): Promise<AdminOverview> { return this.request('GET', '/admin/overview'); }
+  blockAccount(accountId: string): Promise<unknown> { return this.request('POST', `/admin/accounts/${encodeURIComponent(accountId)}/block`, {}); }
+  archiveAccount(accountId: string): Promise<unknown> { return this.request('POST', `/admin/accounts/${encodeURIComponent(accountId)}/archive`, {}); }
+  revokeAssignment(assignmentId: string): Promise<unknown> { return this.request('POST', `/admin/assignments/${encodeURIComponent(assignmentId)}/revoke`, {}); }
+  async exportAudit(): Promise<readonly unknown[]> {
+    const result = await this.request<{ items: unknown[] }>('POST', '/admin/audit/export', {});
+    return result.items;
   }
 }

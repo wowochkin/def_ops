@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { collectFunctionalIds, evaluateFunctionalMatrix } from '../kshvi-contract-matrix.mjs';
 
 const spec = 'KSHVI-F-GEN-01 KSHVI-F-GEN-02 KSHVI-NF-01 KSHVI-AC-01 KSHVI-F-GEN-01';
@@ -31,4 +34,33 @@ test('требует полный набор идентификаторов и �
   });
   assert.deepEqual(result.totalMismatch, { expected: 2, actual: 99 });
   assert.deepEqual(result.unexpectedIds, ['KSHVI-F-OTHER-99']);
+});
+
+test('блокирует несуществующие файлы реализации, тестов и доказательств', () => {
+  const root = mkdtempSync(join(tmpdir(), 'kshvi-matrix-missing-'));
+  const result = evaluateFunctionalMatrix('KSHVI-F-GEN-01', {
+    total: 1,
+    requirements: [{ id: 'KSHVI-F-GEN-01', implementation: ['missing.ts'], tests: ['missing.test.ts'], evidence: ['missing.test.ts#проверка'] }],
+  }, { root, validateFiles: true });
+  assert.deepEqual(result.unimplemented, ['KSHVI-F-GEN-01']);
+  assert.deepEqual(result.missingTests, ['KSHVI-F-GEN-01']);
+  assert.deepEqual(result.missingEvidence, ['KSHVI-F-GEN-01']);
+});
+
+test('принимает только реальный файл и существующую именованную проверку', () => {
+  const root = mkdtempSync(join(tmpdir(), 'kshvi-matrix-real-'));
+  mkdirSync(join(root, 'packages/kshvi/src'), { recursive: true });
+  mkdirSync(join(root, 'packages/kshvi/tests'), { recursive: true });
+  writeFileSync(join(root, 'packages/kshvi/src/model.ts'), 'export const model = true;\n');
+  writeFileSync(join(root, 'packages/kshvi/tests/model.test.ts'), "it('проверяет модель', () => { expect(true).toBe(true); });\n");
+  const result = evaluateFunctionalMatrix('KSHVI-F-GEN-01', {
+    total: 1,
+    requirements: [{
+      id: 'KSHVI-F-GEN-01', implementation: ['packages/kshvi/src/model.ts'],
+      tests: ['packages/kshvi/tests/model.test.ts'], evidence: ['packages/kshvi/tests/model.test.ts#проверяет модель'],
+    }],
+  }, { root, validateFiles: true });
+  assert.deepEqual(result.unimplemented, []);
+  assert.deepEqual(result.missingTests, []);
+  assert.deepEqual(result.missingEvidence, []);
 });

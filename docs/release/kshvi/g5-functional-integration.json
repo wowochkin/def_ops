@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "G5",
+  "status": "passed",
+  "verificationStatus": "passed",
+  "generatedAt": "2026-11-22T01:00:26Z",
+  "baseHead": "fa7d393929096add0a3a6926fb894018e5eff9bc",
+  "requirements": {
+    "total": 267,
+    "implemented": 267,
+    "withTests": 267,
+    "withEvidence": 267,
+    "unimplemented": [],
+    "missingTests": [],
+    "missingEvidence": [],
+    "unexpectedIds": [],
+    "duplicateIds": []
+  },
+  "commands": [
+    {
+      "command": "node scripts/kshvi-contract-matrix.mjs --spec docs/superpowers/specs/2026-11-20-kshvi-modern-design.md --require-total 267 --require-complete --output docs/release/kshvi/functional-contract-matrix.json",
+      "status": "passed",
+      "result": "267/267; все массивы пробелов пусты"
+    },
+    {
+      "command": "TEST_DATABASE_URL=postgres://vladimirabramov@127.0.0.1:5432/postgres npx vitest run services/kshvi/tests/contracts",
+      "status": "passed",
+      "result": "5 файлов, 9 проверок"
+    },
+    {
+      "command": "TEST_DATABASE_URL=postgres://vladimirabramov@127.0.0.1:5432/postgres npm test",
+      "status": "passed",
+      "result": "423 файла, 3527 проверок; 1 файл и 36 проверок пропущены штатными условиями"
+    },
+    {
+      "command": "KSHVI_BASE_URL=http://127.0.0.1:5173 npx playwright test apps/editor/tests/kshvi-library.spec.ts apps/editor/tests/kshvi-workspaces.spec.ts apps/editor/tests/kshvi-replay.spec.ts apps/editor/tests/kshvi-exposition.spec.ts apps/editor/tests/kshvi-full-navigation.spec.ts --reporter=line --workers=1",
+      "status": "passed",
+      "result": "6 сценариев; Vite остановлен одноразовым runner"
+    },
+    {
+      "command": "node --test scripts/tests/kshvi-contract-matrix.test.mjs",
+      "status": "passed",
+      "result": "5 проверок строгой валидации ссылок"
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "passed",
+      "result": "Ошибок нет"
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "result": "Production-сборка редактора создана; сохраняется существующее предупреждение о размере chunks"
+    },
+    {
+      "command": "npm run docs:system",
+      "status": "passed",
+      "result": "pandoc 3.14, Playwright Chromium; PDF 307 страниц, DOCX 206 media-файлов; новые фразы проверены в обоих форматах"
+    }
+  ],
+  "lifecycle": {
+    "route": "современный режим → КШВИ → карта/погода → подготовка → SEALED → ACTIVE → PAUSED → ACTIVE → COMPLETED → реплей → разбор → архив → экспозиция",
+    "serverAuthority": true,
+    "idempotentReplayRecovery": "PostgreSQL: новый экземпляр сервиса вернул исходный результат PAUSE без второго эффекта и восстановил кадр sequence=1",
+    "participantProjection": "Скрытый эталон отсутствует; TRUTH без TRUTH_READ возвращает 403",
+    "assessment": "APPROVED человеком-руководителем и включена в архив",
+    "archiveExport": "Манифест и SHA-256 совпадают с экспортированным пакетом",
+    "adminAccounts": "Обзор использует SessionStore; блокировка запрещает вход с 401; PostgreSQL upsert не создаёт дубликат",
+    "audiencePrivacy": "Скрытые пояснения, serviceIntent и закрытое обоснование не попадают в аудиторную проекцию",
+    "browserEntry": "Решения, реплей, разбор и экспозиция не импортируют node:crypto, серверные модули или packages/sim"
+  },
+  "limitations": [
+    {
+      "code": "INTEGRATED_ARCHIVE_CONTENT",
+      "mode": "LIMITED_RESEARCH",
+      "blocking": false,
+      "details": "Минимальный сквозной сеанс не содержит всех обязательных компонентов среды, типов фактов и offline-ресурсов, поэтому его архив корректно маркируется LIMITED_RESEARCH и не объявляется автономным. Полный автономный пакет отдельно проверяется services/kshvi/tests/archive-roundtrip.test.ts."
+    },
+    {
+      "code": "JUMP_REQUIRES_DEDICATED_INPUT",
+      "mode": "EXPLICIT_REJECTION",
+      "blocking": false,
+      "details": "Кнопка скачка без целевого времени, расчёта и отдельного утверждения отклоняется без серверного успеха. Сам алгоритм скачка проверяется packages/kshvi/tests/jump.test.ts; обязательный маршрут G5 использует PAUSE/RESUME/COMPLETE."
+    }
+  ],
+  "openErrors": [],
+  "artifacts": [
+    "docs/release/kshvi/functional-contract-matrix.json",
+    "packages/kshvi/schemas/openapi.json",
+    "packages/kshvi/schemas/api.schema.json",
+    "services/kshvi/tests/contracts/full-domain-contract.test.ts",
+    "services/kshvi/tests/contracts/legacy-regression.test.ts",
+    "services/kshvi/tests/contracts/openapi-contract.test.ts",
+    "services/kshvi/tests/contracts/admin-accounts.test.ts",
+    "services/kshvi/tests/contracts/session-recovery.test.ts",
+    "apps/editor/tests/kshvi-full-navigation.test.tsx",
+    "apps/editor/tests/kshvi-full-navigation.spec.ts",
+    "docs/img/modern-kshvi-library.jpg",
+    "docs/img/modern-kshvi-conduct.jpg",
+    "docs/img/modern-kshvi-exposition.jpg",
+    "docs/img/modern-kshvi-admin.jpg",
+    "docs/system.md",
+    "docs/system.pdf",
+    "docs/system.docx"
+  ]
+}

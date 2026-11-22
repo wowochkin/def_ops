@@ -1,9 +1,9 @@
-import type { LocalAccountPublic } from '../../../../../../services/kshvi/src/auth/local-directory';
+import type { AdminAccountPublic } from '../../../../../../services/kshvi/src/admin/admin-overview-service';
 
 const stateLabels = { ACTIVE: 'Активна', BLOCKED: 'Заблокирована', ARCHIVED: 'Архивирована' } as const;
 
 export function AccountsWorkspace({ accounts, disseminationLabel, onBlock, onArchive }: {
-  accounts: readonly LocalAccountPublic[];
+  accounts: readonly AdminAccountPublic[];
   disseminationLabel: string;
   onBlock: (userId: string) => void;
   onArchive: (userId: string) => void;

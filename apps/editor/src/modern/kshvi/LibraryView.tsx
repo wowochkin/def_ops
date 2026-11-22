@@ -42,11 +42,12 @@ type Props = {
   onCompare?: (item: LibraryExercise) => void;
   onArchive?: (item: LibraryExercise) => void;
   onOpenSession?: (item: LibraryExercise) => void;
+  onOpenWorkflow?: (item: LibraryExercise) => void;
 };
 
 export function LibraryView({
   items, filters = {}, busy = false, loading = false, notice = '', error = '', archiveMode = false,
-  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession,
+  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession, onOpenWorkflow,
 }: Props) {
   const uid = useId().replaceAll(':', '');
   const [query, setQuery] = useState(filters.query ?? '');
@@ -190,6 +191,7 @@ export function LibraryView({
           </dl>
           <p className="kshvi-owner-readable">{item.ownerId ? `Ответственный: ${item.ownerId}` : 'Ответственный не назначен'}</p>
           <div className="kshvi-card-actions">
+            {onOpenWorkflow && <button type="button" disabled={busy} aria-label={`Рабочий цикл ${item.title}`} onClick={() => onOpenWorkflow(item)}>Рабочий цикл</button>}
             {onCompare && <button type="button" disabled={busy} aria-label={`Сравнить редакции ${item.title}`} onClick={() => onCompare(item)}>Редакции</button>}
             {onOpenSession && item.lastSessionId && <button type="button" disabled={busy} aria-label={`Перейти к последнему сеансу ${item.title}`} onClick={() => onOpenSession(item)}>Последний сеанс</button>}
             {onCopy && <button type="button" disabled={busy} aria-label={`Копировать ${item.title}`} onClick={() => onCopy(item)}>Копировать</button>}

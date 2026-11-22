@@ -70,7 +70,7 @@ test('библиотека КШВИ читается при 1440×900 и 125 %, 
     await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
   }
   await expect(page.getByRole('button', { name: 'Администрирование' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Показ' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Показ' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('def_ops.modern.weather.region'))).toBe('{"bounds":[1,2,3,4]}');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(page.locator('.modern-kshvi > .kshvi-heading')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');

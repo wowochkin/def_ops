@@ -130,3 +130,26 @@ export {
   type ExpositionProgram as ExpositionProgramModel,
 } from './exposition/exposition-program';
 export * from './exposition/exposition-session';
+export {
+  createDecision, projectDecision, reviseDecision, transitionDecision, completeExercise,
+  createDecisionCycle, recordDecisionElement, DECISION_STATUSES, DECISION_CYCLE_ELEMENTS,
+  type Decision as OperationalDecision, type DecisionInput, type DecisionStatus,
+  type DecisionCycle, type DecisionCycleElement, type DecisionCycleEntry,
+} from './decisions/decision-cycle';
+export * from './decisions/order-execution';
+export * from './decisions/playbook';
+export * from './replay/replay-engine';
+export * from './replay/replay-clock';
+export * from './replay/perspective';
+export * from './replay/causal-links';
+export * from './replay/branch';
+export * from './replay/branch-diff';
+export * from './replay/rerun';
+export * from './replay/research-card';
+export * from './assessment/assessment-sheet';
+export * from './assessment/debrief';
+export * from './assessment/evidence-link';
+export * from './assessment/metric-definition';
+export * from './assessment/metric-engine';
+export * from './archive/archive-manifest';
+export * from './archive/archive-schema';

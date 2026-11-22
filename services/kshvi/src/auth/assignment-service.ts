@@ -116,6 +116,10 @@ export class AssignmentService {
     return assignment ? [structuredClone(assignment)] : [];
   }
 
+  list(organizationId: string): RoleAssignment[] {
+    return [...this.assignments.values()].filter(assignment => assignment.organizationId === organizationId).map(assignment => structuredClone(assignment));
+  }
+
   preflight(instanceId: string, requiredPosts: readonly { postId: string; critical: boolean }[]): Array<{ code: string; postId: string }> {
     const timestamp = this.now().getTime();
     return requiredPosts.filter(post => post.critical).flatMap(post => {

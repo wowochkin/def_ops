@@ -1,26 +1,37 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   ExerciseClient,
+  type AdminOverview,
+  type ArchiveRecord,
   type CreateExerciseInput,
+  type DebriefRecord,
   type ExerciseCard,
   type ExerciseFilters,
   type ExerciseRevision,
   type ExerciseSession,
+  type ExpositionRecord,
   type KshviClient,
+  type ReplayFrame,
+  type SessionCommand,
 } from './kshvi-api';
 import { LibraryView, type LibraryExercise } from './LibraryView';
 import { PreparationWorkspace } from './preparation/PreparationWorkspace';
 import { ConductWorkspace } from './conduct/ConductWorkspace';
+import { ReplayWorkspace } from './replay/ReplayWorkspace';
+import { ReviewWorkspace } from './assessment/ReviewWorkspace';
+import { ArchiveWorkspace } from './archive/ArchiveWorkspace';
+import { AdminWorkspace } from './admin/AdminWorkspace';
 import { BrowserExpositionApp } from './exposition/browser-entry';
 import './kshvi.css';
 
-type KshviSection = 'library' | 'preparation' | 'conduct' | 'review' | 'archive' | 'exposition' | 'admin';
+type KshviSection = 'library' | 'preparation' | 'conduct' | 'replay' | 'review' | 'archive' | 'exposition' | 'admin';
 const SECTION_KEY = 'def_ops.kshvi.section';
 const LOCAL_EDITOR_KEY = 'def_ops.kshvi.local-editor';
 const sections: readonly { id: KshviSection; label: string }[] = [
   { id: 'library', label: 'Библиотека' },
   { id: 'preparation', label: 'Подготовка' },
   { id: 'conduct', label: 'Проведение' },
+  { id: 'replay', label: 'Реплей' },
   { id: 'review', label: 'Разбор' },
   { id: 'archive', label: 'Архив' },
   { id: 'exposition', label: 'Показ' },
@@ -97,32 +108,44 @@ function LocalEditor() {
   </section>;
 }
 
-export function KshviView({ client: providedClient, authorities: providedAuthorities }: {
+export function KshviView({ client: providedClient, authorities: providedAuthorities, role: providedRole }: {
   client?: KshviClient;
   authorities?: readonly string[];
+  role?: string;
 }) {
   const fallbackClient = useMemo(() => new ExerciseClient(), []);
   const client = providedClient ?? fallbackClient;
   const [serverAuthorities, setServerAuthorities] = useState<readonly string[]>(readAuthorities);
+  const [serverRole, setServerRole] = useState(providedRole ?? 'TRAINEE');
   const authorities = providedAuthorities ?? serverAuthorities;
+  const role = providedRole ?? serverRole;
   const can = useCallback((authority: string) => authorities.includes(authority), [authorities]);
   const canAdmin = can('kshvi:admin');
   const [activeTab, setActiveTab] = useState<KshviSection>(() => savedSection(providedAuthorities?.includes('kshvi:admin') ?? false));
   const [filters, setFilters] = useState<ExerciseFilters>({});
   const [items, setItems] = useState<readonly LibraryExercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sectionLoading, setSectionLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [comparison, setComparison] = useState<ExerciseCard | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<LibraryExercise | null>(null);
   const [session, setSession] = useState<ExerciseSession | null>(null);
+  const [replayFrame, setReplayFrame] = useState<ReplayFrame | null>(null);
+  const [debrief, setDebrief] = useState<DebriefRecord | null>(null);
+  const [archiveRecord, setArchiveRecord] = useState<ArchiveRecord | null>(null);
+  const [exposition, setExposition] = useState<ExpositionRecord | null>(null);
+  const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
 
   useEffect(() => {
     if (providedAuthorities) return;
     let current = true;
     void client.me().then(participant => {
-      if (current && Array.isArray(participant.authorities)) setServerAuthorities(participant.authorities);
+      if (!current) return;
+      if (Array.isArray(participant.authorities)) setServerAuthorities(participant.authorities);
+      if (participant.activeRole) setServerRole(participant.activeRole);
     }).catch(() => { /* библиотека остаётся доступна только для чтения */ });
     return () => { current = false; };
   }, [client, providedAuthorities]);
@@ -155,6 +178,46 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     });
     return () => { current = false; };
   }, [activeTab, client, filters, reload]);
+
+  useEffect(() => {
+    if (activeTab === 'replay' && session && selectedExercise) {
+      let current = true;
+      setSectionLoading(true);
+      void client.replay(selectedExercise.id, session.id, { cursor: session.confirmedRevision, perspective: 'PARTICIPANT' })
+        .then(frame => { if (current) setReplayFrame(frame); })
+        .catch(cause => { if (current) setError(errorText(cause)); })
+        .finally(() => { if (current) setSectionLoading(false); });
+      return () => { current = false; };
+    }
+    if (activeTab === 'review' && session && selectedExercise) {
+      let current = true;
+      setSectionLoading(true);
+      const scope = can('TRUTH_READ') ? 'GENERAL' : 'PRIVATE';
+      void client.debrief(selectedExercise.id, session.id, scope)
+        .then(record => { if (current) setDebrief(record); })
+        .catch(cause => { if (current) setError(errorText(cause)); })
+        .finally(() => { if (current) setSectionLoading(false); });
+      return () => { current = false; };
+    }
+    if (activeTab === 'exposition' && archiveRecord) {
+      let current = true;
+      setSectionLoading(true);
+      void client.exposition(archiveRecord.archiveId)
+        .then(record => { if (current) setExposition(record); })
+        .catch(cause => { if (current) setError(errorText(cause)); })
+        .finally(() => { if (current) setSectionLoading(false); });
+      return () => { current = false; };
+    }
+    if (activeTab === 'admin' && canAdmin) {
+      let current = true;
+      setSectionLoading(true);
+      void client.adminOverview()
+        .then(record => { if (current) setAdminOverview(record); })
+        .catch(cause => { if (current) setError(errorText(cause)); })
+        .finally(() => { if (current) setSectionLoading(false); });
+      return () => { current = false; };
+    }
+  }, [activeTab, archiveRecord, can, canAdmin, client, reload, selectedExercise, session]);
 
   async function perform(action: () => Promise<unknown>, success: string): Promise<void> {
     if (busy) return;
@@ -196,15 +259,94 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     finally { setBusy(false); }
   }
 
+  function openWorkflow(item: LibraryExercise): void {
+    setSelectedExercise(item);
+    setSession(null);
+    setReplayFrame(null);
+    setDebrief(null);
+    setArchiveRecord(null);
+    setExposition(null);
+    selectTab('preparation');
+  }
+
   async function openSession(item: LibraryExercise): Promise<void> {
     if (!item.lastSessionId) return;
     setBusy(true);
     setError('');
     try {
+      setSelectedExercise(item);
       setSession(await client.getSession(item.id, item.lastSessionId));
       selectTab('conduct');
     } catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
+  }
+
+  async function startOfficialSession(): Promise<void> {
+    if (!selectedExercise || !can('exercise:conduct')) return;
+    if (selectedExercise.state !== 'SEALED') {
+      setError('Официальный сеанс запускается только после фиксации сценария SEALED');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const started = await client.createSession(selectedExercise.id, { revision: selectedExercise.revision });
+      setSession(started);
+      selectTab('conduct');
+    } catch (cause) { setError(errorText(cause)); }
+    finally { setBusy(false); }
+  }
+
+  async function executeCommand(command: SessionCommand): Promise<string> {
+    if (!session || !selectedExercise) throw new Error('Сначала выберите официальный сеанс');
+    if (command === 'JUMP') throw new Error('Для скачка нужны целевое время, расчёт и отдельное утверждение; команда не отправлялась');
+    const confirmed = await client.command(selectedExercise.id, session.id, {
+      command, expectedRevision: session.confirmedRevision,
+      idempotencyKey: `${session.id}-${command}-${session.confirmedRevision + 1}`,
+    });
+    setSession(confirmed);
+    setReplayFrame(null);
+    return `Серверная ревизия ${confirmed.confirmedRevision}: ${confirmed.state}`;
+  }
+
+  async function approveAssessment(value: { finalAssessment: string; comment: string }): Promise<void> {
+    if (!session || !selectedExercise) return;
+    await perform(() => client.approveAssessment(selectedExercise.id, session.id, { ...value, idempotencyKey: `assessment-${session.id}` }), 'Оценка подтверждена сервером и включена в материалы разбора');
+  }
+
+  async function archiveCompleted(): Promise<void> {
+    if (!session || !selectedExercise || session.state !== 'COMPLETED') {
+      setError('Архив создаётся только после серверного завершения сеанса');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const archive = await client.createArchive(selectedExercise.id, session.id);
+      await client.archive(selectedExercise.id, selectedExercise.revision);
+      setArchiveRecord(archive);
+      setSelectedExercise({ ...selectedExercise, state: 'ARCHIVED' });
+      setReload(value => value + 1);
+      selectTab('archive');
+    } catch (cause) { setError(errorText(cause)); }
+    finally { setBusy(false); }
+  }
+
+  async function exportArchive(): Promise<void> {
+    if (!archiveRecord) return;
+    await perform(async () => {
+      const bundle = await client.exportArchive(archiveRecord.archiveId);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(bundle)], { type: 'application/json' }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${archiveRecord.archiveId}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    }, 'Архивный пакет выгружен с проверенным манифестом');
+  }
+
+  function adminMutation(action: () => Promise<unknown>, message: string): void {
+    void perform(action, message);
   }
 
   const library = (archiveMode: boolean) => <LibraryView
@@ -222,35 +364,79 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     onCompare={can('exercise:read') ? item => void compare(item) : undefined}
     onArchive={!archiveMode && can('exercise:archive') ? item => void perform(() => client.archive(item.id, item.revision), 'Учение архивировано на сервере') : undefined}
     onOpenSession={can('exercise:read') ? item => void openSession(item) : undefined}
+    onOpenWorkflow={!archiveMode && can('exercise:read') ? openWorkflow : undefined}
   />;
 
   return <section className="modern-kshvi" aria-label="Командно-штабные военные игры">
     <header className="kshvi-heading">
       <div><p className="kshvi-kicker">Современный режим · полный цикл</p><h1>КШВИ</h1>
-        <p>Библиотека, подготовка, серверное проведение, разбор и повторное использование учений.</p></div>
+        <p>Библиотека, подготовка, серверное проведение, реплей, разбор, архив и экспозиция.</p></div>
       <div className="kshvi-authority"><span>Официальное состояние</span><strong>Подтверждает сервер</strong></div>
     </header>
     <nav className="kshvi-tabs" aria-label="Разделы КШВИ">
       {sections.map(section => <button key={section.id} type="button" aria-current={activeTab === section.id ? 'page' : undefined} onClick={() => selectTab(section.id)}>{section.label}</button>)}
       {canAdmin && <button type="button" aria-current={activeTab === 'admin' ? 'page' : undefined} onClick={() => selectTab('admin')}>Администрирование</button>}
     </nav>
+    {notice && activeTab !== 'library' && activeTab !== 'archive' && <p role="status" className="kshvi-notice">{notice}</p>}
+    {error && activeTab !== 'library' && activeTab !== 'archive' && <p role="alert" className="kshvi-error">{error}</p>}
+    {sectionLoading && <p role="status">Загружаем подтверждённую серверную проекцию…</p>}
 
     {activeTab === 'library' && library(false)}
-    {activeTab === 'archive' && library(true)}
+    {activeTab === 'archive' && <>
+      {archiveRecord && <ArchiveWorkspace archiveId={archiveRecord.archiveId} manifestSha256={archiveRecord.manifestSha256} mode={archiveRecord.mode} missing={archiveRecord.missing} onExport={() => void exportArchive()} />}
+      {library(true)}
+    </>}
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
-    {activeTab === 'preparation' && <><LocalEditor /><PreparationWorkspace /></>}
-    {activeTab === 'conduct' && <section className="kshvi-placeholder">
-      <h2>Проведение</h2>
-      {session ? <div className="kshvi-session-card"><h3>Сеанс {session.id}</h3><dl>
-        <div><dt>Редакция сценария</dt><dd>{session.revision}</dd></div>
-        <div><dt>Источник официального состояния</dt><dd>Сервер</dd></div>
-        <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
-      </dl><p>Оптимистичные изменения браузера не считаются совершившимися до подтверждения серверной команды.</p></div>
-        : <p>Выберите последний сеанс в карточке учения. Здесь отображаются только подтверждённые сервером ревизии.</p>}
-      <ConductWorkspace />
+    {activeTab === 'preparation' && <>
+      <LocalEditor />
+      <section className="kshvi-official-preparation" aria-labelledby="kshvi-preparation-title">
+        <h2 id="kshvi-preparation-title">Подготовка официального сеанса</h2>
+        {selectedExercise ? <>
+          <p>{selectedExercise.title} · редакция {selectedExercise.revision} · состояние {selectedExercise.state}</p>
+          <button type="button" className="kshvi-primary" disabled={busy || !can('exercise:conduct') || selectedExercise.state !== 'SEALED'} onClick={() => void startOfficialSession()}>Запустить официальный сеанс</button>
+          {selectedExercise.state !== 'SEALED' && <p>Сначала завершите подтверждения и зафиксируйте сценарий SEALED.</p>}
+        </> : <p>Выберите «Рабочий цикл» в карточке учения библиотеки.</p>}
+        <PreparationWorkspace />
+      </section>
+    </>}
+    {activeTab === 'conduct' && <section className="kshvi-conduct-container">
+      {session && selectedExercise ? <>
+        <section className="kshvi-session-card" aria-label="Подтверждённое состояние сеанса"><h2>Сеанс {session.id}</h2><dl>
+          <div><dt>Учение</dt><dd>{selectedExercise.title}</dd></div>
+          <div><dt>Редакция сценария</dt><dd>{session.revision}</dd></div>
+          <div><dt>Состояние</dt><dd>{session.state}</dd></div>
+          <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
+        </dl><p>Источник: сервер. Изменение браузера не считается совершившимся до подтверждения команды.</p></section>
+        <ConductWorkspace role={role} canReadTruth={can('TRUTH_READ')} onExecute={executeCommand} />
+      </> : <section><h2>Проведение</h2><p>Откройте рабочий цикл учения и запустите серверный сеанс из подготовки. Обзорные панели ниже не являются официальным миром.</p><ConductWorkspace /></section>}
     </section>}
-    {activeTab === 'exposition' && <BrowserExpositionApp />}
-    {activeTab === 'review' && <section className="kshvi-placeholder"><h2>Разбор</h2><p>Общий и частный разбор использует сохранённые редакции и серверные сеансы выбранного учения.</p></section>}
-    {activeTab === 'admin' && canAdmin && <section className="kshvi-placeholder"><h2>Администрирование</h2><p>Раздел открыт по назначенному сервером полномочию. Содержание учения само по себе административное право не раскрывает.</p></section>}
+    {activeTab === 'replay' && (session && replayFrame ? <ReplayWorkspace
+      initialFrame={replayFrame} maxSequence={replayFrame.maxSequence} canReadTruth={can('TRUTH_READ')}
+      onSeek={async sequence => {
+        if (!selectedExercise || !session) throw new Error('Сеанс не выбран');
+        const frame = await client.replay(selectedExercise.id, session.id, { cursor: sequence, perspective: replayFrame.perspective });
+        setReplayFrame(frame);
+        return frame;
+      }}
+      onPerspectiveChange={async perspective => {
+        if (!selectedExercise || !session) return;
+        const frame = await client.replay(selectedExercise.id, session.id, { cursor: replayFrame.sequence, perspective });
+        setReplayFrame(frame);
+      }}
+      onTrace={eventId => setNotice(`Запрошены серверные причинные связи события ${eventId}`)}
+    /> : !sectionLoading && <section><h2>Реплей</h2><p>Завершите команду в официальном сеансе и откройте сохранённую серверную проекцию.</p></section>)}
+    {activeTab === 'review' && (debrief && session ? <ReviewWorkspace
+      debrief={debrief} canApprove={can('TRUTH_READ') && (role === 'LEADER' || role === 'DIRECTOR')}
+      onApprove={value => void approveAssessment(value)}
+      onArchive={session.state === 'COMPLETED' && can('exercise:archive') && can('archive.export') ? () => void archiveCompleted() : undefined}
+    /> : !sectionLoading && <section><h2>Разбор</h2><p>Материалы появятся после официального сеанса. Общий разбор доступен по серверному полномочию.</p></section>)}
+    {activeTab === 'exposition' && (exposition?.session && exposition.projection ? <BrowserExpositionApp key={exposition.session.sessionId} initialSession={exposition.session} initialProjection={exposition.projection} />
+      : !sectionLoading && <section><h2>Экспозиция</h2><p>{exposition ? 'Сервер вернул неполную экспозиционную проекцию; показ не запущен.' : 'Сначала сформируйте архив завершённого официального сеанса в разборе.'}</p></section>)}
+    {activeTab === 'admin' && canAdmin && (adminOverview ? <AdminWorkspace overview={adminOverview}
+      onBlock={accountId => adminMutation(() => client.blockAccount(accountId), 'Учётная запись заблокирована сервером')}
+      onArchive={accountId => adminMutation(() => client.archiveAccount(accountId), 'Учётная запись архивирована сервером')}
+      onRevoke={assignmentId => adminMutation(() => client.revokeAssignment(assignmentId), 'Назначение отозвано сервером')}
+      onExportAudit={() => adminMutation(() => client.exportAudit(), 'Технический аудит экспортирован сервером')}
+    /> : !sectionLoading && <p>Техническая проекция недоступна. Содержание учения не раскрывается.</p>)}
   </section>;
 }

@@ -1,9 +1,8 @@
-import { createHash } from 'node:crypto';
-import { canonicalJson } from '../events/canonical';
+import { hashCanonical } from '../scenario/initial-map-hash';
 import type { ReplayArchive, ReplaySnapshot, ReplayState } from './types';
 
 export function snapshotStateHash(state: ReplayState): string {
-  return createHash('sha256').update(canonicalJson(state)).digest('hex');
+  return hashCanonical(state);
 }
 
 export function nearestSnapshot(archive: ReplayArchive, branchId: string, sequence: number): ReplaySnapshot {

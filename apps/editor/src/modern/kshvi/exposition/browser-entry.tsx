@@ -11,14 +11,16 @@ import { PresenterWorkspace } from './PresenterWorkspace';
 import { ExpositionClient, type ExpositionApi } from './exposition-client';
 import './exposition.css';
 
-export function BrowserExpositionApp({ client: providedClient, projectorId = 'exposition-projector' }: Readonly<{
+export function BrowserExpositionApp({ client: providedClient, projectorId = 'exposition-projector', initialSession, initialProjection }: Readonly<{
   client?: ExpositionApi;
   projectorId?: string;
+  initialSession?: ExpositionPresenterSession;
+  initialProjection?: AudienceProjectionView;
 }>) {
   const clientRef = useRef(providedClient ?? new ExpositionClient());
   const client = clientRef.current;
-  const [session, setSession] = useState<ExpositionPresenterSession | null>(null);
-  const [projection, setProjection] = useState<AudienceProjectionView | null>(null);
+  const [session, setSession] = useState<ExpositionPresenterSession | null>(initialSession ?? null);
+  const [projection, setProjection] = useState<AudienceProjectionView | null>(initialProjection ?? null);
   const [mode, setMode] = useState<'presenter' | 'editor'>('presenter');
   const [seed, setSeed] = useState(42);
   const [busy, setBusy] = useState(false);
@@ -49,7 +51,7 @@ export function BrowserExpositionApp({ client: providedClient, projectorId = 'ex
     await run(() => client.start(source === 'ARCHIVE' ? { source } : { source, seed }));
   }
 
-  useEffect(() => { void start('ARCHIVE'); }, []);
+  useEffect(() => { if (!initialSession) void start('ARCHIVE'); }, []);
 
   async function command(command: PresenterCommand): Promise<void> {
     if (!session) return;

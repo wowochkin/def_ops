@@ -91,6 +91,11 @@ export class LocalDirectory {
     return safe;
   }
 
+  listPublic(organizationId: string): LocalAccountPublic[] {
+    return [...this.accounts.values()].filter(account => account.organizationId === organizationId)
+      .map(account => this.publicAccount(account.userId));
+  }
+
   async authenticate(username: string, password: string): Promise<LocalAccount> {
     const normalized = normalizeUsername(username);
     const account = [...this.accounts.values()].find(candidate => candidate.username === normalized);
