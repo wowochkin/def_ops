@@ -43,14 +43,17 @@ function sealInput(): SealScenarioInput {
   };
 }
 
+const director = { userId: 'director', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['scenario.seal', 'instance.start'] };
+const bearer = { 'Content-Type': 'application/json', authorization: 'Bearer director-session' };
+
 it('фиксирует сценарий и изолированные сеансы на сервере', async () => {
   const service = new SealingService();
-  const sealed = await service.seal(sealInput());
+  const sealed = await service.seal(sealInput(), director);
   expect(sealed.state).toBe('SEALED');
   expect(sealed.hashes.initialMap).toBe(sealed.initialMap.sha256);
-  const first = await service.start(sealed.id, { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true });
-  const repeated = await service.start(sealed.id, { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true });
-  const other = await service.start(sealed.id, { instanceId: 'i2', idempotencyKey: 'start-2', seed: 'seed-2', actorRole: 'DIRECTOR', serverCommand: true });
+  const first = await service.start(sealed.id, { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true }, director);
+  const repeated = await service.start(sealed.id, { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true }, director);
+  const other = await service.start(sealed.id, { instanceId: 'i2', idempotencyKey: 'start-2', seed: 'seed-2', actorRole: 'DIRECTOR', serverCommand: true }, director);
   expect(repeated.id).toBe(first.id);
   expect(other.id).not.toBe(first.id);
   expect(other.eventLogId).not.toBe(first.eventLogId);
@@ -59,17 +62,45 @@ it('фиксирует сценарий и изолированные сеанс
 it('отдаёт фиксацию и старт через HTTP без клиентского reducer', async () => {
   const sealing = new SealingService();
   const router = new (await import('@def-ops/service-kit')).Router();
-  registerSealingRoutes(router, sealing);
+  registerSealingRoutes(router, sealing, async () => director);
   const service = createService({ name: 'sealing-test', port: 0, router });
   const port = await service.listen();
   try {
-    const sealedResponse = await fetch(`http://127.0.0.1:${port}/kshvi/sealing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sealInput()) });
+    const sealedResponse = await fetch(`http://127.0.0.1:${port}/kshvi/sealing`, { method: 'POST', headers: bearer, body: JSON.stringify(sealInput()) });
     expect(sealedResponse.status).toBe(200);
     const sealed = await sealedResponse.json() as { id: string };
-    const started = await fetch(`http://127.0.0.1:${port}/kshvi/sealing/${sealed.id}/instances`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instanceId: 'i1', idempotencyKey: 'start-http', seed: 'seed-http', actorRole: 'DIRECTOR', serverCommand: true }) });
+    const started = await fetch(`http://127.0.0.1:${port}/kshvi/sealing/${sealed.id}/instances`, { method: 'POST', headers: bearer, body: JSON.stringify({ instanceId: 'i1', idempotencyKey: 'start-http', seed: 'seed-http', actorRole: 'DIRECTOR', serverCommand: true }) });
     expect(started.status).toBe(200);
     expect((await started.json()).state).toBe('ACTIVE');
   } finally {
     await service.close();
   }
+});
+
+
+it('C3: отклоняет самоназначенную роль директора при фиксации и запуске', async () => {
+  const service = new SealingService();
+  const trainee = { userId: 'user', organizationId: 'org-1', activeRole: 'TRAINEE', sideId: 'blue', authorities: ['scenario.seal', 'instance.start'] };
+  await expect(service.seal(sealInput(), trainee)).rejects.toThrow('полномоч');
+  const director = { ...trainee, activeRole: 'DIRECTOR' };
+  const sealed = await service.seal(sealInput(), director);
+  await expect(service.start(sealed.id, { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true }, trainee)).rejects.toThrow('полномоч');
+});
+
+it('C3: повторный запуск читает сохранённый SEALED через порт после пересоздания service', async () => {
+  const sealedValues = new Map<string, unknown>();
+  const instances = new Map<string, unknown>();
+  const store = {
+    async saveSealed(value: any) { sealedValues.set(value.id, structuredClone(value)); },
+    async loadSealed(id: string) { return sealedValues.get(id) as any ?? null; },
+    async findInstance(key: string) { return instances.get(key) as any ?? null; },
+    async saveInstance(key: string, value: any) { instances.set(key, structuredClone(value)); },
+  };
+  const director = { userId: 'director', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['scenario.seal', 'instance.start'] };
+  const first = new SealingService({ store });
+  const sealed = await first.seal(sealInput(), director);
+  const command = { instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true };
+  const started = await first.start(sealed.id, command, director);
+  const restarted = new SealingService({ store });
+  await expect(restarted.start(sealed.id, command, director)).resolves.toEqual(started);
 });

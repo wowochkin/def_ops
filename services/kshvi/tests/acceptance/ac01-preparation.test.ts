@@ -43,7 +43,8 @@ function sealInput(): SealScenarioInput {
 
 it('AC-01: подготовка и фиксация многоступенчатого учения с двумя независимыми сеансами', async () => {
   const service = new SealingService();
-  const sealed = await service.seal(sealInput());
+  const director = { userId: 'director', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['scenario.seal', 'instance.start'] };
+  const sealed = await service.seal(sealInput(), director);
   const scenarioView = sealed.scenario as typeof scenario;
   expect(sealed.state).toBe('SEALED');
   expect(scenarioView.trainedLevels).toBe(3);
@@ -54,9 +55,9 @@ it('AC-01: подготовка и фиксация многоступенчат
   expect(sealed.scenarioSha256).toBe(hashCanonical(scenario));
   expect(sealed.confirmations.map(confirmation => confirmation.area).sort()).toEqual([...READINESS_AREAS].sort());
   expect(sealed.rehearsal.status).toBe('PASSED');
-  const first = await service.start(sealed.id, { instanceId: 'ac01-first', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true });
-  const repeated = await service.start(sealed.id, { instanceId: 'ac01-first', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true });
-  const second = await service.start(sealed.id, { instanceId: 'ac01-second', idempotencyKey: 'start-2', seed: 'seed-2', actorRole: 'DIRECTOR', serverCommand: true });
+  const first = await service.start(sealed.id, { instanceId: 'ac01-first', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true }, director);
+  const repeated = await service.start(sealed.id, { instanceId: 'ac01-first', idempotencyKey: 'start-1', seed: 'seed-1', actorRole: 'DIRECTOR', serverCommand: true }, director);
+  const second = await service.start(sealed.id, { instanceId: 'ac01-second', idempotencyKey: 'start-2', seed: 'seed-2', actorRole: 'DIRECTOR', serverCommand: true }, director);
   expect(repeated.id).toBe(first.id);
   expect(second.id).not.toBe(first.id);
   expect(second.eventLogId).not.toBe(first.eventLogId);

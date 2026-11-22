@@ -1,17 +1,37 @@
-import { randomUUID } from 'node:crypto';
+import type { ExerciseInstance } from '@def-ops/kshvi';
+import type { ParticipantContext } from '../auth/authorize';
+import type { SealingService } from './sealing-service';
 
-export type StartInstanceInput = { scenarioState: string; scenarioRevisionId: string; idempotencyKey: string };
+export type StartInstanceInput = {
+  sealedScenarioId: string;
+  instanceId: string;
+  idempotencyKey: string;
+  seed: string;
+};
 export type InstanceRecord = { id: string; branchId: string; scenarioRevisionId: string; state: 'ACTIVE' };
+export type SealedInstanceStarter = Pick<SealingService, 'start'>;
 
 export class InstanceService {
-  private readonly starts = new Map<string, InstanceRecord>();
+  private readonly sealing?: SealedInstanceStarter;
 
-  async startInstance(input: StartInstanceInput): Promise<InstanceRecord> {
-    if (input.scenarioState !== 'SEALED') throw new Error('Запуск возможен только из SEALED');
-    const existing = this.starts.get(input.idempotencyKey);
-    if (existing) return existing;
-    const instance = { id: randomUUID(), branchId: randomUUID(), scenarioRevisionId: input.scenarioRevisionId, state: 'ACTIVE' as const };
-    this.starts.set(input.idempotencyKey, instance);
-    return instance;
+  constructor(options: { sealing?: SealedInstanceStarter } = {}) {
+    this.sealing = options.sealing;
+  }
+
+  async startInstance(input: StartInstanceInput, actor: ParticipantContext): Promise<InstanceRecord> {
+    if (!this.sealing) throw new Error('SEALED_SCENARIO_NOT_FOUND');
+    const instance: ExerciseInstance = await this.sealing.start(input.sealedScenarioId, {
+      instanceId: input.instanceId,
+      idempotencyKey: input.idempotencyKey,
+      seed: input.seed,
+      actorRole: 'DIRECTOR',
+      serverCommand: true,
+    }, actor);
+    return {
+      id: instance.id,
+      branchId: `branch-${instance.id}`,
+      scenarioRevisionId: instance.scenarioSha256,
+      state: 'ACTIVE',
+    };
   }
 }

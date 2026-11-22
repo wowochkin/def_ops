@@ -10,7 +10,7 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @def-ops/editor",
+    "dev": "npm run dev -w @def-ops/editor --",
     "dev:services": "node scripts/dev-services.mjs",
     "build": "npm run build -w @def-ops/editor",
     "typecheck": "tsc -p tsconfig.json --noEmit",

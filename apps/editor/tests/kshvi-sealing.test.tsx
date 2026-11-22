@@ -8,6 +8,9 @@ import { SealingStep } from '../src/modern/kshvi/preparation/SealingStep';
 import {
   READINESS_AREAS,
   REHEARSAL_CHECKS,
+  createInstanceRegistry,
+  sealScenario,
+  startInstance,
   type SealScenarioInput,
 } from '../../../packages/kshvi/src/scenario/sealing';
 import { VALIDATION_AREAS, type ValidationReport } from '../../../packages/kshvi/src/scenario/validation';
@@ -117,17 +120,22 @@ describe('SealingStep: репетиция, SEALED и запуск', () => {
   it('фиксирует хеши карты и сценария, затем идемпотентно запускает сеанс', async () => {
     const onSealed = vi.fn();
     const onStart = vi.fn();
-    render(<SealingStep report={validReport()} input={validInput()} onValidate={vi.fn(() => validReport())} onRehearsal={vi.fn()} onSealed={onSealed} onStart={onStart} startCommand={startCommand} />);
+    const serverSealed = sealScenario(validInput());
+    const serverInstance = startInstance(serverSealed, startCommand, createInstanceRegistry());
+    const client = { seal: vi.fn(async () => serverSealed), start: vi.fn(async () => serverInstance) };
+    render(<SealingStep report={validReport()} input={validInput()} onValidate={vi.fn(() => validReport())} onRehearsal={vi.fn()} onSealed={onSealed} onStart={onStart} startCommand={startCommand} client={client} />);
     fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать SEALED' }));
+    await waitFor(() => expect(client.seal).toHaveBeenCalledTimes(1));
     expect(onSealed).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/Сценарий: [0-9a-f]{64}/)).toBeTruthy();
+    expect(await screen.findByText(/Сценарий: [0-9a-f]{64}/)).toBeTruthy();
     expect(screen.getByText(new RegExp(`Карта: ${validMap().sha256}`))).toBeTruthy();
     const startButton = screen.getByRole('button', { name: 'Запустить сеанс' });
     fireEvent.click(startButton);
+    await waitFor(() => expect(client.start).toHaveBeenCalledTimes(1));
     fireEvent.click(startButton);
+    await waitFor(() => expect(client.start).toHaveBeenCalledTimes(2));
     expect(onStart).toHaveBeenCalledTimes(2);
     expect(onStart.mock.calls[0][0]).toBe(onStart.mock.calls[1][0]);
-    expect(screen.getByText('Зарегистрировано сеансов: 1')).toBeTruthy();
     expect(screen.getByText('Сеанс: ACTIVE; журнал: events-instance-ui')).toBeTruthy();
   });
 });

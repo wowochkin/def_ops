@@ -2,11 +2,8 @@ import { useRef, useState } from 'react';
 import {
   READINESS_AREAS,
   REHEARSAL_CHECKS,
-  createInstanceRegistry,
   sealScenario,
-  startInstance,
   type ExerciseInstance,
-  type InstanceRegistry,
   type RehearsalReport,
   type SealScenarioInput,
   type SealedScenario,
@@ -14,6 +11,7 @@ import {
 } from '../../../../../../packages/kshvi/src/scenario/sealing';
 import type { ValidationReport } from '../../../../../../packages/kshvi/src/scenario/validation';
 import { SealingConfirmations } from './SealingConfirmations';
+import { createFetchSealingClient, type SealingClient } from './sealing-client';
 
 export type SealingStepProps = Readonly<{
   report: ValidationReport;
@@ -23,16 +21,17 @@ export type SealingStepProps = Readonly<{
   onSealed?: (sealed: SealedScenario) => void;
   onStart?: (instance: ExerciseInstance) => void;
   startCommand: StartInstanceCommand;
+  client?: SealingClient;
 }>;
 
-export function SealingStep({ report: initialReport, input, onValidate, onRehearsal, onSealed, onStart, startCommand }: SealingStepProps) {
+export function SealingStep({ report: initialReport, input, onValidate, onRehearsal, onSealed, onStart, startCommand, client }: SealingStepProps) {
   const [report, setReport] = useState(initialReport);
   const [rehearsal, setRehearsal] = useState(input.rehearsal);
   const [sealed, setSealed] = useState<SealedScenario | null>(null);
   const [instance, setInstance] = useState<ExerciseInstance | null>(null);
   const [error, setError] = useState('');
-  const registry = useRef<InstanceRegistry | null>(null);
-  if (!registry.current) registry.current = createInstanceRegistry();
+  const clientRef = useRef<SealingClient | null>(null);
+  if (!clientRef.current) clientRef.current = client ?? createFetchSealingClient();
 
   const validate = () => {
     try {
@@ -54,15 +53,18 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
       setError(reason instanceof Error ? reason.message : 'Пробный прогон не выполнен');
     }
   };
-  const seal = () => {
+  const seal = async () => {
     try {
-      const result = sealScenario({
+      const candidate = {
         ...input,
         issues: [...(input.issues ?? []), ...report.issues.map(item => ({
           code: item.code, severity: item.severity, area: item.area, message: item.message, waivable: item.waivable,
         }))],
         rehearsal,
-      });
+      };
+      // Локальная проверка даёт быструю диагностику, но не создаёт полномочный SEALED.
+      sealScenario(candidate);
+      const result = await clientRef.current!.seal(candidate);
       setSealed(result);
       setInstance(null);
       setError('');
@@ -71,10 +73,10 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
       setError(reason instanceof Error ? reason.message : 'Сценарий не зафиксирован');
     }
   };
-  const start = () => {
+  const start = async () => {
     try {
       if (!sealed) throw new Error('SEALED_REQUIRED');
-      const result = startInstance(sealed, startCommand, registry.current!);
+      const result = await clientRef.current!.start(sealed.id, startCommand);
       setInstance(result);
       setError('');
       onStart?.(result);
@@ -103,14 +105,13 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
       </>}
     </section>
 
-    <button type="button" onClick={seal}>Зафиксировать SEALED</button>
+    <button type="button" onClick={() => void seal()}>Зафиксировать SEALED</button>
     {sealed && <section aria-label="Зафиксированная редакция">
       <p>Сценарий: {sealed.scenarioSha256}</p>
       <p>Карта: {sealed.hashes.initialMap}</p>
       <p>Среда: {sealed.hashes.environment}</p>
     </section>}
-    <button type="button" onClick={start}>Запустить сеанс</button>
-    <p>Зарегистрировано сеансов: {registry.current.count}</p>
+    <button type="button" onClick={() => void start()}>Запустить сеанс</button>
     {instance && <p>Сеанс: {instance.state}; журнал: {instance.eventLogId}</p>}
     {error && <p role="alert">{error}</p>}
   </section>;

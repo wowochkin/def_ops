@@ -2,13 +2,30 @@ import { expect, it } from 'vitest';
 import { InstanceService } from '../src/instances/instance-service';
 import { CommandService } from '../src/instances/command-service';
 
-it('запускает только SEALED и не дублирует Instance по ключу', async () => {
+it('C3: не принимает самоподтверждённый scenarioState без сохранённого артефакта', async () => {
   const service = new InstanceService();
-  await expect(service.startInstance({ scenarioState: 'DRAFT', scenarioRevisionId: 'r1', idempotencyKey: 'start-1' })).rejects.toThrow('SEALED');
-  const first = await service.startInstance({ scenarioState: 'SEALED', scenarioRevisionId: 'r1', idempotencyKey: 'start-1' });
-  const repeated = await service.startInstance({ scenarioState: 'SEALED', scenarioRevisionId: 'r1', idempotencyKey: 'start-1' });
-  const other = await service.startInstance({ scenarioState: 'SEALED', scenarioRevisionId: 'r1', idempotencyKey: 'start-2' });
-  expect(repeated.id).toBe(first.id);
+  const actor = { userId: 'director', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['instance.start'] };
+  await expect(service.startInstance({ sealedScenarioId: 'sealed', instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed' }, actor)).rejects.toThrow('SEALED_SCENARIO_NOT_FOUND');
+});
+
+it('запускает Instance через порт сохранённого SEALED и сохраняет идемпотентность', async () => {
+  const instances = new Map<string, any>();
+  const sealing = {
+    async start(_scenarioId: string, command: any, _actor: any) {
+      const key = command.idempotencyKey;
+      if (!instances.has(key)) instances.set(key, {
+        schemaVersion: 1, id: command.instanceId, scenarioId: 'sealed', scenarioRevision: 1, scenarioSha256: 'hash', state: 'ACTIVE',
+        seed: command.seed, eventLogId: `events-${command.instanceId}`, events: [], idempotencyKey: key, abnormalTermination: false,
+      });
+      return instances.get(key);
+    },
+  };
+  const actor = { userId: 'director', organizationId: 'org-1', activeRole: 'DIRECTOR', sideId: null, authorities: ['instance.start'] };
+  const service = new InstanceService({ sealing });
+  const first = await service.startInstance({ sealedScenarioId: 'sealed', instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed' }, actor);
+  const repeated = await service.startInstance({ sealedScenarioId: 'sealed', instanceId: 'i1', idempotencyKey: 'start-1', seed: 'seed' }, actor);
+  const other = await service.startInstance({ sealedScenarioId: 'sealed', instanceId: 'i2', idempotencyKey: 'start-2', seed: 'seed-2' }, actor);
+  expect(repeated).toEqual(first);
   expect(other.id).not.toBe(first.id);
   expect(other.branchId).not.toBe(first.branchId);
 });
