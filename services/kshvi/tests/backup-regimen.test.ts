@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, expect, it } from 'vitest';
@@ -38,7 +38,11 @@ it('выполняет prestart, периодические increments/snapshots
   sequence = 2;
   await writeFile(join(root, 'journal.jsonl'), '1\n2\n');
   await writeFile(join(root, 'snapshot.json'), 's3');
-  expect((await regimen.tick()).length).toBeGreaterThan(0);
+  const increments = await regimen.tick();
+  expect(increments.length).toBeGreaterThan(0);
+  const journalIncrement = increments.find(manifest => manifest.files.some(file => file.category === 'JOURNAL'));
+  expect(journalIncrement).toBeTruthy();
+  expect(await readFile(join(root, 'backups', journalIncrement!.id, 'files', 'journal.jsonl'), 'utf8')).toBe('2\n');
   const checkpoint = await regimen.checkpoint('BEFORE_JUMP');
   expect(checkpoint.files.map(file => file.category)).toEqual(expect.arrayContaining(['JOURNAL', 'SNAPSHOT']));
   expect(regimen.manifests().some(manifest => manifest.kind === 'FULL')).toBe(true);
