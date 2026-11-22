@@ -29,7 +29,7 @@ it('проецирует карточку по роли и стороне и о�
   const sessions = new SessionManager({ store: new InMemorySessionStore() });
   await sessions.createAccount({
     userId: 'director-1', username: 'director', password: 'secret123', organizationId,
-    roles: [{ id: 'director-role', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:conduct'] }],
+    roles: [{ id: 'director-role', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:conduct', 'TRUTH_READ'] }],
   });
   await sessions.createAccount({
     userId: 'blue-1', username: 'blue', password: 'secret123', organizationId,
@@ -96,4 +96,9 @@ it('не отдаёт участнику sealed artifact и полный сце�
   });
   expect(JSON.stringify(projected)).not.toContain('СЕКРЕТНЫЙ СЦЕНАРИЙ');
   expect(JSON.stringify(projected)).not.toContain('sealedArtifact');
+  const directorWithoutTruth = projectExerciseCard(card, {
+    organizationId: 'org1', userId: 'director', activeRole: 'DIRECTOR', sideId: null, authorities: ['exercise:read'],
+  });
+  expect(JSON.stringify(directorWithoutTruth)).not.toContain('СЕКРЕТНЫЙ СЦЕНАРИЙ');
+  expect(JSON.stringify(directorWithoutTruth)).not.toContain('sealedArtifact');
 });

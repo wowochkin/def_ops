@@ -2,7 +2,8 @@ import type { JsonValue } from '@def-ops/kshvi';
 import type { ParticipantContext } from '../auth/authorize';
 import type { ExerciseCard, ExerciseRevision } from './exercise-store';
 
-const TRUTH_ROLES = new Set(['DIRECTOR', 'LEADER', 'AUTHOR', 'APPROVER']);
+const TRUTH_ROLES = new Set(['DIRECTOR', 'LEADER']);
+const EDITOR_ROLES = new Set(['AUTHOR', 'APPROVER']);
 
 type Assignment = Readonly<Record<string, JsonValue>>;
 
@@ -30,14 +31,16 @@ export function projectExercisePayload(payload: JsonValue, sideId: string | null
 }
 
 export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContext): ExerciseCard {
-  if (actor.activeRole && TRUTH_ROLES.has(actor.activeRole)) return structuredClone(card);
+  const truth = actor.activeRole !== null && TRUTH_ROLES.has(actor.activeRole) && actor.authorities.includes('TRUTH_READ');
+  if (truth) return structuredClone(card);
+  const editor = actor.activeRole !== null && EDITOR_ROLES.has(actor.activeRole) && actor.authorities.includes('exercise:revise');
   return {
     ...structuredClone(card),
     revisions: card.revisions.map((revision): ExerciseRevision => {
       const { sealedArtifact: _sealedArtifact, ...serverRevision } = structuredClone(revision);
       return {
         ...serverRevision,
-        payload: projectExercisePayload(revision.payload, actor.sideId),
+        payload: editor ? structuredClone(revision.payload) : projectExercisePayload(revision.payload, actor.sideId),
       };
     }),
   };
