@@ -11,6 +11,7 @@ import { ExpositionMap } from './ExpositionMap';
 export type AudienceProjectionView = Readonly<{
   sessionId: string;
   branchId: string;
+  handoffGeneration: number;
   purpose: 'EXPOSITION';
   label: 'Экспозиция';
   source: 'ARCHIVE' | 'AUTONOMOUS';

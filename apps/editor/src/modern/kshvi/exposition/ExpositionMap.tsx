@@ -45,13 +45,19 @@ export function ExpositionMap({ map, layers, camera }: Readonly<{
     };
   }, []);
 
+  const styleKey = JSON.stringify({ map, layers });
   useEffect(() => {
     const created = instance.current;
     if (!created || ready === 0) return;
     created.setStyle(createExpositionMapStyle(map, layers));
-    created.jumpTo({ center: [camera.center[0], camera.center[1]], zoom: camera.zoom, bearing: camera.heading, pitch: 0 });
     created.resize();
-  }, [map, layers, camera.center, camera.zoom, camera.heading, ready]);
+  }, [styleKey, ready]);
+
+  useEffect(() => {
+    const created = instance.current;
+    if (!created || ready === 0) return;
+    created.jumpTo({ center: [camera.center[0], camera.center[1]], zoom: camera.zoom, bearing: camera.heading, pitch: 0 });
+  }, [camera.center[0], camera.center[1], camera.zoom, camera.heading, ready]);
 
   return <div className="exposition-maplibre-wrap">
     <div

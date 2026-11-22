@@ -13,10 +13,13 @@ export interface ExpositionApi {
   restart(sessionId: string, input: Readonly<{ mode: 'REPLAY_SAVED_LINE' | 'NEW_BRANCH'; sessionId?: string; branchId?: string; seed?: number }>): Promise<ExpositionPresenterSession>;
   updateProgram(sessionId: string, program: ExpositionProgram): Promise<ExpositionPresenterSession>;
   projector(sessionId: string, projectorId: string): Promise<AudienceProjectionView>;
+  presenterProjection(sessionId: string): Promise<AudienceProjectionView>;
+  activeProjector(projectorId: string): Promise<AudienceProjectionView>;
   exportArchive(sessionId: string, archiveId?: string): Promise<Readonly<{ schemaVersion: string; archiveId: string }>>;
 }
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+const CSRF_STORAGE_KEY = 'def_ops.kshvi.csrf';
 
 export class ExpositionClient implements ExpositionApi {
   private readonly baseUrl: string;
@@ -32,7 +35,9 @@ export class ExpositionClient implements ExpositionApi {
   }> = {}) {
     this.baseUrl = (options.baseUrl ?? '/api/kshvi').replace(/\/$/, '');
     this.fetcher = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
-    this.csrfToken = options.csrfToken ?? (() => '');
+    this.csrfToken = options.csrfToken ?? (() => {
+      try { return globalThis.sessionStorage?.getItem(CSRF_STORAGE_KEY) ?? ''; } catch { return ''; }
+    });
     this.extraHeaders = options.headers ?? (() => ({}));
   }
 
@@ -75,6 +80,12 @@ export class ExpositionClient implements ExpositionApi {
   }
   projector(sessionId: string, projectorId: string): Promise<AudienceProjectionView> {
     return this.request('GET', `/expositions/${encodeURIComponent(sessionId)}/projector`, undefined, { 'X-Projector-Id': projectorId });
+  }
+  presenterProjection(sessionId: string): Promise<AudienceProjectionView> {
+    return this.request('GET', `/expositions/${encodeURIComponent(sessionId)}/presenter-projection`);
+  }
+  activeProjector(projectorId: string): Promise<AudienceProjectionView> {
+    return this.request('GET', '/expositions/active/projector', undefined, { 'X-Projector-Id': projectorId });
   }
   exportArchive(sessionId: string, archiveId?: string): Promise<Readonly<{ schemaVersion: string; archiveId: string }>> {
     return this.request('POST', `/expositions/${encodeURIComponent(sessionId)}/exports`, { archiveId });

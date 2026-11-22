@@ -10,7 +10,7 @@ import {
   type ExpositionPresenterSession,
   type ExpositionSession,
 } from '../../../packages/kshvi/src/exposition/browser-entry';
-import { expositionProgram, officialArchive } from '../../../packages/kshvi/tests/fixtures/exposition';
+import { expositionProgram, officialArchive, testFullSimulation } from '../../../packages/kshvi/tests/fixtures/exposition';
 import { createProjectorProfile, projectExpositionForAudience } from '../../../services/kshvi/src/exposition/exposition-projection';
 import { BrowserExpositionApp } from '../src/modern/kshvi/exposition/browser-entry';
 import { ExpositionEditor } from '../src/modern/kshvi/exposition/ExpositionEditor';
@@ -35,14 +35,14 @@ function presenter(session: ExpositionSession): ExpositionPresenterSession {
 
 function setup() {
   const program = expositionProgram();
-  const initial = startAutonomousShow({
+  const initial = startAutonomousShow({ calculate: testFullSimulation,
     sourceArchive: officialArchive(), program, seed: 42,
     sessionId: 'ui-show', branchId: 'ui-exposition-branch',
   });
   const session = controlExposition(initial, { type: 'SEEK', atMs: 1_000 });
   const policy = createAudiencePolicy({
     id: 'ui-audience-policy', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
-    showPlanFact: true, showExplanations: true, publicCaptionIds: ['caption-public'], publicDecisionIds: [],
+    showPlanFact: true, showExplanations: true, publicCaptionIds: ['caption-public'], publicExplanationIds: ['explanation-public'], publicDecisionIds: [],
   });
   const projector = createProjectorProfile({
     id: 'ui-projector', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
@@ -110,14 +110,14 @@ describe('подключённый browser entry', () => {
     const archive = presenter(startArchiveShow({
       sourceArchive: officialArchive(), program: expositionProgram(), sessionId: 'ui-archive', branchId: 'ui-archive-branch',
     }));
-    const autonomous = presenter(startAutonomousShow({
+    const autonomous = presenter(startAutonomousShow({ calculate: testFullSimulation,
       sourceArchive: officialArchive(), program: expositionProgram(), seed: 42, sessionId: 'ui-auto', branchId: 'ui-auto-branch',
     }));
     const { policy, projector } = setup();
     const sessions = new Map([[archive.sessionId, archive], [autonomous.sessionId, autonomous]]);
     const fullSessions = new Map<string, ExpositionSession>([
       [archive.sessionId, startArchiveShow({ sourceArchive: officialArchive(), program: expositionProgram(), sessionId: archive.sessionId, branchId: archive.branchId })],
-      [autonomous.sessionId, startAutonomousShow({ sourceArchive: officialArchive(), program: expositionProgram(), seed: 42, sessionId: autonomous.sessionId, branchId: autonomous.branchId })],
+      [autonomous.sessionId, startAutonomousShow({ calculate: testFullSimulation, sourceArchive: officialArchive(), program: expositionProgram(), seed: 42, sessionId: autonomous.sessionId, branchId: autonomous.branchId })],
     ]);
     const client: ExpositionApi = {
       start: vi.fn(async input => input.source === 'ARCHIVE' ? archive : autonomous),
@@ -135,6 +135,8 @@ describe('подключённый browser entry', () => {
         return next;
       }),
       projector: vi.fn(async id => projectExpositionForAudience({ session: fullSessions.get(id)!, policy, projector })),
+      presenterProjection: vi.fn(async id => projectExpositionForAudience({ session: fullSessions.get(id)!, policy, projector })),
+      activeProjector: vi.fn(async () => projectExpositionForAudience({ session: fullSessions.get('ui-auto')!, policy, projector })),
       exportArchive: vi.fn(),
     };
     render(<BrowserExpositionApp client={client} />);
@@ -148,7 +150,7 @@ describe('подключённый browser entry', () => {
     fireEvent.click(await screen.findByLabelText('Погода'));
     await waitFor(() => expect(client.updateProgram).toHaveBeenCalled());
     expect(vi.mocked(client.updateProgram).mock.lastCall?.[1].layers).not.toContain('weather');
-    await waitFor(() => expect(vi.mocked(client.projector).mock.lastCall?.[0]).toBe('ui-auto'));
+    await waitFor(() => expect(vi.mocked(client.presenterProjection).mock.lastCall?.[0]).toBe('ui-auto'));
   });
 });
 

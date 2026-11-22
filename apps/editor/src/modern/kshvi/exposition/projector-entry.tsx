@@ -1,33 +1,41 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AudienceProjector, type AudienceProjectionView } from './AudienceProjector';
-import { ExpositionClient } from './exposition-client';
+import { ExpositionClient, type ExpositionApi } from './exposition-client';
 import './exposition.css';
 
-export function ProjectorApp() {
+export function ProjectorApp({ client: providedClient, projectorId }: Readonly<{
+  client?: Pick<ExpositionApi, 'activeProjector'>;
+  projectorId?: string;
+}>) {
   const [projection, setProjection] = useState<AudienceProjectionView | null>(null);
   const [error, setError] = useState('');
-  const sessionId = new URLSearchParams(location.search).get('session') ?? '';
-  const projectorId = new URLSearchParams(location.search).get('projector') ?? 'exposition-projector';
+  const configuredId = projectorId ?? new URLSearchParams(location.search).get('projector') ?? 'exposition-projector';
 
   useEffect(() => {
-    if (!sessionId) return;
-    const client = new ExpositionClient();
+    const client = providedClient ?? new ExpositionClient();
     let disposed = false;
+    let sequence = 0;
+    let acceptedGeneration = 0;
     const update = () => {
-      void client.projector(sessionId, projectorId)
-        .then(next => { if (!disposed) { setProjection(next); setError(''); } })
-        .catch(reason => { if (!disposed) setError(reason instanceof Error ? reason.message : String(reason)); });
+      const current = ++sequence;
+      void client.activeProjector(configuredId)
+        .then(next => {
+          if (disposed || current !== sequence || next.handoffGeneration < acceptedGeneration) return;
+          acceptedGeneration = next.handoffGeneration;
+          setProjection(next);
+          setError('');
+        })
+        .catch(reason => { if (!disposed && current === sequence) setError(reason instanceof Error ? reason.message : String(reason)); });
     };
     update();
     const timer = globalThis.setInterval(update, 200);
-    return () => { disposed = true; globalThis.clearInterval(timer); };
-  }, [sessionId, projectorId]);
+    return () => { disposed = true; sequence += 1; globalThis.clearInterval(timer); };
+  }, [providedClient, configuredId]);
 
   return <main className="exposition-projector-shell">
-    {!sessionId && <p role="alert">Укажите идентификатор сеанса в адресе проектора.</p>}
     {error && <p className="exposition-error" role="alert">{error}</p>}
-    {projection ? <AudienceProjector projection={projection} /> : sessionId && !error && <p role="status">Подключение к серверному каналу проектора…</p>}
+    {projection ? <AudienceProjector projection={projection} /> : !error && <p role="status">Подключение к активному серверному каналу проектора…</p>}
   </main>;
 }
 

@@ -67,6 +67,12 @@ describe('изоляция browser entry и CSS', () => {
     expect(projector).toContain('ExpositionMap');
   });
 
+  it('включает standalone exposition и projector в production build inputs', () => {
+    const config = readFileSync(resolve('apps/editor/vite.config.ts'), 'utf8');
+    expect(config).toContain("exposition: resolve(__dirname, 'src/modern/kshvi/exposition/index.html')");
+    expect(config).toContain("expositionProjector: resolve(__dirname, 'src/modern/kshvi/exposition/projector.html')");
+  });
+
   it('не переопределяет :root, body, глобальные controls или непрефиксные классы', () => {
     const css = readFileSync(resolve('apps/editor/src/modern/kshvi/exposition/exposition.css'), 'utf8');
     expect(css).not.toMatch(/:root|\bbody\s*[,{]|(^|\n)\s*\*\s*\{/);

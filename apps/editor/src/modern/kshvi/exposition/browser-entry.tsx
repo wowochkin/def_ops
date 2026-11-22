@@ -11,9 +11,8 @@ import { PresenterWorkspace } from './PresenterWorkspace';
 import { ExpositionClient, type ExpositionApi } from './exposition-client';
 import './exposition.css';
 
-export function BrowserExpositionApp({ client: providedClient, projectorId = 'exposition-projector', initialSession, initialProjection }: Readonly<{
+export function BrowserExpositionApp({ client: providedClient, initialSession, initialProjection }: Readonly<{
   client?: ExpositionApi;
-  projectorId?: string;
   initialSession?: ExpositionPresenterSession;
   initialProjection?: AudienceProjectionView;
 }>) {
@@ -28,22 +27,24 @@ export function BrowserExpositionApp({ client: providedClient, projectorId = 'ex
   const generation = useRef(0);
   const advancing = useRef(false);
 
-  async function adopt(next: ExpositionPresenterSession): Promise<void> {
-    const current = ++generation.current;
+  async function adopt(next: ExpositionPresenterSession, current: number): Promise<void> {
+    const nextProjection = await client.presenterProjection(next.sessionId);
+    if (generation.current !== current) return;
     setSession(next);
-    const nextProjection = await client.projector(next.sessionId, projectorId);
-    if (generation.current === current) setProjection(nextProjection);
+    setProjection(nextProjection);
   }
 
   async function run(action: () => Promise<ExpositionPresenterSession>): Promise<void> {
+    const current = ++generation.current;
     setBusy(true);
     setError('');
     try {
-      await adopt(await action());
+      const next = await action();
+      if (generation.current === current) await adopt(next, current);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      if (generation.current === current) setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
-      setBusy(false);
+      if (generation.current === current) setBusy(false);
     }
   }
 
@@ -67,9 +68,10 @@ export function BrowserExpositionApp({ client: providedClient, projectorId = 'ex
       previous = now;
       if (advancing.current || elapsedMs === 0) return;
       advancing.current = true;
+      const current = ++generation.current;
       void client.command(session.sessionId, { type: 'ADVANCE', elapsedMs })
-        .then(adopt)
-        .catch(reason => setError(reason instanceof Error ? reason.message : String(reason)))
+        .then(next => adopt(next, current))
+        .catch(reason => { if (generation.current === current) setError(reason instanceof Error ? reason.message : String(reason)); })
         .finally(() => { advancing.current = false; });
     }, 100);
     return () => globalThis.clearInterval(timer);
