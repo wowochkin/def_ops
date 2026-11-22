@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-01-OFFLINE",
+  "startedAt": "2026-11-22T00:45:22.427Z",
+  "finishedAt": "2026-11-22T00:45:22.472Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "node scripts/kshvi-offline-check.mjs --deny-external",
+  "status": "passed",
+  "issues": [],
+  "localAssetsVerified": true,
+  "localAssetErrors": [],
+  "assets": [
+    {
+      "id": "font-pt-sans-narrow",
+      "kind": "FONT",
+      "path": "fonts/pt-sans-narrow-cyrillic-400-normal.woff2",
+      "bytes": 22208,
+      "sha256": "ff565657aca50b0d3ad4dd38ae9121543149796ea8db25b6a0b6ad78d11e3bcc"
+    },
+    {
+      "id": "library-react",
+      "kind": "LIBRARY",
+      "path": "descriptors/react.json",
+      "bytes": 103,
+      "sha256": "556d3c2f9234f09ce54144a4a180de93545eac87eab0eebb5536dd8336b22fea"
+    },
+    {
+      "id": "atlas-training-empty",
+      "kind": "ATLAS",
+      "path": "data/training-atlas.json",
+      "bytes": 388,
+      "sha256": "4c6c212af44161835851d27473659f9bf2137cc96a805b3cdc75f9406d75efc6"
+    },
+    {
+      "id": "weather-training-no-data",
+      "kind": "WEATHER",
+      "path": "data/training-weather.json",
+      "bytes": 359,
+      "sha256": "9a7edc55ca4bbc60eac74d0c9416c84e995de1023187731abe61db2283be7bf1"
+    },
+    {
+      "id": "generator-pdfmake",
+      "kind": "PDF_GENERATOR",
+      "path": "descriptors/pdfmake.json",
+      "bytes": 105,
+      "sha256": "2d4deaff1bbe365bd3e8e147c1f6f0e5c09243a61bd44ba9ea45afb91f876b79"
+    },
+    {
+      "id": "generator-python-docx",
+      "kind": "DOCX_GENERATOR",
+      "path": "descriptors/python-docx.json",
+      "bytes": 110,
+      "sha256": "853b7e6c55903e13e4b596e7ee1cc7244fdae94fffb8d20fa3c4f862d032ab26"
+    },
+    {
+      "id": "symbols-local",
+      "kind": "SYMBOLS",
+      "path": "descriptors/tactical-symbols.json",
+      "bytes": 151,
+      "sha256": "b9ab96d79d55e6b25c9538892ddc1638a27247ba3a349cec5937b6450b4c8107"
+    },
+    {
+      "id": "reference-local",
+      "kind": "REFERENCE",
+      "path": "descriptors/knowledge.json",
+      "bytes": 132,
+      "sha256": "aa272314df918de3578386cb67734464b934111f4efe5d1eff2af48342d73e38"
+    }
+  ],
+  "externalRequests": 0,
+  "processChecks": {
+    "localConfigurationOnly": true,
+    "externalFetchExecuted": false
+  },
+  "physicalIsolation": {
+    "status": "passed",
+    "reason": "Внешнее TCP-соединение запрещено ядром (EPERM)",
+    "probe": {
+      "local": {
+        "connected": true,
+        "code": null
+      },
+      "external": {
+        "connected": false,
+        "code": "EPERM",
+        "message": "connect EPERM 93.184.216.34:443 - Local (0.0.0.0:0)"
+      }
+    }
+  },
+  "limitations": [],
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

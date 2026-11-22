@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-01",
+  "status": "blocked",
+  "checks": {
+    "offlineStatus": "passed",
+    "networkScope": "loopback",
+    "connections": 50,
+    "activeParticipants": 25
+  },
+  "openErrors": [
+    "PHYSICAL_LAN_NOT_VERIFIED"
+  ],
+  "startedAt": "2026-11-22T00:42:33.732Z",
+  "finishedAt": "2026-11-22T00:44:35.053Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
+  "executionError": null,
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-01.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

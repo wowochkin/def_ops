@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-03",
+  "status": "blocked",
+  "checks": {
+    "sustained": {
+      "targetRate": 5,
+      "achievedRate": 4.999944320036724,
+      "durationSeconds": 60.00294895799999,
+      "commands": 300
+    },
+    "burst": {
+      "targetRate": 20,
+      "achievedRate": 19.999674616293813,
+      "durationSeconds": 60.00064475,
+      "commands": 1200
+    },
+    "dataset": {
+      "instances": 100,
+      "forces": 1000,
+      "events": 10000
+    },
+    "confirmedLost": 0,
+    "duplicateEffects": 0,
+    "orderingErrors": 0,
+    "measurementStatus": "passed"
+  },
+  "openErrors": [
+    "PHYSICAL_LAN_NOT_VERIFIED"
+  ],
+  "startedAt": "2026-11-22T00:42:33.732Z",
+  "finishedAt": "2026-11-22T00:44:35.053Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
+  "executionError": null,
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-03.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

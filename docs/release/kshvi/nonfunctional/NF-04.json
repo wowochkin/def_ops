@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-04",
+  "status": "blocked",
+  "checks": {
+    "heavyJobs": {
+      "attempted": 5244,
+      "completed": 5244,
+      "failed": 0,
+      "maxRunning": 2,
+      "results": [
+        {
+          "id": "heavy-1",
+          "status": "succeeded",
+          "result": {
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "32124bd2fc900b5c2472ad14d13fca23c81cf713b8ff13a74b93b5221246b13b",
+            "checksum": 137198,
+            "orderingErrors": 0
+          }
+        },
+        {
+          "id": "heavy-2",
+          "status": "succeeded",
+          "result": {
+            "kind": "ARCHIVE",
+            "rows": 500,
+            "sha256": "32124bd2fc900b5c2472ad14d13fca23c81cf713b8ff13a74b93b5221246b13b",
+            "checksum": 137198,
+            "orderingErrors": 0
+          }
+        },
+        {
+          "id": "heavy-4",
+          "status": "succeeded",
+          "result": {
+            "kind": "REPLAY",
+            "rows": 500,
+            "sha256": "64647e688a7be58a27489cde404e831f33e03bcf3b961b41effad8bf1d19d539",
+            "checksum": 26751,
+            "orderingErrors": 4
+          }
+        },
+        {
+          "id": "heavy-3",
+          "status": "succeeded",
+          "result": {
+            "kind": "MASS_CALCULATION",
+            "rows": 500,
+            "sha256": "64647e688a7be58a27489cde404e831f33e03bcf3b961b41effad8bf1d19d539",
+            "checksum": 4116411972,
+            "orderingErrors": 0
+          }
+        },
+        {
+          "id": "heavy-5",
+          "status": "succeeded",
+          "result": {
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "64647e688a7be58a27489cde404e831f33e03bcf3b961b41effad8bf1d19d539",
+            "checksum": 137217,
+            "orderingErrors": 0
+          }
+        },
+        {
+          "id": "heavy-6",
+          "status": "succeeded",
+          "result": {
+            "kind": "ARCHIVE",
+            "rows": 500,
+            "sha256": "64647e688a7be58a27489cde404e831f33e03bcf3b961b41effad8bf1d19d539",
+            "checksum": 137217,
+            "orderingErrors": 0
+          }
+        },
+        {
+          "id": "heavy-7",
+          "status": "succeeded",
+          "result": {
+            "kind": "REPLAY",
+            "rows": 500,
+            "sha256": "64647e688a7be58a27489cde404e831f33e03bcf3b961b41effad8bf1d19d539",
+            "checksum": 26751,
+            "orderingErrors": 4
+          }
+        },
+        {
+          "id": "heavy-9",
+          "status": "succeeded",
+          "result": {
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "0e7ec0cf580c18d3961e66cd450fb8731932923c0eff51c98fb7d2fdd5a8ff2e",
+            "checksum": 137241,
+            "orderingErrors": 0
+          }
+        }
+      ],
+      "resultsTruncated": 5236
+    },
+    "deliveryP95Ms": 2.946708999999828,
+    "mapP95Ms": 2.013999999999214,
+    "measurementStatus": "passed"
+  },
+  "openErrors": [
+    "PHYSICAL_LAN_NOT_VERIFIED"
+  ],
+  "startedAt": "2026-11-22T00:42:33.732Z",
+  "finishedAt": "2026-11-22T00:44:35.053Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
+  "executionError": null,
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-04.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}
