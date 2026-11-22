@@ -61,6 +61,10 @@ export class SubscriptionService {
     return this.events.find(event => event.instanceId === instanceId)?.sequence ?? 1;
   }
 
+  latestSequence(instanceId: string): number {
+    return this.events.filter(event => event.instanceId === instanceId).at(-1)?.sequence ?? 0;
+  }
+
   sequenceOf(instanceId: string, eventId: string): number | null {
     return this.events.find(event => event.instanceId === instanceId && event.eventId === eventId)?.sequence ?? null;
   }

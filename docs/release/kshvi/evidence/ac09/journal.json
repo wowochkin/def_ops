@@ -1,0 +1,101 @@
+{
+  "runId": "a17c63c5-8a8a-4cb0-bb09-c2ae3b51412f",
+  "commit": "6885dd7d165952073c921f1e7020a87825ece9f1",
+  "events": [
+    {
+      "eventId": "3d76dea5-bebc-4cf9-aa8a-4ca079004d59",
+      "organizationId": "org-ac09",
+      "instanceId": "ac09",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "first"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "first",
+        "revision": 1,
+        "commandId": "first",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "0ccdb54780e350bf8cf550a4b70408f2bdceca15623cfb6a31450f48007a2fb2",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "1ec6d6a1-42d1-4962-9a94-da513013f5a1",
+      "organizationId": "org-ac09",
+      "instanceId": "ac09",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "input.proposed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "second"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "second",
+          "kind": "PLANNED",
+          "input": {
+            "id": "second",
+            "actualAt": "2030-01-01T01:00:00Z",
+            "approval": {
+              "status": "REVIEW_REQUIRED"
+            },
+            "channelId": "radio",
+            "deviation": "EARLY",
+            "recipients": [
+              "node-1"
+            ],
+            "sourceRole": "LEADER",
+            "scheduledAt": "2030-01-01T02:00:00Z"
+          },
+          "status": "REVIEW_REQUIRED",
+          "causeIds": [],
+          "deviation": "EARLY"
+        },
+        "sideId": "red",
+        "causedBy": "second",
+        "commandId": "second",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "input.planned"
+      },
+      "prevHash": "0ccdb54780e350bf8cf550a4b70408f2bdceca15623cfb6a31450f48007a2fb2",
+      "hash": "9d9f60000fab6c00f07fa0523f38f65a979ecdb57513eba39f39a4615a9204b8",
+      "hashVersion": 2
+    }
+  ]
+}

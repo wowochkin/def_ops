@@ -59,6 +59,12 @@ export function registerSseRoutes(router: Router, subscriptions: SubscriptionSer
       ctx.res.end();
       return;
     }
+    const latest = subscriptions.latestSequence(instanceId);
+    if (after > latest) {
+      writeEvent(ctx, 'snapshot', { type: 'snapshot.required', reason: 'SEQUENCE_GAP' });
+      ctx.res.end();
+      return;
+    }
     const minimum = subscriptions.minSequence(instanceId);
     if (minimum > after + 1) {
       writeEvent(ctx, 'snapshot', { type: 'snapshot.required', reason: 'SEQUENCE_GAP' });
