@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SLUGS = [
@@ -34,11 +34,59 @@ export function acceptanceFiles(from, to) {
     return { id, path: `services/kshvi/tests/acceptance/ac${String(number).padStart(2, '0')}-${slug}.test.ts` };
   });
 }
-function defaultRunner(files) {
-  const result = spawnSync('npx', ['vitest', 'run', ...files.map(file => file.path)], { encoding: 'utf8', env: process.env });
+function defaultRunner(files, cwd = process.cwd()) {
+  const result = spawnSync('npx', ['vitest', 'run', ...files.map(file => file.path)], { cwd, encoding: 'utf8', env: process.env });
   return { status: result.status ?? 1, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
 }
-export async function runAcceptance({ from = 1, to = 30, reverse = false, evidence = 'docs/release/kshvi/acceptance', fileExists = existsSync, runner = defaultRunner, currentCommit, writeEvidence = true }) {
+export function prepareFreshAcceptanceWorkspace({ root = process.cwd(), offline = true, installer = spawnSync } = {}) {
+  mkdirSync(resolve(root, '.tmp'), { recursive: true });
+  const workspace = mkdtempSync(resolve(root, '.tmp', 'kshvi-ac00-'));
+  const excluded = new Set(['.git', 'node_modules', '.worktrees', '.tmp', 'dist']);
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (excluded.has(entry.name)) continue;
+    cpSync(resolve(root, entry.name), resolve(workspace, entry.name), {
+      recursive: true,
+      filter: source => {
+        const path = relative(root, source);
+        if (!path) return true;
+        const [top] = path.split(/[\\/]/);
+        return !excluded.has(top);
+      },
+    });
+  }
+  const result = installer('npm', ['ci', ...(offline ? ['--offline'] : [])], {
+    cwd: workspace,
+    stdio: 'inherit',
+    env: { ...process.env, KSHVI_OFFLINE: offline ? '1' : '0', KSHVI_EXTERNAL_NETWORK: '0' },
+  });
+  if (result.status !== 0) throw new Error(`npm ci в изолированной установке завершился с кодом ${result.status ?? 1}`);
+  return workspace;
+}
+export function acceptanceEvidenceIssues(proof, fileExists = existsSync) {
+  const issues = [];
+  const hash = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+  if (!proof || typeof proof !== 'object') return ['initialRevision: обязательный комплект доказательств отсутствует'];
+  if (!proof.initialRevision || typeof proof.initialRevision.id !== 'string' || !Number.isSafeInteger(proof.initialRevision.revision)
+    || proof.initialRevision.revision < 1 || !hash(proof.initialRevision.sha256)) issues.push('initialRevision: нужна исходная редакция и SHA-256');
+  if (!proof.journal || typeof proof.journal.path !== 'string' || !proof.journal.path || !hash(proof.journal.sha256)
+    || !Number.isSafeInteger(proof.journal.eventCount) || proof.journal.eventCount < 1) issues.push('journal: нужен непустой журнал, путь и SHA-256');
+  for (const key of ['scenario', 'environment', 'journal']) if (!hash(proof.hashes?.[key])) issues.push(`hashes.${key}: требуется SHA-256`);
+  if (proof.hashes?.scenario !== proof.initialRevision?.sha256) issues.push('hashes.scenario: не совпадает с исходной редакцией');
+  if (proof.hashes?.journal !== proof.journal?.sha256) issues.push('hashes.journal: не совпадает с журналом');
+  const protocols = Array.isArray(proof.protocols) ? proof.protocols : [];
+  const screenshots = Array.isArray(proof.screenshots) ? proof.screenshots : [];
+  if (![...protocols, ...screenshots].some(path => typeof path === 'string' && path.length > 0)) issues.push('protocols/screenshots: нужен протокол или снимок');
+  if (!proof.metrics || typeof proof.metrics !== 'object' || !Object.values(proof.metrics).some(value => typeof value === 'number' && Number.isFinite(value))) {
+    issues.push('metrics: нужна хотя бы одна фактическая числовая метрика');
+  }
+  if (!Array.isArray(proof.limitations) || proof.limitations.some(value => typeof value !== 'string')) issues.push('limitations: требуется массив строк, пустой при отсутствии ограничений');
+  const artifacts = Array.isArray(proof.artifacts) ? proof.artifacts : [];
+  for (const path of [proof.journal?.path, ...protocols, ...screenshots]) if (path && !artifacts.includes(path)) issues.push(`artifacts: не указан ${path}`);
+  for (const path of artifacts) if (typeof path !== 'string' || !path || !fileExists(path)) issues.push(`artifacts: файл недоступен ${path}`);
+  return issues;
+}
+
+export async function runAcceptance({ from = 1, to = 30, reverse = false, evidence = 'docs/release/kshvi/acceptance', fileExists = existsSync, runner = defaultRunner, currentCommit, writeEvidence = true, freshInstall = false, offline = false, cwd = process.cwd() }) {
   const files = acceptanceFiles(from, to);
   if (reverse) files.reverse();
   if (writeEvidence) mkdirSync(evidence, { recursive: true });
@@ -48,16 +96,21 @@ export async function runAcceptance({ from = 1, to = 30, reverse = false, eviden
   for (const file of files) {
     let result;
     if (!fileExists(file.path)) result = { status: 1, output: `Отсутствует сценарий ${file.path}` };
-    else result = await runner([file]);
-    const passed = result.status === 0;
+    else result = await runner([file], cwd);
+    const proofIssues = result.status === 0 ? acceptanceEvidenceIssues(result.evidence, path => fileExists(resolve(cwd, path))) : [];
+    const passed = result.status === 0 && proofIssues.length === 0;
     if (!passed) status = 1;
     const evidencePath = resolve(evidence, `${file.id}.json`);
+    const openErrors = result.status !== 0 ? [result.output || 'Сценарий не прошёл'] : proofIssues;
     const record = {
       status: passed ? 'passed' : 'failed', commit, command: `npx vitest run ${file.path}`, output: result.output,
-      artifacts: [evidencePath], openErrors: passed ? [] : [result.output || 'Сценарий не прошёл'],
+      ...(result.evidence && typeof result.evidence === 'object' ? result.evidence : {}),
+      freshInstall, offline, cwd,
+      artifacts: [...(Array.isArray(result.evidence?.artifacts) ? result.evidence.artifacts : []), evidencePath],
+      openErrors,
     };
     if (writeEvidence) writeFileSync(evidencePath, `${JSON.stringify(record, null, 2)}\n`);
-    results.push({ id: file.id, status: record.status, output: result.output });
+    results.push({ id: file.id, status: record.status, output: result.output, openErrors });
   }
   return { status, results };
 }
@@ -161,9 +214,9 @@ export function buildG2Evidence(run, options) {
 }
 
 function runG2(options) {
-  const root = process.cwd();
+  const root = options.cwd ?? process.cwd();
   if (!process.env.TEST_DATABASE_URL) throw new Error('Для G2 нужен проверенный TEST_DATABASE_URL; in-memory fallback запрещён');
-  const currentCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+  const currentCommit = options.currentCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const runId = randomUUID();
   const sources = [
     readFileSync(resolve(root, 'services/kshvi/tests/e2e/conduct-cycle.test.ts'), 'utf8'),
@@ -194,17 +247,17 @@ const invokedPath = process.argv[1] ? resolve(process.argv[1]) : null;
 if (invokedPath && invokedPath === fileURLToPath(import.meta.url)) {
   try {
     const options = resolveRunMode(process.argv.slice(2));
-    if (options.freshInstall) {
-      const install = spawnSync('npm', ['ci'], { stdio: 'inherit' });
-      if (install.status !== 0) throw new Error(`npm ci завершился с кодом ${install.status}`);
-    }
+    const currentCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: process.cwd(), encoding: 'utf8' }).trim();
+    const executionRoot = options.freshInstall ? prepareFreshAcceptanceWorkspace({ root: process.cwd(), offline: options.offline }) : process.cwd();
     if (options.offline) {
       process.env.KSHVI_OFFLINE = '1';
       process.env.KSHVI_EXTERNAL_NETWORK = '0';
+      const guard = resolve(executionRoot, 'scripts/kshvi-network-guard.mjs');
+      process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ''} --import ${guard}`.trim();
     }
-    const generic = options.generic ? await runAcceptance({ ...options, writeEvidence: options.writeGenericEvidence }) : { status: 0, results: [] };
+    const generic = options.generic ? await runAcceptance({ ...options, cwd: executionRoot, currentCommit, writeEvidence: options.writeGenericEvidence }) : { status: 0, results: [] };
     const fullGeneric = options.from === 1 && options.to === 30;
-    const g2 = options.g2 ? runG2({ requireComplete: options.requireComplete, genericStatus: generic.status || !fullGeneric ? 1 : 0 }) : { status: 0 };
+    const g2 = options.g2 ? runG2({ cwd: executionRoot, currentCommit, requireComplete: options.requireComplete, genericStatus: generic.status || !fullGeneric ? 1 : 0 }) : { status: 0 };
     process.exitCode = generic.status || g2.status;
   } catch (error) {
     console.error(`Приёмка КШВИ остановлена: ${error instanceof Error ? error.message : String(error)}`);

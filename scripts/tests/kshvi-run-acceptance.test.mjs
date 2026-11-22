@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { acceptanceFiles, assertNoDirectOutcomeWrites, buildG2Evidence, resolveRunMode, runAcceptance, assertFreshG2Run } from '../kshvi-run-acceptance.mjs';
+import { acceptanceFiles, assertNoDirectOutcomeWrites, buildG2Evidence, resolveRunMode, runAcceptance, assertFreshG2Run, prepareFreshAcceptanceWorkspace } from '../kshvi-run-acceptance.mjs';
 
 test('содержит независимые сценарии AC-01–AC-30', () => {
   const files = acceptanceFiles(1, 30);
@@ -21,7 +21,23 @@ test('записывает доказательства только после 
     reverse: true,
     evidence,
     fileExists: () => true,
-    runner: async files => { calls.push(files); return { status: 0, output: 'ok' }; },
+    runner: async files => {
+      calls.push(files);
+      return {
+        status: 0,
+        output: 'ok',
+        evidence: {
+          initialRevision: { id: `scenario-${files[0].id}`, revision: 1, sha256: 'a'.repeat(64) },
+          journal: { path: `artifacts/${files[0].id}-journal.json`, sha256: 'b'.repeat(64), eventCount: 1 },
+          hashes: { scenario: 'a'.repeat(64), environment: 'c'.repeat(64), journal: 'b'.repeat(64) },
+          protocols: [`artifacts/${files[0].id}-protocol.txt`],
+          screenshots: [],
+          metrics: { assertions: 1 },
+          limitations: [],
+          artifacts: [`artifacts/${files[0].id}-journal.json`, `artifacts/${files[0].id}-protocol.txt`],
+        },
+      };
+    },
     currentCommit: 'abc123',
   });
   assert.equal(result.status, 0);
@@ -32,7 +48,23 @@ test('записывает доказательства только после 
     assert.equal(record.commit, 'abc123');
     assert.ok(record.command.includes('vitest'));
     assert.ok(record.artifacts.length > 0);
+    assert.equal(record.initialRevision.revision, 1);
+    assert.equal(record.journal.eventCount, 1);
+    assert.equal(record.metrics.assertions, 1);
+    assert.ok(record.protocols.length > 0);
   }
+});
+
+test('не выдаёт passed по одному exit status без обязательного комплекта AC-00', async () => {
+  const evidence = mkdtempSync(join(tmpdir(), 'kshvi-acceptance-'));
+  const result = await runAcceptance({
+    from: 1, to: 1, evidence, fileExists: () => true,
+    runner: async () => ({ status: 0, output: 'ok, но нет доказательств' }), currentCommit: 'abc123',
+  });
+  assert.equal(result.status, 1);
+  const record = JSON.parse(readFileSync(join(evidence, 'AC-01.json'), 'utf8'));
+  assert.equal(record.status, 'failed');
+  assert.ok(record.openErrors.some(issue => issue.includes('initialRevision') || issue.includes('journal')));
 });
 
 test('не создаёт passed при отсутствии сценария или ошибке запуска', async () => {
@@ -129,4 +161,27 @@ test('evidence содержит commit/runId и точные идентифик�
   assert.equal(evidence.runId, 'run-1');
   assert.equal(evidence.directOutcomeWrites, false);
   assert.ok(evidence.requirements.every(id => !id.includes('–')));
+});
+
+
+test('чистая установка выполняется в новой копии дерева и только offline', () => {
+  const root = mkdtempSync(join(tmpdir(), 'kshvi-fresh-source-'));
+  writeFileSync(join(root, 'package.json'), '{"name":"fresh-test","version":"1.0.0"}\n');
+  writeFileSync(join(root, 'package-lock.json'), '{"name":"fresh-test","version":"1.0.0","lockfileVersion":3,"packages":{}}\n');
+  mkdirSync(join(root, 'node_modules', 'stale'), { recursive: true });
+  writeFileSync(join(root, 'node_modules', 'stale', 'index.js'), 'старая установка\n');
+  const calls = [];
+  const workspace = prepareFreshAcceptanceWorkspace({
+    root,
+    offline: true,
+    installer: (command, args, options) => { calls.push({ command, args, options }); return { status: 0 }; },
+  });
+  assert.notEqual(workspace, root);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, 'npm');
+  assert.deepEqual(calls[0].args, ['ci', '--offline']);
+  assert.equal(calls[0].options.cwd, workspace);
+  assert.equal(calls[0].options.env.KSHVI_OFFLINE, '1');
+  assert.equal(existsSync(join(workspace, 'package.json')), true);
+  assert.equal(existsSync(join(workspace, 'node_modules')), false);
 });
