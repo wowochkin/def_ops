@@ -19,7 +19,7 @@ export type DualChainDecision = Readonly<{
 
 function derivedState(command: ChainDecision, service: ChainDecision): DualChainStateName {
   if ((command === 'APPROVED' && service === 'CHANGES_REQUESTED') || (command === 'CHANGES_REQUESTED' && service === 'APPROVED')) return 'CONFLICT';
-  if (command === 'APPROVED' && service === 'APPROVED') return 'IN_REVIEW';
+  if (command === 'APPROVED' && service === 'APPROVED') return 'APPROVED';
   if (command === 'CHANGES_REQUESTED' && service === 'CHANGES_REQUESTED') return 'CHANGES_REQUESTED';
   return 'IN_REVIEW';
 }

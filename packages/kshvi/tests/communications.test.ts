@@ -31,7 +31,7 @@ function channel(overrides: Partial<Channel> = {}): Channel {
 
 function message(overrides: Partial<CommunicationMessage> = {}): CommunicationMessage {
   return {
-    id: 'message-1', type: 'ORDER', senderRole: 'COMMANDER', recipientIds: ['unit'], sizeBytes: 2000,
+    id: 'message-1', type: 'ORDER', senderRole: 'COMMANDER', fromInstanceId: 'hq', recipientIds: ['unit'], sizeBytes: 2000,
     priority: 5, domainKey: 'order-1', createdAt: at, ...overrides,
   };
 }
@@ -116,7 +116,7 @@ describe('попытки сообщения и идемпотентный дом
     const retry = retryMessage(failed, '2030-01-01T06:00:04Z');
     expect(retry).toMatchObject({ attempt: 2, status: 'queued', previousAttempt: { attempt: 1, status: 'failed' } });
     const delivered = advanceMessage(advanceMessage(retry, 'START', { at: '2030-01-01T06:00:05Z' }), 'DELIVER', { at: '2030-01-01T06:00:08.500Z' });
-    expect(delivered).toMatchObject({ status: 'delivered', domainEffectApplied: true, appliedDomainKeys: ['order-1'] });
+    expect(delivered).toMatchObject({ status: 'delivered', domainEffectApplied: true, appliedDomainKeys: ['order-1:unit'] });
     const cancelled = advanceMessage(createMessageAttempt(message({ id: 'cancelled' }), route, at), 'CANCEL', { at, reason: 'Отмена отправителем' });
     expect(cancelled.status).toBe('cancelled');
   });
@@ -151,8 +151,8 @@ describe('сценарные сбои', () => {
       factor: { ...baseFailure, id: 'partial', type: 'PARTIAL_DELIVERY', recipientIds: ['unit'] },
       at: '2030-01-01T06:00:04Z',
     });
-    expect(partial.attempt).toMatchObject({ status: 'delivered', partial: true, recipientResults: { unit: 'delivered', neighbor: 'failed' } });
-    expect(partial.attempt.appliedDomainKeys).toEqual(['order-1']);
+    expect(partial.attempt).toMatchObject({ status: 'failed', partial: true, recipientResults: { unit: 'delivered', neighbor: 'failed' } });
+    expect(partial.attempt.appliedDomainKeys).toEqual(['order-1:unit']);
   });
 
   it('снижает ёмкость и восстанавливает инфраструктуру явными событиями', () => {

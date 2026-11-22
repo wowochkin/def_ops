@@ -111,12 +111,13 @@ export function formationExecutionStatus(plan: FormationPlan, elements: readonly
     for (const reportId of item.reportIds) if (!reportIds.includes(reportId)) reportIds.push(reportId);
   }
   const hasProgress = elements.some(item => item.stage === 'COMPLETED' || item.stage === 'PARTIAL' || item.stage === 'FAILED' || (item.route?.travelledMeters ?? 0) > 0);
+  const allFailed = expected.length > 0 && expected.every(id => byId.get(id)?.stage === 'FAILED');
   const status = pendingElementIds.length === 0
     ? 'COMPLETED'
-    : hasProgress
-      ? 'PARTIAL'
-      : elements.length > 0 && elements.every(item => item.stage === 'FAILED')
-        ? 'FAILED'
+    : allFailed
+      ? 'FAILED'
+      : hasProgress
+        ? 'PARTIAL'
         : elements.some(item => item.stage === 'EXECUTION' || item.stage === 'PREPARATION' || item.stage === 'SUSPENDED') ? 'IN_PROGRESS' : 'NOT_STARTED';
   return { planId: plan.id, status, completedElementIds, pendingElementIds, positions, reportIds };
 }

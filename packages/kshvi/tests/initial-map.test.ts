@@ -126,7 +126,7 @@ describe('PREP-13/14 и ENV-12–15: версионная карта', () => {
     const changed = updateInitialMapMarker(initial, 'blue-force', {
       geometry: { type: 'Point', coordinates: [0.3, 0.3] },
     });
-    expect(changed.revision).toBe(2);
+    expect(changed.revision).toBe(3);
     expect(changed.markers[0].geometry).toEqual({ type: 'Point', coordinates: [0.3, 0.3] });
     expect(changed.history).toHaveLength(1);
     expect(changed.history[0].geometry).toEqual({ type: 'Point', coordinates: [0.2, 0.2] });

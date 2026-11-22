@@ -186,7 +186,7 @@ describe('PREP-05/06 и AC-01/22: SEALED, начальный мир и архи�
 
   it('обнаруживает изменение карты, среды или канонического сценария после подтверждений', () => {
     const changedMap = sealInput();
-    changedMap.initialMap = { ...validMap(), revision: 2 };
+    changedMap.initialMap = { ...validMap(), revision: 3 };
     expect(() => sealScenario(changedMap)).toThrow('INITIAL_MAP_HASH_INVALID');
     const changedEnvironment = sealInput();
     changedEnvironment.expectedEnvironmentSha256 = hashC;

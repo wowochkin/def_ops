@@ -14,6 +14,7 @@ export type MessageAttempt = Readonly<{
   messageId: string;
   attempt: number;
   senderRole: string;
+  fromInstanceId: string;
   recipients: readonly string[];
   priority: number;
   sizeBytes: number;
@@ -45,6 +46,7 @@ export function createMessageAttempt(
     messageId: message.id,
     attempt: previousAttempt ? previousAttempt.attempt + 1 : 1,
     senderRole: message.senderRole,
+    fromInstanceId: message.fromInstanceId,
     recipients: [...message.recipientIds],
     priority: message.priority,
     sizeBytes: message.sizeBytes,
@@ -70,6 +72,7 @@ export type DeliveryInput = Readonly<{
   attempt: number;
   domainKey: string | null;
   appliedDomainKeys: readonly string[];
+  recipientIds?: readonly string[];
   duplicate?: boolean;
 }>;
 
@@ -84,12 +87,14 @@ export type DeliveryOutcome = Readonly<{
 
 /** Доменный эффект отделён от видимого транспортного дубликата. */
 export function deliverAttempt<T extends DeliveryInput>(input: T): Omit<T, keyof DeliveryOutcome> & DeliveryOutcome {
-  const alreadyApplied = input.domainKey !== null && input.appliedDomainKeys.includes(input.domainKey);
+  const effectKeys = input.domainKey === null ? [] : input.recipientIds?.length
+    ? input.recipientIds.map(recipient => `${input.domainKey}:${recipient}`)
+    : [input.domainKey];
+  const newEffectKeys = effectKeys.filter(key => !input.appliedDomainKeys.includes(key));
+  const alreadyApplied = effectKeys.length > 0 && newEffectKeys.length === 0;
   const duplicate = input.duplicate === true || alreadyApplied;
-  const domainEffectApplied = input.domainKey !== null && !alreadyApplied;
-  const appliedDomainKeys = input.domainKey !== null && !alreadyApplied
-    ? [...input.appliedDomainKeys, input.domainKey]
-    : [...input.appliedDomainKeys];
+  const domainEffectApplied = newEffectKeys.length > 0;
+  const appliedDomainKeys = [...input.appliedDomainKeys, ...newEffectKeys];
   return {
     ...input,
     status: 'delivered',
@@ -110,7 +115,7 @@ function instant(value: string): number {
 export function advanceMessage(
   attempt: MessageAttempt,
   action: 'START' | 'DELIVER' | 'FAIL' | 'CANCEL',
-  input: Readonly<{ at: string; reason?: string }>,
+  input: Readonly<{ at: string; reason?: string; recipientIds?: readonly string[] }>,
 ): MessageAttempt {
   const at = instant(input.at);
   if (action === 'START') {
@@ -120,13 +125,18 @@ export function advanceMessage(
   if (action === 'DELIVER') {
     if (attempt.status !== 'inTransit' || !attempt.startedAt) throw new Error('Доставляется только попытка inTransit');
     if (at < instant(attempt.startedAt) + attempt.route.delayMs) throw new Error('Доставка раньше версионной задержки канала');
-    const delivered = deliverAttempt(attempt);
+    const recipientIds = input.recipientIds ?? attempt.recipients;
+    if (!recipientIds.length || recipientIds.some(recipient => !attempt.recipients.includes(recipient))) throw new Error('Получатели доставки не принадлежат сообщению');
+    const partial = recipientIds.length < attempt.recipients.length;
+    const delivered = deliverAttempt({ ...attempt, recipientIds });
     return {
       ...delivered,
+      status: partial ? 'failed' : 'delivered',
+      partial,
       completedAt: input.at,
-      result: 'DELIVERED',
-      failureReason: null,
-      recipientResults: Object.fromEntries(attempt.recipients.map(recipient => [recipient, 'delivered'])),
+      result: partial ? 'FAILED' : 'DELIVERED',
+      failureReason: partial ? 'Доставлено не всем получателям; требуется повтор оставшимся' : null,
+      recipientResults: Object.fromEntries(attempt.recipients.map(recipient => [recipient, recipientIds.includes(recipient) ? 'delivered' : 'failed'])),
       deliveryJournalEntry: { ...delivered.deliveryJournalEntry, at: input.at },
     };
   }
@@ -143,11 +153,16 @@ export function advanceMessage(
 
 export function retryMessage(attempt: MessageAttempt, queuedAt: string): MessageAttempt {
   if (attempt.status !== 'failed' && attempt.status !== 'cancelled') throw new Error('Повтор создаётся после failed или cancelled');
+  const recipients = attempt.partial
+    ? attempt.recipients.filter(recipient => attempt.recipientResults[recipient] !== 'delivered')
+    : attempt.recipients;
+  if (!recipients.length) throw new Error('Все получатели уже получили сообщение');
   return createMessageAttempt({
     id: attempt.messageId,
     type: 'ORDER',
     senderRole: attempt.senderRole,
-    recipientIds: attempt.recipients,
+    fromInstanceId: attempt.fromInstanceId,
+    recipientIds: recipients,
     sizeBytes: attempt.sizeBytes,
     priority: attempt.priority,
     domainKey: attempt.domainKey,

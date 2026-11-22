@@ -1,7 +1,8 @@
-import type {
-  ApprovalSignature,
-  DocumentFactType,
-  DocumentRevision,
+import {
+  computeDocumentSha256Sync,
+  type ApprovalSignature,
+  type DocumentFactType,
+  type DocumentRevision,
 } from './document';
 import {
   assertApprovedSignaturesMatch,
@@ -114,7 +115,7 @@ export function supersedeDocument(
   if (!/^[0-9a-f]{64}$/.test(input.sha256)) throw new Error('Новая редакция требует SHA-256 содержимого');
   assertApprovedSignaturesMatch(revision);
   const number = revision.revision + 1;
-  return {
+  const draft: DocumentRevision = {
     ...revision,
     id: `${revision.documentId}:r${number}`,
     revision: number,
@@ -132,6 +133,7 @@ export function supersedeDocument(
     returnComment: undefined,
     previousRevision: { ...revision, state: 'SUPERSEDED' },
   };
+  return { ...draft, sha256: computeDocumentSha256Sync(draft) };
 }
 
 export function recordDocumentFact(

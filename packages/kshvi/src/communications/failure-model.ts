@@ -83,12 +83,7 @@ export function applyFailure(input: {
     duplicateRequested = true;
   } else if (factor.type === 'PARTIAL_DELIVERY') {
     if (!factor.recipientIds?.length) throw new Error('Частичная доставка требует фактических получателей');
-    const delivered = advanceMessage(attempt, 'DELIVER', { at: input.at });
-    next = {
-      ...delivered,
-      partial: true,
-      recipientResults: Object.fromEntries(attempt.recipients.map(recipient => [recipient, factor.recipientIds?.includes(recipient) ? 'delivered' : 'failed'])),
-    };
+    next = advanceMessage(attempt, 'DELIVER', { at: input.at, recipientIds: factor.recipientIds });
   } else {
     throw new Error(`Фактор ${factor.type} применяется к инфраструктуре, а не к попытке`);
   }

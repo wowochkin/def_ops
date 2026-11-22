@@ -29,6 +29,8 @@ export type CommunicationMessage = Readonly<{
   id: string;
   type: string;
   senderRole: string;
+  /** Подлинная инстанция отправителя, зафиксированная серверной командой. */
+  fromInstanceId: string;
   recipientIds: readonly string[];
   sizeBytes: number;
   priority: number;
@@ -58,10 +60,12 @@ function time(value: string): number {
 }
 
 function connects(channel: Channel, message: CommunicationMessage): boolean {
-  const direct = channel.toInstanceId !== '' && message.recipientIds.includes(channel.toInstanceId);
-  if (!direct) return false;
-  if (channel.direction === 'DUPLEX') return true;
-  return channel.fromInstanceId.length > 0;
+  if (message.fromInstanceId === channel.fromInstanceId) {
+    return channel.toInstanceId !== '' && message.recipientIds.includes(channel.toInstanceId);
+  }
+  return channel.direction === 'DUPLEX'
+    && message.fromInstanceId === channel.toInstanceId
+    && message.recipientIds.includes(channel.fromInstanceId);
 }
 
 /** Маршрут фиксируется на момент передачи; последующий отказ не меняет прошлый объект. */
@@ -73,12 +77,29 @@ export function routeMessage(input: {
   processingDelayMs?: number;
 }): MessageRoute {
   const at = time(input.at);
+  const senderKnown = input.channels.some(channel => channel.fromInstanceId === input.message.fromInstanceId
+    || channel.direction === 'DUPLEX' && channel.toInstanceId === input.message.fromInstanceId);
+  if (!senderKnown) throw new Error('Отправитель сообщения не соответствует каналу');
   const typed = input.channels.filter(channel => connects(channel, input.message));
   if (!typed.some(channel => channel.allowedMessageTypes.includes(input.message.type))) throw new Error(`Сообщение типа ${input.message.type} не допущено каналами`);
   const candidates = typed.filter(channel => channel.allowedMessageTypes.includes(input.message.type));
+  const primary = candidates[0];
+  const allowedRouteIds = new Set(primary ? [primary.id] : []);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const channel of candidates) {
+      if (!allowedRouteIds.has(channel.id)) continue;
+      for (const reserveId of channel.reserveChannelIds) {
+        if (!allowedRouteIds.has(reserveId)) {
+          allowedRouteIds.add(reserveId);
+          changed = true;
+        }
+      }
+    }
+  }
   const availableNodes = new Map(input.nodes.map(node => [node.id, node.status] as const));
-  const viable = candidates.filter(channel =>
-    channel.availability !== 'FAILED'
+  const viable = candidates.filter(channel => allowedRouteIds.has(channel.id)
+    && channel.availability !== 'FAILED'
     && at >= Date.parse(channel.validFrom) && at <= Date.parse(channel.validUntil)
     && channel.nodeIds.every(nodeId => availableNodes.get(nodeId) === 'AVAILABLE'));
   const selected = viable[0];
@@ -115,7 +136,10 @@ export function admitAttempts(input: {
   time(input.at);
   const queued = [...input.queued].sort((left, right) => {
     if (input.channel.priorityPolicy.allowQueuedPreemption && left.priority !== right.priority) return right.priority - left.priority;
-    return left.queuedAt.localeCompare(right.queuedAt) || left.messageId.localeCompare(right.messageId);
+    const leftMs = Date.parse(left.queuedAt);
+    const rightMs = Date.parse(right.queuedAt);
+    if (!Number.isFinite(leftMs) || !Number.isFinite(rightMs)) throw new Error('Некорректное время постановки в очередь');
+    return leftMs - rightMs || left.messageId.localeCompare(right.messageId);
   });
   const slots = Math.max(0, effectiveChannelCapacity(input.channel) - input.inTransit.length);
   const started = queued.slice(0, slots).map(attempt => ({

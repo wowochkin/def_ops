@@ -17,7 +17,7 @@ function channel(id: string, nodeId: string, reserveChannelIds: string[]): Chann
 }
 
 function message(id: string, priority: number): CommunicationMessage {
-  return { id, type: 'ORDER', senderRole: 'COMMANDER', recipientIds: ['unit'], sizeBytes: 1000, priority, domainKey: 'order-1', createdAt: at };
+  return { id, type: 'ORDER', senderRole: 'COMMANDER', fromInstanceId: 'hq', recipientIds: ['unit'], sizeBytes: 1000, priority, domainKey: 'order-1', createdAt: at };
 }
 
 it('AC-06 отказ, задержка, резерв, дубли, срок донесения и бумажный обмен доступны разбору', () => {
@@ -50,7 +50,7 @@ it('AC-06 отказ, задержка, резерв, дубли, срок до�
   expect(restored.nodes.find(node => node.id === 'node-main')?.status).toBe('AVAILABLE');
   urgent = advanceMessage(urgent, 'START', { at: '2030-01-01T06:00:03Z' });
   urgent = advanceMessage(urgent, 'DELIVER', { at: '2030-01-01T06:00:05Z' });
-  expect(urgent).toMatchObject({ status: 'delivered', attempt: 2, domainEffectApplied: true, appliedDomainKeys: ['order-1'] });
+  expect(urgent).toMatchObject({ status: 'delivered', attempt: 2, domainEffectApplied: true, appliedDomainKeys: ['order-1:unit'] });
   const cancelled = advanceMessage(low, 'CANCEL', { at: '2030-01-01T06:00:04Z', reason: 'Заменён резервной попыткой' });
   expect(cancelled.status).toBe('cancelled');
   expect([queuedUrgent.status, low.status, urgent.previousAttempt?.status, urgent.status, cancelled.status]).toEqual([
@@ -58,7 +58,7 @@ it('AC-06 отказ, задержка, резерв, дубли, срок до�
   ]);
 
   const duplicate = deliverAttempt({ ...urgent, attempt: 3, appliedDomainKeys: urgent.appliedDomainKeys });
-  expect(duplicate).toMatchObject({ duplicate: true, domainEffectApplied: false, appliedDomainKeys: ['order-1'] });
+  expect(duplicate).toMatchObject({ duplicate: true, domainEffectApplied: false, appliedDomainKeys: ['order-1:unit'] });
   expect(duplicate.deliveryJournalEntry.attempt).toBe(3);
 
   const schedule = {
@@ -76,7 +76,7 @@ it('AC-06 отказ, задержка, резерв, дубли, срок до�
     electronicQueue: [{ messageId: 'urgent-electronic', domainKey: 'order-1', status: 'inTransit' }],
   });
   expect(paper).toMatchObject({
-    domainEffectApplied: false, duplicate: true, appliedDomainKeys: ['order-1'], electronicResolution: 'CANCEL_DUPLICATE', cancelledMessageIds: ['urgent-electronic'],
+    domainEffectApplied: false, duplicate: true, appliedDomainKeys: ['order-1:unit'], electronicResolution: 'CANCEL_DUPLICATE', cancelledMessageIds: ['urgent-electronic'],
   });
   expect(paper.facts[1]).toMatchObject({ actualAt: '2030-01-01T06:10:00Z', recordedAt: '2030-01-01T06:20:00Z' });
 });

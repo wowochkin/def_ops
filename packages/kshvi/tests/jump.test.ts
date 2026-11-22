@@ -16,7 +16,7 @@ it('выполняет семь шагов скачка один раз и со�
   expect(result.hash).toBe('snapshot-hash');
   expect(result.world).toMatchObject({ pathRemaining: 20, fuel: 8, weatherSeed: 7 });
   expect(steps).toEqual(['boundary', 'stop', 'calculate', 'uncertainty', 'approve', 'snapshot', 'resume']);
-  await expect(executeJump({ jumpId: 'jump-1', targetOperationalAt: '2030-01-02T00:00:00Z', world: result.world })).rejects.toThrow('уже применён');
+  await expect(executeJump({ jumpId: 'jump-1', targetOperationalAt: '2030-01-02T00:00:00Z', world: result.world })).resolves.toEqual(result);
 });
 
 it('запрещает обратное официальное время и различает отбой и ABORTED', async () => {

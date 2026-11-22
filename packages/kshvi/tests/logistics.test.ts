@@ -164,19 +164,19 @@ describe('путь поставки', () => {
     expect(entries.map(item => item.operation)).toEqual(['RESERVE', 'DISPATCH']);
 
     let result = advanceSupply(movement, {
-      commandId: 'move-1', action: 'MOVE', at: T0, distanceMeters: 400,
+      commandId: 'move-1', action: 'MOVE', at: '2030-01-01T06:12:00.000Z', speedKph: 2,
       route: { closed: false, capacityTonnes: 80, loadTonnes: 60, availableColumns: 1 },
     });
     movement = result.movement;
     expect(movement.route).toMatchObject({ travelledMeters: 400, remainingMeters: 600 });
     expect(movement.deliveredQuantity).toBe(0);
 
-    result = advanceSupply(movement, { commandId: 'delay', action: 'DELAY', at: T0, delayMinutes: 30, reason: 'Очередь переправы' });
+    result = advanceSupply(movement, { commandId: 'delay', action: 'DELAY', at: '2030-01-01T06:12:00.000Z', delayMinutes: 30, reason: 'Очередь переправы' });
     movement = result.movement;
     expect(movement).toMatchObject({ status: 'DELAYED', delayMinutes: 30, deliveredQuantity: 0 });
 
     result = advanceSupply(movement, {
-      commandId: 'move-2', action: 'MOVE', at: T1, distanceMeters: 600,
+      commandId: 'move-2', action: 'MOVE', at: T1, speedKph: 0.75,
       route: { closed: false, capacityTonnes: 80, loadTonnes: 60, availableColumns: 1 },
     });
     movement = result.movement;
@@ -206,11 +206,11 @@ describe('путь поставки', () => {
   it('задерживает закрытую или перегруженную переправу без отката пройденного пути', () => {
     const { movement } = sentMovement();
     const moved = advanceSupply(movement, {
-      commandId: 'move', action: 'MOVE', at: T0, distanceMeters: 200,
+      commandId: 'move', action: 'MOVE', at: '2030-01-01T06:06:00.000Z', speedKph: 2,
       route: { closed: false, capacityTonnes: 80, loadTonnes: 60, availableColumns: 1 },
     });
     const blocked = advanceSupply(moved.movement, {
-      commandId: 'overload', action: 'MOVE', at: T0, distanceMeters: 200,
+      commandId: 'overload', action: 'MOVE', at: '2030-01-01T06:06:00.000Z', speedKph: 2,
       route: { closed: false, capacityTonnes: 40, loadTonnes: 60, availableColumns: 1 },
     });
     expect(blocked.movement.status).toBe('BLOCKED');
@@ -271,7 +271,7 @@ describe('ремонт и эвакуация', () => {
     expect(started.equipment).toMatchObject({ state: 'UNDER_REPAIR', activeTaskId: null, activeRepairId: 'repair-1' });
     expect(started.ledgerEntries).toHaveLength(1);
     expect(started.ledgerEntries[0]).toMatchObject({ operation: 'CONSUME', resourceId: 'engine-part', quantity: 2 });
-    const early = advanceRepair(started.request, started.equipment, { commandId: 'early', action: 'COMPLETE', at: T1, elapsedMinutes: 30 });
+    const early = advanceRepair(started.request, started.equipment, { commandId: 'early', action: 'COMPLETE', at: '2030-01-01T06:30:00.000Z', elapsedMinutes: 999 });
     expect(early.request.status).toBe('UNDER_REPAIR');
     const completed = advanceRepair(started.request, started.equipment, { commandId: 'complete', action: 'COMPLETE', at: T1, elapsedMinutes: 60 });
     expect(completed.request.status).toBe('RESTORED');

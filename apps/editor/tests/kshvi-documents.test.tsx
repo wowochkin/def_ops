@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DocumentRevision } from '../../../packages/kshvi/src/documents/browser';
+import { computeDocumentSha256Sync, type DocumentRevision } from '../../../packages/kshvi/src/documents/browser';
 import { issueDocument, recordDocumentFact, supersedeDocument, transitionDocument } from '../../../packages/kshvi/src/documents/browser';
 import { advanceApproval } from '../../../packages/kshvi/src/documents/browser';
 import type { CascadeDelivery } from '../../../packages/kshvi/src/documents/browser';
@@ -14,7 +14,7 @@ afterEach(cleanup);
 const HASH = 'a'.repeat(64);
 
 function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
-  return {
+  const value: DocumentRevision = {
     id: 'order-1:r1', documentId: 'order-1', revision: 1, state: 'IN_REVIEW',
     requisites: {
       exerciseId: 'exercise-1', scenarioRevisionId: 'scenario-1', instanceId: 'hq', authorId: 'author', category: 'OPERATIONAL', type: 'ORDER',
@@ -27,6 +27,7 @@ function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
     content: { body: 'Выполнить задачу', units: { distance: 'm' } }, map: null, attachments: [], approvalRouteId: 'route-1',
     sha256: HASH, supersedes: null, supersedesRevision: null, supersedeReason: null, signatures: [], delivery: { state: 'NOT_ISSUED', facts: [] }, ...overrides,
   };
+  return overrides.sha256 ? value : { ...value, sha256: computeDocumentSha256Sync(value) };
 }
 
 function issuedRevision(): DocumentRevision {
@@ -66,7 +67,7 @@ describe('редактор документа', () => {
     rerender(<DocumentEditor revision={next} />);
     expect(screen.getByText('Заменяет редакцию 1')).toBeTruthy();
     expect(screen.getByText('Прежняя подпись: commander-1 / COMMANDER')).toBeTruthy();
-    expect(screen.getAllByText(HASH).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(issued.sha256).length).toBeGreaterThan(0);
     expect(screen.getByText('Основание новой редакции: Уточнение')).toBeTruthy();
   });
 });

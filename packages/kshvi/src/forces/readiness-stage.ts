@@ -222,12 +222,30 @@ export function advanceReadiness(stage: ReadinessStage, previous: ReadinessState
   };
 }
 
+export type ReadinessActor = Readonly<{
+  userId: string;
+  activeRole: string;
+  organizationId: string;
+  authorities: readonly string[];
+}>;
+
 /** Официальное решение разрешает переход, но не завершает мероприятия и не удаляет последствия. */
-export function authorizePartialReadiness(state: ReadinessState, decision: ReadinessAuthorization): ReadinessState {
+export function authorizePartialReadiness(state: ReadinessState, decision: ReadinessAuthorization, actor: ReadinessActor): ReadinessState {
   if (state.status !== 'PARTIAL') throw new Error('Разрешение оформляется только для частичной готовности');
-  if (!decision.authorized) throw new Error('Решение должен принять уполномоченный руководитель');
-  if (!decision.decisionId.trim() || !decision.actorId.trim() || !decision.basis.trim() || !decision.rationale.trim() || !validTime(decision.at)) {
-    throw new Error('Решение требует идентификатор, руководителя, основание, обоснование и время');
+  if (actor.userId !== decision.actorId || !actor.organizationId) throw new Error('Решение должен принять уполномоченный руководитель');
+  decision = { ...decision, actorRole: actor.activeRole, authorities: [...actor.authorities] };
+  if (!decision.authorized || decision.actorRole !== 'LEADER' || !decision.authorities.includes('readiness.partial.override')) {
+    throw new Error('Решение должен принять уполномоченный руководитель');
+  }
+  if (!decision.decisionId.trim() || !decision.actorId.trim() || !decision.orderId.trim() || !decision.basis.trim() || !decision.rationale.trim() || !validTime(decision.at)) {
+    throw new Error('Решение требует идентификатор, руководителя, приказ, основание, обоснование и время');
+  }
+  const actualLimitations = new Set(state.limitations.map(item => item.code));
+  if (actualLimitations.size === 0 || [...actualLimitations].some(code => !decision.limitations.includes(code))) {
+    throw new Error('Разрешение должно перечислять все фактические ограничения первого приказа');
+  }
+  if (state.authorizations.some(item => item.orderId === decision.orderId && item.decisionId !== decision.decisionId)) {
+    throw new Error('Для этого приказа уже оформлено другое разрешение');
   }
   const duplicate = state.authorizations.find(item => item.decisionId === decision.decisionId);
   if (duplicate) {

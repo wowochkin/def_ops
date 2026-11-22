@@ -1,3 +1,5 @@
+import { sha256Hex } from '../scenario/initial-map-hash';
+
 export type DocumentCategory = 'PREPARATORY' | 'ORGANIZATIONAL' | 'EDUCATIONAL' | 'OPERATIONAL' | 'FINAL';
 
 export type DocumentType =
@@ -158,9 +160,8 @@ function canonical(value: unknown): string {
   return JSON.stringify(normalize(value));
 }
 
-/** SHA-256 считается только от содержимого, а не от состояния, подписей или журнала выдачи. */
-export async function computeDocumentSha256(revision: DocumentRevision): Promise<string> {
-  const content = {
+function documentContent(revision: DocumentRevision): unknown {
+  return {
     documentId: revision.documentId,
     requisites: revision.requisites,
     content: revision.content,
@@ -171,6 +172,15 @@ export async function computeDocumentSha256(revision: DocumentRevision): Promise
     supersedesRevision: revision.supersedesRevision,
     supersedeReason: revision.supersedeReason,
   };
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical(content)));
-  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** Синхронный пересчёт нужен всем переходам и не зависит от node:* или WebCrypto. */
+export function computeDocumentSha256Sync(revision: DocumentRevision): string {
+  // Локальный импорт исключён из браузерного графа node:*: это чистая реализация SHA-256.
+  return sha256Hex(canonical(documentContent(revision)));
+}
+
+/** SHA-256 считается только от содержимого, а не от состояния, подписей или журнала выдачи. */
+export async function computeDocumentSha256(revision: DocumentRevision): Promise<string> {
+  return computeDocumentSha256Sync(revision);
 }

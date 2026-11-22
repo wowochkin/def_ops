@@ -140,22 +140,32 @@ describe('явный этап боевой готовности', () => {
     ]));
   });
 
+  const override = (
+    decisionId: string,
+    orderId: string,
+    limitations: readonly ('SIGNAL_NOT_RECEIVED' | 'PERSONNEL_SHORTAGE' | 'EQUIPMENT_UNSERVICEABLE' | 'SUPPLIES_NOT_REPLENISHED' | 'AREA_NOT_OCCUPIED' | 'COMMUNICATIONS_UNAVAILABLE')[],
+    authorized = true,
+  ) => ({
+    decisionId, orderId, limitations, authorized, actorId: 'chief', actorRole: 'LEADER', authorities: ['readiness.partial.override'],
+    basis: 'Приказ', rationale: 'Продолжить с ограничениями', at: DUE,
+  });
+
   it('разрешение руководителя оформляется отдельно и не стирает ограничения', () => {
     const partial: ReadinessState = {
       ...state([{ code: 'PERSONNEL_SHORTAGE', since: START, details: 'Недокомплект 10 человек' }]),
       status: 'PARTIAL',
     };
-    expect(() => authorizePartialReadiness(partial, {
-      decisionId: 'decision-0', actorId: 'chief-1', authorized: false, basis: 'Приказ 1', rationale: 'Продолжить', at: DUE,
+    const serverActor = { userId: 'chief', activeRole: 'LEADER', organizationId: 'org-1', authorities: ['readiness.partial.override'] };
+    expect(() => authorizePartialReadiness(partial, override('decision-0', 'order-0', ['PERSONNEL_SHORTAGE'], false), serverActor)).toThrow('уполномочен');
+    expect(() => authorizePartialReadiness(partial, override('decision-attacker', 'order-1', ['PERSONNEL_SHORTAGE']), {
+      ...serverActor, userId: 'attacker', authorities: [],
     })).toThrow('уполномочен');
-    const authorized = authorizePartialReadiness(partial, {
-      decisionId: 'decision-1', actorId: 'chief-1', authorized: true, basis: 'Приказ 1', rationale: 'Продолжить с ограничениями', at: DUE,
-    });
+    const authorized = authorizePartialReadiness(partial, override('decision-1', 'order-1', ['PERSONNEL_SHORTAGE']), serverActor);
     expect(authorized.status).toBe('PARTIAL');
     expect(authorized.limitations).toEqual(partial.limitations);
     expect(authorized.authorizations).toHaveLength(1);
     const result = assertReadyForTask({
-      scenarioState: 'SEALED', readiness: authorized, allowPartial: true,
+      scenarioState: 'SEALED', readiness: authorized, allowPartial: true, orderId: 'order-1',
       authorization: authorized.authorizations[0], profile: effects,
     });
     expect(result.allowed).toBe(true);
@@ -167,8 +177,8 @@ describe('явный этап боевой готовности', () => {
   it('парный сценарий SIM-24: незавершённая готовность меняет первый приказ', () => {
     const ready = assertReadyForTask({ scenarioState: 'SEALED', readiness: 'READY', missing: [], allowPartial: false, profile: effects });
     const partial = assertReadyForTask({
-      scenarioState: 'SEALED', readiness: 'PARTIAL', missing: ['SIGNAL_NOT_RECEIVED'], allowPartial: true,
-      authorization: { decisionId: 'd1', actorId: 'chief', authorized: true, basis: 'Приказ', rationale: 'Учебный ход', at: DUE }, profile: effects,
+      scenarioState: 'SEALED', readiness: 'PARTIAL', missing: ['SIGNAL_NOT_RECEIVED'], allowPartial: true, orderId: 'order-1',
+      authorization: override('d1', 'order-1', ['SIGNAL_NOT_RECEIVED']), profile: effects,
     });
     expect(ready.allowed).toBe(true);
     expect(partial.allowed).toBe(true);
@@ -179,8 +189,8 @@ describe('явный этап боевой готовности', () => {
 
   it('не подставляет коэффициенты при неизвестном правиле профиля', () => {
     const result = assertReadyForTask({
-      scenarioState: 'SEALED', readiness: 'PARTIAL', missing: ['COMMUNICATIONS_UNAVAILABLE'], allowPartial: true,
-      authorization: { decisionId: 'd1', actorId: 'chief', authorized: true, basis: 'Приказ', rationale: 'Учебный ход', at: DUE }, profile: effects,
+      scenarioState: 'SEALED', readiness: 'PARTIAL', missing: ['COMMUNICATIONS_UNAVAILABLE'], allowPartial: true, orderId: 'order-1',
+      authorization: override('d1', 'order-1', ['COMMUNICATIONS_UNAVAILABLE']), profile: effects,
     });
     expect(result.status).toBe('REQUIRES_REVIEW');
     expect(result.allowed).toBe(false);
@@ -194,9 +204,8 @@ describe('явный этап боевой готовности', () => {
       ['SUPPLIES_NOT_REPLENISHED', 'AREA_NOT_OCCUPIED'],
     ] as const;
     const results = cases.map((missing, index) => assertReadyForTask({
-      scenarioState: 'SEALED', readiness: 'PARTIAL', missing, allowPartial: true,
-      authorization: { decisionId: `ac24-${index}`, actorId: 'chief', authorized: true, basis: 'Отдельное решение', rationale: 'Продолжить с последствиями', at: DUE },
-      profile: effects,
+      scenarioState: 'SEALED', readiness: 'PARTIAL', missing, allowPartial: true, orderId: `order-${index}`,
+      authorization: override(`ac24-${index}`, `order-${index}`, [...missing]), profile: effects,
     }));
     expect(results.every(result => result.allowed)).toBe(true);
     expect(results.map(result => result.missing)).toEqual(cases);

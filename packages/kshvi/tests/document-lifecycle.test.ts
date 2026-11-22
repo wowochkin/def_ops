@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentRequisites, DocumentRevision } from '../src/documents/document';
-import { computeDocumentSha256 } from '../src/documents/document';
+import { computeDocumentSha256, computeDocumentSha256Sync } from '../src/documents/document';
 import {
   DocumentRevisionConflictError,
   issueDocument,
@@ -51,7 +51,7 @@ function requisites(overrides: Partial<DocumentRequisites> = {}): DocumentRequis
 }
 
 function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
-  return {
+  const value: DocumentRevision = {
     id: 'order-1:r1',
     documentId: 'order-1',
     revision: 1,
@@ -69,6 +69,7 @@ function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
     delivery: { state: 'NOT_ISSUED', facts: [] },
     ...overrides,
   };
+  return overrides.sha256 ? value : { ...value, sha256: computeDocumentSha256Sync(value) };
 }
 
 const signature = {
@@ -112,7 +113,7 @@ describe('неизменяемые подписанные редакции', () 
       role: 'COMMANDER',
       signedAt: signature.signedAt,
       revision: 1,
-      sha256: HASH,
+      sha256: approved.sha256,
     })]);
     expect(approved.signatures[0]?.external).toEqual(expect.objectContaining({ certificateRef: 'cert-1' }));
   });
@@ -140,20 +141,20 @@ describe('неизменяемые подписанные редакции', () 
     expect(next).toMatchObject({
       revision: 2,
       state: 'DRAFT',
-      supersedes: HASH,
+      supersedes: approved.sha256,
       supersedesRevision: 1,
       supersedeReason: 'Уточнение границ',
-      sha256: NEXT_HASH,
       signatures: [],
       delivery: { state: 'NOT_ISSUED', facts: [] },
     });
+    expect(next.sha256).toBe(computeDocumentSha256Sync(next));
     expect(next.previousRevision).toMatchObject({
       state: 'SUPERSEDED',
       revision: 1,
-      sha256: HASH,
+      sha256: approved.sha256,
       delivery: { state: 'ISSUED' },
     });
-    expect(next.previousRevision?.signatures[0]).toMatchObject({ sha256: HASH, userId: 'commander-1' });
+    expect(next.previousRevision?.signatures[0]).toMatchObject({ sha256: approved.sha256, userId: 'commander-1' });
     expect(issued.state).toBe('ISSUED');
     expect(issued.signatures).toHaveLength(1);
   });

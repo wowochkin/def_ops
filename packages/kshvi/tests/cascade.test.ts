@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DocumentRevision } from '../src/documents/document';
+import { computeDocumentSha256Sync, type DocumentRevision } from '../src/documents/document';
 import { supersedeDocument, transitionDocument } from '../src/documents/document-lifecycle';
 import {
   advanceCascadeDelivery,
@@ -15,7 +15,7 @@ const HASH = 'a'.repeat(64);
 const NEXT_HASH = 'b'.repeat(64);
 
 function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
-  return {
+  const value: DocumentRevision = {
     id: 'order-1:r1', documentId: 'order-1', revision: 1, state: 'IN_REVIEW',
     requisites: {
       exerciseId: 'exercise-1', scenarioRevisionId: 'scenario-1', instanceId: 'hq', authorId: 'author', category: 'OPERATIONAL', type: 'COMBAT_ORDER',
@@ -30,6 +30,7 @@ function revision(overrides: Partial<DocumentRevision> = {}): DocumentRevision {
     attachments: [], approvalRouteId: 'dual-1', sha256: HASH, supersedes: null, supersedesRevision: null, supersedeReason: null,
     signatures: [], delivery: { state: 'NOT_ISSUED', facts: [] }, ...overrides,
   };
+  return overrides.sha256 ? value : { ...value, sha256: computeDocumentSha256Sync(value) };
 }
 
 const issueInput = {
@@ -83,7 +84,7 @@ describe('самостоятельные плечи каскада', () => {
     }, { issuedAt: '2030-01-01T06:06:00+03:00', availableChannelIds: ['main', 'reserve'] });
     expect(relayed.deliveries[2]).toMatchObject({
       from: 'middle', to: 'lower', relayId: 'middle-relay', state: 'QUEUED',
-      source: { documentId: 'order-1', revision: 1, sha256: HASH }, scheduledDeliveryAt: '2030-01-01T06:13:00+03:00',
+      source: { documentId: 'order-1', revision: 1, sha256: cascade.source.sha256 }, scheduledDeliveryAt: '2030-01-01T06:13:00+03:00',
     });
     expect(relayed.deliveries[1]).toMatchObject({ copyStatus: 'PARTIAL', omittedAttachmentIds: ['attachment-2'] });
     expect(relayed.deliveries[0]?.messageId).not.toBe(relayed.deliveries[2]?.messageId);
@@ -118,9 +119,9 @@ describe('AC-04 двойная вертикаль и каскад докумен
     expect(cascade.deliveries[1]?.state).toBe('QUEUED');
 
     const next = supersedeDocument(issued, { reason: 'Изменилась граница', sha256: NEXT_HASH });
-    expect(next.supersedes).toBe(HASH);
-    expect(next.previousRevision?.signatures[0]?.sha256).toBe(HASH);
-    expect(next.previousRevision?.sha256).toBe(HASH);
+    expect(next.supersedes).toBe(issued.sha256);
+    expect(next.previousRevision?.signatures[0]?.sha256).toBe(issued.sha256);
+    expect(next.previousRevision?.sha256).toBe(issued.sha256);
     const exported = await exportDocumentSet(next, { exerciseTitle: 'Учение AC-04', exerciseRevision: 1, exportedAt: '2030-01-01T06:10:00Z' });
     expect(exported.model.source.revision).toBe(2);
     expect(exported.model.legend).toEqual(['cp:v1']);

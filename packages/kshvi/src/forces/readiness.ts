@@ -30,6 +30,11 @@ export type ReadinessLimitation = Readonly<{
 export type ReadinessAuthorization = Readonly<{
   decisionId: string;
   actorId: string;
+  actorRole: string;
+  authorities: readonly string[];
+  orderId: string;
+  limitations: readonly ReadinessLimitationCode[];
+  consumedByOrderId?: string;
   authorized: boolean;
   basis: string;
   rationale: string;
@@ -178,6 +183,7 @@ export function assertReadyForTask(input: Readonly<{
   missing?: readonly ReadinessLimitationCode[];
   allowPartial: boolean;
   authorization?: ReadinessAuthorization;
+  orderId?: string;
   profile?: ReadinessEffectProfile;
 }>): ReadinessTaskCheck {
   const rich = typeof input.readiness === 'object' ? input.readiness : null;
@@ -188,9 +194,14 @@ export function assertReadyForTask(input: Readonly<{
     details: 'Незавершённое мероприятие боевой готовности',
   }));
   const missing = [...new Set(input.missing ?? limitations.map(item => item.code))];
-  const authorization = input.authorization ?? rich?.authorizations.at(-1);
+  const authorization = input.authorization ?? rich?.authorizations.find(item => item.orderId === input.orderId);
   const recordedAuthorization = !rich || !!authorization && rich.authorizations.some(item => JSON.stringify(item) === JSON.stringify(authorization));
   const validAuthorization = recordedAuthorization && authorization?.authorized === true
+    && authorization.actorRole === 'LEADER'
+    && authorization.authorities.includes('readiness.partial.override')
+    && authorization.orderId === input.orderId
+    && (!authorization.consumedByOrderId || authorization.consumedByOrderId === input.orderId)
+    && missing.every(code => authorization.limitations.includes(code))
     && authorization.decisionId.trim().length > 0
     && authorization.actorId.trim().length > 0
     && authorization.basis.trim().length > 0
@@ -226,5 +237,33 @@ export function assertReadyForTask(input: Readonly<{
     effects: calculated.effects,
     unknown: calculated.unknown,
     explanation: [...explanation, 'Переход разрешён как PARTIAL; последствия применяются к первому приказу'],
+  };
+}
+
+
+
+/** Атомарно для доменного состояния связывает разрешение с первым приказом; повтор того же приказа идемпотентен. */
+export function consumePartialReadinessAuthorization(
+  state: ReadinessState,
+  input: Readonly<{ orderId: string; scenarioState?: string; profile?: ReadinessEffectProfile }>,
+): Readonly<{ state: ReadinessState; check: ReadinessTaskCheck }> {
+  const check = assertReadyForTask({
+    scenarioState: input.scenarioState ?? 'SEALED',
+    readiness: state,
+    allowPartial: true,
+    orderId: input.orderId,
+    profile: input.profile,
+  });
+  if (!check.allowed) return { state, check };
+  const authorization = state.authorizations.find(item => item.orderId === input.orderId);
+  if (!authorization || authorization.consumedByOrderId === input.orderId) return { state, check };
+  return {
+    state: {
+      ...state,
+      authorizations: state.authorizations.map(item => item.decisionId === authorization.decisionId
+        ? { ...item, consumedByOrderId: input.orderId }
+        : item),
+    },
+    check,
   };
 }

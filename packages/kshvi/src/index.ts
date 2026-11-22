@@ -64,6 +64,7 @@ export * from './forces/equipment-state';
 export * from './forces/readiness-stage';
 export {
   assertReadyForTask,
+  consumePartialReadinessAuthorization,
   type ReadinessStatus, type ReadinessLimitationCode, type ReadinessLimitation, type ReadinessAuthorization,
   type ReadinessActivityRecord, type ReadinessReport, type ReadinessHistoryEntry,
   type ReadinessState as ReadinessStateModel, type ReadinessEffectRule, type ReadinessEffectProfile,

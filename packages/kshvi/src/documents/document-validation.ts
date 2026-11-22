@@ -1,7 +1,8 @@
-import type {
-  DocumentRecipient,
-  DocumentRevision,
-  VisibilityScope,
+import {
+  computeDocumentSha256Sync,
+  type DocumentRecipient,
+  type DocumentRevision,
+  type VisibilityScope,
 } from './document';
 
 export type DocumentValidationIssue = Readonly<{
@@ -57,8 +58,8 @@ export function validateDocumentReadiness(revision: DocumentRevision): DocumentV
   if (!revision.content.body.trim()) {
     issues.push({ code: 'CONTENT_REQUIRED', severity: 'ERROR', field: 'content.body', message: 'Документ должен содержать редактируемое содержимое' });
   }
-  if (!/^[0-9a-f]{64}$/.test(revision.sha256)) {
-    issues.push({ code: 'SHA256_INVALID', severity: 'ERROR', field: 'sha256', message: 'Нужен SHA-256 содержимого редакции' });
+  if (!/^[0-9a-f]{64}$/.test(revision.sha256) || computeDocumentSha256Sync(revision) !== revision.sha256) {
+    issues.push({ code: 'SHA256_INVALID', severity: 'ERROR', field: 'sha256', message: 'Нужен пересчитанный SHA-256 фактического содержимого редакции' });
   }
   const from = Date.parse(revision.requisites.validFrom);
   const until = Date.parse(revision.requisites.validUntil);
@@ -112,7 +113,9 @@ export function assertDocumentIssue(revision: DocumentRevision, context: Documen
 
 export function assertApprovedSignaturesMatch(revision: DocumentRevision): void {
   if (revision.signatures.length === 0) throw new Error('Утверждение требует подписи');
-  const changed = revision.signatures.some(signature => signature.revision !== revision.revision || signature.sha256 !== revision.sha256);
+  const actualSha256 = computeDocumentSha256Sync(revision);
+  const changed = actualSha256 !== revision.sha256
+    || revision.signatures.some(signature => signature.revision !== revision.revision || signature.sha256 !== actualSha256);
   if (changed) throw new Error('Содержимое подписанной редакции изменилось; создайте новую редакцию');
 }
 
@@ -166,7 +169,8 @@ export function analyzeDocument(revision: DocumentRevision, context: DocumentAna
   if (context.availableChannelIds && !context.availableChannelIds.includes(revision.requisites.deliveryChannelId)) {
     issues.push({ code: 'CHANNEL_UNAVAILABLE', severity: 'ERROR', field: 'requisites.deliveryChannelId', message: 'Выбранный канал недоступен' });
   }
-  if (revision.signatures.some(signature => signature.sha256 !== revision.sha256 || signature.revision !== revision.revision)) {
+  if (computeDocumentSha256Sync(revision) !== revision.sha256
+    || revision.signatures.some(signature => signature.sha256 !== revision.sha256 || signature.revision !== revision.revision)) {
     issues.push({ code: 'SIGNED_CONTENT_CHANGED', severity: 'ERROR', field: 'sha256', message: 'Изменённый подписанный документ требует новой редакции' });
   }
   return issues;

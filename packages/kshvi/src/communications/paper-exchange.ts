@@ -44,9 +44,10 @@ export function recordPaperExchange(input: PaperExchangeInput): Readonly<{
   if (!Number.isSafeInteger(input.revision) || input.revision < 1 || !/^[0-9a-f]{64}$/.test(input.sha256)) throw new Error('Бумажный обмен требует исходную редакцию и SHA-256');
   const related = input.electronicQueue.filter(message => message.domainKey === input.domainKey);
   const electronicDelivered = related.some(message => message.status === 'delivered');
-  const alreadyApplied = input.domainKey !== null && (input.appliedDomainKeys.includes(input.domainKey) || electronicDelivered);
+  const recorded = input.domainKey !== null && input.appliedDomainKeys.some(key => key === input.domainKey || key.startsWith(`${input.domainKey}:`));
+  const alreadyApplied = input.domainKey !== null && (recorded || electronicDelivered);
   const domainEffectApplied = input.domainKey !== null && !alreadyApplied;
-  const appliedDomainKeys = input.domainKey !== null && !input.appliedDomainKeys.includes(input.domainKey)
+  const appliedDomainKeys = input.domainKey !== null && !recorded
     ? [...input.appliedDomainKeys, input.domainKey]
     : [...input.appliedDomainKeys];
   const cancellable = electronicDelivered ? [] : related.filter(message => message.status === 'queued' || message.status === 'inTransit');

@@ -43,6 +43,8 @@ export type SupplyMovement = Readonly<{
   route: Readonly<{ routeLengthMeters: number; remainingMeters: number; travelledMeters: number }>;
   delayMinutes: number;
   sentAt: string | null;
+  /** Обновляется только успешными MOVE/DELAY, не отклонёнными командами. */
+  lastMovementAt?: string | null;
   deliveredAt: string | null;
   cancellationRequested: boolean;
   reportIds: readonly string[];
@@ -64,7 +66,10 @@ export type SupplyCommand = Readonly<{
   originNode?: SupplyNode;
   destinationNode?: SupplyNode;
   route?: SupplyRouteCapacity;
+  /** Устаревший прямой исход не исполняется; оставлен только для диагностики старых команд. */
   distanceMeters?: number;
+  /** Скорость из утверждённого транспортного профиля, применяемая к истёкшему времени. */
+  speedKph?: number;
   delayMinutes?: number;
   reason?: string;
   quantity?: number;
@@ -232,15 +237,27 @@ export function advanceSupply(previous: SupplyMovement, command: SupplyCommand):
         next = { ...next, status: 'DELAYED' };
         break;
       }
-      const distance = command.distanceMeters;
-      if (distance === undefined || !Number.isFinite(distance) || distance < 0) {
-        issues.push({ code: 'INVALID_COMMAND', message: 'Нужен неотрицательный фактический участок пути' });
+      const speed = command.speedKph;
+      const delay = command.delayMinutes ?? 0;
+      const checkpoint = previous.lastMovementAt ?? previous.sentAt;
+      const elapsedMinutes = checkpoint ? (Date.parse(command.at) - Date.parse(checkpoint)) / 60000 : Number.NaN;
+      if (command.distanceMeters !== undefined || speed === undefined || !Number.isFinite(speed) || speed <= 0
+        || !Number.isFinite(delay) || delay < 0 || !Number.isFinite(elapsedMinutes) || elapsedMinutes < 0) {
+        issues.push({ code: 'INVALID_COMMAND', message: 'Движение требует скорость и истёкшее время; прямой участок пути не принимается' });
         next = { ...next, status: 'REQUIRES_REVIEW' };
         break;
       }
+      const effectiveHours = Math.max(0, elapsedMinutes - delay) / 60;
+      const distance = speed * 1000 * effectiveHours;
       const travelled = round(Math.min(previous.route.routeLengthMeters, previous.route.travelledMeters + distance));
       const remaining = round(Math.max(0, previous.route.remainingMeters - distance));
-      next = { ...next, status: remaining === 0 ? 'ARRIVED' : 'IN_TRANSIT', route: { ...previous.route, travelledMeters: travelled, remainingMeters: remaining } };
+      next = {
+        ...next,
+        status: remaining === 0 ? 'ARRIVED' : distance === 0 ? 'DELAYED' : 'IN_TRANSIT',
+        delayMinutes: round(previous.delayMinutes + Math.min(delay, elapsedMinutes)),
+        lastMovementAt: command.at,
+        route: { ...previous.route, travelledMeters: travelled, remainingMeters: remaining },
+      };
       break;
     }
     case 'DELAY': {
@@ -250,7 +267,7 @@ export function advanceSupply(previous: SupplyMovement, command: SupplyCommand):
         issues.push({ code: 'INVALID_COMMAND', message: 'Задержка должна быть неотрицательной' });
         break;
       }
-      next = { ...next, status: 'DELAYED', delayMinutes: round(previous.delayMinutes + delay) };
+      next = { ...next, status: 'DELAYED', delayMinutes: round(previous.delayMinutes + delay), lastMovementAt: command.at };
       break;
     }
     case 'START_UNLOADING':

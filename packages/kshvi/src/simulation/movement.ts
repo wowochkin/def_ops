@@ -3,6 +3,8 @@ export type RouteProgress = Readonly<{
   remainingMeters: number;
   travelledMeters: number;
   delayMinutes: number;
+  /** Неистёкшая часть задержки переносится на следующий оперативный интервал. */
+  pendingDelayMinutes?: number;
 }>;
 
 export type MovementProfileRef = Readonly<{
@@ -58,9 +60,10 @@ export function advanceMovement(previous: RouteProgress, input: MovementInput): 
     remainingMeters: previous.remainingMeters,
     travelledMeters: previous.travelledMeters,
     delayMinutes: previous.delayMinutes,
+    ...(previous.pendingDelayMinutes !== undefined ? { pendingDelayMinutes: previous.pendingDelayMinutes } : {}),
   };
-  if (![base.routeLengthMeters, base.remainingMeters, base.travelledMeters, base.delayMinutes].every(Number.isFinite)
-    || base.routeLengthMeters < 0 || base.remainingMeters < 0 || base.travelledMeters < 0 || base.delayMinutes < 0
+  if (![base.routeLengthMeters, base.remainingMeters, base.travelledMeters, base.delayMinutes, base.pendingDelayMinutes ?? 0].every(Number.isFinite)
+    || base.routeLengthMeters < 0 || base.remainingMeters < 0 || base.travelledMeters < 0 || base.delayMinutes < 0 || (base.pendingDelayMinutes ?? 0) < 0
     || Math.abs(base.remainingMeters + base.travelledMeters - base.routeLengthMeters) > 1e-6) {
     return review(base, ['route:inconsistent'], ['Остаток и пройденный путь не согласованы с длиной маршрута']);
   }
@@ -78,11 +81,16 @@ export function advanceMovement(previous: RouteProgress, input: MovementInput): 
   if (unknown.length) return review(base, [...new Set(unknown)], ['Обязательный коэффициент движения отсутствует или профиль не утверждён']);
 
   const queueDelay = input.queueDelayMinutes ?? 0;
-  const delayMinutes = round(base.delayMinutes + queueDelay);
+  const intervalMinutes = input.hours! * 60;
+  const availableDelay = (base.pendingDelayMinutes ?? 0) + queueDelay;
+  const consumedDelay = Math.min(intervalMinutes, availableDelay);
+  const pendingDelayMinutes = round(availableDelay - consumedDelay);
+  const effectiveHours = (intervalMinutes - consumedDelay) / 60;
+  const delayMinutes = round(base.delayMinutes + consumedDelay);
   if (base.remainingMeters === 0) {
     return { ...base, delayMinutes, status: 'ARRIVED', arrived: true, distanceMeters: 0, unknown: [], explanation: ['Маршрут уже завершён'] };
   }
-  const potentialMeters = input.speedKph! * 1000 * input.terrainFactor! * input.weatherFactor! * input.stateFactor! * input.hours!;
+  const potentialMeters = input.speedKph! * 1000 * input.terrainFactor! * input.weatherFactor! * input.stateFactor! * effectiveHours;
   const distanceMeters = round(Math.min(base.remainingMeters, Math.max(0, potentialMeters)));
   const remainingMeters = round(Math.max(0, base.remainingMeters - distanceMeters));
   const travelledMeters = round(base.travelledMeters + distanceMeters);
@@ -96,6 +104,7 @@ export function advanceMovement(previous: RouteProgress, input: MovementInput): 
     remainingMeters,
     travelledMeters,
     delayMinutes,
+    ...(pendingDelayMinutes > 0 ? { pendingDelayMinutes } : {}),
     status: arrived ? 'ARRIVED' : distanceMeters === 0 ? 'DELAYED' : 'IN_PROGRESS',
     arrived,
     distanceMeters,
@@ -284,6 +293,7 @@ export function advanceTask(previous: TaskExecution, command: TaskCommand): Task
             remainingMeters: movementResult.remainingMeters,
             travelledMeters: movementResult.travelledMeters,
             delayMinutes: movementResult.delayMinutes,
+            ...(movementResult.pendingDelayMinutes !== undefined ? { pendingDelayMinutes: movementResult.pendingDelayMinutes } : {}),
           },
           elapsedMinutes: round(previous.elapsedMinutes + hours * 60),
           stage: limited || movementResult.status === 'REQUIRES_REVIEW' ? 'PARTIAL' : 'EXECUTION',

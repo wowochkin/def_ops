@@ -162,7 +162,7 @@ export function addInitialMapMarker(map: InitialSituationMap, marker: MapMarker)
   if (map.markers.some(item => item.id === marker.id)) throw new Error('DUPLICATE_OBJECT_ID');
   const issues = validateInitialMap({ bounds: map.bounds, markers: [marker] }).filter(issue => issue.severity === 'ERROR');
   if (issues.length) throw new Error(issues.map(issue => issue.code).join(', '));
-  return deepFreeze({ ...map, state: 'DRAFT' as const, sha256: undefined, markers: [...map.markers, clone(marker)] });
+  return deepFreeze({ ...map, revision: map.revision + 1, state: 'DRAFT' as const, sha256: undefined, markers: [...map.markers, clone(marker)] });
 }
 
 export function updateInitialMapMarker(map: InitialSituationMap, markerId: string, patch: Partial<Omit<MapMarker, 'id' | 'revision'>>): InitialSituationMap {

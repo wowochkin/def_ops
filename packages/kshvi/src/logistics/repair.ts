@@ -146,8 +146,10 @@ export function advanceRepair(previousRequest: RepairRequest, previousEquipment:
       break;
     case 'COMPLETE': {
       if (!transition(['UNDER_REPAIR'])) break;
-      const elapsed = command.elapsedMinutes;
-      if (elapsed === undefined || !Number.isFinite(elapsed) || elapsed < previousRequest.repairDurationMinutes) {
+      const startedAt = previousRequest.startedAt ? Date.parse(previousRequest.startedAt) : Number.NaN;
+      const completedAt = Date.parse(command.at);
+      const elapsed = (completedAt - startedAt) / 60000;
+      if (!Number.isFinite(startedAt) || !Number.isFinite(elapsed) || elapsed < previousRequest.repairDurationMinutes) {
         issues.push({ code: 'REPAIR_NOT_DUE', message: 'Ремонт ещё не завершён; длительность и ресурсы сохранены' });
         break;
       }
