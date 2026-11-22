@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-13",
+  "status": "passed",
+  "startedAt": "2026-11-22T00:44:41.004Z",
+  "finishedAt": "2026-11-22T00:44:41.576Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "npx vitest run services/kshvi/tests/recovery/backup-schedule.test.ts",
+  "tests": [
+    "services/kshvi/tests/recovery/backup-schedule.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ services/kshvi/tests/recovery/backup-schedule.test.ts (1 test) 9ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  03:44:41\n   Duration  82ms (transform 46%, tests 28%, import 22%, worker 4%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-13.json"
+  ],
+  "openErrors": []
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "command": "npm audit --json",
+  "vulnerabilityCount": 0,
+  "error": null,
+  "output": "{\n  \"auditReportVersion\": 2,\n  \"vulnerabilities\": {},\n  \"metadata\": {\n    \"vulnerabilities\": {\n      \"info\": 0,\n      \"low\": 0,\n      \"moderate\": 0,\n      \"high\": 0,\n      \"critical\": 0,\n      \"total\": 0\n    },\n    \"dependencies\": {\n      \"prod\": 192,\n      \"dev\": 161,\n      \"optional\": 125,\n      \"peer\": 13,\n      \"peerOptional\": 0,\n      \"total\": 393\n    }\n  }\n}\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/dependency-audit.json"
+  ]
+}

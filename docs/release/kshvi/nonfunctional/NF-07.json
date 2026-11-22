@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-07",
+  "status": "passed",
+  "startedAt": "2026-11-22T00:48:19.985Z",
+  "finishedAt": "2026-11-22T00:48:20.594Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "npx vitest run services/kshvi/tests/security/tenant-isolation.test.ts",
+  "tests": [
+    "services/kshvi/tests/security/tenant-isolation.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ services/kshvi/tests/security/tenant-isolation.test.ts (2 tests) 2ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  03:48:20\n   Duration  71ms (transform 58%, import 23%, tests 11%, worker 7%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-07.json"
+  ],
+  "openErrors": []
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-06",
+  "status": "passed",
+  "startedAt": "2026-11-22T00:48:19.015Z",
+  "finishedAt": "2026-11-22T00:48:19.985Z",
+  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "command": "npx vitest run services/kshvi/tests/security/authentication.test.ts",
+  "tests": [
+    "services/kshvi/tests/security/authentication.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n{\"t\":\"2026-11-22T00:48:19.877Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"msg\":\"listening on :57652\"}\n{\"t\":\"2026-11-22T00:48:19.884Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"c5a3aad3-ad6e-47c6-8efc-43436c061ce6\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-1/events\",\"status\":401,\"ms\":1}\n{\"t\":\"2026-11-22T00:48:19.887Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"4360cbb4-e0cc-4b39-b360-33da601c7e73\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-1/projection\",\"status\":401,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.889Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"9c1312b7-6771-46a4-8dfb-c2368c7e11b1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances\",\"status\":401,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.890Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"8d16b887-4407-4368-a74d-46e2300bfd1e\",\"tenant\":\"org-1\",\"method\":\"GET\",\"path\":\"/kshvi/exercises\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.890Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"8a7947ae-4245-4e39-8518-6fb89e3a9ca3\",\"tenant\":\"org-2\",\"method\":\"GET\",\"path\":\"/kshvi/exercises\",\"status\":403,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.891Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"be2abdb5-6117-47d8-9563-b3e05c0f4024\",\"tenant\":\"org-1\",\"method\":\"GET\",\"path\":\"/kshvi/exercises\",\"status\":401,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.913Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"4dda5c12-df02-4e85-b442-a1f83bbfe15e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/logout\",\"status\":204,\"ms\":0}\n{\"t\":\"2026-11-22T00:48:19.914Z\",\"service\":\"kshvi-security-test\",\"level\":\"info\",\"requestId\":\"c1416664-7593-4d43-95bc-990f70c8f743\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/auth/me\",\"status\":401,\"ms\":0}\n ✓ services/kshvi/tests/security/authentication.test.ts (2 tests) 123ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  03:48:19\n   Duration  468ms (transform 54%, tests 30%, import 16%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-06.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/dependency-audit.json"
+  ],
+  "openErrors": [],
+  "dependencyAudit": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/dependency-audit.json"
+}

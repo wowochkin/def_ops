@@ -78,5 +78,20 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerSseRoutes(router, subscriptions);
   registerSealingRoutes(router, sealing);
   if (environmentProvider) addEnvironmentRoutes(router, environmentProvider);
+
+  const match = router.match.bind(router);
+  router.match = (method, path) => {
+    const route = match(method, path);
+    if (!route || route === 'method' || path === `${KSHVI_ROUTE_PREFIX}/auth/login`) return route;
+    return {
+      ...route,
+      handler: async ctx => {
+        const sessionOnly = path.startsWith(`${KSHVI_ROUTE_PREFIX}/auth/`);
+        const organizationHint = sessionOnly || ctx.tenant === 'default' ? undefined : ctx.tenant;
+        await sessions.authenticate(tokenOf(ctx), organizationHint);
+        return route.handler(ctx);
+      },
+    };
+  };
   return router;
 }
