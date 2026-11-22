@@ -1,11 +1,12 @@
 import { createPool, dropSchema } from '@def-ops/db';
-import { READINESS_AREAS, type InitialSituationMapModel, type JsonValue } from '@def-ops/kshvi';
+import { READINESS_AREAS, REHEARSAL_CHECKS, type InitialSituationMapModel, type JsonValue } from '@def-ops/kshvi';
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import type { EnvironmentSnapshot } from '../../../packages/kshvi/src/environment/provider';
 import { InMemoryExerciseEvidenceService, PgExerciseEvidenceService } from '../src/store/exercise-evidence-service';
 import { InMemoryExerciseStore, PgExerciseStore, type ExerciseSealActor } from '../src/store/exercise-store';
 import { approveExercise, linkedExercisePayload, SEAL_HASH_A, SEAL_HASH_B, validExerciseSealInput } from './helpers/full-seal';
+import { rehearsalProfile } from './helpers/rehearsal-profile';
 
 const director: ExerciseSealActor = { organizationId: 'org-evidence', userId: 'director', activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
 const environment = {
@@ -38,7 +39,7 @@ it('создаёт доказательства из серверных дейс
   const rawMap = { ...mapContent, environment: { ...mapContent.environment, snapshotId: SEAL_HASH_A }, state: 'DRAFT' } as InitialSituationMapModel;
   const card = await store.createRevision(director, created.id, {
     expectedRevision: 1,
-    payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A }),
+    payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A, rehearsalProfile: rehearsalProfile() as unknown as JsonValue }),
   });
   await approveExercise(store, director, card, 2);
   await expect(store.seal(director, created.id, { expectedRevision: 2 })).rejects.toThrow('INITIAL_MAP_NOT_APPROVED');
@@ -56,6 +57,9 @@ it('создаёт доказательства из серверных дейс
   expect(artifact.confirmations[0].subjectHash).not.toBe(SEAL_HASH_A);
   expect(artifact.rehearsal).toMatchObject({ full: true, isolated: true, status: 'PASSED', scenarioSha256: sealed.revisions[1].sha256 });
   expect(artifact.rehearsal.eventLogId).not.toBe(artifact.rehearsal.officialEventLogId);
+  const rehearsalJournal = await evidence.rehearsalJournal(artifact.rehearsal.eventLogId);
+  expect(rehearsalJournal.map(event => event.check)).toEqual(REHEARSAL_CHECKS);
+  expect(rehearsalJournal.every(event => event.payload && typeof event.payload === 'object')).toBe(true);
   expect(artifact.environmentSnapshot.manifestSha256).toBe(environment.manifestSha256);
   await expect(store.createSession(director, created.id, { revision: 2 })).resolves.toMatchObject({ state: 'ACTIVE' });
 });
@@ -107,7 +111,7 @@ databaseIntegration('PostgreSQL выполняет полный seal и посл
     const { sha256: _hash, ...mapContent } = validExerciseSealInput(created).initialMap!;
     const rawMap = { ...mapContent, environment: { ...mapContent.environment, snapshotId: SEAL_HASH_A }, state: 'DRAFT' } as InitialSituationMapModel;
     const card = await store.createRevision(director, created.id, {
-      expectedRevision: 1, payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A }),
+      expectedRevision: 1, payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A, rehearsalProfile: rehearsalProfile() as unknown as JsonValue }),
     });
     await evidence.approveMap({ ...director, activeRole: 'APPROVER', authorities: ['initialMap.approve'] }, created.id, card.revisions[1], rawMap);
     await approveExercise(store, director, card, 2);
@@ -123,6 +127,7 @@ databaseIntegration('PostgreSQL выполняет полный seal и посл
     const restartedEvidence = new PgExerciseEvidenceService({ pool, schema, environment: environmentLoader });
     const restartedStore = new PgExerciseStore({ pool, schema, evidence: restartedEvidence });
     await expect(restartedStore.createSession(director, created.id, { revision: 2 })).resolves.toMatchObject({ state: 'ACTIVE', revision: 2 });
+    expect(await restartedEvidence.rehearsalJournal(sealed.revisions[1].sealedArtifact!.rehearsal.eventLogId)).toHaveLength(14);
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

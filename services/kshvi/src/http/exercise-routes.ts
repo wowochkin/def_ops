@@ -109,7 +109,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(base, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:create', true);
     const body = await ctx.json<CreateExerciseInput>();
-    return reply(201, await store.create(actor, body));
+    return reply(201, projectExerciseCard(await store.create(actor, body), actor.participant));
   }));
 
   router.get(`${base}/:id`, handle(async ctx => {
@@ -122,13 +122,13 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(`${base}/:id/copies`, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:copy', true);
     const body = await ctx.json<{ title?: string }>() ?? {};
-    return reply(201, await store.copy(actor, exerciseId(ctx), body.title));
+    return reply(201, projectExerciseCard(await store.copy(actor, exerciseId(ctx), body.title), actor.participant));
   }));
 
   router.post(`${base}/:id/archive`, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:archive', true);
     const body = await ctx.json<{ expectedRevision?: number }>() ?? {};
-    return store.archive(actor, exerciseId(ctx), body.expectedRevision as number);
+    return projectExerciseCard(await store.archive(actor, exerciseId(ctx), body.expectedRevision as number), actor.participant);
   }));
 
   router.get(`${base}/:id/revisions`, handle(async ctx => {
@@ -141,13 +141,13 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(`${base}/:id/revisions`, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<CreateRevisionInput>();
-    return reply(201, await store.createRevision(actor, exerciseId(ctx), body));
+    return reply(201, projectExerciseCard(await store.createRevision(actor, exerciseId(ctx), body), actor.participant));
   }));
 
   router.post(`${base}/:id/transitions`, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<ExerciseLifecycleInput>();
-    return store.transition(actor, exerciseId(ctx), body);
+    return projectExerciseCard(await store.transition(actor, exerciseId(ctx), body), actor.participant);
   }));
 
   if (evidence) {
@@ -156,7 +156,8 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
       const body = await ctx.json<{ expectedRevision: number; map: InitialSituationMapModel }>();
       closedBody(body, ['expectedRevision', 'map']);
       const revision = await currentRevision(ctx, actor, body.expectedRevision);
-      return evidenceCall(() => evidence.approveMap(actor, exerciseId(ctx), revision, body.map));
+      const approved = await evidenceCall(() => evidence.approveMap(actor, exerciseId(ctx), revision, body.map));
+      return { id: approved.id, revision: approved.revision, state: approved.state, sha256: approved.sha256 };
     }));
     router.post(`${base}/:id/confirmations`, handle(async ctx => {
       const actor = await participant(ctx, 'readiness.confirm', true);
@@ -171,7 +172,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(`${base}/:id/seal`, handle(async ctx => {
     const actor = await participant(ctx, 'scenario.seal', true);
     const body = await ctx.json<ExerciseSealInput>();
-    return store.seal(actor, exerciseId(ctx), body);
+    return projectExerciseCard(await store.seal(actor, exerciseId(ctx), body), actor.participant);
   }));
 
   router.get(`${base}/:id/sessions`, handle(async ctx => {

@@ -1,6 +1,7 @@
 export * from './app';
 export * from './store/exercise-store';
 export * from './store/exercise-evidence-service';
+export * from './store/domain-rehearsal';
 export * from './store/event-store';
 export * from './store/snapshot-store';
 export * from './store/jobs';

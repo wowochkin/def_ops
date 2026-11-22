@@ -6,6 +6,7 @@ import { registerExerciseRoutes } from '../src/http/exercise-routes';
 import { InMemoryExerciseEvidenceService } from '../src/store/exercise-evidence-service';
 import { InMemoryExerciseStore, type ExerciseSealActor } from '../src/store/exercise-store';
 import { linkedExercisePayload, SEAL_HASH_A, SEAL_HASH_B, validExerciseSealInput } from './helpers/full-seal';
+import { rehearsalProfile } from './helpers/rehearsal-profile';
 import type { EnvironmentSnapshot } from '../../../packages/kshvi/src/environment/provider';
 
 const director: ExerciseSealActor = { organizationId: 'org-routes', userId: 'director', activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
@@ -29,7 +30,7 @@ it('HTTP выполняет утверждение карты и персона�
   const { sha256: _hash, ...mapContent } = validExerciseSealInput(created).initialMap!;
   const rawMap = { ...mapContent, environment: { ...mapContent.environment, snapshotId: SEAL_HASH_A }, state: 'DRAFT' } as InitialSituationMapModel;
   const card = await store.createRevision(director, created.id, {
-    expectedRevision: 1, payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A }),
+    expectedRevision: 1, payload: linkedExercisePayload({ initialMap: rawMap as unknown as JsonValue, environmentSnapshotId: SEAL_HASH_A, rehearsalProfile: rehearsalProfile() as unknown as JsonValue }),
   });
 
   const sessions = new SessionManager({ store: new InMemorySessionStore() });
@@ -62,7 +63,10 @@ it('HTTP выполняет утверждение карты и персона�
     await sessions.selectRole(login.token, 'director-role');
     const sealed = await call('/seal', { expectedRevision: 2 });
     expect(sealed.status).toBe(200);
-    expect(await sealed.json()).toMatchObject({ id: card.id, revision: 2, state: 'SEALED' });
+    const sealedBody = await sealed.json();
+    expect(sealedBody).toMatchObject({ id: card.id, revision: 2, state: 'SEALED' });
+    expect(sealedBody.revisions[1]).not.toHaveProperty('sealedArtifact');
+    expect(JSON.stringify(sealedBody)).not.toContain('ENVIRONMENT_MAP');
   } finally {
     await service.close();
   }

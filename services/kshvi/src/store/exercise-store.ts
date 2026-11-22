@@ -89,7 +89,7 @@ export type ServerExerciseEvidence = Omit<SealScenarioInput,
 > & Readonly<{ validation: ScenarioValidationInput }>;
 export type ExerciseSealInput = Readonly<{ expectedRevision: number }>;
 export type ExerciseEvidenceContext = Readonly<{
-  actor: ExerciseSealActor;
+  actor: ExerciseActor;
   exerciseId: string;
   revision: ExerciseRevision;
 }>;
@@ -228,7 +228,7 @@ function revisionForSeal(record: ExerciseCard, expectedRevision: number): Exerci
   return revision;
 }
 async function sealedArtifactFor(
-  actor: ExerciseSealActor,
+  actor: ExerciseActor,
   exerciseId: string,
   record: ExerciseCard,
   revision: ExerciseRevision,
@@ -245,7 +245,7 @@ async function sealedArtifactFor(
     const sealed = sealScenario({
       id: revision.id,
       revision: revision.revision,
-      state: record.state,
+      state: 'APPROVED',
       scenario: revision.payload,
       issues: validation.issues.map(issue => ({ ...issue })),
       requiredConfirmations: [...READINESS_AREAS],
@@ -268,32 +268,24 @@ async function sealedArtifactFor(
     fail('VALIDATION', `Предусловия запечатывания не выполнены: ${message}`);
   }
 }
-function verifiedSealedArtifact(record: ExerciseCard, revision: ExerciseRevision): SealedScenario {
+async function verifiedSealedArtifact(
+  actor: ExerciseActor,
+  exerciseId: string,
+  record: ExerciseCard,
+  revision: ExerciseRevision,
+  evidence: ExerciseEvidenceProvider | undefined,
+): Promise<SealedScenario> {
   const artifact = revision.sealedArtifact;
   if (record.state !== 'SEALED' || record.revision !== revision.revision || revision.state !== 'SEALED') {
     fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
   }
   if (!artifact) fail('SEALED_REQUIRED', 'SEALED_ARTIFACT_INVALID: серверный артефакт запечатывания отсутствует');
   try {
-    const reconstructed = sealScenario({
-      id: artifact.id,
-      revision: artifact.revision,
-      state: 'APPROVED',
-      scenario: revision.payload,
-      issues: [],
-      requiredConfirmations: [...READINESS_AREAS],
-      confirmations: [...artifact.confirmations],
-      confirmationSubjects: Object.fromEntries(artifact.confirmations.map(item => [item.area, item.subjectHash])),
-      rehearsal: artifact.rehearsal,
-      initialMap: artifact.initialMap,
-      environmentSnapshot: artifact.environmentSnapshot,
-      expectedEnvironmentSha256: artifact.environmentSnapshot.manifestSha256,
-      officialEventLogId: artifact.rehearsal.officialEventLogId,
-      hashes: artifact.hashes,
-      sealedAt: artifact.sealedAt,
-    });
+    const candidateRecord = { ...record, state: 'APPROVED' as const };
+    const candidateRevision = { ...revision, state: 'APPROVED' as const, sealedArtifact: undefined };
+    const reconstructed = await sealedArtifactFor(actor, exerciseId, candidateRecord, candidateRevision, evidence, artifact.sealedAt);
     if (artifact.id !== revision.id || artifact.revision !== revision.revision || canonicalJson(reconstructed) !== canonicalJson(artifact)) {
-      throw new Error('артефакт не совпадает с текущей серверной редакцией');
+      throw new Error('артефакт не совпадает с заново вычисленными серверными доказательствами');
     }
     return artifact;
   } catch (error) {
@@ -560,6 +552,10 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const revision = revisionForSeal(record, input.expectedRevision) as { -readonly [K in keyof ExerciseRevision]: ExerciseRevision[K] };
     const now = this.now().toISOString();
     const artifact = await sealedArtifactFor(actor, exerciseId, record, revision, this.evidence, now);
+    const current = revisionForSeal(record, input.expectedRevision);
+    if (current.id !== revision.id || record.state !== 'APPROVED' || revision.state !== 'APPROVED') {
+      fail('REVISION_CONFLICT', 'Редакция изменилась во время проверки готовности; запечатывание отменено');
+    }
     record.state = 'SEALED';
     record.readiness = 100;
     record.validation = 'OK';
@@ -575,7 +571,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     if (record.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
     const revision = record.revisions.find(item => item.revision === input.revision);
     if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
-    verifiedSealedArtifact(record, revision);
+    await verifiedSealedArtifact(actor, exerciseId, record, revision, this.evidence);
     const session: ExerciseSession = {
       id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
       state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,
@@ -859,7 +855,7 @@ export class PgExerciseStore implements ExerciseStore {
       if (current.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
       const revision = current.revisions.find(item => item.revision === input.revision);
       if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
-      verifiedSealedArtifact(current, revision);
+      await verifiedSealedArtifact(actor, exerciseId, current, revision, this.evidence);
       const session: ExerciseSession = {
         id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
         state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,

@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { migrate, type Migration, type Pool } from '@def-ops/db';
+import { migrate, tx, type Migration, type Pool } from '@def-ops/db';
 import {
   approveInitialMap, hashCanonical, READINESS_AREAS, REHEARSAL_CHECKS, runRehearsal, validateKit,
   type ApprovedInitialMap, type RehearsalReport, type ScenarioItem, type ScenarioKit,
 } from '@def-ops/kshvi';
 import type { InitialSituationMap } from '../../../../packages/kshvi/src/scenario/initial-map';
-import { validateScenario, VALIDATION_AREAS, type ScenarioValidationInput, type ValidationArea, type ValidationReport } from '../../../../packages/kshvi/src/scenario/validation';
+import { VALIDATION_AREAS, type ScenarioValidationInput, type ValidationArea } from '../../../../packages/kshvi/src/scenario/validation';
 import type { EnvironmentSnapshot } from '../../../../packages/kshvi/src/environment/provider';
+import { executeDomainRehearsal, type RehearsalDomainEvent, type RehearsalProfile } from './domain-rehearsal';
 import type {
   ExerciseEvidenceProvider, ExerciseRevision, ExerciseSealActor, ServerExerciseEvidence,
 } from './exercise-store';
@@ -19,6 +20,7 @@ export interface ExerciseEvidenceService extends ExerciseEvidenceProvider {
   approveMap(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, map: InitialSituationMap): Promise<ApprovedInitialMap>;
   confirmations(revision: ExerciseRevision): Promise<readonly import('@def-ops/kshvi').ReadinessConfirmation[]>;
   approvedMap(revision: ExerciseRevision): Promise<ApprovedInitialMap | null>;
+  rehearsalJournal(eventLogId: string): Promise<readonly RehearsalDomainEvent[]>;
 }
 
 const AREA_ITEMS: Record<ValidationArea, readonly ScenarioItem[]> = {
@@ -38,12 +40,6 @@ const AREA_ITEMS: Record<ValidationArea, readonly ScenarioItem[]> = {
   VISIBILITY: ['PRIVATE_PLANS'],
   MODEL: ['ASSUMPTION_PASSPORT'],
   RECOVERY: ['READINESS_PLAN'],
-};
-const CHECK_AREAS: Record<typeof REHEARSAL_CHECKS[number], readonly ValidationArea[]> = {
-  RECIPIENTS: ['COMMUNICATIONS'], CHANNELS: ['COMMUNICATIONS'], QUEUE: ['COMMUNICATIONS'], BRANCHES: ['STRUCTURE'],
-  VISIBILITY: ['VISIBILITY'], DOCUMENTS: ['DOCUMENTS'], RECOVERY: ['RECOVERY'], PRINT_FALLBACK: ['DOCUMENTS'],
-  EVENT_STATISTICS: ['INPUTS'], CASCADE_LIMITS: ['INPUTS'], INTERMEDIARY_CYCLES: ['AUTONOMY_AGENTS'], OPPONENT: ['AUTONOMY_AGENTS'],
-  MORALE_IMPACT: ['EQUIPMENT_MORALE_READINESS'], SUPPLY_ROUTES: ['LOGISTICS_FORMATION'],
 };
 const UNKNOWN_HASH = hashCanonical({ status: 'UNKNOWN', reason: 'Серверный артефакт не предоставлен' });
 
@@ -68,6 +64,8 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
   protected abstract writeConfirmation(organizationId: string, exerciseId: string, revision: ExerciseRevision, value: import('@def-ops/kshvi').ReadinessConfirmation): Promise<void>;
   protected abstract readMap(revision: ExerciseRevision): Promise<ApprovedInitialMap | null>;
   protected abstract writeMap(organizationId: string, exerciseId: string, revision: ExerciseRevision, value: ApprovedInitialMap): Promise<void>;
+  protected abstract readRehearsalEvents(eventLogId: string): Promise<readonly RehearsalDomainEvent[]>;
+  protected abstract writeRehearsalEvents(eventLogId: string, events: readonly RehearsalDomainEvent[]): Promise<void>;
   protected readonly environment: ExerciseEnvironmentLoader;
   protected readonly now: () => Date;
 
@@ -78,6 +76,7 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
 
   confirmations(revision: ExerciseRevision) { return this.readConfirmations(revision); }
   approvedMap(revision: ExerciseRevision) { return this.readMap(revision); }
+  rehearsalJournal(eventLogId: string) { return this.readRehearsalEvents(eventLogId); }
 
   async confirm(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, input: ExerciseConfirmationInput): Promise<void> {
     requireRevision(revision, input.expectedRevision);
@@ -129,9 +128,9 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
     };
   }
 
-  private async rehearsal(revision: ExerciseRevision, validation: ValidationReport): Promise<{ report: RehearsalReport; officialEventLogId: string }> {
+  private async rehearsal(revision: ExerciseRevision, profile: RehearsalProfile): Promise<{ report: RehearsalReport; officialEventLogId: string }> {
     const officialEventLogId = `official-log-${revision.id}`;
-    const rehearsalId = `rehearsal-${revision.id}-${randomUUID()}`;
+    const rehearsalId = `rehearsal-${revision.id}`;
     const eventLogId = `rehearsal-log-${rehearsalId}`;
     const report = await runRehearsal({
       scenario: revision.payload, officialEventLogId, rehearsalId, eventLogId,
@@ -139,13 +138,12 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
       if (isolated.mode !== 'REHEARSAL' || isolated.eventLogId !== eventLogId || isolated.scenario === revision.payload) {
         throw new Error('REHEARSAL_ISOLATION_REQUIRED');
       }
-      const checks = Object.fromEntries(REHEARSAL_CHECKS.map(check => [check, CHECK_AREAS[check].every(area =>
-        !validation.issues.some(issue => issue.area === area && issue.severity === 'ERROR'),
-      )]));
+      const result = await executeDomainRehearsal(profile, eventLogId);
+      await this.writeRehearsalEvents(eventLogId, result.events);
       return {
-        status: Object.values(checks).every(Boolean) ? 'PASSED' as const : 'FAILED' as const,
+        status: REHEARSAL_CHECKS.every(check => result.checks[check]) ? 'PASSED' as const : 'FAILED' as const,
         eventLogId,
-        checks,
+        checks: result.checks,
       };
     });
     return { report, officialEventLogId };
@@ -161,10 +159,12 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
     if (initialMap.environment.snapshotId !== environment.id || initialMap.environment.manifestSha256 !== environment.manifestSha256) {
       throw new Error('ENVIRONMENT_HASH_INVALID: карта не связана с серверным снимком среды');
     }
+    if (!payload.rehearsalProfile || typeof payload.rehearsalProfile !== 'object' || Array.isArray(payload.rehearsalProfile)) {
+      throw new Error('REHEARSAL_PROFILE_REQUIRED: требуется версионный профиль доменной репетиции');
+    }
     const kit = payload.kit as ScenarioKit;
     const validation = this.validationInput(kit, environment, initialMap);
-    const report = validateScenario(validation);
-    const rehearsal = await this.rehearsal(revision, report);
+    const rehearsal = await this.rehearsal(revision, payload.rehearsalProfile as RehearsalProfile);
     const confirmations = await this.readConfirmations(revision);
     return {
       validation,
@@ -198,6 +198,7 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
 export class InMemoryExerciseEvidenceService extends BaseExerciseEvidenceService {
   private readonly confirmationRecords = new Map<string, import('@def-ops/kshvi').ReadinessConfirmation[]>();
   private readonly mapRecords = new Map<string, ApprovedInitialMap>();
+  private readonly rehearsalRecords = new Map<string, RehearsalDomainEvent[]>();
   protected async readConfirmations(revision: ExerciseRevision) { return structuredClone(this.confirmationRecords.get(revision.id) ?? []); }
   protected async writeConfirmation(_organizationId: string, _exerciseId: string, revision: ExerciseRevision, value: import('@def-ops/kshvi').ReadinessConfirmation) {
     const current = this.confirmationRecords.get(revision.id) ?? [];
@@ -207,12 +208,20 @@ export class InMemoryExerciseEvidenceService extends BaseExerciseEvidenceService
   protected async writeMap(_organizationId: string, _exerciseId: string, revision: ExerciseRevision, value: ApprovedInitialMap) {
     this.mapRecords.set(revision.id, structuredClone(value));
   }
+  protected async readRehearsalEvents(eventLogId: string) { return structuredClone(this.rehearsalRecords.get(eventLogId) ?? []); }
+  protected async writeRehearsalEvents(eventLogId: string, events: readonly RehearsalDomainEvent[]) {
+    this.rehearsalRecords.set(eventLogId, structuredClone([...events]));
+  }
 }
 
 export const KSHVI_EVIDENCE_MIGRATIONS: Migration[] = [{
   id: 6,
   name: 'exercise-server-evidence',
   sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/006-exercise-evidence.sql', import.meta.url), 'utf8')),
+}, {
+  id: 7,
+  name: 'exercise-domain-rehearsal-journal',
+  sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/007-rehearsal-journal.sql', import.meta.url), 'utf8')),
 }];
 
 export class PgExerciseEvidenceService extends BaseExerciseEvidenceService {
@@ -254,5 +263,26 @@ export class PgExerciseEvidenceService extends BaseExerciseEvidenceService {
        on conflict (organization_id, revision_id) do update set map=excluded.map`,
       [organizationId, exerciseId, revision.id, JSON.stringify(value)],
     );
+  }
+  protected async readRehearsalEvents(eventLogId: string) {
+    const result = await this.options.pool.query(
+      `select event_id, sequence, area, event_type, payload, sha256 from ${this.options.schema}.exercise_rehearsal_events where event_log_id=$1 order by sequence`,
+      [eventLogId],
+    );
+    return result.rows.map(row => ({
+      eventId: row.event_id, eventLogId, sequence: Number(row.sequence), check: row.area, type: row.event_type, payload: row.payload, sha256: row.sha256,
+    })) as RehearsalDomainEvent[];
+  }
+  protected async writeRehearsalEvents(eventLogId: string, events: readonly RehearsalDomainEvent[]) {
+    await tx(this.options.pool, async db => {
+      await db.query(`delete from ${this.options.schema}.exercise_rehearsal_events where event_log_id=$1`, [eventLogId]);
+      for (const event of events) {
+        await db.query(
+          `insert into ${this.options.schema}.exercise_rehearsal_events (event_log_id, sequence, event_id, area, event_type, payload, sha256)
+           values ($1,$2,$3,$4,$5,$6,$7)`,
+          [eventLogId, event.sequence, event.eventId, event.check, event.type, JSON.stringify(event.payload), event.sha256],
+        );
+      }
+    });
   }
 }
