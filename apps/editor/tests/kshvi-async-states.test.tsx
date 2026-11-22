@@ -36,6 +36,7 @@ it('вызывает повтор, восстановление соединен
 });
 
 it('показывает период обрыва, последнюю серверную синхронизацию и потерю NTP', () => {
+  vi.useFakeTimers();
   render(<OfflineBanner connection="OFFLINE" lastSyncedAt="2026-11-22T08:00:00.000Z" outageStartedAt="2026-11-22T07:59:55.000Z" serverTime="2026-11-22T08:00:04.000Z" ntpSynchronized={false} clockOffsetMs={1250} />);
   expect(screen.getByText(/Нет соединения с сервером/)).toBeTruthy();
   expect(screen.getByText(/Период потери связи: 9 с/)).toBeTruthy();

@@ -1,0 +1,106 @@
+{
+  "initialRevision": {
+    "id": "ac06-communications",
+    "revision": 1,
+    "sha256": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420"
+  },
+  "scenario": {
+    "operations": {
+      "knownInstanceIds": [
+        "ac06",
+        "node-1"
+      ],
+      "availableChannelIds": [
+        "primary",
+        "reserve"
+      ],
+      "channels": [
+        {
+          "id": "primary",
+          "version": 1,
+          "fromInstanceId": "ac06",
+          "toInstanceId": "node-1",
+          "nodeIds": [
+            "node-1"
+          ],
+          "direction": "SIMPLEX",
+          "allowedMessageTypes": [
+            "ORDER"
+          ],
+          "capacity": 1,
+          "bytesPerSecond": 1000,
+          "baseDelayMs": 100,
+          "priorityPolicy": {
+            "allowQueuedPreemption": false
+          },
+          "availability": "AVAILABLE",
+          "encrypted": true,
+          "reserveChannelIds": [
+            "reserve"
+          ],
+          "validFrom": "2030-01-01T00:00:00Z",
+          "validUntil": "2030-01-02T00:00:00Z"
+        },
+        {
+          "id": "reserve",
+          "version": 1,
+          "fromInstanceId": "ac06",
+          "toInstanceId": "node-1",
+          "nodeIds": [
+            "node-2"
+          ],
+          "direction": "SIMPLEX",
+          "allowedMessageTypes": [
+            "ORDER"
+          ],
+          "capacity": 1,
+          "bytesPerSecond": 1000,
+          "baseDelayMs": 100,
+          "priorityPolicy": {
+            "allowQueuedPreemption": false
+          },
+          "availability": "AVAILABLE",
+          "encrypted": true,
+          "reserveChannelIds": [],
+          "validFrom": "2030-01-01T00:00:00Z",
+          "validUntil": "2030-01-02T00:00:00Z"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "node-1",
+          "status": "AVAILABLE"
+        },
+        {
+          "id": "node-2",
+          "status": "AVAILABLE"
+        }
+      ],
+      "reportSchedule": {
+        "id": "urgent-report",
+        "type": "ORDER",
+        "triggerEventId": "event-1",
+        "senderRole": "TRAINEE",
+        "recipientIds": [
+          "node-1"
+        ],
+        "channelId": "primary",
+        "deadlineAt": "2030-01-01T00:02:00Z",
+        "requiredFields": [
+          "result"
+        ],
+        "escalation": {
+          "toRole": "DIRECTOR",
+          "afterMinutes": 0
+        },
+        "reporterKind": "TRAINEE"
+      }
+    },
+    "messages": [
+      "message-1",
+      "message-2",
+      "message-3",
+      "message-4"
+    ]
+  }
+}

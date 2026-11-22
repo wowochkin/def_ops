@@ -16,7 +16,8 @@ const officialCommandTypes = new Set([
   'observation.record', 'document.create', 'document.transition', 'document.edit', 'document.approval', 'document.conflict.resolve',
   'document.cascade.issue', 'document.cascade.advance', 'document.cascade.fact', 'document.revise',
   'input.planned', 'input.reactive', 'input.adaptive', 'input.approve', 'trigger.validate',
-  'communication.enqueue', 'environment.bind', 'weather.change',
+  'communication.enqueue', 'communication.admit', 'communication.advance', 'communication.retry', 'communication.failure', 'communication.infrastructure',
+  'report.check', 'paper.record', 'environment.bind', 'weather.change',
   'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);
 const requirements = [

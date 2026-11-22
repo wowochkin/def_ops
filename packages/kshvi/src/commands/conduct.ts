@@ -20,8 +20,11 @@ import { advanceCascadeDelivery, issueCascade, recordCascadeFact, type CascadeIs
 import { advanceApproval, resolveDualConflict, type DualChainDecision, type DualChainState } from '../documents/dual-chain';
 import type { DocumentIssueContext } from '../documents/document-validation';
 import type { Channel, CommunicationMessage, CommunicationNode } from '../communications/channel';
-import { routeMessage } from '../communications/channel';
-import { createMessageAttempt, type MessageAttempt } from '../communications/message';
+import { routeMessage, admitAttempts } from '../communications/channel';
+import { advanceMessage, createMessageAttempt, retryMessage, type MessageAttempt } from '../communications/message';
+import { applyFailure, applyInfrastructureFailure, type CommunicationFailure } from '../communications/failure-model';
+import { checkReportDeadline, type ReportDeadlineResult, type ReportInput, type ReportScheduleEntry } from '../communications/report-schedule';
+import { recordPaperExchange, type PaperExchangeInput } from '../communications/paper-exchange';
 import type { EnvironmentSnapshot } from '../environment/provider';
 import { validateWeatherScenario, type WeatherScenario } from '@def-ops/core';
 import { applyDelegation, proposeInput, type AdaptiveInput, type Delegation } from '../runtime/input';
@@ -37,6 +40,7 @@ export type ConductOperations = Readonly<{
   treeEdges?: readonly Readonly<{ from: string; to: string }>[];
   cascadeLegs?: readonly CascadeLegInput[];
   delegation?: Delegation;
+  reportSchedule?: ReportScheduleEntry;
 }>;
 export type DocumentDraftInput = Omit<DocumentRevision, 'state' | 'sha256' | 'signatures' | 'delivery' | 'previousRevision'>;
 export type ConductInputRecord = Readonly<{
@@ -66,6 +70,10 @@ export type ConductState = {
   approvalRequests: Record<string, ApprovalRequestRecord>;
   triggerValidations: readonly TriggerValidationRecord[];
   communications: Record<string, MessageAttempt>;
+  communicationAttempts: Record<string, readonly MessageAttempt[]>;
+  communicationInfrastructure?: Readonly<{ nodes: readonly CommunicationNode[]; channels: readonly Channel[] }>;
+  reportChecks: readonly ReportDeadlineResult[];
+  paperExchanges: readonly ReturnType<typeof recordPaperExchange>[];
   jumpSnapshots: Record<string, { state: unknown; hash: string; reports: readonly string[] }>;
   completion: unknown | null;
   stage: { stageId: string; calculationProfileId: string; state: unknown } | null;
@@ -109,6 +117,13 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'input.approve'; requestId: string; approved: boolean }>)
   | (CommandBase & Readonly<{ type: 'trigger.validate'; rules: readonly { id: string; emits: readonly string[] }[] }>)
   | (CommandBase & Readonly<{ type: 'communication.enqueue'; message: CommunicationMessage }>)
+  | (CommandBase & Readonly<{ type: 'communication.admit'; channelId: string }>)
+  | (CommandBase & Readonly<{ type: 'communication.advance'; messageId: string; action: 'START' | 'DELIVER' | 'FAIL' | 'CANCEL'; recipientIds?: readonly string[]; reason?: string }>)
+  | (CommandBase & Readonly<{ type: 'communication.retry'; messageId: string }>)
+  | (CommandBase & Readonly<{ type: 'communication.failure'; messageId: string; factor: CommunicationFailure }>)
+  | (CommandBase & Readonly<{ type: 'communication.infrastructure'; factor: CommunicationFailure }>)
+  | (CommandBase & Readonly<{ type: 'report.check'; eventStatus: 'OCCURRED' | 'NOT_OCCURRED' | 'UNKNOWN'; report?: ReportInput }>)
+  | (CommandBase & Readonly<{ type: 'paper.record'; input: Omit<PaperExchangeInput, 'appliedDomainKeys' | 'electronicQueue'> }>)
   | (CommandBase & Readonly<{ type: 'environment.bind'; snapshot: EnvironmentSnapshot }>)
   | (CommandBase & Readonly<{ type: 'weather.change'; changeId: string; effectiveAt: string; reason: string; supersedes: string; scenario: WeatherScenario }>)
   | (CommandBase & Readonly<{ type: 'time.jump'; jumpId: string; targetOperationalAt: string; currentOperationalAt: string; elapsedMinutes: number }>)
@@ -129,7 +144,7 @@ export type ConductExecution = Readonly<{
 }>;
 
 export function emptyConductState(scenarioId: string): ConductState {
-  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, documentRevisions: {}, approvalChains: {}, cascades: {}, inputs: {}, approvalRequests: {}, triggerValidations: [], communications: {}, jumpSnapshots: {}, completion: null, stage: null };
+  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, documentRevisions: {}, approvalChains: {}, cascades: {}, inputs: {}, approvalRequests: {}, triggerValidations: [], communications: {}, communicationAttempts: {}, reportChecks: [], paperExchanges: [], jumpSnapshots: {}, completion: null, stage: null };
 }
 function json(value: unknown): JsonValue { return JSON.parse(JSON.stringify(value)) as JsonValue; }
 function assertCommand(command: CommandBase): void {
@@ -152,6 +167,15 @@ function recordDocument(state: ConductState, revision: DocumentRevision): Partia
     documentRevisions: {
       ...state.documentRevisions,
       [revision.documentId]: { ...(state.documentRevisions[revision.documentId] ?? {}), [revision.revision]: revision },
+    },
+  };
+}
+function recordAttempt(state: ConductState, attempt: MessageAttempt): Partial<ConductState> {
+  return {
+    communications: { ...state.communications, [attempt.messageId]: attempt },
+    communicationAttempts: {
+      ...state.communicationAttempts,
+      [attempt.messageId]: [...(state.communicationAttempts[attempt.messageId] ?? []), attempt],
     },
   };
 }
@@ -478,12 +502,106 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       if (command.message.fromInstanceId !== state.scenarioId) throw new Error('Отправитель сообщения не соответствует сеансу');
       if (command.message.recipientIds.some(id => !operations.knownInstanceIds.includes(id))) throw new Error('Получатель отсутствует в дереве инстанций');
       if (state.communications[command.message.id]) throw new Error('Сообщение с таким идентификатором уже существует');
-      const route = routeMessage({ message: command.message, channels: operations.channels, nodes: operations.nodes, at: command.at });
+      const infrastructure = state.communicationInfrastructure ?? operations;
+      const route = routeMessage({ message: command.message, channels: infrastructure.channels, nodes: infrastructure.nodes, at: command.at });
       const attempt = createMessageAttempt(command.message, route, command.at);
       return {
-        state: next(state, { communications: { ...state.communications, [attempt.messageId]: attempt } }),
+        state: next(state, recordAttempt(state, attempt)),
         event: eventFor(state, command, 'communication.queued.v1', attempt.messageId, { sideId: actor.sideId, recipients: attempt.recipients, attempt }),
         revision: state.revision + 1, communication: attempt,
+      };
+    }
+    case 'communication.admit': {
+      const infrastructure = required(state.communicationInfrastructure ?? operations, 'Каналы связи не настроены');
+      const channel = required(infrastructure.channels.find(candidate => candidate.id === command.channelId), 'Канал не найден');
+      const admitted = admitAttempts({
+        channel, at: command.at,
+        inTransit: Object.values(state.communications).filter(attempt => attempt.status === 'inTransit'),
+        queued: Object.values(state.communications).filter(attempt => attempt.status === 'queued'),
+      });
+      let changes: Partial<ConductState> = {};
+      for (const attempt of [...admitted.inTransit, ...admitted.queued]) {
+        const previous = state.communications[attempt.messageId]!;
+        if (previous.status === attempt.status && previous.startedAt === attempt.startedAt) continue;
+        const recorded = recordAttempt(state, attempt);
+        changes = {
+          communications: { ...(changes.communications ?? {}), ...recorded.communications },
+          communicationAttempts: { ...(changes.communicationAttempts ?? {}), ...recorded.communicationAttempts },
+        };
+      }
+      return {
+        state: next(state, changes),
+        event: eventFor(state, command, 'communication.admitted.v1', channel.id, { inTransitIds: admitted.inTransit.map(attempt => attempt.messageId), queuedIds: admitted.queued.map(attempt => attempt.messageId) }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'communication.advance': {
+      const current = required(state.communications[command.messageId], 'Сообщение не найдено');
+      const attempt = advanceMessage(current, command.action, { at: command.at, ...(command.recipientIds ? { recipientIds: command.recipientIds } : {}), ...(command.reason ? { reason: command.reason } : {}) });
+      return {
+        state: next(state, recordAttempt(state, attempt)),
+        event: eventFor(state, command, 'communication.advanced.v1', attempt.messageId, { attempt }),
+        revision: state.revision + 1, communication: attempt,
+      };
+    }
+    case 'communication.retry': {
+      const current = required(state.communications[command.messageId], 'Сообщение не найдено');
+      const attempt = retryMessage(current, command.at);
+      return {
+        state: next(state, recordAttempt(state, attempt)),
+        event: eventFor(state, command, 'communication.retried.v1', attempt.messageId, { attempt }),
+        revision: state.revision + 1, communication: attempt,
+      };
+    }
+    case 'communication.failure': {
+      const current = required(state.communications[command.messageId], 'Сообщение не найдено');
+      const result = applyFailure({ attempt: current, factor: command.factor, at: command.at });
+      return {
+        state: next(state, recordAttempt(state, result.attempt)),
+        event: eventFor(state, command, 'communication.failure.applied.v1', result.event.messageId, { ...result.event, duplicateRequested: result.duplicateRequested, impactPreview: result.impactPreview, attempt: result.attempt }),
+        revision: state.revision + 1, communication: result.attempt,
+      };
+    }
+    case 'communication.infrastructure': {
+      const infrastructure = required(state.communicationInfrastructure ?? operations, 'Инфраструктура связи не настроена');
+      const result = applyInfrastructureFailure({ nodes: infrastructure.nodes, channels: infrastructure.channels, factor: command.factor });
+      return {
+        state: next(state, { communicationInfrastructure: { nodes: result.nodes, channels: result.channels } }),
+        event: eventFor(state, command, 'communication.infrastructure.changed.v1', command.factor.id, { events: result.events, impactPreview: result.impactPreview }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'report.check': {
+      const schedule = required(operations?.reportSchedule, 'Табель донесений не настроен');
+      const result = checkReportDeadline({ schedule, now: command.at, eventStatus: command.eventStatus, ...(command.report ? { report: command.report } : {}) });
+      return {
+        state: next(state, { reportChecks: [...state.reportChecks, result] }),
+        event: eventFor(state, command, 'report.deadline.checked.v1', schedule.id, { scheduleId: schedule.id, result }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'paper.record': {
+      const attempts = Object.values(state.communications);
+      const result = recordPaperExchange({
+        ...command.input,
+        appliedDomainKeys: [...new Set(attempts.flatMap(attempt => attempt.appliedDomainKeys))],
+        electronicQueue: attempts.map(attempt => ({ messageId: attempt.messageId, domainKey: attempt.domainKey, status: attempt.status })),
+      });
+      let changes: Partial<ConductState> = { paperExchanges: [...state.paperExchanges, result] };
+      for (const messageId of result.cancelledMessageIds) {
+        const current = required(state.communications[messageId], 'Электронный дубликат не найден');
+        const cancelled = advanceMessage(current, 'CANCEL', { at: command.at, reason: 'Заменено бумажным обменом' });
+        const recorded = recordAttempt(state, cancelled);
+        changes = {
+          ...changes,
+          communications: { ...(changes.communications ?? {}), ...recorded.communications },
+          communicationAttempts: { ...(changes.communicationAttempts ?? {}), ...recorded.communicationAttempts },
+        };
+      }
+      return {
+        state: next(state, changes),
+        event: eventFor(state, command, 'paper.exchange.recorded.v1', result.source.documentId, { result }),
+        revision: state.revision + 1,
       };
     }
     case 'environment.bind': {
