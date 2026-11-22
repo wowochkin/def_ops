@@ -1,0 +1,385 @@
+{
+  "runId": "30e3d00f-3bb1-4204-a9d6-8dac4b6684c2",
+  "commit": "8f2e274fe0fa58852f8ab468ca4af19a3d846e65",
+  "events": [
+    {
+      "eventId": "7503e7e7-8b31-4fbf-a711-ae925fe301f6",
+      "organizationId": "org-ac08",
+      "instanceId": "ac08",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "deterministic-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "deterministic-1",
+        "commandId": "deterministic-create",
+        "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+        "randomKeys": [],
+        "calculation": {
+          "id": "deterministic-1",
+          "mode": "DETERMINISTIC",
+          "state": "CALCULATED",
+          "units": {},
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 20,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 50
+              },
+              "position": {
+                "remainingMeters": 100,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            }
+          },
+          "nodeId": "node-1",
+          "reason": "Детерминированный эпизод",
+          "result": {
+            "task": {
+              "id": "task",
+              "status": "PARTIALLY_COMPLETED",
+              "progressPercent": 20
+            },
+            "state": {},
+            "position": {
+              "remainingMeters": 50,
+              "travelledMeters": 50
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 0,
+                "deficit": 2,
+                "consumed": 12,
+                "supplied": 2
+              }
+            },
+            "uncertainty": {},
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:00:00Z",
+          "createdBy": null,
+          "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "revision": 1
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение",
+              "applicability": "AC-08"
+            },
+            "purpose": "Реплей",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Учебный стенд"
+            ]
+          },
+          "requiredInputs": [],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {},
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 0,
+              "deficit": 2,
+              "consumed": 12,
+              "supplied": 2
+            },
+            "actualAdvanceMeters": 50
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": null,
+      "hash": "7e414f520047c6fc2d56a9d3db12b2e0783d39451bf9a344d4cdf722f8cab0ec",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "a014d045-746c-487f-841e-9de459cde01c",
+      "organizationId": "org-ac08",
+      "instanceId": "ac08",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "stochastic-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "stochastic-1",
+        "commandId": "stochastic-create",
+        "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+        "randomKeys": [
+          {
+            "seed": "11n",
+            "value": 0.01892486633525925,
+            "digest": "04d84291fdb960701d6146cba36e95e1114d1158d539f0e33ed23171b67988fa",
+            "ordinal": 1,
+            "purpose": "stochastic-replay",
+            "branchId": "main",
+            "exerciseId": "exercise-ac08",
+            "algorithmVersion": 1
+          }
+        ],
+        "calculation": {
+          "id": "stochastic-1",
+          "mode": "STOCHASTIC",
+          "state": "CALCULATED",
+          "units": {},
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 20,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 50
+              },
+              "position": {
+                "remainingMeters": 100,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            }
+          },
+          "nodeId": "node-1",
+          "reason": "Стохастический эпизод",
+          "result": {
+            "task": {
+              "id": "task",
+              "status": "PARTIALLY_COMPLETED",
+              "progressPercent": 20
+            },
+            "state": {},
+            "position": {
+              "remainingMeters": 50,
+              "travelledMeters": 50
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 0,
+                "deficit": 2,
+                "consumed": 12,
+                "supplied": 2
+              }
+            },
+            "uncertainty": {},
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:00:00Z",
+          "createdBy": null,
+          "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+          "approvedBy": null,
+          "randomKeys": [
+            {
+              "seed": "11n",
+              "value": 0.01892486633525925,
+              "digest": "04d84291fdb960701d6146cba36e95e1114d1158d539f0e33ed23171b67988fa",
+              "ordinal": 1,
+              "purpose": "stochastic-replay",
+              "branchId": "main",
+              "exerciseId": "exercise-ac08",
+              "algorithmVersion": 1
+            }
+          ],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "revision": 1
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение",
+              "applicability": "AC-08"
+            },
+            "purpose": "Реплей",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Учебный стенд"
+            ]
+          },
+          "requiredInputs": [],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [
+            {
+              "id": "expected",
+              "weight": 1,
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 20,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 50
+              }
+            }
+          ],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {},
+            "selectedOutcomeId": "expected",
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 0,
+              "deficit": 2,
+              "consumed": 12,
+              "supplied": 2
+            },
+            "actualAdvanceMeters": 50
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "7e414f520047c6fc2d56a9d3db12b2e0783d39451bf9a344d4cdf722f8cab0ec",
+      "hash": "25e6243c002fab45dc97f941e80d11557d9648c161f22b1bce55dd02de4e7e6d",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "2a7a7a31-a299-49a8-8c99-1ac0d529024e",
+      "organizationId": "org-ac08",
+      "instanceId": "ac08",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "calculation.replayed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "stochastic-replay"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "stochastic-1",
+        "commandId": "stochastic-replay",
+        "randomKeys": [
+          {
+            "seed": "11n",
+            "value": 0.01892486633525925,
+            "digest": "04d84291fdb960701d6146cba36e95e1114d1158d539f0e33ed23171b67988fa",
+            "ordinal": 1,
+            "purpose": "stochastic-replay",
+            "branchId": "main",
+            "exerciseId": "exercise-ac08",
+            "algorithmVersion": 1
+          }
+        ],
+        "commandType": "calculation.replay",
+        "selectedOutcomeId": "expected"
+      },
+      "prevHash": "25e6243c002fab45dc97f941e80d11557d9648c161f22b1bce55dd02de4e7e6d",
+      "hash": "840e0eecd3ab35afe70c84d46eeedb3c24c46d856db3ea6d3c7129acb1f37da5",
+      "hashVersion": 2
+    }
+  ]
+}
