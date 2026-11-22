@@ -17,13 +17,13 @@ integration('локальная аварийная репетиция форми
     const input = command('recovery-drill-1');
     await expect(appendCommittedCommand(store, input, { afterCommit: () => { throw new Error('Соединение потеряно после фиксации'); } })).rejects.toThrow('после фиксации');
     const repeated = await appendCommittedCommand(store, input);
-    expect(await store.eventCount('i1')).toBe(1);
+    expect(await store.eventCount('org1', 'i1')).toBe(1);
     const world = reduceWorld(emptyWorld('scenario-1'), { eventId: repeated.eventId, type: input.type, payload: input.payload, causeIds: [] }, { reducerVersion: 1 });
     await store.saveSnapshot({ organizationId: 'org1', instanceId: 'i1', branchId: 'b1', sequence: 1, state: world, environment: { id: 'env-1', revision: 1, sha256: 'a'.repeat(64) }, reducerVersion: 1 });
 
     const restartStarted = performance.now();
     const restarted = new KshviEventStore({ pool: store.pool, schema: store.schema });
-    expect((await restarted.restoreWorld('i1', 'b1')).sequence).toBe(1);
+    expect((await restarted.restoreWorld('org1', 'i1', 'b1')).sequence).toBe(1);
     const restartMs = performance.now() - restartStarted;
 
     const root = await mkdtemp(join(tmpdir(), 'kshvi-recovery-drill-'));

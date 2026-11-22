@@ -5,11 +5,14 @@ export type ISODateTime = Brand<string, 'ISODateTime'>;
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
 export type VersionRef = Readonly<{ id: string; revision: number; sha256: string }>;
-export type Quantity = Readonly<{ value: number | null; unit: string; status: 'KNOWN' | 'UNKNOWN' }>;
+export type Quantity = Readonly<
+  | { value: number; unit: string; status: 'KNOWN' }
+  | { value: null; unit: string; status: 'UNKNOWN' }
+>;
 export type Unknown<T> = Readonly<{ status: 'UNKNOWN'; reason: string } | { status: 'KNOWN'; value: T }>;
 export type WallClockAt = Brand<ISODateTime, 'WallClockAt'>;
 export type OperationalTime = Readonly<{
-  normalizedAt: ISODateTime;
+  normalizedAt: string;
   originalAt: string;
   zone: string;
   offset: string;

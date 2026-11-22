@@ -5,4 +5,8 @@ export const KSHVI_MIGRATIONS: Migration[] = [{
   id: 1,
   name: 'core-event-store',
   sql: readFileSync(new URL('./migrations/001-core.sql', import.meta.url), 'utf8'),
+}, {
+  id: 4,
+  name: 'foundation-hardening',
+  sql: readFileSync(new URL('./migrations/004-foundation-hardening.sql', import.meta.url), 'utf8'),
 }];

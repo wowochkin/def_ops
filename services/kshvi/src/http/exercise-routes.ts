@@ -65,7 +65,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   const { store, sessions } = options;
   const participant = async (ctx: Ctx, action: string, mutation = false): Promise<ExerciseActor & { participant: ParticipantContext }> => {
     const current = await sessions.authenticate(tokenOf(ctx));
-    authorize(current, { action, organizationId: current.organizationId });
+    authorize(current, { action, organizationId: current.organizationId, scope: 'organization' });
     if (mutation) assertCsrf(current, String(ctx.req.headers['x-csrf-token'] ?? ''));
     return { organizationId: current.organizationId, userId: current.userId, participant: current };
   };

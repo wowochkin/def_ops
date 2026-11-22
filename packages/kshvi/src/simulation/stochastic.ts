@@ -16,7 +16,8 @@ export type StoredRandomKey = Readonly<{
 export function chooseStochasticOutcome(outcomes: readonly StochasticOutcome[], key: RandomKey) {
   if (outcomes.length === 0) throw new Error('Стохастический расчёт требует варианты исхода');
   let total = 0;
-  for (const outcome of outcomes) {
+  const ordered = [...outcomes].sort((left, right) => left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+  for (const outcome of ordered) {
     if (!outcome.id.trim() || !Number.isFinite(outcome.weight) || outcome.weight < 0) throw new Error('Некорректный вес стохастического исхода');
     total += outcome.weight;
   }
@@ -24,8 +25,8 @@ export function chooseStochasticOutcome(outcomes: readonly StochasticOutcome[], 
   const random = deriveRandom(key);
   const target = random.value * total;
   let cumulative = 0;
-  let selected = outcomes[outcomes.length - 1];
-  for (const outcome of outcomes) {
+  let selected = ordered[ordered.length - 1];
+  for (const outcome of ordered) {
     cumulative += outcome.weight;
     if (target < cumulative) { selected = outcome; break; }
   }

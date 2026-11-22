@@ -21,7 +21,7 @@ it('не сохраняет пароли, токены и закрытое со�
 it('сохраняет только разрешённые поля append-only аудита и аудирует его экспорт', () => {
   const audit = new SecurityAudit();
   audit.append({ actorId: 'admin', organizationId: 'org-1', action: 'login.failed', outcome: 'DENIED', correlationId: 'corr-2', password: 'secret-password', payload: 'Скрытая обстановка' });
-  const exported = audit.export('security-officer', 'org-1', 'corr-3');
+  const exported = audit.export({ userId: 'security-officer', organizationId: 'org-1', technicalPermissions: ['audit.export'] }, 'corr-3');
   expect(exported.at(-1)?.action).toBe('audit.exported');
   expect(JSON.stringify(exported)).not.toContain('secret-password');
   expect(JSON.stringify(exported)).not.toContain('Скрытая обстановка');

@@ -1,4 +1,4 @@
-import type { WorldState } from '../model/world';
+import { cloneWorld, type WorldState } from '../model/world';
 import { reduceWorld, type WorldEvent } from '../events/reducer';
 import {
   createExpositionProgram,
@@ -35,6 +35,10 @@ export type ExpositionCheckpoint = Readonly<{
   world: WorldState;
   rng?: ExpositionRngSnapshot;
 }>;
+
+function cloneCheckpoint(checkpoint: ExpositionCheckpoint): ExpositionCheckpoint {
+  return { ...structuredClone(checkpoint), world: cloneWorld(checkpoint.world) };
+}
 
 export type DemonstrationEvent = WorldEvent & Readonly<{ atMs: number; checkpointId?: string }>;
 export type DemonstrationScenario = Readonly<{
@@ -219,7 +223,7 @@ export const calculatePreparedScenario: AutonomousCalculator = input => {
   }
   if (scenario.systemSides.length === 0) throw new Error('Для автономного показа нужны разрешённые системные агенты сторон');
   validateSeed(input.seed);
-  let world = structuredClone(fromCheckpoint?.world ?? scenario.initialWorld);
+  let world = cloneWorld(fromCheckpoint?.world ?? scenario.initialWorld);
   const startCursor = fromCheckpoint?.scenarioCursor ?? fromCheckpoint?.journalCursor ?? 0;
   let sequence = fromCheckpoint?.journalCursor ?? 0;
   let rng = restoredRng(input);
@@ -277,7 +281,7 @@ export const calculatePreparedScenario: AutonomousCalculator = input => {
         atMs: event.atMs,
         journalCursor: sequence,
         scenarioCursor,
-        world: structuredClone(world),
+        world: cloneWorld(world),
         rng: structuredClone(rng),
       });
     }
@@ -296,7 +300,7 @@ export function worldAtExposition(
     .sort((left, right) => left.sequence - right.sequence)
     .reduce((world, entry) => reduceWorld(world, {
       eventId: entry.eventId, type: entry.type, payload: structuredClone(entry.payload), causeIds: entry.causeIds,
-    }, { reducerVersion }), structuredClone(initialWorld));
+    }, { reducerVersion }), cloneWorld(initialWorld));
 }
 
 type StartArchiveInput = Readonly<{
@@ -322,7 +326,7 @@ export function startArchiveShow(input: StartArchiveInput): ExpositionSession {
     program,
     seed: null,
     journal: structuredClone(sourceArchive.journal),
-    checkpoints: structuredClone(sourceArchive.checkpoints),
+    checkpoints: sourceArchive.checkpoints.map(cloneCheckpoint),
     world: worldAtExposition(sourceArchive.demonstration.initialWorld, sourceArchive.journal, playback.atMs, sourceArchive.demonstration.rules.reducerVersion),
     map: structuredClone(sourceArchive.map),
     calculation: null,
@@ -367,7 +371,7 @@ export function startAutonomousShow(input: StartAutonomousInput): ExpositionSess
     program,
     seed: input.seed,
     journal: structuredClone(result.journal),
-    checkpoints: structuredClone(result.checkpoints),
+    checkpoints: result.checkpoints.map(cloneCheckpoint),
     world: worldAtExposition(sourceArchive.demonstration.initialWorld, result.journal, playback.atMs, sourceArchive.demonstration.rules.reducerVersion),
     map: structuredClone(sourceArchive.map),
     calculation: calculationContext(sourceArchive.demonstration),
@@ -416,8 +420,8 @@ export function continueFromCheckpoint(
     seed,
     journal,
     checkpoints: [
-      ...structuredClone(show.checkpoints.filter(item => item.journalCursor <= checkpoint.journalCursor)),
-      ...structuredClone(result.checkpoints),
+      ...show.checkpoints.filter(item => item.journalCursor <= checkpoint.journalCursor).map(cloneCheckpoint),
+      ...result.checkpoints.map(cloneCheckpoint),
     ],
     world: worldAtExposition(show.sourceArchive.demonstration.initialWorld, journal, playback.atMs, show.sourceArchive.demonstration.rules.reducerVersion),
     rng: structuredClone(result.rng),

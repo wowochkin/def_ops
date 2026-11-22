@@ -16,6 +16,7 @@ export type RandomValue = Readonly<{
 }>;
 
 export function deriveRandom(key: RandomKey): RandomValue {
+  if (!key || typeof key !== 'object' || typeof key.seed !== 'bigint') throw new Error('Случайный seed должен иметь runtime-тип bigint');
   if (!Number.isSafeInteger(key.ordinal) || key.ordinal < 0) throw new Error('Порядковый номер случайного ключа должен быть неотрицательным целым');
   if (!Number.isSafeInteger(key.algorithmVersion) || key.algorithmVersion < 1) throw new Error('Нужна версия алгоритма случайности');
   if (!key.exerciseId || !key.branchId || !key.purpose) throw new Error('Случайный ключ неполный');

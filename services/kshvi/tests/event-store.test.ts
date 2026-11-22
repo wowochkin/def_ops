@@ -11,9 +11,9 @@ integration('атомарно фиксирует событие, ревизию 
     const second = await store.appendCommand(input);
     expect(second.eventId).toBe(first.eventId);
     expect(second.idempotent).toBe(true);
-    expect(await store.eventCount('i1')).toBe(1);
-    expect(await store.outboxCount('i1')).toBe(1);
-    expect(await store.aggregateRevision('i1', 'b1')).toBe(1);
+    expect(await store.eventCount('org1', 'i1')).toBe(1);
+    expect(await store.outboxCount('org1', 'i1')).toBe(1);
+    expect(await store.aggregateRevision('org1', 'i1', 'b1')).toBe(1);
   });
 });
 
@@ -21,7 +21,7 @@ integration('отклоняет повтор ключа с другим соде
   await withKshviDatabase(async store => {
     await store.appendCommand(command());
     await expect(store.appendCommand({ ...command(), payload: { resourceId: 'fuel', amount: 3 } })).rejects.toThrow('Идемпотентный ключ уже использован');
-    expect(await store.eventCount('i1')).toBe(1);
+    expect(await store.eventCount('org1', 'i1')).toBe(1);
   });
 });
 
@@ -29,18 +29,18 @@ integration('не принимает устаревшую ревизию агр�
   await withKshviDatabase(async store => {
     await store.appendCommand(command());
     await expect(store.appendCommand(command('cmd-2'))).rejects.toThrow('ревизия');
-    expect(await store.eventCount('i1')).toBe(1);
+    expect(await store.eventCount('org1', 'i1')).toBe(1);
   });
 });
 
-integration('восстанавливает снимок с хвостом журнала', async () => {
+integration('восстанавливает снимок с проверенным хвостом журнала', async () => {
   await withKshviDatabase(async store => {
     const first = await store.appendCommand(command());
     const world = reduceWorld(emptyWorld('scenario-1'), { eventId: first.eventId, type: 'resource.consumed.v1', payload: { resourceId: 'fuel', amount: 2 }, causeIds: [] }, { reducerVersion: 1 });
     await store.saveSnapshot({ organizationId: 'org1', instanceId: 'i1', branchId: 'b1', sequence: 1, state: world, environment: { id: 'env-1', revision: 1, sha256: 'a'.repeat(64) }, reducerVersion: 1 });
     const secondInput = { ...command('cmd-2'), aggregateRevision: 1, payload: { resourceId: 'fuel', amount: 3, supplied: 4 } };
     await store.appendCommand(secondInput);
-    const restored = await store.restoreWorld('i1', 'b1');
+    const restored = await store.restoreWorld('org1', 'i1', 'b1');
     expect(restored.sequence).toBe(2);
     expect(restored.state.resources.fuel.onHand).toBe(1);
     expect(restored.state.resources.fuel.consumed).toBe(3);
@@ -48,7 +48,7 @@ integration('восстанавливает снимок с хвостом жу�
   });
 });
 
-integration('публикует outbox однократно при повторном обработчике', async () => {
+integration('не повторяет обработчик после зафиксированной at-least-once доставки', async () => {
   await withKshviDatabase(async store => {
     await store.appendCommand(command());
     let delivered = 0;

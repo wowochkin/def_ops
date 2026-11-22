@@ -68,6 +68,8 @@ it('AC-28: оба показа, продолжение и производный
   expect(derivative.audiencePolicy).toEqual(policy);
   expect(derivative.seed).toBe(28);
   expect(derivative.journal).toEqual(continued.journal);
+  expect(derivative.world.resources.fuel).toBeDefined();
+  expect(derivative.checkpoints[0]?.world.resources.fuel).toBeDefined();
   expect(derivative.officialAssessmentCreated).toBe(false);
   expect(derivative.officialAssessments).toEqual([]);
   expect(derivative.manifestHash).toMatch(/^[0-9a-f]{64}$/);

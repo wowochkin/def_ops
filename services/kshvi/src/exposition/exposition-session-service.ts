@@ -27,6 +27,11 @@ function presenterView(session: ExpositionSession): ExpositionPresenterSession {
   const { sourceArchive: _sourceArchive, officialAssessments: _officialAssessments, ...view } = session;
   return {
     ...structuredClone(view),
+    world: { ...structuredClone(session.world), resources: structuredClone(session.world.state.Resources) },
+    checkpoints: session.checkpoints.map(checkpoint => ({
+      ...structuredClone(checkpoint),
+      world: { ...structuredClone(checkpoint.world), resources: structuredClone(checkpoint.world.state.Resources) },
+    })),
     map: Object.fromEntries(['weather', 'terrain', 'logistics', 'modernSymbols', 'forces', 'routes']
       .filter(key => session.map[key] !== undefined)
       .map(key => [key, publicMapValue(session.map[key])])),

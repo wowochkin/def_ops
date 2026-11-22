@@ -13,7 +13,10 @@ export interface SessionStore {
   findAccountById(userId: string): Promise<AccountRecord | null>;
   saveSession(session: StoredSession): Promise<void>;
   findSession(tokenHash: string): Promise<StoredSession | null>;
-  updateSession(session: StoredSession): Promise<void>;
+  /** Атомарно меняет роль только у неотозванной сессии. */
+  selectActiveRole(tokenHash: string, roleId: string): Promise<boolean>;
+  /** Монотонно фиксирует первый отзыв; stale-копия не может его стереть. */
+  revokeSession(tokenHash: string, revokedAt: Date): Promise<void>;
 }
 
 export class InMemorySessionStore implements SessionStore {
@@ -25,7 +28,17 @@ export class InMemorySessionStore implements SessionStore {
   async findAccountById(userId: string): Promise<AccountRecord | null> { return this.accounts.get(userId) ?? null; }
   async saveSession(session: StoredSession): Promise<void> { this.sessions.set(session.tokenHash, structuredClone(session)); }
   async findSession(tokenHash: string): Promise<StoredSession | null> { return this.sessions.get(tokenHash) ?? null; }
-  async updateSession(session: StoredSession): Promise<void> { this.sessions.set(session.tokenHash, structuredClone(session)); }
+  async selectActiveRole(tokenHash: string, roleId: string): Promise<boolean> {
+    const current = this.sessions.get(tokenHash);
+    if (!current || current.revokedAt) return false;
+    this.sessions.set(tokenHash, { ...current, activeRoleId: roleId });
+    return true;
+  }
+  async revokeSession(tokenHash: string, revokedAt: Date): Promise<void> {
+    const current = this.sessions.get(tokenHash);
+    if (!current) return;
+    this.sessions.set(tokenHash, { ...current, revokedAt: current.revokedAt ?? revokedAt });
+  }
   records(): StoredSession[] { return [...this.sessions.values()].map(session => structuredClone(session)); }
 }
 
@@ -114,17 +127,16 @@ export class SessionManager {
   }
 
   async selectRole(token: string, roleId: string): Promise<ParticipantContext> {
-    const session = await this.store.findSession(digest(token));
+    const tokenHash = digest(token);
+    const session = await this.store.findSession(tokenHash);
     if (!session || session.revokedAt || session.expiresAt.getTime() <= this.now().getTime()) unauthorized();
     const account = await this.store.findAccountById(session.userId);
     if (!account || !account.roles.some(role => role.id === roleId)) throw new HttpError(403, 'forbidden', '403: Действие недоступно');
-    await this.store.updateSession({ ...session, activeRoleId: roleId });
+    if (!(await this.store.selectActiveRole(tokenHash, roleId))) unauthorized();
     return this.authenticate(token);
   }
 
   async revoke(token: string): Promise<void> {
-    const session = await this.store.findSession(digest(token));
-    if (!session) return;
-    await this.store.updateSession({ ...session, revokedAt: this.now() });
+    await this.store.revokeSession(digest(token), this.now());
   }
 }

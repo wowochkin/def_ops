@@ -31,7 +31,7 @@ try {
     if (!String(error.message).includes('после фиксации')) throw error;
   });
   const repeated = await appendCommittedCommand(store, command);
-  if (!(await store.eventCount('i1')) || !repeated.idempotent) throw new Error('Идемпотентный повтор не подтверждён');
+  if (!(await store.eventCount('org1', 'i1')) || !repeated.idempotent) throw new Error('Идемпотентный повтор не подтверждён');
   const world = reduceWorld(emptyWorld('scenario-1'), { eventId: repeated.eventId, type: command.type, payload: command.payload, causeIds: [] }, { reducerVersion: 1 });
   await store.saveSnapshot({ organizationId: 'org1', instanceId: 'i1', branchId: 'b1', sequence: 1, state: world, environment: { id: 'env-1', revision: 1, sha256: 'a'.repeat(64) }, reducerVersion: 1 });
   const workerFile = join(root, 'workers.jsonl');
@@ -44,7 +44,7 @@ try {
   const restartStarted = performance.now();
   secondPool = createPool(url, 2);
   const restarted = new KshviEventStore({ pool: secondPool, schema });
-  const recovered = await restarted.restoreWorld('i1', 'b1');
+  const recovered = await restarted.restoreWorld('org1', 'i1', 'b1');
   if (recovered.sequence !== repeated.sequence) throw new Error('Последнее подтверждённое событие потеряно');
   const restartedWorkers = new WorkerRecoveryService({ stateFile: workerFile });
   const duplicate = await restartedWorkers.resume('outbox', repeated.sequence, async () => { effects.push('duplicate'); });

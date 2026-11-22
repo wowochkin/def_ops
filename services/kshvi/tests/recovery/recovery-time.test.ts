@@ -14,7 +14,7 @@ integration('измеряет восстановление до последне
     await store.saveSnapshot({ organizationId: 'org1', instanceId: 'i1', branchId: 'b1', sequence: 1, state: world, environment: { id: 'env-1', revision: 1, sha256: 'a'.repeat(64) }, reducerVersion: 1 });
     const started = performance.now();
     const restarted = new (store.constructor as new (options: { pool: typeof store.pool; schema: string }) => typeof store)({ pool: store.pool, schema: store.schema });
-    const restored = await restarted.restoreWorld('i1', 'b1');
+    const restored = await restarted.restoreWorld('org1', 'i1', 'b1');
     const restartMs = performance.now() - started;
     expect(restored.sequence).toBe(1);
     expect(assertRecoveryObjectives({ confirmedEventsLost: 0, restartMs, nodeRestoreMs: restartMs })).toMatchObject({ rpo: 0, restartWithinTarget: true, nodeRestoreWithinTarget: true });

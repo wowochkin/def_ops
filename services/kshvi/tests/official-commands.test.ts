@@ -70,6 +70,6 @@ integration('Critical 1/2: PostgreSQL содержит именно событи
     expect(journal).toHaveLength(1);
     expect(journal[0].eventId).toBe(result.event.eventId);
     expect(journal[0].payload).toMatchObject({ commandId: 'pg-decision', commandType: 'decision.create', causedBy: 'decision-1' });
-    expect(await store.eventCount(context.sessionId)).toBe(1);
+    expect(await store.eventCount('org', context.sessionId)).toBe(1);
   });
 });

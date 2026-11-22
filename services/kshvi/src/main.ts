@@ -1,26 +1,36 @@
 import { createService, env, onShutdown } from '@def-ops/service-kit';
-import { createPool } from '@def-ops/db';
-import { buildRouter } from './app';
-import { InMemorySessionStore, SessionManager } from './auth/sessions';
-import { PgSessionStore } from './auth/pg-session-store';
-import { InMemoryExerciseStore, PgExerciseStore } from './store/exercise-store';
+import { SessionManager } from './auth/sessions';
+import { SecurityAudit } from './auth/security-audit';
 import { CartographyEnvironmentProvider } from './environment/cartography-provider';
 import { EnvironmentSnapshotStore } from './environment/snapshot-store';
 import { registerExpositionRoutes } from './http/exposition-routes';
 import { createTrainingExpositionService } from './exposition/training-exposition';
+import { buildTask52Router } from './http/contracts';
+import { createKshviPersistence } from './persistence';
 
-const databaseUrl = process.env.DATABASE_URL;
-const pool = databaseUrl ? createPool(databaseUrl) : null;
-const store = pool ? new PgSessionStore(pool, env('KSHVI_SCHEMA', 'kshvi')) : new InMemorySessionStore();
-if (store instanceof PgSessionStore) await store.init();
-const exerciseStore = pool ? new PgExerciseStore({ pool, schema: env('KSHVI_SCHEMA', 'kshvi') }) : new InMemoryExerciseStore();
-if (exerciseStore instanceof PgExerciseStore) await exerciseStore.init();
+const persistence = await createKshviPersistence(process.env);
+const pool = persistence.pool;
+const sessions = new SessionManager({ store: persistence.sessionStore });
+const audit = new SecurityAudit();
 const environmentProvider = new CartographyEnvironmentProvider({
   baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104'),
   store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
 });
-const sessions = new SessionManager({ store });
-const router = buildRouter({ sessions, exerciseStore, environmentProvider });
+const router = buildTask52Router({
+  sessions,
+  exerciseStore: persistence.exerciseStore,
+  environmentProvider,
+  audit: async record => {
+    audit.append({
+      actorId: record.actorId,
+      organizationId: record.organizationId ?? 'default',
+      action: record.action,
+      outcome: record.outcome,
+      correlationId: record.correlationId,
+      ...(record.resourceId ? { resourceId: record.resourceId } : {}),
+    });
+  },
+});
 registerExpositionRoutes(router, createTrainingExpositionService());
 const service = createService({
   name: 'kshvi',

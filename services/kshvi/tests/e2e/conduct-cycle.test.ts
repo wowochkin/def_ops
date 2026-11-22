@@ -332,9 +332,9 @@ async function runOfficialG2(store: KshviEventStore) {
       const payload = event.payload;
       return payload !== null && typeof payload === 'object' && !Array.isArray(payload) && payload.commandId === 'order-blue-deliver';
     })).toHaveLength(1);
-    expect(await store.eventCount(firstSession.id)).toBe(firstHistory.length);
-    expect(await store.outboxCount(firstSession.id)).toBe(firstHistory.length);
-    expect(await store.eventCount(secondSession.id)).toBe(secondHistory.length);
+    expect(await store.eventCount(ORG, firstSession.id)).toBe(firstHistory.length);
+    expect(await store.outboxCount(ORG, firstSession.id)).toBe(firstHistory.length);
+    expect(await store.eventCount(ORG, secondSession.id)).toBe(secondHistory.length);
 
     const events = [
       ...firstHistory.map(event => ({ ...event, sessionId: firstSession.id })),

@@ -64,7 +64,7 @@ async function start(source: 'ARCHIVE' | 'AUTONOMOUS', suffix: string): Promise<
   const response = await request<ExpositionSession>('POST', '/kshvi/expositions', {
     source, seed: 42, sessionId: `route-${suffix}`, branchId: `route-${suffix}-branch`,
   });
-  expect(response.status).toBe(200);
+  expect(response.status, JSON.stringify(response.data)).toBe(200);
   return response.data;
 }
 

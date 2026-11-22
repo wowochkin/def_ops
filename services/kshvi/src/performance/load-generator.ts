@@ -148,14 +148,17 @@ async function startNetworkStand(store: KshviEventStore, plan: FixturePlan) {
 
   const runHeavy = async (kind: HeavyJobKind, response: ServerResponse) => {
     const id = `heavy-${heavySequence += 1}`;
+    let started = false;
     try {
-      const initial = budget.submit({ id, kind, cpuUnits: 2, memoryMb: 128 });
+      const initial = budget.submit({ id, kind, cpuUnits: 2, memoryMb: 128, operation: { kind: 'CPU_WORK', iterations: 1000 } });
       if (initial.status === 'RUNNING') {
+        started = true;
         runningHeavy += 1;
         maxRunningHeavy = Math.max(maxRunningHeavy, runningHeavy);
       }
       while (budget.status(id) === 'QUEUED') await delay(2);
-      if (initial.status === 'QUEUED') {
+      if (initial.status === 'QUEUED' && !started) {
+        started = true;
         runningHeavy += 1;
         maxRunningHeavy = Math.max(maxRunningHeavy, runningHeavy);
       }
@@ -164,12 +167,13 @@ async function startNetworkStand(store: KshviEventStore, plan: FixturePlan) {
          where organization_id = $1 order by instance_id, sequence limit 500`,
         [plan.organizationId],
       );
+      await budget.wait(id);
       const result = await runWorker(kind, rows.rows);
-      runningHeavy -= 1;
-      budget.complete(id);
       sendJson(response, 200, { id, status: 'succeeded', result });
     } catch (error) {
       sendJson(response, 500, { id, status: 'failed', error: error instanceof Error ? error.message : String(error) });
+    } finally {
+      if (started) runningHeavy -= 1;
     }
   };
 

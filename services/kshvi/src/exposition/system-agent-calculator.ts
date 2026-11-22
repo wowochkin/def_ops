@@ -10,6 +10,7 @@ import type {
   ExpositionAgentDecision,
 } from '../../../../packages/kshvi/src/exposition/exposition-session';
 import { calculatePreparedScenario } from '../../../../packages/kshvi/src/exposition/exposition-session';
+import { cloneWorld } from '../../../../packages/kshvi/src/model/world';
 
 export interface AsyncAutonomousCalculator {
   calculate(input: AutonomousCalculationInput): Promise<AutonomousCalculationResult>;
@@ -46,7 +47,7 @@ export class SystemAgentExpositionCalculator implements AsyncAutonomousCalculato
 
   async calculate(input: AutonomousCalculationInput): Promise<AutonomousCalculationResult> {
     const startCursor = input.fromCheckpoint?.scenarioCursor ?? input.fromCheckpoint?.journalCursor ?? 0;
-    const world = input.fromCheckpoint?.world ?? input.scenario.initialWorld;
+    const world = cloneWorld(input.fromCheckpoint?.world ?? input.scenario.initialWorld);
     const fuel = world.resources.fuel;
     const supplyFraction = fuel && fuel.onHand + fuel.consumed > 0
       ? Math.max(0, Math.min(1, fuel.onHand / (fuel.onHand + fuel.consumed)))

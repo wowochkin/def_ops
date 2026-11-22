@@ -3,65 +3,425 @@
   "$id": "https://def-ops.local/schemas/kshvi/model.schema.json",
   "title": "Канонические сущности КШВИ",
   "definitions": {
+    "UUID": { "type": "string", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$" },
+    "Sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "ISODateTime": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?Z$" },
+    "JsonValue": {
+      "anyOf": [
+        { "type": "null" }, { "type": "boolean" }, { "type": "number" }, { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/definitions/JsonValue" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/definitions/JsonValue" } }
+      ]
+    },
     "VersionRef": {
-      "type": "object",
-      "required": ["id", "revision", "sha256"],
-      "additionalProperties": false,
+      "type": "object", "required": ["id", "revision", "sha256"], "additionalProperties": false,
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "revision": { "type": "integer", "minimum": 1 },
-        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        "sha256": { "$ref": "#/definitions/Sha256" }
+      }
+    },
+    "SourceRef": {
+      "type": "object", "required": ["sourceId", "revision", "sha256"], "additionalProperties": false,
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/definitions/Sha256" },
+        "note": { "type": "string" }
       }
     },
     "Quantity": {
-      "type": "object",
-      "required": ["value", "unit", "status"],
-      "additionalProperties": false,
+      "type": "object", "required": ["value", "unit", "status"], "additionalProperties": false,
       "properties": {
         "value": { "type": ["number", "null"] },
         "unit": { "type": "string", "minLength": 1 },
         "status": { "enum": ["KNOWN", "UNKNOWN"] }
       },
       "allOf": [
-        { "if": { "properties": { "status": { "const": "UNKNOWN" } } }, "then": { "properties": { "value": { "type": "null" } } } }
+        {
+          "if": { "properties": { "status": { "const": "KNOWN" } }, "required": ["status"] },
+          "then": { "properties": { "value": { "type": "number" } } },
+          "else": { "properties": { "value": { "type": "null" }, "status": { "const": "UNKNOWN" } } }
+        }
       ]
     },
-    "Exercise": { "type": "object", "required": ["id", "purpose", "scale", "method", "ownerId"] },
-    "ScenarioVersion": { "type": "object", "required": ["id", "exerciseId", "revision", "sha256"] },
-    "EnvironmentSnapshot": { "type": "object", "required": ["id", "region", "weather", "contentHashes", "sha256"] },
-    "Instance": { "type": "object", "required": ["id", "scenarioVersion", "kind", "state", "branchId"] },
-    "InitialSituationMap": { "type": "object", "required": ["id", "initialAt", "environment", "truthLayers", "sha256"] },
-    "TerrainState": { "type": "object", "required": ["id", "version", "effectiveAt", "passability", "capacity"] },
-    "CommandNode": { "type": "object", "required": ["id", "sideId", "decisionSource"] },
-    "Force": { "type": "object", "required": ["id", "sideId", "ownerNodeId", "position"] },
-    "ModernKnowledgeImport": { "type": "object", "required": ["id", "sourceRecord", "unknownFields", "reviewStatus"] },
-    "EquipmentHolding": { "type": "object", "required": ["id", "forceId", "characteristics", "authorized", "actual"] },
-    "MoralePsychState": { "type": "object", "required": ["id", "forceId", "components", "scale", "measuredAt"] },
-    "ReadinessState": { "type": "object", "required": ["id", "subjectId", "initialLevel", "requiredLevel", "readiness"] },
-    "FormationPlan": { "type": "object", "required": ["id", "orderDocumentId", "echelons", "routes", "executionState"] },
-    "ResourceLedgerEntry": { "type": "object", "required": ["id", "resourceId", "ownerId", "quantity", "causeIds", "idempotencyKey"] },
-    "SupplyNode": { "type": "object", "required": ["id", "stocks", "capacity", "state", "visibility"] },
-    "SupplyMovement": { "type": "object", "required": ["id", "requestId", "route", "remainingInTransit"] },
-    "EventTemplate": { "type": "object", "required": ["id", "category", "educationalQuestion", "source", "effects", "version"] },
-    "EventCandidateTrace": { "type": "object", "required": ["id", "interval", "category", "candidates", "randomKey", "createdEventIds"] },
-    "AutonomyProfile": { "type": "object", "required": ["id", "intensities", "limits", "seed", "version"] },
-    "ElectronicIntermediaryAssignment": { "type": "object", "required": ["id", "systemIdentity", "nodeIds", "mode", "projection", "authorities"] },
-    "AgentDecisionTrace": { "type": "object", "required": ["id", "inputProjection", "inputHash", "options", "commands", "explanation"] },
-    "Document": { "type": "object", "required": ["id", "type", "content", "revision", "supersedes", "sha256"] },
-    "Input": { "type": "object", "required": ["id", "kind", "sourceRole", "addresseeIds", "state"] },
-    "Channel": { "type": "object", "required": ["id", "nodeIds", "capacity", "delay", "activePeriod"] },
-    "Message": { "type": "object", "required": ["id", "content", "senderRole", "addresseeIds", "domainKey"] },
-    "Decision": { "type": "object", "required": ["id", "nodeId", "basis", "options", "objectives", "executionState"] },
-    "Calculation": { "type": "object", "required": ["id", "mode", "inputHash", "model", "result", "state"] },
-    "DomainEvent": { "type": "object", "required": ["eventId", "instanceId", "branchId", "sequence", "type", "schemaVersion", "payload", "hash"] },
-    "Snapshot": { "type": "object", "required": ["id", "branchId", "sequence", "stateHash", "environment", "state"] },
-    "Assessment": { "type": "object", "required": ["id", "criterion", "subjectId", "factEventIds", "manualGrade", "author"] },
-    "ResearchRecord": { "type": "object", "required": ["id", "question", "hypothesis", "method", "limitations", "conclusion"] },
-    "ExpositionProgram": { "type": "object", "required": ["id", "source", "chapters", "audience", "demonstrationBranchId"] },
-    "SymbolSet": { "type": "object", "required": ["id", "version", "sourceDocuments", "fileHashes", "methodologicalApproval"] },
-    "SymbolDefinition": { "type": "object", "required": ["id", "code", "russianName", "vectorGeometry", "source", "status", "version"] },
-    "Participant": { "type": "object", "required": ["id", "accountId", "organizationId", "state"] },
-    "RoleAssignment": { "type": "object", "required": ["id", "participantId", "nodeId", "role", "activePeriod", "authorities"] },
-    "ApprovalRequest": { "type": "object", "required": ["id", "kind", "diff", "consequences", "decision", "rationale"] }
+    "OperationalTime": {
+      "type": "object", "required": ["normalizedAt", "originalAt", "zone", "offset"], "additionalProperties": false,
+      "properties": {
+        "normalizedAt": { "$ref": "#/definitions/ISODateTime" },
+        "originalAt": { "type": "string", "pattern": "(?:Z|[+-]\\d{2}:\\d{2})$" },
+        "zone": { "type": "string", "minLength": 1 },
+        "offset": { "type": "string", "pattern": "^[+-]\\d{2}:\\d{2}$" }
+      }
+    },
+    "TimeRange": {
+      "type": "object", "required": ["from", "to"], "additionalProperties": false,
+      "properties": {
+        "from": { "$ref": "#/definitions/OperationalTime" },
+        "to": { "$ref": "#/definitions/OperationalTime" }
+      }
+    },
+    "ActorRef": {
+      "type": "object", "required": ["id", "kind"], "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["HUMAN", "SYSTEM"] },
+        "assignmentId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Visibility": {
+      "type": "object", "required": ["sideIds", "nodeIds", "roles"], "additionalProperties": false,
+      "properties": {
+        "sideIds": { "type": "array", "items": { "$ref": "#/definitions/UUID" }, "uniqueItems": true },
+        "nodeIds": { "type": "array", "items": { "$ref": "#/definitions/UUID" }, "uniqueItems": true },
+        "roles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "VersionList": { "type": "array", "items": { "$ref": "#/definitions/VersionRef" } },
+    "SourceList": { "type": "array", "items": { "$ref": "#/definitions/SourceRef" } },
+    "UuidList": { "type": "array", "items": { "$ref": "#/definitions/UUID" } },
+    "JsonList": { "type": "array", "items": { "$ref": "#/definitions/JsonValue" } },
+    "StringList": { "type": "array", "items": { "type": "string" } },
+    "QuantityList": { "type": "array", "items": { "$ref": "#/definitions/Quantity" } },
+    "NullableVersionRef": { "anyOf": [{ "$ref": "#/definitions/VersionRef" }, { "type": "null" }] },
+    "NullableUuid": { "anyOf": [{ "$ref": "#/definitions/UUID" }, { "type": "null" }] },
+    "Exercise": {
+      "type": "object", "required": ["id", "purpose", "scale", "method", "ownerId"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" },
+        "purpose": { "enum": ["planned", "special", "inspection", "research", "exposition", "custom"] },
+        "scale": { "enum": ["tactical", "operational", "strategic", "custom"] },
+        "method": { "const": "full-simulation" },
+        "ownerId": { "$ref": "#/definitions/UUID" }
+      }
+    },
+    "ScenarioVersion": {
+      "type": "object", "required": ["id", "exerciseId", "revision", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "exerciseId": { "$ref": "#/definitions/UUID" },
+        "revision": { "type": "integer", "minimum": 1 }, "sha256": { "$ref": "#/definitions/Sha256" }
+      }
+    },
+    "EnvironmentSnapshot": {
+      "type": "object", "required": ["id", "region", "weather", "contentHashes", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "region": { "$ref": "#/definitions/JsonValue" },
+        "weather": { "$ref": "#/definitions/VersionRef" },
+        "contentHashes": { "type": "object", "additionalProperties": { "$ref": "#/definitions/Sha256" } },
+        "sha256": { "$ref": "#/definitions/Sha256" }
+      }
+    },
+    "Instance": {
+      "type": "object", "required": ["id", "scenarioVersion", "kind", "state", "branchId"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "scenarioVersion": { "$ref": "#/definitions/VersionRef" },
+        "kind": { "enum": ["CONDUCT", "EXPOSITION"] },
+        "state": { "enum": ["ACTIVE", "PAUSED", "COMPLETED", "ABORTED", "ARCHIVED"] },
+        "branchId": { "$ref": "#/definitions/UUID" }
+      }
+    },
+    "InitialSituationMap": {
+      "type": "object", "required": ["id", "initialAt", "environment", "truthLayers", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "initialAt": { "$ref": "#/definitions/OperationalTime" },
+        "environment": { "$ref": "#/definitions/VersionRef" }, "truthLayers": { "$ref": "#/definitions/JsonList" },
+        "sha256": { "$ref": "#/definitions/Sha256" }
+      }
+    },
+    "TerrainState": {
+      "type": "object", "required": ["id", "version", "effectiveAt", "passability", "capacity"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "version": { "$ref": "#/definitions/VersionRef" },
+        "effectiveAt": { "$ref": "#/definitions/OperationalTime" },
+        "passability": { "$ref": "#/definitions/JsonValue" }, "capacity": { "$ref": "#/definitions/JsonValue" }
+      }
+    },
+    "CommandNode": {
+      "type": "object", "required": ["id", "sideId", "decisionSource"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "sideId": { "$ref": "#/definitions/UUID" },
+        "decisionSource": { "enum": ["HUMAN", "SCRIPT", "PLAYBOOK", "AGENT", "HYBRID"] }
+      }
+    },
+    "Force": {
+      "type": "object", "required": ["id", "sideId", "ownerNodeId", "position"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "sideId": { "$ref": "#/definitions/UUID" },
+        "ownerNodeId": { "$ref": "#/definitions/UUID" },
+        "position": {
+          "type": "object", "required": ["status"], "additionalProperties": false,
+          "properties": {
+            "status": { "enum": ["KNOWN", "UNKNOWN"] },
+            "value": { "$ref": "#/definitions/JsonValue" }, "reason": { "type": "string" }
+          }
+        }
+      }
+    },
+    "ModernKnowledgeImport": {
+      "type": "object", "required": ["id", "sourceRecord", "unknownFields", "reviewStatus"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "sourceRecord": { "$ref": "#/definitions/VersionRef" },
+        "unknownFields": { "$ref": "#/definitions/StringList" },
+        "reviewStatus": { "enum": ["IMPORTED", "REVIEWED", "APPROVED", "REJECTED"] }
+      }
+    },
+    "EquipmentHolding": {
+      "type": "object", "required": ["id", "forceId", "characteristics", "authorized", "actual"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "forceId": { "$ref": "#/definitions/UUID" },
+        "characteristics": { "$ref": "#/definitions/VersionRef" },
+        "authorized": { "$ref": "#/definitions/Quantity" }, "actual": { "$ref": "#/definitions/Quantity" }
+      }
+    },
+    "MoralePsychState": {
+      "type": "object", "required": ["id", "forceId", "components", "scale", "measuredAt"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "forceId": { "$ref": "#/definitions/UUID" },
+        "components": { "type": "object", "additionalProperties": { "$ref": "#/definitions/Quantity" } },
+        "scale": { "$ref": "#/definitions/VersionRef" }, "measuredAt": { "$ref": "#/definitions/OperationalTime" }
+      }
+    },
+    "ReadinessState": {
+      "type": "object", "required": ["id", "subjectId", "initialLevel", "requiredLevel", "readiness"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "subjectId": { "$ref": "#/definitions/UUID" },
+        "initialLevel": { "type": "string", "minLength": 1 }, "requiredLevel": { "type": "string", "minLength": 1 },
+        "readiness": { "type": "string", "minLength": 1 }
+      }
+    },
+    "FormationPlan": {
+      "type": "object", "required": ["id", "orderDocumentId", "echelons", "routes", "executionState"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "orderDocumentId": { "$ref": "#/definitions/UUID" },
+        "echelons": { "$ref": "#/definitions/JsonList" }, "routes": { "$ref": "#/definitions/JsonList" },
+        "executionState": { "type": "string", "minLength": 1 }
+      }
+    },
+    "ResourceLedgerEntry": {
+      "type": "object", "required": ["id", "resourceId", "ownerId", "quantity", "causeIds", "idempotencyKey"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "resourceId": { "$ref": "#/definitions/UUID" },
+        "ownerId": { "$ref": "#/definitions/UUID" }, "quantity": { "$ref": "#/definitions/Quantity" },
+        "causeIds": { "$ref": "#/definitions/UuidList" }, "idempotencyKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "SupplyNode": {
+      "type": "object", "required": ["id", "stocks", "capacity", "state", "visibility"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" },
+        "stocks": { "type": "array", "items": { "$ref": "#/definitions/ResourceLedgerEntry" } },
+        "capacity": { "$ref": "#/definitions/Quantity" }, "state": { "type": "string", "minLength": 1 },
+        "visibility": { "$ref": "#/definitions/Visibility" }
+      }
+    },
+    "SupplyMovement": {
+      "type": "object", "required": ["id", "requestId", "route", "remainingInTransit"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "requestId": { "$ref": "#/definitions/UUID" },
+        "route": { "$ref": "#/definitions/JsonValue" }, "remainingInTransit": { "$ref": "#/definitions/QuantityList" }
+      }
+    },
+    "EventTemplate": {
+      "type": "object", "required": ["id", "category", "educationalQuestion", "source", "effects", "version"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "category": { "type": "string", "minLength": 1 },
+        "educationalQuestion": { "type": "string", "minLength": 1 }, "source": { "$ref": "#/definitions/SourceRef" },
+        "effects": { "$ref": "#/definitions/JsonList" }, "version": { "$ref": "#/definitions/VersionRef" }
+      }
+    },
+    "EventCandidateTrace": {
+      "type": "object", "required": ["id", "interval", "category", "candidates", "randomKey", "createdEventIds"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "interval": { "$ref": "#/definitions/TimeRange" },
+        "category": { "type": "string", "minLength": 1 }, "candidates": { "$ref": "#/definitions/JsonList" },
+        "randomKey": { "$ref": "#/definitions/JsonValue" }, "createdEventIds": { "$ref": "#/definitions/UuidList" }
+      }
+    },
+    "AutonomyProfile": {
+      "type": "object", "required": ["id", "intensities", "limits", "seed", "version"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "intensities": { "$ref": "#/definitions/JsonList" },
+        "limits": { "$ref": "#/definitions/JsonValue" }, "seed": { "type": "string", "minLength": 1 },
+        "version": { "$ref": "#/definitions/VersionRef" }
+      }
+    },
+    "ElectronicIntermediaryAssignment": {
+      "type": "object", "required": ["id", "systemIdentity", "nodeIds", "mode", "projection", "authorities"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "systemIdentity": { "$ref": "#/definitions/ActorRef" },
+        "nodeIds": { "$ref": "#/definitions/UuidList" }, "mode": { "enum": ["ADVISORY", "DELEGATED", "AUTONOMOUS"] },
+        "projection": { "$ref": "#/definitions/VersionRef" }, "authorities": { "$ref": "#/definitions/StringList" }
+      }
+    },
+    "AgentDecisionTrace": {
+      "type": "object", "required": ["id", "inputProjection", "inputHash", "options", "commands", "explanation"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "inputProjection": { "$ref": "#/definitions/JsonValue" },
+        "inputHash": { "$ref": "#/definitions/Sha256" }, "options": { "$ref": "#/definitions/JsonList" },
+        "commands": { "$ref": "#/definitions/JsonList" }, "explanation": { "type": "string" }
+      }
+    },
+    "Document": {
+      "type": "object", "required": ["id", "type", "content", "revision", "supersedes", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "type": { "type": "string", "minLength": 1 },
+        "content": { "$ref": "#/definitions/JsonValue" }, "revision": { "type": "integer", "minimum": 1 },
+        "supersedes": { "$ref": "#/definitions/NullableVersionRef" }, "sha256": { "$ref": "#/definitions/Sha256" }
+      }
+    },
+    "Input": {
+      "type": "object", "required": ["id", "kind", "sourceRole", "addresseeIds", "state"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "kind": { "enum": ["PLANNED", "REACTIVE", "ADAPTIVE", "PROBABILISTIC"] },
+        "sourceRole": { "type": "string", "minLength": 1 }, "addresseeIds": { "$ref": "#/definitions/UuidList" },
+        "state": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Channel": {
+      "type": "object", "required": ["id", "nodeIds", "capacity", "delay", "activePeriod"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "nodeIds": { "$ref": "#/definitions/UuidList" },
+        "capacity": { "$ref": "#/definitions/Quantity" }, "delay": { "$ref": "#/definitions/Quantity" },
+        "activePeriod": { "$ref": "#/definitions/TimeRange" }
+      }
+    },
+    "Message": {
+      "type": "object", "required": ["id", "content", "senderRole", "addresseeIds", "domainKey"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "content": { "$ref": "#/definitions/JsonValue" },
+        "senderRole": { "type": "string", "minLength": 1 }, "addresseeIds": { "$ref": "#/definitions/UuidList" },
+        "domainKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Decision": {
+      "type": "object", "required": ["id", "nodeId", "basis", "options", "objectives", "executionState"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "nodeId": { "$ref": "#/definitions/UUID" },
+        "basis": { "type": "string", "minLength": 1 }, "options": { "$ref": "#/definitions/JsonList" },
+        "objectives": { "$ref": "#/definitions/JsonList" }, "executionState": { "type": "string", "minLength": 1 }
+      }
+    },
+    "Calculation": {
+      "type": "object", "required": ["id", "mode", "inputHash", "model", "result", "state"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "mode": { "enum": ["MANUAL", "DETERMINISTIC", "STOCHASTIC", "HYBRID"] },
+        "inputHash": { "$ref": "#/definitions/Sha256" }, "model": { "$ref": "#/definitions/VersionRef" },
+        "result": {
+          "type": "object", "required": ["status"], "additionalProperties": false,
+          "properties": {
+            "status": { "enum": ["KNOWN", "UNKNOWN"] },
+            "value": { "$ref": "#/definitions/JsonValue" }, "reason": { "type": "string" }
+          }
+        },
+        "state": { "type": "string", "minLength": 1 }
+      }
+    },
+    "DomainEvent": {
+      "type": "object",
+      "required": ["eventId", "organizationId", "instanceId", "branchId", "sequence", "type", "schemaVersion", "wallClockAt", "operationalAt", "actor", "causeIds", "versions", "reducerVersion", "payload", "prevHash", "hash", "hashVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "eventId": { "$ref": "#/definitions/UUID" },
+        "organizationId": { "type": "string", "minLength": 1 },
+        "instanceId": { "type": "string", "minLength": 1 },
+        "branchId": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "type": { "type": "string", "pattern": "\\.v[1-9][0-9]*$" },
+        "schemaVersion": { "type": "integer", "minimum": 1 },
+        "wallClockAt": { "$ref": "#/definitions/ISODateTime" },
+        "operationalAt": { "$ref": "#/definitions/OperationalTime" },
+        "actor": { "$ref": "#/definitions/ActorRef" },
+        "causeIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "versions": { "type": "object", "additionalProperties": { "$ref": "#/definitions/VersionRef" } },
+        "reducerVersion": { "type": "integer", "minimum": 1 },
+        "payload": { "$ref": "#/definitions/JsonValue" },
+        "prevHash": { "anyOf": [{ "$ref": "#/definitions/Sha256" }, { "type": "null" }] },
+        "hash": { "$ref": "#/definitions/Sha256" },
+        "hashVersion": { "type": "integer", "enum": [1, 2] }
+      }
+    },
+    "Snapshot": {
+      "type": "object", "required": ["id", "branchId", "sequence", "stateHash", "versions", "environment", "state"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "branchId": { "$ref": "#/definitions/UUID" },
+        "sequence": { "type": "integer", "minimum": 0 }, "stateHash": { "$ref": "#/definitions/Sha256" },
+        "versions": { "$ref": "#/definitions/VersionList" }, "environment": { "$ref": "#/definitions/VersionRef" },
+        "state": { "$ref": "#/definitions/JsonValue" }
+      }
+    },
+    "Assessment": {
+      "type": "object", "required": ["id", "criterion", "subjectId", "factEventIds", "manualGrade", "author"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "criterion": { "$ref": "#/definitions/VersionRef" },
+        "subjectId": { "$ref": "#/definitions/UUID" }, "factEventIds": { "$ref": "#/definitions/UuidList" },
+        "manualGrade": {
+          "type": "object", "required": ["status"], "additionalProperties": false,
+          "properties": {
+            "status": { "enum": ["KNOWN", "UNKNOWN"] },
+            "value": { "$ref": "#/definitions/JsonValue" }, "reason": { "type": "string" }
+          }
+        },
+        "author": { "$ref": "#/definitions/ActorRef" }
+      }
+    },
+    "ResearchRecord": {
+      "type": "object", "required": ["id", "question", "hypothesis", "method", "limitations", "conclusion"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "question": { "type": "string", "minLength": 1 },
+        "hypothesis": { "type": "string", "minLength": 1 }, "method": { "type": "string", "minLength": 1 },
+        "limitations": { "$ref": "#/definitions/StringList" }, "conclusion": { "type": "string" }
+      }
+    },
+    "ExpositionProgram": {
+      "type": "object", "required": ["id", "source", "chapters", "audience", "demonstrationBranchId"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "source": { "$ref": "#/definitions/VersionRef" },
+        "chapters": { "$ref": "#/definitions/JsonList" }, "audience": { "$ref": "#/definitions/Visibility" },
+        "demonstrationBranchId": { "$ref": "#/definitions/UUID" }
+      }
+    },
+    "SymbolSet": {
+      "type": "object", "required": ["id", "version", "sourceDocuments", "fileHashes", "methodologicalApproval"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "version": { "$ref": "#/definitions/VersionRef" },
+        "sourceDocuments": { "$ref": "#/definitions/SourceList" },
+        "fileHashes": { "type": "object", "additionalProperties": { "$ref": "#/definitions/Sha256" } },
+        "methodologicalApproval": { "$ref": "#/definitions/JsonValue" }
+      }
+    },
+    "SymbolDefinition": {
+      "type": "object", "required": ["id", "code", "russianName", "vectorGeometry", "source", "status", "version"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "code": { "type": "string", "minLength": 1 },
+        "russianName": { "type": "string", "minLength": 1 }, "vectorGeometry": { "$ref": "#/definitions/JsonValue" },
+        "source": { "$ref": "#/definitions/SourceRef" },
+        "status": { "enum": ["IMPORTED", "MAPPED", "VERIFIED", "APPROVED", "DEPRECATED"] },
+        "version": { "$ref": "#/definitions/VersionRef" }
+      }
+    },
+    "Participant": {
+      "type": "object", "required": ["id", "accountId", "organizationId", "state"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "accountId": { "$ref": "#/definitions/UUID" },
+        "organizationId": { "$ref": "#/definitions/UUID" },
+        "state": { "enum": ["ACTIVE", "BLOCKED", "ARCHIVED"] }
+      }
+    },
+    "RoleAssignment": {
+      "type": "object", "required": ["id", "participantId", "nodeId", "role", "activePeriod", "authorities"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "participantId": { "$ref": "#/definitions/UUID" },
+        "nodeId": { "$ref": "#/definitions/UUID" }, "role": { "type": "string", "minLength": 1 },
+        "activePeriod": { "$ref": "#/definitions/TimeRange" }, "authorities": { "$ref": "#/definitions/StringList" }
+      }
+    },
+    "ApprovalRequest": {
+      "type": "object", "required": ["id", "kind", "diff", "consequences", "decision", "rationale"],
+      "properties": {
+        "id": { "$ref": "#/definitions/UUID" }, "kind": { "enum": ["INPUT", "TIME_JUMP", "CALCULATION", "CHANGE"] },
+        "diff": { "$ref": "#/definitions/JsonValue" }, "consequences": { "$ref": "#/definitions/JsonList" },
+        "decision": { "$ref": "#/definitions/JsonValue" }, "rationale": { "type": "string", "minLength": 1 }
+      }
+    }
   }
 }

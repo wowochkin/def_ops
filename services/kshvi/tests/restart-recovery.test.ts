@@ -13,16 +13,16 @@ integration('сохраняет подтверждённую команду пр
     await expect(appendCommittedCommand(store, input, { afterCommit: () => { throw new Error('Ответ потерян'); } })).rejects.toThrow('Ответ потерян');
     const repeated = await appendCommittedCommand(store, input);
     expect(repeated.idempotent).toBe(true);
-    expect(await store.eventCount('i1')).toBe(1);
+    expect(await store.eventCount('org1', 'i1')).toBe(1);
     const world = reduceWorld(emptyWorld('scenario-1'), { eventId: repeated.eventId, type: input.type, payload: input.payload, causeIds: [] }, { reducerVersion: 1 });
     await store.saveSnapshot({ organizationId: 'org1', instanceId: 'i1', branchId: 'b1', sequence: 1, state: world, environment: { id: 'env-1', revision: 1, sha256: 'a'.repeat(64) }, reducerVersion: 1 });
 
     const startedAt = performance.now();
     const restarted = new KshviEventStore({ pool: store.pool, schema: store.schema });
-    const restored = await restarted.restoreWorld('i1', 'b1');
+    const restored = await restarted.restoreWorld('org1', 'i1', 'b1');
     const restartMs = performance.now() - startedAt;
     expect(restored.sequence).toBe(1);
-    expect(await restarted.eventCount('i1')).toBe(1);
+    expect(await restarted.eventCount('org1', 'i1')).toBe(1);
     expect(assertRecoveryObjectives({ confirmedEventsLost: 0, restartMs, nodeRestoreMs: restartMs }).passed).toBe(true);
   });
 });

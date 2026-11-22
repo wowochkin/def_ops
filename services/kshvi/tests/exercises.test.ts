@@ -136,7 +136,8 @@ describe('библиотека учений', () => {
       confirmedRevision: 0,
       state: 'ACTIVE',
     });
-    expect(JSON.stringify(session)).not.toContain('999');
+    expect(session).not.toHaveProperty('optimisticWorld');
+    expect(JSON.stringify(session)).not.toContain('"fuel":999');
     expect((await store.get(actor.organizationId, exercise.id))?.lastSessionId).toBe(session.id);
     await expect(store.getSession(actor.organizationId, exercise.id, session.id)).resolves.toMatchObject({ id: session.id });
     await expect(store.getSession('org2', exercise.id, session.id)).resolves.toBeNull();

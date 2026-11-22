@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { canonicalJson } from '../events/canonical';
 import type { ChainEventInput } from '../events/envelope';
 import type { JsonValue } from '../model/types';
-import { emptyWorld, type WorldState } from '../model/world';
+import { emptyWorld, withResourceAlias, type WorldState } from '../model/world';
 import { newUUID } from '../model/uuid';
 import { reduceWorld } from '../events/reducer';
 import { createDecision, reviseDecision, transitionDecision, type Decision, type DecisionInput } from '../decisions/decision';
@@ -28,7 +28,8 @@ export type ConductState = {
   completion: unknown | null;
   stage: { stageId: string; calculationProfileId: string; state: unknown } | null;
 };
-export type OfficialEventDraft = ChainEventInput;
+type EventScope = 'organizationId' | 'instanceId' | 'branchId' | 'schemaVersion' | 'wallClockAt' | 'operationalAt' | 'actor' | 'causeIds' | 'versions' | 'reducerVersion';
+export type OfficialEventDraft = Omit<ChainEventInput, EventScope> & Partial<Pick<ChainEventInput, EventScope>>;
 type CommandBase = Readonly<{ commandId: string; at: string }>;
 export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'decision.create'; decision: DecisionInput }>)
@@ -139,12 +140,15 @@ export async function executeConductCommand(state: ConductState, command: Conduc
       const event = eventFor(state, command, 'resource.consumed.v1', approved.id, { calculationId: approved.id, resourceId, amount: resource.consumed + resource.deficit, supplied: resource.supplied });
       const calculation = applyCalculation(approved, { authorized: actor.role === 'LEADER' || actor.role === 'MODEL_RULE', appliedEventIds: [event.eventId] });
       const inputResource = (approved.inputs.episode as { resource?: { onHand: number } } | undefined)?.resource;
-      const initialWorld = state.world.resources[resourceId] || !inputResource ? state.world : {
+      const initialWorld = state.world.resources[resourceId] || !inputResource ? state.world : withResourceAlias({
         ...state.world,
-        resources: { ...state.world.resources, [resourceId]: { onHand: inputResource.onHand, consumed: 0, supplied: 0, deficit: 0 } },
-      };
+        state: {
+          ...state.world.state,
+          Resources: { ...state.world.state.Resources, [resourceId]: { onHand: inputResource.onHand, consumed: 0, supplied: 0, deficit: 0 } },
+        },
+      });
       const world = reduceWorld(initialWorld, { eventId: event.eventId, type: event.type, payload: event.payload, causeIds: [command.commandId] }, { reducerVersion: 1 });
-      const nextWorld = { ...world, state: { ...world.state, ScenarioState: { ...(world.state.ScenarioState as Record<string, unknown>), episode: calculation.result } } };
+      const nextWorld = withResourceAlias({ ...world, state: { ...world.state, ScenarioState: { ...(world.state.ScenarioState as Record<string, unknown>), episode: calculation.result } } });
       return { state: next(state, { world: nextWorld, calculations: { ...state.calculations, [calculation.id]: calculation } }), event, revision: state.revision + 1, calculation };
     }
     case 'calculation.override': {

@@ -27,5 +27,5 @@ const categories = [
 
 export const DEFAULT_ACTION_TAXONOMY: ActionTaxonomy = Object.freeze({
   version: 1,
-  categories: categories.map(([id, title]) => Object.freeze({ id, title, allowedStageTransitions: Object.freeze([]) })),
+  categories: Object.freeze(categories.map(([id, title]) => Object.freeze({ id, title, allowedStageTransitions: Object.freeze([]) }))),
 });

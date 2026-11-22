@@ -19,7 +19,7 @@ import type {
 
 export type EntityRef = Readonly<{ id: UUID }>;
 export type ActorRef = Readonly<{ id: UUID; kind: 'HUMAN' | 'SYSTEM'; assignmentId?: UUID }>;
-export type SourceRef = Readonly<{ sourceId: string; revision?: number; sha256?: string; note?: string }>;
+export type SourceRef = Readonly<{ sourceId: string; revision: number; sha256: string; note?: string }>;
 export type Visibility = Readonly<{ sideIds: readonly UUID[]; nodeIds: readonly UUID[]; roles: readonly string[] }>;
 export type Uncertainty = Readonly<{ status: 'UNKNOWN' | 'PARTIAL' | 'ESTIMATED'; reason: string; observedAt?: OperationalTime }>;
 
@@ -381,10 +381,11 @@ export interface Calculation extends EntityRef {
   appliedEventIds: readonly UUID[];
 }
 
-export interface DomainEvent<T = JsonValue> extends EntityRef {
+export interface DomainEvent<T = JsonValue> {
   eventId: UUID;
-  instanceId: UUID;
-  branchId: UUID;
+  organizationId: string;
+  instanceId: string;
+  branchId: string;
   sequence: number;
   type: string;
   schemaVersion: number;
@@ -392,9 +393,12 @@ export interface DomainEvent<T = JsonValue> extends EntityRef {
   operationalAt: OperationalTime;
   actor: ActorRef;
   causeIds: readonly UUID[];
+  versions: Readonly<Record<string, VersionRef>>;
+  reducerVersion: number;
   payload: T;
   prevHash: string | null;
   hash: string;
+  hashVersion: 1 | 2;
 }
 
 export interface Snapshot extends EntityRef {

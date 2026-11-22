@@ -56,10 +56,18 @@ export class PgSessionStore implements SessionStore {
     return result.rows[0] ? session(result.rows[0]) : null;
   }
 
-  async updateSession(value: StoredSession): Promise<void> {
+  async selectActiveRole(tokenHash: string, roleId: string): Promise<boolean> {
+    const result = await this.pool.query(
+      `update ${this.schema}.sessions set active_role_id=$2 where token_hash=$1 and revoked_at is null`,
+      [tokenHash, roleId],
+    );
+    return result.rowCount === 1;
+  }
+
+  async revokeSession(tokenHash: string, revokedAt: Date): Promise<void> {
     await this.pool.query(
-      `update ${this.schema}.sessions set active_role_id=$2, revoked_at=$3 where token_hash=$1`,
-      [value.tokenHash, value.activeRoleId, value.revokedAt],
+      `update ${this.schema}.sessions set revoked_at=coalesce(revoked_at,$2) where token_hash=$1`,
+      [tokenHash, revokedAt],
     );
   }
 }

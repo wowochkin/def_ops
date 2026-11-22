@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createAudiencePolicy, type AudiencePolicy } from '../../../../packages/kshvi/src/exposition/audience-policy';
+import { cloneWorld } from '../../../../packages/kshvi/src/model/world';
 import type {
   ExpositionSession,
   OfficialExpositionArchive,
@@ -74,8 +75,8 @@ export function exportExpositionArchive(input: Readonly<{
     seed: session.seed,
     rng: structuredClone(session.rng),
     journal: structuredClone(session.journal),
-    checkpoints: structuredClone(session.checkpoints),
-    world: structuredClone(session.world),
+    checkpoints: session.checkpoints.map(checkpoint => ({ ...structuredClone(checkpoint), world: cloneWorld(checkpoint.world) })),
+    world: cloneWorld(session.world),
     map: structuredClone(session.map),
     officialAssessmentCreated: false as const,
     officialAssessments: [] as never[],
