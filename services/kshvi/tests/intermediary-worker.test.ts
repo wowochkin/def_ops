@@ -284,5 +284,5 @@ it('серверный планировщик продолжает циклы б
 
   expect(countAfterStop).toBeGreaterThanOrEqual(2);
   expect(journal.cycles.size).toBe(countAfterStop);
-  expect(backend.effects.get('issueDocument')).toBe(countAfterStop);
+  expect(backend.effects.get('issueDocument')).toBe(1);
 });

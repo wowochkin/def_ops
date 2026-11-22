@@ -44,7 +44,7 @@ it('цикл противника идемпотентно передаёт то
       async submit(command) { submitted.push(command); return { accepted: true, commandId: 'cmd-1' }; },
     },
     communication: {
-      async deliver(order) { delivered.push(order); return { ...order, status: 'SCHEDULED' }; },
+      async deliver(order) { delivered.push(order); return { ...order, status: 'DELIVERED' }; },
     },
   });
   const first = await process.runOpponentCycle(request);
@@ -68,7 +68,7 @@ it('при недостатке данных не создаёт новых си
       unknown: ['observations.strength'], orders: [], trace: { safe: true },
     }; } },
     official: { async submit(command) { submitted.push(command); return { accepted: true, commandId: 'safe' }; } },
-    communication: { async deliver(order) { return { ...order, status: 'SCHEDULED' }; } },
+    communication: { async deliver(order) { return { ...order, status: 'DELIVERED' }; } },
   });
   const result = await process.runOpponentCycle(request);
   expect(result.status).toBe('SAFE_ORDER');
@@ -85,7 +85,7 @@ it('эскалация идёт серверной командой без пр�
       unknown: ['weather.movementFactor'], orders: [],
     }; } },
     official: { async submit(command) { submitted.push(command); return { accepted: true, commandId: 'escalation-1' }; } },
-    communication: { async deliver(order) { return { ...order, status: 'SCHEDULED' }; } },
+    communication: { async deliver(order) { return { ...order, status: 'DELIVERED' }; } },
   });
   const result = await process.runOpponentCycle(request);
   expect(result.status).toBe('ESCALATED');
@@ -100,12 +100,12 @@ it('пересматривает решение при новой ревизии
   const revisedEvaluation: AgentEvaluation = {
     ...evaluation,
     selected: { id: 'defend', kind: 'DEFEND', label: 'Оборонять', commandType: 'force.defend.v1' },
-    orders: [], trace: { choice: 'defend', inputHash: 'new-report' },
+    orders: evaluation.orders, trace: { choice: 'defend', inputHash: 'new-report' },
   };
   const process = new AgentProcess({
     engine: { async evaluateChoices() { calls += 1; return calls === 1 ? evaluation : revisedEvaluation; } },
     official: { async submit(command) { submitted.push(command); return { accepted: true, commandId: `cmd-${calls}` }; } },
-    communication: { async deliver(order) { return { ...order, status: 'SCHEDULED' }; } },
+    communication: { async deliver(order) { return { ...order, status: 'DELIVERED' }; } },
   });
   await process.runOpponentCycle(request);
   const revised = await process.runOpponentCycle({

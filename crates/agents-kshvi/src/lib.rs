@@ -186,14 +186,14 @@ pub fn evaluate_choices(fixture: &ModernFixture) -> Evaluation {
                 fixture.projection.agent_id, fixture.projection.tick, choice.id
             ),
         );
-        let jitter = fork
+        let simulated_utility = fork
             .evaluate(
                 &choice.id,
                 fixture.profile.search_depth * fixture.profile.horizon_ticks,
                 &mut local_rng,
             )
             .expect("новый форк доступен");
-        utility += jitter;
+        utility += simulated_utility * 0.05;
         fork_hashes.push(fork.hash().expect("форк доступен до уничтожения"));
         fork.destroy();
         destroyed_forks += 1;
@@ -341,17 +341,19 @@ fn safe_choice(fixture: &ModernFixture) -> ModernChoice {
 fn available_choices(fixture: &ModernFixture) -> Vec<ModernChoice> {
     let p = &fixture.projection;
     let profile = &fixture.profile;
-    let observation = &p.observations[0];
-    let force = &p.own_forces[0];
-    let threat = observation.strength.unwrap();
-    let observation_confidence = observation.confidence.unwrap();
-    let mps_confidence = force.mps.confidence.unwrap();
-    let mps_stress = force.mps.stress.unwrap();
+    let threat = p.observations.iter().map(|item| item.strength.unwrap()).sum::<f64>()
+        / p.observations.len() as f64;
+    let observation_confidence = p.observations.iter().map(|item| item.confidence.unwrap()).sum::<f64>()
+        / p.observations.len() as f64;
+    let mps_confidence = p.own_forces.iter().map(|item| item.mps.confidence.unwrap()).sum::<f64>()
+        / p.own_forces.len() as f64;
+    let mps_stress = p.own_forces.iter().map(|item| item.mps.stress.unwrap()).sum::<f64>()
+        / p.own_forces.len() as f64;
     let supply = p.resources.supply_fraction.unwrap();
     let weather = p.weather.movement_factor.unwrap();
     let route_open = p.terrain.route_open.unwrap();
-    let equipment = force.operational_equipment.unwrap();
-    let equipment_total = force.total_equipment.unwrap().max(1);
+    let equipment = p.own_forces.iter().map(|item| item.operational_equipment.unwrap()).sum::<u32>();
+    let equipment_total = p.own_forces.iter().map(|item| item.total_equipment.unwrap()).sum::<u32>().max(1);
     let equipment_fraction = equipment as f64 / equipment_total as f64;
 
     let mut out = Vec::new();

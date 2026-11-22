@@ -1,5 +1,7 @@
 use agents_kshvi::{
-    evaluate_choices, modern_fixture, ModernAgentProfile, ModernStream, SeededModernRng,
+    evaluate_choices, modern_fixture,
+    fork::WorldFork,
+    ModernAgentProfile, ModernStream, SeededModernRng,
 };
 
 fn selected(fixture: &agents_kshvi::ModernFixture) -> String {
@@ -144,4 +146,46 @@ fn hierarchy_delivers_orders_and_reports_through_communication_model() {
         .reports
         .iter()
         .all(|report| report.recipient.starts_with("hq-")));
+}
+
+
+#[test]
+fn i5_all_observations_change_modeled_option_outcomes() {
+    let mut baseline = modern_fixture();
+    baseline.projection.observations.push(baseline.projection.observations[0].clone());
+    let before = evaluate_choices(&baseline);
+    let mut changed = baseline.clone();
+    changed.projection.observations[1].strength = Some(3.0);
+    changed.projection.observations[1].confidence = Some(1.0);
+    let after = evaluate_choices(&changed);
+    assert_ne!(before.options, after.options);
+}
+
+#[test]
+fn i5_all_own_forces_change_modeled_option_outcomes() {
+    let mut baseline = modern_fixture();
+    let second = baseline.projection.own_forces[0].clone();
+    baseline.projection.own_forces.push(second);
+    let before = evaluate_choices(&baseline);
+    let mut changed = baseline.clone();
+    changed.projection.own_forces[1].operational_equipment = Some(0);
+    let after = evaluate_choices(&changed);
+    assert_ne!(before.options, after.options);
+}
+
+#[test]
+fn i5_fork_really_simulates_choice_and_horizon() {
+    let fixture = modern_fixture();
+    let mut advance_fork = WorldFork::create(&fixture.official, "advance-fork".into());
+    let mut defend_fork = WorldFork::create(&fixture.official, "defend-fork".into());
+    let mut short_fork = WorldFork::create(&fixture.official, "short-fork".into());
+    let mut advance_rng = SeededModernRng::new(7, 1, 1, ModernStream::Decision);
+    let mut defend_rng = SeededModernRng::new(7, 1, 1, ModernStream::Decision);
+    let mut short_rng = SeededModernRng::new(7, 1, 1, ModernStream::Decision);
+    let advance = advance_fork.evaluate("advance", 4, &mut advance_rng).unwrap();
+    let defend = defend_fork.evaluate("defend", 4, &mut defend_rng).unwrap();
+    let short = short_fork.evaluate("advance", 1, &mut short_rng).unwrap();
+    assert_ne!(advance, defend);
+    assert_ne!(advance, short);
+    assert_eq!(fixture.official_rng_cursor(), 0);
 }

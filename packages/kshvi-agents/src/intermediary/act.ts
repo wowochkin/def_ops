@@ -29,11 +29,12 @@ export type AgentCommandResponse = Readonly<{
 export function createAgentCommand(
   assignment: ElectronicIntermediaryAssignment,
   projection: ServerIntermediaryProjection,
-  wakeId: string,
+  _wakeId: string,
   issuedAt: string,
   action: AgentRequestedAction,
 ): AgentCommand {
-  const commandId = `${assignment.assignmentId}:${wakeId}:${action.actionId}`;
+  // Новое пробуждение той же проекции не является новым доменным действием.
+  const commandId = `${assignment.assignmentId}:${projection.projectionId}:${projection.revision}:${action.actionId}`;
   return {
     commandId,
     idempotencyKey: `agent:${commandId}`,

@@ -28,7 +28,7 @@ export interface AgentProcessDependencies {
 }
 
 export interface AgentCycleResult {
-  status: 'DECIDED' | 'SAFE_ORDER' | 'ESCALATED' | 'REJECTED';
+  status: 'DECIDED' | 'SAFE_ORDER' | 'ESCALATED' | 'REJECTED' | 'AWAITING_DELIVERY';
   evaluation: AgentEvaluation;
   unknown: readonly string[];
   command?: OfficialAgentCommand;
@@ -64,22 +64,32 @@ export class AgentProcess {
       profileVersion: request.profile.version,
       orderIds: evaluation.orders.map(order => order.id),
     };
+
+    if (selected.kind === 'ESCALATE') {
+      const receipt = await this.dependencies.official.submit(command);
+      const result: AgentCycleResult = receipt.accepted
+        ? { status: 'ESCALATED', evaluation, unknown: evaluation.unknown, command, receipt }
+        : { status: 'REJECTED', evaluation, unknown: evaluation.unknown, command, receipt, error: receipt.error ?? 'Сервер отклонил эскалацию' };
+      this.completed.set(cycleKey, result);
+      return result;
+    }
+
+    const deliveries: DeliveredOrder[] = [];
+    for (const order of evaluation.orders) deliveries.push(await this.dependencies.communication.deliver(order));
+    if (deliveries.length === 0 || deliveries.some(order => order.status !== 'DELIVERED')) {
+      // Не кэшируем ожидание: следующий запуск сможет доотправить приказ с тем же ключом.
+      return { status: 'AWAITING_DELIVERY', evaluation, unknown: evaluation.unknown, command, deliveries };
+    }
+
     const receipt = await this.dependencies.official.submit(command);
     if (!receipt.accepted) {
       const result: AgentCycleResult = {
-        status: 'REJECTED', evaluation, unknown: evaluation.unknown, command, receipt,
+        status: 'REJECTED', evaluation, unknown: evaluation.unknown, command, receipt, deliveries,
         error: receipt.error ?? 'Сервер отклонил команду агента',
       };
       this.completed.set(cycleKey, result);
       return result;
     }
-    if (selected.kind === 'ESCALATE') {
-      const result: AgentCycleResult = { status: 'ESCALATED', evaluation, unknown: evaluation.unknown, command, receipt };
-      this.completed.set(cycleKey, result);
-      return result;
-    }
-    const deliveries: DeliveredOrder[] = [];
-    for (const order of evaluation.orders) deliveries.push(await this.dependencies.communication.deliver(order));
     const result: AgentCycleResult = { status: 'DECIDED', evaluation, unknown: evaluation.unknown, command, receipt, deliveries };
     this.completed.set(cycleKey, result);
     return result;

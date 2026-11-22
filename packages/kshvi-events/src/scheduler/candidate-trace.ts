@@ -177,6 +177,8 @@ export type NonProbabilisticEvent = Readonly<{
   kind: 'PLANNED' | 'REACTIVE';
   operationalSecond: number;
   payload?: Readonly<Record<string, unknown>>;
+  /** Типизированные доменные операции; старые записи получают один applyWorldEffects. */
+  operations?: readonly AutonomyEventOperation[];
 }>;
 
 export type ScheduleIntervalResult = Readonly<{

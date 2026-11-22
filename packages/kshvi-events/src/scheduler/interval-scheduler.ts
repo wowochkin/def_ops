@@ -5,6 +5,7 @@ import {
   SCHEDULER_ALGORITHM_VERSION,
   finalizeIntervalTrace,
   replayIntervalResult,
+  type CreatedAutonomyEvent,
   type EventCandidateTrace,
   type NonProbabilisticEvent,
   type OperationalInterval,
@@ -57,7 +58,9 @@ export function fixedOperationalIntervals(fromSecond: number, toSecond: number, 
   if (!Number.isSafeInteger(intervalMinutes) || intervalMinutes < 1) throw new Error('Интервал профиля должен быть положительным целым числом минут');
   if (fromSecond === toSecond) return [];
   const size = intervalMinutes * 60;
-  const firstStart = Math.ceil(fromSecond / size) * size;
+  // Закрытый интервал обрабатывается даже при невыровненном fromSecond: журнал
+  // worker дедуплицирует его при последующих диапазонах, а ceil безвозвратно его терял.
+  const firstStart = Math.floor(fromSecond / size) * size;
   const intervals: OperationalInterval[] = [];
   for (let start = firstStart; start + size <= toSecond; start += size) {
     intervals.push({ index: start / size, startSecond: start, endSecond: start + size });
@@ -102,6 +105,57 @@ export function scheduleInterval(input: ScheduleIntervalInput): ScheduleInterval
   const rejections: TraceRejection[] = [];
   const randomKeys = { attempts: [] as string[], selection: [] as string[], target: [] as string[], approval: [] as string[] };
   let expectedAttempts = 0;
+  let cascadeAttemptOrdinal = 1_000_000;
+
+  const appendCascades = (
+    parentEvent: CreatedAutonomyEvent,
+    parentTemplate: EventTemplate,
+  ): void => {
+    if (parentEvent.status !== 'READY') return;
+    for (const templateId of parentTemplate.cascade.allowedTemplateIds) {
+      const template = input.templates.find(candidate => candidate.templateId === templateId);
+      if (!template) continue;
+      const cascade = {
+        causeEventIds: [...parentEvent.causeEventIds, parentEvent.eventId],
+        depth: parentEvent.cascadeDepth + 1,
+        events: createdEvents.filter(event => event.cascadeDepth > 0).length,
+      };
+      const selected = selectCandidate({
+        templates: [template],
+        category: template.category,
+        profile: input.profile,
+        state: workingState,
+        target: parentEvent.target,
+        interval,
+        attemptOrdinal: cascadeAttemptOrdinal++,
+        seed: input.seed,
+        branchId: input.branchId,
+        snapshotHash: input.snapshotHash,
+        templateSetVersion: input.templateSetVersion,
+        algorithmVersion,
+        cascade,
+        parentTemplate,
+      });
+      workingState = selected.state;
+      traces.push(selected.trace);
+      attemptsByCategory[template.category] = (attemptsByCategory[template.category] ?? 0) + 1;
+      randomKeys.selection.push(selected.trace.selectionDigest);
+      randomKeys.target.push(selected.trace.targetDigest);
+      randomKeys.approval.push(selected.trace.approvalDigest);
+      if (selected.trace.rejection) {
+        rejections.push({
+          code: selected.trace.rejection,
+          category: template.category,
+          targetKey: `${parentEvent.target.sideId}/${parentEvent.target.areaId}`,
+          templateId,
+        });
+      }
+      if (selected.event) {
+        createdEvents.push(selected.event);
+        appendCascades(selected.event, template);
+      }
+    }
+  };
 
   for (const category of categories) {
     for (const target of targets) {
@@ -150,7 +204,11 @@ export function scheduleInterval(input: ScheduleIntervalInput): ScheduleInterval
         randomKeys.selection.push(selected.trace.selectionDigest);
         randomKeys.target.push(selected.trace.targetDigest);
         randomKeys.approval.push(selected.trace.approvalDigest);
-        if (selected.event) createdEvents.push(selected.event);
+        if (selected.event) {
+          createdEvents.push(selected.event);
+          const parentTemplate = input.templates.find(template => template.templateId === selected.event!.templateId);
+          if (parentTemplate) appendCascades(selected.event, parentTemplate);
+        }
         if (selected.trace.rejection) {
           rejections.push({
             code: selected.trace.rejection,

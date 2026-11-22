@@ -32,6 +32,9 @@ struct ForkState {
     purpose: String,
     state: OfficialState,
     simulated_events: Vec<String>,
+    simulated_utility: f64,
+    readiness: f64,
+    supply: f64,
     local_rng_cursor: u64,
 }
 
@@ -46,8 +49,11 @@ impl WorldFork {
             state: Some(ForkState {
                 id,
                 purpose: "optionEvaluation".into(),
+                readiness: official.state.forces.len().max(1) as f64,
+                supply: official.state.resources.len() as f64,
                 state: official.state.clone(),
                 simulated_events: Vec::new(),
+                simulated_utility: 0.0,
                 local_rng_cursor: 0,
             }),
         }
@@ -60,14 +66,33 @@ impl WorldFork {
         rng: &mut SeededModernRng,
     ) -> Result<f64, String> {
         let state = self.state.as_mut().ok_or("Оценочный форк уничтожен")?;
-        let random = rng.next_u64();
-        state.local_rng_cursor = rng.cursor();
-        for step in 0..horizon {
-            state
-                .simulated_events
-                .push(format!("{}:{step}:{random}", choice_id));
+        if horizon == 0 {
+            return Ok(0.0);
         }
-        Ok(((random >> 11) as f64 / ((1u64 << 53) as f64)) * 0.000001)
+        let mut total_utility = 0.0;
+        for step in 0..horizon {
+            let random = rng.next_u64();
+            let noise = ((random >> 11) as f64 / ((1u64 << 53) as f64)) - 0.5;
+            let (base, readiness_delta, supply_delta) = match choice_id {
+                "advance" => (0.075, -0.035, -0.020),
+                "defend" => (0.040, -0.010, -0.005),
+                "withdraw" => (-0.005, -0.005, 0.0),
+                "request-support" => (0.020, 0.0, 0.040),
+                "continue-order" => (0.020, -0.002, -0.005),
+                _ => (0.0, 0.0, 0.0),
+            };
+            let step_utility = base + state.readiness * 0.005 + state.supply * 0.010 + noise * 0.010;
+            state.readiness = (state.readiness + readiness_delta).max(0.0);
+            state.supply = (state.supply + supply_delta).max(0.0);
+            total_utility += step_utility;
+            state.simulated_events.push(format!(
+                "{choice_id}:{step}:utility={step_utility:.6}:readiness={:.3}:supply={:.3}",
+                state.readiness, state.supply
+            ));
+        }
+        state.local_rng_cursor = rng.cursor();
+        state.simulated_utility = total_utility / horizon as f64;
+        Ok(state.simulated_utility)
     }
 
     pub fn hash(&self) -> Result<String, String> {

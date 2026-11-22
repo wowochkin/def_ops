@@ -56,6 +56,7 @@ export type RunAutonomyWorkerInput = Readonly<{
   templateSetVersion: string;
   fromSecond: number;
   toSecond: number;
+  plannedReactiveEvents?: ScheduleIntervalResult['plannedReactiveEvents'];
   queue: AutonomyCommandQueue;
   journal: AutonomyWorkerJournal;
 }>;
@@ -64,6 +65,7 @@ export type AutonomyWorkerResult = Readonly<{
   results: readonly ScheduleIntervalResult[];
   attempts: number;
   createdEvents: readonly CreatedAutonomyEvent[];
+  plannedReactiveEvents: ScheduleIntervalResult['plannedReactiveEvents'];
   enqueuedOperations: number;
   recoveredIntervals: number;
   skippedIntervals: number;
@@ -110,7 +112,7 @@ export async function runAutonomyWorker(input: RunAutonomyWorkerInput): Promise<
   if (loaded.version !== 1) throw new Error('Неподдерживаемая версия журнала autonomy worker');
   if (input.instanceState === 'PAUSED') {
     return {
-      results: [], attempts: 0, createdEvents: [], enqueuedOperations: 0,
+      results: [], attempts: 0, createdEvents: [], plannedReactiveEvents: [], enqueuedOperations: 0,
       recoveredIntervals: 0, skippedIntervals: 0, state: loaded.schedulerState ?? input.state,
       controlHash: canonicalHash([]),
     };
@@ -166,6 +168,7 @@ export async function runAutonomyWorker(input: RunAutonomyWorkerInput): Promise<
           branchId: input.branchId,
           snapshotHash: input.snapshotHash,
           templateSetVersion: input.templateSetVersion,
+          plannedReactiveEvents: input.plannedReactiveEvents,
         });
     if (pending) recoveredIntervals += 1;
     if (!pending) {
@@ -181,6 +184,29 @@ export async function runAutonomyWorker(input: RunAutonomyWorkerInput): Promise<
         enqueuedOperations += 1;
       }
     }
+    for (const event of result.plannedReactiveEvents) {
+      const operations: CreatedAutonomyEvent['operations'] = event.operations?.length ? event.operations : [{
+        operationId: `${event.eventId}-world-effects`,
+        kind: 'applyWorldEffects',
+        idempotencyKey: `autonomy:${input.branchId}:${event.eventId}:world-effects`,
+        payload: event.payload ?? {},
+      }];
+      for (const operation of operations) {
+        await input.queue.enqueue({
+          commandId: operation.operationId,
+          idempotencyKey: operation.idempotencyKey,
+          kind: operation.kind,
+          instanceId: input.instanceId,
+          branchId: input.branchId,
+          operationalSecond: event.operationalSecond,
+          priority: event.kind === 'REACTIVE' ? 90 : 100,
+          sequence: interval.index * 1_000_000 + sequenceInInterval,
+          payload: { ...event.payload, ...operation.payload, plannedReactiveEventId: event.eventId, plannedReactiveKind: event.kind },
+        });
+        sequenceInInterval += 1;
+        enqueuedOperations += 1;
+      }
+    }
     schedulerState = result.state;
     processed.add(key);
     stored[key] = pending ?? result;
@@ -192,6 +218,7 @@ export async function runAutonomyWorker(input: RunAutonomyWorkerInput): Promise<
     results,
     attempts: results.reduce((sum, result) => sum + result.attempts, 0),
     createdEvents: results.flatMap(result => result.createdEvents),
+    plannedReactiveEvents: results.flatMap(result => result.plannedReactiveEvents),
     enqueuedOperations,
     recoveredIntervals,
     skippedIntervals,

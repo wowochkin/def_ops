@@ -117,3 +117,22 @@ describe('Серверный autonomy worker', () => {
     expect(journal.state.intervals).toEqual({});
   });
 });
+
+
+it('I2: передаёт planned/reactive операции в общую очередь и не повторяет их при replay', async () => {
+  const queue = new MemoryQueue();
+  const journal = new MemoryJournal();
+  const input = {
+    ...workerInput(queue, journal),
+    plannedReactiveEvents: [{
+      eventId: 'planned-1', kind: 'PLANNED' as const, operationalSecond: 30,
+      operations: [{ operationId: 'planned-operation-1', kind: 'createInput' as const, idempotencyKey: 'planned-operation-key', payload: { inputId: 'input-1' } }],
+    }],
+  };
+  const result = await runAutonomyWorker(input);
+  expect(queue.commands.some(command => command.kind === 'createInput' && command.payload.inputId === 'input-1')).toBe(true);
+  expect(result.plannedReactiveEvents.map(event => event.eventId)).toContain('planned-1');
+  const count = queue.commands.length;
+  await runAutonomyWorker(input);
+  expect(queue.commands).toHaveLength(count);
+});

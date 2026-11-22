@@ -45,6 +45,9 @@ export class IntermediaryWorker {
   updateAssignment(assignment: ElectronicIntermediaryAssignment): void {
     const current = this.assignments.get(assignment.assignmentId);
     if (current && assignment.version < current.version) throw new Error('Нельзя вернуть устаревшую версию назначения');
+    if (current && assignment.version === current.version && JSON.stringify(current) !== JSON.stringify(assignment)) {
+      throw new Error('Нельзя заменить назначение той же версии');
+    }
     this.assignments.set(assignment.assignmentId, assignment);
   }
 

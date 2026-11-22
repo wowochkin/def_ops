@@ -13,7 +13,7 @@ const at = '2030-01-01T06:00:00Z';
 const route: MessageRoute = { channelId: 'main', nodeIds: ['node-1'], delayMs: 1000, selectedReserve: false, events: [] };
 
 function message(id: string): CommunicationMessage {
-  return { id, type: 'ORDER', senderRole: 'COMMANDER', recipientIds: ['unit'], sizeBytes: 1000, priority: 1, domainKey: 'order-1', createdAt: at };
+  return { id, type: 'ORDER', senderRole: 'COMMANDER', fromInstanceId: 'hq', recipientIds: ['unit'], sizeBytes: 1000, priority: 1, domainKey: 'order-1', createdAt: at };
 }
 
 const schedule: ReportScheduleEntry = {

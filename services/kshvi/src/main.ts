@@ -7,6 +7,10 @@ import { registerExpositionRoutes } from './http/exposition-routes';
 import { createTrainingExpositionService } from './exposition/training-exposition';
 import { buildTask52Router } from './http/contracts';
 import { createKshviPersistence } from './persistence';
+import { CommandService } from './instances/command-service';
+import { RevisionTrackingCommandPort } from './instances/typed-command-port';
+import { registerAgentRoutes } from './http/agent-routes';
+import { loadConfiguredProductionRuntime } from './runtime/production-config';
 
 const persistence = await createKshviPersistence(process.env);
 const pool = persistence.pool;
@@ -16,10 +20,24 @@ const environmentProvider = new CartographyEnvironmentProvider({
   baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104'),
   store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
 });
+const commands = new CommandService({
+  ...(persistence.eventStore ? { store: persistence.eventStore } : {}),
+  organizationId: env('KSHVI_ORGANIZATION_ID', 'default'),
+});
+const commandPort = new RevisionTrackingCommandPort(commands);
+const port = Number(env('PORT', '8105'));
+const production = await loadConfiguredProductionRuntime({
+  configPath: process.env.KSHVI_WORKERS_CONFIG,
+  sessions,
+  commands: commandPort,
+  revision: (instanceId, branchId) => commandPort.revision(instanceId, branchId),
+  commandBaseUrl: env('KSHVI_INTERNAL_URL', `http://127.0.0.1:${port}`),
+});
 const router = buildTask52Router({
   sessions,
   exerciseStore: persistence.exerciseStore,
   environmentProvider,
+  commands,
   audit: async record => {
     audit.append({
       actorId: record.actorId,
@@ -31,13 +49,19 @@ const router = buildTask52Router({
     });
   },
 });
+registerAgentRoutes(router, { commands: commandPort, resolveDelegation: production.resolveDelegation });
 registerExpositionRoutes(router, createTrainingExpositionService());
 const service = createService({
   name: 'kshvi',
   version: '0.1.0',
-  port: Number(env('PORT', '8105')),
+  port,
   router,
   ready: async () => pool ? (await pool.query('select 1')).rowCount === 1 : true,
 });
 await service.listen();
-onShutdown(async () => { await service.close(); if (pool) await pool.end(); });
+await production.start();
+onShutdown(async () => {
+  await production.stop();
+  await service.close();
+  if (pool) await pool.end();
+});
