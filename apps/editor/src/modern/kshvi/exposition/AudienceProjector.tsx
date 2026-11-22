@@ -2,10 +2,11 @@ import {
   cameraAt,
   type AudienceLayer,
   type ExpositionChapter,
+  type ExpositionPlayback,
   type ExpositionProgram,
-  type ExpositionSession,
   type PlanFactComparison,
 } from '../../../../../../packages/kshvi/src/exposition/browser-entry';
+import { ExpositionMap } from './ExpositionMap';
 
 export type AudienceProjectionView = Readonly<{
   sessionId: string;
@@ -13,7 +14,7 @@ export type AudienceProjectionView = Readonly<{
   purpose: 'EXPOSITION';
   label: 'Экспозиция';
   source: 'ARCHIVE' | 'AUTONOMOUS';
-  playback: ExpositionSession['playback'];
+  playback: ExpositionPlayback;
   projectorProfile: Readonly<{ id: string; kind: 'AUDIENCE_PROJECTOR' }>;
   program: Readonly<{
     id: string;
@@ -58,29 +59,13 @@ export function AudienceProjector({ projection, preview = false }: {
   const { program, map } = projection;
   const visible = (layer: AudienceLayer) => program.layers.includes(layer);
   const camera = cameraAt(program.cameraRoute, projection.playback.atMs);
-  return <section className={`exposition-audience${preview ? ' is-preview' : ''}`} aria-label="Аудиторная проекция экспозиции" data-testid="audience-projection">
+  return <section className={`exposition-audience${preview ? ' is-preview' : ''}`} aria-label="Аудиторная проекция экспозиции" data-testid="audience-projection" data-session-id={projection.sessionId}>
     <header className="exposition-map-header">
       <div><span className="exposition-badge">Экспозиция</span><h2>{program.title}</h2></div>
-      <span>Камера · масштаб {camera.zoom.toFixed(1)}</span>
+      <span>Камера · центр {camera.center.map(value => value.toFixed(2)).join(', ')} · масштаб {camera.zoom.toFixed(1)} · поворот {camera.heading.toFixed(0)}°</span>
     </header>
     <div className="exposition-map-stage">
-      <svg className="exposition-map-drawing" viewBox="0 0 800 420" role="img" aria-label="Схема общей карты с местностью и современными знаками">
-        <rect width="800" height="420" className="exposition-map-ground" />
-        {visible('terrain') && <g className="exposition-terrain">
-          <path d="M0 310 C160 230 230 340 390 270 S650 190 800 250 V420 H0Z" />
-          <path d="M80 90 l30 55 h-60z M130 65 l38 70 h-76z M190 105 l28 52 h-56z" />
-          <text x="55" y="195">Лесной массив</text>
-        </g>}
-        {visible('logistics') && <g className="exposition-logistics">
-          <path d="M110 355 C260 300 370 340 640 120" />
-          <rect x="75" y="330" width="42" height="32" />
-          <text x="52" y="388">Склад МТО</text>
-        </g>}
-        {visible('routes') && <path className="exposition-route" d="M170 280 L390 205 L630 160" />}
-        {visible('modern-symbols') && <g className="exposition-unit-mark" transform="translate(410 145)">
-          <rect width="96" height="58" /><path d="M0 0 L96 58 M96 0 L0 58" /><text x="48" y="82">Современный знак</text>
-        </g>}
-      </svg>
+      <ExpositionMap map={map} layers={program.layers} camera={camera} />
       <div className="exposition-map-legend">
         {visible('weather') && <p>{`Погода: ${summary(map.weather)}`}</p>}
         {visible('terrain') && <p>{`Местность: ${summary(map.terrain)}`}</p>}
@@ -90,8 +75,8 @@ export function AudienceProjector({ projection, preview = false }: {
         </div>}
       </div>
       <div className="exposition-public-notes">
-        {program.captions.map(caption => <p key={caption.id}>{caption.text}</p>)}
-        {program.explanations.map(explanation => <p key={explanation.id}>{explanation.text}</p>)}
+        {program.captions.filter(caption => caption.atMs <= projection.playback.atMs).map(caption => <p key={caption.id}>{caption.text}</p>)}
+        {program.explanations.filter(explanation => explanation.atMs <= projection.playback.atMs).map(explanation => <p key={explanation.id}>{explanation.text}</p>)}
       </div>
     </div>
     <footer className="exposition-projector-footer">Проекторный профиль: {projection.projectorProfile.id}</footer>

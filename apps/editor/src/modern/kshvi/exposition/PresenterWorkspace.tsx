@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import {
-  controlExposition,
   decisionAt,
   planFactAt,
-  type ExpositionSession,
+  type ExpositionPresenterSession,
   type PresenterCommand,
 } from '../../../../../../packages/kshvi/src/exposition/browser-entry';
 import { AudienceProjector, type AudienceProjectionView } from './AudienceProjector';
 import { ChapterTimeline } from './ChapterTimeline';
 import './exposition.css';
 
-export function PresenterWorkspace({ session, projection, onSessionChange, onContinueFromCheckpoint }: {
-  session: ExpositionSession;
+export function PresenterWorkspace({ session, projection, onCommand, onContinueFromCheckpoint, onRestart }: {
+  session: ExpositionPresenterSession;
   projection: AudienceProjectionView;
-  onSessionChange(session: ExpositionSession): void;
+  onCommand(command: PresenterCommand): void;
   onContinueFromCheckpoint?: (checkpointId: string) => void;
+  onRestart?: (mode: 'REPLAY_SAVED_LINE' | 'NEW_BRANCH') => void;
 }) {
   const [preview, setPreview] = useState(false);
   const [decisionOpen, setDecisionOpen] = useState(false);
@@ -26,7 +26,7 @@ export function PresenterWorkspace({ session, projection, onSessionChange, onCon
   const allowedCheckpoints = session.checkpoints.filter(checkpoint => session.program.allowedCheckpointIds.includes(checkpoint.id));
 
   function apply(command: PresenterCommand): void {
-    onSessionChange(controlExposition(session, command));
+    onCommand(command);
   }
 
   function nextCameraKeyframe(): void {
@@ -65,6 +65,7 @@ export function PresenterWorkspace({ session, projection, onSessionChange, onCon
             <button type="button" onClick={() => apply({ type: 'SET_TEMPO', tempo: Math.min(8, session.playback.tempo * 2) })}>Ускорить ×2</button>
           </div>
           <p>Темп: {session.playback.tempo}×</p>
+          {session.playback.pauseRemainingMs > 0 && <p>Пауза главы: {session.playback.pauseRemainingMs} мс</p>}
           <button type="button" onClick={nextCameraKeyframe}>Следующий кадр камеры</button>
         </section>
 
@@ -80,12 +81,15 @@ export function PresenterWorkspace({ session, projection, onSessionChange, onCon
         <section><h2>Демонстрационная ветвь</h2>
           <p>Ветвь: {session.branchId}</p>
           {session.source === 'AUTONOMOUS' && <>
+            {session.rng && <p>RNG: {session.rng.version} · состояние {session.rng.cursor}</p>}
             <label>Контрольная точка
               <select value={checkpointId} onChange={event => setCheckpointId(event.target.value)}>
                 {allowedCheckpoints.map(checkpoint => <option key={checkpoint.id} value={checkpoint.id}>{checkpoint.id} · {(checkpoint.atMs / 1_000).toFixed(1)} с</option>)}
               </select>
             </label>
             <button type="button" disabled={!checkpointId || !onContinueFromCheckpoint} onClick={() => onContinueFromCheckpoint?.(checkpointId)}>Продолжить от контрольной точки</button>
+            <button type="button" disabled={!onRestart} onClick={() => onRestart?.('REPLAY_SAVED_LINE')}>Повторить сохранённую линию</button>
+            <button type="button" disabled={!onRestart} onClick={() => onRestart?.('NEW_BRANCH')}>Новая ветвь</button>
           </>}
           {session.program.branches.map(branch => <p key={branch.id}>Ветвь программы: {branch.title}</p>)}
         </section>
