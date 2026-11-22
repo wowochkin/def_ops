@@ -28,7 +28,8 @@ export function assertRecoveryObjectives(input: {
   restartMs: number;
   nodeRestoreMs: number;
 }): { passed: true; rpo: 0; restartWithinTarget: true; nodeRestoreWithinTarget: true } {
-  if (input.confirmedEventsLost !== 0) throw new Error('Нарушен RPO подтверждённых событий');
+  if (!Number.isFinite(input.confirmedEventsLost) || input.confirmedEventsLost !== 0) throw new Error('Нарушен RPO подтверждённых событий');
+  if (!Number.isFinite(input.restartMs) || !Number.isFinite(input.nodeRestoreMs)) throw new Error('Временные цели должны быть конечным числом');
   if (input.restartMs < 0 || input.restartMs > 300_000) throw new Error('Перезапуск превысил 5 мин');
   if (input.nodeRestoreMs < 0 || input.nodeRestoreMs > 1_800_000) throw new Error('Восстановление узла превысило 30 мин');
   return { passed: true, rpo: 0, restartWithinTarget: true, nodeRestoreWithinTarget: true };

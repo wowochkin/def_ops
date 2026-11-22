@@ -1,10 +1,11 @@
-export type AsyncStatus = 'loading' | 'empty' | 'forbidden' | 'no-data' | 'stale' | 'partial-error' | 'unavailable';
+export type AsyncStatus = 'loading' | 'empty' | 'forbidden' | 'no-data' | 'unknown' | 'stale' | 'partial-error' | 'unavailable';
 
 const messages: Record<AsyncStatus, string> = {
   loading: 'Загрузка данных…',
   empty: 'Ничего не найдено. Измените условия поиска.',
   forbidden: 'Недостаточно прав. Обратитесь к администратору.',
   'no-data': 'Нет данных для выбранных условий.',
+  unknown: 'Неизвестное состояние данных. Требуется проверка, а не подстановка значения по умолчанию.',
   stale: 'Данные устарели. Повторите серверную синхронизацию.',
   'partial-error': 'Часть данных недоступна. Можно повторить запрос или перейти к журналу.',
   unavailable: 'Сервис недоступен. Восстановите соединение или обратитесь к администратору.',

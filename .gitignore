@@ -12,6 +12,8 @@ data
 # обязательные автономные ресурсы КШВИ — версионируемые исходники
 !packages/kshvi/assets/data
 !packages/kshvi/assets/data/**
+!packages/kshvi/assets/vendor
+!packages/kshvi/assets/vendor/**
 
 # корпоративные сертификаты для сборки (не коммитятся)
 deploy/extra-ca/*.crt

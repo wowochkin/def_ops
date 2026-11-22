@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJson } from '@def-ops/kshvi';
+import { appendDurableJsonLine, readDurableJsonLines } from './durable-jsonl';
 
 export type SecurityAuditEvent = Readonly<{
   sequence: number;
@@ -24,6 +25,11 @@ export type SecurityAuditInput = {
   resourceType?: string;
   resourceId?: string;
 } & Record<string, unknown>;
+export type AuditActor = Readonly<{
+  userId: string;
+  organizationId: string;
+  technicalPermissions: readonly string[];
+}>;
 
 function hashEvent(event: Omit<SecurityAuditEvent, 'hash'>): string {
   return createHash('sha256').update(canonicalJson(event)).digest('hex');
@@ -32,9 +38,15 @@ function hashEvent(event: Omit<SecurityAuditEvent, 'hash'>): string {
 export class SecurityAudit {
   private readonly events: SecurityAuditEvent[] = [];
   private readonly now: () => Date;
+  private readonly stateFile?: string;
 
-  constructor(options: { now?: () => Date } = {}) {
+  constructor(options: { now?: () => Date; stateFile?: string } = {}) {
     this.now = options.now ?? (() => new Date());
+    this.stateFile = options.stateFile;
+    const restored = readDurableJsonLines<SecurityAuditEvent>(this.stateFile);
+    const issues = this.verify(restored);
+    if (issues.length) throw new Error(`Повреждена хеш-цепочка аудита: ${issues.join(', ')}`);
+    this.events.push(...restored);
   }
 
   append(input: SecurityAuditInput): SecurityAuditEvent {
@@ -53,12 +65,17 @@ export class SecurityAudit {
       prevHash: previous?.hash ?? null,
     };
     const event = Object.freeze({ ...withoutHash, hash: hashEvent(withoutHash) });
+    appendDurableJsonLine(this.stateFile, event);
     this.events.push(event);
     return structuredClone(event);
   }
 
   entries(): SecurityAuditEvent[] {
     return this.events.map(event => structuredClone(event));
+  }
+
+  entriesForOrganization(organizationId: string): SecurityAuditEvent[] {
+    return this.events.filter(event => event.organizationId === organizationId).map(event => structuredClone(event));
   }
 
   verify(events: readonly SecurityAuditEvent[] = this.events): string[] {
@@ -74,8 +91,12 @@ export class SecurityAudit {
     return issues;
   }
 
-  export(actorId: string, organizationId: string, correlationId: string): SecurityAuditEvent[] {
-    this.append({ actorId, organizationId, action: 'audit.exported', outcome: 'ALLOWED', correlationId });
-    return this.entries();
+  export(actor: AuditActor, correlationId: string): SecurityAuditEvent[] {
+    if (!actor.technicalPermissions.includes('audit.export')) {
+      this.append({ actorId: actor.userId, organizationId: actor.organizationId, action: 'audit.export.denied', outcome: 'DENIED', correlationId });
+      throw new Error('Для экспорта аудита требуется полномочие audit.export');
+    }
+    this.append({ actorId: actor.userId, organizationId: actor.organizationId, action: 'audit.exported', outcome: 'ALLOWED', correlationId });
+    return this.entriesForOrganization(actor.organizationId);
   }
 }

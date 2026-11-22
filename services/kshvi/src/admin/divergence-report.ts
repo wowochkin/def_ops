@@ -1,5 +1,15 @@
 import { randomUUID } from 'node:crypto';
 
+export type DivergenceDifference = Readonly<{
+  code: 'ACTIVE_SEQUENCE_AHEAD' | 'EVENT_MISSING' | 'EVENT_ID_MISMATCH' | 'HASH_MISMATCH' | 'BRANCH_MISMATCH';
+  sequence: number;
+  backupEventId?: string;
+  activeEventId?: string;
+  backupHash?: string;
+  activeHash?: string;
+  backupBranchId?: string;
+  activeBranchId?: string;
+}>;
 export type DivergenceReport = Readonly<{
   id: string;
   createdAt: string;
@@ -7,7 +17,8 @@ export type DivergenceReport = Readonly<{
   activeLastSequence: number;
   preservedSequence: number;
   laterEventCount: number;
-  laterEvents: readonly { sequence: number; eventId: string; hash: string }[];
+  laterEvents: readonly { sequence: number; eventId: string; hash: string; branchId?: string }[];
+  differences: readonly DivergenceDifference[];
   status: 'PENDING' | 'RESOLVED';
   resolution?: 'KEEP_ACTIVE' | 'NEW_BRANCH';
   resolvedByRole?: 'DIRECTOR' | 'ADMIN';
@@ -17,14 +28,20 @@ export type DivergenceReport = Readonly<{
 export function createDivergenceReport(input: {
   backupLastSequence: number;
   activeLastSequence: number;
-  laterEvents: readonly { sequence: number; eventId: string; hash: string }[];
+  laterEvents: readonly { sequence: number; eventId: string; hash: string; branchId?: string }[];
+  differences?: readonly DivergenceDifference[];
 }): DivergenceReport {
-  if (input.backupLastSequence >= input.activeLastSequence) throw new Error('Расхождение с более поздним журналом отсутствует');
+  const differences = [...(input.differences ?? [])];
+  if (input.backupLastSequence < input.activeLastSequence && !differences.some(item => item.code === 'ACTIVE_SEQUENCE_AHEAD')) {
+    differences.push({ code: 'ACTIVE_SEQUENCE_AHEAD', sequence: input.activeLastSequence });
+  }
+  if (!differences.length) throw new Error('Расхождение журналов отсутствует');
   return Object.freeze({
     id: randomUUID(), createdAt: new Date().toISOString(),
     backupLastSequence: input.backupLastSequence, activeLastSequence: input.activeLastSequence,
     preservedSequence: input.activeLastSequence, laterEventCount: input.laterEvents.length,
-    laterEvents: input.laterEvents.map(event => ({ sequence: event.sequence, eventId: event.eventId, hash: event.hash })), status: 'PENDING',
+    laterEvents: input.laterEvents.map(event => ({ sequence: event.sequence, eventId: event.eventId, hash: event.hash, ...(event.branchId ? { branchId: event.branchId } : {}) })),
+    differences, status: 'PENDING',
   });
 }
 

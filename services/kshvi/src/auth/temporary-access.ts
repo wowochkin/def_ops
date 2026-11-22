@@ -42,7 +42,9 @@ export class TemporaryAccessService {
       throw new Error('Недостаточно технических прав для временного доступа');
     }
     if (input.reason.trim().length < 10) throw new Error('Укажите содержательную причину временного доступа');
-    if (Date.parse(input.validFrom) >= Date.parse(input.validUntil)) throw new Error('Срок временного доступа некорректен');
+    const validFrom = Date.parse(input.validFrom);
+    const validUntil = Date.parse(input.validUntil);
+    if (!Number.isFinite(validFrom) || !Number.isFinite(validUntil) || validFrom >= validUntil) throw new Error('Срок временного доступа некорректен');
     const grant: TemporaryAccessGrant = Object.freeze({
       id: randomUUID(), ...input, reason: input.reason.trim(), grantedBy: actor.userId, revokedAt: null, revokedBy: null,
     });
@@ -58,7 +60,7 @@ export class TemporaryAccessService {
     const allowed = !grant.revokedAt
       && timestamp >= Date.parse(grant.validFrom)
       && timestamp < Date.parse(grant.validUntil)
-      && request.action === 'document.read'
+      && request.action === 'recovery.content.read'
       && request.organizationId === grant.organizationId
       && request.resourceId === grant.resourceId;
     this.record(allowed ? 'temporary.access.used' : 'temporary.access.denied', grant.subjectUserId, grant.organizationId, grant.id, grant.resourceId, request.correlationId);

@@ -1,6 +1,0 @@
-{
-  "package": "@def-ops/knowledge",
-  "version": "0.1.0",
-  "catalog": "packages/knowledge/data",
-  "runtime": "local-workspace"
-}

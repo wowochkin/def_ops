@@ -1,17 +1,24 @@
-import { appendFile, copyFile, mkdir, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import type { BackupFile, BackupManifest, BackupService } from './backup-service';
+import { randomUUID } from 'node:crypto';
+import type { AuditSink } from '../auth/durable-jsonl';
+import type { BackupFile, BackupManifest, BackupService, JournalEventIdentity } from './backup-service';
+import type { DivergenceDifference, DivergenceReport } from './divergence-report';
+import { createDivergenceReport } from './divergence-report';
+import { assertDirectoryIfExists, assertPathInside } from './path-safety';
 import { verifyRestoredFiles } from './restore-verification';
 
 export type RestorePlan = { allowed: true } | {
   allowed: false;
   requiredReport: 'DIVERGENCE';
   preservedSequence: number;
+  divergenceReport: DivergenceReport;
 };
 export type RestoreResult = {
   allowed: false;
   requiredReport: 'DIVERGENCE';
   preservedSequence: number;
+  divergenceReport: DivergenceReport;
 } | {
   allowed: true;
   restoredDirectory: string;
@@ -19,9 +26,44 @@ export type RestoreResult = {
   lastSequence: number;
 };
 
-export function planRestore(input: { backupLastSequence: number; activeLastSequence: number }): RestorePlan {
+function denied(input: { backupLastSequence: number; activeLastSequence: number; laterEvents: readonly JournalEventIdentity[]; differences: readonly DivergenceDifference[] }): RestorePlan {
+  return {
+    allowed: false,
+    requiredReport: 'DIVERGENCE',
+    preservedSequence: input.activeLastSequence,
+    divergenceReport: createDivergenceReport(input),
+  };
+}
+
+export function planRestore(input: {
+  backupLastSequence: number;
+  activeLastSequence: number;
+  backupJournal?: readonly JournalEventIdentity[];
+  activeJournal?: readonly JournalEventIdentity[];
+}): RestorePlan {
+  if (input.backupJournal !== undefined || input.activeJournal !== undefined) {
+    if (!input.backupJournal || !input.activeJournal) throw new Error('Для сравнения нужны идентичности обоих журналов');
+    const differences: DivergenceDifference[] = [];
+    const backupBySequence = new Map(input.backupJournal.map(event => [event.sequence, event]));
+    for (const active of input.activeJournal) {
+      const backup = backupBySequence.get(active.sequence);
+      if (!backup) {
+        differences.push({ code: 'EVENT_MISSING', sequence: active.sequence, activeEventId: active.eventId, activeHash: active.hash, activeBranchId: active.branchId });
+        continue;
+      }
+      if (backup.eventId !== active.eventId) differences.push({ code: 'EVENT_ID_MISMATCH', sequence: active.sequence, backupEventId: backup.eventId, activeEventId: active.eventId });
+      if (backup.hash !== active.hash) differences.push({ code: 'HASH_MISMATCH', sequence: active.sequence, backupHash: backup.hash, activeHash: active.hash });
+      if (backup.branchId !== active.branchId) differences.push({ code: 'BRANCH_MISMATCH', sequence: active.sequence, backupBranchId: backup.branchId, activeBranchId: active.branchId });
+    }
+    if (input.backupLastSequence < input.activeLastSequence) differences.push({ code: 'ACTIVE_SEQUENCE_AHEAD', sequence: input.activeLastSequence });
+    if (differences.length) {
+      const laterEvents = input.activeJournal.filter(event => event.sequence > input.backupLastSequence);
+      return denied({ ...input, laterEvents, differences });
+    }
+    return { allowed: true };
+  }
   if (input.backupLastSequence < input.activeLastSequence) {
-    return { allowed: false, requiredReport: 'DIVERGENCE', preservedSequence: input.activeLastSequence };
+    return denied({ ...input, laterEvents: [], differences: [{ code: 'ACTIVE_SEQUENCE_AHEAD', sequence: input.activeLastSequence }] });
   }
   return { allowed: true };
 }
@@ -29,33 +71,52 @@ export function planRestore(input: { backupLastSequence: number; activeLastSeque
 export class RestoreService {
   private readonly backups: BackupService;
   private readonly isolationRoot: string;
+  private readonly audit?: AuditSink;
 
-  constructor(options: { backups: BackupService; isolationRoot: string }) {
+  constructor(options: { backups: BackupService; isolationRoot: string; audit?: AuditSink }) {
     this.backups = options.backups;
     this.isolationRoot = resolve(options.isolationRoot);
+    this.audit = options.audit;
   }
 
-  async restoreToIsolated(input: { backupId: string; activeLastSequence: number; isolationId: string }): Promise<RestoreResult> {
+  async restoreToIsolated(input: {
+    backupId: string;
+    activeLastSequence: number;
+    isolationId: string;
+    activeJournal?: readonly JournalEventIdentity[];
+  }): Promise<RestoreResult> {
     if (!/^[a-zA-Z0-9-]+$/.test(input.isolationId)) throw new Error('Недопустимый идентификатор изолированного восстановления');
+    await assertDirectoryIfExists(this.isolationRoot, 'Изолированный корень восстановления');
     const manifest = await this.backups.readManifest(input.backupId);
-    const plan = planRestore({ backupLastSequence: manifest.lastSequence, activeLastSequence: input.activeLastSequence });
-    if (!plan.allowed) return plan;
+    if (input.activeJournal && !manifest.journalEvents) throw new Error('В манифесте отсутствуют идентичности журнала для сравнения');
+    const plan = planRestore({
+      backupLastSequence: manifest.lastSequence,
+      activeLastSequence: input.activeLastSequence,
+      ...(input.activeJournal ? { backupJournal: manifest.journalEvents, activeJournal: input.activeJournal } : {}),
+    });
+    if (!plan.allowed) {
+      this.record('restore.divergence', input.backupId, 'DENIED');
+      return plan;
+    }
     const chain = await this.verifiedChain(manifest);
     const restoredDirectory = join(this.isolationRoot, input.isolationId);
+    assertPathInside(this.isolationRoot, restoredDirectory, 'Изолированное назначение восстановления');
     await mkdir(this.isolationRoot, { recursive: true });
     await mkdir(restoredDirectory, { recursive: false });
     const assembledFiles = new Map<string, BackupFile>();
     for (const backup of chain) {
       for (const file of backup.files) {
-        const fragment = join(this.backups.directoryFor(backup.id), 'files', file.name);
+        const fragment = await this.backups.readBackupFile(backup.id, file.name);
         const destination = join(restoredDirectory, file.name);
-        if (file.offset === 0) await copyFile(fragment, destination);
-        else await appendFile(destination, await readFile(fragment));
+        assertPathInside(restoredDirectory, destination, 'Файл изолированного восстановления');
+        if (file.offset === 0) await writeFile(destination, fragment);
+        else await appendFile(destination, fragment);
         assembledFiles.set(file.name, file);
       }
     }
     const verification = await verifyRestoredFiles({ ...manifest, files: [...assembledFiles.values()] }, restoredDirectory);
     if (!verification.valid) throw new Error('Хеши изолированного восстановления не совпадают');
+    this.record('restore.completed', input.backupId, 'ALLOWED');
     return { allowed: true, restoredDirectory, verifiedHashes: verification.checkedFiles, lastSequence: manifest.lastSequence };
   }
 
@@ -73,5 +134,9 @@ export class RestoreService {
     }
     if (chain[0]?.kind !== 'FULL') throw new Error('Цепочка восстановления не начинается с полной копии');
     return chain;
+  }
+
+  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED'): void {
+    this.audit?.append({ actorId: 'restore-service', organizationId: 'local', action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
   }
 }

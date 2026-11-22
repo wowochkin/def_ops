@@ -52,7 +52,8 @@ describe('локальный каталог и технические права
     );
     const service = new AccountService(directory, { now: () => now, temporaryAccess: temporary });
     const session = await service.login('tech.admin', 'Локальный-пароль-12', 'org-1');
-    const request = { action: 'document.read', organizationId: 'org-1', resourceId: 'exercise-1' };
+    const request = { action: 'recovery.content.read', organizationId: 'org-1', resourceId: 'exercise-1' };
+    expect(service.authorize(session.token, { ...request, action: 'document.read' }).allowed).toBe(false);
     expect(service.authorize(session.token, request).allowed).toBe(true);
     expect(service.authorize(session.token, { ...request, resourceId: 'exercise-2' }).allowed).toBe(false);
     temporary.revoke(grant.id, 'security-1');

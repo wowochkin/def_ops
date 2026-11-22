@@ -11,7 +11,7 @@ const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
 
 it('не затирает более поздние подтверждённые события старой копией', () => {
-  expect(planRestore({ backupLastSequence: 100, activeLastSequence: 140 })).toEqual({ allowed: false, requiredReport: 'DIVERGENCE', preservedSequence: 140 });
+  expect(planRestore({ backupLastSequence: 100, activeLastSequence: 140 })).toMatchObject({ allowed: false, requiredReport: 'DIVERGENCE', preservedSequence: 140, divergenceReport: { status: 'PENDING' } });
   const report = createDivergenceReport({
     backupLastSequence: 100, activeLastSequence: 140,
     laterEvents: [{ sequence: 101, eventId: 'event-101', hash: 'a'.repeat(64) }, { sequence: 140, eventId: 'event-140', hash: 'b'.repeat(64) }],
@@ -45,7 +45,7 @@ it('восстанавливает только в изолированную о
   expect(await readFile(join(result.restoredDirectory as string, 'scenario.json'), 'utf8')).toBe('scenario');
 
   const denied = await restore.restoreToIsolated({ backupId: full.id, activeLastSequence: 140, isolationId: 'must-not-exist' });
-  expect(denied).toEqual({ allowed: false, requiredReport: 'DIVERGENCE', preservedSequence: 140 });
+  expect(denied).toMatchObject({ allowed: false, requiredReport: 'DIVERGENCE', preservedSequence: 140, divergenceReport: { status: 'PENDING' } });
   await expect(readFile(join(root, 'isolated', 'must-not-exist', 'scenario.json'), 'utf8')).rejects.toThrow();
 
   await writeFile(join(root, 'journal.jsonl'), 'journal\n+confirmed');

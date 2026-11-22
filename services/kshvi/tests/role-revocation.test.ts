@@ -23,8 +23,9 @@ describe('предметные назначения', () => {
   it('назначает срок, инстанцию, сторону, участок, действия и замещение только уполномоченным', () => {
     const value = assignment();
     expect(value).toMatchObject({ postId: 'commander-blue', substituteUserId: 'user-2', state: 'ACTIVE' });
-    expect(service.authorize('user-1', { action: 'document.read', organizationId: 'org-1', instanceId: 'instance-1', sideId: 'blue', areaId: 'area-1' }).allowed).toBe(true);
-    expect(service.authorize('user-1', { action: 'scenario.approve', organizationId: 'org-1', instanceId: 'instance-1' }).allowed).toBe(false);
+    const scope = () => ({ organizationId: 'org-1', instanceId: 'instance-1', sideId: 'blue', areaId: 'area-1' });
+    expect(service.authorize('user-1', { action: 'document.read', organizationId: 'org-1', instanceId: 'instance-1', resourceId: 'document-1' }, scope).allowed).toBe(true);
+    expect(service.authorize('user-1', { action: 'scenario.approve', organizationId: 'org-1', instanceId: 'instance-1', resourceId: 'scenario-1' }, scope).allowed).toBe(false);
     expect(() => service.assign({ ...director, domainPermissions: [] }, {
       userId: 'user-3', organizationId: 'org-1', instanceId: 'instance-1', postId: 'staff', role: 'TRAINEE',
       sideId: null, areaId: null, sessionMode: 'TRAINING', validFrom: '2026-11-22T07:00:00.000Z', validUntil: '2026-11-22T12:00:00.000Z',
@@ -35,8 +36,11 @@ describe('предметные назначения', () => {
   it('немедленно отзывает API и SSE, сохраняя сам факт назначения в истории', () => {
     const value = assignment();
     expect(service.subscriptionRevision('user-1')).toBe(1);
+    const scope = () => ({ organizationId: 'org-1', instanceId: 'instance-1', sideId: 'blue', areaId: 'area-1' });
+    const request = { action: 'document.read', organizationId: 'org-1', instanceId: 'instance-1', resourceId: 'document-1' };
+    expect(service.authorize('user-1', request, scope).allowed).toBe(true);
     service.revoke(director, value.id);
-    expect(service.authorize('user-1', { action: 'document.read', organizationId: 'org-1', instanceId: 'instance-1' }).allowed).toBe(false);
+    expect(service.authorize('user-1', request, scope).allowed).toBe(false);
     expect(service.subscriptionRevision('user-1')).toBe(2);
     expect(service.history(value.id)[0].state).toBe('REVOKED');
   });

@@ -1,5 +1,6 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJson } from '@def-ops/kshvi';
+import { appendDurableJsonLine, readDurableJsonLines, type AuditSink } from '../auth/durable-jsonl';
 
 export type ConfigKind = 'DOCUMENTS' | 'SCALE' | 'COMMUNICATIONS' | 'WEATHER' | 'MODEL' | 'ASSESSMENT';
 export type ConfigVersion = Readonly<{
@@ -15,9 +16,22 @@ export type ConfigVersion = Readonly<{
   approvedBy?: string;
   createdAt: string;
 }>;
+type ConfigRecord = { type: 'config.upsert'; record: ConfigVersion };
 
 export class ConfigCatalog {
   private readonly versions = new Map<string, ConfigVersion[]>();
+  private readonly stateFile?: string;
+  private readonly audit?: AuditSink;
+  private readonly organizationId: string;
+  private readonly now: () => Date;
+
+  constructor(options: { stateFile?: string; audit?: AuditSink; organizationId?: string; now?: () => Date } = {}) {
+    this.stateFile = options.stateFile;
+    this.audit = options.audit;
+    this.organizationId = options.organizationId ?? 'local';
+    this.now = options.now ?? (() => new Date());
+    for (const item of readDurableJsonLines<ConfigRecord>(this.stateFile)) this.replace(item.record);
+  }
 
   importProfile(input: {
     profileId: string;
@@ -38,9 +52,10 @@ export class ConfigCatalog {
     const record: ConfigVersion = Object.freeze({
       profileId: input.profileId, kind: input.kind, version, sha256, content: structuredClone(input.content),
       ...(input.source ? { source: input.source } : {}), ...(input.assumption ? { assumption: input.assumption } : {}),
-      testReport: { status: 'PASSED' }, status: 'IMPORTED', createdAt: new Date().toISOString(),
+      testReport: { status: 'PASSED' }, status: 'IMPORTED', createdAt: this.now().toISOString(),
     });
-    this.versions.set(input.profileId, [...history, record]);
+    this.persist(record);
+    this.record('config.imported', 'catalog-importer', record);
     return structuredClone(record);
   }
 
@@ -48,13 +63,15 @@ export class ConfigCatalog {
     if (!actor.domainPermissions.includes('config.approve')) throw new Error('Недостаточно предметных прав для утверждения профиля');
     const current = this.get(profileId, version);
     const approved = { ...current, status: 'APPROVED' as const, approvedBy: actor.userId };
-    this.replace(approved);
+    this.persist(approved);
+    this.record('config.approved', actor.userId, approved);
     return structuredClone(approved);
   }
 
   activate(profileId: string, version: number): ConfigVersion {
     const record = this.get(profileId, version);
     if (record.status !== 'APPROVED') throw new Error('Активировать можно только профиль APPROVED');
+    this.record('config.activated', 'catalog-activator', record);
     return structuredClone(record);
   }
 
@@ -74,8 +91,23 @@ export class ConfigCatalog {
     return record;
   }
 
+  private persist(record: ConfigVersion): void {
+    appendDurableJsonLine(this.stateFile, { type: 'config.upsert', record } satisfies ConfigRecord);
+    this.replace(record);
+  }
+
   private replace(record: ConfigVersion): void {
     const history = this.versions.get(record.profileId) ?? [];
-    this.versions.set(record.profileId, history.map(candidate => candidate.version === record.version ? record : candidate));
+    const exists = history.some(candidate => candidate.version === record.version);
+    this.versions.set(record.profileId, exists
+      ? history.map(candidate => candidate.version === record.version ? record : candidate)
+      : [...history, record]);
+  }
+
+  private record(action: string, actorId: string, version: ConfigVersion): void {
+    this.audit?.append({
+      actorId, organizationId: this.organizationId, action, outcome: 'ALLOWED', correlationId: randomUUID(),
+      resourceType: 'config', resourceId: `${version.profileId}:${version.version}`,
+    });
   }
 }

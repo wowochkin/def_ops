@@ -1,16 +1,16 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { AsyncState, type AsyncStatus } from '../src/modern/kshvi/shared/AsyncState';
 import { OfflineBanner } from '../src/modern/kshvi/shared/OfflineBanner';
 import { formatBytes, formatDuration, formatNumber, formatRussianDateTime } from '../src/modern/kshvi/shared/format';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const cases: [AsyncStatus, RegExp][] = [
   ['loading', /Загрузка данных/], ['empty', /Ничего не найдено/], ['forbidden', /Недостаточно прав/],
-  ['no-data', /Нет данных/], ['stale', /Данные устарели/], ['partial-error', /Часть данных недоступна/],
-  ['unavailable', /Сервис недоступен/],
+  ['no-data', /Нет данных/], ['unknown', /Неизвестное состояние данных/], ['stale', /Данные устарели/],
+  ['partial-error', /Часть данных недоступна/], ['unavailable', /Сервис недоступен/],
 ];
 
 it('различает все русские состояния и предлагает понятное действие', () => {
@@ -42,6 +42,14 @@ it('показывает период обрыва, последнюю серв�
   expect(screen.getByText(/Синхронизация NTP потеряна/)).toBeTruthy();
   expect(screen.getByText(/Расхождение часов: 1250 мс/)).toBeTruthy();
   expect(screen.getByText(/Последняя серверная синхронизация:/)).toBeTruthy();
+});
+
+it('увеличивает offline-длительность по таймеру даже без обновления serverTime', () => {
+  vi.useFakeTimers();
+  render(<OfflineBanner connection="OFFLINE" lastSyncedAt="2026-11-22T08:00:00.000Z" outageStartedAt="2026-11-22T07:59:55.000Z" serverTime="2026-11-22T08:00:04.000Z" ntpSynchronized={false} clockOffsetMs={1250} />);
+  expect(screen.getByText(/Период потери связи: 9 с/)).toBeTruthy();
+  act(() => { vi.advanceTimersByTime(3000); });
+  expect(screen.getByText(/Период потери связи: 12 с/)).toBeTruthy();
 });
 
 it('единообразно форматирует русские даты, числа, длительность и единицы', () => {

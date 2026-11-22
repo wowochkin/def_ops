@@ -28,7 +28,7 @@ it('создаёт append-only хеш-цепочку без payload, парол�
 it('аудирует экспорт аудита и сохраняет записи после запроса удаления', () => {
   const audit = new SecurityAudit({ now: () => new Date('2026-11-22T08:00:00.000Z') });
   audit.append({ actorId: 'admin-1', organizationId: 'org-1', action: 'deletion.requested', outcome: 'ALLOWED', correlationId: 'del-1', resourceId: 'exercise-1' });
-  const exported = audit.export('security-2', 'org-1', 'export-1');
+  const exported = audit.export({ userId: 'security-2', organizationId: 'org-1', technicalPermissions: ['audit.export'] }, 'export-1');
   expect(exported.at(-1)?.action).toBe('audit.exported');
   expect(exported[0].action).toBe('deletion.requested');
   expect(audit.entries().map(event => event.action)).toEqual(['deletion.requested', 'audit.exported']);

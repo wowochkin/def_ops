@@ -1,9 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
+import type { AuditSink } from '../auth/durable-jsonl';
+import { assertDirectoryIfExists, assertPathInside, assertRegularFile } from './path-safety';
 
 export type BackupCategory = 'SCENARIO' | 'ENVIRONMENT' | 'ASSIGNMENTS' | 'JOURNAL' | 'SNAPSHOT';
 export type BackupSource = Readonly<{ name: string; path: string; category: BackupCategory }>;
+export type JournalEventIdentity = Readonly<{ sequence: number; eventId: string; hash: string; branchId: string }>;
 export type BackupFile = Readonly<{
   name: string;
   category: BackupCategory;
@@ -23,6 +26,7 @@ export type BackupManifest = Readonly<{
   lastSequence: number;
   versions: { schema: string; reducer: number };
   files: readonly BackupFile[];
+  journalEvents?: readonly JournalEventIdentity[];
 }>;
 export type BackupVerification = Readonly<{
   valid: boolean;
@@ -30,8 +34,12 @@ export type BackupVerification = Readonly<{
   issues: readonly { code: 'HASH_MISMATCH' | 'FILE_MISSING'; name: string }[];
 }>;
 
+const categories = new Set<BackupCategory>(['SCENARIO', 'ENVIRONMENT', 'ASSIGNMENTS', 'JOURNAL', 'SNAPSHOT']);
+const hashPattern = /^[a-f0-9]{64}$/;
 function safeName(name: string): void {
-  if (!name || basename(name) !== name || name === 'manifest.json') throw new Error('Недопустимое имя файла резервной копии');
+  if (!name || basename(name) !== name || name === 'manifest.json' || !/^[a-zA-Z0-9._-]+$/.test(name) || name === '.' || name === '..') {
+    throw new Error('Недопустимое имя файла резервной копии');
+  }
 }
 function safeId(id: string): void {
   if (!/^[a-zA-Z0-9-]+$/.test(id)) throw new Error('Недопустимый идентификатор резервной копии');
@@ -39,20 +47,67 @@ function safeId(id: string): void {
 function sha256(content: Buffer): string {
   return createHash('sha256').update(content).digest('hex');
 }
+function safeInteger(value: unknown, minimum = 0): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= minimum;
+}
+function validDate(value: unknown): value is string {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
+export function validateBackupManifest(value: unknown, expectedId?: string): BackupManifest {
+  if (!value || typeof value !== 'object') throw new Error('Неверная схема манифеста резервной копии');
+  const manifest = value as BackupManifest;
+  if (manifest.schemaVersion !== 1 || typeof manifest.id !== 'string' || (expectedId && manifest.id !== expectedId)
+    || typeof manifest.instanceId !== 'string' || !manifest.instanceId
+    || !['FULL', 'INCREMENTAL'].includes(manifest.kind)
+    || (manifest.baseBackupId !== null && typeof manifest.baseBackupId !== 'string')
+    || (manifest.kind === 'FULL' ? manifest.baseBackupId !== null : typeof manifest.baseBackupId !== 'string')
+    || !validDate(manifest.createdAt) || !safeInteger(manifest.lastSequence)
+    || !manifest.versions || typeof manifest.versions.schema !== 'string' || !safeInteger(manifest.versions.reducer, 1)
+    || !Array.isArray(manifest.files) || !manifest.files.length) {
+    throw new Error('Неверная схема манифеста резервной копии');
+  }
+  safeId(manifest.id);
+  if (manifest.baseBackupId) safeId(manifest.baseBackupId);
+  const names = new Set<string>();
+  for (const file of manifest.files) {
+    if (!file || typeof file.name !== 'string' || !categories.has(file.category)
+      || !hashPattern.test(file.sha256) || !hashPattern.test(file.assembledSha256)
+      || !safeInteger(file.size) || !safeInteger(file.offset) || !safeInteger(file.assembledSize)
+      || file.offset + file.size !== file.assembledSize || names.has(file.name)) {
+      throw new Error('Неверная схема файла манифеста резервной копии');
+    }
+    safeName(file.name);
+    names.add(file.name);
+  }
+  if (manifest.journalEvents !== undefined) {
+    if (!Array.isArray(manifest.journalEvents)) throw new Error('Неверная схема журнала манифеста');
+    for (const event of manifest.journalEvents) {
+      if (!safeInteger(event.sequence, 1) || typeof event.eventId !== 'string' || !event.eventId
+        || !hashPattern.test(event.hash) || typeof event.branchId !== 'string' || !event.branchId) {
+        throw new Error('Неверная схема идентичности события манифеста');
+      }
+    }
+  }
+  return structuredClone(manifest);
+}
 
 export class BackupService {
   private readonly rootDirectory: string;
   private readonly now: () => Date;
+  private readonly audit?: AuditSink;
 
-  constructor(options: { rootDirectory: string; now?: () => Date }) {
+  constructor(options: { rootDirectory: string; now?: () => Date; audit?: AuditSink }) {
     this.rootDirectory = resolve(options.rootDirectory);
     this.now = options.now ?? (() => new Date());
+    this.audit = options.audit;
   }
 
   async createFullBackup(input: {
     instanceId: string;
     sources: readonly BackupSource[];
     lastSequence: number;
+    journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
   }): Promise<BackupManifest> {
     const required: BackupCategory[] = ['SCENARIO', 'ENVIRONMENT', 'ASSIGNMENTS', 'JOURNAL', 'SNAPSHOT'];
@@ -66,6 +121,7 @@ export class BackupService {
     baseBackupId: string;
     sources: readonly BackupSource[];
     lastSequence: number;
+    journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
   }): Promise<BackupManifest> {
     const base = await this.readManifest(input.baseBackupId);
@@ -79,12 +135,28 @@ export class BackupService {
 
   async readManifest(backupId: string): Promise<BackupManifest> {
     safeId(backupId);
-    return JSON.parse(await readFile(join(this.rootDirectory, backupId, 'manifest.json'), 'utf8')) as BackupManifest;
+    const directory = this.directoryFor(backupId);
+    await assertDirectoryIfExists(directory, 'Каталог резервной копии');
+    const manifestPath = join(directory, 'manifest.json');
+    assertPathInside(directory, manifestPath, 'Манифест резервной копии');
+    await assertRegularFile(manifestPath, 'Манифест резервной копии');
+    return validateBackupManifest(JSON.parse(await readFile(manifestPath, 'utf8')), backupId);
   }
 
   directoryFor(backupId: string): string {
     safeId(backupId);
-    return join(this.rootDirectory, backupId);
+    const directory = join(this.rootDirectory, backupId);
+    assertPathInside(this.rootDirectory, directory, 'Каталог резервной копии');
+    return directory;
+  }
+
+  async readBackupFile(backupId: string, name: string): Promise<Buffer> {
+    safeName(name);
+    const directory = this.directoryFor(backupId);
+    const path = join(directory, 'files', name);
+    assertPathInside(directory, path, 'Файл резервной копии');
+    await assertRegularFile(path, 'Файл резервной копии');
+    return readFile(path);
   }
 
   async verifyBackup(backupId: string): Promise<BackupVerification> {
@@ -93,25 +165,29 @@ export class BackupService {
     let checkedFiles = 0;
     for (const file of manifest.files) {
       try {
-        const content = await readFile(join(this.directoryFor(backupId), 'files', file.name));
+        const content = await this.readBackupFile(backupId, file.name);
         if (sha256(content) !== file.sha256 || content.byteLength !== file.size) issues.push({ code: 'HASH_MISMATCH', name: file.name });
         checkedFiles += 1;
-      } catch {
+      } catch (error) {
+        if (error instanceof Error && /символическ|корень/.test(error.message)) throw error;
         issues.push({ code: 'FILE_MISSING', name: file.name });
       }
     }
-    return { valid: issues.length === 0 && checkedFiles === manifest.files.length, checkedFiles, issues };
+    const result = { valid: issues.length === 0 && checkedFiles === manifest.files.length, checkedFiles, issues };
+    this.record(result.valid ? 'backup.verified' : 'backup.verification_failed', backupId, result.valid ? 'ALLOWED' : 'DENIED');
+    return result;
   }
 
   private async create(input: {
     instanceId: string;
     sources: readonly BackupSource[];
     lastSequence: number;
+    journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
     kind: 'FULL' | 'INCREMENTAL';
     baseBackupId: string | null;
   }, base?: BackupManifest): Promise<BackupManifest> {
-    if (!Number.isSafeInteger(input.lastSequence) || input.lastSequence < 0) throw new Error('Последовательность копии некорректна');
+    if (!safeInteger(input.lastSequence)) throw new Error('Последовательность копии некорректна');
     const names = new Set<string>();
     for (const source of input.sources) {
       safeName(source.name);
@@ -123,6 +199,7 @@ export class BackupService {
     await mkdir(filesDirectory, { recursive: true });
     const files: BackupFile[] = [];
     for (const source of input.sources) {
+      await assertRegularFile(source.path, 'Источник резервной копии');
       const assembled = await readFile(source.path);
       let offset = 0;
       let fragment = assembled;
@@ -145,9 +222,16 @@ export class BackupService {
     const manifest: BackupManifest = Object.freeze({
       schemaVersion: 1, id, instanceId: input.instanceId, kind: input.kind, baseBackupId: input.baseBackupId,
       createdAt: this.now().toISOString(), lastSequence: input.lastSequence, versions: { ...input.versions }, files,
+      ...(input.journalEvents ? { journalEvents: structuredClone(input.journalEvents) } : {}),
     });
+    validateBackupManifest(manifest, id);
     await writeFile(join(this.rootDirectory, id, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
+    this.record(input.kind === 'FULL' ? 'backup.full_created' : 'backup.incremental_created', id, 'ALLOWED');
     return structuredClone(manifest);
+  }
+
+  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED'): void {
+    this.audit?.append({ actorId: 'backup-service', organizationId: 'local', action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
   }
 }
 
@@ -160,7 +244,10 @@ export function assertBackupCadence(input: {
 }): void {
   if (!input.preStartFullBackupId) throw new Error('Обязательная предстартовая полная копия отсутствует');
   if (!input.lastIncrementalAt) throw new Error('Инкрементальная копия журнала отсутствует');
-  const elapsed = Date.parse(input.now) - Date.parse(input.lastIncrementalAt);
+  const current = Date.parse(input.now);
+  const previous = Date.parse(input.lastIncrementalAt);
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) throw new Error('Некорректная дата регламента копирования');
+  const elapsed = current - previous;
   if (elapsed < 0 || elapsed > 5 * 60 * 1000) throw new Error('Инкремент журнала должен копироваться не реже чем каждые 5 мин');
   if (input.checkpoint !== 'NONE' && !input.checkpointBackupId) throw new Error('Перед скачком или завершением нужна контрольная копия');
 }

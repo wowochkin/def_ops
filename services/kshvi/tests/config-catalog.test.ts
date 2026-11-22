@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ConfigCatalog } from '../src/admin/config-catalog';
 import { RetentionService } from '../src/admin/retention-service';
-import { DeletionService } from '../src/admin/deletion-service';
+import { DeletionService, type DeletionPorts } from '../src/admin/deletion-service';
 import { SecurityAudit } from '../src/auth/security-audit';
 
 let now: Date;
 beforeEach(() => { now = new Date('2026-11-22T08:00:00.000Z'); });
+
+function ports(retained = false): DeletionPorts {
+  return {
+    lockExercise: async () => {}, scheduleDeletion: async () => {},
+    hasRetentionHold: async () => retained, deleteExercise: async () => {},
+  };
+}
 
 describe('версионный каталог конфигурации', () => {
   it('требует источник или допущение, пройденные тесты и утверждение', () => {
@@ -17,7 +24,6 @@ describe('версионный каталог конфигурации', () => {
     const approved = catalog.approve({ userId: 'methodist-1', domainPermissions: ['config.approve'] }, 'weather', 1);
     expect(approved.status).toBe('APPROVED');
     expect(catalog.activate('weather', 1).sha256).toBe(approved.sha256);
-
     catalog.importProfile({ profileId: 'weather', kind: 'WEATHER', content: { factor: 0.9 }, assumption: 'Новое учебное допущение', testReport: { status: 'PASSED' } });
     expect(catalog.resolve({ profileId: 'weather', version: 1, sha256: approved.sha256 }).content).toEqual({ factor: 0.8 });
   });
@@ -34,29 +40,29 @@ describe('хранение и удаление', () => {
     expect(service.canReadArchive('org-1', ['exercise.read', 'assessment.read'], ['exercise.read'], true)).toBe(true);
   });
 
-  it('требует специальное право, второе лицо, отсутствие удержания и отложенное удаление', () => {
+  it('требует специальное право, второе лицо, отсутствие удержания и отложенное удаление', async () => {
     const audit = new SecurityAudit({ now: () => now });
-    const service = new DeletionService({ now: () => now, audit });
+    const service = new DeletionService({ now: () => now, audit, ports: ports() });
     const requester = { userId: 'security-1', organizationId: 'org-1', domainPermissions: ['exercise.delete'] };
     const confirmer = { userId: 'security-2', organizationId: 'org-1', domainPermissions: ['deletion.confirm'] };
-    expect(() => service.request({ ...requester, domainPermissions: [] }, { exerciseId: 'exercise-1', organizationId: 'org-1', retentionHold: false })).toThrow('специальное полномочие');
-    const request = service.request(requester, { exerciseId: 'exercise-1', organizationId: 'org-1', retentionHold: false });
+    await expect(service.request({ ...requester, domainPermissions: [] }, { exerciseId: 'exercise-1', organizationId: 'org-1' })).rejects.toThrow('специальное полномочие');
+    const request = await service.request(requester, { exerciseId: 'exercise-1', organizationId: 'org-1' });
     expect(request.status).toBe('LOCKED');
-    expect(() => service.confirm(requester, request.id)).toThrow('втор');
-    expect(() => service.execute(request.id)).toThrow('не подтверждено');
-    const scheduled = service.confirm(confirmer, request.id);
+    await expect(service.confirm(requester, request.id)).rejects.toThrow('втор');
+    await expect(service.execute(request.id)).rejects.toThrow('не подтверждено');
+    const scheduled = await service.confirm(confirmer, request.id);
     expect(scheduled.status).toBe('SCHEDULED');
-    expect(() => service.execute(request.id)).toThrow('отложено');
+    await expect(service.execute(request.id)).rejects.toThrow('отложено');
     now = new Date(scheduled.executeAfter);
-    expect(service.execute(request.id).status).toBe('EXECUTED');
+    expect((await service.execute(request.id)).status).toBe('EXECUTED');
     expect(audit.entries().map(event => event.action)).toEqual(['deletion.requested', 'deletion.confirmed', 'deletion.executed']);
   });
 
-  it('не разрешает удаление при организационном удержании', () => {
-    const service = new DeletionService({ now: () => now, audit: new SecurityAudit({ now: () => now }) });
-    expect(() => service.request(
+  it('не разрешает удаление при организационном удержании', async () => {
+    const service = new DeletionService({ now: () => now, audit: new SecurityAudit({ now: () => now }), ports: ports(true) });
+    await expect(service.request(
       { userId: 'security-1', organizationId: 'org-1', domainPermissions: ['exercise.delete'] },
-      { exerciseId: 'exercise-1', organizationId: 'org-1', retentionHold: true },
-    )).toThrow('удержание');
+      { exerciseId: 'exercise-1', organizationId: 'org-1' },
+    )).rejects.toThrow('удержание');
   });
 });

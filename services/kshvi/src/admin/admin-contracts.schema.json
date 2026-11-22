@@ -63,6 +63,17 @@
         "assembledSize": { "type": "integer", "minimum": 0 }
       }
     },
+    "JournalEventIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence", "eventId", "hash", "branchId"],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "eventId": { "type": "string", "minLength": 1 },
+        "hash": { "$ref": "#/definitions/sha256" },
+        "branchId": { "type": "string", "minLength": 1 }
+      }
+    },
     "BackupManifest": {
       "type": "object",
       "additionalProperties": false,
@@ -72,7 +83,8 @@
         "kind": { "enum": ["FULL", "INCREMENTAL"] }, "baseBackupId": { "type": ["string", "null"] },
         "createdAt": { "type": "string", "format": "date-time" }, "lastSequence": { "type": "integer", "minimum": 0 },
         "versions": { "type": "object", "required": ["schema", "reducer"], "properties": { "schema": { "type": "string" }, "reducer": { "type": "integer" } } },
-        "files": { "type": "array", "items": { "$ref": "#/definitions/BackupFile" } }
+        "files": { "type": "array", "items": { "$ref": "#/definitions/BackupFile" } },
+        "journalEvents": { "type": "array", "items": { "$ref": "#/definitions/JournalEventIdentity" } }
       }
     },
     "SecurityAuditEvent": {

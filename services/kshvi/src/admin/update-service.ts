@@ -1,9 +1,10 @@
+import { randomUUID } from 'node:crypto';
+import type { AuditSink } from '../auth/durable-jsonl';
+
 export type MigrationPlan = Readonly<{
   version: string;
-  testedOnCopy: boolean;
   rollbackApplicationVersion: string;
   incompatible: boolean;
-  fullBackupId: string | null;
   rewritesHistoricalPayload: boolean;
   migrationProtocolId: string | null;
   sourceArchiveId: string | null;
@@ -15,6 +16,19 @@ export type UpdatePostChecks = Readonly<{
   documents: boolean;
   controlCalculation: boolean;
 }>;
+export type UpdatePorts = Readonly<{
+  pauseSession: () => Promise<void>;
+  createSnapshot: () => Promise<{ snapshotId: string }>;
+  verifySnapshot: (snapshotId: string) => Promise<boolean>;
+  createFullBackup: () => Promise<{ backupId: string }>;
+  testMigrationOnCopy: (migration: MigrationPlan) => Promise<void>;
+  checkCompatibility: (migration: MigrationPlan) => Promise<void>;
+  appendJournal: (event: { type: string; migrationVersion: string }) => Promise<string>;
+  applyMigration: (migration: MigrationPlan) => Promise<void>;
+  runPostChecks: () => Promise<UpdatePostChecks>;
+  rollback: (context: { snapshotId: string | null; backupId: string | null; migrationApplied: boolean; rollbackApplicationVersion: string }) => Promise<void>;
+  resumeSession: () => Promise<void>;
+}>;
 
 export function planUpdate(session: { active: boolean; mode: 'DEMONSTRATION' | 'TRAINING' | 'OFFICIAL'; emergency: boolean }): { allowed: boolean; reason?: string } {
   if (session.active && !session.emergency) return { allowed: false, reason: session.mode === 'OFFICIAL' ? 'Активный официальный сеанс' : 'Активный сеанс' };
@@ -22,32 +36,55 @@ export function planUpdate(session: { active: boolean; mode: 'DEMONSTRATION' | '
 }
 
 export function assertMigrationPlan(plan: MigrationPlan): void {
-  if (!plan.testedOnCopy) throw new Error('Миграция должна быть проверена на копии');
   if (!plan.rollbackApplicationVersion) throw new Error('Требуется план отката приложения');
-  if (plan.incompatible && !plan.fullBackupId) throw new Error('Перед несовместимой миграцией нужна полная копия');
   if (plan.rewritesHistoricalPayload && (!plan.migrationProtocolId || !plan.sourceArchiveId)) {
     throw new Error('Перезапись исторических payload требует протокол миграции и исходный архив');
   }
 }
 
-export function runSafeUpdate(input: {
+export async function runSafeUpdate(input: {
   session: { active: boolean; mode: 'DEMONSTRATION' | 'TRAINING' | 'OFFICIAL'; emergency: boolean };
-  emergencyProcedure: { paused: boolean; snapshotVerified: boolean; compatibilityChecked: boolean; journalEventId: string | null };
   migration: MigrationPlan;
+}, ports: UpdatePorts, audit?: AuditSink): Promise<{
+  status: 'COMPLETED';
+  migrationVersion: string;
   postChecks: UpdatePostChecks;
-}): { status: 'COMPLETED'; migrationVersion: string; postChecks: UpdatePostChecks; journalEventId: string | null } {
+  journalEventId: string;
+  snapshotId: string;
+  backupId: string | null;
+}> {
   const plan = planUpdate(input.session);
   if (!plan.allowed) throw new Error(`Обновление запрещено: ${plan.reason ?? 'активный сеанс'}`);
   assertMigrationPlan(input.migration);
-  if (input.session.active) {
-    const procedure = input.emergencyProcedure;
-    if (!procedure.paused) throw new Error('Аварийное обновление: пауза сеанса обязательна');
-    if (!procedure.snapshotVerified) throw new Error('Аварийное обновление требует проверенный снимок');
-    if (!procedure.compatibilityChecked) throw new Error('Совместимость обновления не проверена');
-    if (!procedure.journalEventId) throw new Error('Аварийная процедура должна быть записана в журнал');
+  let paused = false;
+  let snapshotId: string | null = null;
+  let backupId: string | null = null;
+  let migrationApplied = false;
+  try {
+    if (input.session.active) {
+      await ports.pauseSession();
+      paused = true;
+    }
+    const snapshot = await ports.createSnapshot();
+    snapshotId = snapshot.snapshotId;
+    if (!(await ports.verifySnapshot(snapshotId))) throw new Error('Фактическая проверка снимка не прошла');
+    if (input.migration.incompatible) backupId = (await ports.createFullBackup()).backupId;
+    await ports.testMigrationOnCopy(input.migration);
+    await ports.checkCompatibility(input.migration);
+    const journalEventId = await ports.appendJournal({ type: 'update.started', migrationVersion: input.migration.version });
+    await ports.applyMigration(input.migration);
+    migrationApplied = true;
+    const postChecks = await ports.runPostChecks();
+    for (const [check, passed] of Object.entries(postChecks)) {
+      if (!passed) throw new Error(check === 'controlCalculation' ? 'Не пройден повторный расчёт контрольного примера' : `После обновления не пройдена проверка: ${check}`);
+    }
+    audit?.append({ actorId: 'update-service', organizationId: 'local', action: 'update.completed', outcome: 'ALLOWED', correlationId: journalEventId, resourceId: input.migration.version });
+    return { status: 'COMPLETED', migrationVersion: input.migration.version, postChecks, journalEventId, snapshotId, backupId };
+  } catch (error) {
+    await ports.rollback({ snapshotId, backupId, migrationApplied, rollbackApplicationVersion: input.migration.rollbackApplicationVersion });
+    audit?.append({ actorId: 'update-service', organizationId: 'local', action: 'update.rolled_back', outcome: 'DENIED', correlationId: randomUUID(), resourceId: input.migration.version });
+    throw error;
+  } finally {
+    if (paused) await ports.resumeSession();
   }
-  for (const [check, passed] of Object.entries(input.postChecks)) {
-    if (!passed) throw new Error(check === 'controlCalculation' ? 'Не пройден повторный расчёт контрольного примера' : `После обновления не пройдена проверка: ${check}`);
-  }
-  return { status: 'COMPLETED', migrationVersion: input.migration.version, postChecks: input.postChecks, journalEventId: input.emergencyProcedure.journalEventId };
 }
