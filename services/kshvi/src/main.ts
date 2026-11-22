@@ -6,6 +6,8 @@ import { PgSessionStore } from './auth/pg-session-store';
 import { InMemoryExerciseStore, PgExerciseStore } from './store/exercise-store';
 import { CartographyEnvironmentProvider } from './environment/cartography-provider';
 import { EnvironmentSnapshotStore } from './environment/snapshot-store';
+import { registerExpositionRoutes } from './http/exposition-routes';
+import { createTrainingExpositionService } from './exposition/training-exposition';
 
 const databaseUrl = process.env.DATABASE_URL;
 const pool = databaseUrl ? createPool(databaseUrl) : null;
@@ -18,11 +20,13 @@ const environmentProvider = new CartographyEnvironmentProvider({
   store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
 });
 const sessions = new SessionManager({ store });
+const router = buildRouter({ sessions, exerciseStore, environmentProvider });
+registerExpositionRoutes(router, createTrainingExpositionService());
 const service = createService({
   name: 'kshvi',
   version: '0.1.0',
   port: Number(env('PORT', '8105')),
-  router: buildRouter({ sessions, exerciseStore, environmentProvider }),
+  router,
   ready: async () => pool ? (await pool.query('select 1')).rowCount === 1 : true,
 });
 await service.listen();

@@ -44,6 +44,39 @@ describe('серверная аудиторная проекция', () => {
     }
   });
 
+  it('глубоко удаляет вложенные служебные поля из объектов и массивов разрешённых слоёв', () => {
+    const source = officialArchive();
+    const map: Record<string, unknown> = { ...source.map };
+    const archive = { ...source, map };
+    map.weather = {
+      summary: 'Публичная погода',
+      nested: { serviceIntent: 'Вложенный замысел', safe: 'Видимость 8 км' },
+      frames: [{ hiddenRationale: 'Вложенное обоснование', summary: 'Без осадков' }],
+    };
+    map.terrain = {
+      summary: 'Публичная местность',
+      geojson: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'Рубеж', officialAssessments: [4] }, geometry: null }] },
+    };
+    const session = startAutonomousShow({
+      sourceArchive: archive, program: expositionProgram(), seed: 42,
+      sessionId: 'deep-private-show', branchId: 'deep-private-branch',
+    });
+    const policy = createAudiencePolicy({
+      id: 'deep-policy', allowedLayers: ['weather', 'terrain'], showPlanFact: false,
+      showExplanations: false, publicCaptionIds: [], publicDecisionIds: [],
+    });
+    const projector = createProjectorProfile({ id: 'deep-projector', allowedLayers: ['weather', 'terrain'] });
+    const audience = projectExpositionForAudience({ session, policy, projector });
+    expect(audience.map.weather).toEqual({
+      summary: 'Публичная погода', nested: { safe: 'Видимость 8 км' }, frames: [{ summary: 'Без осадков' }],
+    });
+    const serialized = JSON.stringify(audience);
+    expect(serialized).toContain('Рубеж');
+    for (const forbidden of ['serviceIntent', 'hiddenRationale', 'officialAssessments', 'Вложенный замысел', 'Вложенное обоснование']) {
+      expect(serialized).not.toContain(forbidden);
+    }
+  });
+
   it('не добавляет скрытые данные в поток после команд ведущего', () => {
     const { session, policy, projector } = setup();
     const accelerated = applyPresenterCommand({

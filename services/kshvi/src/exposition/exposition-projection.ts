@@ -60,6 +60,33 @@ export function createProjectorProfile(input: Readonly<{
   return { id: input.id, kind: 'AUDIENCE_PROJECTOR', allowedLayers: [...new Set(input.allowedLayers)] };
 }
 
+const FORBIDDEN_MAP_KEYS = new Set([
+  'serviceintent', 'hiddenrationale', 'officialassessments', 'officialassessment', 'sourcearchive',
+  'journal', 'checkpoints', 'seed', 'rng', 'rngstate', 'hidden truth', 'hiddentruth', 'secret',
+  'secrets', 'private', 'internal', 'presenter', 'servicedata', 'classification',
+]);
+
+function forbiddenMapKey(key: string): boolean {
+  const normalized = key.replace(/[-_\s]/g, '').toLowerCase();
+  return key === '__proto__' || key === 'prototype' || key === 'constructor'
+    || FORBIDDEN_MAP_KEYS.has(normalized)
+    || normalized.includes('serviceintent')
+    || normalized.includes('hiddenrationale')
+    || normalized.includes('officialassessment')
+    || normalized.includes('secret');
+}
+
+/** Проектор получает публичную геометрию, но не неизвестные вложенные служебные объекты. */
+export function publicMapValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(publicMapValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value)
+      .filter(([key]) => !forbiddenMapKey(key))
+      .map(([key, item]) => [key, publicMapValue(item)]));
+  }
+  return value;
+}
+
 export function projectExpositionForAudience(input: Readonly<{
   session: ExpositionSession;
   policy: AudiencePolicy;
@@ -70,7 +97,8 @@ export function projectExpositionForAudience(input: Readonly<{
   if (session.purpose !== 'EXPOSITION' || session.label !== 'Экспозиция') throw new Error('Проектор принимает только экспозиционный сеанс');
   if (projector.kind !== 'AUDIENCE_PROJECTOR') throw new Error('Требуется отдельный проекторный профиль аудитории');
   const policy = createAudiencePolicy(input.policy);
-  const layers = audienceLayers(policy, projector.allowedLayers);
+  const enabled = new Set(session.program.layers);
+  const layers = audienceLayers(policy, projector.allowedLayers).filter(layer => enabled.has(layer));
   const map: Record<string, unknown> = {};
   const fields: Readonly<Partial<Record<AudienceLayer, string>>> = {
     weather: 'weather', terrain: 'terrain', logistics: 'logistics', 'modern-symbols': 'modernSymbols', forces: 'forces', routes: 'routes',
@@ -78,7 +106,7 @@ export function projectExpositionForAudience(input: Readonly<{
   for (const layer of layers) {
     const target = fields[layer]!;
     const source = layer === 'modern-symbols' ? 'modernSymbols' : layer;
-    if (session.map[source] !== undefined) map[target] = structuredClone(session.map[source]);
+    if (session.map[source] !== undefined) map[target] = publicMapValue(session.map[source]);
   }
   const publicDecision = input.presenterDecisionId && policy.publicDecisionIds.includes(input.presenterDecisionId)
     ? session.program.frames.find(frame => frame.decision?.id === input.presenterDecisionId)?.decision

@@ -30,3 +30,7 @@ export * from './environment/snapshot-store';
 export * from './exposition/exposition-service';
 export * from './exposition/exposition-projection';
 export * from './exposition/exposition-export';
+export * from './exposition/system-agent-calculator';
+export * from './exposition/exposition-session-service';
+export * from './exposition/training-exposition';
+export * from './http/exposition-routes';

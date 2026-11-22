@@ -5,7 +5,10 @@ import type {
   OfficialExpositionArchive,
 } from '../../../../packages/kshvi/src/exposition/exposition-session';
 
+export const EXPOSITION_ARCHIVE_SCHEMA_VERSION = '1.0.0' as const;
+
 export type DerivedExpositionArchive = Readonly<{
+  schemaVersion: typeof EXPOSITION_ARCHIVE_SCHEMA_VERSION;
   archiveId: string;
   branchId: string;
   manifestHash: string;
@@ -17,6 +20,7 @@ export type DerivedExpositionArchive = Readonly<{
   audiencePolicy: AudiencePolicy;
   origin: ExpositionSession['origin'];
   seed: number | null;
+  rng: ExpositionSession['rng'];
   journal: ExpositionSession['journal'];
   checkpoints: ExpositionSession['checkpoints'];
   world: ExpositionSession['world'];
@@ -52,8 +56,13 @@ export function exportExpositionArchive(input: Readonly<{
   if (session.sourceArchive.manifestHash !== session.origin.manifestHash) {
     throw new Error('Хеш исходного архива изменился; производный архив не создан');
   }
+  const archiveId = input.archiveId ?? `exposition-archive-${globalThis.crypto.randomUUID()}`;
+  if (archiveId === session.sourceArchive.archiveId) {
+    throw new Error('Производный архив не может повторять идентификатор официального архива');
+  }
   const unsigned = {
-    archiveId: input.archiveId ?? `exposition-archive-${globalThis.crypto.randomUUID()}`,
+    schemaVersion: EXPOSITION_ARCHIVE_SCHEMA_VERSION,
+    archiveId,
     branchId: session.branchId,
     purpose: 'EXPOSITION' as const,
     label: 'Экспозиция' as const,
@@ -63,6 +72,7 @@ export function exportExpositionArchive(input: Readonly<{
     audiencePolicy: createAudiencePolicy(input.policy),
     origin: structuredClone(session.origin),
     seed: session.seed,
+    rng: structuredClone(session.rng),
     journal: structuredClone(session.journal),
     checkpoints: structuredClone(session.checkpoints),
     world: structuredClone(session.world),
@@ -78,7 +88,8 @@ export function verifyExpositionDerivative(
   source: OfficialExpositionArchive,
 ): boolean {
   const { manifestHash, ...unsigned } = derivative;
-  return derivative.purpose === 'EXPOSITION'
+  return derivative.schemaVersion === EXPOSITION_ARCHIVE_SCHEMA_VERSION
+    && derivative.purpose === 'EXPOSITION'
     && derivative.label === 'Экспозиция'
     && derivative.branchId !== source.branchId
     && derivative.archiveId !== source.archiveId

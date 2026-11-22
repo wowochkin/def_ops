@@ -47,7 +47,10 @@ it('AC-28: оба показа, продолжение и производный
   expect(audience.map.modernSymbols).toBeDefined();
   expect(JSON.stringify(audience)).not.toContain('Скрытый служебный замысел');
 
+  expect(() => exportExpositionArchive({ session: continued, policy, archiveId: archive.archiveId }))
+    .toThrow('идентификатор официального архива');
   const derivative = exportExpositionArchive({ session: continued, policy, archiveId: 'ac28-derived-archive' });
+  expect(derivative.schemaVersion).toBe('1.0.0');
   expect(derivative.archiveId).toBe('ac28-derived-archive');
   expect(derivative.archiveId).not.toBe(archive.archiveId);
   expect(derivative.branchId).toBe('ac28-continued-branch');
