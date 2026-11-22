@@ -1,0 +1,15 @@
+{
+  "transport": "HTTP+SSE",
+  "delegation": {
+    "allowedSeverities": [
+      1
+    ],
+    "allowedAreas": [
+      "area-A"
+    ],
+    "allowedStages": [
+      "stage-1"
+    ],
+    "allowEffects": true
+  }
+}

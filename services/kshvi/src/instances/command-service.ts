@@ -27,6 +27,7 @@ const officialTypes = new Set([
   'calculation.create', 'calculation.approve', 'calculation.apply', 'calculation.override', 'calculation.replay',
   'observation.record', 'document.create', 'document.transition', 'document.edit', 'document.approval', 'document.conflict.resolve',
   'document.cascade.issue', 'document.cascade.advance', 'document.cascade.fact', 'document.revise',
+  'input.planned', 'input.reactive', 'input.adaptive', 'input.approve', 'trigger.validate',
   'communication.enqueue', 'environment.bind', 'weather.change',
   'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);

@@ -24,6 +24,8 @@ import { routeMessage } from '../communications/channel';
 import { createMessageAttempt, type MessageAttempt } from '../communications/message';
 import type { EnvironmentSnapshot } from '../environment/provider';
 import { validateWeatherScenario, type WeatherScenario } from '@def-ops/core';
+import { applyDelegation, proposeInput, type AdaptiveInput, type Delegation } from '../runtime/input';
+import { evaluateTrigger, validateTriggerGraph, type TriggerCondition } from '../runtime/triggers';
 
 export type ConductActor = Readonly<{ userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] }>;
 export type ConductOperations = Readonly<{
@@ -34,8 +36,20 @@ export type ConductOperations = Readonly<{
   approvalAssignments?: Readonly<{ command: readonly string[]; service: readonly string[]; finalApproverId: string }>;
   treeEdges?: readonly Readonly<{ from: string; to: string }>[];
   cascadeLegs?: readonly CascadeLegInput[];
+  delegation?: Delegation;
 }>;
 export type DocumentDraftInput = Omit<DocumentRevision, 'state' | 'sha256' | 'signatures' | 'delivery' | 'previousRevision'>;
+export type ConductInputRecord = Readonly<{
+  id: string;
+  kind: 'PLANNED' | 'REACTIVE' | 'ADAPTIVE';
+  status: 'PLANNED' | 'REVIEW_REQUIRED' | 'APPLIED' | 'APPROVAL_REQUIRED' | 'REQUIRES_REVIEW' | 'REJECTED' | 'SUPPRESSED';
+  causeIds: readonly string[];
+  input: unknown;
+  requestId?: string;
+  deviation?: 'EARLY' | 'ON_TIME';
+}>;
+export type ApprovalRequestRecord = Readonly<{ id: string; inputId: string; reason: 'OUTSIDE_DELEGATION'; status: 'PENDING' | 'APPROVED' | 'REJECTED' }>;
+export type TriggerValidationRecord = Readonly<{ ruleIds: readonly string[]; status: 'VALID' | 'REQUIRES_REVIEW'; issues: readonly { code: string; ruleId: string }[] }>;
 export type ConductState = {
   scenarioId: string;
   revision: number;
@@ -48,6 +62,9 @@ export type ConductState = {
   documentRevisions: Record<string, Record<number, DocumentRevision>>;
   approvalChains: Record<string, DualChainState>;
   cascades: Record<string, CascadeIssue>;
+  inputs: Record<string, ConductInputRecord>;
+  approvalRequests: Record<string, ApprovalRequestRecord>;
+  triggerValidations: readonly TriggerValidationRecord[];
   communications: Record<string, MessageAttempt>;
   jumpSnapshots: Record<string, { state: unknown; hash: string; reports: readonly string[] }>;
   completion: unknown | null;
@@ -86,6 +103,11 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'document.cascade.advance'; documentId: string; deliveryId: string; action: 'BEGIN' | 'DELIVER' | 'FAIL' | 'CANCEL'; reason?: string }>)
   | (CommandBase & Readonly<{ type: 'document.cascade.fact'; documentId: string; deliveryId: string; factType: 'ACKNOWLEDGED' | 'EXECUTION_STARTED' }>)
   | (CommandBase & Readonly<{ type: 'document.revise'; documentId: string; reason: string; changes: { requisites?: DocumentRevision['requisites']; content?: DocumentRevision['content']; map?: DocumentRevision['map']; attachments?: DocumentRevision['attachments'] } }>)
+  | (CommandBase & Readonly<{ type: 'input.planned'; input: Parameters<typeof proposeInput>[0] & { id: string } }>)
+  | (CommandBase & Readonly<{ type: 'input.reactive'; input: { id: string; causeId: string; recipients: readonly string[]; channelId: string; actualAt: string; condition: TriggerCondition; rules?: readonly { id: string; emits: readonly string[] }[] } }>)
+  | (CommandBase & Readonly<{ type: 'input.adaptive'; input: AdaptiveInput & { recipients: readonly string[]; channelId: string; actualAt: string } }>)
+  | (CommandBase & Readonly<{ type: 'input.approve'; requestId: string; approved: boolean }>)
+  | (CommandBase & Readonly<{ type: 'trigger.validate'; rules: readonly { id: string; emits: readonly string[] }[] }>)
   | (CommandBase & Readonly<{ type: 'communication.enqueue'; message: CommunicationMessage }>)
   | (CommandBase & Readonly<{ type: 'environment.bind'; snapshot: EnvironmentSnapshot }>)
   | (CommandBase & Readonly<{ type: 'weather.change'; changeId: string; effectiveAt: string; reason: string; supersedes: string; scenario: WeatherScenario }>)
@@ -107,7 +129,7 @@ export type ConductExecution = Readonly<{
 }>;
 
 export function emptyConductState(scenarioId: string): ConductState {
-  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, documentRevisions: {}, approvalChains: {}, cascades: {}, communications: {}, jumpSnapshots: {}, completion: null, stage: null };
+  return { scenarioId, revision: 0, world: emptyWorld(scenarioId), decisions: {}, orders: {}, calculations: {}, observations: {}, documents: {}, documentRevisions: {}, approvalChains: {}, cascades: {}, inputs: {}, approvalRequests: {}, triggerValidations: [], communications: {}, jumpSnapshots: {}, completion: null, stage: null };
 }
 function json(value: unknown): JsonValue { return JSON.parse(JSON.stringify(value)) as JsonValue; }
 function assertCommand(command: CommandBase): void {
@@ -373,6 +395,81 @@ export async function executeConductCommand(state: ConductState, command: Conduc
         state: next(state, { ...recordDocument(state, revision), approvalChains }),
         event: eventFor(state, command, 'document.revised.v1', revision.id, { sideId: revision.requisites.sideId, revision: revision.revision, supersedes: revision.supersedes, sha256: revision.sha256, document: revision }),
         revision: state.revision + 1, document: revision,
+      };
+    }
+    case 'input.planned': {
+      const input = command.input;
+      if (state.inputs[input.id]) throw new Error('Вводная с таким идентификатором уже существует');
+      if (!Number.isFinite(Date.parse(input.scheduledAt)) || !Number.isFinite(Date.parse(input.actualAt))) throw new Error('Плановая вводная требует корректное расписание и фактическое время');
+      const proposed = proposeInput(input);
+      const record: ConductInputRecord = {
+        id: input.id, kind: 'PLANNED', status: proposed.approval.status, causeIds: [], input: proposed, deviation: proposed.deviation,
+      };
+      return {
+        state: next(state, { inputs: { ...state.inputs, [input.id]: record } }),
+        event: eventFor(state, command, 'input.proposed.v1', input.id, { record, recipients: input.recipients, sideId: actor.sideId }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'input.reactive': {
+      const input = command.input;
+      if (state.inputs[input.id]) throw new Error('Вводная с таким идентификатором уже существует');
+      if (!Number.isFinite(Date.parse(input.actualAt))) throw new Error('Реактивная вводная требует фактическое время');
+      const graphIssues = input.rules ? validateTriggerGraph(input.rules) : [];
+      const condition = graphIssues.length ? 'UNRESOLVED' : evaluateTrigger(input.condition);
+      const status: ConductInputRecord['status'] = condition === 'UNRESOLVED' ? 'REQUIRES_REVIEW' : condition === 'TRUE' ? 'APPLIED' : 'SUPPRESSED';
+      const record: ConductInputRecord = { id: input.id, kind: 'REACTIVE', status, causeIds: [input.causeId], input: { ...input, graphIssues } };
+      return {
+        state: next(state, { inputs: { ...state.inputs, [input.id]: record } }),
+        event: eventFor(state, command, 'input.reactive.evaluated.v1', input.id, { record, condition, recipients: input.recipients, sideId: actor.sideId }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'input.adaptive': {
+      const input = command.input;
+      if (state.inputs[input.id]) throw new Error('Вводная с таким идентификатором уже существует');
+      if (!Number.isFinite(Date.parse(input.actualAt))) throw new Error('Адаптивная вводная требует фактическое время');
+      const delegation = required(operations?.delegation, 'Пределы адаптации не утверждены');
+      const evaluated = applyDelegation(delegation, input);
+      const status: ConductInputRecord['status'] = evaluated.status === 'APPLIED' ? 'APPLIED' : 'APPROVAL_REQUIRED';
+      const requestId = evaluated.status === 'APPROVAL_REQUIRED' ? `request-${input.id}` : undefined;
+      const record: ConductInputRecord = { id: input.id, kind: 'ADAPTIVE', status, causeIds: [], input: evaluated, ...(requestId ? { requestId } : {}) };
+      const approvalRequests = requestId
+        ? { ...state.approvalRequests, [requestId]: { id: requestId, inputId: input.id, reason: 'OUTSIDE_DELEGATION' as const, status: 'PENDING' as const } }
+        : state.approvalRequests;
+      const type = status === 'APPLIED' ? 'input.adaptive.applied.v1' : 'input.approval.requested.v1';
+      return {
+        state: next(state, { inputs: { ...state.inputs, [input.id]: record }, approvalRequests }),
+        event: eventFor(state, command, type, input.id, { record, recipients: input.recipients, sideId: actor.sideId }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'input.approve': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Утверждение адаптивной вводной недоступно этой роли');
+      const request = required(state.approvalRequests[command.requestId], 'Заявка на адаптивную вводную не найдена');
+      if (request.status !== 'PENDING') throw new Error('Заявка уже обработана');
+      const input = required(state.inputs[request.inputId], 'Вводная заявки не найдена');
+      const nextStatus = command.approved ? 'APPROVED' : 'REJECTED';
+      const nextInput: ConductInputRecord = { ...input, status: command.approved ? 'APPLIED' : 'REJECTED' };
+      const nextRequest: ApprovalRequestRecord = { ...request, status: nextStatus };
+      return {
+        state: next(state, {
+          inputs: { ...state.inputs, [input.id]: nextInput },
+          approvalRequests: { ...state.approvalRequests, [request.id]: nextRequest },
+        }),
+        event: eventFor(state, command, command.approved ? 'input.adaptive.applied.v1' : 'input.adaptive.rejected.v1', input.id, { record: nextInput, request: nextRequest, approvedBy: actor.userId, sideId: actor.sideId }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'trigger.validate': {
+      const issues = validateTriggerGraph(command.rules);
+      const validation: TriggerValidationRecord = {
+        ruleIds: command.rules.map(rule => rule.id), status: issues.length ? 'REQUIRES_REVIEW' : 'VALID', issues,
+      };
+      return {
+        state: next(state, { triggerValidations: [...state.triggerValidations, validation] }),
+        event: eventFor(state, command, 'trigger.validated.v1', validation.ruleIds.join(','), validation),
+        revision: state.revision + 1,
       };
     }
     case 'communication.enqueue': {
