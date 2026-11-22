@@ -47,8 +47,9 @@ function projectValue(value: unknown, policy: ParticipantExportPolicy): Projecti
 }
 
 export function projectComponentForExport(componentId: string, data: Uint8Array | string, policy: ParticipantExportPolicy): { data: Uint8Array | string; redacted: boolean } {
-  if (componentId === 'viewer.engine' || componentId === 'viewer.index' || data instanceof Uint8Array) return { data, redacted: false };
-  const source = JSON.parse(data) as unknown;
+  if (componentId === 'viewer.engine' || componentId === 'viewer.index') return { data, redacted: false };
+  const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+  const source = JSON.parse(text) as unknown;
   if (componentId === 'participants.assignments' && source && typeof source === 'object') {
     const root = source as Record<string, unknown>;
     const payload = root.payload as Record<string, unknown> | undefined;

@@ -20,6 +20,11 @@ export type DebriefDeviation = DebriefScope & {
   rationale: string;
   consequences: readonly string[];
 };
+export type DebriefReferenceInput = DebriefScope & { content: Record<string, unknown> };
+export type DebriefReference = DebriefReferenceInput & {
+  kind: 'LEADERSHIP_INTENT';
+  notTheOnlyCorrectSolution: true;
+};
 export type DebriefInput = {
   scope: 'GENERAL' | 'PRIVATE';
   instanceId: string;
@@ -27,12 +32,12 @@ export type DebriefInput = {
   audience: string;
   allowedSideIds: readonly string[];
   materials: readonly DebriefMaterial[];
-  referenceIntent: Record<string, unknown>;
+  referenceIntent: DebriefReferenceInput;
   deviations: readonly DebriefDeviation[];
 };
 export type DebriefPackage = Omit<DebriefInput, 'materials' | 'referenceIntent'> & {
   materials: DebriefMaterial[];
-  reference: { kind: 'LEADERSHIP_INTENT'; notTheOnlyCorrectSolution: true; content: Record<string, unknown> };
+  reference: DebriefReference;
   deviations: readonly DebriefDeviation[];
   draftComments?: readonly string[];
 };
@@ -63,13 +68,24 @@ function withUnknownSections(materials: readonly DebriefMaterial[], input: Debri
     }];
   });
 }
+function referenceFor(reference: DebriefReferenceInput, input: DebriefInput | DebriefPackage, audiences: readonly string[]): DebriefReference {
+  const allowed = permitted(reference, input, audiences);
+  return {
+    kind: 'LEADERSHIP_INTENT', notTheOnlyCorrectSolution: true,
+    instanceId: allowed ? reference.instanceId : input.instanceId,
+    sideId: allowed ? reference.sideId : input.allowedSideIds[0] ?? 'UNKNOWN',
+    trainingQuestions: allowed ? [...reference.trainingQuestions] : [...input.trainingQuestions],
+    audience: allowed ? [...reference.audience] : [...audiences],
+    content: allowed ? structuredClone(reference.content) : { status: 'UNKNOWN', reason: 'Замысел недоступен этой аудитории' },
+  };
+}
 
 export function buildDebrief(input: DebriefInput): DebriefPackage {
   const materials = withUnknownSections(input.materials.filter(material => !material.draft && permitted(material, input, [input.audience])), input, [input.audience]);
   return {
     scope: input.scope, instanceId: input.instanceId, trainingQuestions: [...input.trainingQuestions], audience: input.audience,
     allowedSideIds: [...input.allowedSideIds], materials,
-    reference: { kind: 'LEADERSHIP_INTENT', notTheOnlyCorrectSolution: true, content: structuredClone(input.referenceIntent) },
+    reference: referenceFor(input.referenceIntent, input, [input.audience]),
     deviations: input.deviations.filter(deviation => permitted(deviation, input, [input.audience])).map(deviation => structuredClone(deviation)),
   };
 }
@@ -85,6 +101,7 @@ export function publishDebrief(debrief: DebriefPackage, input: DebriefPublicatio
     ...material,
     materials,
     deviations,
+    reference: referenceFor(material.reference, material, input.audience),
     schemaVersion: 1,
     revision: input.revision,
     audience: [...input.audience],

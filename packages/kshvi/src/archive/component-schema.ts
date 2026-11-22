@@ -3,8 +3,13 @@ export type ArchiveComponentRule = {
   format: 'json' | 'text' | 'html';
   fields?: Readonly<Record<string, ArchiveFieldType>>;
   nonEmpty?: readonly string[];
+  itemFields?: Readonly<Record<string, readonly string[]>>;
 };
-const json = (fields: Readonly<Record<string, ArchiveFieldType>>, nonEmpty: readonly string[] = []): ArchiveComponentRule => ({ format: 'json', fields, nonEmpty });
+const json = (
+  fields: Readonly<Record<string, ArchiveFieldType>>,
+  nonEmpty: readonly string[] = [],
+  itemFields: Readonly<Record<string, readonly string[]>> = {},
+): ArchiveComponentRule => ({ format: 'json', fields, nonEmpty, itemFields });
 
 /**
  * Минимальная обязательная семантика каждого компонента. Пустые истории допускаются,
@@ -14,18 +19,18 @@ export const ARCHIVE_COMPONENT_RULES: Readonly<Record<string, ArchiveComponentRu
   'exercise.card': json({ 'payload.card': 'object', 'payload.card.id': 'string', 'payload.card.title': 'string', 'payload.card.organizationId': 'string' }, ['payload.card.id', 'payload.card.title', 'payload.card.organizationId']),
   'scenario.revisions': json({ 'payload.revisions': 'array' }, ['payload.revisions']),
   'assumptions.passport': json({ 'payload.assumptions': 'array', 'payload.limitations': 'array' }),
-  'snapshots.initial': json({ 'payload.snapshots': 'array' }, ['payload.snapshots']),
-  'snapshots.intermediate': json({ 'payload.snapshots': 'array' }),
-  'snapshots.final': json({ 'payload.snapshots': 'array' }, ['payload.snapshots']),
-  'journal.events': json({ 'payload.events': 'array' }, ['payload.events']),
+  'snapshots.initial': json({ 'payload.snapshots': 'array' }, ['payload.snapshots'], { 'payload.snapshots': ['state'] }),
+  'snapshots.intermediate': json({ 'payload.snapshots': 'array' }, [], { 'payload.snapshots': ['state'] }),
+  'snapshots.final': json({ 'payload.snapshots': 'array' }, ['payload.snapshots'], { 'payload.snapshots': ['state'] }),
+  'journal.events': json({ 'payload.events': 'array' }, ['payload.events'], { 'payload.events': ['eventId', 'type'] }),
   'journal.hash-chain': json({ 'payload.algorithm': 'string', 'payload.links': 'array' }, ['payload.algorithm', 'payload.links']),
   'replay.archive': json({ events: 'array', snapshots: 'array', versions: 'object' }, ['versions']),
   'replay.control-points': json({ 'payload.points': 'array' }, ['payload.points']),
   'environment.map': json({ 'payload.map': 'object', 'payload.map.style': 'object', 'payload.map.bounds': 'array' }, ['payload.map.style', 'payload.map.bounds']),
   'environment.initial': json({ 'payload.state': 'object' }, ['payload.state']),
-  'environment.tiles': json({ 'payload.tiles': 'array' }, ['payload.tiles']),
+  'environment.tiles': json({ 'payload.tiles': 'array' }, ['payload.tiles'], { 'payload.tiles': ['data'] }),
   'environment.elevations': json({ 'payload.grid': 'object', 'payload.grid.width': 'number', 'payload.grid.height': 'number', 'payload.grid.values': 'array' }, ['payload.grid.values']),
-  'environment.weather': json({ 'payload.frames': 'array' }, ['payload.frames']),
+  'environment.weather': json({ 'payload.frames': 'array' }, ['payload.frames'], { 'payload.frames': ['operationalAt'] }),
   'environment.terrain-initial': json({ 'payload.state': 'object', 'payload.initialVersionId': 'string' }, ['payload.state', 'payload.initialVersionId']),
   'environment.terrain-history': json({ 'payload.versions': 'array', 'payload.initialVersionId': 'string' }, ['payload.initialVersionId']),
   'environment.attribution': json({ 'payload.attribution': 'string', 'payload.license': 'string', 'payload.offlineExport': 'boolean' }, ['payload.attribution', 'payload.license']),
@@ -67,7 +72,7 @@ export const ARCHIVE_COMPONENT_RULES: Readonly<Record<string, ArchiveComponentRu
   'debriefs.materials': json({ 'payload.sections': 'array' }, ['payload.sections']),
   'research.cards': json({ 'payload.cards': 'array' }),
   'branches.comparisons': json({ 'payload.comparisons': 'array' }),
-  'participants.assignments': json({ 'payload.assignments': 'array' }, ['payload.assignments']),
+  'participants.assignments': json({ 'payload.assignments': 'array' }, ['payload.assignments'], { 'payload.assignments': ['userId', 'role', 'sideId'] }),
   'viewer.engine': { format: 'text' },
   'viewer.resources': json({ 'payload.resources': 'object' }, ['payload.resources']),
   'viewer.index': { format: 'html' },
@@ -114,6 +119,20 @@ export function validateArchiveComponent(componentId: string, bytes: Uint8Array)
   for (const [path, type] of Object.entries(rule.fields ?? {})) {
     const field = readPath(value, path);
     if (!matchesType(field, type)) issues.push(`${componentId}: поле ${path} должно иметь тип ${type}`);
+    if (type === 'array' && Array.isArray(field)) {
+      field.forEach((item, index) => {
+        if (item === null || item === undefined || (typeof item === 'string' && !item.trim())
+          || (isObject(item) && Object.keys(item).length === 0) || (Array.isArray(item) && item.length === 0)) {
+          issues.push(`${componentId}: пустая запись ${path}[${index}]`);
+          return;
+        }
+        if (isObject(item)) {
+          for (const requiredPath of rule.itemFields?.[path] ?? []) {
+            if (!nonEmpty(readPath(item, requiredPath))) issues.push(`${componentId}: запись ${path}[${index}] не содержит ${requiredPath}`);
+          }
+        }
+      });
+    }
   }
   for (const path of rule.nonEmpty ?? []) {
     if (!nonEmpty(readPath(value, path))) issues.push(`${componentId}: поле ${path} не должно быть пустым`);

@@ -15,7 +15,7 @@ it('локальные PDF, DOCX и JSON соответствуют одной �
   const debrief = new DebriefService().build({
     scope: 'GENERAL', instanceId: 'all', trainingQuestions: ['q'], audience: 'GENERAL', allowedSideIds: ['blue'],
     materials: REQUIRED_DEBRIEF_SECTIONS.map((section, index) => ({ id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'], payload: { text: section, unit: 's', attribution: 'Локальный атлас', legend: 'Легенда' } })),
-    referenceIntent: { text: 'Замысел руководства' }, deviations: [],
+    referenceIntent: { instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'], content: { text: 'Замысел руководства' } }, deviations: [],
   });
   debrief.draftComments = ['Черновой служебный комментарий'];
   const published = new PublicationService().publish(debrief, { revision: 5, audience: ['commanders'], publishedBy: 'leader', publishedAt: '2026-11-21T12:00:00Z' });

@@ -5,13 +5,10 @@ import {
   type ArchiveBundle,
 } from '../../../../packages/kshvi/src/archive/archive-manifest';
 import { ARCHIVE_COMPONENT_RULES, validateArchiveComponent } from '../../../../packages/kshvi/src/archive/component-schema';
+import { evaluateArchiveOmissions } from '../../../../packages/kshvi/src/archive/archive-omissions';
 import { validateArchivePaths, validateArchiveSchema } from '../../../../packages/kshvi/src/archive/archive-schema';
-import {
-  journalCoverage,
-  restoreAt,
-  REPLAY_DOMAINS,
-  type ReplayArchive,
-} from '../../../../packages/kshvi/src/replay/replay-engine';
+import { restoreAt, type ReplayArchive } from '../../../../packages/kshvi/src/replay/replay-engine';
+import { verifyReplayJournalSemantics } from '../../../../packages/kshvi/src/replay/journal-verifier';
 
 export type ArchiveVerification = {
   valid: boolean;
@@ -22,6 +19,7 @@ export type ArchiveVerification = {
   brokenReferences: readonly string[];
   errors: readonly string[];
   limitations: readonly string[];
+  notices: readonly string[];
   manifestSha256: string;
 };
 
@@ -32,16 +30,17 @@ export function verifyArchive(bundle: ArchiveBundle): ArchiveVerification {
   if (unsafe.length) errors.push(`Небезопасные пути: ${unsafe.join(', ')}`);
   const actualHash = archiveManifestHash(manifest);
   if (actualHash !== manifest.manifestSha256) errors.push('Контрольная сумма манифеста не совпадает');
-  const omissions = new Map(manifest.omissions.map(item => [item.componentId, item]));
+  const omissionState = evaluateArchiveOmissions(manifest);
+  errors.push(...omissionState.errors);
   const missing: string[] = [];
-  const limitations = manifest.omissions.filter(item => !item.informational).map(item => item.reason);
+  const limitations = omissionState.limitations;
   const requiredDefinitions = ARCHIVE_COMPONENTS.filter(component => component.required
     || (manifest.kind === 'EXPOSITION' && component.id.startsWith('exposition.')));
   const ids = new Set<string>();
   for (const definition of requiredDefinitions) {
     if (!ARCHIVE_COMPONENT_RULES[definition.id]) errors.push(`Отсутствует схема компонента ${definition.id}`);
     if (manifest.components.some(component => component.id === definition.id)) continue;
-    if (omissions.get(definition.id)?.licenseLimitation) continue;
+    if (omissionState.licensedMissing.has(definition.id)) continue;
     missing.push(definition.id);
   }
   const corrupted: string[] = [];
@@ -71,22 +70,9 @@ export function verifyArchive(bundle: ArchiveBundle): ArchiveVerification {
   if (replayFile) {
     try {
       const replay = JSON.parse(new TextDecoder().decode(replayFile)) as ReplayArchive;
-      for (const factType of journalCoverage(replay.events)) missing.push(`journal.facts:${factType}`);
-      for (const domain of REPLAY_DOMAINS) {
-        if (replay.snapshots.some(snapshot => !(domain in snapshot.state.domains))) missing.push(`replay.domain:${domain}`);
-      }
-      if (!replay.controlPoints?.length) missing.push('replay.control-points.empty');
-      else {
-        for (const point of replay.controlPoints) {
-          try {
-            const branchId = point.branchId ?? replay.branchId;
-            const frame = restoreAt({ archive: replay, cursor: { branchId, sequence: point.sequence } });
-            if (!frame.identityClaimed || frame.stateHash !== point.stateHash) errors.push(`Контрольная точка не воспроизводится: ${branchId}/${point.sequence}`);
-          } catch (error) {
-            errors.push(error instanceof Error ? error.message : String(error));
-          }
-        }
-      }
+      const semantic = verifyReplayJournalSemantics(replay, restoreAt);
+      missing.push(...semantic.missing);
+      errors.push(...semantic.errors);
     } catch (error) {
       errors.push(`Некорректный журнал реплея: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -102,6 +88,7 @@ export function verifyArchive(bundle: ArchiveBundle): ArchiveVerification {
     brokenReferences: [...new Set(brokenReferences)],
     errors,
     limitations,
+    notices: omissionState.notices,
     manifestSha256: actualHash,
   };
 }

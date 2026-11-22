@@ -20,11 +20,12 @@ const exportPolicy = {
   allowedAudiences: ['GENERAL', 'PRIVATE', 'PUBLIC', 'commanders'],
   includeDisplayNames: false,
 };
+const exportPolicyAdapter = { policyFor: () => exportPolicy };
 
 function exportInput(components = completeComponents()) {
   return {
     actor, organizationId: 'org-1', archiveId: 'review-archive', kind: 'OFFICIAL' as const,
-    createdAt: '2026-11-21T12:00:00.000Z', versions: archiveVersions, components, exportPolicy,
+    createdAt: '2026-11-21T12:00:00.000Z', versions: archiveVersions, components, policyAdapter: exportPolicyAdapter,
     atlasLicense: { offlineExport: true, attribution: 'Локальный атлас' },
   };
 }
@@ -86,7 +87,7 @@ it('R04: экспорт применяет серверную проекцию �
   };
   const bundle = exportArchive({
     ...exportInput(components),
-    exportPolicy: { ...exportPolicy, allowedSideIds: ['blue'], allowedAudiences: ['PUBLIC'], allowedComponentIds: exportPolicy.allowedComponentIds.filter(id => id !== 'environment.weather') },
+    policyAdapter: { policyFor: () => ({ ...exportPolicy, allowedSideIds: ['blue'], allowedAudiences: ['PUBLIC'], allowedComponentIds: exportPolicy.allowedComponentIds.filter(id => id !== 'environment.weather') }) },
   });
   const participants = new TextDecoder().decode(bundle.files['participants/assignments.json']);
   const documents = new TextDecoder().decode(bundle.files['documents/revisions.json']);
@@ -101,7 +102,10 @@ it('R04: экспорт применяет серверную проекцию �
 });
 
 it('R08: standalone HTML экранирует архив и ограничения и запрещает сетевые подключения CSP', () => {
+  const components = completeComponents();
+  delete components['environment.weather'];
   const bundle = makeArchiveBundle(manifestInput({
+    components,
     archiveId: '<script>globalThis.__archiveXss=1</script>',
     omissions: [{ componentId: 'environment.weather', reason: '<img src=x onerror=globalThis.__archiveXss=1>' }],
   }));

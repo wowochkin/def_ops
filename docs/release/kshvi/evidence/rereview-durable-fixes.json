@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "Повторная ревизия Tasks 44–47 и durable PostgreSQL jobs",
+  "items": {
+    "RR01": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR01", "result": "PASS", "fix": "Лицензионный omission только для environment.tiles; license+informational отклоняется; все omissions видны как notices" },
+    "RR02": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR02", "result": "PASS", "fix": "null, пустые записи и записи без обязательных полей в массивах отклоняются" },
+    "RR03": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR03", "result": "PASS", "fix": "Uint8Array декодируется и проходит side/audience/field проекцию" },
+    "RR04": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR04", "result": "PASS", "fix": "referenceIntent/reference.content имеют scope и UNKNOWN при недопустимой аудитории" },
+    "RR05": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR05", "result": "PASS", "fix": "Standalone и server используют общий journal-verifier для фактов, 22 доменов и контрольных точек" },
+    "RR06": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR06", "result": "PASS", "fix": "Политика вычисляется ArchiveActorPolicyAdapter из назначений actor" },
+    "RR07": { "test": "packages/kshvi/tests/rereview-domain-regressions.test.ts#RR07", "result": "PASS", "fix": "Повреждённые occurredAt и period дают UNKNOWN" },
+    "RR08": { "test": "packages/kshvi/tests/rereview-domain-regressions.test.ts#RR08", "result": "PASS", "fix": "Снимок ветви получает новый snapshotId и актуальный stateHash" },
+    "RR09": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR09", "result": "PASS", "fix": "Существующий branchId не перезаписывается" },
+    "RR10": { "test": "services/kshvi/tests/rereview-regressions.test.ts#RR10", "result": "PASS", "fix": "Idempotent submit требует archive.jobs.read" },
+    "RR11": { "test": "apps/archive-viewer/tests/rereview-regressions.test.ts#RR11", "result": "PASS", "fix": "Standalone и server запрещают обратные слэши и Windows paths" },
+    "D01": { "test": "services/kshvi/tests/archive-jobs-pg.test.ts#D01", "result": "PASS", "fix": "queued/running/succeeded, progress, attempts, results и idempotency читаются другим экземпляром PostgreSQL" },
+    "D02": { "test": "services/kshvi/tests/archive-jobs-pg.test.ts#D02", "result": "PASS", "fix": "SIGKILL после эффекта; recovery и retry возвращают REPLAYED, ровно один side effect и одна archive_job_effects запись" },
+    "D03": { "test": "services/kshvi/tests/archive-jobs-pg.test.ts#D03", "result": "PASS", "fix": "Транзакционные блокировки двух менеджеров: max running=1, глобальная очередь и попытки без дублирования" },
+    "D04": { "test": "services/kshvi/tests/archive-jobs-pg.test.ts#D04", "result": "PASS", "fix": "Orphaned running завершается перед retry, owner_manager очищается, attempts сохраняется" }
+  },
+  "verification": {
+    "originalRegressions": "R01–R21 и RR01–RR11: 32/32 PASS",
+    "durable": "D01–D04: 4/4 PASS на реальном PostgreSQL, включая SIGKILL дочернего процесса",
+    "playwright": "4/4 PASS: replay, generated viewer+tamper, standalone valid/tampered/limited",
+    "typecheck": "npm run typecheck — PASS",
+    "fullWithDatabase": "TEST_DATABASE_URL=postgres://vladimirabramov@127.0.0.1:5432/postgres npm test — 347 files passed, 1 skipped; 3179 tests passed, 36 skipped",
+    "build": "npm run build и npm run build -w @def-ops/archive-viewer — PASS",
+    "documentation": "docs/system.md/PDF/DOCX обновлены; standalone JPEG 1440×900 обновлён",
+    "debug": "JOB_DEBUG отсутствует, диагностические процессы завершены"
+  },
+  "physicalLimitationsOnly": [
+    "Файловый просмотр на физически отключённой машине с реальными тайлами, шрифтами и полными архивами не проверялся.",
+    "Матрица поддерживаемых браузеров/ОС и длительная эксплуатационная проверка больших пакетов с замером CPU и памяти не проводилась."
+  ]
+}

@@ -12,7 +12,7 @@ it('R06: публикация повторно фильтрует материа
   const debrief = buildDebrief({
     scope: 'PRIVATE', instanceId: 'hq-1', trainingQuestions: ['q1'], audience: 'PRIVATE', allowedSideIds: ['blue'],
     materials: [{ id: 'private-secret', section: 'KEY_DECISIONS', instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['q1'], audience: ['PRIVATE'], payload: { text: 'Скрытое содержимое' } }],
-    referenceIntent: { text: 'Замысел' }, deviations: [],
+    referenceIntent: { instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['q1'], audience: ['PRIVATE'], content: { text: 'Замысел' } }, deviations: [],
   });
   const published = publishDebrief(debrief, { revision: 2, audience: ['PUBLIC'], publishedBy: 'leader', publishedAt: '2026-11-21T12:00:00Z' });
   expect(JSON.stringify(published)).not.toContain('Скрытое содержимое');
@@ -42,7 +42,7 @@ it('R10: частный разбор фильтрует отклонения п�
   const base = { rationale: 'Обоснование', consequences: ['Последствие'] };
   const debrief = buildDebrief({
     scope: 'PRIVATE', instanceId: 'hq-1', trainingQuestions: ['q1'], audience: 'PRIVATE', allowedSideIds: ['blue'], materials: [],
-    referenceIntent: { text: 'Замысел' }, deviations: [
+    referenceIntent: { instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['q1'], audience: ['PRIVATE'], content: { text: 'Замысел' } }, deviations: [
       { ...base, decisionId: 'allowed', instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['q1'], audience: ['PRIVATE'] },
       { ...base, decisionId: 'other-instance', instanceId: 'hq-2', sideId: 'blue', trainingQuestions: ['q1'], audience: ['PRIVATE'] },
       { ...base, decisionId: 'other-question', instanceId: 'hq-1', sideId: 'blue', trainingQuestions: ['q2'], audience: ['PRIVATE'] },

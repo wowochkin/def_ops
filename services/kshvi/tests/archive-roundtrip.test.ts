@@ -1,7 +1,8 @@
 import { expect, it } from 'vitest';
 import { restoreAt } from '../../../packages/kshvi/src/replay/replay-engine';
 import type { ReplayArchive } from '../../../packages/kshvi/src/replay/types';
-import { completeComponents, archiveVersions, makeArchiveBundle, fullArchiveExportPolicy } from '../../../packages/kshvi/tests/fixtures/archive-fixture';
+import { completeComponents, archiveVersions, makeArchiveBundle } from '../../../packages/kshvi/tests/fixtures/archive-fixture';
+import { fullArchivePolicyAdapter } from './helpers/archive-policy';
 import { exportArchive, serializeArchive, deserializeArchive } from '../src/archive/archive-exporter';
 import { verifyArchive } from '../src/archive/integrity-check';
 import { importArchive } from '../src/archive/archive-importer';
@@ -13,7 +14,7 @@ const importActor = { organizationId: 'org-1', userId: 'importer-1', authorities
 function exported() {
   return exportArchive({
     actor, organizationId: 'org-1', archiveId: 'archive-official-1', kind: 'OFFICIAL', createdAt: '2026-11-21T12:00:00.000Z',
-    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy,
+    versions: archiveVersions, components: completeComponents(), policyAdapter: fullArchivePolicyAdapter,
     atlasLicense: { offlineExport: true, attribution: 'Локальный атлас' },
   });
 }
@@ -58,13 +59,13 @@ it('до публикации обнаруживает изменённый фа
 it('не обходит права и лицензию атласа, а ссылочный экспорт явно неавтономен', () => {
   expect(() => exportArchive({
     actor: { organizationId: 'org-1', userId: 'forbidden', authorities: [] }, organizationId: 'org-1', archiveId: 'x', kind: 'OFFICIAL', createdAt: 'x',
-    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy,
+    versions: archiveVersions, components: completeComponents(), policyAdapter: fullArchivePolicyAdapter,
     atlasLicense: { offlineExport: true, attribution: 'x' },
   })).toThrow('403');
   expect(() => exportedWithOrgMismatch()).toThrow('403');
   const limited = exportArchive({
     actor, organizationId: 'org-1', archiveId: 'archive-reference', kind: 'OFFICIAL', createdAt: '2026-11-21T12:00:00.000Z',
-    versions: archiveVersions, components: completeComponents(), exportPolicy: fullArchiveExportPolicy, allowReferenceOnly: true,
+    versions: archiveVersions, components: completeComponents(), policyAdapter: fullArchivePolicyAdapter, allowReferenceOnly: true,
     atlasLicense: { offlineExport: false, attribution: 'Ограниченный атлас', reference: { style: 'local-style' } },
   });
   expect(limited.manifest.omissions.some(item => item.componentId === 'environment.tiles')).toBe(true);
@@ -85,7 +86,7 @@ it('список участников ограничен политикой эк
 function exportedWithOrgMismatch() {
   return exportArchive({
     actor, organizationId: 'org-2', archiveId: 'x', kind: 'OFFICIAL', createdAt: 'x', versions: archiveVersions,
-    components: completeComponents(), exportPolicy: fullArchiveExportPolicy, atlasLicense: { offlineExport: true, attribution: 'x' },
+    components: completeComponents(), policyAdapter: fullArchivePolicyAdapter, atlasLicense: { offlineExport: true, attribution: 'x' },
   });
 }
 

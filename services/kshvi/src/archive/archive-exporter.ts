@@ -1,4 +1,5 @@
 import {
+  ARCHIVE_COMPONENTS,
   createArchiveManifest,
   materializeArchiveFiles,
   type ArchiveBundle,
@@ -9,9 +10,36 @@ import { projectComponentForExport, type ParticipantExportPolicy } from './reten
 
 export type ArchiveExportActor = { organizationId: string; userId: string; authorities: readonly string[] };
 export type ArchiveExportPolicy = ParticipantExportPolicy & { allowedComponentIds: readonly string[] };
+export type ArchiveActorAssignment = {
+  organizationId: string;
+  userId: string;
+  componentIds: readonly string[];
+  sideIds: readonly string[];
+  audiences: readonly string[];
+  includeDisplayNames: boolean;
+};
+export interface ArchiveActorPolicyAdapter {
+  policyFor(actor: ArchiveExportActor): ArchiveExportPolicy;
+}
+export class StaticArchiveActorPolicyAdapter implements ArchiveActorPolicyAdapter {
+  constructor(private readonly assignments: readonly ArchiveActorAssignment[]) {}
+
+  policyFor(actor: ArchiveExportActor): ArchiveExportPolicy {
+    const assignment = this.assignments.find(item => item.organizationId === actor.organizationId && item.userId === actor.userId);
+    if (!assignment) throw new Error('403: Для actor нет назначения экспортной политики');
+    const known = new Set(ARCHIVE_COMPONENTS.map(component => component.id));
+    if (assignment.componentIds.some(componentId => !known.has(componentId))) throw new Error('Назначение содержит неизвестный компонент архива');
+    return {
+      allowedComponentIds: [...assignment.componentIds],
+      allowedSideIds: [...assignment.sideIds],
+      allowedAudiences: [...assignment.audiences],
+      includeDisplayNames: assignment.includeDisplayNames,
+    };
+  }
+}
 export type ArchiveExportInput = ArchiveManifestInput & {
   actor: ArchiveExportActor;
-  exportPolicy: ArchiveExportPolicy;
+  policyAdapter: ArchiveActorPolicyAdapter;
   atlasLicense: { offlineExport: boolean; attribution: string; reference?: unknown };
   allowReferenceOnly?: boolean;
 };
@@ -20,8 +48,9 @@ export function exportArchive(input: ArchiveExportInput): ArchiveBundle {
   if (!input.actor.userId || !input.actor.authorities.includes('archive.export') || input.actor.organizationId !== input.organizationId) {
     throw new Error('403: Экспорт архива недоступен');
   }
+  const exportPolicy = input.policyAdapter.policyFor(input.actor);
   const omissions = [...(input.omissions ?? [])];
-  const allowed = new Set(input.exportPolicy.allowedComponentIds);
+  const allowed = new Set(exportPolicy.allowedComponentIds);
   const components: Record<string, ArchiveComponentInput> = {};
   for (const [componentId, component] of Object.entries(input.components)) {
     if (allowed.has(componentId)) components[componentId] = structuredClone(component);
@@ -37,7 +66,7 @@ export function exportArchive(input: ArchiveExportInput): ArchiveBundle {
   }
   for (const [componentId, component] of Object.entries(components)) {
     try {
-      const projected = projectComponentForExport(componentId, component.data, input.exportPolicy);
+      const projected = projectComponentForExport(componentId, component.data, exportPolicy);
       component.data = projected.data;
       if (projected.redacted) omissions.push({ componentId, reason: 'Применена серверная проекция разрешённых данных', informational: true });
     } catch (error) {

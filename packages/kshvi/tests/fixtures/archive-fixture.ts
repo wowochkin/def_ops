@@ -22,7 +22,11 @@ export const fullArchiveExportPolicy = {
 };
 
 function sampleValue(componentId: string, path: string, type: ArchiveFieldType, filled: boolean): unknown {
-  if (type === 'array') return filled ? [{ id: 'item-1', sideId: 'blue', audience: ['GENERAL', 'PRIVATE', 'PUBLIC', 'commanders'], data: 'recorded', sha256: 'a'.repeat(64) }] : [];
+  if (type === 'array') return filled ? [{
+    id: 'item-1', eventId: 'event-1', type: 'recorded', sequence: 1, revision: 1,
+    state: { recorded: true }, stateHash: 'a'.repeat(64), hash: 'a'.repeat(64), operationalAt: '2026-11-21T00:00:00.000Z',
+    userId: 'user-1', role: 'COMMANDER', sideId: 'blue', audience: ['GENERAL', 'PRIVATE', 'PUBLIC', 'commanders'], data: 'recorded', sha256: 'a'.repeat(64),
+  }] : [];
   if (type === 'object') return filled ? { recorded: true } : {};
   if (type === 'number') return 1;
   if (type === 'boolean') return true;

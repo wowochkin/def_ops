@@ -1,4 +1,5 @@
 import { ARCHIVE_COMPONENTS, type ArchiveBundle } from '../../../../packages/kshvi/src/archive/archive-manifest';
+import { REPLAY_DOMAINS, REPLAY_FACT_TYPES } from '../../../../packages/kshvi/src/replay/types';
 import { serializeArchive } from './archive-exporter';
 import { verifyArchive } from './integrity-check';
 
@@ -54,6 +55,24 @@ function decodeText(base64) {
   return new TextDecoder().decode(decodeBytes(base64));
 }
 const requiredComponents = __ARCHIVE_REQUIRED__;
+const requiredFacts = __REPLAY_FACTS__;
+const requiredDomains = __REPLAY_DOMAINS__;
+function verifyJournal(replay) {
+  const missing = [];
+  const errors = [];
+  for (const type of requiredFacts) if (!replay.events.some(event => event.type === type)) missing.push('journal.facts:' + type);
+  for (const domain of requiredDomains) {
+    if (replay.snapshots.some(snapshot => !(domain in snapshot.state.domains))) missing.push('replay.domain:' + domain);
+  }
+  if (!replay.controlPoints?.length) missing.push('replay.control-points.empty');
+  else for (const point of replay.controlPoints) {
+    try {
+      const frame = recordedReplayAt(replay, point.sequence, point.branchId || replay.branchId);
+      if (frame.compatibility !== 'REPRODUCIBLE' || frame.hash !== point.stateHash) errors.push('Контрольная точка не воспроизводится: ' + point.sequence);
+    } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
+  }
+  return { missing, errors };
+}
 function verifyPackage(packageData) {
   const { manifest, files } = packageData;
   const errors = [];
@@ -64,13 +83,21 @@ function verifyPackage(packageData) {
   const manifestSha256 = sha256(new TextEncoder().encode(canonicalJson(manifestContent)));
   if (manifestSha256 !== manifest.manifestSha256) errors.push('Контрольная сумма манифеста не совпадает');
   if (manifest.schemaVersion !== 1) errors.push('Неподдерживаемая схема');
-  const omissions = new Map(manifest.omissions.map(item => [item.componentId, item]));
+  const omissions = manifest.omissions;
+  const present = new Set(manifest.components.map(component => component.id));
+  const licensedMissing = new Set();
+  for (const omission of omissions) {
+    if (omission.licenseLimitation && (omission.componentId !== 'environment.tiles' || omission.informational)) errors.push('Недопустимый omission: ' + omission.componentId);
+    if (present.has(omission.componentId) && !omission.informational) errors.push('Omission при наличии компонента: ' + omission.componentId);
+    if (omission.licenseLimitation && omission.componentId === 'environment.tiles' && !omission.informational && !present.has(omission.componentId)) licensedMissing.add(omission.componentId);
+  }
   for (const definition of requiredComponents) {
     if (!definition.required && !(manifest.kind === 'EXPOSITION' && definition.id.startsWith('exposition.'))) continue;
-    if (!manifest.components.some(component => component.id === definition.id) && !omissions.get(definition.id)?.licenseLimitation) missing.push(definition.id);
+    if (!manifest.components.some(component => component.id === definition.id) && !licensedMissing.has(definition.id)) missing.push(definition.id);
   }
   const paths = new Set(manifest.components.map(component => component.path));
   for (const component of manifest.components) {
+    if (!component.path || component.path.startsWith('/') || component.path.includes('\\') || component.path.split('/').includes('..') || /^[a-z]:/i.test(component.path)) errors.push('Небезопасный путь: ' + component.id);
     let bytes;
     try { bytes = decodeBytes(files[component.path]); }
     catch { corrupted.push(component.path); continue; }
@@ -82,22 +109,30 @@ function verifyPackage(packageData) {
     for (const reference of component.references) if (!paths.has(reference) || typeof files[reference] !== 'string') brokenReferences.push(reference);
   }
   for (const path of Object.keys(files)) if (!paths.has(path)) errors.push('Файл отсутствует в манифесте: ' + path);
-  const limitations = manifest.omissions.filter(item => !item.informational).map(item => item.reason);
+  const replayEntry = manifest.components.find(component => component.id === 'replay.archive');
+  if (replayEntry && files[replayEntry.path]) {
+    try {
+      const semantic = verifyJournal(JSON.parse(decodeText(files[replayEntry.path])));
+      missing.push(...semantic.missing); errors.push(...semantic.errors);
+    } catch (error) { errors.push('Некорректный журнал: ' + (error instanceof Error ? error.message : String(error))); }
+  }
+  const limitations = manifest.omissions.filter(item => !item.informational || item.licenseLimitation).map(item => item.reason);
+  const notices = manifest.omissions.map(item => item.componentId + ': ' + item.reason);
   const rejected = errors.length || corrupted.length || brokenReferences.length;
   const autonomous = !rejected && !missing.length && !limitations.length;
   return {
     mode: rejected ? 'REJECTED' : autonomous ? 'AUTONOMOUS' : 'LIMITED_RESEARCH',
-    autonomous, missing, corrupted, brokenReferences, errors, limitations,
-    replayPath: manifest.components.find(component => component.id === 'replay.archive')?.path || null,
+    autonomous, missing, corrupted, brokenReferences, errors, limitations, notices,
+    replayPath: replayEntry?.path || null,
   };
 }
-function recordedReplayAt(archive, cursor) {
-  const snapshots = archive.snapshots.filter(item => item.branchId === archive.branchId && item.sequence <= cursor).sort((a,b) => b.sequence - a.sequence);
+function recordedReplayAt(archive, cursor, branchId = archive.branchId) {
+  const snapshots = archive.snapshots.filter(item => item.branchId === branchId && item.sequence <= cursor).sort((a,b) => b.sequence - a.sequence);
   const snapshot = snapshots[0];
   if (!snapshot) throw new Error('Нет снимка');
   if (snapshot.reducerVersion !== 1) return { state: snapshot.state, hash: null, sequence: snapshot.sequence, compatibility: 'INCOMPATIBLE_READ' };
   const state = JSON.parse(JSON.stringify(snapshot.state));
-  const events = archive.events.filter(event => event.branchId === archive.branchId && event.sequence <= cursor).sort((a,b) => a.sequence - b.sequence);
+  const events = archive.events.filter(event => event.branchId === branchId && event.sequence <= cursor).sort((a,b) => a.sequence - b.sequence);
   for (const event of events) {
     if (event.sequence <= snapshot.sequence) continue;
     if ((event.reducerVersion || snapshot.reducerVersion) !== 1) return { state, hash: null, sequence: event.sequence - 1, compatibility: 'INCOMPATIBLE_READ' };
@@ -115,7 +150,7 @@ if (verification.mode === 'REJECTED') {
   throw new Error('Проверка автономного архива не пройдена');
 }
 if (!verification.autonomous) {
-  document.getElementById('archive-status').textContent = 'Ограниченное исследование: ' + [...verification.missing, ...verification.limitations].join('; ');
+  document.getElementById('archive-status').textContent = 'Ограниченное исследование: ' + [...verification.missing, ...verification.notices].join('; ');
 }
 if (!verification.replayPath || !packageData.files[verification.replayPath]) throw new Error('Журнал реплея отсутствует');
 const replay = JSON.parse(decodeText(packageData.files[verification.replayPath]));
@@ -154,10 +189,12 @@ export function buildOfflineViewer(bundle: ArchiveBundle): string {
   if (verification.mode === 'REJECTED') throw new Error('Нельзя собрать viewer повреждённого архива');
   const serialized = serializeArchive(bundle).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026');
   const requiredJson = JSON.stringify(ARCHIVE_COMPONENTS.map(component => ({ id: component.id, required: component.required })));
-  const executable = VIEWER_SCRIPT.replace('__ARCHIVE_REQUIRED__', requiredJson);
+  const executable = VIEWER_SCRIPT.replace('__ARCHIVE_REQUIRED__', requiredJson)
+    .replace('__REPLAY_FACTS__', JSON.stringify(REPLAY_FACT_TYPES))
+    .replace('__REPLAY_DOMAINS__', JSON.stringify(REPLAY_DOMAINS));
   const modeLabel = verification.autonomous
-    ? 'Автономное воспроизведение: проверено'
-    : `Ограниченное исследование: ${[...verification.missing, ...verification.limitations].join('; ')}`;
+    ? `Автономное воспроизведение: проверено${verification.notices.length ? `; уведомления: ${verification.notices.join('; ')}` : ''}`
+    : `Ограниченное исследование: ${[...verification.missing, ...verification.notices].join('; ')}`;
   return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; font-src 'none'"><title>Автономный реплей КШВИ</title>
 <style>html{font-family:system-ui,sans-serif;background:#111a20;color:#edf2f4}body{margin:0;padding:20px}main{max-width:1400px;margin:auto}article{border:1px solid #75838b;padding:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere}#offline-domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}label{display:block;margin:16px 0}input{width:100%}</style></head>
 <body><main><h1>Автономный реплей КШВИ</h1><p id="archive-status" role="status">${escapeHtml(modeLabel)}</p><p>Истинное состояние — постоянная метка</p><p>${escapeHtml(bundle.manifest.archiveId)}; манифест ${escapeHtml(bundle.manifest.manifestSha256)}</p><p id="archive-error" role="alert"></p>

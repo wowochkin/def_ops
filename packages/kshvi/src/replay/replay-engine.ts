@@ -2,7 +2,6 @@ import { nearestSnapshot, restoreSnapshot, snapshotStateHash } from './snapshot-
 import { replayClockAt } from './replay-clock';
 import { tagReplayObjectSources } from './perspective';
 import {
-  REPLAY_FACT_TYPES,
   type ReplayArchive,
   type ReplayCursor,
   type ReplayEvent,
@@ -158,6 +157,4 @@ export function replayStateHash(state: ReplayState): string {
   return snapshotStateHash(state);
 }
 
-export function journalCoverage(events: readonly Pick<ReplayEvent, 'type'>[]): string[] {
-  return REPLAY_FACT_TYPES.filter(required => !events.some(event => event.type === required));
-}
+export { journalCoverage } from './journal-verifier';

@@ -93,6 +93,9 @@ export class ArchiveJobManager {
     if (existingId) {
       const existing = this.jobs.get(existingId)!;
       if (existing.requestHash !== requestHash) throw new Error('Ключ задания уже использован с другим содержимым');
+      if (!input.owner.authorities.includes('archive.jobs.read') && !input.owner.authorities.includes('archive.jobs.read.any')) {
+        throw new Error('403: Чтение результата идемпотентного задания недоступно');
+      }
       return this.publicJob(existing);
     }
     if (Buffer.byteLength(canonicalJson(input.payload)) > this.limits.maxPayloadBytes) throw new Error('Превышен лимит размера задания');

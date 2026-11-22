@@ -38,12 +38,17 @@ export function calculateMetric(definition: MetricDefinition, events: readonly M
   if (errors.length) throw new Error(errors.join('; '));
   const from = Date.parse(definition.period.from);
   const to = Date.parse(definition.period.to);
+  const missing = new Set<string>();
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from > to) missing.add('period');
   const periodEvents = events.filter(event => {
     const occurredAt = Date.parse(event.occurredAt);
-    return Number.isFinite(occurredAt) && occurredAt >= from && occurredAt <= to;
+    if (!Number.isFinite(occurredAt)) {
+      missing.add('occurredAt');
+      return false;
+    }
+    return occurredAt >= from && occurredAt <= to;
   });
   let value: number | 'UNKNOWN' = 'UNKNOWN';
-  const missing = new Set<string>();
   const used: MetricEvent[] = [];
   if (definition.operation === 'DELIVERY_DELAY') {
     const starts = periodEvents.filter(event => event.type === definition.startEventType).sort((left, right) => left.sequence - right.sequence);
@@ -77,6 +82,7 @@ export function calculateMetric(definition: MetricDefinition, events: readonly M
     used.push(...matching);
     value = matching.length;
   }
+  if (missing.size > 0) value = 'UNKNOWN';
   const unique = [...new Map(used.map(event => [event.eventId, event])).values()].sort((left, right) => left.sequence - right.sequence);
   return {
     metricId: definition.id,

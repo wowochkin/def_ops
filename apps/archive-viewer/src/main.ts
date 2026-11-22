@@ -46,8 +46,8 @@ fileInput.addEventListener('change', async () => {
     if (!verification.replayPath || !packageData.files[verification.replayPath]) throw new Error('Журнал реплея отсутствует');
     replay = JSON.parse(standaloneText(packageData.files[verification.replayPath])) as ReplayArchive;
     status.textContent = verification.autonomous
-      ? 'Манифест и SHA-256 проверены. Автономное воспроизведение разрешено.'
-      : `Ограниченное исследование: ${[...verification.missing, ...verification.limitations].join('; ')}`;
+      ? `Манифест и SHA-256 проверены. Автономное воспроизведение разрешено.${verification.notices.length ? ` Уведомления: ${verification.notices.join('; ')}` : ''}`
+      : `Ограниченное исследование: ${[...verification.missing, ...verification.notices].join('; ')}`;
     slider.max = String(Math.max(0, ...replay.events.map(event => event.sequence)));
     slider.value = '0';
     viewer.hidden = false;

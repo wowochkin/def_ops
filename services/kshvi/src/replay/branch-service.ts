@@ -47,6 +47,7 @@ export class BranchService {
   createBranch(branchId: string, actor: ReplayActor): Branch {
     this.assertOfficial(actor);
     if (!actor.authorities.includes('BRANCH_CREATE')) throw new Error('403: Нет права создания ветви');
+    if (this.branches.has(branchId)) throw new Error(`Ветвь ${branchId} уже существует`);
     const branch = createBranch(this.officialLine, { branchId });
     branch.ownerId = actor.userId;
     branch.rights = ['BRANCH_READ'];

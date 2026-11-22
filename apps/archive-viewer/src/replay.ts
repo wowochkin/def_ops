@@ -49,15 +49,15 @@ export function sha256Offline(bytes: Uint8Array): string {
   return hash.map(value => value.toString(16).padStart(8, '0')).join('');
 }
 
-export function recordedReplayAt(archive: ReplayArchive, cursor: number): OfflineReplayFrame {
+export function recordedReplayAt(archive: ReplayArchive, cursor: number, branchId = archive.branchId): OfflineReplayFrame {
   const snapshot = archive.snapshots
-    .filter(item => item.branchId === archive.branchId && item.sequence <= cursor)
+    .filter(item => item.branchId === branchId && item.sequence <= cursor)
     .sort((left, right) => right.sequence - left.sequence)[0];
   if (!snapshot) throw new Error('Для автономного реплея нет снимка');
   const state = structuredClone(snapshot.state);
   if (snapshot.reducerVersion !== 1) return { state, hash: null, sequence: snapshot.sequence, compatibility: 'INCOMPATIBLE_READ' };
   const events = archive.events
-    .filter(event => event.branchId === archive.branchId && event.sequence <= cursor)
+    .filter(event => event.branchId === branchId && event.sequence <= cursor)
     .sort((left, right) => left.sequence - right.sequence);
   for (const event of events) {
     if (event.sequence <= snapshot.sequence) continue;

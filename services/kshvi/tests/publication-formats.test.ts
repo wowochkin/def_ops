@@ -13,7 +13,7 @@ it('PDF и DOCX открываются локально и сохраняют р
       id: `m${index}`, section, instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'],
       payload: { text: 'Учебный материал', unit: 's', attribution: 'Локальный атлас', legend: 'Легенда знаков' },
     })),
-    referenceIntent: { text: 'Замысел руководства' }, deviations: [],
+    referenceIntent: { instanceId: 'hq', sideId: 'blue', trainingQuestions: ['q'], audience: ['GENERAL', 'commanders'], content: { text: 'Замысел руководства' } }, deviations: [],
   });
   const published = service.publish(debrief, { revision: 7, audience: ['commanders'], publishedBy: 'leader', publishedAt: '2026-11-21T12:00:00Z' });
   const pdf = await service.export(published, 'PDF');

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { canonicalJson } from '../events/canonical';
+import { snapshotStateHash } from './snapshot-restore';
 import { ReplayReducerRegistry, type ReplayActor, type ReplayChange, type ReplayEvent, type ReplaySnapshot, type ReplayState, type ReplayVersionRef } from './replay-engine';
 
 export type BranchVersions = {
@@ -51,11 +52,16 @@ export function branchSequence(branch: Branch): number {
 }
 function branchSnapshot(branch: Branch, branchId: string): ReplaySnapshot {
   const latest = branch.events.at(-1);
+  const sequence = branchSequence(branch);
+  const state = structuredClone(branch.state);
   return {
-    ...structuredClone(branch.snapshot), branchId, sequence: branchSequence(branch),
+    ...structuredClone(branch.snapshot),
+    snapshotId: `${branch.snapshot.snapshotId}:branch:${branchId}:${sequence}`,
+    branchId, sequence,
     operationalAt: latest?.operationalAt ?? branch.snapshot.operationalAt,
     wallClockAt: latest?.wallClockAt ?? branch.snapshot.wallClockAt,
-    state: structuredClone(branch.state),
+    state,
+    stateHash: snapshotStateHash(state),
   };
 }
 

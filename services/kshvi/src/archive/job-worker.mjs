@@ -4,6 +4,11 @@ const controller = new AbortController();
 parentPort.on('message', message => {
   if (message?.type === 'cancel') controller.abort(new Error('Задание отменено'));
 });
+let effects;
+if (workerData.db?.url) {
+  const { applyIdempotentEffect } = await import('./pg-effect-port.mjs');
+  effects = { apply: (key, apply) => applyIdempotentEffect(workerData.db, key, apply) };
+}
 
 try {
   let task;
@@ -18,6 +23,7 @@ try {
     payload: workerData.payload,
     attempt: workerData.attempt,
     signal: controller.signal,
+    effects,
     reportProgress: progress => parentPort.postMessage({ type: 'progress', progress }),
   });
   parentPort.postMessage({ type: 'result', result });
