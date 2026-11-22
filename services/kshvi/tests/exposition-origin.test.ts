@@ -6,7 +6,7 @@ import {
   startArchiveShow,
   startAutonomousShow,
 } from '../../../packages/kshvi/src/exposition/exposition-session';
-import { expositionProgram, officialArchive } from '../../../packages/kshvi/tests/fixtures/exposition';
+import { expositionProgram, officialArchive, testFullSimulation } from '../../../packages/kshvi/tests/fixtures/exposition';
 import { exportExpositionArchive, verifyExpositionDerivative } from '../src/exposition/exposition-export';
 import { createProjectorProfile, projectExpositionForAudience } from '../src/exposition/exposition-projection';
 
@@ -17,7 +17,8 @@ it('AC-28: оба показа, продолжение и производный
   const program = expositionProgram();
   const policy = createAudiencePolicy({
     id: 'audience-policy-ac28', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
-    showPlanFact: true, showExplanations: true, publicCaptionIds: ['caption-public'], publicDecisionIds: [],
+    showPlanFact: true, showExplanations: true, publicCaptionIds: ['caption-public'],
+    publicExplanationIds: ['explanation-public'], publicDecisionIds: [],
   });
   const projector = createProjectorProfile({
     id: 'projector-ac28', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
@@ -32,9 +33,10 @@ it('AC-28: оба показа, продолжение и производный
 
   const autonomous = startAutonomousShow({
     sourceArchive: archive, program, seed: 28, sessionId: 'ac28-auto', branchId: 'ac28-auto-branch',
+    calculate: testFullSimulation,
   });
   const continued = continueFromCheckpoint(autonomous, 'cp-1', {
-    sessionId: 'ac28-continued', branchId: 'ac28-continued-branch',
+    sessionId: 'ac28-continued', branchId: 'ac28-continued-branch', calculate: testFullSimulation,
   });
   const replayed = restartAutonomousShow(continued, { mode: 'REPLAY_SAVED_LINE', sessionId: 'ac28-replayed' });
   expect(replayed.journal).toEqual(continued.journal);
@@ -49,6 +51,8 @@ it('AC-28: оба показа, продолжение и производный
 
   expect(() => exportExpositionArchive({ session: continued, policy, archiveId: archive.archiveId }))
     .toThrow('идентификатор официального архива');
+  expect(() => exportExpositionArchive({ session: continued, policy, archiveId: '  ' }))
+    .toThrow('пуст');
   const derivative = exportExpositionArchive({ session: continued, policy, archiveId: 'ac28-derived-archive' });
   expect(derivative.schemaVersion).toBe('1.0.0');
   expect(derivative.archiveId).toBe('ac28-derived-archive');
@@ -63,13 +67,15 @@ it('AC-28: оба показа, продолжение и производный
     parentBranchId: autonomous.branchId,
     checkpointId: 'cp-1',
   });
-  expect(derivative.program).toEqual(program);
-  expect(derivative.explanations).toEqual(program.explanations);
+  expect(derivative.playback).toEqual(continued.playback);
+  expect(derivative.journalCursor).toBe(1);
+  expect(derivative.journal).toEqual(continued.journal.slice(0, 1));
+  expect(derivative.world).toEqual(continued.world);
+  expect(derivative.rng).toEqual(continued.checkpoints[0].rng);
+  expect(JSON.stringify(derivative.program)).not.toContain('hiddenRationale');
+  expect(derivative.explanations).toEqual([program.explanations[0]]);
   expect(derivative.audiencePolicy).toEqual(policy);
   expect(derivative.seed).toBe(28);
-  expect(derivative.journal).toEqual(continued.journal);
-  expect(derivative.world.resources.fuel).toBeDefined();
-  expect(derivative.checkpoints[0]?.world.resources.fuel).toBeDefined();
   expect(derivative.officialAssessmentCreated).toBe(false);
   expect(derivative.officialAssessments).toEqual([]);
   expect(derivative.manifestHash).toMatch(/^[0-9a-f]{64}$/);

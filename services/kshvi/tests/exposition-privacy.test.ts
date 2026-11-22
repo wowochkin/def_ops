@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { createAudiencePolicy } from '../../../packages/kshvi/src/exposition/audience-policy';
 import { controlExposition, startAutonomousShow } from '../../../packages/kshvi/src/exposition/exposition-session';
-import { expositionProgram, officialArchive } from '../../../packages/kshvi/tests/fixtures/exposition';
+import { expositionProgram, officialArchive, testFullSimulation } from '../../../packages/kshvi/tests/fixtures/exposition';
 import { createProjectorProfile, projectExpositionForAudience } from '../src/exposition/exposition-projection';
 import { applyPresenterCommand } from '../src/exposition/exposition-service';
 
 function setup() {
   const session = startAutonomousShow({
     sourceArchive: officialArchive(), program: expositionProgram(), seed: 42,
-    sessionId: 'private-show', branchId: 'private-exposition-branch',
+    sessionId: 'private-show', branchId: 'private-exposition-branch', calculate: testFullSimulation,
   });
   const policy = createAudiencePolicy({
-    id: 'audience-policy-1',
-    allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
-    showPlanFact: true,
-    showExplanations: true,
-    publicCaptionIds: ['caption-public'],
-    publicDecisionIds: [],
+    id: 'audience-policy-1', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
+    showPlanFact: true, showExplanations: true, publicCaptionIds: ['caption-public'],
+    publicExplanationIds: ['explanation-public'], publicDecisionIds: [],
   });
   const projector = createProjectorProfile({
     id: 'projector-1', allowedLayers: ['weather', 'terrain', 'logistics', 'modern-symbols'],
@@ -44,7 +41,7 @@ describe('серверная аудиторная проекция', () => {
     }
   });
 
-  it('глубоко удаляет вложенные служебные поля из объектов и массивов разрешённых слоёв', () => {
+  it('применяет whitelist схемы вместо сохранения неизвестных вложенных полей', () => {
     const source = officialArchive();
     const map: Record<string, unknown> = { ...source.map };
     const archive = { ...source, map };
@@ -52,14 +49,17 @@ describe('серверная аудиторная проекция', () => {
       summary: 'Публичная погода',
       nested: { serviceIntent: 'Вложенный замысел', safe: 'Видимость 8 км' },
       frames: [{ hiddenRationale: 'Вложенное обоснование', summary: 'Без осадков' }],
+      futureInput: 'Будущая вводная', commanderNotes: 'Заметки командующего', hidden: true,
     };
     map.terrain = {
-      summary: 'Публичная местность',
-      geojson: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'Рубеж', officialAssessments: [4] }, geometry: null }] },
+      summary: 'Публичная местность', trueForceId: 'force-truth',
+      geojson: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {
+        name: 'Рубеж', kind: 'ridge', officialAssessments: [4], trueForceId: 'force-truth', futureInput: 'Секрет', commanderNotes: 'Секрет', hidden: true,
+      }, geometry: null }] },
     };
     const session = startAutonomousShow({
       sourceArchive: archive, program: expositionProgram(), seed: 42,
-      sessionId: 'deep-private-show', branchId: 'deep-private-branch',
+      sessionId: 'deep-private-show', branchId: 'deep-private-branch', calculate: testFullSimulation,
     });
     const policy = createAudiencePolicy({
       id: 'deep-policy', allowedLayers: ['weather', 'terrain'], showPlanFact: false,
@@ -67,12 +67,13 @@ describe('серверная аудиторная проекция', () => {
     });
     const projector = createProjectorProfile({ id: 'deep-projector', allowedLayers: ['weather', 'terrain'] });
     const audience = projectExpositionForAudience({ session, policy, projector });
-    expect(audience.map.weather).toEqual({
-      summary: 'Публичная погода', nested: { safe: 'Видимость 8 км' }, frames: [{ summary: 'Без осадков' }],
+    expect(audience.map.weather).toEqual({ summary: 'Публичная погода' });
+    expect(audience.map.terrain).toEqual({
+      summary: 'Публичная местность',
+      geojson: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { name: 'Рубеж', kind: 'ridge' }, geometry: null }] },
     });
     const serialized = JSON.stringify(audience);
-    expect(serialized).toContain('Рубеж');
-    for (const forbidden of ['serviceIntent', 'hiddenRationale', 'officialAssessments', 'Вложенный замысел', 'Вложенное обоснование']) {
+    for (const forbidden of ['serviceIntent', 'hiddenRationale', 'officialAssessments', 'trueForceId', 'futureInput', 'commanderNotes', 'hidden', 'Вложенный замысел']) {
       expect(serialized).not.toContain(forbidden);
     }
   });

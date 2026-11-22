@@ -27,6 +27,7 @@ export type AudienceMap = Readonly<{
 export type AudienceProjection = Readonly<{
   sessionId: string;
   branchId: string;
+  handoffGeneration: number;
   purpose: 'EXPOSITION';
   label: 'Экспозиция';
   source: 'ARCHIVE' | 'AUTONOMOUS';
@@ -60,31 +61,98 @@ export function createProjectorProfile(input: Readonly<{
   return { id: input.id, kind: 'AUDIENCE_PROJECTOR', allowedLayers: [...new Set(input.allowedLayers)] };
 }
 
-const FORBIDDEN_MAP_KEYS = new Set([
-  'serviceintent', 'hiddenrationale', 'officialassessments', 'officialassessment', 'sourcearchive',
-  'journal', 'checkpoints', 'seed', 'rng', 'rngstate', 'hidden truth', 'hiddentruth', 'secret',
-  'secrets', 'private', 'internal', 'presenter', 'servicedata', 'classification',
-]);
-
-function forbiddenMapKey(key: string): boolean {
-  const normalized = key.replace(/[-_\s]/g, '').toLowerCase();
-  return key === '__proto__' || key === 'prototype' || key === 'constructor'
-    || FORBIDDEN_MAP_KEYS.has(normalized)
-    || normalized.includes('serviceintent')
-    || normalized.includes('hiddenrationale')
-    || normalized.includes('officialassessment')
-    || normalized.includes('secret');
+function text(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+function coordinates(value: unknown): unknown {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (Array.isArray(value)) return value.map(coordinates).filter(item => item !== undefined);
+  return undefined;
+}
+function geometry(value: unknown): unknown {
+  if (value === null) return null;
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as { type?: unknown; coordinates?: unknown };
+  if (!['Point', 'LineString', 'Polygon', 'MultiPoint', 'MultiLineString', 'MultiPolygon'].includes(String(candidate.type))) return undefined;
+  const points = coordinates(candidate.coordinates);
+  return points === undefined ? undefined : { type: candidate.type, coordinates: points };
+}
+function feature(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as { type?: unknown; id?: unknown; properties?: unknown; geometry?: unknown };
+  if (candidate.type !== 'Feature') return undefined;
+  const source = candidate.properties && typeof candidate.properties === 'object' ? candidate.properties : {};
+  const properties: Record<string, unknown> = {};
+  for (const key of ['name', 'kind', 'side', 'label'] as const) {
+    const item = (source as Record<string, unknown>)[key];
+    if (typeof item === 'string') properties[key] = item;
+  }
+  const shape = geometry(candidate.geometry);
+  if (shape === undefined) return undefined;
+  return {
+    type: 'Feature',
+    ...(typeof candidate.id === 'string' || typeof candidate.id === 'number' ? { id: candidate.id } : {}),
+    properties,
+    geometry: shape,
+  };
+}
+function geojson(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as { type?: unknown; features?: unknown };
+  if (candidate.type !== 'FeatureCollection' || !Array.isArray(candidate.features)) return undefined;
+  return {
+    type: 'FeatureCollection',
+    features: candidate.features.map(feature).filter(item => item !== undefined),
+  };
+}
+function symbols(value: unknown): unknown {
+  if (!Array.isArray(value)) return undefined;
+  return value.flatMap(item => {
+    if (!item || typeof item !== 'object') return [];
+    const candidate = item as { id?: unknown; label?: unknown; side?: unknown; position?: unknown };
+    if (typeof candidate.id !== 'string' || typeof candidate.label !== 'string') return [];
+    const position = Array.isArray(candidate.position) && candidate.position.length === 2
+      && candidate.position.every(part => typeof part === 'number' && Number.isFinite(part))
+      ? [...candidate.position] : undefined;
+    return [{
+      id: candidate.id,
+      label: candidate.label,
+      ...(typeof candidate.side === 'string' ? { side: candidate.side } : {}),
+      ...(position ? { position } : {}),
+    }];
+  });
 }
 
-/** Проектор получает публичную геометрию, но не неизвестные вложенные служебные объекты. */
-export function publicMapValue(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(publicMapValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value)
-      .filter(([key]) => !forbiddenMapKey(key))
-      .map(([key, item]) => [key, publicMapValue(item)]));
+/** Единственная схема публикации: неизвестные поля не имеют audience-представления. */
+export function publicMapValue(layer: AudienceLayer, value: unknown): unknown {
+  if (layer === 'modern-symbols') return symbols(value);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const candidate = value as { summary?: unknown; geojson?: unknown };
+  const result: Record<string, unknown> = {};
+  const summary = text(candidate.summary);
+  if (summary !== undefined) result.summary = summary;
+  if (layer !== 'weather') {
+    const data = geojson(candidate.geojson);
+    if (data !== undefined) result.geojson = data;
   }
-  return value;
+  return Object.keys(result).length ? result : undefined;
+}
+
+export function projectAudienceMap(
+  source: Readonly<Record<string, unknown>>,
+  layers: readonly AudienceLayer[],
+): AudienceMap {
+  const map: Record<string, unknown> = {};
+  const fields: Readonly<Partial<Record<AudienceLayer, string>>> = {
+    weather: 'weather', terrain: 'terrain', logistics: 'logistics', 'modern-symbols': 'modernSymbols', forces: 'forces', routes: 'routes',
+  };
+  for (const layer of layers) {
+    const target = fields[layer]!;
+    const sourceField = layer === 'modern-symbols' ? 'modernSymbols' : layer;
+    const value = publicMapValue(layer, source[sourceField]);
+    if (value !== undefined) map[target] = value;
+  }
+  return map;
 }
 
 export function projectExpositionForAudience(input: Readonly<{
@@ -92,6 +160,7 @@ export function projectExpositionForAudience(input: Readonly<{
   policy: AudiencePolicy;
   projector: ProjectorProfile;
   presenterDecisionId?: string;
+  handoffGeneration?: number;
 }>): AudienceProjection {
   const { session, projector } = input;
   if (session.purpose !== 'EXPOSITION' || session.label !== 'Экспозиция') throw new Error('Проектор принимает только экспозиционный сеанс');
@@ -99,21 +168,13 @@ export function projectExpositionForAudience(input: Readonly<{
   const policy = createAudiencePolicy(input.policy);
   const enabled = new Set(session.program.layers);
   const layers = audienceLayers(policy, projector.allowedLayers).filter(layer => enabled.has(layer));
-  const map: Record<string, unknown> = {};
-  const fields: Readonly<Partial<Record<AudienceLayer, string>>> = {
-    weather: 'weather', terrain: 'terrain', logistics: 'logistics', 'modern-symbols': 'modernSymbols', forces: 'forces', routes: 'routes',
-  };
-  for (const layer of layers) {
-    const target = fields[layer]!;
-    const source = layer === 'modern-symbols' ? 'modernSymbols' : layer;
-    if (session.map[source] !== undefined) map[target] = publicMapValue(session.map[source]);
-  }
   const publicDecision = input.presenterDecisionId && policy.publicDecisionIds.includes(input.presenterDecisionId)
     ? session.program.frames.find(frame => frame.decision?.id === input.presenterDecisionId)?.decision
     : undefined;
   return {
     sessionId: session.sessionId,
     branchId: session.branchId,
+    handoffGeneration: input.handoffGeneration ?? 0,
     purpose: 'EXPOSITION',
     label: 'Экспозиция',
     source: session.source,
@@ -130,11 +191,11 @@ export function projectExpositionForAudience(input: Readonly<{
       pauseMs: session.program.pauseMs,
       captions: structuredClone(session.program.captions.filter(caption => policy.publicCaptionIds.includes(caption.id))),
       explanations: policy.showExplanations
-        ? structuredClone(session.program.explanations.filter(explanation => explanation.audience))
+        ? structuredClone(session.program.explanations.filter(explanation => explanation.audience && policy.publicExplanationIds.includes(explanation.id)))
         : [],
       branches: session.program.branches.map(branch => ({ id: branch.id, title: branch.title, chapterIds: [...branch.chapterIds] })),
     },
-    map,
+    map: projectAudienceMap(session.map, layers),
     planFact: policy.showPlanFact ? structuredClone(session.program.planFact) : [],
     decision: publicDecision ? { id: publicDecision.id, summary: publicDecision.summary } : null,
   };

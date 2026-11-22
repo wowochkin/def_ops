@@ -4,13 +4,14 @@ import { SecurityAudit } from './auth/security-audit';
 import { CartographyEnvironmentProvider } from './environment/cartography-provider';
 import { EnvironmentSnapshotStore } from './environment/snapshot-store';
 import { registerExpositionRoutes } from './http/exposition-routes';
-import { createTrainingExpositionService } from './exposition/training-exposition';
 import { buildTask52Router } from './http/contracts';
 import { createKshviPersistence } from './persistence';
 import { CommandService } from './instances/command-service';
 import { RevisionTrackingCommandPort } from './instances/typed-command-port';
 import { registerAgentRoutes } from './http/agent-routes';
 import { loadConfiguredProductionRuntime } from './runtime/production-config';
+import { FileExpositionRepository } from './exposition/exposition-repository';
+import { createFileExpositionService } from './exposition/exposition-runtime';
 
 const persistence = await createKshviPersistence(process.env);
 const pool = persistence.pool;
@@ -19,6 +20,14 @@ const audit = new SecurityAudit();
 const environmentProvider = new CartographyEnvironmentProvider({
   baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104/cartography'),
   store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
+});
+const exposition = await createFileExpositionService({
+  repository: new FileExpositionRepository({
+    archivePath: env('KSHVI_EXPOSITION_ARCHIVE', './data/kshvi/exposition/official-archive.json'),
+    programPath: env('KSHVI_EXPOSITION_PROGRAM', './data/kshvi/exposition/program.json'),
+    statePath: env('KSHVI_EXPOSITION_STATE', './data/kshvi/exposition/sessions.json'),
+  }),
+  runtimePath: env('KSHVI_EXPOSITION_RUNTIME', './data/kshvi/exposition/runtime.json'),
 });
 const commands = new CommandService({
   ...(persistence.eventStore ? { store: persistence.eventStore } : {}),
@@ -50,7 +59,7 @@ const router = buildTask52Router({
   },
 });
 registerAgentRoutes(router, { commands: commandPort, resolveDelegation: production.resolveDelegation });
-registerExpositionRoutes(router, createTrainingExpositionService());
+registerExpositionRoutes(router, { service: exposition, sessions });
 const service = createService({
   name: 'kshvi',
   version: '0.1.0',
