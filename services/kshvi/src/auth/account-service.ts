@@ -74,7 +74,8 @@ export class AccountService {
         ? { allowed: true }
         : this.deny(account.userId, request, 'Недостаточно технических прав');
     }
-    if (request.action === 'recovery.content.read' && this.temporaryAccess?.canAccessForUser(account.userId, request)) return { allowed: true };
+    const recoveryMetadataActions = ['recovery.manifest.read', 'recovery.hash.read', 'recovery.health.read'];
+    if (recoveryMetadataActions.includes(request.action) && this.temporaryAccess?.canAccessForUser(account.userId, request)) return { allowed: true };
     return this.deny(account.userId, request, 'Предметные права назначаются отдельно');
   }
 

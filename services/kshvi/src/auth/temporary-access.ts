@@ -1,10 +1,17 @@
 import { randomUUID } from 'node:crypto';
 
+export type RecoveryResourceKind = 'BACKUP_METADATA' | 'SERVICE_HEALTH';
+const allowedActions: Record<RecoveryResourceKind, readonly string[]> = {
+  BACKUP_METADATA: ['recovery.manifest.read', 'recovery.hash.read'],
+  SERVICE_HEALTH: ['recovery.health.read'],
+};
+
 export type TemporaryAccessGrant = Readonly<{
   id: string;
   subjectUserId: string;
   organizationId: string;
   resourceId: string;
+  resourceKind: RecoveryResourceKind;
   reason: string;
   validFrom: string;
   validUntil: string;
@@ -34,6 +41,7 @@ export class TemporaryAccessService {
     subjectUserId: string;
     organizationId: string;
     resourceId: string;
+    resourceKind: RecoveryResourceKind;
     reason: string;
     validFrom: string;
     validUntil: string;
@@ -41,6 +49,7 @@ export class TemporaryAccessService {
     if (!actor.technicalPermissions.includes('temporary-access.grant') || actor.organizationId !== input.organizationId) {
       throw new Error('Недостаточно технических прав для временного доступа');
     }
+    if (!allowedActions[input.resourceKind]) throw new Error('Временный доступ разрешён только к техническим метаданным');
     if (input.reason.trim().length < 10) throw new Error('Укажите содержательную причину временного доступа');
     const validFrom = Date.parse(input.validFrom);
     const validUntil = Date.parse(input.validUntil);
@@ -60,7 +69,7 @@ export class TemporaryAccessService {
     const allowed = !grant.revokedAt
       && timestamp >= Date.parse(grant.validFrom)
       && timestamp < Date.parse(grant.validUntil)
-      && request.action === 'recovery.content.read'
+      && allowedActions[grant.resourceKind].includes(request.action)
       && request.organizationId === grant.organizationId
       && request.resourceId === grant.resourceId;
     this.record(allowed ? 'temporary.access.used' : 'temporary.access.denied', grant.subjectUserId, grant.organizationId, grant.id, grant.resourceId, request.correlationId);

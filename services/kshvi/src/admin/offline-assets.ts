@@ -52,6 +52,7 @@ export async function verifyOfflineManifest(rootDirectory: string): Promise<{
   missing: string[];
   unlisted: string[];
   invalidHashes: string[];
+  licenseViolations: string[];
 }> {
   const manifest = JSON.parse(await readFile(resolve(rootDirectory, 'manifest.json'), 'utf8')) as OfflineManifest;
   if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.assets)) throw new Error('Неверная схема offline manifest');
@@ -73,11 +74,13 @@ export async function verifyOfflineManifest(rootDirectory: string): Promise<{
   }
   const actual = (await listedFiles(rootDirectory)).filter(path => path !== 'manifest.json');
   const unlisted = actual.filter(path => !listed.has(path));
+  const licenseViolations = manifest.assets.filter(asset => (asset.path?.includes('/fragments/') || asset.path?.endsWith('/source-registry.json'))
+    && asset.autonomousArchive !== 'LINK_ONLY').map(asset => asset.path ?? asset.id);
   const requiredKinds = new Set(['FONT', 'LIBRARY', 'ATLAS', 'WEATHER', 'PDF_GENERATOR', 'DOCX_GENERATOR', 'SYMBOLS', 'REFERENCE']);
   const kindsComplete = [...requiredKinds].every(kind => manifest.assets.some(asset => asset.kind === kind));
   return {
-    valid: missing.length === 0 && unlisted.length === 0 && invalidHashes.length === 0 && kindsComplete,
-    checkedFiles: listed.size, missing, unlisted, invalidHashes,
+    valid: missing.length === 0 && unlisted.length === 0 && invalidHashes.length === 0 && licenseViolations.length === 0 && kindsComplete,
+    checkedFiles: listed.size, missing, unlisted, invalidHashes, licenseViolations,
   };
 }
 
@@ -106,7 +109,7 @@ export function createExportEnvelope(input: {
 export async function assertAutonomousExport(datasets: readonly OfflineDataSet[], options: {
   rootDirectory: string;
   allowLinkOnly?: boolean;
-}): Promise<{ autonomous: boolean; warnings: string[] }> {
+}): Promise<{ autonomous: boolean; permitted: boolean; warnings: string[] }> {
   if (datasets.some(dataset => !dataset.offlineReady || dataset.autonomousArchive === 'FORBIDDEN')) {
     throw new Error('Включение набора данных в автономный архив запрещено лицензией или отсутствием локальных данных');
   }
@@ -115,11 +118,9 @@ export async function assertAutonomousExport(datasets: readonly OfflineDataSet[]
     if (hash(content) !== dataset.sha256) throw new Error(`Не совпадает хеш offline payload: ${dataset.path ?? dataset.id}`);
   }
   const linkOnly = datasets.filter(dataset => dataset.autonomousArchive === 'LINK_ONLY');
-  if (linkOnly.length && !options.allowLinkOnly) {
-    throw new Error('Полная автономность невозможна; разрешён только экспорт ссылки/стиля');
-  }
   return {
     autonomous: linkOnly.length === 0,
+    permitted: linkOnly.length === 0 || Boolean(options.allowLinkOnly),
     warnings: linkOnly.map(dataset => `${dataset.name}: полностью автономное воспроизведение невозможно, экспортирована ссылка/стиль`),
   };
 }

@@ -1,7 +1,7 @@
 import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { AuditSink } from '../auth/durable-jsonl';
+import type { AuditSink, OperationAuditContext } from '../auth/durable-jsonl';
 import type { BackupFile, BackupManifest, BackupService, JournalEventIdentity } from './backup-service';
 import type { DivergenceDifference, DivergenceReport } from './divergence-report';
 import { createDivergenceReport } from './divergence-report';
@@ -84,7 +84,9 @@ export class RestoreService {
     activeLastSequence: number;
     isolationId: string;
     activeJournal?: readonly JournalEventIdentity[];
+    auditContext?: OperationAuditContext;
   }): Promise<RestoreResult> {
+    if (this.audit && !input.auditContext) throw new Error('Для аудита восстановления требуется actor/org операции');
     if (!/^[a-zA-Z0-9-]+$/.test(input.isolationId)) throw new Error('Недопустимый идентификатор изолированного восстановления');
     await assertDirectoryIfExists(this.isolationRoot, 'Изолированный корень восстановления');
     const manifest = await this.backups.readManifest(input.backupId);
@@ -95,10 +97,11 @@ export class RestoreService {
       ...(input.activeJournal ? { backupJournal: manifest.journalEvents, activeJournal: input.activeJournal } : {}),
     });
     if (!plan.allowed) {
-      this.record('restore.divergence', input.backupId, 'DENIED');
+      this.record('restore.divergence', input.backupId, 'DENIED', input.auditContext);
       return plan;
     }
-    const chain = await this.verifiedChain(manifest);
+    const chain = await this.verifiedChain(manifest, input.auditContext);
+    this.assertJournalCoverage(manifest, chain);
     const restoredDirectory = join(this.isolationRoot, input.isolationId);
     assertPathInside(this.isolationRoot, restoredDirectory, 'Изолированное назначение восстановления');
     await mkdir(this.isolationRoot, { recursive: true });
@@ -116,18 +119,18 @@ export class RestoreService {
     }
     const verification = await verifyRestoredFiles({ ...manifest, files: [...assembledFiles.values()] }, restoredDirectory);
     if (!verification.valid) throw new Error('Хеши изолированного восстановления не совпадают');
-    this.record('restore.completed', input.backupId, 'ALLOWED');
+    this.record('restore.completed', input.backupId, 'ALLOWED', input.auditContext);
     return { allowed: true, restoredDirectory, verifiedHashes: verification.checkedFiles, lastSequence: manifest.lastSequence };
   }
 
-  private async verifiedChain(manifest: BackupManifest): Promise<BackupManifest[]> {
+  private async verifiedChain(manifest: BackupManifest, auditContext?: OperationAuditContext): Promise<BackupManifest[]> {
     const chain: BackupManifest[] = [];
     const visited = new Set<string>();
     let current: BackupManifest | undefined = manifest;
     while (current) {
       if (visited.has(current.id)) throw new Error('Циклическая ссылка в цепочке резервных копий');
       visited.add(current.id);
-      const verification = await this.backups.verifyBackup(current.id);
+      const verification = await this.backups.verifyBackup(current.id, auditContext);
       if (!verification.valid) throw new Error('Резервная копия повреждена и не может быть восстановлена');
       chain.unshift(current);
       current = current.baseBackupId ? await this.backups.readManifest(current.baseBackupId) : undefined;
@@ -136,7 +139,25 @@ export class RestoreService {
     return chain;
   }
 
-  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED'): void {
-    this.audit?.append({ actorId: 'restore-service', organizationId: 'local', action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
+  private assertJournalCoverage(manifest: BackupManifest, chain: readonly BackupManifest[]): void {
+    const coveredSequence = chain.reduce((latest, backup) => backup.files.some(file => file.category === 'JOURNAL')
+      ? Math.max(latest, backup.lastSequence) : latest, 0);
+    if (coveredSequence < manifest.lastSequence) {
+      throw new Error(`Журнальная цепочка покрывает только ${coveredSequence} из ${manifest.lastSequence}`);
+    }
+    if (manifest.journalEvents) {
+      const identities = chain.flatMap(backup => backup.journalEvents ?? []);
+      for (const expected of manifest.journalEvents) {
+        const found = identities.some(event => event.sequence === expected.sequence && event.eventId === expected.eventId
+          && event.hash === expected.hash && event.branchId === expected.branchId);
+        if (!found) throw new Error(`В цепочке отсутствует событие ${expected.eventId} на последовательности ${expected.sequence}`);
+      }
+    }
+  }
+
+  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED', auditContext?: OperationAuditContext): void {
+    if (!this.audit) return;
+    if (!auditContext) throw new Error('Для аудита восстановления требуется actor/org операции');
+    this.audit.append({ actorId: auditContext.actorId, organizationId: auditContext.organizationId, action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
   }
 }

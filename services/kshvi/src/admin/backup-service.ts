@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
-import type { AuditSink } from '../auth/durable-jsonl';
+import type { AuditSink, OperationAuditContext } from '../auth/durable-jsonl';
 import { assertDirectoryIfExists, assertPathInside, assertRegularFile } from './path-safety';
 
 export type BackupCategory = 'SCENARIO' | 'ENVIRONMENT' | 'ASSIGNMENTS' | 'JOURNAL' | 'SNAPSHOT';
@@ -109,6 +109,7 @@ export class BackupService {
     lastSequence: number;
     journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
+    auditContext?: OperationAuditContext;
   }): Promise<BackupManifest> {
     const required: BackupCategory[] = ['SCENARIO', 'ENVIRONMENT', 'ASSIGNMENTS', 'JOURNAL', 'SNAPSHOT'];
     const missing = required.filter(category => !input.sources.some(source => source.category === category));
@@ -123,6 +124,7 @@ export class BackupService {
     lastSequence: number;
     journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
+    auditContext?: OperationAuditContext;
   }): Promise<BackupManifest> {
     const base = await this.readManifest(input.baseBackupId);
     if (base.instanceId !== input.instanceId) throw new Error('Базовая копия принадлежит другому сеансу');
@@ -130,6 +132,9 @@ export class BackupService {
       throw new Error('Инкремент содержит только журнал и снимки');
     }
     if (input.lastSequence < base.lastSequence) throw new Error('Инкремент не может откатывать последовательность журнала');
+    if (input.sources.every(source => source.category === 'SNAPSHOT') && input.lastSequence > base.lastSequence) {
+      throw new Error('Snapshot с новой последовательностью требует журнальный инкремент той же точки');
+    }
     return this.create({ ...input, kind: 'INCREMENTAL' }, base);
   }
 
@@ -159,7 +164,8 @@ export class BackupService {
     return readFile(path);
   }
 
-  async verifyBackup(backupId: string): Promise<BackupVerification> {
+  async verifyBackup(backupId: string, auditContext?: OperationAuditContext): Promise<BackupVerification> {
+    if (this.audit && !auditContext) throw new Error('Для аудита копии требуется actor/org операции');
     const manifest = await this.readManifest(backupId);
     const issues: { code: 'HASH_MISMATCH' | 'FILE_MISSING'; name: string }[] = [];
     let checkedFiles = 0;
@@ -174,7 +180,7 @@ export class BackupService {
       }
     }
     const result = { valid: issues.length === 0 && checkedFiles === manifest.files.length, checkedFiles, issues };
-    this.record(result.valid ? 'backup.verified' : 'backup.verification_failed', backupId, result.valid ? 'ALLOWED' : 'DENIED');
+    this.record(result.valid ? 'backup.verified' : 'backup.verification_failed', backupId, result.valid ? 'ALLOWED' : 'DENIED', auditContext);
     return result;
   }
 
@@ -184,9 +190,11 @@ export class BackupService {
     lastSequence: number;
     journalEvents?: readonly JournalEventIdentity[];
     versions: { schema: string; reducer: number };
+    auditContext?: OperationAuditContext;
     kind: 'FULL' | 'INCREMENTAL';
     baseBackupId: string | null;
   }, base?: BackupManifest): Promise<BackupManifest> {
+    if (this.audit && !input.auditContext) throw new Error('Для аудита копии требуется actor/org операции');
     if (!safeInteger(input.lastSequence)) throw new Error('Последовательность копии некорректна');
     const names = new Set<string>();
     for (const source of input.sources) {
@@ -226,12 +234,14 @@ export class BackupService {
     });
     validateBackupManifest(manifest, id);
     await writeFile(join(this.rootDirectory, id, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
-    this.record(input.kind === 'FULL' ? 'backup.full_created' : 'backup.incremental_created', id, 'ALLOWED');
+    this.record(input.kind === 'FULL' ? 'backup.full_created' : 'backup.incremental_created', id, 'ALLOWED', input.auditContext);
     return structuredClone(manifest);
   }
 
-  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED'): void {
-    this.audit?.append({ actorId: 'backup-service', organizationId: 'local', action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
+  private record(action: string, resourceId: string, outcome: 'ALLOWED' | 'DENIED', auditContext?: OperationAuditContext): void {
+    if (!this.audit) return;
+    if (!auditContext) throw new Error('Для аудита копии требуется actor/org операции');
+    this.audit.append({ actorId: auditContext.actorId, organizationId: auditContext.organizationId, action, outcome, correlationId: randomUUID(), resourceType: 'backup', resourceId });
   }
 }
 

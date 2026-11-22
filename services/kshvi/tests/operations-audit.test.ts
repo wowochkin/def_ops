@@ -31,17 +31,23 @@ it('фиксирует копирование, проверку, восстан�
     { name: 'snapshot.json', path: join(root, 'snapshot.json'), category: 'SNAPSHOT' },
   ];
   const audit = new SecurityAudit();
+  const auditContext = { actorId: 'admin-org-1', organizationId: 'org-1' };
   const backups = new BackupService({ rootDirectory: join(root, 'backups'), audit });
-  const full = await backups.createFullBackup({ instanceId: 'i1', sources, lastSequence: 1, versions: { schema: '1.0.0', reducer: 1 } });
-  await backups.verifyBackup(full.id);
+  const full = await backups.createFullBackup({ instanceId: 'i1', sources, lastSequence: 1, versions: { schema: '1.0.0', reducer: 1 }, auditContext });
+  await backups.verifyBackup(full.id, auditContext);
   const restore = new RestoreService({ backups, isolationRoot: join(root, 'isolated'), audit });
-  await restore.restoreToIsolated({ backupId: full.id, activeLastSequence: 1, isolationId: 'audit' });
+  await restore.restoreToIsolated({ backupId: full.id, activeLastSequence: 1, isolationId: 'audit', auditContext });
   await runSafeUpdate(
-    { session: { active: false, mode: 'OFFICIAL', emergency: false }, migration: { version: '2.0.0', rollbackApplicationVersion: '1.0.0', incompatible: false, rewritesHistoricalPayload: false, migrationProtocolId: null, sourceArchiveId: null } },
+    { session: { active: false, mode: 'OFFICIAL', emergency: false }, migration: { version: '2.0.0', rollbackApplicationVersion: '1.0.0', incompatible: false, rewritesHistoricalPayload: false, migrationProtocolId: null, sourceArchiveId: null }, auditContext },
     updatePorts,
     audit,
   );
-  expect(audit.entries().map(event => event.action)).toEqual(expect.arrayContaining([
+  const exported = audit.export({ userId: 'auditor-org-1', organizationId: 'org-1', technicalPermissions: ['audit.export'] }, 'operations-export');
+  expect(exported.map(event => event.action)).toEqual(expect.arrayContaining([
     'backup.full_created', 'backup.verified', 'restore.completed', 'update.completed',
   ]));
+  for (const action of ['backup.full_created', 'backup.verified', 'restore.completed', 'update.completed']) {
+    expect(exported.find(event => event.action === action)).toMatchObject({ actorId: 'admin-org-1', organizationId: 'org-1' });
+  }
+  expect(JSON.stringify(exported)).not.toContain('"organizationId":"local"');
 });

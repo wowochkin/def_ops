@@ -37,7 +37,7 @@ try {
   const workerFile = join(root, 'workers.jsonl');
   const effects = [];
   const workers = new WorkerRecoveryService({ stateFile: workerFile });
-  await workers.resume('outbox', repeated.sequence, async () => { effects.push(`outbox:${repeated.sequence}`); });
+  await workers.resume('outbox', repeated.sequence, async () => { effects.push(`outbox:${repeated.sequence}`); return 'APPLIED'; });
   await firstPool.end();
   firstPool = undefined;
 
@@ -47,7 +47,7 @@ try {
   const recovered = await restarted.restoreWorld('org1', 'i1', 'b1');
   if (recovered.sequence !== repeated.sequence) throw new Error('Последнее подтверждённое событие потеряно');
   const restartedWorkers = new WorkerRecoveryService({ stateFile: workerFile });
-  const duplicate = await restartedWorkers.resume('outbox', repeated.sequence, async () => { effects.push('duplicate'); });
+  const duplicate = await restartedWorkers.resume('outbox', repeated.sequence, async () => { effects.push('duplicate'); return 'APPLIED'; });
   if (duplicate || effects.length !== 1) throw new Error('Worker повторил эффект после перезапуска');
   const restartMs = performance.now() - restartStarted;
 

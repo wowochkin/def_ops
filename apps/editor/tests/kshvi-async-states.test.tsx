@@ -52,6 +52,28 @@ it('увеличивает offline-длительность по таймеру 
   expect(screen.getByText(/Период потери связи: 12 с/)).toBeTruthy();
 });
 
+it('считает длительность только от OFFLINE/serverTime без двойного учёта и роста в ONLINE', () => {
+  vi.useFakeTimers();
+  const initial = {
+    connection: 'ONLINE' as const, lastSyncedAt: '2026-11-22T08:00:00.000Z', outageStartedAt: null,
+    serverTime: '2026-11-22T08:00:00.000Z', ntpSynchronized: true, clockOffsetMs: 0,
+  };
+  const view = render(<OfflineBanner {...initial} />);
+  act(() => { vi.advanceTimersByTime(60_000); });
+  view.rerender(<OfflineBanner {...initial} connection="OFFLINE" outageStartedAt="2026-11-22T07:59:55.000Z" serverTime="2026-11-22T08:00:04.000Z" />);
+  expect(screen.getByText(/Период потери связи: 9 с/)).toBeTruthy();
+  act(() => { vi.advanceTimersByTime(3000); });
+  expect(screen.getByText(/Период потери связи: 12 с/)).toBeTruthy();
+  view.rerender(<OfflineBanner {...initial} connection="OFFLINE" outageStartedAt="2026-11-22T07:59:55.000Z" serverTime="2026-11-22T08:00:07.000Z" />);
+  expect(screen.getByText(/Период потери связи: 12 с/)).toBeTruthy();
+  act(() => { vi.advanceTimersByTime(2000); });
+  expect(screen.getByText(/Период потери связи: 14 с/)).toBeTruthy();
+  view.rerender(<OfflineBanner {...initial} outageStartedAt="2026-11-22T07:59:55.000Z" serverTime="2026-11-22T08:00:09.000Z" />);
+  expect(screen.getByText(/Период потери связи: 14 с/)).toBeTruthy();
+  act(() => { vi.advanceTimersByTime(10_000); });
+  expect(screen.getByText(/Период потери связи: 14 с/)).toBeTruthy();
+});
+
 it('единообразно форматирует русские даты, числа, длительность и единицы', () => {
   expect(formatRussianDateTime('2026-11-22T08:00:00.000Z')).toContain('22.11.2026');
   expect(formatNumber(12345.6)).toBe('12 345,6');

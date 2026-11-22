@@ -2,6 +2,7 @@ import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, wr
 import { dirname } from 'node:path';
 
 export type AuditSink = { append(input: Record<string, unknown>): unknown };
+export type OperationAuditContext = Readonly<{ actorId: string; organizationId: string }>;
 
 export function readDurableJsonLines<Value>(stateFile?: string): Value[] {
   if (!stateFile || !existsSync(stateFile)) return [];

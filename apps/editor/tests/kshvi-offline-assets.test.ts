@@ -22,6 +22,10 @@ it('проверяет каждый фактический payload, лиценз
   expect(manifest.assets.every(asset => asset.source.length > 0 && asset.license.length > 0 && asset.attribution.length > 0 && asset.offlineReady)).toBe(true);
   expect(JSON.stringify(manifest)).not.toMatch(/https?:\/\//i);
   await expect(verifyOfflineManifest(root)).resolves.toMatchObject({ valid: true, missing: [], unlisted: [], invalidHashes: [] });
+  const restricted = manifest.assets.filter(asset => asset.path?.includes('/fragments/') || asset.path?.endsWith('/source-registry.json'));
+  expect(restricted.length).toBeGreaterThan(0);
+  expect(restricted.every(asset => asset.autonomousArchive === 'LINK_ONLY')).toBe(true);
+  await expect(assertAutonomousExport(manifest.assets, { rootDirectory: root })).resolves.toMatchObject({ autonomous: false, permitted: false });
 
   const runtime = JSON.parse(await readFile(resolve('deploy/kshvi/runtime.json'), 'utf8'));
   expect(runtime.network).toMatchObject({ mode: 'closed-lan', minWorkstations: 2, maxWorkstations: 50, externalAccess: false });
@@ -52,9 +56,9 @@ it('доказывает автономность фактическим сод�
     id: 'atlas', kind: 'ATLAS', name: 'Атлас', source: 'Источник', version: '1', license: 'Лицензия', sha256,
     attribution: 'Атрибуция', offlineReady: true, autonomousArchive: 'ALLOWED', path: 'atlas.txt',
   };
-  await expect(assertAutonomousExport([base], { rootDirectory: directory })).resolves.toEqual({ autonomous: true, warnings: [] });
-  await expect(assertAutonomousExport([{ ...base, autonomousArchive: 'LINK_ONLY' }], { rootDirectory: directory })).rejects.toThrow('ссылки/стиля');
-  await expect(assertAutonomousExport([{ ...base, autonomousArchive: 'LINK_ONLY' }], { rootDirectory: directory, allowLinkOnly: true })).resolves.toMatchObject({ autonomous: false });
+  await expect(assertAutonomousExport([base], { rootDirectory: directory })).resolves.toEqual({ autonomous: true, permitted: true, warnings: [] });
+  await expect(assertAutonomousExport([{ ...base, autonomousArchive: 'LINK_ONLY' }], { rootDirectory: directory })).resolves.toMatchObject({ autonomous: false, permitted: false });
+  await expect(assertAutonomousExport([{ ...base, autonomousArchive: 'LINK_ONLY' }], { rootDirectory: directory, allowLinkOnly: true })).resolves.toMatchObject({ autonomous: false, permitted: true });
   const { path: _path, ...descriptor } = base;
   await expect(assertAutonomousExport([descriptor], { rootDirectory: directory })).rejects.toThrow('payload');
   await writeFile(join(directory, 'atlas.txt'), 'tampered');

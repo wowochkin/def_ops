@@ -2505,7 +2505,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-001/page-001.jpg",
       "sha256": "c96e82fa32c4220ae4ea970fd999baf7721d94fc4a5061730f92008387c30625",
       "offlineReady": true
@@ -2518,7 +2518,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-002/page-001.jpg",
       "sha256": "ceae7a41695a0a79c55488f732d0c2b0dadc58cba31866599a38bbc570a7e46a",
       "offlineReady": true
@@ -2531,7 +2531,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-002/page-002.jpg",
       "sha256": "8c1a813b5d42b3ac553707dddbfaa37f9b0a75a718c2c5efdda48c7d094f93ff",
       "offlineReady": true
@@ -2544,7 +2544,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-002/page-003.jpg",
       "sha256": "502f16d04e13496dab22b7e41fa27f07a1cca5444af5f67f00a6f34a2f4105fe",
       "offlineReady": true
@@ -2557,7 +2557,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-002/page-004.jpg",
       "sha256": "52730c5c6cb5c7cfd3ddadd09200352fb6ebd4f2622c1ce23d1f663c3f5c8b5c",
       "offlineReady": true
@@ -2570,7 +2570,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-003/page-001.jpg",
       "sha256": "b8cec1bea2b43ebc3603323e02e9511d9147fb788efaa95cacddddf38b778ce8",
       "offlineReady": true
@@ -2583,7 +2583,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-003/page-002.jpg",
       "sha256": "a1258343c571258734ea296d9914541f40182eb854836112116b902630987f2c",
       "offlineReady": true
@@ -2596,7 +2596,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-003/page-003.jpg",
       "sha256": "0b49a49f4ba983a0affa103f7a72bb4b41cdf19342f1146fed4c45ad93422dd5",
       "offlineReady": true
@@ -2609,7 +2609,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-003/page-004.jpg",
       "sha256": "9987f3cbc306a71e817e88314286fb43140d202c0d3b606540ecd83f91888d34",
       "offlineReady": true
@@ -2622,7 +2622,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-003/page-005.jpg",
       "sha256": "96d330802126af5ef7111611a54fc9d0dd0902958d38ce37008704bb15243bba",
       "offlineReady": true
@@ -2635,7 +2635,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-004/page-001.jpg",
       "sha256": "ff2313ff38c2959a677d867e1dc7b1fc7fa35a411aad3aa830c2e2047016901b",
       "offlineReady": true
@@ -2648,7 +2648,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-001.jpg",
       "sha256": "5e8fa2d8e4e1477e0efd4f553fe9f335434349a3f363fd58198337350b774233",
       "offlineReady": true
@@ -2661,7 +2661,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-002.jpg",
       "sha256": "e95147b21ab3e1c0ad715d492400eedbb3adaad8c62cbe75a8096c649125b30d",
       "offlineReady": true
@@ -2674,7 +2674,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-003.jpg",
       "sha256": "4c9db1a86d3b4b0e5e432f34401e54f6df7f243d7d094a599c27f06e45daff6e",
       "offlineReady": true
@@ -2687,7 +2687,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-004.jpg",
       "sha256": "8fa2d0e3e238e8a08bc7792535c804993ea28589ff88931507f852298fe5a1cd",
       "offlineReady": true
@@ -2700,7 +2700,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-005.jpg",
       "sha256": "948ce507c1904dc06e6596a9ecb192973144eef986389d5819c3721c9b9dbcf9",
       "offlineReady": true
@@ -2713,7 +2713,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-005/page-006.jpg",
       "sha256": "6dd8eca56039a26424d0728a3476292f68590b2c31f05761a0e3c9d2f1b6a0d3",
       "offlineReady": true
@@ -2726,7 +2726,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-006/page-001.jpg",
       "sha256": "bf8aafb0f47f287c841145c07f11012c5a39ba0852776c1e2c7df68415c90833",
       "offlineReady": true
@@ -2739,7 +2739,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-006/page-002.jpg",
       "sha256": "6bd4e013314be05a4de69f227b593bcfd3f3b3e40b7c369e63bc56fc8537bd77",
       "offlineReady": true
@@ -2752,7 +2752,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-006/page-003.jpg",
       "sha256": "7293b22dd82fb5cfc6edf25c94db402932575ac8c4beb94b8165605cadd82303",
       "offlineReady": true
@@ -2765,7 +2765,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-006/page-004.jpg",
       "sha256": "393092493011a95f4ba08cf3fbfdece235bddfa579a72174c940502030ac2c9f",
       "offlineReady": true
@@ -2778,7 +2778,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-007/page-001.jpg",
       "sha256": "83e733e52a099e3a0879e8a8903e57a634c2f3960a2a7c3341fc0e49697a023a",
       "offlineReady": true
@@ -2791,7 +2791,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-007/page-002.jpg",
       "sha256": "ff1843911c7f4fa064558a613fea9a1ed289f92bd7c9089862bdd78cf88c4ebf",
       "offlineReady": true
@@ -2804,7 +2804,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-008/page-001.jpg",
       "sha256": "df88ee499b33918d3ad3974255fe83c9fc8efadb8c95b34a02040b7ce831b87d",
       "offlineReady": true
@@ -2817,7 +2817,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-009/page-001.jpg",
       "sha256": "4676fd1ef2f40078a88b88b7b9616f7f920b02d0bde5617a57ee08e5983380a6",
       "offlineReady": true
@@ -2830,7 +2830,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-009/page-002.jpg",
       "sha256": "1d3f6a0a11c3b6e61943bbf20bfdff64d2cb7b8c472cc279a768ca14790a1479",
       "offlineReady": true
@@ -2843,7 +2843,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-010/page-001.jpg",
       "sha256": "7a1f03df6e5fd86ab25331d69eb7839ba8371779c606f123b4c1aa6927c79cb5",
       "offlineReady": true
@@ -2856,7 +2856,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-010/page-002.jpg",
       "sha256": "27de0f7739aed9277cd3421e8bf0620d6fe2fce00f876d786336e6085f1211d7",
       "offlineReady": true
@@ -2869,7 +2869,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-011/page-001.jpg",
       "sha256": "3919faaab1677544b6d6fab3ba684e8ecff89a2e14a8bd852ee0e53ff9209e87",
       "offlineReady": true
@@ -2882,7 +2882,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-011/page-002.jpg",
       "sha256": "d2a7192a6ac6ae22821cb68e08f41e57c385bbe90d68beb0141eb68b907210f4",
       "offlineReady": true
@@ -2895,7 +2895,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-012/page-001.jpg",
       "sha256": "195940cb0766dd448a8f5cd2e76e745948fb5224272cba23201b1519bad1e494",
       "offlineReady": true
@@ -2908,7 +2908,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-012/page-002.jpg",
       "sha256": "b0f269de90f0b138d3dab6f5e42fe3bc50803f9b3b9a42166f3c40126764bc5b",
       "offlineReady": true
@@ -2921,7 +2921,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-013/page-001.jpg",
       "sha256": "31ac3c4a6a6564e78da3d3bc5d7f4ca0de1e462e05a84ac973bb4945ccbd2179",
       "offlineReady": true
@@ -2934,7 +2934,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-013/page-002.jpg",
       "sha256": "b52fff3f9de39a444b8a8f8bdb4a79ee3f5f72677260ab874a86720478b78bfb",
       "offlineReady": true
@@ -2947,7 +2947,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-013/page-003.jpg",
       "sha256": "8e5794df3ecba7b5f0aec63c79cd88ed29190ed651ebe9bd17666352a8fac537",
       "offlineReady": true
@@ -2960,7 +2960,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-014/page-001.jpg",
       "sha256": "769ebd9d6c20a2bc1a57a1fd6db8df692e59a03a1183de7ca24336a074e7cb8d",
       "offlineReady": true
@@ -2973,7 +2973,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-014/page-002.jpg",
       "sha256": "3008d72250edc86db526f2e131cf78396913709c73cec8a9bd2fee5002a9a3ba",
       "offlineReady": true
@@ -2986,7 +2986,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-015/page-001.jpg",
       "sha256": "d342b66f4b054293bbb14f8fd0a209306e26d24e89b98fa7ccd31bc7eaf97345",
       "offlineReady": true
@@ -2999,7 +2999,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-015/page-002.jpg",
       "sha256": "ae5e74d9d85f6b85ae40158089c3a4744eb4f489e40188bb90a47517da918947",
       "offlineReady": true
@@ -3012,7 +3012,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-015/page-003.jpg",
       "sha256": "7fc6a5ad4da5734994c99d6d0f29ba40131c2d7e6663f900acbe24cf56091db5",
       "offlineReady": true
@@ -3025,7 +3025,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-015/page-004.jpg",
       "sha256": "e7c95c14ec8cc0b9c1ac31afc957088e79503497d82cd7911fb2495a8a5d314a",
       "offlineReady": true
@@ -3038,7 +3038,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-015/page-005.jpg",
       "sha256": "df8dc0bbe3eb93874bec8dfe0f541aa849d4e82b3537956ee076868cfbb5dfa7",
       "offlineReady": true
@@ -3051,7 +3051,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-016/page-001.jpg",
       "sha256": "ea4313ebadc836eae2825f2e53121ad5dd4fd445e0ed68bb601609a351e4b10f",
       "offlineReady": true
@@ -3064,7 +3064,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-016/page-002.jpg",
       "sha256": "0617cba9649404056fb7e756759091b48b9cb8dbd0491350c42986cd7cece33d",
       "offlineReady": true
@@ -3077,7 +3077,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-016/page-003.jpg",
       "sha256": "366c3e6e5b0066aa5106ec1271ec3c0221e03f720315ff9ebe0a9a0652597aa7",
       "offlineReady": true
@@ -3090,7 +3090,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-016/page-004.jpg",
       "sha256": "4d4ef7c8ebd3377aa98df3dafbdda9fcc14de58e4b941e82f038af2bc2911897",
       "offlineReady": true
@@ -3103,7 +3103,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-016/page-005.jpg",
       "sha256": "69db6b565054bf061827f837bbd9d09a889c04a3a7cf2fe644dc2ebac0e1d6e6",
       "offlineReady": true
@@ -3116,7 +3116,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-017/page-001.jpg",
       "sha256": "40d23431e92110315602e319f926f944b386a92e1bf2057d9f2424180c98a145",
       "offlineReady": true
@@ -3129,7 +3129,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-017/page-002.jpg",
       "sha256": "8a075c610983caebf9cbc24d297e74d8a9daf19d8e3258ff7cb846aedf178fe6",
       "offlineReady": true
@@ -3142,7 +3142,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-017/page-003.jpg",
       "sha256": "5e9ce1e53a284631ff320d079437c604de2d9d95e3e0106e206a0931d86d0f47",
       "offlineReady": true
@@ -3155,7 +3155,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-018/page-001.jpg",
       "sha256": "87ba2ef14942830a95fda7c8540ef7a8998af12f76b1ec3b52f18fc3666928db",
       "offlineReady": true
@@ -3168,7 +3168,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-019/page-001.jpg",
       "sha256": "c2274f4b520254d13b279dcc1c00c8e967f5471a3366b6f8d1ac63ab42ab4416",
       "offlineReady": true
@@ -3181,7 +3181,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-019/page-002.jpg",
       "sha256": "dab0299b30c782d22759d51645b1dab412dfe0394e5a2f44e36b74f5db09a69e",
       "offlineReady": true
@@ -3194,7 +3194,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-020/page-001.jpg",
       "sha256": "ac8e37cebcc6afb041f9bb79228066235d7822b9dee972edba73b8435e352aef",
       "offlineReady": true
@@ -3207,7 +3207,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-020/page-002.jpg",
       "sha256": "ff3f9cc23f2df1b75e003e75662e600ffc5589dbf77fcbaefe396aa0c0aae49c",
       "offlineReady": true
@@ -3220,7 +3220,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-020/page-003.jpg",
       "sha256": "5259bb5534ab64194ebf00ff93781ad9ccb4ba7139c3bf1aab072108dcd2e45e",
       "offlineReady": true
@@ -3233,7 +3233,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-021/page-001.jpg",
       "sha256": "8f5170ceac734909d0f0d422ef40680c35900f22324a324d0d65a032209f96db",
       "offlineReady": true
@@ -3246,7 +3246,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-021/page-002.jpg",
       "sha256": "7167563e878a598d9bea6c76d640bbd75e610b16ef3b8073737d66dcba45db52",
       "offlineReady": true
@@ -3259,7 +3259,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-021/page-003.jpg",
       "sha256": "98c9923fdec32a45f1487e8c4b1fdba1c3fe48963d96cd73a29371a20dac761e",
       "offlineReady": true
@@ -3272,7 +3272,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-001.jpg",
       "sha256": "cfbdd7106d78b8b3e54ac10c27c59bb91ba103c92ec44ea7a02374f496fb2cfc",
       "offlineReady": true
@@ -3285,7 +3285,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-002.jpg",
       "sha256": "1ff9f4bb37f45bf458daeff30da04995bb5ab397406a69cc6905a4cb783eb061",
       "offlineReady": true
@@ -3298,7 +3298,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-003.jpg",
       "sha256": "4f14742ffb084a4defd66d90152f5e6497a71affac672207de0713655a6c03ac",
       "offlineReady": true
@@ -3311,7 +3311,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-004.jpg",
       "sha256": "db5317aa5c6fe25bca3d65de295367e803c4626df2785887a3541b1db8e9081d",
       "offlineReady": true
@@ -3324,7 +3324,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-005.jpg",
       "sha256": "612901665204b0913cc40e2c01957a807e8f367ca527fcd4880deb213b7973e4",
       "offlineReady": true
@@ -3337,7 +3337,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-006.jpg",
       "sha256": "d16b245161e28272f0de2a93cb59d8626fa3dbdefc1c955c80b3d33b1f1d9e42",
       "offlineReady": true
@@ -3350,7 +3350,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-022/page-007.jpg",
       "sha256": "80d8d03fd665a0178dbcaac1322ffb51bfd6e2b73a32017c9a88e4e042171fab",
       "offlineReady": true
@@ -3363,7 +3363,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-023/page-001.jpg",
       "sha256": "9b5fa6e6505b7c0e2dc40da1f4303c670f3760c3c8a5ce043eaae1061f256ceb",
       "offlineReady": true
@@ -3376,7 +3376,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-024/page-001.jpg",
       "sha256": "d39efe011ecfe9a88c424dbe9d6a65b4ed40d88497032f26374ce8be9eaab8b7",
       "offlineReady": true
@@ -3389,7 +3389,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-024/page-002.jpg",
       "sha256": "bc59cb0940f7432c356151698d1b0ab3230b1654a55e49367f29d961556dabff",
       "offlineReady": true
@@ -3402,7 +3402,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-025/page-001.jpg",
       "sha256": "b74190d818e2dfa10ba2bc398baad529ca37ff7061edcb77e04a235352f87790",
       "offlineReady": true
@@ -3415,7 +3415,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-025/page-002.jpg",
       "sha256": "b5f2fb43c00039c09937f36d8884b270fd92f309828edc2d2b9c61fa3997f7e8",
       "offlineReady": true
@@ -3428,7 +3428,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-025/page-003.jpg",
       "sha256": "8cd993fba4b4c88a5023ad435804e1660cead28358f1f158049dbd1178cad3b6",
       "offlineReady": true
@@ -3441,7 +3441,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-026/page-001.jpg",
       "sha256": "bc9af0aec3ff2a1cc7b611ba2b3ba96b002b3767124f7f2b2e791d3be5ffa993",
       "offlineReady": true
@@ -3454,7 +3454,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-026/page-002.jpg",
       "sha256": "00403d84c3d49c088a922f3d6c3df0899fc56f564fd4b1e14e579acb62505352",
       "offlineReady": true
@@ -3467,7 +3467,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-026/page-003.jpg",
       "sha256": "790efbbd9dd30c9813defae3257f15a5a19bb3df70d92d054af4c9f475fc03dc",
       "offlineReady": true
@@ -3480,7 +3480,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-027/page-001.jpg",
       "sha256": "85e5212870134978e60f1a58a1d7af79d21fa5e5a6553aa21580605df8574ab4",
       "offlineReady": true
@@ -3493,7 +3493,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-027/page-002.jpg",
       "sha256": "ff21f77da3b82b6da86e0a55329b63e2e4f1e77a4bbc2815337ba4e27e1da5c4",
       "offlineReady": true
@@ -3506,7 +3506,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-027/page-003.jpg",
       "sha256": "1b67e4cb916b9926ca7a1540328078eb2f9aeb82339c9cac2758b4c639baa65b",
       "offlineReady": true
@@ -3519,7 +3519,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-028/page-001.jpg",
       "sha256": "b2a69ef70da651a274843c6de832b9504abd04a6aa6e366223536d296d62c3d4",
       "offlineReady": true
@@ -3532,7 +3532,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-028/page-002.jpg",
       "sha256": "562ec0c12f18fe0454f428cdb2f496ed0024b5197c3e79ad44355f7f199a780d",
       "offlineReady": true
@@ -3545,7 +3545,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-029/page-001.jpg",
       "sha256": "926330a89fefb6f7f5dbc69d7762afeb7b73c7205301aed42f728dd89c420902",
       "offlineReady": true
@@ -3558,7 +3558,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-029/page-002.jpg",
       "sha256": "05185a5b1eef695e87aca67c72ebe065f0a00908776995dff3032cef14312828",
       "offlineReady": true
@@ -3571,7 +3571,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/fragments/doc-029/page-003.jpg",
       "sha256": "fd5ea67d86837a07a7cc5dfaadb28f3f46fdcc19038f45e7a49561dba85acd5f",
       "offlineReady": true
@@ -3597,7 +3597,7 @@
       "version": "0.1.0",
       "license": "По реестру источников",
       "attribution": "data/source-registry.json и NOTICE.txt",
-      "autonomousArchive": "ALLOWED",
+      "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/data/source-registry.json",
       "sha256": "2c2f08bf0f87fc924a065a2f8d697c97c1ee2be56c8c6845137828966c7e860f",
       "offlineReady": true

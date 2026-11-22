@@ -26,6 +26,9 @@ it('выполняет тяжёлые задания в отдельных пр�
   const secondResult = await service.wait('cpu-2');
   await service.wait('cpu-3');
   expect(firstResult).toMatchObject({ status: 'SUCCEEDED', result: { iterations: 200_000 } });
+  expect(firstResult.result.cpuUsage.userMs).toBeGreaterThanOrEqual(0);
+  expect(firstResult.result.cpuUsage.systemMs).toBeGreaterThanOrEqual(0);
+  expect(service.capabilities()).toMatchObject({ cpuControl: 'BLOCKED', cpuUnitsAdmissionOnly: true, nf04Confirmed: false });
   expect(secondResult.result.pid).not.toBe(process.pid);
   expect(firstResult.result.pid).not.toBe(secondResult.result.pid);
   expect(events.filter(event => event.startsWith('started:'))).toEqual(['started:cpu-1', 'started:cpu-2', 'started:cpu-3']);

@@ -55,10 +55,10 @@ it('возобновляет workers без повторного эффекта 
   const stateFile = join(root, 'workers.jsonl');
   const effects: string[] = [];
   const first = new WorkerRecoveryService({ stateFile });
-  await first.resume('outbox', 10, async () => { effects.push('outbox:10'); });
-  await first.resume('outbox', 10, async () => { effects.push('duplicate'); });
+  await first.resume('outbox', 10, async () => { effects.push('outbox:10'); return 'APPLIED'; });
+  await first.resume('outbox', 10, async () => { effects.push('duplicate'); return 'APPLIED'; });
   const restarted = new WorkerRecoveryService({ stateFile });
-  await restarted.resume('outbox', 10, async () => { effects.push('duplicate-after-restart'); });
-  await restarted.resume('outbox', 11, async () => { effects.push('outbox:11'); });
+  await restarted.resume('outbox', 10, async () => { effects.push('duplicate-after-restart'); return 'APPLIED'; });
+  await restarted.resume('outbox', 11, async () => { effects.push('outbox:11'); return 'APPLIED'; });
   expect(effects).toEqual(['outbox:10', 'outbox:11']);
 });

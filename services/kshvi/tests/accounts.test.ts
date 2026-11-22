@@ -38,7 +38,7 @@ describe('локальный каталог и технические права
     expect(JSON.stringify(service.listSessions('admin-1'))).not.toContain(session.token);
   });
 
-  it('ограничивает временное раскрытие объектом, сроком и отзывом', async () => {
+  it('разрешает grant только для технических метаданных и запрещает любое предметное содержание', async () => {
     let now = at;
     const directory = new LocalDirectory({ now: () => now });
     await directory.createAccount({
@@ -48,20 +48,22 @@ describe('локальный каталог и технические права
     const temporary = new TemporaryAccessService({ now: () => now });
     const grant = temporary.grant(
       { userId: 'security-1', organizationId: 'org-1', technicalPermissions: ['temporary-access.grant'] },
-      { subjectUserId: 'admin-1', organizationId: 'org-1', resourceId: 'exercise-1', reason: 'Проверка восстановления закрытого архива', validFrom: '2026-11-22T08:00:00.000Z', validUntil: '2026-11-22T09:00:00.000Z' },
+      { subjectUserId: 'admin-1', organizationId: 'org-1', resourceId: 'backup-1', resourceKind: 'BACKUP_METADATA', reason: 'Проверка манифеста и хешей восстановления', validFrom: '2026-11-22T08:00:00.000Z', validUntil: '2026-11-22T09:00:00.000Z' },
     );
     const service = new AccountService(directory, { now: () => now, temporaryAccess: temporary });
     const session = await service.login('tech.admin', 'Локальный-пароль-12', 'org-1');
-    const request = { action: 'recovery.content.read', organizationId: 'org-1', resourceId: 'exercise-1' };
-    expect(service.authorize(session.token, { ...request, action: 'document.read' }).allowed).toBe(false);
+    const request = { action: 'recovery.manifest.read', organizationId: 'org-1', resourceId: 'backup-1' };
+    for (const action of ['document.read', 'recovery.content.read', 'scenario.read', 'assessment.read']) {
+      expect(service.authorize(session.token, { ...request, action }).allowed).toBe(false);
+    }
     expect(service.authorize(session.token, request).allowed).toBe(true);
-    expect(service.authorize(session.token, { ...request, resourceId: 'exercise-2' }).allowed).toBe(false);
+    expect(service.authorize(session.token, { ...request, resourceId: 'backup-2' }).allowed).toBe(false);
     temporary.revoke(grant.id, 'security-1');
     expect(service.authorize(session.token, request).allowed).toBe(false);
 
     const second = temporary.grant(
       { userId: 'security-1', organizationId: 'org-1', technicalPermissions: ['temporary-access.grant'] },
-      { subjectUserId: 'admin-1', organizationId: 'org-1', resourceId: 'exercise-1', reason: 'Повторная проверка восстановления', validFrom: '2026-11-22T08:00:00.000Z', validUntil: '2026-11-22T09:00:00.000Z' },
+      { subjectUserId: 'admin-1', organizationId: 'org-1', resourceId: 'backup-1', resourceKind: 'BACKUP_METADATA', reason: 'Повторная проверка технических хешей', validFrom: '2026-11-22T08:00:00.000Z', validUntil: '2026-11-22T09:00:00.000Z' },
     );
     now = new Date('2026-11-22T09:00:01.000Z');
     expect(temporary.canAccess(second.id, request)).toBe(false);

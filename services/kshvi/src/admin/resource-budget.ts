@@ -13,7 +13,7 @@ export type HeavyJob = Readonly<{
 }>;
 export type HeavyJobResult = Readonly<{
   status: 'SUCCEEDED';
-  result: { pid: number; iterations?: number; bytes?: number };
+  result: { pid: number; iterations?: number; bytes?: number; cpuUsage: { userMs: number; systemMs: number } };
 }>;
 type JobRecord = {
   job: HeavyJob;
@@ -79,6 +79,13 @@ export class ResourceBudget {
     return {
       running: this.count('RUNNING'), queued: this.count('QUEUED'),
       interactiveCommandsAccepted: this.interactiveCommandsAccepted, completed: this.count('SUCCEEDED'),
+    };
+  }
+
+  capabilities(): { cpuControl: 'BLOCKED'; cpuUnitsAdmissionOnly: true; nf04Confirmed: false; reason: string } {
+    return {
+      cpuControl: 'BLOCKED', cpuUnitsAdmissionOnly: true, nf04Confirmed: false,
+      reason: 'Поддерживаемый CPU-троттлинг не настроен; измеряется только process.cpuUsage, NF-04 и AC-14 не подтверждаются.',
     };
   }
 

@@ -1,37 +1,87 @@
 {
   "schemaVersion": 1,
-  "baseCommit": "53513dcccad0e145b48ba72e134ab9f6ae916068",
-  "reviewLog": ".tmp/independent-review.log",
   "status": "implemented",
+  "baseCommit": "2e99ba0af7589c1233233b1af0fd11f4616aed17",
+  "reviewedRange": {
+    "from": "ccf69ac4016743e7bb53bd94675bca3ff3ea054c",
+    "to": "4be48c1dbd7b826b6e60b046849e9b0b78e0461e"
+  },
+  "reviewLog": "docs/release/kshvi/original-findings.md",
+  "reviewLogSha256": "0b8b4831902e6ec34daa20813f5a16b84f1c4c93548e8fb038bb94d50c1320b4",
+  "reReviewLog": "docs/release/kshvi/rereview.md",
+  "reReviewLogSha256": "02903d61df329865e1dfdafac732da45fdbcd5f9fb21a10b3d0cdedea3210128",
   "items": [
-    { "id": "CRITICAL-01", "severity": "Critical", "summary": "Технический аккаунт не получает document.read через grant", "tests": ["services/kshvi/tests/accounts.test.ts"] },
-    { "id": "CRITICAL-02", "severity": "Critical", "summary": "Экспорт аудита требует authority и фильтрует организацию", "tests": ["services/kshvi/tests/admin-security-regression.test.ts", "services/kshvi/tests/security-audit.test.ts"] },
-    { "id": "CRITICAL-03", "severity": "Critical", "summary": "Manifest schema, regular files и изолированные пути восстановления", "tests": ["services/kshvi/tests/restore-security-regression.test.ts"] },
-    { "id": "IMPORTANT-01", "severity": "Important", "summary": "HTTP/UI и health/readiness подключаются отдельной задачей", "tests": [], "deferredTo": "Task52" },
-    { "id": "IMPORTANT-02", "severity": "Important", "summary": "Обязательный аудит действий и durable append-only состояние", "tests": ["services/kshvi/tests/admin-security-regression.test.ts", "services/kshvi/tests/operations-audit.test.ts"] },
-    { "id": "IMPORTANT-03", "severity": "Important", "summary": "Обязательный resource-derived scope", "tests": ["services/kshvi/tests/admin-security-regression.test.ts", "services/kshvi/tests/role-revocation.test.ts"] },
-    { "id": "IMPORTANT-04", "severity": "Important", "summary": "Блокировка, отложенное задание, retention recheck и фактический executor", "tests": ["services/kshvi/tests/deletion-execution.test.ts", "services/kshvi/tests/config-catalog.test.ts"] },
-    { "id": "IMPORTANT-05", "severity": "Important", "summary": "CLI, increments/snapshots и durable workers", "tests": ["services/kshvi/tests/backup-regimen.test.ts", "services/kshvi/tests/recovery-scripts.test.ts"] },
-    { "id": "IMPORTANT-06", "severity": "Important", "summary": "Сравнение журналов по event ID/hash/branch и автоматический DivergenceReport", "tests": ["services/kshvi/tests/restore-security-regression.test.ts", "services/kshvi/tests/restore-divergence.test.ts"] },
-    { "id": "IMPORTANT-07", "severity": "Important", "summary": "Фактические порты update, post-checks и rollback", "tests": ["services/kshvi/tests/update.test.ts"] },
-    { "id": "IMPORTANT-08", "severity": "Important", "summary": "Out-of-process очередь, лимит памяти и приоритет команд", "tests": ["services/kshvi/tests/resource-budget.test.ts"] },
-    { "id": "IMPORTANT-09", "severity": "Important", "summary": "Фактический offline payload, лицензии и SHA-256", "tests": ["apps/editor/tests/kshvi-offline-assets.test.ts"] },
-    { "id": "IMPORTANT-10", "severity": "Important", "summary": "Системная документация и снимки обновляются отдельной задачей", "tests": [], "deferredTo": "Task52" },
-    { "id": "MINOR-01", "severity": "Minor", "summary": "NaN дат и временных целей отклоняется", "tests": ["services/kshvi/tests/restore-security-regression.test.ts"] },
-    { "id": "MINOR-02", "severity": "Minor", "summary": "Unknown и live offline duration", "tests": ["apps/editor/tests/kshvi-async-states.test.tsx"] },
-    { "id": "MINOR-03", "severity": "Minor", "summary": "Username нормализуется до uniqueness", "tests": ["services/kshvi/tests/admin-security-regression.test.ts"] },
-    { "id": "MINOR-04", "severity": "Minor", "summary": "Протокол привязан к baseCommit и каждому regression test", "tests": ["services/kshvi/tests/review-evidence.test.ts"] }
-  ],
-  "verificationCommands": [
-    "TEST_DATABASE_URL=postgres://… npx vitest run <профильные тесты>",
-    "npm run typecheck",
-    "TEST_DATABASE_URL=postgres://… npm test",
-    "npm run build",
-    "npx playwright test apps/editor/tests/kshvi-projector-accessibility.spec.ts --workers=1"
+    {
+      "id": "REREVIEW-CRITICAL-01",
+      "severity": "Critical",
+      "summary": "Recovery grant только для технических метаданных",
+      "tests": [
+        "services/kshvi/tests/accounts.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-CRITICAL-02",
+      "severity": "Critical",
+      "summary": "Backup graph и журнальная целостность snapshot restore",
+      "tests": [
+        "services/kshvi/tests/backup-graph-regression.test.ts",
+        "services/kshvi/tests/backup-regimen.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-01",
+      "severity": "Important",
+      "summary": "Настоящие actor/org операционного аудита",
+      "tests": [
+        "services/kshvi/tests/operations-audit.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-02",
+      "severity": "Important",
+      "summary": "Идемпотентный эффект в crash-window worker",
+      "tests": [
+        "services/kshvi/tests/worker-crash-window.test.ts",
+        "services/kshvi/tests/backup-regimen.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-03",
+      "severity": "Important",
+      "summary": "CPU measurement и явный BLOCKED протокол без NF-04",
+      "tests": [
+        "services/kshvi/tests/resource-budget.test.ts",
+        "services/kshvi/tests/cpu-control-protocol.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-04",
+      "severity": "Important",
+      "summary": "LINK_ONLY исходных документов и fragments",
+      "tests": [
+        "apps/editor/tests/kshvi-offline-assets.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-MINOR-01",
+      "severity": "Minor",
+      "summary": "Live duration только от OFFLINE/serverTime",
+      "tests": [
+        "apps/editor/tests/kshvi-async-states.test.tsx"
+      ]
+    },
+    {
+      "id": "REREVIEW-MINOR-02",
+      "severity": "Minor",
+      "summary": "Версионируемые журналы и фактические hashes",
+      "tests": [
+        "services/kshvi/tests/review-evidence.test.ts"
+      ]
+    }
   ],
   "limitations": [
-    "Task52 подключает HTTP/UI и системную документацию; соответствующие файлы здесь не изменялись.",
-    "Локальная репетиция не является физической потерей узла или нагрузочным испытанием 50 рабочих мест.",
-    "CPU ограничен admission-лимитом и числом процессов; память каждого heavy-job процесса ограничена --max-old-space-size."
+    "Физическая потеря узла, нагрузка 50 рабочих мест и стендовые RTO/RPO здесь не заявляются.",
+    "Поддерживаемый CPU-троттлинг отсутствует; NF-04 и AC-14 не подтверждаются протоколом BLOCKED.",
+    "Атомарность внешнего эффекта worker обеспечивается обязательным идемпотентным портом эффекта."
   ]
 }

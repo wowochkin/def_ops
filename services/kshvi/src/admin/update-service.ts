@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AuditSink } from '../auth/durable-jsonl';
+import type { AuditSink, OperationAuditContext } from '../auth/durable-jsonl';
 
 export type MigrationPlan = Readonly<{
   version: string;
@@ -45,6 +45,7 @@ export function assertMigrationPlan(plan: MigrationPlan): void {
 export async function runSafeUpdate(input: {
   session: { active: boolean; mode: 'DEMONSTRATION' | 'TRAINING' | 'OFFICIAL'; emergency: boolean };
   migration: MigrationPlan;
+  auditContext?: OperationAuditContext;
 }, ports: UpdatePorts, audit?: AuditSink): Promise<{
   status: 'COMPLETED';
   migrationVersion: string;
@@ -53,6 +54,7 @@ export async function runSafeUpdate(input: {
   snapshotId: string;
   backupId: string | null;
 }> {
+  if (audit && !input.auditContext) throw new Error('Для аудита обновления требуется actor/org операции');
   const plan = planUpdate(input.session);
   if (!plan.allowed) throw new Error(`Обновление запрещено: ${plan.reason ?? 'активный сеанс'}`);
   assertMigrationPlan(input.migration);
@@ -78,11 +80,11 @@ export async function runSafeUpdate(input: {
     for (const [check, passed] of Object.entries(postChecks)) {
       if (!passed) throw new Error(check === 'controlCalculation' ? 'Не пройден повторный расчёт контрольного примера' : `После обновления не пройдена проверка: ${check}`);
     }
-    audit?.append({ actorId: 'update-service', organizationId: 'local', action: 'update.completed', outcome: 'ALLOWED', correlationId: journalEventId, resourceId: input.migration.version });
+    audit?.append({ actorId: input.auditContext!.actorId, organizationId: input.auditContext!.organizationId, action: 'update.completed', outcome: 'ALLOWED', correlationId: journalEventId, resourceId: input.migration.version });
     return { status: 'COMPLETED', migrationVersion: input.migration.version, postChecks, journalEventId, snapshotId, backupId };
   } catch (error) {
     await ports.rollback({ snapshotId, backupId, migrationApplied, rollbackApplicationVersion: input.migration.rollbackApplicationVersion });
-    audit?.append({ actorId: 'update-service', organizationId: 'local', action: 'update.rolled_back', outcome: 'DENIED', correlationId: randomUUID(), resourceId: input.migration.version });
+    audit?.append({ actorId: input.auditContext!.actorId, organizationId: input.auditContext!.organizationId, action: 'update.rolled_back', outcome: 'DENIED', correlationId: randomUUID(), resourceId: input.migration.version });
     throw error;
   } finally {
     if (paused) await ports.resumeSession();
