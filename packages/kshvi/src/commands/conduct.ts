@@ -20,6 +20,8 @@ import type { DocumentIssueContext } from '../documents/document-validation';
 import type { Channel, CommunicationMessage, CommunicationNode } from '../communications/channel';
 import { routeMessage } from '../communications/channel';
 import { createMessageAttempt, type MessageAttempt } from '../communications/message';
+import type { EnvironmentSnapshot } from '../environment/provider';
+import { validateWeatherScenario, type WeatherScenario } from '@def-ops/core';
 
 export type ConductActor = Readonly<{ userId: string; role: string; organizationId: string; sideId?: string; assignedNodeIds?: readonly string[] }>;
 export type ConductOperations = Readonly<{
@@ -46,6 +48,14 @@ export type ConductState = {
 type EventScope = 'organizationId' | 'instanceId' | 'branchId' | 'schemaVersion' | 'wallClockAt' | 'operationalAt' | 'actor' | 'causeIds' | 'versions' | 'reducerVersion';
 export type OfficialEventDraft = Omit<ChainEventInput, EventScope> & Partial<Pick<ChainEventInput, EventScope>>;
 type CommandBase = Readonly<{ commandId: string; at: string }>;
+export type ScheduledWeatherChange = Readonly<{
+  changeId: string;
+  effectiveAt: string;
+  reason: string;
+  authorId: string;
+  supersedes: string;
+  scenario: WeatherScenario;
+}>;
 export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'decision.create'; decision: DecisionInput }>)
   | (CommandBase & Readonly<{ type: 'decision.transition'; decisionId: string; to: Decision['status'] }>)
@@ -62,6 +72,8 @@ export type ConductCommand =
   | (CommandBase & Readonly<{ type: 'document.create'; revision: DocumentDraftInput }>)
   | (CommandBase & Readonly<{ type: 'document.transition'; documentId: string; action: DocumentTransitionAction; recipient?: DocumentIssueContext['recipient'] }>)
   | (CommandBase & Readonly<{ type: 'communication.enqueue'; message: CommunicationMessage }>)
+  | (CommandBase & Readonly<{ type: 'environment.bind'; snapshot: EnvironmentSnapshot }>)
+  | (CommandBase & Readonly<{ type: 'weather.change'; changeId: string; effectiveAt: string; reason: string; supersedes: string; scenario: WeatherScenario }>)
   | (CommandBase & Readonly<{ type: 'time.jump'; jumpId: string; targetOperationalAt: string; currentOperationalAt: string; elapsedMinutes: number }>)
   | (CommandBase & Readonly<{ type: 'stage.assign'; currentStageId: string; currentProfileId: string; nextStageId: string; nextProfileId?: string }>)
   | (CommandBase & Readonly<{ type: 'playbook.evaluate'; playbook: Playbook; condition: PlaybookCondition }>)
@@ -242,6 +254,47 @@ export async function executeConductCommand(state: ConductState, command: Conduc
         state: next(state, { communications: { ...state.communications, [attempt.messageId]: attempt } }),
         event: eventFor(state, command, 'communication.queued.v1', attempt.messageId, { sideId: actor.sideId, recipients: attempt.recipients, attempt }),
         revision: state.revision + 1, communication: attempt,
+      };
+    }
+    case 'environment.bind': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Привязка среды недоступна этой роли');
+      const snapshot = command.snapshot;
+      if (snapshot.autonomy !== 'COMPLETE' || snapshot.manifestSha256 !== snapshot.id || !/^[0-9a-f]{64}$/.test(snapshot.id)) {
+        throw new Error('Автономный снимок среды не прошёл проверку целостности');
+      }
+      const current = state.world.state.Weather as { snapshot?: EnvironmentSnapshot };
+      if (current.snapshot) throw new Error('Исходная среда уже привязана и не может быть заменена');
+      const world = withResourceAlias({
+        ...state.world,
+        state: { ...state.world.state, Weather: { snapshot: structuredClone(snapshot), changes: [] } },
+      });
+      return {
+        state: next(state, { world }),
+        event: eventFor(state, command, 'environment.bound.v1', snapshot.id, { snapshotId: snapshot.id, manifestSha256: snapshot.manifestSha256, supersedes: null, recipients: ['blue', 'red'] }),
+        revision: state.revision + 1,
+      };
+    }
+    case 'weather.change': {
+      if (!['LEADER', 'DIRECTOR'].includes(actor.role)) throw new Error('Плановое изменение погоды недоступно этой роли');
+      const current = state.world.state.Weather as { snapshot?: EnvironmentSnapshot; changes?: readonly ScheduledWeatherChange[] };
+      if (!current.snapshot) throw new Error('Сначала требуется серверная привязка исходной среды');
+      if (!command.changeId.trim() || !command.reason.trim() || !Number.isFinite(Date.parse(command.effectiveAt))) throw new Error('Плановое изменение погоды требует идентификатор, основание и время');
+      const previous = current.changes?.at(-1);
+      const expectedSupersedes = previous?.changeId ?? current.snapshot.manifestSha256;
+      if (command.supersedes !== expectedSupersedes) throw new Error(`supersedes должен ссылаться на ${expectedSupersedes}`);
+      if (previous && Date.parse(command.effectiveAt) < Date.parse(previous.effectiveAt)) throw new Error('Плановые изменения погоды не переписывают прошлое');
+      const change: ScheduledWeatherChange = {
+        changeId: command.changeId, effectiveAt: command.effectiveAt, reason: command.reason, authorId: actor.userId,
+        supersedes: command.supersedes, scenario: validateWeatherScenario(command.scenario),
+      };
+      const world = withResourceAlias({
+        ...state.world,
+        state: { ...state.world.state, Weather: { snapshot: current.snapshot, changes: [...(current.changes ?? []), change] } },
+      });
+      return {
+        state: next(state, { world }),
+        event: eventFor(state, command, 'weather.changed.v1', change.changeId, { ...change, recipients: ['blue', 'red'] }),
+        revision: state.revision + 1,
       };
     }
     case 'time.jump': {

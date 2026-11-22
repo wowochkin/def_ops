@@ -25,7 +25,7 @@ function normalizeSeedValues(value: unknown, key?: string): unknown {
 const officialTypes = new Set([
   'decision.create', 'decision.transition', 'decision.revise', 'order.issue', 'order.advance', 'order.cancel',
   'calculation.create', 'calculation.approve', 'calculation.apply', 'calculation.override', 'calculation.replay',
-  'observation.record', 'document.create', 'document.transition', 'communication.enqueue',
+  'observation.record', 'document.create', 'document.transition', 'communication.enqueue', 'environment.bind', 'weather.change',
   'time.jump', 'stage.assign', 'playbook.evaluate', 'exercise.complete',
 ]);
 

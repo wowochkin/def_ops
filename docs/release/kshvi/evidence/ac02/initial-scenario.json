@@ -1,0 +1,64 @@
+{
+  "initialRevision": {
+    "id": "ac02-3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+    "revision": 1,
+    "sha256": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698"
+  },
+  "scenario": {
+    "selection": {
+      "region": {
+        "name": "Исходный район",
+        "bounds": [
+          36,
+          54,
+          38,
+          56
+        ]
+      },
+      "atlases": [
+        {
+          "id": "a1",
+          "exportRights": "ALLOWED",
+          "elevationPoints": [
+            [
+              37,
+              55
+            ]
+          ]
+        }
+      ],
+      "weather": {
+        "mode": "scenario",
+        "scenario": {
+          "version": 1,
+          "seed": 17,
+          "start": "2026-01-01T00:00:00.000Z",
+          "durationHours": 2,
+          "temperature": -2,
+          "humidity": 75,
+          "pressure": 1002,
+          "windSpeed": 2,
+          "windDirection": 180,
+          "cloud": 40,
+          "precipitation": 1,
+          "variability": 0,
+          "transitionHours": 1,
+          "visibility": 7000,
+          "snowDepth": 0,
+          "soilTemperature": -1,
+          "soilMoisture": 0.3
+        }
+      },
+      "elevation": {
+        "adjustmentM": 0,
+        "algorithmVersion": 1
+      },
+      "algorithmVersions": {
+        "snapshot": 1,
+        "weather": 1
+      }
+    },
+    "snapshotId": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+    "manifestSha256": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92"
+  }
+}

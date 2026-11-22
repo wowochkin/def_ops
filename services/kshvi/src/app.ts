@@ -110,7 +110,7 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   registerExerciseRoutes(router, { store: exerciseStore, sessions, ...(evidence ? { evidence } : {}) });
   registerForceRoutes(router, forceStore, sessions);
   registerSymbolRoutes(router);
-  registerInstanceRoutes(router, instances, commands, participant);
+  registerInstanceRoutes(router, instances, commands, participant, environmentProvider);
   registerProjectionRoutes(router, projections, projectionWorld, projectionActor);
   registerSseRoutes(router, subscriptions, async (ctx, instanceId) => ({
     ...await projectionActor(ctx, instanceId),
