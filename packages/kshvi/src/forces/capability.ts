@@ -19,12 +19,12 @@ export function capabilityFactors(input: CapabilityInput) {
   const factors = {
     equipment: ratio(input.equipment, 'equipment'),
     personnel: ratio(input.personnel, 'personnel'),
-    supplies: input.supplies ? input.supplies.available / input.supplies.required : null,
+    supplies: input.supplies && input.supplies.required > 0 ? input.supplies.available / input.supplies.required : null,
     fatigue: input.fatigue,
     morale: input.morale,
     readiness: input.readiness,
     supply: input.supply,
   };
-  if (!input.supplies) unknown.push('supplies');
+  if (!input.supplies || input.supplies.required <= 0) unknown.push('supplies');
   return { status: unknown.length ? 'REQUIRES_REVIEW' as const : 'CALCULATED' as const, unknown, factors, initialAssessment: input.initialAssessment, manualCorrection: input.manualCorrection };
 }

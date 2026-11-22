@@ -18,18 +18,19 @@ export type EquipmentEditorResource = Readonly<{
   unit: string;
 }>;
 
+export type EquipmentEditorStateCounts = Readonly<Record<EquipmentCondition, number | null>>;
 export type EquipmentEditorRow = Readonly<{
   id: string;
   forceId: string;
   accounting: EquipmentAccounting;
   typeId: string;
-  typeRevision: number;
+  typeRevision: number | null;
   typeSha256: string;
   typeTitle: string;
   movementClass: string;
   authorized: number | null;
   actual: number | null;
-  stateCounts: EquipmentStateCounts;
+  stateCounts: EquipmentEditorStateCounts;
   crewRequiredPerUnit: number | null;
   crewAssigned: number | null;
   massTonnes: number | null;
@@ -49,7 +50,7 @@ export type EquipmentEditorRow = Readonly<{
 }>;
 
 export type EquipmentEditorIssue = Readonly<{
-  code: 'STATE_SUM_MISMATCH' | 'DISTRIBUTION_EXCEEDS_ACTUAL' | 'INVALID_COUNT' | 'INVALID_MEASURE' | 'SOURCE_REQUIRED' | 'DUPLICATE_ROW';
+  code: 'STATE_SUM_MISMATCH' | 'STATE_UNKNOWN' | 'TYPE_REVISION_UNKNOWN' | 'DISTRIBUTION_EXCEEDS_ACTUAL' | 'INVALID_COUNT' | 'INVALID_MEASURE' | 'SOURCE_REQUIRED' | 'DUPLICATE_ROW';
   rowId: string;
   message: string;
 }>;
@@ -125,7 +126,7 @@ function typeFromRow(row: EquipmentEditorRow): EquipmentType {
   const source = sourceFor(row);
   return {
     id: row.typeId,
-    revision: row.typeRevision,
+    revision: row.typeRevision!,
     sha256: row.typeSha256,
     title: row.typeTitle,
     movementClass: row.movementClass,
@@ -146,6 +147,9 @@ function typeFromRow(row: EquipmentEditorRow): EquipmentType {
 }
 
 export function equipmentHoldingFromRow(row: EquipmentEditorRow): EquipmentHolding {
+  if (row.typeRevision === null || Object.values(row.stateCounts).some(value => value === null)) {
+    throw new Error('Нельзя создать официальную ведомость с UNKNOWN версией типа или состоянием');
+  }
   return createEquipmentHolding({
     id: row.id,
     forceId: row.forceId,
@@ -153,7 +157,7 @@ export function equipmentHoldingFromRow(row: EquipmentEditorRow): EquipmentHoldi
     equipmentType: typeFromRow(row),
     authorized: row.authorized,
     actual: row.actual,
-    stateCounts: { ...row.stateCounts },
+    stateCounts: { ...row.stateCounts } as EquipmentStateCounts,
     crew: {
       requiredPerUnit: measure(row.crewRequiredPerUnit, 'person', sourceFor(row)),
       assigned: measure(row.crewAssigned, 'person', sourceFor(row)),
@@ -216,8 +220,12 @@ export function validateEquipmentEditorRows(rows: readonly EquipmentEditorRow[])
     if (!validCount(row.authorized) || !validCount(row.actual) || Object.values(row.stateCounts).some(value => !validCount(value))) {
       issues.push({ code: 'INVALID_COUNT', rowId: row.id, message: 'Количество должно быть неотрицательным целым или UNKNOWN' });
     }
-    const counted = Object.values(row.stateCounts).reduce((sum, value) => sum + value, 0);
-    if (row.actual !== null && counted !== row.actual) {
+    const counts = Object.values(row.stateCounts);
+    const statesUnknown = counts.some(value => value === null);
+    if (statesUnknown) issues.push({ code: 'STATE_UNKNOWN', rowId: row.id, message: 'Состояние части техники UNKNOWN; ноль не подставляется' });
+    if (row.typeRevision === null) issues.push({ code: 'TYPE_REVISION_UNKNOWN', rowId: row.id, message: 'Редакция типа UNKNOWN и требует уточнения' });
+    const counted = counts.reduce<number>((sum, value) => sum + (value ?? 0), 0);
+    if (!statesUnknown && row.actual !== null && counted !== row.actual) {
       issues.push({ code: 'STATE_SUM_MISMATCH', rowId: row.id, message: 'Сумма состояний не равна фактическому количеству' });
     }
     if (row.actual === null && counted !== 0) {
@@ -434,14 +442,14 @@ export function importEquipmentTable(text: string): EquipmentImportResult {
       return index >= 0 ? cells[index]?.trim() : undefined;
     };
     const id = get('id') ?? '';
-    const stateCounts = zeroCounts();
-    for (const condition of EQUIPMENT_CONDITIONS) stateCounts[condition] = requiredNumber(get(condition));
+    const stateCounts: Record<EquipmentCondition, number | null> = zeroCounts();
+    for (const condition of EQUIPMENT_CONDITIONS) stateCounts[condition] = nullableNumber(get(condition));
     const row: EquipmentEditorRow = {
       id,
       forceId: get('forceId') ?? '',
       accounting: get('accounting') === 'INDIVIDUAL' ? 'INDIVIDUAL' : 'AGGREGATE',
       typeId: get('typeId') ?? '',
-      typeRevision: requiredNumber(get('typeRevision'), 1),
+      typeRevision: nullableNumber(get('typeRevision')),
       typeSha256: get('typeSha256') ?? '',
       typeTitle: get('typeTitle') || (get('typeId') ?? ''),
       movementClass: get('movementClass') || 'UNKNOWN',
@@ -466,6 +474,8 @@ export function importEquipmentTable(text: string): EquipmentImportResult {
       sourceSha256: get('sourceSha256') ?? '',
     };
     for (const field of NULLABLE_FIELDS) if (row[field] === null) unknown.add(`${id}.${field}`);
+    for (const condition of EQUIPMENT_CONDITIONS) if (row.stateCounts[condition] === null) unknown.add(`${id}.${condition}`);
+    if (row.typeRevision === null) unknown.add(`${id}.typeRevision`);
     return row;
   });
   return { rows, unknown: [...unknown], issues: validateEquipmentEditorRows(rows) };

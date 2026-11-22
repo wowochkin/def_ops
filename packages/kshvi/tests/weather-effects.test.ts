@@ -70,4 +70,17 @@ describe('профили погодного влияния', () => {
     expect(result.status).toBe('CALCULATED');
     expect(result.factors.movement).not.toBe(1);
   });
+
+  it('не рассчитывает по формально APPROVED, но невалидному профилю', () => {
+    const missingApproval = applyWeatherEffects({ precipitation: 2 }, { ...approvedProfile, id: '', approvedBy: '' }, context);
+    expect(missingApproval.status).toBe('REQUIRES_REVIEW');
+    expect(missingApproval.unknown).toContain('profile:invalid');
+    expect(missingApproval.factors).toEqual({});
+    const brokenRule = applyWeatherEffects({ precipitation: 2 }, {
+      ...approvedProfile,
+      rules: [{ ...approvedProfile.rules[0], factor: Number.NaN }],
+    }, context);
+    expect(brokenRule.status).toBe('REQUIRES_REVIEW');
+    expect(brokenRule.unknown).toContain('profile:invalid');
+  });
 });

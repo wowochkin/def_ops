@@ -1,4 +1,4 @@
-import { anchorOffset } from './geometry';
+import { anchorOffset, validateModifiers } from './geometry';
 import type { RenderSymbolInput, SymbolDefinition, SymbolKind } from './model';
 import { renderSymbol, type RenderSymbolOptions } from './render-svg';
 
@@ -40,31 +40,54 @@ function iconId(symbol: RenderSymbolInput & { readonly geometry?: SymbolDefiniti
   return `tactical:${symbol.id}:${symbol.version ?? '0.0.0'}:${symbol.geometry?.version ?? 1}`;
 }
 
+function labelOf(symbol: SymbolDefinition): string {
+  const value = symbol.labels.top ?? symbol.labels.bottom ?? symbol.name;
+  return value === null || value === '' ? '' : String(value);
+}
+function dashOf(symbol: SymbolDefinition): readonly number[] {
+  switch (symbol.geometry.template) {
+    case 'BOUNDARY': return [10, 4, 2, 4];
+    case 'FORD': return [6, 4];
+    case 'FERRY': return [5, 4];
+    case 'ICE_CROSSING': return [8, 4];
+    default: return [1, 0];
+  }
+}
+
 export function symbolFeatures(
   instances: readonly SymbolInstance[],
   options: SymbolSizeForMap = { width: 64, height: 64 },
 ): SymbolFeatureCollection {
   return {
     type: 'FeatureCollection',
-    features: instances.map(instance => ({
-      type: 'Feature',
-      id: instance.id,
-      geometry: instance.geometry,
-      properties: {
-        ...instance.properties,
-        symbolId: instance.symbol.id,
-        symbolVersion: instance.symbol.version,
-        setVersion: instance.setVersion,
-        geometryVersion: instance.symbol.geometry.version,
-        status: instance.symbol.status,
-        kind: instance.symbol.kind,
-        affiliation: instance.symbol.affiliation,
-        objectType: instance.symbol.objectType,
-        color: instance.symbol.color,
-        icon: iconId(instance.symbol),
-        offset: instance.symbol.kind === 'POINT' ? anchorOffset(instance.symbol, options) : [0, 0],
-      },
-    })),
+    features: instances.map(instance => {
+      validateModifiers(instance.symbol);
+      return {
+        type: 'Feature',
+        id: instance.id,
+        geometry: instance.geometry,
+        properties: {
+          ...instance.properties,
+          symbolId: instance.symbol.id,
+          symbolVersion: instance.symbol.version,
+          setVersion: instance.setVersion,
+          geometryVersion: instance.symbol.geometry.version,
+          geometryTemplate: instance.symbol.geometry.template,
+          geometryParameters: { ...instance.symbol.geometry.parameters },
+          modifiers: instance.symbol.modifiers.map(modifier => ({ ...modifier })),
+          label: labelOf(instance.symbol),
+          lineDasharray: dashOf(instance.symbol),
+          symbolSpacing: typeof instance.symbol.geometry.parameters.symbolSpacing === 'number' ? instance.symbol.geometry.parameters.symbolSpacing : 48,
+          status: instance.symbol.status,
+          kind: instance.symbol.kind,
+          affiliation: instance.symbol.affiliation,
+          objectType: instance.symbol.objectType,
+          color: instance.symbol.color,
+          icon: iconId(instance.symbol),
+          offset: instance.symbol.kind === 'POINT' ? anchorOffset(instance.symbol, options) : [0, 0],
+        },
+      };
+    }),
   };
 }
 
@@ -95,6 +118,11 @@ export function symbolLayers(sourceId = 'tactical-symbols') {
       paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.12 },
     },
     {
+      id: `${sourceId}-areas-pattern`, type: 'fill', source: sourceId,
+      filter: ['==', ['geometry-type'], 'Polygon'],
+      paint: { 'fill-pattern': ['get', 'icon'], 'fill-opacity': 0.22 },
+    },
+    {
       id: `${sourceId}-areas-outline`, type: 'line', source: sourceId,
       filter: ['==', ['geometry-type'], 'Polygon'],
       paint: { 'line-color': ['get', 'color'], 'line-width': 1.5 },
@@ -103,7 +131,16 @@ export function symbolLayers(sourceId = 'tactical-symbols') {
       id: `${sourceId}-lines`, type: 'line', source: sourceId,
       filter: ['==', ['geometry-type'], 'LineString'],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': ['get', 'color'], 'line-width': 3 },
+      paint: { 'line-color': ['get', 'color'], 'line-width': 3, 'line-dasharray': ['get', 'lineDasharray'] },
+    },
+    {
+      id: `${sourceId}-lines-template`, type: 'symbol', source: sourceId,
+      filter: ['==', ['geometry-type'], 'LineString'],
+      layout: {
+        'symbol-placement': 'line', 'icon-image': ['get', 'icon'], 'icon-size': 0.5,
+        'symbol-spacing': ['get', 'symbolSpacing'], 'icon-rotation-alignment': 'map',
+        'icon-allow-overlap': true, 'icon-ignore-placement': true,
+      },
     },
     {
       id: `${sourceId}-clusters`, type: 'circle', source: sourceId,
@@ -120,6 +157,15 @@ export function symbolLayers(sourceId = 'tactical-symbols') {
       filter: ['has', 'point_count'],
       layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 },
       paint: { 'text-color': '#ffffff' },
+    },
+    {
+      id: `${sourceId}-labels`, type: 'symbol', source: sourceId,
+      filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'label'], '']],
+      layout: {
+        'text-field': ['get', 'label'], 'text-size': 12, 'text-offset': [0, -3],
+        'text-allow-overlap': false, 'text-optional': true,
+      },
+      paint: { 'text-color': ['get', 'color'], 'text-halo-color': '#ffffff', 'text-halo-width': 1 },
     },
     {
       id: `${sourceId}-points`, type: 'symbol', source: sourceId,

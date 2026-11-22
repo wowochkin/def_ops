@@ -1,12 +1,26 @@
-import { symbolSet, type SymbolDefinition } from '@def-ops/tactical-symbols';
+import { symbolSet, type SymbolAffiliation, type SymbolDefinition, type SymbolKind, type SymbolSet, type SymbolStatus } from '@def-ops/tactical-symbols';
 import { sourceRegistry } from '@def-ops/tactical-symbols/source/browser';
 
-export function searchSymbols(query: string, forceType = 'ALL'): SymbolDefinition[] {
+export type SymbolSearchFilters = Readonly<{
+  affiliation?: SymbolAffiliation | 'ALL';
+  kind?: SymbolKind | 'ALL';
+  status?: SymbolStatus | 'ALL';
+  organizationalLevel?: string;
+  documentId?: string;
+}>;
+
+export function searchSymbols(query: string, forceType = 'ALL', filters: SymbolSearchFilters = {}, set: SymbolSet = symbolSet): SymbolDefinition[] {
   const normalized = query.trim().toLocaleLowerCase('ru');
-  return symbolSet.symbols.filter(symbol => (
-    (forceType === 'ALL' || symbol.forceType === forceType)
-    && (!normalized || `${symbol.name} ${symbol.code} ${symbol.purpose} ${symbol.forceType}`.toLocaleLowerCase('ru').includes(normalized))
-  ));
+  return set.symbols.filter(symbol => {
+    const documentId = sourceRegistry.fragments.find(fragment => fragment.id === symbol.source.fragmentId)?.documentId;
+    return (forceType === 'ALL' || symbol.forceType === forceType)
+      && (!filters.affiliation || filters.affiliation === 'ALL' || symbol.affiliation === filters.affiliation)
+      && (!filters.kind || filters.kind === 'ALL' || symbol.kind === filters.kind)
+      && (!filters.status || filters.status === 'ALL' || symbol.status === filters.status)
+      && (!filters.organizationalLevel || filters.organizationalLevel === 'ALL' || symbol.organizationalLevel === filters.organizationalLevel)
+      && (!filters.documentId || filters.documentId === 'ALL' || documentId === filters.documentId)
+      && (!normalized || `${symbol.name} ${symbol.code} ${symbol.purpose} ${symbol.forceType}`.toLocaleLowerCase('ru').includes(normalized));
+  });
 }
 
 export function fragmentUrl(fragmentId: string): string {

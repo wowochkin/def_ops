@@ -86,7 +86,7 @@ describe('динамическая местность и H_v/G_v', () => {
   it('AC-29: распутица, замерзание/оттаивание и разлив создают события с геометрией и причиной', () => {
     const wet = advanceTerrain(state(), {
       operationalAt: t1,
-      weather: { eventId: 'weather-wet', state: { precipitation: 12, soilTemperature: 4 } },
+      weather: { eventId: 'weather-wet', state: { precipitation: 12, soilTemperature: 4 }, geometry },
       events: [], profile,
     });
     expect(wet.status).toBe('READY');
@@ -99,14 +99,14 @@ describe('динамическая местность и H_v/G_v', () => {
 
     const frozen = advanceTerrain(wet, {
       operationalAt: t2,
-      weather: { eventId: 'weather-freeze', state: { precipitation: 0, soilTemperature: -5 } },
+      weather: { eventId: 'weather-freeze', state: { precipitation: 0, soilTemperature: -5 }, geometry },
       events: [], profile,
     });
     expect(frozen.objects.marsh.frozen).toBe(true);
     expect(frozen.objects.river.ice).toBe('FROZEN');
     const thawed = advanceTerrain(frozen, {
       operationalAt: '2026-01-01T03:00:00.000Z',
-      weather: { eventId: 'weather-thaw', state: { precipitation: 25, soilTemperature: 5 } },
+      weather: { eventId: 'weather-thaw', state: { precipitation: 25, soilTemperature: 5 }, geometry },
       events: [], profile,
     });
     expect(thawed.objects.marsh.frozen).toBe(false);
@@ -117,7 +117,7 @@ describe('динамическая местность и H_v/G_v', () => {
   it('повтор скачка идемпотентен, прошлое не переписывается, пробел требует проверки', () => {
     const input = {
       operationalAt: t1,
-      weather: { eventId: 'weather-wet', state: { precipitation: 12, soilTemperature: 4 } },
+      weather: { eventId: 'weather-wet', state: { precipitation: 12, soilTemperature: 4 }, geometry },
       events: [], profile,
     } as const;
     const first = advanceTerrain(state(), input);
@@ -125,7 +125,7 @@ describe('динамическая местность и H_v/G_v', () => {
     expect(() => advanceTerrain(first, { ...input, operationalAt: t0 })).toThrow('оперативн');
     const missing = advanceTerrain(state(), {
       operationalAt: t1,
-      weather: { eventId: 'weather-gap', state: { precipitation: null, soilTemperature: -5 } },
+      weather: { eventId: 'weather-gap', state: { precipitation: null, soilTemperature: -5 }, geometry },
       events: [], profile,
     });
     expect(missing.status).toBe('REQUIRES_REVIEW');
@@ -224,5 +224,77 @@ describe('динамическая местность и H_v/G_v', () => {
     const observed = projectTerrainState(damaged, { sideId: 'blue', observedEventIds: ['secret-damage'] });
     expect(observed.objects.bridge.status).toBe('CLOSED');
     expect(observed.quality).toBe('CURRENT');
+  });
+
+  it('UNKNOWN переправы и маршрута требует проверки, а не BLOCKED или CLOSED', () => {
+    expect(crossingDecision({ loadTonnes: 10 }, { capacityTonnes: 40, status: 'UNKNOWN' })).toBe('REQUIRES_REVIEW');
+    const unknown = initialTerrainState({
+      operationalAt: t0,
+      objects: [object({ id: 'bridge', kind: 'BRIDGE', status: 'UNKNOWN', capacityTonnes: 40, crossingMinutes: 20 })],
+      profile,
+    });
+    const route = recalculateRoute({
+      state: unknown,
+      graph: { nodes: ['A', 'B'], edges: [{ id: 'unknown-edge', from: 'A', to: 'B', distanceMeters: 1000, terrainObjectId: 'bridge', baseSpeedKph: 40 }] },
+      from: 'A', to: 'B', movement: { movementClass: 'WHEELED', loadTonnes: 10 }, travelledMeters: 0, elapsedMinutes: 0, purpose: 'MOVEMENT',
+    });
+    expect(route.status).toBe('REQUIRES_REVIEW');
+    expect(route.effects.route).not.toBe('BLOCKED');
+    expect(route.effects.movement).not.toBe('BLOCKED');
+  });
+
+  it('применяет погоду только в географии события и не публикует скрытый факт', () => {
+    const regional = initialTerrainState({
+      operationalAt: t0,
+      objects: [
+        object({ id: 'near', kind: 'ROAD', geometry: { type: 'Point', coordinates: [37, 55] }, mud: 'NONE' }),
+        object({ id: 'far', kind: 'ROAD', geometry: { type: 'Point', coordinates: [10, 10] }, mud: 'NONE' }),
+      ],
+      profile,
+    });
+    const changed = advanceTerrain(regional, {
+      operationalAt: t1,
+      weather: {
+        eventId: 'weather-region', state: { precipitation: 12, soilTemperature: 4 },
+        geometry: { type: 'Point', coordinates: [37, 55] }, visibility: 'HIDDEN',
+      },
+      events: [], profile,
+    });
+    expect(changed.objects.near.mud).toBe('HEAVY');
+    expect(changed.objects.far.mud).toBe('NONE');
+    const hidden = projectTerrainState(changed, { sideId: 'blue', observedEventIds: [] });
+    expect(hidden.objects.near.mud).toBe('NONE');
+    const observed = projectTerrainState(changed, { sideId: 'blue', observedEventIds: changed.history.map(event => event.id) });
+    expect(observed.objects.near.mud).toBe('HEAVY');
+  });
+
+  it('не применяет погоду глобально без географии', () => {
+    const current = state();
+    const changed = advanceTerrain(current, {
+      operationalAt: t1,
+      weather: { eventId: 'weather-global', state: { precipitation: 12, soilTemperature: 4 } },
+      events: [], profile,
+    });
+    expect(changed.status).toBe('REQUIRES_REVIEW');
+    expect(changed.unknown).toContain('weather:geometry');
+    expect(changed.objects).toEqual(current.objects);
+    expect(changed.history).toEqual([]);
+  });
+
+  it('вызывает доменные процессы маршрута вместо подмены их текстовыми метками', () => {
+    const calls: string[] = [];
+    const processes = {
+      supply: (effect: unknown) => { calls.push('supply'); return { accepted: effect }; },
+      evacuation: (effect: unknown) => { calls.push('evacuation'); return { accepted: effect }; },
+      reconnaissance: (effect: unknown) => { calls.push('reconnaissance'); return { accepted: effect }; },
+      agentOption: (effect: unknown) => { calls.push('agentOption'); return { accepted: effect }; },
+    };
+    const route = recalculateRoute({
+      state: state(), graph, from: 'A', to: 'B', movement: { movementClass: 'WHEELED', loadTonnes: 30 },
+      travelledMeters: 0, elapsedMinutes: 0, purpose: 'SUPPLY', processes,
+    });
+    expect(calls).toEqual(['supply', 'evacuation', 'reconnaissance', 'agentOption']);
+    expect(route.processResults.supply).toEqual({ accepted: expect.objectContaining({ status: 'OPEN' }) });
+    expect(route.processResults.reconnaissance).toBeDefined();
   });
 });

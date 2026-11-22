@@ -16,6 +16,10 @@ import {
 } from './morale-model';
 import { MORALE_PROFILE_V1, type MoraleProfile } from './morale-profile';
 
+export type MoraleResourceJournal = Readonly<{
+  consume(consumption: MoraleResourceConsumption & Readonly<{ at: string }>): Readonly<{ status: 'APPLIED' | 'DUPLICATE' | 'REQUIRES_REVIEW' }>;
+}>;
+
 export type MoraleTransition = Readonly<{
   status: 'CALCULATED' | 'REQUIRES_REVIEW';
   state: MoralePsychState;
@@ -123,6 +127,7 @@ export function advanceMorale(input: {
   intervalMinutes: number;
   impacts?: readonly MoraleImpact[];
   recovery?: MoraleRecoveryInput;
+  resourceJournal?: MoraleResourceJournal;
 }, profile: MoraleProfile = MORALE_PROFILE_V1): MoraleTransition {
   const { state } = input;
   if (profile.version !== state.profileVersion || profile.scale.version !== state.scale.version) {
@@ -131,7 +136,11 @@ export function advanceMorale(input: {
   if (!Number.isFinite(input.intervalMinutes) || input.intervalMinutes < 0) {
     throw new Error('Интервал МПС должен быть неотрицательным конечным числом');
   }
-  if (instant(input.at) < instant(state.at)) throw new Error('Переход МПС не может переписывать прошлое');
+  const stateMs = instant(state.at);
+  const inputMs = instant(input.at);
+  if (inputMs < stateMs) throw new Error('Переход МПС не может переписывать прошлое');
+  const elapsedMinutes = (inputMs - stateMs) / 60_000;
+  if (input.intervalMinutes > elapsedMinutes) throw new Error('Интервал МПС превышает фактическое время');
   assertComponents(state.components);
 
   const next: Record<MoraleComponentName, MoraleComponentValue> = { ...state.components };
@@ -177,6 +186,10 @@ export function advanceMorale(input: {
       duplicateEventIds.push(impact.eventId);
       continue;
     }
+    const occurredMs = instant(impact.occurredAt);
+    if (occurredMs < Math.max(stateMs, inputMs - input.intervalMinutes * 60_000) || occurredMs > inputMs) {
+      throw new Error('Воздействие МПС вне фактического интервала');
+    }
     seen.add(impact.eventId);
     appliedEventIds.push(impact.eventId);
     addChanges(impact.eventId, 'MORALE_IMPACT', impact.kind, impact.changes, impact.source, impact.occurredAt);
@@ -198,22 +211,32 @@ export function advanceMorale(input: {
       if (activity.availableResources.unit !== rule.resourceUnit || activity.availableResources.amount < rule.requiredResourceAmount) {
         reasons.push('Недостаточно ресурсов для восстановления МПС');
       }
+      if (!input.resourceJournal) reasons.push('Ресурсный журнал не подключён');
       for (const [name] of changedEntries(rule.changes)) {
         if (next[name].status === 'UNKNOWN') reasons.push(`Нельзя рассчитать восстановление UNKNOWN: ${name}`);
       }
       if (reasons.length) {
         recovery = { eventId: activity.eventId, status: 'BLOCKED', reasons };
       } else {
-        seen.add(activity.eventId);
-        appliedEventIds.push(activity.eventId);
-        addChanges(activity.eventId, 'RECOVERY', activity.activity, rule.changes, activity.source, input.at);
-        resourceConsumptions.push({
+        const consumption = {
           eventId: activity.eventId,
           resourceId: activity.availableResources.resourceId,
           amount: rule.requiredResourceAmount,
           unit: rule.resourceUnit,
-        });
-        recovery = { eventId: activity.eventId, status: 'APPLIED', reasons: [] };
+        };
+        const journalStatus = input.resourceJournal?.consume({ ...consumption, at: input.at }).status;
+        if (journalStatus === 'DUPLICATE') {
+          duplicateEventIds.push(activity.eventId);
+          recovery = { eventId: activity.eventId, status: 'DUPLICATE', reasons: ['Проводка ресурса уже учтена'] };
+        } else if (journalStatus === 'REQUIRES_REVIEW') {
+          recovery = { eventId: activity.eventId, status: 'BLOCKED', reasons: ['Ресурсный журнал отклонил списание'] };
+        } else {
+          seen.add(activity.eventId);
+          appliedEventIds.push(activity.eventId);
+          addChanges(activity.eventId, 'RECOVERY', activity.activity, rule.changes, activity.source, input.at);
+          resourceConsumptions.push(consumption);
+          recovery = { eventId: activity.eventId, status: 'APPLIED', reasons: [] };
+        }
       }
     }
   }

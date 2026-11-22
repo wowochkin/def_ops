@@ -76,9 +76,6 @@ export type CreateRevisionInput = Readonly<{
   scale?: ExerciseScale;
   startsAt?: string | null;
   endsAt?: string | null;
-  state?: Exclude<ExerciseState, 'ARCHIVED'>;
-  readiness?: number;
-  validation?: ExerciseValidation;
   payload?: JsonValue;
 }>;
 

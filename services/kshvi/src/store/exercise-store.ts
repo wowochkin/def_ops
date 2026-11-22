@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createPool, migrate, tx, type Client, type Migration, type Pool } from '@def-ops/db';
-import { canonicalJson, type JsonValue } from '@def-ops/kshvi';
+import { canonicalJson, REQUIRED_SCENARIO_ITEMS, validateKit, type JsonValue, type ScenarioKit } from '@def-ops/kshvi';
 
 export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' | 'exposition' | 'custom';
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
@@ -104,7 +104,8 @@ export interface ExerciseStore {
   listSessions(organizationId: string, exerciseId: string): Promise<readonly ExerciseSession[]>;
 }
 
-export type ExerciseStoreErrorCode = 'NOT_FOUND' | 'REVISION_NOT_FOUND' | 'REVISION_CONFLICT' | 'ARCHIVED' | 'VALIDATION';
+export type ExerciseStoreErrorCode = 'NOT_FOUND' | 'REVISION_NOT_FOUND' | 'REVISION_CONFLICT' | 'ARCHIVED' | 'VALIDATION'
+  | 'SERVER_ASSESSMENT_REQUIRED' | 'SEALED_REQUIRED';
 export class ExerciseStoreError extends Error {
   constructor(readonly code: ExerciseStoreErrorCode, message: string) { super(message); }
 }
@@ -117,8 +118,6 @@ export const KSHVI_EXERCISE_MIGRATIONS: Migration[] = [{
 
 const purposes = new Set<ExercisePurpose>(['planned', 'special', 'inspection', 'research', 'exposition', 'custom']);
 const scales = new Set<ExerciseScale>(['tactical', 'operational', 'strategic', 'custom']);
-const validations = new Set<ExerciseValidation>(['NOT_RUN', 'OK', 'WARNING', 'ERROR']);
-const editableStates = new Set<ExerciseRevision['state']>(['DRAFT', 'IN_REVIEW', 'APPROVED', 'SEALED', 'CANCELLED']);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function fail(code: ExerciseStoreErrorCode, message: string): never { throw new ExerciseStoreError(code, message); }
@@ -129,16 +128,30 @@ function checkDate(value: string | null | undefined, label: string): void {
   if (value === null || value === undefined) return;
   if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) fail('VALIDATION', `Укажите корректную дату: ${label}`);
 }
+function assessmentOf(payload: JsonValue): { readiness: number; validation: ExerciseValidation } {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !('kit' in payload)) {
+    return { readiness: 0, validation: 'NOT_RUN' };
+  }
+  const kit = payload.kit as unknown as ScenarioKit;
+  if (!kit || typeof kit !== 'object' || !Array.isArray(kit.items) || !Array.isArray(kit.omissions)) {
+    return { readiness: 0, validation: 'ERROR' };
+  }
+  const present = new Set(kit.items.filter(item => item?.present).map(item => item.item));
+  const readiness = Math.floor(100 * REQUIRED_SCENARIO_ITEMS.filter(item => present.has(item)).length / REQUIRED_SCENARIO_ITEMS.length);
+  const issues = validateKit(kit);
+  return {
+    readiness,
+    validation: issues.some(issue => issue.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'OK',
+  };
+}
 function validateRevisionInput(input: CreateRevisionInput): void {
   if (!input || typeof input !== 'object') fail('VALIDATION', 'Проверьте данные учения');
   if (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 1) fail('VALIDATION', 'Укажите ожидаемую редакцию');
   if (input.title !== undefined && (typeof input.title !== 'string' || !input.title.trim())) fail('VALIDATION', 'Введите название учения');
   if (input.purpose !== undefined && !purposes.has(input.purpose)) fail('VALIDATION', 'Выберите назначение учения');
   if (input.scale !== undefined && !scales.has(input.scale)) fail('VALIDATION', 'Выберите масштаб учения');
-  if (input.state !== undefined && !editableStates.has(input.state)) fail('VALIDATION', 'Недопустимое состояние редакции');
-  if (input.validation !== undefined && !validations.has(input.validation)) fail('VALIDATION', 'Недопустимый результат проверки');
-  if (input.readiness !== undefined && (!Number.isSafeInteger(input.readiness) || input.readiness < 0 || input.readiness > 100)) {
-    fail('VALIDATION', 'Готовность должна быть целым числом от 0 до 100');
+  if (input.state !== undefined || input.readiness !== undefined || input.validation !== undefined) {
+    fail('SERVER_ASSESSMENT_REQUIRED', 'Состояние, готовность и результат проверки устанавливаются только сервером');
   }
   checkDate(input.startsAt, 'начало');
   checkDate(input.endsAt, 'окончание');
@@ -212,18 +225,20 @@ function copiedCard(source: ExerciseCard, actor: ExerciseActor, now: string, tit
       exerciseId,
       payload,
       sha256: digest(payload),
+      state: 'DRAFT' as const,
       createdBy: actor.userId,
       createdAt: now,
       supersedesId: revision.supersedesId ? revisionIds.get(revision.supersedesId) ?? null : null,
     };
   });
+  const assessment = assessmentOf(revisions.at(-1)?.payload ?? {});
   return {
     ...summaryOf(source),
     id: exerciseId,
     title: title?.trim() || `Копия — ${source.title}`,
     state: 'DRAFT',
-    readiness: 0,
-    validation: 'NOT_RUN',
+    readiness: assessment.readiness,
+    validation: assessment.validation,
     ownerId: actor.userId,
     createdAt: now,
     updatedAt: now,
@@ -250,6 +265,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const now = this.now().toISOString();
     const exerciseId = randomUUID();
     const payload = clone(input.payload ?? {});
+    const assessment = assessmentOf(payload);
     const record: ExerciseCard = {
       id: exerciseId,
       title: input.title.trim(),
@@ -260,8 +276,8 @@ export class InMemoryExerciseStore implements ExerciseStore {
       ownerId: actor.userId,
       startsAt: input.startsAt ?? null,
       endsAt: input.endsAt ?? null,
-      readiness: 0,
-      validation: 'NOT_RUN',
+      readiness: assessment.readiness,
+      validation: assessment.validation,
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
@@ -320,9 +336,9 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const now = this.now().toISOString();
     const previous = record.revisions.find(revision => revision.revision === record.revision)!;
     const payload = clone(input.payload ?? previous.payload);
-    const state = input.state ?? 'DRAFT';
+    const assessment = assessmentOf(payload);
     const revision: ExerciseRevision = {
-      id: randomUUID(), exerciseId, revision: record.revision + 1, payload, sha256: digest(payload), state,
+      id: randomUUID(), exerciseId, revision: record.revision + 1, payload, sha256: digest(payload), state: 'DRAFT',
       createdBy: actor.userId, createdAt: now, supersedesId: previous.id,
     };
     record.title = input.title?.trim() ?? record.title;
@@ -330,9 +346,9 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.scale = input.scale ?? record.scale;
     record.startsAt = startsAt;
     record.endsAt = endsAt;
-    record.state = state;
-    record.readiness = input.readiness ?? record.readiness;
-    record.validation = input.validation ?? record.validation;
+    record.state = 'DRAFT';
+    record.readiness = assessment.readiness;
+    record.validation = assessment.validation;
     record.revision = revision.revision;
     record.updatedAt = now;
     (record.revisions as ExerciseRevision[]).push(revision);
@@ -345,6 +361,9 @@ export class InMemoryExerciseStore implements ExerciseStore {
     if (record.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
     const revision = record.revisions.find(item => item.revision === input.revision);
     if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
+    if (record.state !== 'SEALED' || record.revision !== revision.revision || revision.state !== 'SEALED') {
+      fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
+    }
     const session: ExerciseSession = {
       id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
       state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,
@@ -454,10 +473,11 @@ export class PgExerciseStore implements ExerciseStore {
       const now = new Date().toISOString();
       const exerciseId = randomUUID();
       const payload = clone(input.payload ?? {});
+      const assessment = assessmentOf(payload);
       const card: ExerciseCard = {
         id: exerciseId, title: input.title.trim(), purpose: input.purpose, scale: input.scale,
         state: 'DRAFT', revision: 1, ownerId: actor.userId, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null,
-        readiness: 0, validation: 'NOT_RUN', createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null,
+        readiness: assessment.readiness, validation: assessment.validation, createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null,
         revisions: [{ id: randomUUID(), exerciseId, revision: 1, payload, sha256: digest(payload), state: 'DRAFT', createdBy: actor.userId, createdAt: now, supersedesId: null }],
         sessions: [],
       };
@@ -525,9 +545,10 @@ export class PgExerciseStore implements ExerciseStore {
       const previous = current.revisions.find(revision => revision.revision === current.revision)!;
       const now = new Date().toISOString();
       const payload = clone(input.payload ?? previous.payload);
+      const assessment = assessmentOf(payload);
       const revision: ExerciseRevision = {
         id: randomUUID(), exerciseId, revision: current.revision + 1, payload, sha256: digest(payload),
-        state: input.state ?? 'DRAFT', createdBy: actor.userId, createdAt: now, supersedesId: previous.id,
+        state: 'DRAFT', createdBy: actor.userId, createdAt: now, supersedesId: previous.id,
       };
       await db.query(
         `insert into ${this.schema}.exercise_revisions (organization_id, id, exercise_id, revision, payload, sha256, state, created_by, created_at, supersedes_id)
@@ -538,7 +559,7 @@ export class PgExerciseStore implements ExerciseStore {
         `update ${this.schema}.exercises set title=$3, purpose=$4, scale=$5, starts_at=$6, ends_at=$7, state=$8,
          readiness=$9, validation=$10, revision=$11, updated_at=$12 where organization_id=$1 and id=$2`,
         [actor.organizationId, exerciseId, input.title?.trim() ?? current.title, input.purpose ?? current.purpose, input.scale ?? current.scale,
-          startsAt, endsAt, revision.state, input.readiness ?? current.readiness, input.validation ?? current.validation, revision.revision, now],
+          startsAt, endsAt, revision.state, assessment.readiness, assessment.validation, revision.revision, now],
       );
       return requiredCard(db, this.schema, actor.organizationId, exerciseId);
     });
@@ -552,6 +573,9 @@ export class PgExerciseStore implements ExerciseStore {
       if (current.state === 'ARCHIVED') fail('ARCHIVED', 'Для архивного учения нельзя создать сеанс');
       const revision = current.revisions.find(item => item.revision === input.revision);
       if (!revision) fail('REVISION_NOT_FOUND', 'Редакция сценария не найдена');
+      if (current.state !== 'SEALED' || current.revision !== revision.revision || revision.state !== 'SEALED') {
+        fail('SEALED_REQUIRED', 'Сеанс можно создать только из текущей редакции SEALED');
+      }
       const session: ExerciseSession = {
         id: randomUUID(), exerciseId, scenarioRevisionId: revision.id, revision: revision.revision,
         state: 'ACTIVE', mode: 'NETWORK', authority: 'SERVER', confirmedRevision: 0,

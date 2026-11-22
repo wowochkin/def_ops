@@ -8,6 +8,7 @@ import {
   type EnvironmentSnapshot,
   type OperationalWeather,
   type SnapshotAtlas,
+  type SnapshotResource,
   type WeatherQuery,
 } from '../../../../packages/kshvi/src/environment/provider';
 import { canonicalJson } from '../../../../packages/kshvi/src/events/canonical';
@@ -23,6 +24,18 @@ export type CartographyEnvironmentOptions = Readonly<{
 }>;
 
 const jsonHeaders = { 'content-type': 'application/json' } as const;
+const glyphRanges = Array.from({ length: 256 }, (_, index) => `${index * 256}-${index * 256 + 255}`);
+
+function fontStacks(style: unknown): string[] {
+  const fonts = new Set<string>();
+  const visit = (value: unknown, key = ''): void => {
+    if (key === 'text-font' && typeof value === 'string') fonts.add(value);
+    if (Array.isArray(value)) for (const child of value) visit(child, key);
+    else if (value && typeof value === 'object') for (const [childKey, child] of Object.entries(value)) visit(child, childKey);
+  };
+  visit(style);
+  return [...fonts].sort();
+}
 
 export class CartographyEnvironmentProvider implements EnvironmentProvider {
   readonly #baseUrl: string;
@@ -42,7 +55,7 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
   }
 
   async #request(pathname: string, init?: RequestInit): Promise<Response> {
-    const response = await this.#fetch(`${this.#baseUrl}${pathname}`, {
+    const response = await this.#fetch(/^https?:\/\//.test(pathname) ? pathname : `${this.#baseUrl}${pathname}`, {
       ...init,
       headers: { ...this.#headers, ...jsonHeaders, ...(init?.headers ?? {}) },
     });
@@ -83,20 +96,55 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
     return this.#json<WeatherDataset>(`/environment/weather/${encodeURIComponent(id)}`);
   }
 
+  async #snapshotResources(style: unknown): Promise<{ contents: PreparedContent[]; resources: SnapshotResource[] }> {
+    const contents: PreparedContent[] = [];
+    const resources: SnapshotResource[] = [];
+    const source = style && typeof style === 'object' && !Array.isArray(style) ? style as Record<string, unknown> : {};
+    const add = async (logicalPath: SnapshotResource['path'], sourceUrl: string): Promise<void> => {
+      const url = new URL(sourceUrl, `${this.#baseUrl}/`);
+      if (url.origin !== new URL(this.#baseUrl).origin || !['http:', 'https:'].includes(url.protocol)) {
+        throw new HttpError(422, 'environment_resource_origin', 'Ресурс стиля должен принадлежать серверу картографии');
+      }
+      const bytes = Buffer.from(await (await this.#request(url.href)).arrayBuffer());
+      const prepared = prepareContent(bytes, '.bin');
+      contents.push(prepared.content);
+      resources.push({ path: logicalPath, artifact: prepared.artifact });
+    };
+    if (typeof source.glyphs === 'string') {
+      const stacks = fontStacks(style);
+      if (!stacks.length) throw new HttpError(422, 'environment_glyphs_incomplete', 'В стиле есть glyphs, но не определены text-font');
+      for (const stack of stacks) for (const range of glyphRanges) {
+        const url = source.glyphs.replace('{fontstack}', encodeURIComponent(stack)).replace('{range}', range);
+        await add(`glyphs/${stack}/${range}.pbf`, url);
+      }
+    }
+    if (typeof source.sprite === 'string') {
+      for (const suffix of ['.json', '.png', '@2x.json', '@2x.png']) {
+        const url = new URL(source.sprite, `${this.#baseUrl}/`);
+        url.pathname = `${url.pathname}${suffix}`;
+        await add(`sprites/ohm${suffix}` as SnapshotResource['path'], url.href);
+      }
+    }
+    return { contents, resources };
+  }
+
   #snapshotStyle(style: unknown, atlasId: string): unknown {
     const sourcePrefixes = [
       `${this.#baseUrl}/atlas/${atlasId}/tiles`,
       `/api/cartography/atlas/${atlasId}/tiles`,
+      `/cartography/atlas/${atlasId}/tiles`,
     ];
     const target = `/kshvi/environment/snapshots/{snapshotId}/atlas/${atlasId}/tiles`;
-    const rewrite = (value: unknown): unknown => {
+    const rewrite = (value: unknown, key = ''): unknown => {
       if (typeof value === 'string') {
+        if (key === 'glyphs') return '/kshvi/environment/snapshots/{snapshotId}/resources/glyphs/{fontstack}/{range}.pbf';
+        if (key === 'sprite') return '/kshvi/environment/snapshots/{snapshotId}/resources/sprites/ohm';
         let result = value;
         for (const prefix of sourcePrefixes) result = result.split(prefix).join(target);
         return result;
       }
-      if (Array.isArray(value)) return value.map(rewrite);
-      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, rewrite(child)]));
+      if (Array.isArray(value)) return value.map(child => rewrite(child, key));
+      if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([childKey, child]) => [childKey, rewrite(child, childKey)]));
       return value;
     };
     return rewrite(style);
@@ -121,11 +169,21 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
     const contents: PreparedContent[] = [];
     const limitations: string[] = [];
     const atlases: SnapshotAtlas[] = [];
+    const resources: SnapshotResource[] = [];
     for (const chosen of selection.atlases) {
       const meta = await this.getAtlas(chosen.id);
+      const coverage = await this.coverage(chosen.id, selection.region.bounds);
+      if (!coverage.covered) throw new HttpError(422, 'environment_coverage_missing', coverage.reason ?? 'Область не покрыта атласом');
       const exportRights = chosen.exportRights ?? 'ALLOWED';
       const license = chosen.license ?? meta.license ?? 'Лицензия указана в атрибуции источника';
       const sourceStyle = await this.#json(`/atlas/${encodeURIComponent(chosen.id)}/style`);
+      const captured = await this.#snapshotResources(sourceStyle);
+      contents.push(...captured.contents);
+      for (const resource of captured.resources) {
+        const existing = resources.find(item => item.path === resource.path);
+        if (existing && existing.artifact.sha256 !== resource.artifact.sha256) throw new HttpError(422, 'environment_resource_conflict', `Конфликт ресурса ${resource.path}`);
+        if (!existing) resources.push(resource);
+      }
       const style = prepareContent(canonicalJson(this.#snapshotStyle(sourceStyle, chosen.id)), '.json');
       contents.push(style.content);
       let exportArtifact = emptyArtifact();
@@ -179,6 +237,7 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
       schemaVersion: 1,
       region: selection.region,
       atlases,
+      resources,
       weather: {
         mode: selection.weather.mode,
         contentRef: weather.artifact.contentRef,
@@ -211,6 +270,12 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
 
   snapshotTile(snapshot: EnvironmentSnapshot, atlasId: string, z: number, x: number, y: number) {
     return readSnapshotTile(this.#store, snapshot, atlasId, z, x, y);
+  }
+
+  async snapshotResource(snapshot: EnvironmentSnapshot, resourcePath: string): Promise<Buffer> {
+    const resource = snapshot.resources.find(item => item.path === resourcePath);
+    if (!resource?.artifact.contentRef) throw new HttpError(404, 'snapshot_content_not_found', 'Ресурс снимка не найден');
+    return this.#store.read(resource.artifact.contentRef, snapshot.id);
   }
 
   async snapshotArtifact(snapshot: EnvironmentSnapshot, atlasId: string, kind: 'style' | 'export' | 'elevations'): Promise<Buffer | object> {

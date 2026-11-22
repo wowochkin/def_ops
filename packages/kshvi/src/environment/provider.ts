@@ -32,6 +32,10 @@ export type AtlasMeta = Readonly<{
 
 export type ContentRef = Readonly<{ path: string; sha256: string; bytes: number }>;
 export type SnapshotArtifact = Readonly<{ contentRef: ContentRef | null; sha256: string | null }>;
+export type SnapshotResource = Readonly<{
+  path: `glyphs/${string}` | `sprites/${string}`;
+  artifact: SnapshotArtifact;
+}>;
 
 export type EnvironmentSelection = Readonly<{
   region: Readonly<{ name: string; bounds: Bounds }>;
@@ -77,6 +81,7 @@ export type EnvironmentSnapshot = Readonly<{
   manifestSha256: string;
   region: EnvironmentSelection['region'];
   atlases: readonly SnapshotAtlas[];
+  resources: readonly SnapshotResource[];
   weather: EnvironmentWeather;
   elevation: EnvironmentSelection['elevation'];
   algorithmVersions: EnvironmentSelection['algorithmVersions'];

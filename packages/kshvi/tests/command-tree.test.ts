@@ -10,7 +10,11 @@ it('находит цикл и незакрытый активный стык', 
 it('различает человека, группу, системного агента и отложенное подключение', () => {
   const nodes = [{ id: 'a', parentId: null, trained: true }, { id: 'b', parentId: 'a', trained: true }];
   const edges = [
-    { from: 'a', to: 'b', active: true, playRole: { kind: 'AGENT', assignmentId: 'agent-1' } },
+    {
+      from: 'a', to: 'b', active: true, playRole: { kind: 'AGENT', assignmentId: 'agent-1' },
+      kind: 'OPERATIONAL_COMMAND' as const, validFrom: '2025-01-01T00:00:00Z', validTo: null,
+      authorities: ['ISSUE_ORDER'], allowedDocumentTypes: ['ORDER'], channelId: 'radio',
+    },
     { from: 'b', to: 'a', active: false, playRole: null, activation: 'AFTER_SUPERIOR_TASK' as const },
   ] as const;
   expect(validateCommandTree({ nodes, edges })).toEqual([]);

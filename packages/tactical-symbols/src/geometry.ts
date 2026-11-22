@@ -39,7 +39,7 @@ export function validateModifiers(symbol: RenderSymbolInput): void {
   const active = new Set(symbol.modifiers.map(modifier => modifier.id));
   if (active.size !== symbol.modifiers.length) throw new Error('Идентификаторы модификаторов должны быть уникальны');
   for (const modifier of symbol.modifiers) {
-    if (symbol.allowedModifierIds && symbol.allowedModifierIds.length > 0 && !symbol.allowedModifierIds.includes(modifier.id)) {
+    if (symbol.allowedModifierIds && !symbol.allowedModifierIds.includes(modifier.id)) {
       throw new Error(`Недопустимый модификатор ${modifier.id} для знака ${symbol.id}`);
     }
     for (const incompatibleId of modifier.incompatibleWith ?? []) {

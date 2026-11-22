@@ -7,6 +7,7 @@ export function crossingDecision(
   vehicle: { loadTonnes: number | null; movementClass?: MovementClass; widthM?: number | null; heightM?: number | null },
   crossing: Pick<TerrainObject, 'capacityTonnes' | 'status'> & Partial<TerrainObject>,
 ): CrossingDecision {
+  if (crossing.status === 'UNKNOWN') return 'REQUIRES_REVIEW';
   if (crossing.status !== 'OPEN' || crossing.deployed === false || crossing.equipmentStatus === 'DAMAGED') return 'BLOCKED';
   if (vehicle.loadTonnes === null || crossing.capacityTonnes === null || crossing.capacityTonnes === undefined) return 'REQUIRES_REVIEW';
   if (!Number.isFinite(vehicle.loadTonnes) || vehicle.loadTonnes < 0 || !Number.isFinite(crossing.capacityTonnes)) return 'REQUIRES_REVIEW';

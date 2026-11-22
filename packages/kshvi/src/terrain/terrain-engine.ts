@@ -107,7 +107,29 @@ function contains(min: number, max: number, upper: number, value: number): boole
   return value >= min && (value < max || value === max && value === upper);
 }
 
-/** Версионный H_v: погода превращается в события мира, а не в незаметную правку карты. */
+type GeometryBounds = readonly [number, number, number, number];
+function geometryBounds(geometry: TerrainObject['geometry'] | undefined): GeometryBounds | null {
+  if (!geometry) return null;
+  const points: [number, number][] = [];
+  const visit = (value: unknown): void => {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && Number.isFinite(value[0]) && Number.isFinite(value[1])) {
+      points.push([value[0], value[1]]);
+      return;
+    }
+    for (const child of value) visit(child);
+  };
+  visit(geometry.coordinates);
+  if (!points.length) return null;
+  const xs = points.map(point => point[0]);
+  const ys = points.map(point => point[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+function intersects(first: GeometryBounds, second: GeometryBounds): boolean {
+  return first[0] <= second[2] && first[2] >= second[0] && first[1] <= second[3] && first[3] >= second[1];
+}
+
+/** Версионный H_v: погода превращается в географически и визуально ограниченные события мира. */
 export function advanceTerrain(state: TerrainState, input: TerrainAdvanceInput): TerrainState {
   const targetMs = weatherTime(input.operationalAt);
   const currentMs = weatherTime(state.operationalAt);
@@ -120,7 +142,9 @@ export function advanceTerrain(state: TerrainState, input: TerrainAdvanceInput):
   const weatherApplied = input.weather ? state.history.some(event => event.causeIds.includes(input.weather!.eventId)) : true;
   if (!events.length && weatherApplied) return targetMs === currentMs ? state : { ...state, operationalAt: input.operationalAt };
 
+  const weatherBounds = input.weather ? geometryBounds(input.weather.geometry) : null;
   if (input.weather && !weatherApplied) {
+    if (!weatherBounds) return { ...state, operationalAt: input.operationalAt, status: 'REQUIRES_REVIEW', unknown: ['weather:geometry'] };
     const missing = input.profile.requiredWeather.filter(field => input.weather!.state[field] === null || input.weather!.state[field] === undefined);
     if (missing.length) return { ...state, operationalAt: input.operationalAt, status: 'REQUIRES_REVIEW', unknown: missing };
     const outside = input.profile.rules.filter(rule => {
@@ -131,17 +155,18 @@ export function advanceTerrain(state: TerrainState, input: TerrainAdvanceInput):
   }
 
   let next: TerrainState = { ...state, status: 'READY', unknown: [] };
-  if (input.weather && !weatherApplied) {
+  if (input.weather && !weatherApplied && weatherBounds) {
     for (const rule of input.profile.rules) {
       const value = input.weather.state[rule.input];
       if (value === null || value === undefined || !contains(rule.condition.min, rule.condition.max, rule.range[1], value)) continue;
       for (const object of Object.values(next.objects)) {
-        if (object.kind !== rule.kind) continue;
+        const objectBounds = geometryBounds(object.geometry);
+        if (object.kind !== rule.kind || !objectBounds || !intersects(weatherBounds, objectBounds)) continue;
         const id = `weather-${createHash('sha256').update(canonicalJson({ eventId: input.weather.eventId, ruleId: rule.id, objectId: object.id, operationalAt: input.operationalAt })).digest('hex').slice(0, 32)}`;
         if (knownIds.has(id)) continue;
         next = applyEvent(next, {
           id, type: 'terrain.weather.v1', objectId: object.id, operationalAt: input.operationalAt,
-          geometry: object.geometry, reason: rule.reason, causeIds: [input.weather.eventId], visibility: 'PUBLIC', patch: rule.set,
+          geometry: input.weather.geometry!, reason: rule.reason, causeIds: [input.weather.eventId], visibility: input.weather.visibility ?? 'HIDDEN', patch: rule.set,
         });
       }
     }

@@ -16,7 +16,14 @@ it('показывает нейтральный экран без прежней
 });
 
 it('очищает привилегированные кэши, черновики и проекторный профиль', async () => {
-  const storage = new Map([['kshvi.projection', 'secret'], ['kshvi.draft', 'draft'], ['kshvi.projector', 'truth']]);
+  const storage = new Map([
+    ['kshvi.projection', 'secret'],
+    ['kshvi.draft', 'draft'],
+    ['kshvi.projector', 'truth'],
+    ['def_ops.kshvi.section', 'preparation'],
+    ['def_ops.kshvi.local-editor', 'secret draft'],
+    ['def_ops.kshvi.projection.blue', 'participant cache'],
+  ]);
   const caches = new Map([['query', 'secret']]);
   const deleted: string[] = [];
   await clearPrivilegedState({

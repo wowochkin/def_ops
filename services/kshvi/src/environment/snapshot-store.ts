@@ -54,7 +54,11 @@ export class EnvironmentSnapshotStore {
     const temporary = path.join(this.root, `.tmp-${id}-${randomUUID()}`);
     await fs.mkdir(path.join(temporary, 'content'), { recursive: true });
     try {
+      const written = new Set<string>();
       for (const content of contents) {
+        if (content.data.length !== content.ref.bytes || digest(content.data) !== content.ref.sha256) throw new Error('Содержимое снимка не совпадает с SHA-256');
+        if (written.has(content.ref.path)) continue;
+        written.add(content.ref.path);
         const target = path.join(temporary, content.ref.path);
         await fs.mkdir(path.dirname(target), { recursive: true });
         await fs.writeFile(target, content.data, { flag: 'wx' });
@@ -67,7 +71,7 @@ export class EnvironmentSnapshotStore {
       if ((error as NodeJS.ErrnoException).code === 'EEXIST') return this.load(id);
       throw error;
     }
-    return snapshot;
+    return this.load(id);
   }
 
   async load(id: string): Promise<EnvironmentSnapshot> {
@@ -76,6 +80,17 @@ export class EnvironmentSnapshotStore {
     const { id: storedId, manifestSha256, ...draft } = snapshot;
     const actual = digest(canonicalJson(draft));
     if (storedId !== id || manifestSha256 !== id || actual !== id) throw new Error('Контрольная сумма манифеста снимка не совпадает');
+    if (snapshot.autonomy === 'COMPLETE') assertSnapshotComplete(snapshot);
+    const artifacts: SnapshotArtifact[] = [
+      ...snapshot.atlases.flatMap(atlas => [atlas.style, atlas.export, atlas.elevations]),
+      ...(snapshot.resources ?? []).map(resource => resource.artifact),
+      { contentRef: snapshot.weather.contentRef, sha256: snapshot.weather.contentRef?.sha256 ?? null },
+    ];
+    for (const artifact of artifacts) {
+      if (!artifact.contentRef) continue;
+      if (artifact.sha256 !== artifact.contentRef.sha256) throw new Error('SHA-256 артефакта не совпадает с контентной ссылкой');
+      await this.read(artifact.contentRef, id);
+    }
     return freeze(snapshot);
   }
 

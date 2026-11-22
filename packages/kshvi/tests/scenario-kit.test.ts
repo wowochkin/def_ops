@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { REQUIRED_SCENARIO_ITEMS, validateKit } from '../src/scenario/scenario-kit';
+import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS, validateKit } from '../src/scenario/scenario-kit';
 import { buildOperationalAssignment } from '../src/scenario/concept';
 import { stageImpact } from '../src/scenario/stage-plan';
 
@@ -10,10 +10,14 @@ it('не разрешает молчаливо исключить обязате
 
 it('содержит все 19 частей и фиксирует обоснованные сокращения', () => {
   expect(REQUIRED_SCENARIO_ITEMS).toHaveLength(19);
-  const items = REQUIRED_SCENARIO_ITEMS.map(item => ({ item, present: true }));
-  expect(validateKit({ items, usesLogistics: true, omissions: [] })).toEqual([]);
+  const linked = buildLinkedScenarioKit({
+    documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
+    usesLogistics: true,
+  });
+  const items = linked.items;
+  expect(validateKit(linked)).toEqual([]);
   const shortened = items.filter(item => item.item !== 'RESEARCH_PLAN');
-  const issues = validateKit({ items: shortened, usesLogistics: true, omissions: [{ item: 'RESEARCH_PLAN', reason: 'Исследовательские цели не заданы', decisionBy: 'leader-1' }] });
+  const issues = validateKit({ ...linked, items: shortened, omissions: [{ item: 'RESEARCH_PLAN', reason: 'Исследовательские цели не заданы', decisionBy: 'leader-1' }] });
   expect(issues).toContainEqual(expect.objectContaining({ code: 'OMISSION_ACCEPTED', severity: 'WARNING', item: 'RESEARCH_PLAN' }));
 });
 
@@ -27,8 +31,10 @@ it('формирует частное задание без публикации
     { generalSituation: 'Общие сведения', fullIntent: 'Скрытый общий замысел', referenceData: 'Справка' },
     { nodeId: 'node-1', privateSituation: 'Частные сведения', task: 'Занять район', allowedGeneralSituation: 'Разрешённые сведения' },
   );
-  expect(assignment).toEqual({ nodeId: 'node-1', generalSituation: 'Разрешённые сведения', privateSituation: 'Частные сведения', referenceData: 'Справка', task: 'Занять район' });
+  expect(assignment).toEqual({ nodeId: 'node-1', generalSituation: 'Разрешённые сведения', privateSituation: 'Частные сведения', task: 'Занять район' });
   expect(JSON.stringify(assignment)).not.toContain('Скрытый общий замысел');
+  expect(JSON.stringify(assignment)).not.toContain('referenceData');
+  expect(JSON.stringify(assignment)).not.toContain('Справка');
 });
 
 it('точно перечисляет затронутые изменением этапа связи', () => {

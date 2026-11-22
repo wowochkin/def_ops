@@ -6,7 +6,7 @@ export type PrivilegedState = {
 };
 
 export async function clearPrivilegedState(state: PrivilegedState): Promise<void> {
-  for (const key of [...state.storage.keys()]) if (key.startsWith('kshvi.')) state.storage.delete(key);
+  for (const key of [...state.storage.keys()]) if (key.startsWith('kshvi.') || key.startsWith('def_ops.kshvi.')) state.storage.delete(key);
   state.caches.clear();
   await Promise.all([state.deleteDatabase('kshvi-projections'), state.deleteDatabase('kshvi-drafts')]);
   state.removeProjector();

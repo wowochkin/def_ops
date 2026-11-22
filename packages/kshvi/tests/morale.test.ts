@@ -189,10 +189,12 @@ describe('версионное состояние и ограниченные п
     expect(tooShort.state.components).toEqual(initial.components);
     expect(tooShort.resourceConsumptions).toEqual([]);
 
+    const resourceJournal = { consume: () => ({ status: 'APPLIED' as const }) };
     const recovered = advanceMorale({
       state: initial,
       at: '2026-11-21T10:00:00.000Z',
       intervalMinutes: 60,
+      resourceJournal,
       recovery: {
         eventId: 'rest-1',
         activity: 'REST_AND_SLEEP',
@@ -212,6 +214,7 @@ describe('версионное состояние и ограниченные п
       state: recovered.state,
       at: '2026-11-21T11:00:00.000Z',
       intervalMinutes: 60,
+      resourceJournal,
       recovery: {
         eventId: 'rest-1',
         activity: 'REST_AND_SLEEP',
@@ -315,4 +318,87 @@ describe('приватная оценка и решение системного
     expect(decideSystemCommander({ projection: missing, options: commanderOptions, commander, port: utilityMaximizingCommanderPort }))
       .toMatchObject({ status: 'REQUIRES_REVIEW', selectedOptionId: null });
   });
+});
+
+
+describe('фактическое время и ресурсный журнал МПС', () => {
+  it('не разрешает восстановление при интервале больше фактически прошедшего времени', () => {
+    expect(() => advanceMorale({
+      state: makeState(0.4, 0.5, 0.7),
+      at: START,
+      intervalMinutes: 60,
+      recovery: {
+        eventId: 'rest-without-time', activity: 'REST_AND_SLEEP', durationMinutes: 60,
+        availableResources: { resourceId: 'recovery-support', amount: 1, unit: 'support-unit' }, source,
+      },
+    })).toThrow('фактическое время');
+  });
+
+  it('отклоняет воздействие вне расчётного интервала', () => {
+    expect(() => advanceMorale({
+      state: makeState(), at: LATER, intervalMinutes: 30,
+      impacts: [{ eventId: 'outside-interval', kind: 'LOSSES', occurredAt: '2026-11-21T08:00:00.000Z', changes: { morale: -0.1 }, source }],
+    })).toThrow('вне фактического интервала');
+  });
+
+  it('списывает ресурс восстановления в журнал один раз', async () => {
+    const { appendResourceLedgerEntry } = await import('../src/logistics/ledger');
+    let entries: import('../src/logistics/ledger').ResourceLedgerEntry[] = [{
+      id: 'opening-recovery', operation: 'OPENING', resourceId: 'recovery-support', unit: 'support-unit', quantity: 2,
+      nodeId: 'force-1', at: START, causeId: 'scenario-start', actorId: 'director',
+    }];
+    const resourceJournal = {
+      consume(consumption: { eventId: string; resourceId: string; amount: number; unit: string; at: string }) {
+        const result = appendResourceLedgerEntry(entries, {
+          id: consumption.eventId, operation: 'CONSUME', resourceId: consumption.resourceId, unit: consumption.unit,
+          quantity: consumption.amount, nodeId: 'force-1', at: consumption.at, causeId: consumption.eventId, actorId: 'morale-model',
+        });
+        entries = [...result.entries];
+        return result;
+      },
+    };
+    const recovered = advanceMorale({
+      state: makeState(0.4, 0.5, 0.7), at: '2026-11-21T10:00:00.000Z', intervalMinutes: 60, resourceJournal,
+      recovery: {
+        eventId: 'rest-journal', activity: 'REST_AND_SLEEP', durationMinutes: 60,
+        availableResources: { resourceId: 'recovery-support', amount: 2, unit: 'support-unit' }, source,
+      },
+    });
+    expect(recovered.recovery?.status).toBe('APPLIED');
+    expect(entries.map(entry => entry.id)).toEqual(['opening-recovery', 'rest-journal']);
+    const repeated = advanceMorale({
+      state: recovered.state, at: '2026-11-21T11:00:00.000Z', intervalMinutes: 60, resourceJournal,
+      recovery: {
+        eventId: 'rest-journal', activity: 'REST_AND_SLEEP', durationMinutes: 60,
+        availableResources: { resourceId: 'recovery-support', amount: 2, unit: 'support-unit' }, source,
+      },
+    });
+    expect(repeated.recovery?.status).toBe('DUPLICATE');
+    expect(entries).toHaveLength(2);
+  });
+
+  it('загружает поставленный профиль из morale-v1.json', async () => {
+    const { existsSync, readFileSync } = await import('node:fs');
+    const url = new URL('../data/profiles/morale-v1.json', import.meta.url);
+    expect(existsSync(url)).toBe(true);
+    expect(MORALE_PROFILE_V1).toEqual(JSON.parse(readFileSync(url, 'utf8')));
+  });
+});
+
+
+it('не завершает восстановление без подключённого ресурсного журнала', () => {
+  const initial = makeState(0.4, 0.5, 0.7);
+  const result = advanceMorale({
+    state: initial,
+    at: '2026-11-21T10:00:00.000Z',
+    intervalMinutes: 60,
+    recovery: {
+      eventId: 'rest-without-journal', activity: 'REST_AND_SLEEP', durationMinutes: 60,
+      availableResources: { resourceId: 'recovery-support', amount: 1, unit: 'support-unit' }, source,
+    },
+  });
+  expect(result.recovery?.status).toBe('BLOCKED');
+  expect(result.recovery?.reasons.join(' ')).toContain('журнал');
+  expect(result.state.components).toEqual(initial.components);
+  expect(result.resourceConsumptions).toEqual([]);
 });

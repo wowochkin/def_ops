@@ -1,4 +1,5 @@
 import { createPool, dropSchema } from '@def-ops/db';
+import { buildLinkedScenarioKit, REQUIRED_SCENARIO_ITEMS } from '@def-ops/kshvi';
 import { Router, createService } from '@def-ops/service-kit';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -9,6 +10,7 @@ import {
   PgExerciseStore,
   type CreateExerciseInput,
   type ExerciseActor,
+  type ExerciseCard,
 } from '../src/store/exercise-store';
 import { KshviEventStore } from '../src/store/event-store';
 
@@ -25,6 +27,15 @@ const closers: Array<() => Promise<void>> = [];
 afterEach(async () => {
   while (closers.length) await closers.pop()?.();
 });
+
+/** Имитирует результат отдельного серверного sealing-контура, не открывая клиентский переход. */
+function sealCurrentForFixture(store: InMemoryExerciseStore, organizationId: string, exerciseId: string): void {
+  const records = (store as unknown as { records: Map<string, ExerciseCard> }).records;
+  const card = records.get(`${organizationId}/${exerciseId}`)!;
+  const mutable = card as unknown as { state: string; revisions: { state: string }[] };
+  mutable.state = 'SEALED';
+  mutable.revisions.at(-1)!.state = 'SEALED';
+}
 
 describe('библиотека учений', () => {
   it('создаёт карточку, ищет по фильтрам и сохраняет неизменяемые редакции', async () => {
@@ -51,12 +62,9 @@ describe('библиотека учений', () => {
     const revised = await store.createRevision(actor, created.id, {
       expectedRevision: 1,
       title: 'Учение «Рубеж» — уточнено',
-      state: 'IN_REVIEW',
-      readiness: 35,
-      validation: 'WARNING',
       payload: { intent: 'Проверить управление', requiredUnknown: null },
     });
-    expect(revised).toMatchObject({ revision: 2, state: 'IN_REVIEW', readiness: 35, validation: 'WARNING' });
+    expect(revised).toMatchObject({ revision: 2, state: 'DRAFT', readiness: 0, validation: 'NOT_RUN' });
     expect(revised.revisions.map(revision => revision.revision)).toEqual([1, 2]);
     expect(revised.revisions[0].payload).toEqual({});
     await expect(store.createRevision(actor, created.id, {
@@ -124,6 +132,7 @@ describe('библиотека учений', () => {
   it('создаёт только серверные сеансы и изолирует их по организации', async () => {
     const store = new InMemoryExerciseStore();
     const exercise = await store.create(actor, input);
+    sealCurrentForFixture(store, actor.organizationId, exercise.id);
     const sessionInput = {
       revision: 1,
       optimisticWorld: { resources: { fuel: 999 } },
@@ -144,6 +153,49 @@ describe('библиотека учений', () => {
     await expect(store.listSessions('org2', exercise.id)).resolves.toEqual([]);
     await expect(store.createSession(actor, exercise.id, { revision: 99 }))
       .rejects.toMatchObject({ code: 'REVISION_NOT_FOUND' });
+  });
+
+  it('не принимает от клиента состояние, готовность и результат проверки', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, input);
+    await expect(store.createRevision(actor, exercise.id, {
+      expectedRevision: 1,
+      state: 'SEALED',
+      readiness: 100,
+      validation: 'OK',
+      payload: {},
+    })).rejects.toMatchObject({ code: 'SERVER_ASSESSMENT_REQUIRED' });
+    await expect(store.createSession(actor, exercise.id, { revision: 1 }))
+      .rejects.toMatchObject({ code: 'SEALED_REQUIRED' });
+  });
+
+  it('рассчитывает готовность и проверку по связанному комплекту на сервере', async () => {
+    const store = new InMemoryExerciseStore();
+    const exercise = await store.create(actor, input);
+    const revised = await store.createRevision(actor, exercise.id, {
+      expectedRevision: 1,
+      payload: {
+        kit: {
+          items: [{ item: 'CONCEPT', present: true }],
+          usesLogistics: false,
+          omissions: [],
+        },
+      },
+    });
+    expect(revised.state).toBe('DRAFT');
+    expect(revised.readiness).toBe(5);
+    expect(revised.validation).toBe('ERROR');
+    expect(revised.revisions.at(-1)?.state).toBe('DRAFT');
+  });
+
+  it('рассчитывает оценку уже при создании серверной редакции', async () => {
+    const store = new InMemoryExerciseStore();
+    const kit = buildLinkedScenarioKit({
+      documents: REQUIRED_SCENARIO_ITEMS.map((item, index) => ({ id: `doc-${index + 1}`, item, revision: 1, content: { item } })),
+      usesLogistics: true,
+    });
+    const created = await store.create(actor, { ...input, payload: { kit: kit as unknown as import('@def-ops/kshvi').JsonValue } });
+    expect(created).toMatchObject({ state: 'DRAFT', readiness: 100, validation: 'OK' });
   });
 });
 
@@ -217,6 +269,7 @@ describe('HTTP API библиотеки', () => {
     });
     expect(revised.response.status).toBe(201);
     expect(revised.body.revision).toBe(2);
+    sealCurrentForFixture(store, actor.organizationId, created.body.id);
 
     const session = await call(`/${created.body.id}/sessions`, {
       method: 'POST',
@@ -255,6 +308,8 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     const copied = await store.copy(actor, created.id);
     expect(copied.id).not.toBe(created.id);
     expect(copied.revisions[0].id).not.toBe(created.revisions[0].id);
+    await pool.query(`update ${schema}.exercises set state='SEALED' where organization_id=$1 and id=$2`, [actor.organizationId, created.id]);
+    await pool.query(`update ${schema}.exercise_revisions set state='SEALED' where organization_id=$1 and id=$2`, [actor.organizationId, created.revisions[0].id]);
     const session = await store.createSession(actor, created.id, { revision: 1 });
     await expect(store.getSession('org2', created.id, session.id)).resolves.toBeNull();
     const revised = await store.createRevision(actor, created.id, { expectedRevision: 1, payload: { intent: 'Проверка PostgreSQL' } });

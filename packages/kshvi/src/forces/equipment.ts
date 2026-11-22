@@ -50,6 +50,7 @@ export type EquipmentEvent = Readonly<{
   causeId: string;
   reason: string;
   resources: readonly EquipmentResourceAmount[];
+  availableResources?: readonly EquipmentResourceAmount[];
   unitId?: string;
   quantity?: number;
   allocations?: readonly EquipmentDistribution[];

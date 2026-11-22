@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
 import { SymbolsView } from '../src/modern/symbols/SymbolsView';
+import { getSymbol, symbolSet, type SymbolUsage } from '@def-ops/tactical-symbols';
+import { sourceRegistry } from '@def-ops/tactical-symbols/source/browser';
 
 afterEach(cleanup);
 
@@ -34,4 +36,35 @@ it('не выводит неопределённую подпись при пу�
   render(<SymbolsView />);
   const vector = document.querySelector('[role="img"][aria-label="Векторный образец знака"]');
   expect(vector?.innerHTML).not.toContain('undefined');
+});
+
+
+it('предоставляет главы, полные фильтры, модификаторы, топооснову и историю', () => {
+  render(<SymbolsView />);
+  const commandPost = getSymbol('command-post');
+  const documentId = sourceRegistry.fragments.find(fragment => fragment.id === commandPost.source.fragmentId)!.documentId;
+  fireEvent.change(screen.getByLabelText('Глава документа'), { target: { value: documentId } });
+  fireEvent.change(screen.getByLabelText('Принадлежность'), { target: { value: 'FRIENDLY' } });
+  fireEvent.change(screen.getByLabelText('Геометрия'), { target: { value: 'POINT' } });
+  fireEvent.change(screen.getByLabelText('Статус'), { target: { value: 'MAPPED' } });
+  fireEvent.change(screen.getByLabelText('Уровень'), { target: { value: 'ARMY' } });
+  expect(screen.getByRole('heading', { name: 'История версий' })).toBeTruthy();
+  expect(screen.getByRole('img', { name: 'Пример на топооснове' })).toBeTruthy();
+  expect(screen.getByText('Модификаторы')).toBeTruthy();
+  fireEvent.click(screen.getByLabelText('main'));
+  const vector = document.querySelector('[role="img"][aria-label="Векторный образец знака"]');
+  expect(vector?.innerHTML).toContain('data-modifier="main"');
+});
+
+it('вставляет точную версию только при праве и ручном APPROVED', () => {
+  const approved = { ...getSymbol('command-post'), status: 'APPROVED' as const };
+  const approvedSet = { ...symbolSet, status: 'APPROVED' as const, symbols: [approved] };
+  const usages: SymbolUsage[] = [];
+  render(<SymbolsView set={approvedSet} canInsert onInsert={usage => usages.push(usage)} />);
+  const button = screen.getByRole('button', { name: 'Вставить на карту' });
+  expect(button).toHaveProperty('disabled', false);
+  fireEvent.click(button);
+  expect(usages).toEqual([{
+    symbolId: approved.id, symbolVersion: approved.version, setVersion: approvedSet.version, geometryVersion: approved.geometry.version,
+  }]);
 });

@@ -84,8 +84,9 @@ describe('контентно-адресуемый снимок среды', () =
         version: 8,
         glyphs: 'http://cartography.test/api/cartography/fonts/{fontstack}/{range}.pbf',
         sources: { atlas: { type: 'vector', tiles: ['http://cartography.test/api/cartography/atlas/a1/tiles/{z}/{x}/{y}'], attribution: meta.attribution } },
-        layers: [],
+        layers: [{ id: 'labels', type: 'symbol', layout: { 'text-font': ['Test Sans'] } }],
       });
+      if (/^GET \/api\/cartography\/fonts\/Test%20Sans\/\d+-\d+\.pbf$/.test(key)) return new Response(new Uint8Array([7]), { status: 200 });
       if (key === 'GET /api/cartography/atlas/a1/export') return new Response(new Uint8Array(exportBytes), { status: 200 });
       if (key === 'POST /api/cartography/atlas/a1/elevations') return json({ source: 'a1', values: [{ lon: 37, lat: 55, elevationM: 180 }] });
       if (key === 'GET /api/cartography/environment/weather/w1/export') return json(dataset);

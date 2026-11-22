@@ -3,6 +3,14 @@ import type { EnvironmentSelection } from '../../../../packages/kshvi/src/enviro
 import type { CartographyEnvironmentProvider } from '../environment/cartography-provider';
 import { assertSnapshotComplete } from '../environment/snapshot-store';
 
+function coordinate(query: URLSearchParams, key: 'lon' | 'lat'): number {
+  const raw = query.get(key);
+  const value = raw === null || raw.trim() === '' ? Number.NaN : Number(raw);
+  const valid = Number.isFinite(value) && (key === 'lon' ? value >= -180 && value <= 180 : value >= -90 && value <= 90);
+  if (!valid) throw new HttpError(422, 'invalid_coordinates', `Укажите корректную координату ${key}`);
+  return value;
+}
+
 /** Отдельная регистрация: основной app.ts подключает модуль на этапе интеграции. */
 export function addEnvironmentRoutes(router: Router, provider: CartographyEnvironmentProvider, prefix = '/kshvi'): Router {
   const base = `${prefix}/environment`;
@@ -18,9 +26,22 @@ export function addEnvironmentRoutes(router: Router, provider: CartographyEnviro
     const operationalAt = ctx.query.get('operationalAt');
     if (!operationalAt) throw new HttpError(422, 'operational_time_required', 'Укажите оперативное время погоды');
     return provider.weatherAtOperational(snapshot, {
-      lon: Number(ctx.query.get('lon')),
-      lat: Number(ctx.query.get('lat')),
+      lon: coordinate(ctx.query, 'lon'),
+      lat: coordinate(ctx.query, 'lat'),
       operationalAt,
+    });
+  });
+  router.get(`${base}/snapshots/:id/resources/glyphs/:fontstack/:range`, async ctx => {
+    const snapshot = await provider.loadSnapshot(ctx.params.id);
+    const data = await provider.snapshotResource(snapshot, `glyphs/${ctx.params.fontstack}/${ctx.params.range}`);
+    return reply(200, data, { 'content-type': 'application/x-protobuf', 'cache-control': 'private, max-age=31536000, immutable' });
+  });
+  router.get(`${base}/snapshots/:id/resources/sprites/:name`, async ctx => {
+    const snapshot = await provider.loadSnapshot(ctx.params.id);
+    const data = await provider.snapshotResource(snapshot, `sprites/${ctx.params.name}`);
+    return reply(200, data, {
+      'content-type': ctx.params.name.endsWith('.png') ? 'image/png' : 'application/json; charset=utf-8',
+      'cache-control': 'private, max-age=31536000, immutable',
     });
   });
   for (const kind of ['style', 'elevations'] as const) {

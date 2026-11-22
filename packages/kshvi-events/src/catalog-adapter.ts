@@ -26,7 +26,10 @@ type RawTemplate = {
     scales: EventScale[];
     stages: string[];
     sides: string[];
+    allowedStates: string[];
+    disallowedStates: string[];
     geography: { requiredFeatures: string[] };
+    time: { operationalOnly: boolean; withinStage: boolean; allowBackward: boolean; minLead: { value: number; unit: string } };
   };
   preconditions: { fact: string; operator: string; value: string | number | boolean }[];
   parameters: { id: string; name: string; unit: string; min: number; max: number; default?: number }[];
@@ -42,7 +45,16 @@ type RawTemplate = {
 type RawCatalogFile = { templates: RawTemplate[] };
 type RawManifest = { catalogId: string; catalogVersion: string };
 
-const REVIEW_DATE = '2026-11-21';
+const AUTHORIZED_SIDE = 'AUTHORIZED_SIDE';
+const preconditionOperators: Readonly<Record<string, 'EQ' | 'NE' | 'LT' | 'LE' | 'GT' | 'GE'>> = {
+  EQUALS: 'EQ', NOT_EQUALS: 'NE', LESS_THAN: 'LT', LESS_OR_EQUAL: 'LE', GREATER_THAN: 'GT', GREATER_OR_EQUAL: 'GE',
+  EQ: 'EQ', NE: 'NE', LT: 'LT', LE: 'LE', GT: 'GT', GE: 'GE',
+};
+function preconditionOperator(value: string): 'EQ' | 'NE' | 'LT' | 'LE' | 'GT' | 'GE' {
+  const operator = preconditionOperators[value];
+  if (!operator) throw new Error(`Неизвестный оператор предусловия: ${value}`);
+  return operator;
+}
 
 function quantity(value: number, sourceUnit: string): { value: number; unit: EventUnit } {
   switch (sourceUnit) {
@@ -86,10 +98,11 @@ function effect(raw: RawEffect): CatalogEffect {
 
 function normalizeTemplate(raw: RawTemplate): EventTemplate {
   const cooldown = quantity(raw.limits.cooldown.value, raw.limits.cooldown.unit);
+  const minLead = quantity(raw.applicability.time.minLead.value, raw.applicability.time.minLead.unit);
   const observations = raw.observations.map((observation, index) => ({
     observationId: `${raw.templateId}-observation-${index + 1}`,
-    source: { kind: observation.visibility === 'CONTROL_ONLY' ? 'CONTROL' as const : 'OBSERVER' as const, sourceId: observation.sourceRequirement, sideId: raw.applicability.sides[0] },
-    recipientSideIds: raw.applicability.sides,
+    source: { kind: observation.visibility === 'CONTROL_ONLY' ? 'CONTROL' as const : 'OBSERVER' as const, sourceId: observation.sourceRequirement, sideId: AUTHORIZED_SIDE },
+    recipientSideIds: [AUTHORIZED_SIDE],
     channelId: raw.reports[0]?.channelRequirement ?? 'scenario-channel',
     visibility: observation.visibility === 'CONTROL_ONLY' ? 'CONTROL' as const : 'PARTICIPANT' as const,
     delaySeconds: { min: 0, max: 0 },
@@ -106,23 +119,31 @@ function normalizeTemplate(raw: RawTemplate): EventTemplate {
       type: 'TRAINING_ASSUMPTION',
       statement: raw.trainingAssumption,
       rationale: raw.source.note,
-      approvedBy: raw.review.method,
+      approvedBy: 'Требуется независимое методическое рецензирование',
     },
     applicability: {
       scales: raw.applicability.scales,
       stageIds: raw.applicability.stages,
       sideIds: raw.applicability.sides,
+      allowedStates: [...raw.applicability.allowedStates],
+      disallowedStates: [...raw.applicability.disallowedStates],
+      time: {
+        operationalOnly: raw.applicability.time.operationalOnly,
+        withinStage: raw.applicability.time.withinStage,
+        allowBackward: raw.applicability.time.allowBackward,
+        minLeadSeconds: minLead.value,
+      },
       geography: {
         areaIds: raw.applicability.geography.requiredFeatures,
         boundingBox: { minLatitude: -90, maxLatitude: 90, minLongitude: -180, maxLongitude: 180 },
         requiresEnvironmentCoverage: true,
       },
-      operationalWindows: [{ startMinute: 0, endMinute: 525_600 }],
+      operationalWindows: [{ startMinute: minLead.value / 60, endMinute: 525_600 }],
     },
     preconditions: raw.preconditions.map(precondition => ({
       type: 'fact.comparison',
       fact: precondition.fact,
-      operator: 'EQ',
+      operator: preconditionOperator(precondition.operator),
       value: precondition.value,
       required: true,
       onUnknown: 'NOT_TRUE',
@@ -146,10 +167,10 @@ function normalizeTemplate(raw: RawTemplate): EventTemplate {
     },
     effects: raw.effects.map(effect),
     observations,
-    reports: raw.reports.map(report => ({
+    reports: raw.reports.map((report, index) => ({
       reportId: `${raw.templateId}-${report.kind}`,
-      basedOnObservationId: observations[0]?.observationId ?? 'no-observation',
-      recipientSideIds: raw.applicability.sides,
+      basedOnObservationId: observations[index]?.observationId ?? observations[0]?.observationId ?? 'no-observation',
+      recipientSideIds: [...(observations[index]?.recipientSideIds ?? observations[0]?.recipientSideIds ?? [AUTHORIZED_SIDE])],
       channelId: report.channelRequirement,
       title: report.kind,
     })),
@@ -167,13 +188,11 @@ export async function loadEventCatalog(directory: string): Promise<{ templates: 
   const rawManifest = JSON.parse(await readFile(join(directory, 'manifest.json'), 'utf8')) as RawManifest;
   const issues: ValidationIssue[] = [];
   const templates: EventTemplate[] = [];
-  const rawTemplates: RawTemplate[] = [];
   for (const file of files) {
     const data = JSON.parse(await readFile(join(directory, file), 'utf8')) as RawCatalogFile;
     for (const raw of data.templates) {
       const template = normalizeTemplate(raw);
       templates.push(template);
-      rawTemplates.push(raw);
       for (const issue of validateEventTemplate(template).issues) issues.push({ ...issue, path: `/${template.templateId}${issue.path}` });
     }
   }
@@ -181,13 +200,11 @@ export async function loadEventCatalog(directory: string): Promise<{ templates: 
     schemaVersion: 1,
     catalogId: rawManifest.catalogId,
     version: Number.parseInt(rawManifest.catalogVersion, 10),
-    templates: templates.map((template, index) => ({
+    templates: templates.map(template => ({
       templateId: template.templateId,
       version: template.version,
       sha256: templateContentHash(template),
-      reviewStatus: 'APPROVED',
-      reviewedBy: rawTemplates[index].review.method,
-      reviewedAt: REVIEW_DATE,
+      reviewStatus: 'IN_REVIEW',
     })),
   };
   return { templates, manifest, issues };

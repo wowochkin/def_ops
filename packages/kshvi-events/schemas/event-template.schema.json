@@ -61,6 +61,19 @@
         },
         "stageIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
         "sideIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "allowedStates": { "type": "array", "items": { "type": "string" } },
+        "disallowedStates": { "type": "array", "items": { "type": "string" } },
+        "time": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operationalOnly", "withinStage", "allowBackward", "minLeadSeconds"],
+          "properties": {
+            "operationalOnly": { "type": "boolean" },
+            "withinStage": { "type": "boolean" },
+            "allowBackward": { "type": "boolean" },
+            "minLeadSeconds": { "type": "number", "minimum": 0 }
+          }
+        },
         "geography": {
           "type": "object",
           "additionalProperties": false,

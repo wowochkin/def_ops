@@ -123,7 +123,12 @@ export type TerrainHydrologyProfile = Readonly<{
 
 export type TerrainAdvanceInput = Readonly<{
   operationalAt: string;
-  weather?: Readonly<{ eventId: string; state: Readonly<Record<string, number | null | undefined>> }>;
+  weather?: Readonly<{
+    eventId: string;
+    state: Readonly<Record<string, number | null | undefined>>;
+    geometry?: TerrainGeometry;
+    visibility?: TerrainVisibility;
+  }>;
   events?: readonly TerrainEventInput[];
   profile: TerrainHydrologyProfile;
 }>;

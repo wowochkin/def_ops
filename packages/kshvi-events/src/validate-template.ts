@@ -256,6 +256,8 @@ function validateEffects(
       }
       if (!isObject(effectValue.target) || typeof effectValue.target.domain !== 'string' || typeof effectValue.target.ref !== 'string' || !effectValue.target.domain || !effectValue.target.ref) {
         add(issues, 'TARGET_REQUIRED', `${base}/target`, 'Типизированная операция требует домен и ссылку на объект.');
+      } else if (/(?:assessment|goals?|score)/i.test(effectValue.target.domain)) {
+        add(issues, 'TRAINING_DATA_PROTECTED', `${base}/target/domain`, 'Вероятностное событие не может изменять цели или оценку обучаемого.');
       }
       if (typeof effectValue.mechanism !== 'string' || !effectValue.mechanism.trim()) add(issues, 'REQUIRED_TEXT', `${base}/mechanism`, 'Нужен механизм последствий.');
       if (typeof effectValue.reason !== 'string' || !effectValue.reason.trim()) add(issues, 'REQUIRED_TEXT', `${base}/reason`, 'Нужно основание последствий.');

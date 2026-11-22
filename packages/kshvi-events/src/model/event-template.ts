@@ -101,6 +101,14 @@ export type EventTemplate = {
     scales: EventScale[];
     stageIds: string[];
     sideIds: string[];
+    allowedStates?: string[];
+    disallowedStates?: string[];
+    time?: {
+      operationalOnly: boolean;
+      withinStage: boolean;
+      allowBackward: boolean;
+      minLeadSeconds: number;
+    };
     geography: {
       areaIds: string[];
       boundingBox: {

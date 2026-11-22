@@ -250,7 +250,7 @@ describe('табличный редактор оснащённости', () => {
     ].join('\n'));
     expect(imported.rows[0]).toMatchObject({ id: 'row-1', authorized: 2, actual: 1, massTonnes: 8 });
     expect(imported.rows[1]).toMatchObject({ authorized: null, actual: null, massTonnes: null });
-    expect(imported.rows[1].stateCounts.UNKNOWN).toBe(0);
+    expect(imported.rows[1].stateCounts.UNKNOWN).toBeNull();
     expect(imported.unknown).toEqual(expect.arrayContaining(['row-2.authorized', 'row-2.actual', 'row-2.massTonnes', 'row-2.crewAssigned']));
     const exported = exportEquipmentTable(imported.rows);
     expect(exported).toContain('UNKNOWN');
@@ -332,5 +332,57 @@ describe('поштучный табличный обмен', () => {
     const restored = equipmentHoldingFromRow(restoredRows[0]);
     expect(restored.actual).toBe(2);
     expect(restored.stateCounts).toEqual(counts(1, 1));
+  });
+});
+
+
+describe('контрпримеры независимой ревизии оснащённости', () => {
+  it('сохраняет UNKNOWN состояния и typeRevision вместо нуля и первой версии', () => {
+    const result = importEquipmentTable([
+      'id;forceId;typeId;typeRevision;typeSha256;actual;SERVICEABLE;DEGRADED;UNDER_REPAIR;DAMAGED;DESTROYED;UNKNOWN;sourceId;sourceRevision;sourceSha256',
+      `row-unknown;force-1;pontoon;;${'b'.repeat(64)};1;UNKNOWN;0;0;0;1;0;technical-catalogue;1;${'a'.repeat(64)}`,
+    ].join('\n'));
+    expect(result.rows[0].stateCounts.SERVICEABLE).toBeNull();
+    expect(result.rows[0].typeRevision).toBeNull();
+    expect(result.unknown).toEqual(expect.arrayContaining(['row-unknown.SERVICEABLE', 'row-unknown.typeRevision']));
+    expect(result.issues.map(issue => issue.code)).toEqual(expect.arrayContaining(['STATE_UNKNOWN', 'TYPE_REVISION_UNKNOWN']));
+    expect(() => equipmentHoldingFromRow(result.rows[0])).toThrow('UNKNOWN');
+  });
+
+  it('обнаруживает конфликт payload при повторном eventId', () => {
+    const repaired = transitionEquipment({ state: 'UNDER_REPAIR' }, {
+      to: 'SERVICEABLE', causeId: 'repair-1', eventId: 'repair-event', at: AT, reason: 'Заменён узел',
+      resources: [{ resourceId: 'spare-part', amount: 2, unit: 'pcs' }],
+      availableResources: [{ resourceId: 'spare-part', amount: 2, unit: 'pcs' }],
+    });
+    expect(() => transitionEquipment(repaired, {
+      to: 'SERVICEABLE', causeId: 'repair-1', eventId: 'repair-event', at: AT, reason: 'Другая команда с тем же eventId',
+      resources: [{ resourceId: 'spare-part', amount: 2, unit: 'pcs' }],
+      availableResources: [{ resourceId: 'spare-part', amount: 2, unit: 'pcs' }],
+    })).toThrow('Конфликт идемпотентности');
+    expect(() => transitionEquipment(repaired, {
+      to: 'SERVICEABLE', causeId: 'repair-1', eventId: 'repair-event', at: AT, reason: 'Заменён узел',
+      resources: [{ resourceId: 'spare-part', amount: 2, unit: 'pcs' }],
+      availableResources: [{ resourceId: 'spare-part', amount: 1, unit: 'pcs' }],
+    })).toThrow('Конфликт идемпотентности');
+  });
+
+  it('обнаруживает конфликт ресурсов и распределения при повторной передаче', () => {
+    const initial = createEquipmentHolding(aggregateInput());
+    const transferred = transferEquipment(initial, {
+      eventId: 'transfer-conflict', at: AT, causeId: 'order-transfer', reason: 'Передача', resources: [],
+      availableResources: [{ resourceId: 'fuel', amount: 2, unit: 'tonne' }],
+      allocations: [{ targetId: 'child-a', quantity: 1 }, { targetId: 'child-b', quantity: 1 }],
+    });
+    expect(() => transferEquipment(transferred, {
+      eventId: 'transfer-conflict', at: AT, causeId: 'order-transfer', reason: 'Передача', resources: [],
+      availableResources: [{ resourceId: 'fuel', amount: 1, unit: 'tonne' }],
+      allocations: [{ targetId: 'child-a', quantity: 1 }, { targetId: 'child-b', quantity: 1 }],
+    })).toThrow('Конфликт идемпотентности');
+    expect(() => transferEquipment(transferred, {
+      eventId: 'transfer-conflict', at: AT, causeId: 'order-transfer', reason: 'Передача', resources: [],
+      availableResources: [{ resourceId: 'fuel', amount: 2, unit: 'tonne' }],
+      allocations: [{ targetId: 'child-a', quantity: 2 }],
+    })).toThrow('Конфликт идемпотентности');
   });
 });

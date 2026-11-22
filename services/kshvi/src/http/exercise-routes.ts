@@ -10,6 +10,7 @@ import {
   type ExerciseFilters,
   type ExerciseStore,
 } from '../store/exercise-store';
+import { projectExerciseCard } from '../store/exercise-projection';
 import { KSHVI_ROUTE_PREFIX } from './router';
 
 const base = `${KSHVI_ROUTE_PREFIX}/exercises`;
@@ -25,8 +26,8 @@ function tokenOf(ctx: Ctx): string {
 
 function translate(error: unknown): never {
   if (error instanceof ExerciseStoreError) {
-    const status = error.code === 'VALIDATION' ? 422
-      : error.code === 'REVISION_CONFLICT' || error.code === 'ARCHIVED' ? 409
+    const status = error.code === 'VALIDATION' || error.code === 'SERVER_ASSESSMENT_REQUIRED' ? 422
+      : error.code === 'REVISION_CONFLICT' || error.code === 'ARCHIVED' || error.code === 'SEALED_REQUIRED' ? 409
         : 404;
     throw new HttpError(status, error.code.toLocaleLowerCase(), error.message);
   }
@@ -88,7 +89,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:read');
     const card = await store.get(actor.organizationId, exerciseId(ctx));
     if (!card) throw new HttpError(404, 'not_found', 'Учение не найдено');
-    return card;
+    return projectExerciseCard(card, actor.participant);
   }));
 
   router.post(`${base}/:id/copies`, handle(async ctx => {
@@ -107,7 +108,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:read');
     const card = await store.get(actor.organizationId, exerciseId(ctx));
     if (!card) throw new HttpError(404, 'not_found', 'Учение не найдено');
-    return { items: card.revisions };
+    return { items: projectExerciseCard(card, actor.participant).revisions };
   }));
 
   router.post(`${base}/:id/revisions`, handle(async ctx => {

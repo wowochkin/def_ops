@@ -103,6 +103,8 @@ export function applyWeatherEffects(
   const profileVersion = profile.version ?? profile.weatherEffectProfileVersion ?? null;
   const requiredUnknown = profile.movementRequires.filter(key => state[key] === null || state[key] === undefined);
   if (requiredUnknown.length && profile.mode !== 'WITHOUT_WEATHER_EFFECTS') return result({ status: 'REQUIRES_REVIEW', unknown: requiredUnknown, profileVersion, explanation: ['Обязательные погодные показатели отсутствуют'] });
+  const profileIssues = validateWeatherEffectProfile(profile);
+  if (profileIssues.length) return result({ status: 'REQUIRES_REVIEW', unknown: ['profile:invalid'], profileVersion, explanation: profileIssues });
   if (profile.status !== 'APPROVED') {
     if (profile.mode === 'WITHOUT_WEATHER_EFFECTS' && profile.assumptionPassport?.limitation.trim() && profile.assumptionPassport.approvedBy.trim()) {
       return result({ status: 'WITHOUT_WEATHER_EFFECTS', profileVersion, limitations: [profile.assumptionPassport.limitation], explanation: ['Погодное влияние явно исключено паспортом допущений'] });

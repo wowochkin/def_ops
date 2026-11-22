@@ -17,7 +17,7 @@ const pool = persistence.pool;
 const sessions = new SessionManager({ store: persistence.sessionStore });
 const audit = new SecurityAudit();
 const environmentProvider = new CartographyEnvironmentProvider({
-  baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104'),
+  baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104/cartography'),
   store: new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR', './data/kshvi/environment')),
 });
 const commands = new CommandService({

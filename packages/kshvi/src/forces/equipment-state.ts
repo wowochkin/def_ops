@@ -10,6 +10,7 @@ import {
   type EquipmentStateCounts,
   type EquipmentUnit,
 } from './equipment';
+import { canonicalJson } from '../events/canonical';
 
 export type EquipmentState = Readonly<{
   state: EquipmentCondition;
@@ -109,6 +110,22 @@ function consumeResources(
   return balances;
 }
 
+function assertDuplicatePayload(current: EquipmentHolding | EquipmentStateInput, command: EquipmentTransitionCommand): void {
+  const event = (current.history ?? []).find(candidate => candidate.eventId === command.eventId);
+  const same = event
+    && event.kind === (command.kind ?? 'STATE_CHANGE')
+    && event.to === command.to
+    && event.causeId === command.causeId
+    && event.at === command.at
+    && event.reason === command.reason
+    && (command.from === undefined || event.from === command.from)
+    && (event.unitId ?? null) === (command.unitId ?? null)
+    && (event.quantity ?? null) === (command.quantity ?? null)
+    && canonicalJson(event.resources) === canonicalJson(command.resources)
+    && canonicalJson(event.availableResources ?? []) === canonicalJson(command.availableResources ?? []);
+  if (!same) throw new Error(`Конфликт идемпотентности: ${command.eventId} уже применён к другой команде`);
+}
+
 function transitionSingle(current: EquipmentStateInput, command: EquipmentTransitionCommand): EquipmentState {
   assertCommand(command);
   const from = current.state;
@@ -126,6 +143,7 @@ function transitionSingle(current: EquipmentStateInput, command: EquipmentTransi
     causeId: command.causeId,
     reason: command.reason,
     resources: command.resources.map(resource => ({ ...resource })),
+    availableResources: (command.availableResources ?? []).map(resource => ({ ...resource })),
     unitId: command.unitId,
     quantity: command.quantity,
   };
@@ -146,6 +164,7 @@ export function transitionEquipment(
   command: EquipmentTransitionCommand,
 ): EquipmentHolding | EquipmentState {
   if (current.appliedEventIds?.includes(command.eventId)) {
+    assertDuplicatePayload(current, command);
     if ('stateCounts' in current) return current;
     return current as EquipmentState;
   }
@@ -382,7 +401,7 @@ export function assignEquipmentTask(holding: EquipmentHolding, input: {
 }
 
 
-export function transferEquipment(holding: EquipmentHolding, input: {
+type EquipmentTransferInput = Readonly<{
   eventId: string;
   at: string;
   causeId: string;
@@ -390,8 +409,29 @@ export function transferEquipment(holding: EquipmentHolding, input: {
   resources: readonly EquipmentResourceAmount[];
   availableResources?: readonly EquipmentResourceAmount[];
   allocations: readonly EquipmentAllocation[];
-}): EquipmentHolding {
-  if (holding.appliedEventIds.includes(input.eventId)) return holding;
+}>;
+function assertTransferDuplicatePayload(holding: EquipmentHolding, input: EquipmentTransferInput): void {
+  const event = holding.history.find(candidate => candidate.eventId === input.eventId);
+  const allocations = input.allocations.map(entry => ({
+    targetId: entry.targetId,
+    quantity: entry.quantity ?? entry.unitIds?.length ?? 0,
+    ...(entry.unitIds ? { unitIds: [...entry.unitIds] } : {}),
+  }));
+  const same = event?.kind === 'TRANSFER'
+    && event.at === input.at
+    && event.causeId === input.causeId
+    && event.reason === input.reason
+    && canonicalJson(event.resources) === canonicalJson(input.resources)
+    && canonicalJson(event.availableResources ?? []) === canonicalJson(input.availableResources ?? [])
+    && canonicalJson(event.allocations ?? []) === canonicalJson(allocations);
+  if (!same) throw new Error(`Конфликт идемпотентности: ${input.eventId} уже применён к другой передаче`);
+}
+
+export function transferEquipment(holding: EquipmentHolding, input: EquipmentTransferInput): EquipmentHolding {
+  if (holding.appliedEventIds.includes(input.eventId)) {
+    assertTransferDuplicatePayload(holding, input);
+    return holding;
+  }
   if (!input.eventId.trim() || !input.causeId.trim() || !input.reason.trim() || !Number.isFinite(Date.parse(input.at))) {
     throw new Error('Передача техники требует событие, причину, основание и время');
   }
@@ -406,6 +446,7 @@ export function transferEquipment(holding: EquipmentHolding, input: {
     causeId: input.causeId,
     reason: input.reason,
     resources: input.resources.map(resource => ({ ...resource })),
+    availableResources: (input.availableResources ?? []).map(resource => ({ ...resource })),
     allocations: transferred.distribution,
   };
   return {

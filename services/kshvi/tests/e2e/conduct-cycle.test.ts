@@ -170,7 +170,18 @@ async function runOfficialG2(store: KshviEventStore) {
     expect(validateExerciseAxes({ scale: 'operational', mapZoom: 8, trainedLevels: 3 })).toEqual([]);
     expect(validateCommandTree({
       nodes: [{ id: 'level-1', parentId: null, trained: true }, { id: 'level-2', parentId: 'level-1', trained: true }, { id: 'level-3', parentId: 'level-2', trained: true }],
-      edges: [{ from: 'level-1', to: 'level-2', active: true, playRole: { kind: 'GROUP', assignmentId: 'intermediary-1' } }, { from: 'level-2', to: 'level-3', active: true, playRole: { kind: 'GROUP', assignmentId: 'intermediary-2' } }],
+      edges: [
+        {
+          from: 'level-1', to: 'level-2', active: true, playRole: { kind: 'GROUP', assignmentId: 'intermediary-1' },
+          kind: 'OPERATIONAL_COMMAND', validFrom: '2025-01-01T00:00:00Z', validTo: null,
+          authorities: ['ISSUE_ORDER'], allowedDocumentTypes: ['ORDER'], channelId: 'radio',
+        },
+        {
+          from: 'level-2', to: 'level-3', active: true, playRole: { kind: 'GROUP', assignmentId: 'intermediary-2' },
+          kind: 'OPERATIONAL_COMMAND', validFrom: '2025-01-01T00:00:00Z', validTo: null,
+          authorities: ['RELAY_ORDER'], allowedDocumentTypes: ['ORDER'], channelId: 'radio',
+        },
+      ],
     })).toEqual([]);
     const revisions = new Map<string, number>();
     async function official(sessionId: string, command: ConductCommand, expectedRevision?: number) {
