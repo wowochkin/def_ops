@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "5d042b1f1e54d7a38f197da4a8596af83d8f7b7b",
+  "runId": "a3f12a63-1e6a-4343-a677-a321b2f40d30",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac28-exposition.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n{\"t\":\"2026-11-22T19:02:00.772Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"msg\":\"listening on :62450\"}\n{\"t\":\"2026-11-22T19:02:00.782Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"0c890689-6229-40bd-ac44-6515c0e25fa5\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-22T19:02:00.787Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"6ac95166-af9d-44bd-b0e0-fc9b9a5777e9\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-22T19:02:00.788Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"0a4c69c9-f59b-4b99-ac1a-dc2392780646\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T19:02:00.791Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"3521a0c5-9675-4fad-9f11-ae6d9dc5f544\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.792Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"59484e09-0401-4e84-831e-59aa5508e395\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.793Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"67da22aa-ad8b-46e9-8630-1e8b1001a705\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.794Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"4c5d7c00-b844-4173-9955-25c1319be69d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.794Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"14bfc63b-b5c6-4a70-b2b2-e60c76f6622e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T19:02:00.796Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"07a65d5e-8e80-42a9-9af4-7933975ba05e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/checkpoints/cp-1/continuations\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.797Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"54f1ebbc-c149-423b-8c6d-94735e343eb3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/restarts\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.798Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"5b04b9a7-86c7-4022-890b-199a6db26a1c\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/restarts\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T19:02:00.800Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"b576637a-0ffb-4709-8cef-2317eff8aee6\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/expositions/active/projector\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T19:02:00.801Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"0c0ea07f-a39a-445e-8905-049d312139bd\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T19:02:00.803Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"2bcdcf14-3c26-4cd5-b6eb-43b01ea6c7bc\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T19:02:00.804Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"937ea1e9-8e87-42dc-a913-59dff35a04e9\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/exports\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac28-exposition.test.ts (1 test) 144ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  22:02:00\n   Duration  293ms (tests 61%, transform 28%, import 10%, worker 1%)\n\n",
+  "initialRevision": {
+    "id": "official-archive-1",
+    "revision": 1,
+    "sha256": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac28/journal.json",
+    "sha256": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0",
+    "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "journal": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac28/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "randomOutcomesCreated": 4,
+    "agentRequests": 10,
+    "seekWorldMatches": 2,
+    "audienceForbiddenFields": 0,
+    "mapLayers": 4
+  },
+  "limitations": [
+    "Проверка выполнена на уровне двух HTTP-клиентов presenter/server/audience; визуальная проверка Playwright подключается отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac28/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac28/journal.json",
+    "docs/release/kshvi/evidence/ac28/protocol.txt",
+    "docs/release/kshvi/evidence/ac28/derived-archive.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-28.json"
+  ],
+  "freshInstall": false,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "openErrors": []
+}

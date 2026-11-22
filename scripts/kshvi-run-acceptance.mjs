@@ -34,9 +34,13 @@ export function acceptanceFiles(from, to) {
     return { id, path: `services/kshvi/tests/acceptance/ac${String(number).padStart(2, '0')}-${slug}.test.ts` };
   });
 }
-function defaultRunner(files, cwd = process.cwd()) {
-  const result = spawnSync('npx', ['vitest', 'run', ...files.map(file => file.path)], { cwd, encoding: 'utf8', env: process.env });
-  return { status: result.status ?? 1, output: `${result.stdout ?? ''}${result.stderr ?? ''}` };
+function defaultRunner(files, cwd = process.cwd(), runId = '') {
+  const result = spawnSync('npx', ['vitest', 'run', ...files.map(file => file.path)], {
+    cwd, encoding: 'utf8', env: { ...process.env, KSHVI_ACCEPTANCE_RUN_ID: runId },
+  });
+  const proofPath = resolve(cwd, 'docs/release/kshvi/acceptance', `${files[0].id}.proof.json`);
+  const evidence = existsSync(proofPath) ? JSON.parse(readFileSync(proofPath, 'utf8')) : undefined;
+  return { status: result.status ?? 1, output: `${result.stdout ?? ''}${result.stderr ?? ''}`, evidence };
 }
 export function prepareFreshAcceptanceWorkspace({ root = process.cwd(), offline = true, installer = spawnSync } = {}) {
   mkdirSync(resolve(root, '.tmp'), { recursive: true });
@@ -62,10 +66,12 @@ export function prepareFreshAcceptanceWorkspace({ root = process.cwd(), offline 
   if (result.status !== 0) throw new Error(`npm ci в изолированной установке завершился с кодом ${result.status ?? 1}`);
   return workspace;
 }
-export function acceptanceEvidenceIssues(proof, fileExists = existsSync) {
+export function acceptanceEvidenceIssues(proof, fileExists = existsSync, freshness = {}) {
   const issues = [];
   const hash = value => typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
   if (!proof || typeof proof !== 'object') return ['initialRevision: обязательный комплект доказательств отсутствует'];
+  if (freshness.runId && proof.runId !== freshness.runId) issues.push(`runId: ожидался ${freshness.runId}, получен ${proof.runId ?? 'отсутствующий'}`);
+  if (freshness.commit && proof.commit !== freshness.commit) issues.push('commit: доказательство относится к другой редакции кода');
   if (!proof.initialRevision || typeof proof.initialRevision.id !== 'string' || !Number.isSafeInteger(proof.initialRevision.revision)
     || proof.initialRevision.revision < 1 || !hash(proof.initialRevision.sha256)) issues.push('initialRevision: нужна исходная редакция и SHA-256');
   if (!proof.journal || typeof proof.journal.path !== 'string' || !proof.journal.path || !hash(proof.journal.sha256)
@@ -86,7 +92,7 @@ export function acceptanceEvidenceIssues(proof, fileExists = existsSync) {
   return issues;
 }
 
-export async function runAcceptance({ from = 1, to = 30, reverse = false, evidence = 'docs/release/kshvi/acceptance', fileExists = existsSync, runner = defaultRunner, currentCommit, writeEvidence = true, freshInstall = false, offline = false, cwd = process.cwd() }) {
+export async function runAcceptance({ from = 1, to = 30, reverse = false, evidence = 'docs/release/kshvi/acceptance', fileExists = existsSync, runner = defaultRunner, currentCommit, writeEvidence = true, freshInstall = false, offline = false, cwd = process.cwd(), runId = randomUUID() }) {
   const files = acceptanceFiles(from, to);
   if (reverse) files.reverse();
   if (writeEvidence) mkdirSync(evidence, { recursive: true });
@@ -96,14 +102,14 @@ export async function runAcceptance({ from = 1, to = 30, reverse = false, eviden
   for (const file of files) {
     let result;
     if (!fileExists(file.path)) result = { status: 1, output: `Отсутствует сценарий ${file.path}` };
-    else result = await runner([file], cwd);
-    const proofIssues = result.status === 0 ? acceptanceEvidenceIssues(result.evidence, path => fileExists(resolve(cwd, path))) : [];
+    else result = await runner([file], cwd, runId);
+    const proofIssues = result.status === 0 ? acceptanceEvidenceIssues(result.evidence, path => fileExists(resolve(cwd, path)), { runId, commit }) : [];
     const passed = result.status === 0 && proofIssues.length === 0;
     if (!passed) status = 1;
     const evidencePath = resolve(evidence, `${file.id}.json`);
     const openErrors = result.status !== 0 ? [result.output || 'Сценарий не прошёл'] : proofIssues;
     const record = {
-      status: passed ? 'passed' : 'failed', commit, command: `npx vitest run ${file.path}`, output: result.output,
+      status: passed ? 'passed' : 'failed', commit, runId, command: `npx vitest run ${file.path}`, output: result.output,
       ...(result.evidence && typeof result.evidence === 'object' ? result.evidence : {}),
       freshInstall, offline, cwd,
       artifacts: [...(Array.isArray(result.evidence?.artifacts) ? result.evidence.artifacts : []), evidencePath],

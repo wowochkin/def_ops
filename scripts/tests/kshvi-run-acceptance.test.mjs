@@ -27,6 +27,7 @@ test('записывает доказательства только после 
         status: 0,
         output: 'ok',
         evidence: {
+          runId: 'run-ac00', commit: 'abc123',
           initialRevision: { id: `scenario-${files[0].id}`, revision: 1, sha256: 'a'.repeat(64) },
           journal: { path: `artifacts/${files[0].id}-journal.json`, sha256: 'b'.repeat(64), eventCount: 1 },
           hashes: { scenario: 'a'.repeat(64), environment: 'c'.repeat(64), journal: 'b'.repeat(64) },
@@ -38,7 +39,7 @@ test('записывает доказательства только после 
         },
       };
     },
-    currentCommit: 'abc123',
+    currentCommit: 'abc123', runId: 'run-ac00',
   });
   assert.equal(result.status, 0);
   assert.deepEqual(calls.map(call => call[0].id), ['AC-02', 'AC-01']);
@@ -184,4 +185,25 @@ test('чистая установка выполняется в новой ко�
   assert.equal(calls[0].options.env.KSHVI_OFFLINE, '1');
   assert.equal(existsSync(join(workspace, 'package.json')), true);
   assert.equal(existsSync(join(workspace, 'node_modules')), false);
+});
+
+
+test('устаревший runId доказательства блокирует passed', async () => {
+  const evidence = mkdtempSync(join(tmpdir(), 'kshvi-acceptance-'));
+  const result = await runAcceptance({
+    from: 1, to: 1, evidence, fileExists: () => true, currentCommit: 'abc123', runId: 'fresh-run',
+    runner: async () => ({
+      status: 0, output: 'ok',
+      evidence: {
+        runId: 'stale-run', commit: 'abc123',
+        initialRevision: { id: 'scenario', revision: 1, sha256: 'a'.repeat(64) },
+        journal: { path: 'artifacts/journal.json', sha256: 'b'.repeat(64), eventCount: 1 },
+        hashes: { scenario: 'a'.repeat(64), environment: 'c'.repeat(64), journal: 'b'.repeat(64) },
+        protocols: ['artifacts/protocol.txt'], screenshots: [], metrics: { assertions: 1 }, limitations: [],
+        artifacts: ['artifacts/journal.json', 'artifacts/protocol.txt'],
+      },
+    }),
+  });
+  assert.equal(result.status, 1);
+  assert.ok(result.results[0].openErrors.some(issue => issue.includes('runId')));
 });

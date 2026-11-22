@@ -1,0 +1,39 @@
+{
+  "runId": "a3f12a63-1e6a-4343-a677-a321b2f40d30",
+  "commit": "5d042b1f1e54d7a38f197da4a8596af83d8f7b7b",
+  "initialRevision": {
+    "id": "official-archive-1",
+    "revision": 1,
+    "sha256": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac28/journal.json",
+    "sha256": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0",
+    "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "journal": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac28/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "randomOutcomesCreated": 4,
+    "agentRequests": 10,
+    "seekWorldMatches": 2,
+    "audienceForbiddenFields": 0,
+    "mapLayers": 4
+  },
+  "limitations": [
+    "Проверка выполнена на уровне двух HTTP-клиентов presenter/server/audience; визуальная проверка Playwright подключается отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac28/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac28/journal.json",
+    "docs/release/kshvi/evidence/ac28/protocol.txt",
+    "docs/release/kshvi/evidence/ac28/derived-archive.json"
+  ]
+}

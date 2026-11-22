@@ -1,0 +1,411 @@
+{
+  "schemaVersion": "1.0.0",
+  "archiveId": "ac28-derived",
+  "branchId": "ac28-continued-branch",
+  "purpose": "EXPOSITION",
+  "label": "Экспозиция",
+  "source": "AUTONOMOUS",
+  "program": {
+    "id": "program-1",
+    "title": "Демонстрация «Рубеж»",
+    "chapters": [
+      {
+        "id": "chapter-1",
+        "title": "Исходная обстановка",
+        "startMs": 0,
+        "endMs": 1000,
+        "frameIds": [
+          "frame-1"
+        ],
+        "pauseAfterMs": 500
+      },
+      {
+        "id": "chapter-2",
+        "title": "Развитие действий",
+        "startMs": 1000,
+        "endMs": 3000,
+        "frameIds": [
+          "frame-2"
+        ],
+        "pauseAfterMs": 0
+      }
+    ],
+    "frames": [
+      {
+        "id": "frame-1",
+        "atMs": 1000,
+        "title": "Первое решение",
+        "caption": "Силы выдвигаются к рубежу"
+      },
+      {
+        "id": "frame-2",
+        "atMs": 2000,
+        "title": "Подвоз",
+        "caption": "МТО пополняет запасы"
+      }
+    ],
+    "cameraRoute": {
+      "keyframes": [
+        {
+          "id": "camera-1",
+          "atMs": 0,
+          "center": [
+            30,
+            50
+          ],
+          "zoom": 6,
+          "heading": 0
+        },
+        {
+          "id": "camera-2",
+          "atMs": 2000,
+          "center": [
+            32,
+            52
+          ],
+          "zoom": 8,
+          "heading": 90
+        }
+      ]
+    },
+    "layers": [
+      "weather",
+      "terrain",
+      "logistics",
+      "modern-symbols"
+    ],
+    "tempo": 1,
+    "pauseMs": 500,
+    "captions": [
+      {
+        "id": "caption-public",
+        "atMs": 1000,
+        "text": "Публичная подпись"
+      }
+    ],
+    "explanations": [
+      {
+        "id": "explanation-public",
+        "atMs": 1000,
+        "text": "Пояснение для аудитории",
+        "audience": true
+      }
+    ],
+    "branches": [
+      {
+        "id": "branch-new",
+        "title": "Альтернативное развитие",
+        "fromCheckpointId": "cp-1",
+        "chapterIds": [
+          "chapter-2"
+        ]
+      }
+    ],
+    "allowedCheckpointIds": [
+      "cp-1"
+    ],
+    "planFact": [
+      {
+        "id": "comparison-1",
+        "atMs": 1000,
+        "plan": "Удержать исходный рубеж",
+        "fact": "Рубеж удержан"
+      }
+    ]
+  },
+  "explanations": [
+    {
+      "id": "explanation-public",
+      "atMs": 1000,
+      "text": "Пояснение для аудитории",
+      "audience": true
+    }
+  ],
+  "audiencePolicy": {
+    "id": "ac28-policy",
+    "allowedLayers": [
+      "weather",
+      "terrain",
+      "logistics",
+      "modern-symbols",
+      "forces",
+      "routes"
+    ],
+    "showPlanFact": true,
+    "showExplanations": true,
+    "publicCaptionIds": [
+      "caption-public"
+    ],
+    "publicExplanationIds": [
+      "explanation-public"
+    ],
+    "publicDecisionIds": []
+  },
+  "origin": {
+    "archiveId": "official-archive-1",
+    "branchId": "conduct-branch-1",
+    "manifestHash": "ffe24e71f20ac39543bf18cf7824f10811c9175954ae2e2d8c868c4de7ae5107",
+    "parentBranchId": "ac28-auto-branch",
+    "checkpointId": "cp-1"
+  },
+  "playback": {
+    "status": "PLAYING",
+    "atMs": 2000,
+    "tempo": 1,
+    "chapterId": "chapter-2",
+    "pauseRemainingMs": 0,
+    "endPauseRemainingMs": 0
+  },
+  "journalCursor": 2,
+  "seed": 42,
+  "rng": {
+    "version": "exposition-rng-v1",
+    "seed": 42,
+    "branchId": "ac28-continued-branch",
+    "cursor": 8,
+    "state": 3616359920
+  },
+  "journal": [
+    {
+      "eventId": "demo-event-1",
+      "sequence": 1,
+      "atMs": 1000,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "resourceId": "fuel",
+        "amount": 14,
+        "supplied": 0
+      },
+      "causeIds": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ],
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-auto-branch",
+        "cursor": 4,
+        "state": 27493211
+      }
+    },
+    {
+      "eventId": "demo-event-2",
+      "sequence": 2,
+      "atMs": 2000,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "resourceId": "fuel",
+        "amount": 20,
+        "supplied": 6
+      },
+      "causeIds": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ],
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-continued-branch",
+        "cursor": 8,
+        "state": 3616359920
+      }
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-1",
+      "atMs": 1000,
+      "journalCursor": 1,
+      "scenarioCursor": 1,
+      "world": {
+        "scenarioId": "demo-scenario",
+        "state": {
+          "Time": {
+            "operationalAt": null,
+            "wallClockAt": null
+          },
+          "Forces": {},
+          "Equipment": {},
+          "Tasks": {},
+          "Resources": {
+            "fuel": {
+              "onHand": 86,
+              "consumed": 14,
+              "supplied": 0,
+              "deficit": 0
+            }
+          },
+          "Supply": {},
+          "Readiness": {},
+          "MoralePsych": {},
+          "Formation": {},
+          "Terrain": {},
+          "Weather": {},
+          "Observations": {},
+          "Communications": {},
+          "Documents": {},
+          "ScenarioState": {
+            "scenarioId": "demo-scenario",
+            "status": "DRAFT"
+          },
+          "EventScheduler": {
+            "cursor": 0
+          },
+          "AgentStates": {}
+        },
+        "appliedEventIds": [
+          "demo-event-1"
+        ],
+        "eventCauses": {
+          "demo-event-1": [
+            "agent:agent-blue@modern-blue-1",
+            "agent:agent-red@modern-red-1"
+          ]
+        }
+      },
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-auto-branch",
+        "cursor": 4,
+        "state": 27493211
+      }
+    },
+    {
+      "id": "cp-2",
+      "atMs": 2000,
+      "journalCursor": 2,
+      "scenarioCursor": 2,
+      "world": {
+        "scenarioId": "demo-scenario",
+        "state": {
+          "Time": {
+            "operationalAt": null,
+            "wallClockAt": null
+          },
+          "Forces": {},
+          "Equipment": {},
+          "Tasks": {},
+          "Resources": {
+            "fuel": {
+              "onHand": 72,
+              "consumed": 34,
+              "supplied": 6,
+              "deficit": 0
+            }
+          },
+          "Supply": {},
+          "Readiness": {},
+          "MoralePsych": {},
+          "Formation": {},
+          "Terrain": {},
+          "Weather": {},
+          "Observations": {},
+          "Communications": {},
+          "Documents": {},
+          "ScenarioState": {
+            "scenarioId": "demo-scenario",
+            "status": "DRAFT"
+          },
+          "EventScheduler": {
+            "cursor": 0
+          },
+          "AgentStates": {}
+        },
+        "appliedEventIds": [
+          "demo-event-1",
+          "demo-event-2"
+        ],
+        "eventCauses": {
+          "demo-event-1": [
+            "agent:agent-blue@modern-blue-1",
+            "agent:agent-red@modern-red-1"
+          ],
+          "demo-event-2": [
+            "agent:agent-blue@modern-blue-1",
+            "agent:agent-red@modern-red-1"
+          ]
+        }
+      },
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-continued-branch",
+        "cursor": 8,
+        "state": 3616359920
+      }
+    }
+  ],
+  "world": {
+    "scenarioId": "demo-scenario",
+    "state": {
+      "Time": {
+        "operationalAt": null,
+        "wallClockAt": null
+      },
+      "Forces": {},
+      "Equipment": {},
+      "Tasks": {},
+      "Resources": {
+        "fuel": {
+          "onHand": 72,
+          "consumed": 34,
+          "supplied": 6,
+          "deficit": 0
+        }
+      },
+      "Supply": {},
+      "Readiness": {},
+      "MoralePsych": {},
+      "Formation": {},
+      "Terrain": {},
+      "Weather": {},
+      "Observations": {},
+      "Communications": {},
+      "Documents": {},
+      "ScenarioState": {
+        "scenarioId": "demo-scenario",
+        "status": "DRAFT"
+      },
+      "EventScheduler": {
+        "cursor": 0
+      },
+      "AgentStates": {}
+    },
+    "appliedEventIds": [
+      "demo-event-1",
+      "demo-event-2"
+    ],
+    "eventCauses": {
+      "demo-event-1": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ],
+      "demo-event-2": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ]
+    }
+  },
+  "map": {
+    "weather": {
+      "summary": "Пасмурно, видимость 8 км"
+    },
+    "terrain": {
+      "summary": "Лес и рубеж высоты"
+    },
+    "logistics": {
+      "summary": "Склад и маршрут подвоза"
+    },
+    "modernSymbols": [
+      {
+        "id": "symbol-1",
+        "label": "Батальон",
+        "side": "BLUE"
+      }
+    ]
+  },
+  "officialAssessmentCreated": false,
+  "officialAssessments": [],
+  "manifestHash": "b44ca944e281baf1417d49839cc5216b2b40e73081581c76189bae0860947b98"
+}

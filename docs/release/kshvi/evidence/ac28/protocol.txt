@@ -1,0 +1,8 @@
+AC-28: архивный и автономный показ завершены.
+runId: a3f12a63-1e6a-4343-a677-a321b2f40d30
+commit: 5d042b1f1e54d7a38f197da4a8596af83d8f7b7b
+PLAY/ADVANCE/SET_TEMPO/SEEK/SEEK_CHAPTER: мир и камера восстановлены по фактическому журналу.
+Checkpoint continuation, replay saved line и new branch: подтверждены.
+Исходный архив не изменён; официальных оценок экспозиция не создала.
+Метрики: {"randomOutcomesCreated":4,"agentRequests":10,"seekWorldMatches":2,"audienceForbiddenFields":0,"mapLayers":4}
+Ограничения: Проверка выполнена на уровне двух HTTP-клиентов presenter/server/audience; визуальная проверка Playwright подключается отдельно.
