@@ -25,7 +25,7 @@ it('C5: production supervisor запускает и останавливает a
   });
   const supervisor = new ProductionWorkerSupervisor({
     autonomy: [{
-      instanceId: 'i1', instanceState: 'ACTIVE', profile: schedule.profile, templates: schedule.templates, state: schedule.state,
+      instanceId: 'i1', instanceState: 'ACTIVE', operationalStartAt: '2030-01-01T00:00:00.000Z', profile: schedule.profile, templates: schedule.templates, state: schedule.state,
       targets: schedule.targets, seed: schedule.seed, branchId: 'main', snapshotHash: 'snapshot', templateSetVersion: 'templates', fromSecond: 0, toSecond: 3600,
       everyMs: 10,
       queue: { enqueue: async command => { commands.push(command); return { idempotent: false }; } },

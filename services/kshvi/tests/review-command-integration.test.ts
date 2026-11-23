@@ -1,7 +1,8 @@
 import { expect, it } from 'vitest';
 import { createService, Router } from '@def-ops/service-kit';
 import { AutonomyCommandQueueAdapter } from '../src/runtime/autonomy-command-queue';
-import type { TypedInstanceCommand } from '../src/instances/typed-command-port';
+import { CommandService } from '../src/instances/command-service';
+import { RevisionTrackingCommandPort, type TypedInstanceCommand } from '../src/instances/typed-command-port';
 import { registerAgentRoutes } from '../src/http/agent-routes';
 import type { AgentCommand } from '../../../packages/kshvi-agents/src/intermediary/act';
 
@@ -25,6 +26,38 @@ it('C5: autonomy queue использует типизированный Command
     commandId: 'bad', idempotencyKey: 'bad', kind: 'arbitraryOutcome' as never, instanceId: 'i1', branchId: 'main', operationalSecond: 1,
     priority: 1, sequence: 2, payload: {},
   })).rejects.toThrow('операц');
+});
+
+it('AC-19: настоящий CommandService журналирует системную автономную операцию один раз', async () => {
+  const commands = new CommandService({ organizationId: 'org-server' });
+  const tracked = new RevisionTrackingCommandPort(commands);
+  const queue = new AutonomyCommandQueueAdapter({
+    organizationId: 'org-server', actorUserId: 'autonomy-worker', commands: tracked,
+    revision: (instanceId, branchId) => tracked.revision(instanceId, branchId),
+  });
+  const operation = {
+    commandId: 'autonomous-operation', idempotencyKey: 'autonomous-operation-key', kind: 'applyWorldEffects' as const,
+    instanceId: 'autonomous-instance', branchId: 'main', operationalSecond: 60,
+    operationalAt: '2030-01-01T00:01:00.000Z', priority: 100, sequence: 0,
+    payload: {
+      eventId: 'autonomous-event', templateId: 'logistics.fuel-shortage', templateVersion: 1,
+      effects: [
+        { type: 'resource.adjust', resourceId: 'fuel', ownerSideId: 'blue', unit: 'L', operation: 'RESTORE', amount: 100 },
+        { type: 'resource.adjust', resourceId: 'fuel', ownerSideId: 'blue', unit: 'L', operation: 'CONSUME', amount: 10 },
+      ],
+      parameters: {}, causeEventIds: [], stageId: 'stage-main', target: { sideId: 'blue', areaId: 'area-north' },
+    },
+  };
+  expect(await queue.enqueue(operation)).toEqual({ idempotent: false });
+  expect(await queue.enqueue(operation)).toEqual({ idempotent: true });
+  const history = await commands.history('autonomous-instance', 'main');
+  expect(history).toHaveLength(1);
+  expect(history[0]).toMatchObject({
+    type: 'autonomy.worldEffects.apply.v1', actor: { id: 'autonomy-worker', kind: 'SYSTEM' },
+    operationalAt: { originalAt: '2030-01-01T00:01:00.000Z' },
+    payload: { commandId: 'autonomous-operation-key', commandType: 'autonomy.worldEffects.apply.v1', causedBy: 'autonomous-event' },
+  });
+  expect(commands.state('autonomous-instance', 'main').world.resources['blue/fuel']).toMatchObject({ onHand: 90, consumed: 10, supplied: 100, deficit: 0 });
 });
 
 function agentCommand(kind: string): AgentCommand {

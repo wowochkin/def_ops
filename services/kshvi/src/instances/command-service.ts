@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ConductCommandService } from './conduct-command-service';
+import { assertDomainOperationType } from './typed-command-port';
 import type { ConductCommand, ConductOperations } from '../../../../packages/kshvi/src/commands/conduct';
 import type { ChainEvent } from '../../../../packages/kshvi/src/events/envelope';
 import type { KshviEventStore } from '../store/event-store';
@@ -55,6 +56,16 @@ export class CommandService {
       const result = await this.official.execute({
         sessionId: input.instanceId, branchId: input.branchId, expectedRevision: input.expectedRevision, actor: input.actor,
       }, { ...payload, type: input.type, commandId: input.idempotencyKey, at } as ConductCommand);
+      if (!result.idempotent && this.eventSink) await this.eventSink(result.event);
+      return { eventId: result.event.eventId, revision: result.revision, idempotent: result.idempotent };
+    }
+    if (input.actor.role === 'SYSTEM') {
+      assertDomainOperationType(input.type);
+      const payload = input.payload && typeof input.payload === 'object' && !Array.isArray(input.payload) ? input.payload as Record<string, unknown> : {};
+      const at = input.at ?? (typeof payload.at === 'string' ? payload.at : new Date().toISOString());
+      const result = await this.official.executeDomain({
+        sessionId: input.instanceId, branchId: input.branchId, expectedRevision: input.expectedRevision, actor: input.actor,
+      }, { commandId: input.idempotencyKey, type: input.type, payload, at });
       if (!result.idempotent && this.eventSink) await this.eventSink(result.event);
       return { eventId: result.event.eventId, revision: result.revision, idempotent: result.idempotent };
     }

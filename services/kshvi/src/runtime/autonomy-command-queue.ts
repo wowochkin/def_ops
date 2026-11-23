@@ -26,6 +26,7 @@ export class AutonomyCommandQueueAdapter implements AutonomyCommandQueue {
       expectedRevision: await this.options.revision(command.instanceId, command.branchId),
       idempotencyKey: command.idempotencyKey,
       type,
+      at: command.operationalAt,
       actor: { userId: this.options.actorUserId, role: 'SYSTEM', organizationId: this.options.organizationId },
       payload: {
         ...command.payload,

@@ -40,6 +40,7 @@ function workerInput(queue: MemoryQueue, journal: MemoryJournal) {
   return {
     instanceId: 'instance-1',
     instanceState: 'ACTIVE' as const,
+    operationalStartAt: '2030-01-01T00:00:00.000Z',
     profile: schedule.profile,
     templates: schedule.templates,
     state: schedule.state,

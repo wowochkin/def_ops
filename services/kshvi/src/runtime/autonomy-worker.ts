@@ -22,6 +22,7 @@ export type AutonomyQueueCommand = Readonly<{
   instanceId: string;
   branchId: string;
   operationalSecond: number;
+  operationalAt?: string;
   priority: number;
   sequence: number;
   payload: Readonly<Record<string, unknown>>;
@@ -45,6 +46,7 @@ export type AutonomyWorkerJournal = Readonly<{
 export type RunAutonomyWorkerInput = Readonly<{
   instanceId: string;
   instanceState: 'ACTIVE' | 'PAUSED';
+  operationalStartAt: string;
   profile: AutonomyProfile;
   templates: readonly EventTemplate[];
   state: SchedulerRuntimeState;
@@ -81,6 +83,11 @@ function controlHash(results: readonly ScheduleIntervalResult[]): string {
   })));
 }
 
+function operationalAt(input: RunAutonomyWorkerInput, operationalSecond: number): string {
+  const startedAt = Date.parse(input.operationalStartAt);
+  if (!Number.isFinite(startedAt)) throw new Error('Некорректная оперативная привязка autonomy worker');
+  return new Date(startedAt + operationalSecond * 1000).toISOString();
+}
 function commandFor(
   input: RunAutonomyWorkerInput,
   event: CreatedAutonomyEvent,
@@ -95,6 +102,7 @@ function commandFor(
     instanceId: input.instanceId,
     branchId: input.branchId,
     operationalSecond: event.operationalSecond,
+    operationalAt: operationalAt(input, event.operationalSecond),
     priority: 100,
     sequence: intervalIndex * 1_000_000 + sequenceInInterval,
     payload: {
@@ -199,6 +207,7 @@ export async function runAutonomyWorker(input: RunAutonomyWorkerInput): Promise<
           instanceId: input.instanceId,
           branchId: input.branchId,
           operationalSecond: event.operationalSecond,
+          operationalAt: operationalAt(input, event.operationalSecond),
           priority: event.kind === 'REACTIVE' ? 90 : 100,
           sequence: interval.index * 1_000_000 + sequenceInInterval,
           payload: { ...event.payload, ...operation.payload, plannedReactiveEventId: event.eventId, plannedReactiveKind: event.kind },

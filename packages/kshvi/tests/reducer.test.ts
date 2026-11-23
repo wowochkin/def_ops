@@ -24,6 +24,44 @@ describe('версионный reducer', () => {
     expect(next.resources.fuel).toEqual({ onHand: 0, consumed: 4, supplied: 1, deficit: 1 });
   });
 
+  it('применяет типизированные эффекты автономного события к компонентам мира', () => {
+    const next = reduceWorld(emptyWorld('scenario-1'), {
+      eventId: 'autonomy-1', type: 'autonomy.worldEffects.apply.v1',
+      payload: {
+        parameters: {},
+        effects: [
+          { type: 'resource.adjust', resourceId: 'fuel', ownerSideId: 'blue', unit: 'L', operation: 'RESTORE', amount: 100 },
+          { type: 'resource.adjust', resourceId: 'fuel', ownerSideId: 'blue', unit: 'L', operation: 'CONSUME', amount: 10 },
+          { type: 'force.state', forceId: 'force-1', status: 'DEGRADED' },
+          { type: 'equipment.state', equipmentId: 'equipment-1', status: 'DAMAGED' },
+          { type: 'terrain.state', areaId: 'area-1', status: 'RESTRICTED' },
+          { type: 'communication.state', channelId: 'channel-1', status: 'UNAVAILABLE' },
+        ],
+      },
+    }, { reducerVersion: 1 });
+    expect(next.resources['blue/fuel']).toEqual({ onHand: 90, consumed: 10, supplied: 100, deficit: 0 });
+    expect(next.state.Forces).toMatchObject({ 'force-1': { status: 'DEGRADED' } });
+    expect(next.state.Equipment).toMatchObject({ 'equipment-1': { status: 'DAMAGED' } });
+    expect(next.state.Terrain).toMatchObject({ 'area-1': { status: 'RESTRICTED' } });
+    expect(next.state.Communications).toMatchObject({ 'channel-1': { status: 'UNAVAILABLE' } });
+  });
+
+  it('восстанавливает автономные наблюдения, документы, вводные и заявки по журналу', () => {
+    const events = [
+      { eventId: 'observation-1', type: 'observation.create.v1', payload: { observationId: 'observation-1', value: 'seen' } },
+      { eventId: 'document-1', type: 'document.revision.create.v1', payload: { documentId: 'document-1', revision: 1, title: 'Донесение' } },
+      { eventId: 'input-1', type: 'input.create.v1', payload: { inputId: 'input-1', visibility: 'PARTICIPANT' } },
+      { eventId: 'approval-1', type: 'approval.request.create.v1', payload: { requestId: 'approval-1', reason: 'MANUAL_APPROVAL_PROFILE' } },
+    ] as const;
+    const next = replayWorld(emptyWorld('scenario-1'), events, { reducerVersion: 1 });
+    expect(next.state.Observations).toMatchObject({ 'observation-1': { value: 'seen' } });
+    expect(next.state.Documents).toMatchObject({ 'document-1': { revision: 1, title: 'Донесение' } });
+    expect(next.state.ScenarioState).toMatchObject({
+      Inputs: { 'input-1': { visibility: 'PARTICIPANT' } },
+      ApprovalRequests: { 'approval-1': { reason: 'MANUAL_APPROVAL_PROFILE', status: 'PENDING' } },
+    });
+  });
+
   it('отклоняет неизвестное событие и отрицательный расход без изменения мира', () => {
     const world = emptyWorld('scenario-1');
     expect(() => reduceWorld(world, { ...event, type: 'unknown.v1' }, { reducerVersion: 1 })).toThrow('Неизвестный тип');
