@@ -1,0 +1,10 @@
+{
+  "realRustEvaluations": 4,
+  "sameSeedTraceMatches": 1,
+  "hiddenTruthTraceMatches": 1,
+  "observationChangedChoice": 1,
+  "systemCommands": 1,
+  "duplicateOfficialEffects": 0,
+  "isolatedForksDestroyed": 4,
+  "replayMatches": 1
+}

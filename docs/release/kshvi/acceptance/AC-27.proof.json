@@ -1,0 +1,42 @@
+{
+  "runId": "292d61b2-4097-4fae-948f-0ffded44e51c",
+  "commit": "c6cabd4d1ced755529184160c6d7b7f8482462a8",
+  "initialRevision": {
+    "id": "modern-opponent-ac27",
+    "revision": 1,
+    "sha256": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac27/journal.json",
+    "sha256": "3cf89f1ca0b317983fe764c7bf9a7b464a85a8a7374fb38b51c3b792b89fc770",
+    "eventCount": 1
+  },
+  "hashes": {
+    "scenario": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4",
+    "environment": "e2cefdcd1a9acb892257edfe716aa0f748fc14a2799a3f9fe406fbf076cb86f4",
+    "journal": "3cf89f1ca0b317983fe764c7bf9a7b464a85a8a7374fb38b51c3b792b89fc770"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac27/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "realRustEvaluations": 4,
+    "sameSeedTraceMatches": 1,
+    "hiddenTruthTraceMatches": 1,
+    "observationChangedChoice": 1,
+    "systemCommands": 1,
+    "duplicateOfficialEffects": 0,
+    "isolatedForksDestroyed": 4,
+    "replayMatches": 1
+  },
+  "limitations": [
+    "Rust worker, доставка и общий CommandService проверены на локальном стенде; распределённая сетевая нагрузка и физическая изоляция узлов проверяются отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac27/journal.json",
+    "docs/release/kshvi/evidence/ac27/decision-traces.json",
+    "docs/release/kshvi/evidence/ac27/protocol.txt",
+    "docs/release/kshvi/evidence/ac27/metrics.json"
+  ]
+}

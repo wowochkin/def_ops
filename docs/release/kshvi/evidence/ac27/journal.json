@@ -1,0 +1,884 @@
+{
+  "runId": "292d61b2-4097-4fae-948f-0ffded44e51c",
+  "commit": "c6cabd4d1ced755529184160c6d7b7f8482462a8",
+  "firstEvaluation": {
+    "selected": {
+      "id": "advance",
+      "kind": "ADVANCE",
+      "label": "Наступать по доступному маршруту",
+      "contrib": [
+        1.2,
+        0.3,
+        -0.2,
+        -0.1,
+        0.8,
+        -0.3,
+        -0.1
+      ],
+      "uncertainty": 0.20999999999999996,
+      "losses": 0.09999999999999999,
+      "commandType": "force.advance.v1"
+    },
+    "options": [
+      {
+        "id": "advance",
+        "utility": 1.2019482459152933,
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999
+      },
+      {
+        "id": "continue-order",
+        "utility": 0.49584362091529344,
+        "uncertainty": 0.12,
+        "losses": 0.04
+      },
+      {
+        "id": "defend",
+        "utility": 0.45928262091529337,
+        "uncertainty": 0.05499999999999999,
+        "losses": 0.095
+      },
+      {
+        "id": "withdraw",
+        "utility": 0.10508949591529328,
+        "uncertainty": 0.12,
+        "losses": 0.065
+      }
+    ],
+    "unknown": [],
+    "forkHashes": [
+      "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+      "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+      "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+      "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+    ],
+    "destroyedForks": 4,
+    "orders": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance"
+      }
+    ],
+    "reports": [
+      {
+        "id": "report-own",
+        "sender": "hq-sub",
+        "recipient": "hq-red",
+        "tick": 7,
+        "text": "Донесение собственного подчинённого штаба"
+      }
+    ],
+    "commands": [
+      {
+        "type": "force.advance.v1",
+        "instanceId": "instance-modern",
+        "expectedRevision": 3,
+        "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+        "choiceId": "advance"
+      }
+    ],
+    "trace": {
+      "choice": "advance",
+      "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+      "factors": [
+        "наблюдения: 1 собственных сведений",
+        "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+      ],
+      "profileVersion": "modern-opponent-1",
+      "searchDepth": 2,
+      "horizonTicks": 6,
+      "reviewCycleTicks": 2
+    }
+  },
+  "repeatedEvaluation": {
+    "selected": {
+      "id": "advance",
+      "kind": "ADVANCE",
+      "label": "Наступать по доступному маршруту",
+      "contrib": [
+        1.2,
+        0.3,
+        -0.2,
+        -0.1,
+        0.8,
+        -0.3,
+        -0.1
+      ],
+      "uncertainty": 0.20999999999999996,
+      "losses": 0.09999999999999999,
+      "commandType": "force.advance.v1"
+    },
+    "options": [
+      {
+        "id": "advance",
+        "utility": 1.2019482459152933,
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999
+      },
+      {
+        "id": "continue-order",
+        "utility": 0.49584362091529344,
+        "uncertainty": 0.12,
+        "losses": 0.04
+      },
+      {
+        "id": "defend",
+        "utility": 0.45928262091529337,
+        "uncertainty": 0.05499999999999999,
+        "losses": 0.095
+      },
+      {
+        "id": "withdraw",
+        "utility": 0.10508949591529328,
+        "uncertainty": 0.12,
+        "losses": 0.065
+      }
+    ],
+    "unknown": [],
+    "forkHashes": [
+      "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+      "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+      "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+      "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+    ],
+    "destroyedForks": 4,
+    "orders": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance"
+      }
+    ],
+    "reports": [
+      {
+        "id": "report-own",
+        "sender": "hq-sub",
+        "recipient": "hq-red",
+        "tick": 7,
+        "text": "Донесение собственного подчинённого штаба"
+      }
+    ],
+    "commands": [
+      {
+        "type": "force.advance.v1",
+        "instanceId": "instance-modern",
+        "expectedRevision": 3,
+        "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+        "choiceId": "advance"
+      }
+    ],
+    "trace": {
+      "choice": "advance",
+      "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+      "factors": [
+        "наблюдения: 1 собственных сведений",
+        "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+      ],
+      "profileVersion": "modern-opponent-1",
+      "searchDepth": 2,
+      "horizonTicks": 6,
+      "reviewCycleTicks": 2
+    }
+  },
+  "hiddenEvaluation": {
+    "selected": {
+      "id": "advance",
+      "kind": "ADVANCE",
+      "label": "Наступать по доступному маршруту",
+      "contrib": [
+        1.2,
+        0.3,
+        -0.2,
+        -0.1,
+        0.8,
+        -0.3,
+        -0.1
+      ],
+      "uncertainty": 0.20999999999999996,
+      "losses": 0.09999999999999999,
+      "commandType": "force.advance.v1"
+    },
+    "options": [
+      {
+        "id": "advance",
+        "utility": 1.2019482459152933,
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999
+      },
+      {
+        "id": "continue-order",
+        "utility": 0.49584362091529344,
+        "uncertainty": 0.12,
+        "losses": 0.04
+      },
+      {
+        "id": "defend",
+        "utility": 0.45928262091529337,
+        "uncertainty": 0.05499999999999999,
+        "losses": 0.095
+      },
+      {
+        "id": "withdraw",
+        "utility": 0.10508949591529328,
+        "uncertainty": 0.12,
+        "losses": 0.065
+      }
+    ],
+    "unknown": [],
+    "forkHashes": [
+      "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+      "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+      "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+      "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+    ],
+    "destroyedForks": 4,
+    "orders": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance"
+      }
+    ],
+    "reports": [
+      {
+        "id": "report-own",
+        "sender": "hq-sub",
+        "recipient": "hq-red",
+        "tick": 7,
+        "text": "Донесение собственного подчинённого штаба"
+      }
+    ],
+    "commands": [
+      {
+        "type": "force.advance.v1",
+        "instanceId": "instance-modern",
+        "expectedRevision": 3,
+        "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+        "choiceId": "advance"
+      }
+    ],
+    "trace": {
+      "choice": "advance",
+      "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+      "factors": [
+        "наблюдения: 1 собственных сведений",
+        "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+      ],
+      "profileVersion": "modern-opponent-1",
+      "searchDepth": 2,
+      "horizonTicks": 6,
+      "reviewCycleTicks": 2
+    }
+  },
+  "observedEvaluation": {
+    "selected": {
+      "id": "continue-order",
+      "kind": "CONTINUE_ORDER",
+      "label": "Продолжить действующий приказ",
+      "contrib": [
+        0.45,
+        0,
+        0.1,
+        0,
+        0,
+        0.2,
+        0
+      ],
+      "uncertainty": 0.12,
+      "losses": 0.04,
+      "commandType": "order.continue.v1"
+    },
+    "options": [
+      {
+        "id": "continue-order",
+        "utility": 0.49584362091529344,
+        "uncertainty": 0.12,
+        "losses": 0.04
+      },
+      {
+        "id": "defend",
+        "utility": 0.40398262091529336,
+        "uncertainty": 0.015,
+        "losses": 0.2
+      },
+      {
+        "id": "withdraw",
+        "utility": 0.11208949591529328,
+        "uncertainty": 0.1,
+        "losses": 0.065
+      }
+    ],
+    "unknown": [],
+    "forkHashes": [
+      "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+      "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+      "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+    ],
+    "destroyedForks": 3,
+    "orders": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "continue-order"
+      }
+    ],
+    "reports": [
+      {
+        "id": "report-own",
+        "sender": "hq-sub",
+        "recipient": "hq-red",
+        "tick": 7,
+        "text": "Донесение собственного подчинённого штаба"
+      }
+    ],
+    "commands": [
+      {
+        "type": "order.continue.v1",
+        "instanceId": "instance-modern",
+        "expectedRevision": 4,
+        "idempotencyKey": "opponent:instance-modern:red-command:8:continue-order",
+        "choiceId": "continue-order"
+      }
+    ],
+    "trace": {
+      "choice": "continue-order",
+      "inputHash": "f25aa013c50f796f0332667adbd165b366d02a217f60f75bc41339e0e6d3b4d5",
+      "factors": [
+        "наблюдения: 1 собственных сведений",
+        "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран continue-order"
+      ],
+      "profileVersion": "modern-opponent-1",
+      "searchDepth": 2,
+      "horizonTicks": 6,
+      "reviewCycleTicks": 2
+    }
+  },
+  "firstCycle": {
+    "status": "DECIDED",
+    "evaluation": {
+      "selected": {
+        "id": "advance",
+        "kind": "ADVANCE",
+        "label": "Наступать по доступному маршруту",
+        "contrib": [
+          1.2,
+          0.3,
+          -0.2,
+          -0.1,
+          0.8,
+          -0.3,
+          -0.1
+        ],
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999,
+        "commandType": "force.advance.v1"
+      },
+      "options": [
+        {
+          "id": "advance",
+          "utility": 1.2019482459152933,
+          "uncertainty": 0.20999999999999996,
+          "losses": 0.09999999999999999
+        },
+        {
+          "id": "continue-order",
+          "utility": 0.49584362091529344,
+          "uncertainty": 0.12,
+          "losses": 0.04
+        },
+        {
+          "id": "defend",
+          "utility": 0.45928262091529337,
+          "uncertainty": 0.05499999999999999,
+          "losses": 0.095
+        },
+        {
+          "id": "withdraw",
+          "utility": 0.10508949591529328,
+          "uncertainty": 0.12,
+          "losses": 0.065
+        }
+      ],
+      "unknown": [],
+      "forkHashes": [
+        "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+        "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+        "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+        "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+      ],
+      "destroyedForks": 4,
+      "orders": [
+        {
+          "id": "modern-order:red-command:8:hq-sub",
+          "recipient": "hq-sub",
+          "channel": "own-command-network",
+          "issuedTick": 8,
+          "deliveryTick": 9,
+          "choiceId": "advance"
+        }
+      ],
+      "reports": [
+        {
+          "id": "report-own",
+          "sender": "hq-sub",
+          "recipient": "hq-red",
+          "tick": 7,
+          "text": "Донесение собственного подчинённого штаба"
+        }
+      ],
+      "commands": [
+        {
+          "type": "force.advance.v1",
+          "instanceId": "instance-modern",
+          "expectedRevision": 3,
+          "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+          "choiceId": "advance"
+        }
+      ],
+      "trace": {
+        "choice": "advance",
+        "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+        "factors": [
+          "наблюдения: 1 собственных сведений",
+          "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+        ],
+        "profileVersion": "modern-opponent-1",
+        "searchDepth": 2,
+        "horizonTicks": 6,
+        "reviewCycleTicks": 2
+      }
+    },
+    "unknown": [],
+    "command": {
+      "type": "force.advance.v1",
+      "instanceId": "instance-modern",
+      "expectedRevision": 3,
+      "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+      "choiceId": "advance",
+      "profileVersion": "modern-opponent-1",
+      "orderIds": [
+        "modern-order:red-command:8:hq-sub"
+      ]
+    },
+    "receipt": {
+      "accepted": true,
+      "commandId": "9db36c2b-eff2-59eb-985a-19231a475a6d"
+    },
+    "deliveries": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance",
+        "status": "DELIVERED"
+      }
+    ]
+  },
+  "repeatedCycle": {
+    "status": "DECIDED",
+    "evaluation": {
+      "selected": {
+        "id": "advance",
+        "kind": "ADVANCE",
+        "label": "Наступать по доступному маршруту",
+        "contrib": [
+          1.2,
+          0.3,
+          -0.2,
+          -0.1,
+          0.8,
+          -0.3,
+          -0.1
+        ],
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999,
+        "commandType": "force.advance.v1"
+      },
+      "options": [
+        {
+          "id": "advance",
+          "utility": 1.2019482459152933,
+          "uncertainty": 0.20999999999999996,
+          "losses": 0.09999999999999999
+        },
+        {
+          "id": "continue-order",
+          "utility": 0.49584362091529344,
+          "uncertainty": 0.12,
+          "losses": 0.04
+        },
+        {
+          "id": "defend",
+          "utility": 0.45928262091529337,
+          "uncertainty": 0.05499999999999999,
+          "losses": 0.095
+        },
+        {
+          "id": "withdraw",
+          "utility": 0.10508949591529328,
+          "uncertainty": 0.12,
+          "losses": 0.065
+        }
+      ],
+      "unknown": [],
+      "forkHashes": [
+        "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+        "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+        "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+        "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+      ],
+      "destroyedForks": 4,
+      "orders": [
+        {
+          "id": "modern-order:red-command:8:hq-sub",
+          "recipient": "hq-sub",
+          "channel": "own-command-network",
+          "issuedTick": 8,
+          "deliveryTick": 9,
+          "choiceId": "advance"
+        }
+      ],
+      "reports": [
+        {
+          "id": "report-own",
+          "sender": "hq-sub",
+          "recipient": "hq-red",
+          "tick": 7,
+          "text": "Донесение собственного подчинённого штаба"
+        }
+      ],
+      "commands": [
+        {
+          "type": "force.advance.v1",
+          "instanceId": "instance-modern",
+          "expectedRevision": 3,
+          "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+          "choiceId": "advance"
+        }
+      ],
+      "trace": {
+        "choice": "advance",
+        "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+        "factors": [
+          "наблюдения: 1 собственных сведений",
+          "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+        ],
+        "profileVersion": "modern-opponent-1",
+        "searchDepth": 2,
+        "horizonTicks": 6,
+        "reviewCycleTicks": 2
+      }
+    },
+    "unknown": [],
+    "command": {
+      "type": "force.advance.v1",
+      "instanceId": "instance-modern",
+      "expectedRevision": 3,
+      "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+      "choiceId": "advance",
+      "profileVersion": "modern-opponent-1",
+      "orderIds": [
+        "modern-order:red-command:8:hq-sub"
+      ]
+    },
+    "receipt": {
+      "accepted": true,
+      "commandId": "9db36c2b-eff2-59eb-985a-19231a475a6d"
+    },
+    "deliveries": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance",
+        "status": "DELIVERED"
+      }
+    ]
+  },
+  "afterRestart": {
+    "status": "DECIDED",
+    "evaluation": {
+      "selected": {
+        "id": "advance",
+        "kind": "ADVANCE",
+        "label": "Наступать по доступному маршруту",
+        "contrib": [
+          1.2,
+          0.3,
+          -0.2,
+          -0.1,
+          0.8,
+          -0.3,
+          -0.1
+        ],
+        "uncertainty": 0.20999999999999996,
+        "losses": 0.09999999999999999,
+        "commandType": "force.advance.v1"
+      },
+      "options": [
+        {
+          "id": "advance",
+          "utility": 1.2019482459152933,
+          "uncertainty": 0.20999999999999996,
+          "losses": 0.09999999999999999
+        },
+        {
+          "id": "continue-order",
+          "utility": 0.49584362091529344,
+          "uncertainty": 0.12,
+          "losses": 0.04
+        },
+        {
+          "id": "defend",
+          "utility": 0.45928262091529337,
+          "uncertainty": 0.05499999999999999,
+          "losses": 0.095
+        },
+        {
+          "id": "withdraw",
+          "utility": 0.10508949591529328,
+          "uncertainty": 0.12,
+          "losses": 0.065
+        }
+      ],
+      "unknown": [],
+      "forkHashes": [
+        "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+        "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+        "cafc31f54fc332c2df1ea73127a177b27a79da63c4dee73baafef081c5932ab9",
+        "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+      ],
+      "destroyedForks": 4,
+      "orders": [
+        {
+          "id": "modern-order:red-command:8:hq-sub",
+          "recipient": "hq-sub",
+          "channel": "own-command-network",
+          "issuedTick": 8,
+          "deliveryTick": 9,
+          "choiceId": "advance"
+        }
+      ],
+      "reports": [
+        {
+          "id": "report-own",
+          "sender": "hq-sub",
+          "recipient": "hq-red",
+          "tick": 7,
+          "text": "Донесение собственного подчинённого штаба"
+        }
+      ],
+      "commands": [
+        {
+          "type": "force.advance.v1",
+          "instanceId": "instance-modern",
+          "expectedRevision": 3,
+          "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+          "choiceId": "advance"
+        }
+      ],
+      "trace": {
+        "choice": "advance",
+        "inputHash": "5517f1c3d95aa780ef09b183a39b72204a59af2b18fa9b2fb73cd44c1399b942",
+        "factors": [
+          "наблюдения: 1 собственных сведений",
+          "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран advance"
+        ],
+        "profileVersion": "modern-opponent-1",
+        "searchDepth": 2,
+        "horizonTicks": 6,
+        "reviewCycleTicks": 2
+      }
+    },
+    "unknown": [],
+    "command": {
+      "type": "force.advance.v1",
+      "instanceId": "instance-modern",
+      "expectedRevision": 3,
+      "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+      "choiceId": "advance",
+      "profileVersion": "modern-opponent-1",
+      "orderIds": [
+        "modern-order:red-command:8:hq-sub"
+      ]
+    },
+    "receipt": {
+      "accepted": true,
+      "commandId": "9db36c2b-eff2-59eb-985a-19231a475a6d"
+    },
+    "deliveries": [
+      {
+        "id": "modern-order:red-command:8:hq-sub",
+        "recipient": "hq-sub",
+        "channel": "own-command-network",
+        "issuedTick": 8,
+        "deliveryTick": 9,
+        "choiceId": "advance",
+        "status": "DELIVERED"
+      }
+    ]
+  },
+  "revisedCycle": {
+    "status": "SAFE_ORDER",
+    "evaluation": {
+      "selected": {
+        "id": "continue-order",
+        "kind": "CONTINUE_ORDER",
+        "label": "Продолжить действующий приказ",
+        "contrib": [
+          0.45,
+          0,
+          0.1,
+          0,
+          0,
+          0.2,
+          0
+        ],
+        "uncertainty": 0.12,
+        "losses": 0.04,
+        "commandType": "order.continue.v1"
+      },
+      "options": [
+        {
+          "id": "continue-order",
+          "utility": 0.49584362091529344,
+          "uncertainty": 0.12,
+          "losses": 0.04
+        },
+        {
+          "id": "defend",
+          "utility": 0.40398262091529336,
+          "uncertainty": 0.015,
+          "losses": 0.2
+        },
+        {
+          "id": "withdraw",
+          "utility": 0.11208949591529328,
+          "uncertainty": 0.1,
+          "losses": 0.065
+        }
+      ],
+      "unknown": [],
+      "forkHashes": [
+        "8e5dd5bfa0d4ba0aded730af670d52ea01ef5cd6a1f9ad202982a4a08349047c",
+        "58caa9340a1cdd049e534d00f261feecb08eec14f01db14a010730b5558f99a3",
+        "507dbe3af577921109b062dda243eebe0ab7303e2809a0429ea4f1852aff46ca"
+      ],
+      "destroyedForks": 3,
+      "orders": [
+        {
+          "id": "modern-order:red-command:8:hq-sub",
+          "recipient": "hq-sub",
+          "channel": "own-command-network",
+          "issuedTick": 8,
+          "deliveryTick": 9,
+          "choiceId": "continue-order"
+        }
+      ],
+      "reports": [
+        {
+          "id": "report-own",
+          "sender": "hq-sub",
+          "recipient": "hq-red",
+          "tick": 7,
+          "text": "Донесение собственного подчинённого штаба"
+        }
+      ],
+      "commands": [
+        {
+          "type": "order.continue.v1",
+          "instanceId": "instance-modern",
+          "expectedRevision": 4,
+          "idempotencyKey": "opponent:instance-modern:red-command:8:continue-order",
+          "choiceId": "continue-order"
+        }
+      ],
+      "trace": {
+        "choice": "continue-order",
+        "inputHash": "f25aa013c50f796f0332667adbd165b366d02a217f60f75bc41339e0e6d3b4d5",
+        "factors": [
+          "наблюдения: 1 собственных сведений",
+          "МПС, техника, запасы, местность и погода из разрешённой проекции; выбран continue-order"
+        ],
+        "profileVersion": "modern-opponent-1",
+        "searchDepth": 2,
+        "horizonTicks": 6,
+        "reviewCycleTicks": 2
+      }
+    },
+    "unknown": []
+  },
+  "receipts": [
+    {
+      "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+      "idempotent": false
+    },
+    {
+      "idempotencyKey": "opponent:instance-modern:red-command:8:advance",
+      "idempotent": true
+    }
+  ],
+  "deliveries": [
+    "modern-order:red-command:8:hq-sub",
+    "modern-order:red-command:8:hq-sub"
+  ],
+  "events": [
+    {
+      "eventId": "9db36c2b-eff2-59eb-985a-19231a475a6d",
+      "organizationId": "org-ac27",
+      "instanceId": "instance-modern",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "force.advance.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:08.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:00:08.000Z",
+        "originalAt": "2030-01-01T00:00:08.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "red-command",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "opponent:instance-modern:red-command:8:advance"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "choiceId": "advance",
+        "profileVersion": "modern-opponent-1",
+        "orderIds": [
+          "modern-order:red-command:8:hq-sub"
+        ],
+        "issuedAt": "2030-01-01T00:00:08.000Z",
+        "commandId": "opponent:instance-modern:red-command:8:advance",
+        "commandType": "force.advance.v1",
+        "at": "2030-01-01T00:00:08.000Z",
+        "causedBy": "opponent:instance-modern:red-command:8:advance"
+      },
+      "prevHash": null,
+      "hash": "4d23fe5aa2393bbf60000f1e3432919efc5933c09d27f649151705e98940faee",
+      "hashVersion": 2
+    }
+  ]
+}
