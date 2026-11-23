@@ -1,0 +1,42 @@
+{
+  "runId": "39fd3772-7055-42c8-9950-0731a23c3715",
+  "commit": "93b904b774229c90833247b46a64635aafdca08f",
+  "initialRevision": {
+    "id": "ac16-recovery",
+    "revision": 1,
+    "sha256": "801a511b928eeab83d3f1798d4347a4dcc8cfc5a2eb631d773a0564e662f2370"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac16/recovery-drill.json",
+    "sha256": "801a511b928eeab83d3f1798d4347a4dcc8cfc5a2eb631d773a0564e662f2370",
+    "eventCount": 1
+  },
+  "hashes": {
+    "scenario": "801a511b928eeab83d3f1798d4347a4dcc8cfc5a2eb631d773a0564e662f2370",
+    "environment": "5f3e80a7624f4be3f0c8105a81a3ed8fcc8d35cafb23b081f9d0c67b148fca9e",
+    "journal": "801a511b928eeab83d3f1798d4347a4dcc8cfc5a2eb631d773a0564e662f2370"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac16/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "confirmedEvents": 1,
+    "duplicateEventsAfterRetry": 0,
+    "confirmedEventsLost": 0,
+    "restartMs": 7.38345799999999,
+    "nodeRestoreMs": 2.4291670000000067,
+    "verifiedBackupFiles": 5,
+    "isolatedRestore": 1
+  },
+  "limitations": [
+    "Полная потеря физического узла и нагрузка 50 рабочих мест не проверялась.",
+    "Проверены локальные PostgreSQL pool restart, идемпотентность, durable worker и файловое восстановление.",
+    "Результат не заменяет стендовый протокол NF-12 и AC-16."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac16/recovery-drill.json",
+    "docs/release/kshvi/evidence/ac16/protocol.txt",
+    "docs/release/kshvi/evidence/ac16/metrics.json"
+  ]
+}

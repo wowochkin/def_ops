@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "LOCAL_FUNCTIONAL_DRILL_NOT_PHYSICAL_NODE_LOSS",
+  "measuredAt": "2026-11-23T05:02:06.568Z",
+  "confirmedEvents": 1,
+  "duplicateEventsAfterRetry": 0,
+  "confirmedEventsLost": 0,
+  "rpo": 0,
+  "restartMs": 8.705624999999998,
+  "restartTargetMs": 300000,
+  "nodeRestoreMs": 5.440166000000033,
+  "nodeRestoreTargetMs": 1800000,
+  "databasePoolRestarted": true,
+  "verifiedBackupFiles": 5,
+  "isolatedRestore": true,
+  "workers": {
+    "outbox": {
+      "resumedWithoutDuplicate": true
+    }
+  },
+  "divergence": {
+    "allowed": false,
+    "requiredReport": "DIVERGENCE",
+    "preservedSequence": 140,
+    "divergenceReport": {
+      "id": "ceba6f84-368c-4ae7-8eb5-8976a3a305e7",
+      "createdAt": "2026-11-23T05:02:06.568Z",
+      "backupLastSequence": 100,
+      "activeLastSequence": 140,
+      "preservedSequence": 140,
+      "laterEventCount": 0,
+      "laterEvents": [],
+      "differences": [
+        {
+          "code": "ACTIVE_SEQUENCE_AHEAD",
+          "sequence": 140
+        }
+      ],
+      "status": "PENDING"
+    }
+  },
+  "limitations": [
+    "Полная потеря физического узла и нагрузка 50 рабочих мест не проверялась.",
+    "Проверены локальные PostgreSQL pool restart, идемпотентность, durable worker и файловое восстановление.",
+    "Результат не заменяет стендовый протокол NF-12 и AC-16."
+  ]
+}
