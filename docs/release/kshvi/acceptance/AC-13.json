@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "75b4dd8eea41ef9d8dcda4660262397b71e78974",
+  "runId": "556a619b-3b9b-4e29-8deb-39bba5214eb4",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac13-admin.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n{\"t\":\"2026-11-23T04:22:43.211Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"msg\":\"listening on :53444\"}\n{\"t\":\"2026-11-23T04:22:43.238Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"59e7ebb7-f206-4dc4-8532-a9827c39d6a9\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/login\",\"status\":200,\"ms\":20}\n{\"t\":\"2026-11-23T04:22:43.241Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"3c2d2e32-8597-4b6f-853f-84e1b58b1176\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/role\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T04:22:43.243Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"2c8ace22-c3b0-4606-8b7f-a52bdfe8e2e7\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/admin/overview\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T04:22:43.244Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"b0280c39-b170-441c-9610-3486fa31063e\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/exercises\",\"status\":403,\"ms\":1}\n{\"t\":\"2026-11-23T04:22:43.244Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"15254e76-b7e7-4bcf-a84e-d343d4d39df8\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/admin/accounts/trainee/block\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T04:22:43.245Z\",\"service\":\"kshvi-ac13\",\"level\":\"info\",\"requestId\":\"47fca6fa-c0d5-4bf5-b9d3-01d9c8244592\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/login\",\"status\":401,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac13-admin.test.ts (1 test) 134ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  07:22:41\n   Duration  2.03s (transform 68%, import 25%, tests 7%)\n\n",
+  "initialRevision": {
+    "id": "ac13-admin",
+    "revision": 1,
+    "sha256": "bba16e3b0db1cb7347f0ee2704acda7e735e8e92d5c5feaeac07b899a823efef"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac13/journal.json",
+    "sha256": "dd58018acb15dd5f89307860521d1e9838ebd6d04ee92e4a603f1c05c90a129f",
+    "eventCount": 6
+  },
+  "hashes": {
+    "scenario": "bba16e3b0db1cb7347f0ee2704acda7e735e8e92d5c5feaeac07b899a823efef",
+    "environment": "df5241fb75920dd5c53c069c46c8b08f4b9bcc7f890d22ae892948364e28c7a8",
+    "journal": "dd58018acb15dd5f89307860521d1e9838ebd6d04ee92e4a603f1c05c90a129f"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac13/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "technicalOverviewAllowed": 1,
+    "contentRejected": 1,
+    "backupVerified": 1,
+    "temporaryGrantUsed": 1,
+    "temporaryGrantRevoked": 1,
+    "expiredGrantRejected": 1
+  },
+  "limitations": [
+    "Проверка выполнена на локальном тенанте и официальном API; физическое разделение стендов проверяется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac13/journal.json",
+    "docs/release/kshvi/evidence/ac13/protocol.txt",
+    "docs/release/kshvi/evidence/ac13/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-13.json"
+  ],
+  "freshInstall": false,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "openErrors": []
+}
