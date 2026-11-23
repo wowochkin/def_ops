@@ -62,6 +62,34 @@ describe('версионный reducer', () => {
     });
   });
 
+  it('восстанавливает типизированные действия электронного посредника по компонентам мира', () => {
+    const events = [
+      { eventId: 'agent-document', type: 'document.issue.v1', payload: { actionId: 'action-document', issuedAt: '2030-01-01T00:10:00Z' } },
+      { eventId: 'agent-task', type: 'task.assign.v1', payload: { actionId: 'action-task' } },
+      { eventId: 'agent-calculation', type: 'calculation.request.v1', payload: { actionId: 'action-calculation' } },
+      { eventId: 'agent-order', type: 'order.execute.v1', payload: { orderId: 'order-1', actionId: 'action-order' } },
+      { eventId: 'agent-observation', type: 'observation.record.v1', payload: { observationId: 'observation-agent' } },
+      { eventId: 'agent-input', type: 'input.classify.v1', payload: { inputId: 'input-agent' } },
+      { eventId: 'agent-decision', type: 'decision.accept.v1', payload: { decisionId: 'decision-agent' } },
+      { eventId: 'agent-report', type: 'report.create.v1', payload: { reportId: 'report-agent' } },
+      { eventId: 'agent-escalation', type: 'agent.escalation.requested.v1', payload: { actionId: 'action-escalation', reason: 'OUTSIDE_DELEGATION' } },
+    ] as const;
+    const next = replayWorld(emptyWorld('scenario-1'), events, { reducerVersion: 1 });
+    expect(next.state.Documents).toMatchObject({ 'action-document': { status: 'ISSUED', operationType: 'document.issue.v1' } });
+    expect(next.state.Tasks).toMatchObject({
+      'action-task': { status: 'ASSIGNED' },
+      'order-1': { status: 'EXECUTING' },
+    });
+    expect(next.state.Observations).toMatchObject({ 'observation-agent': { operationType: 'observation.record.v1' } });
+    expect(next.state.ScenarioState).toMatchObject({
+      Inputs: { 'input-agent': { status: 'CLASSIFIED' } },
+      Decisions: { 'decision-agent': { status: 'ACCEPTED' } },
+      CalculationRequests: { 'action-calculation': { status: 'REQUESTED' } },
+      Reports: { 'report-agent': { status: 'RECORDED' } },
+      Escalations: { 'action-escalation': { status: 'REQUIRES_REVIEW', reason: 'OUTSIDE_DELEGATION' } },
+    });
+  });
+
   it('отклоняет неизвестное событие и отрицательный расход без изменения мира', () => {
     const world = emptyWorld('scenario-1');
     expect(() => reduceWorld(world, { ...event, type: 'unknown.v1' }, { reducerVersion: 1 })).toThrow('Неизвестный тип');

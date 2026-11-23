@@ -62,7 +62,8 @@ export class CommandService {
     if (input.actor.role === 'SYSTEM') {
       assertDomainOperationType(input.type);
       const payload = input.payload && typeof input.payload === 'object' && !Array.isArray(input.payload) ? input.payload as Record<string, unknown> : {};
-      const at = input.at ?? (typeof payload.at === 'string' ? payload.at : new Date().toISOString());
+      const at = input.at ?? (typeof payload.at === 'string' ? payload.at
+        : typeof payload.issuedAt === 'string' ? payload.issuedAt : new Date().toISOString());
       const result = await this.official.executeDomain({
         sessionId: input.instanceId, branchId: input.branchId, expectedRevision: input.expectedRevision, actor: input.actor,
       }, { commandId: input.idempotencyKey, type: input.type, payload, at });

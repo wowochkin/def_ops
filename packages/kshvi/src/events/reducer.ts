@@ -105,15 +105,15 @@ function applyAutonomyRecord(world: WorldState, event: WorldEvent): WorldState {
   const state = structuredClone(world.state);
   const components = state as unknown as UnknownRecord;
   if (event.type === 'observation.create.v1') {
-    const id = requiredString(payload.observationId, 'наблюдение');
+    const id = requiredString(payload.observationId ?? payload.actionId ?? event.eventId, 'наблюдение');
     components.Observations = { ...record(components.Observations), [id]: structuredClone(payload) };
   } else if (event.type === 'document.revision.create.v1') {
-    const id = requiredString(payload.documentId, 'документ');
+    const id = requiredString(payload.documentId ?? payload.actionId ?? event.eventId, 'документ');
     components.Documents = { ...record(components.Documents), [id]: structuredClone(payload) };
   } else {
     const scenario = record(components.ScenarioState);
     if (event.type === 'input.create.v1') {
-      const id = requiredString(payload.inputId, 'вводная');
+      const id = requiredString(payload.inputId ?? payload.actionId ?? event.eventId, 'вводная');
       components.ScenarioState = { ...scenario, Inputs: { ...record(scenario.Inputs), [id]: structuredClone(payload) } };
     } else if (event.type === 'approval.request.create.v1') {
       const id = requiredString(payload.requestId, 'заявка');
@@ -123,10 +123,60 @@ function applyAutonomyRecord(world: WorldState, event: WorldEvent): WorldState {
   return applied(world, event, state);
 }
 
+type TypedDomainRecordRule = Readonly<{
+  component: string;
+  keys: readonly string[];
+  collection?: string;
+  status?: string;
+}>;
+const TYPED_DOMAIN_RECORDS: Readonly<Record<string, TypedDomainRecordRule>> = {
+  'input.classify.v1': { component: 'ScenarioState', collection: 'Inputs', keys: ['inputId', 'actionId'], status: 'CLASSIFIED' },
+  'projection.workingMap.update.v1': { component: 'ScenarioState', collection: 'WorkingMaps', keys: ['projectionId', 'actionId'], status: 'UPDATED' },
+  'assessment.record.v1': { component: 'ScenarioState', collection: 'Assessments', keys: ['assessmentId', 'actionId'] },
+  'decision.accept.v1': { component: 'ScenarioState', collection: 'Decisions', keys: ['decisionId', 'actionId'], status: 'ACCEPTED' },
+  'task.assign.v1': { component: 'Tasks', keys: ['taskId', 'actionId'], status: 'ASSIGNED' },
+  'document.coordinate.v1': { component: 'Documents', keys: ['documentId', 'actionId'], status: 'COORDINATED' },
+  'document.issue.v1': { component: 'Documents', keys: ['documentId', 'actionId'], status: 'ISSUED' },
+  'report.create.v1': { component: 'ScenarioState', collection: 'Reports', keys: ['reportId', 'actionId'] },
+  'calculation.request.v1': { component: 'ScenarioState', collection: 'CalculationRequests', keys: ['calculationId', 'actionId'], status: 'REQUESTED' },
+  'order.execute.v1': { component: 'Tasks', keys: ['orderId', 'actionId'], status: 'EXECUTING' },
+  'deadline.check.v1': { component: 'ScenarioState', collection: 'DeadlineChecks', keys: ['deadlineId', 'actionId'], status: 'CHECKED' },
+  'data.request.v1': { component: 'ScenarioState', collection: 'DataRequests', keys: ['requestId', 'actionId'], status: 'REQUESTED' },
+  'observation.record.v1': { component: 'Observations', keys: ['observationId', 'actionId'] },
+  'force.advance.v1': { component: 'Forces', keys: ['forceId', 'actionId'], status: 'ADVANCING' },
+  'force.defend.v1': { component: 'Forces', keys: ['forceId', 'actionId'], status: 'DEFENDING' },
+  'force.withdraw.v1': { component: 'Forces', keys: ['forceId', 'actionId'], status: 'WITHDRAWING' },
+  'logistics.support.requested.v1': { component: 'Supply', keys: ['requestId', 'actionId'], status: 'REQUESTED' },
+  'agent.escalation.requested.v1': { component: 'ScenarioState', collection: 'Escalations', keys: ['escalationId', 'actionId'], status: 'REQUIRES_REVIEW' },
+  'order.continue.v1': { component: 'Tasks', keys: ['orderId', 'actionId'], status: 'EXECUTING' },
+};
+function applyTypedDomainRecord(world: WorldState, event: WorldEvent, rule: TypedDomainRecordRule): WorldState {
+  const payload = record(event.payload);
+  const id = rule.keys.map(key => payload[key]).find(value => typeof value === 'string' && value.trim()) as string | undefined ?? event.eventId;
+  const value = {
+    ...structuredClone(payload), operationType: event.type, eventId: event.eventId,
+    status: rule.status ?? (typeof payload.status === 'string' ? payload.status : 'RECORDED'),
+  };
+  const state = structuredClone(world.state);
+  const components = state as unknown as UnknownRecord;
+  if (rule.component === 'ScenarioState' && rule.collection) {
+    const scenario = record(components.ScenarioState);
+    components.ScenarioState = {
+      ...scenario,
+      [rule.collection]: { ...record(scenario[rule.collection]), [id]: value },
+    };
+  } else {
+    components[rule.component] = { ...record(components[rule.component]), [id]: value };
+  }
+  return applied(world, event, state);
+}
+
 export function reduceWorld(world: WorldState, event: WorldEvent, profile: ReducerProfile): WorldState {
   if (world.appliedEventIds.includes(event.eventId)) throw new Error('Событие уже применено');
   if (profile.reducerVersion !== 1) throw new Error('Неподдерживаемая версия reducer');
   if (event.type === 'autonomy.worldEffects.apply.v1') return applyAutonomyEffects(world, event);
+  const domainRule = TYPED_DOMAIN_RECORDS[event.type];
+  if (domainRule) return applyTypedDomainRecord(world, event, domainRule);
   if (['observation.create.v1', 'document.revision.create.v1', 'input.create.v1', 'approval.request.create.v1'].includes(event.type)) {
     return applyAutonomyRecord(world, event);
   }

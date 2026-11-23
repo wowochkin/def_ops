@@ -1,0 +1,42 @@
+{
+  "runId": "56af985f-f490-4016-8bf6-96b71ef8025f",
+  "commit": "841ea28023c016ee848cb65283bc11cfd69f406e",
+  "initialRevision": {
+    "id": "agent-1",
+    "revision": 1,
+    "sha256": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac25/journal.json",
+    "sha256": "556d2e239770033593298d7a102b0bf256537026e504f92fb61dfe01cdb0677e",
+    "eventCount": 21
+  },
+  "hashes": {
+    "scenario": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406",
+    "environment": "9acad94decf986b1a3b91f37bebb26aa0d036938b7fc05a862a5f8d8e221a6d0",
+    "journal": "556d2e239770033593298d7a102b0bf256537026e504f92fb61dfe01cdb0677e"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac25/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "delegatedInstances": 3,
+    "completedCycles": 2,
+    "escalatedCycles": 1,
+    "systemEvents": 21,
+    "forbiddenEffects": 0,
+    "duplicateEffects": 0,
+    "humanOverrides": 1,
+    "replayHashMatches": 1
+  },
+  "limitations": [
+    "Настоящий HTTP и командный журнал проверены в одном процессе; физическое разнесение агентов и восстановление всего узла входят в отдельный стендовый контур."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac25/journal.json",
+    "docs/release/kshvi/evidence/ac25/agent-decision-traces.json",
+    "docs/release/kshvi/evidence/ac25/protocol.txt",
+    "docs/release/kshvi/evidence/ac25/metrics.json"
+  ]
+}
