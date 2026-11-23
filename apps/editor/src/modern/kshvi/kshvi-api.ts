@@ -116,6 +116,7 @@ export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>
 export interface KshviClient {
   login(username: string, password: string): Promise<LoginResult>;
   selectRole(roleId: string): Promise<Participant>;
+  logout(): Promise<void>;
   me(): Promise<Participant>;
   list(filters?: ExerciseFilters): Promise<readonly ExerciseSummary[]>;
   getCard(exerciseId: string): Promise<ExerciseCard>;
@@ -195,6 +196,13 @@ export class ExerciseClient implements KshviClient {
     return result;
   }
   selectRole(roleId: string): Promise<Participant> { return this.request('POST', '/auth/role', { roleId }); }
+  async logout(): Promise<void> {
+    try { await this.request('POST', '/auth/logout'); }
+    finally {
+      this.sessionCsrfToken = '';
+      try { globalThis.sessionStorage?.removeItem(`def_ops.kshvi.csrf:${this.baseUrl}`); } catch { /* память текущей вкладки недоступна */ }
+    }
+  }
   me(): Promise<Participant> { return this.request('GET', '/auth/me'); }
   async list(filters: ExerciseFilters = {}): Promise<readonly ExerciseSummary[]> {
     const query = new URLSearchParams();

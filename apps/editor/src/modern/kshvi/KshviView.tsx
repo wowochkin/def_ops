@@ -337,6 +337,22 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     return `Серверная ревизия ${confirmed.confirmedRevision}: ${confirmed.state}`;
   }
 
+  async function handleHandover(): Promise<void> {
+    try { await client.logout(); }
+    finally {
+      setSession(null);
+      setSelectedExercise(null);
+      setReplayFrame(null);
+      setDebrief(null);
+      setArchiveRecord(null);
+      setExposition(null);
+      setServerAuthorities([]);
+      setServerRole('UNKNOWN');
+      setAuthenticated(false);
+      selectTab('library');
+    }
+  }
+
   async function approveAssessment(value: { finalAssessment: string; comment: string }): Promise<void> {
     if (!session || !selectedExercise) return;
     await perform(() => client.approveAssessment(selectedExercise.id, session.id, { ...value, idempotencyKey: `assessment-${session.id}` }), 'Оценка подтверждена сервером и включена в материалы разбора');
@@ -451,7 +467,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
           <div><dt>Состояние</dt><dd>{session.state}</dd></div>
           <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
         </dl><p>Источник: сервер. Изменение браузера не считается совершившимся до подтверждения команды.</p></section>
-        <ConductWorkspace role={role} canReadTruth={can('TRUTH_READ')} onExecute={executeCommand} />
+        <ConductWorkspace role={role} canReadTruth={can('TRUTH_READ')} onExecute={executeCommand} onHandover={handleHandover} />
       </> : <section><h2>Проведение</h2><p>Откройте рабочий цикл учения и запустите серверный сеанс из подготовки. Обзорные панели ниже не являются официальным миром.</p><ConductWorkspace /></section>}
     </section>}
     {activeTab === 'replay' && (session && replayFrame ? <ReplayWorkspace

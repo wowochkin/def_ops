@@ -10,6 +10,7 @@ import { CartographyEnvironmentProvider } from '../../src/environment/cartograph
 import { EnvironmentSnapshotStore } from '../../src/environment/snapshot-store';
 import { withKshviDatabase } from '../helpers/database';
 import { hashCanonical } from '../../../../packages/kshvi/src/scenario/initial-map-hash';
+import type { Calculation } from '../../../../packages/kshvi/src/simulation/calculation';
 
 const services: Array<ReturnType<typeof createService>> = [];
 const roots: string[] = [];
@@ -66,8 +67,9 @@ it('AC-15: пробел погоды возвращает NO_DATA и REQUIRES_RE
     await create(0.8, 0, 'calc-known');
     await create(null, 1, 'calc-missing');
     const events = await store.listEvents('org-ac15', 'ac15', 'main');
-    const calculated = events.find(event => event.payload.calculation?.id === 'calc-known')?.payload.calculation;
-    const requiresReview = events.find(event => event.payload.calculation?.id === 'calc-missing')?.payload.calculation;
+    const calculations = events.map(event => (event.payload as { calculation?: Calculation } | null)?.calculation);
+    const calculated = calculations.find(calculation => calculation?.id === 'calc-known');
+    const requiresReview = calculations.find(calculation => calculation?.id === 'calc-missing')!;
     expect(calculated).toMatchObject({ state: 'CALCULATED', inputs: { weatherFactor: 0.8 } });
     expect(requiresReview).toMatchObject({ state: 'REQUIRES_REVIEW', unknown: ['weatherFactor'] });
     expect(requiresReview.warnings.join(' ')).toContain('weatherFactor');

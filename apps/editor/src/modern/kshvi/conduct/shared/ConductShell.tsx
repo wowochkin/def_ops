@@ -12,7 +12,7 @@ function deleteDatabase(name: string): Promise<void> {
 }
 async function clearPrivilegedBrowserState(): Promise<void> {
   for (const storage of [window.localStorage, window.sessionStorage]) {
-    const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter((key): key is string => Boolean(key?.startsWith('kshvi.')));
+    const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter((key): key is string => Boolean(key?.startsWith('kshvi.') || key?.startsWith('def_ops.kshvi.')));
     for (const key of keys) storage.removeItem(key);
   }
   const cacheNames = window.caches ? await window.caches.keys() : [];
