@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { countPassed, finalReleaseGaps, inspectProtocol, openLimitations } from '../kshvi-final-verify.mjs';
+import { countPassed, existingPaths, finalReleaseGaps, inspectProtocol, openLimitations } from '../kshvi-final-verify.mjs';
 
 const complete = { functionalPassed: 267, nfPassed: 22, acPassed: 30, expositionPassed: true, openLimitations: [], fullChecksPassed: true };
 
@@ -46,6 +46,13 @@ test('свежесть протокола обязательна при подс
   writeFileSync(join(directory, 'NF-01.json'), JSON.stringify({ status: 'passed', commit: 'current', command: 'npm test', artifacts: ['proof.json'], openErrors: [] }));
   writeFileSync(join(directory, 'NF-02.json'), JSON.stringify({ status: 'passed', commit: 'stale', command: 'npm test', artifacts: ['proof.json'], openErrors: [] }));
   assert.equal(countPassed(directory, 'NF', { root: directory, currentCommit: 'current' }), 1);
+});
+
+test('путь доказательства с якорем проверяет существующий файл, а не имя с #', () => {
+  const root = mkdtempSync(join(tmpdir(), 'kshvi-evidence-anchor-'));
+  writeFileSync(join(root, 'proof.json'), '{}\n');
+  assert.equal(existingPaths(root, ['proof.json#acceptance-check']), true);
+  assert.equal(existingPaths(root, ['missing.json#acceptance-check']), false);
 });
 
 test('закрытое ограничение требует свежего доказательства устранения', () => {

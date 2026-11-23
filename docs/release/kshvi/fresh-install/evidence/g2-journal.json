@@ -1,0 +1,751 @@
+{
+  "schemaVersion": 1,
+  "runId": "4229f25b-bace-42fe-8e52-3fd3b1e4ed85",
+  "commit": "334cb33d8a22a249e036e8dbfa2682473d79d4b8",
+  "startedAt": "2026-11-22T01:03:06.565Z",
+  "completedAt": "2026-11-22T01:03:06.949Z",
+  "scenarioHash": "4b5719cbf3b5e80e3e3607b49a18a1a6cf66a5f8b2d6f99f9db1b18e36d7f414",
+  "environmentHash": "5eee1ef910a33793664387df48829b753abdda653365140c624ece0ef0b95130",
+  "sessionIds": [
+    "0ce9768c-366c-40ba-a31f-29e384c19d6a",
+    "af8635fc-6134-404b-b5a1-dec047d39388"
+  ],
+  "events": [
+    {
+      "eventId": "a3f24444-fc54-4e3e-bd50-7b80f217fb84",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "decision-blue-1",
+        "revision": 1,
+        "commandId": "decision-blue-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "3e446bb16690e30816fd6c8c04cdfb533b12b15831701dbb125cd5dd088b72d5",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "863db1a7-947a-42c9-b69e-aee7ce8007ea",
+      "sequence": 2,
+      "type": "decision.created.v1",
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "decision-red-1",
+        "revision": 1,
+        "commandId": "decision-red-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": "3e446bb16690e30816fd6c8c04cdfb533b12b15831701dbb125cd5dd088b72d5",
+      "hash": "2bb8dcff7fe7952158ab4dcf0fab58bf3e644de101c5947ccfe540af560950d7",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "ad28e41a-b25b-41b7-a176-5fc43e081ee7",
+      "sequence": 3,
+      "type": "decision.status.changed.v1",
+      "payload": {
+        "at": "2030-01-01T01:10:00Z",
+        "status": "ACCEPTED",
+        "causedBy": "decision-blue-1",
+        "commandId": "decision-blue-accept",
+        "commandType": "decision.transition"
+      },
+      "prevHash": "2bb8dcff7fe7952158ab4dcf0fab58bf3e644de101c5947ccfe540af560950d7",
+      "hash": "0b7437d05f0223ffd05d975e20f3d63da1c994ebf2ad6b0401de1fab1319c9e6",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "613f6d0c-a734-4bf8-b10e-8c5f8e6c85da",
+      "sequence": 4,
+      "type": "decision.status.changed.v1",
+      "payload": {
+        "at": "2030-01-01T01:10:00Z",
+        "status": "ACCEPTED",
+        "causedBy": "decision-red-1",
+        "commandId": "decision-red-accept",
+        "commandType": "decision.transition"
+      },
+      "prevHash": "0b7437d05f0223ffd05d975e20f3d63da1c994ebf2ad6b0401de1fab1319c9e6",
+      "hash": "39ab8507d8c84b2f990cdbe8b7ca08e69e6c2adb3f80d8daa3c6c31dafde5fc9",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "b0577825-ed1a-49e2-b8e3-a2c001d3688b",
+      "sequence": 5,
+      "type": "decision.revised.v1",
+      "payload": {
+        "at": "2030-01-01T01:12:00Z",
+        "causedBy": "decision-blue-2",
+        "revision": 2,
+        "commandId": "decision-blue-revise",
+        "supersedes": "decision-blue-1",
+        "commandType": "decision.revise"
+      },
+      "prevHash": "39ab8507d8c84b2f990cdbe8b7ca08e69e6c2adb3f80d8daa3c6c31dafde5fc9",
+      "hash": "96721aea222780f97f536e44a8dd6bece22f14d270c44aee75b8d9364c6ffc3e",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "12aebcd1-f34c-423a-95a0-84d44ced0c4b",
+      "sequence": 6,
+      "type": "order.issued.v1",
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-1",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-blue-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "96721aea222780f97f536e44a8dd6bece22f14d270c44aee75b8d9364c6ffc3e",
+      "hash": "7949d0ead51dd276e5588a8eba89249542b09590d679e538b48a12610b23dd51",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "e8dc469a-3106-4715-a328-8de7f37fa0bb",
+      "sequence": 7,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:25:00Z",
+        "status": "DELIVERED",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-deliver",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "7949d0ead51dd276e5588a8eba89249542b09590d679e538b48a12610b23dd51",
+      "hash": "b6fb102cc8092ea9699413d84925aeb03eb4fdcba54bf75244ad97cec18a98e0",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "25791bfd-4f98-4aff-8fbb-c676d516402d",
+      "sequence": 8,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:26:00Z",
+        "status": "PROCESSING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-process",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "b6fb102cc8092ea9699413d84925aeb03eb4fdcba54bf75244ad97cec18a98e0",
+      "hash": "4037a95c2accc93d062c48bd360027705bffa1ecb9935fe456307728800ce1af",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "b3b7ea2b-747c-42d5-803e-13d70a2709ae",
+      "sequence": 9,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:27:00Z",
+        "status": "PREPARING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-prepare",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "4037a95c2accc93d062c48bd360027705bffa1ecb9935fe456307728800ce1af",
+      "hash": "7a31e80eb38f2731b1576216a1138b9b1033074a4d572e654ca9ec6078af3c1a",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "8b433516-34e5-48a2-9061-820d3bad51ad",
+      "sequence": 10,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 5000,
+          "travelledMeters": 0
+        },
+        "commandId": "order-blue-start",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "7a31e80eb38f2731b1576216a1138b9b1033074a4d572e654ca9ec6078af3c1a",
+      "hash": "ea98c0cf18b3f0d31c1c3230a97fe8d74fda9e1adc411ddccd0f4207e810a15a",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "2aa063ff-d21c-4d23-9495-5c98cf80f960",
+      "sequence": 11,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:40:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-blue-cost",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "ea98c0cf18b3f0d31c1c3230a97fe8d74fda9e1adc411ddccd0f4207e810a15a",
+      "hash": "45203a29713bb457053baef0eaf1043e7eff9491de9c0092444e7b52469e8765",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "353e0e42-1ae9-492f-abff-5398a9072a89",
+      "sequence": 12,
+      "type": "order.issued.v1",
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-cancel-before",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-cancel-before-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "45203a29713bb457053baef0eaf1043e7eff9491de9c0092444e7b52469e8765",
+      "hash": "73c552e322c020fb15e94969504bae8ac9b2e32f321320f3ad34e3a4394abf66",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "9fc9d154-89eb-4bb2-a945-ebd3f1b94629",
+      "sequence": 13,
+      "type": "order.cancelled.v1",
+      "payload": {
+        "at": "2030-01-01T01:21:00Z",
+        "status": "CANCELLED_BEFORE_RECEIPT",
+        "causedBy": "order-blue-cancel-before",
+        "position": null,
+        "commandId": "order-cancel-before",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.cancel"
+      },
+      "prevHash": "73c552e322c020fb15e94969504bae8ac9b2e32f321320f3ad34e3a4394abf66",
+      "hash": "7566cda301719c661e2de1aaa6029cf91597d162f667a246a158deb313f3dde8",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "813cb87f-99d4-4676-8cab-ae2d4290d26d",
+      "sequence": 14,
+      "type": "order.issued.v1",
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-cancel-after",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-cancel-after-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "7566cda301719c661e2de1aaa6029cf91597d162f667a246a158deb313f3dde8",
+      "hash": "34205d59f13c00190217b25daadfa3fa0ebcfd72b6b34ef93284230c122c28e0",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "18c8bf29-a0b7-4989-bd79-edb4891db5de",
+      "sequence": 15,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:25:00Z",
+        "status": "DELIVERED",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-deliver",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "34205d59f13c00190217b25daadfa3fa0ebcfd72b6b34ef93284230c122c28e0",
+      "hash": "76d101900d59108e119b6eddee698ef174b0884ed23b37a30faeec0f762e276e",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "a8f5a544-1cec-473e-94ff-790fa8e2730e",
+      "sequence": 16,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:26:00Z",
+        "status": "PROCESSING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-process",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "76d101900d59108e119b6eddee698ef174b0884ed23b37a30faeec0f762e276e",
+      "hash": "21fe4212adaba1fdf53e3b75269ca2acc8959715f071f968e9aced2032ee78c8",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "c0c3b4cd-1ab7-4a0d-b13d-314d48d1391d",
+      "sequence": 17,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:27:00Z",
+        "status": "PREPARING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-prepare",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "21fe4212adaba1fdf53e3b75269ca2acc8959715f071f968e9aced2032ee78c8",
+      "hash": "720faf610487eeb2e4de6ba46b83816c165d611cfb04f3a03731319a61d891e8",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "6f7675e0-dba9-43c1-83c9-c683e4f0bd7e",
+      "sequence": 18,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 5000,
+          "travelledMeters": 0
+        },
+        "commandId": "order-cancel-after-start",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "720faf610487eeb2e4de6ba46b83816c165d611cfb04f3a03731319a61d891e8",
+      "hash": "b87218220a32d13bfbd58c40c02883f9175071c7862c2588f893b28150955107",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "85188dc6-87b7-4eae-8b51-6aab1936a163",
+      "sequence": 19,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T01:40:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-cancel-after-cost",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "b87218220a32d13bfbd58c40c02883f9175071c7862c2588f893b28150955107",
+      "hash": "f385403b16966064c5c12eff8d0d5716714fe8455d4b9dda560701ad9e9f3a65",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "b6d7fc8f-bee0-416d-b150-748031ef3891",
+      "sequence": 20,
+      "type": "order.cancelled.v1",
+      "payload": {
+        "at": "2030-01-01T01:41:00Z",
+        "status": "CANCELLED_AFTER_RECEIPT",
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-cancel-after",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.cancel"
+      },
+      "prevHash": "f385403b16966064c5c12eff8d0d5716714fe8455d4b9dda560701ad9e9f3a65",
+      "hash": "ff767efd211c74db8df95daa821617069fa564becaa701cc18c7f39a49896ac8",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "6e395d78-06ca-4f1f-9e98-b8e149d3c133",
+      "sequence": 21,
+      "type": "calculation.calculated.v1",
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "state": "CALCULATED",
+        "causedBy": "calc-blue-1",
+        "commandId": "calc-blue-create",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [],
+        "commandType": "calculation.create"
+      },
+      "prevHash": "ff767efd211c74db8df95daa821617069fa564becaa701cc18c7f39a49896ac8",
+      "hash": "0ee8f18eeb3742ba50a90c765f404669cc8c67b9969b99c52e9e1ebaeb7b20db",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "3ee8b3bc-087c-4496-ba6f-98769af0a96b",
+      "sequence": 22,
+      "type": "calculation.approved.v1",
+      "payload": {
+        "at": "2030-01-01T01:31:00Z",
+        "causedBy": "calc-blue-1",
+        "commandId": "calc-blue-approve",
+        "approvedBy": "leader-g2",
+        "commandType": "calculation.approve",
+        "recomputedFrom": null
+      },
+      "prevHash": "0ee8f18eeb3742ba50a90c765f404669cc8c67b9969b99c52e9e1ebaeb7b20db",
+      "hash": "90b02472e0c9c328f18c5ea1ce2adc0b49d3c06e04b9074c5fda69decd922615",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "eb7cd8f9-442e-45c7-af38-d2ea9b236bcb",
+      "sequence": 23,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "at": "2030-01-01T01:32:00Z",
+        "amount": 14,
+        "causedBy": "calc-blue-1",
+        "supplied": 2,
+        "commandId": "calc-blue-apply",
+        "resourceId": "fuel",
+        "commandType": "calculation.apply",
+        "calculationId": "calc-blue-1"
+      },
+      "prevHash": "90b02472e0c9c328f18c5ea1ce2adc0b49d3c06e04b9074c5fda69decd922615",
+      "hash": "f17a125fba47675182a32a31b618ba83beed6f8a2f5993f0e7d3f58c4daeb8fa",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "de61734a-b5aa-4370-9ff4-bc6410ac43c4",
+      "sequence": 24,
+      "type": "calculation.manual.created.v1",
+      "payload": {
+        "at": "2030-01-01T01:35:00Z",
+        "causedBy": "manual-blue-1",
+        "commandId": "calc-blue-manual",
+        "supersedes": "calc-blue-1",
+        "commandType": "calculation.override",
+        "evaluationEffect": "UNCHANGED"
+      },
+      "prevHash": "f17a125fba47675182a32a31b618ba83beed6f8a2f5993f0e7d3f58c4daeb8fa",
+      "hash": "306e85d04eb6eb82c1adfc9d763d0997d29465cfa4d9f6985b1d145e7b3c3ff4",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "30c0fc4c-a6af-406e-922b-6306ca43d88f",
+      "sequence": 25,
+      "type": "calculation.calculated.v1",
+      "payload": {
+        "at": "2030-01-01T01:33:00Z",
+        "state": "CALCULATED",
+        "causedBy": "calc-stochastic-1",
+        "commandId": "calc-stochastic-create",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [
+          {
+            "seed": "42n",
+            "value": 0.2210401386713592,
+            "digest": "38961626b2610070a3d163b52df4d1827e04794794cdf4caa4615636da95fb5b",
+            "ordinal": 0,
+            "purpose": "g2-replay",
+            "branchId": "main",
+            "exerciseId": "g2",
+            "algorithmVersion": 1
+          }
+        ],
+        "commandType": "calculation.create"
+      },
+      "prevHash": "306e85d04eb6eb82c1adfc9d763d0997d29465cfa4d9f6985b1d145e7b3c3ff4",
+      "hash": "7c178513314afcb4437607a2ad140d00c9ff488ca41042b73b310323fb48a470",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "ced9c044-0376-4eb9-889b-b8eeafa3ece5",
+      "sequence": 26,
+      "type": "calculation.replayed.v1",
+      "payload": {
+        "at": "2030-01-01T01:34:00Z",
+        "causedBy": "calc-stochastic-1",
+        "commandId": "calc-stochastic-replay",
+        "randomKeys": [
+          {
+            "seed": "42n",
+            "value": 0.2210401386713592,
+            "digest": "38961626b2610070a3d163b52df4d1827e04794794cdf4caa4615636da95fb5b",
+            "ordinal": 0,
+            "purpose": "g2-replay",
+            "branchId": "main",
+            "exerciseId": "g2",
+            "algorithmVersion": 1
+          }
+        ],
+        "commandType": "calculation.replay",
+        "selectedOutcomeId": "planned"
+      },
+      "prevHash": "7c178513314afcb4437607a2ad140d00c9ff488ca41042b73b310323fb48a470",
+      "hash": "c107f9edbbf982d623f2facee47de1f368b9edfdb9e6208bda00c34abce01b44",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "7d96ef8e-164f-49ad-9d4e-8d17019ca4a9",
+      "sequence": 27,
+      "type": "calculation.calculated.v1",
+      "payload": {
+        "at": "2030-01-01T01:36:00Z",
+        "state": "REQUIRES_REVIEW",
+        "causedBy": "calc-weather-unknown",
+        "commandId": "calc-weather-unknown",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [],
+        "commandType": "calculation.create"
+      },
+      "prevHash": "c107f9edbbf982d623f2facee47de1f368b9edfdb9e6208bda00c34abce01b44",
+      "hash": "8027fa8327957f7641f5ac28fb225de28939f18282f3c993a68ab42044f721a6",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "db3f5636-4105-44cd-90fe-8b1400e70ece",
+      "sequence": 28,
+      "type": "order.advanced.v1",
+      "payload": {
+        "at": "2030-01-01T02:00:00Z",
+        "status": "REPORTED",
+        "outcome": "PARTIALLY_COMPLETED",
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 2500,
+          "travelledMeters": 2500
+        },
+        "commandId": "order-blue-report",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "8027fa8327957f7641f5ac28fb225de28939f18282f3c993a68ab42044f721a6",
+      "hash": "9789d59eabcd0d142b1cc603c0d7552940b2157b2dfa55d6e512cc55da270632",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "fc310df9-1605-408f-9d6a-127c4cfc40d8",
+      "sequence": 29,
+      "type": "observation.reported.v1",
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "observation-g2",
+        "commandId": "observation-g2",
+        "commandType": "observation.record",
+        "observation": {
+          "id": "observation-g2",
+          "source": {
+            "id": "sensor-g2",
+            "kind": "UAV",
+            "sideId": "blue",
+            "profileVersion": "sensor-v1"
+          },
+          "status": "CURRENT",
+          "observedAt": "2030-01-01T01:00:00.000Z",
+          "validUntil": "2030-01-01T01:10:00.000Z",
+          "deliveredAt": "2030-01-01T01:00:10.480Z",
+          "reliability": 0.8,
+          "completeness": 0.8,
+          "reportedGeometry": {
+            "lat": 55.70058668945751,
+            "lon": 37.599822127375504
+          },
+          "reportedAttributes": {
+            "type": "motorized"
+          },
+          "environmentSnapshotId": "5eee1ef910a33793664387df48829b753abdda653365140c624ece0ef0b95130",
+          "reportedAccuracyMeters": 100
+        }
+      },
+      "prevHash": "9789d59eabcd0d142b1cc603c0d7552940b2157b2dfa55d6e512cc55da270632",
+      "hash": "5e71ea3a4b8d01a7e7b6851bddad9f87c673c6b1ff719de9080f22b0bf162906",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "b6d7a1ff-694b-4ac5-a158-a7741858255a",
+      "sequence": 30,
+      "type": "time.jump.applied.v1",
+      "payload": {
+        "at": "2030-01-01T02:10:00Z",
+        "reports": [
+          "boundary",
+          "stop",
+          "uncertainty",
+          "resume"
+        ],
+        "causedBy": "jump-4229f25b-bace-42fe-8e52-3fd3b1e4ed85",
+        "commandId": "jump-4229f25b-bace-42fe-8e52-3fd3b1e4ed85",
+        "commandType": "time.jump",
+        "snapshotHash": "28e7c1f1dba4a8e70981cb84869951404b4fa699880880ae584586239c1fff0f"
+      },
+      "prevHash": "5e71ea3a4b8d01a7e7b6851bddad9f87c673c6b1ff719de9080f22b0bf162906",
+      "hash": "af011711f7f05d5df7ce6698cafb150f694ac0fd0540875660e056c3bcb1dbaf",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "7a4ea76e-1b39-4efe-a3f7-c1318a65399e",
+      "sequence": 31,
+      "type": "stage.calculation.assigned.v1",
+      "payload": {
+        "at": "2030-01-01T02:20:00Z",
+        "causedBy": "stage-2",
+        "commandId": "stage-g2-assign",
+        "commandType": "stage.assign",
+        "calculationProfileId": "manual-v1"
+      },
+      "prevHash": "af011711f7f05d5df7ce6698cafb150f694ac0fd0540875660e056c3bcb1dbaf",
+      "hash": "08e78f11dc97bcff1eb42b629eded4db83a02aac7a781fd6670226d20ef33257",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "ce1f40a8-bdc4-4725-a721-92d7763de3f2",
+      "sequence": 32,
+      "type": "playbook.command.v1",
+      "payload": {
+        "at": "2030-01-01T02:21:00Z",
+        "result": {
+          "kind": "COMMAND",
+          "ruleId": "contact",
+          "command": "report",
+          "playbookVersion": 1
+        },
+        "causedBy": "playbook-g2",
+        "commandId": "playbook-known",
+        "commandType": "playbook.evaluate"
+      },
+      "prevHash": "08e78f11dc97bcff1eb42b629eded4db83a02aac7a781fd6670226d20ef33257",
+      "hash": "d01f6cd7e9ddea07c7afe30fc2c3af2fa0791f88c8aa7bc0e063c9ddecc315d2",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "14f9f999-a87b-43f1-99d9-ee66d21b180c",
+      "sequence": 33,
+      "type": "playbook.escalated.v1",
+      "payload": {
+        "at": "2030-01-01T02:22:00Z",
+        "result": {
+          "kind": "ESCALATE",
+          "reason": "NO_RULE"
+        },
+        "causedBy": "playbook-g2",
+        "commandId": "playbook-unknown",
+        "commandType": "playbook.evaluate"
+      },
+      "prevHash": "d01f6cd7e9ddea07c7afe30fc2c3af2fa0791f88c8aa7bc0e063c9ddecc315d2",
+      "hash": "69180412ca8a697a733b7b74084e74385b43dfc015737d521491f6f18880c5dd",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "71e58dac-3f61-4621-b8b9-a53d587109ce",
+      "sequence": 34,
+      "type": "exercise.completed.v1",
+      "payload": {
+        "at": "2030-01-01T02:30:00Z",
+        "status": "COMPLETED",
+        "causedBy": "0ce9768c-366c-40ba-a31f-29e384c19d6a",
+        "commandId": "exercise-g2-complete",
+        "commandType": "exercise.complete",
+        "snapshotHash": "28e7c1f1dba4a8e70981cb84869951404b4fa699880880ae584586239c1fff0f",
+        "outcomeAuthority": "EXERCISE_LEADER",
+        "unfinishedEventIds": [
+          "delivery-pending"
+        ]
+      },
+      "prevHash": "69180412ca8a697a733b7b74084e74385b43dfc015737d521491f6f18880c5dd",
+      "hash": "cd36964f4b99df5a2194448ebf579ea0025467d6bdac516372e67e75ab10bf93",
+      "sessionId": "0ce9768c-366c-40ba-a31f-29e384c19d6a"
+    },
+    {
+      "eventId": "41a88308-4920-4c88-92cb-dc866043f606",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "decision-second-blue",
+        "revision": 1,
+        "commandId": "decision-second-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "0a95d4b14c4615e97b4ee8ae3c28a62043b4960523ece34068b3fe6d22ce3668",
+      "sessionId": "af8635fc-6134-404b-b5a1-dec047d39388"
+    }
+  ],
+  "infrastructure": {
+    "postgresql": "passed",
+    "cartography": "passed",
+    "gateway": "passed"
+  },
+  "checks": [
+    "AC-01",
+    "AC-03",
+    "AC-04",
+    "AC-05",
+    "AC-06",
+    "AC-07",
+    "AC-09",
+    "AC-11",
+    "AC-15",
+    "AC-18"
+  ],
+  "coverage": {
+    "AC-01": "passed",
+    "AC-03": "passed",
+    "AC-04": "passed",
+    "AC-05": "passed",
+    "AC-06": "passed",
+    "AC-07": "passed",
+    "AC-09": "passed",
+    "AC-11": "passed",
+    "AC-15": "passed",
+    "AC-18": "passed"
+  }
+}

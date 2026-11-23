@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "sealedScenario": {
     "schemaVersion": 1,
-    "id": "26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
+    "id": "172098b5-d7f8-43b5-a205-27e0e0e8674b",
     "revision": 2,
     "state": "SEALED",
     "scenario": {
@@ -2515,136 +2515,136 @@
       "roles": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c",
       "communications": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212",
       "documents": "ec42a156f279d786816a1d116c222f6842cba947d1827c9df5443d683852bb6e",
-      "rehearsal": "b96e1752e0a8ce249dad682f6711587eefa6b0d201b0ccdf923a9efec1239dd5"
+      "rehearsal": "6dfd5f481afd3393cbaf353595c5ef2655e82c82ab3ecd68f1b9f669f69ca1eb"
     },
     "confirmations": [
       {
-        "id": "4cfd4da2-98d9-4b0c-811d-0947f65d403f",
+        "id": "925f967e-d804-4fe1-b908-397c2fe4471a",
         "area": "CONCEPT",
         "userId": "responsible-ac22-0",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "1cc8175d63127d23ede15e1d0c8708f28b2114ea54299774238ee8d1bf9bdf7b",
+        "subjectHash": "4c5bbf09c52bd96ec1402b3a6314e48216c10c4621e298560c4c91f471856e23",
         "dependsOn": []
       },
       {
-        "id": "22024e59-397d-405b-a09d-af1354d98425",
+        "id": "a9fd8fc7-9906-4873-946c-8e1273452f0a",
         "area": "ENVIRONMENT_MAP",
         "userId": "responsible-ac22-1",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "5f95c4d89aa3e53a80b1132fb997f62bf9c3f6bce7562b6975c671acd25e17cb",
+        "subjectHash": "a5af3caab9d4ddb9d38389f8734dcb531655be8020817379bfb6a94a317ed6bb",
         "dependsOn": []
       },
       {
-        "id": "7235b8c9-b253-4243-b7e4-7d4fd50a13e7",
+        "id": "6c3dd19f-a3f3-4a84-8556-9cb14ecaad26",
         "area": "COMMAND_INTERMEDIARIES",
         "userId": "responsible-ac22-2",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "ebf133466ecdca572175bdad62cb64f85c103bef813eaeed5d5b8f5a0b06b959",
+        "subjectHash": "49eee23102ad241fab64bab2132b870b064f69eddf37aa57035282ee56999a81",
         "dependsOn": []
       },
       {
-        "id": "fd09f6b0-321e-4eba-9cb8-4124aa35d91b",
+        "id": "13955690-c388-4c5f-8496-879df4a04ce0",
         "area": "EQUIPMENT",
         "userId": "responsible-ac22-3",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "2c1e34ca6b07a6038ddf92febc49b3ce492250bea1d02f0eb771b789ec0b5791",
+        "subjectHash": "2d3321d5d1fdb824bfafb4d695ff0f920be5607d24b32e007130311302948849",
         "dependsOn": []
       },
       {
-        "id": "794ca74d-b32e-4015-be41-5875dbe21613",
+        "id": "254a19b3-5acc-4ac7-b3c6-81933600f8a9",
         "area": "MORALE_READINESS",
         "userId": "responsible-ac22-4",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "3bd5cf669ec5bce5ba45073f06064df08ea4300a0924d8fd60ea463917ca735d",
+        "subjectHash": "94de93f473abccc286096384af3a2c23c2af62939ea9b977360b71d41edb45be",
         "dependsOn": []
       },
       {
-        "id": "4e9a08c5-3d12-449d-96b0-966aaac9c4a3",
+        "id": "7bf039bd-4c36-4952-962e-4c0c1dde7c2c",
         "area": "LOGISTICS_FORMATION",
         "userId": "responsible-ac22-5",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "c6a0a2d07d54f09060fe553a988d9f0ce5a46d09fc7e1dfac5eb3f2906f6aa52",
+        "subjectHash": "6f1a00e3590c45ab5dd9c463a82534634469c02215622b675ae9935cb513294c",
         "dependsOn": []
       },
       {
-        "id": "71d81989-23c1-4d6e-b863-35cd5bbbab61",
+        "id": "1f5c25a3-8bf3-4514-9d90-91fa64540ac9",
         "area": "AUTONOMY_AGENTS",
         "userId": "responsible-ac22-6",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "1914d2ddfdeffd2e3e23bea26c6ac901209173df9a28c0de2728665f6ac29178",
+        "subjectHash": "8f329c9435565fbfcdb663931b6bb2289156dbf8a2594e6e3bef371994c0cda6",
         "dependsOn": []
       },
       {
-        "id": "a446e0d1-2628-4fcc-b230-67af6b3c1635",
+        "id": "607e9cdb-c8c2-421e-8716-b152f79ce6f8",
         "area": "SYMBOL_LIBRARY",
         "userId": "responsible-ac22-7",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "6f9ae74b25a279e550b94a8ce377489b8f335270b430918b55f7f224ba25244b",
+        "subjectHash": "e459df0d3634e85395d9340fa6b839fee64a372d28103252263c129766ce1944",
         "dependsOn": []
       },
       {
-        "id": "8ed5fbc5-cb29-42fe-842e-b7f607a743f2",
+        "id": "59b18ada-1c42-4bf8-ab6a-4818f729a411",
         "area": "MODEL_PROFILE",
         "userId": "responsible-ac22-8",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "f6eec41919dc9d2c2a48ad082c14111ad05392a4b0ba4c10950379cf7ae2729a",
+        "subjectHash": "dcb1415dbf9fd39fc178b27d261b853abf34dee74dbd5b4568f83b3749adb6d2",
         "dependsOn": []
       },
       {
-        "id": "7a9d7c3c-85b5-4b12-a676-a9a4126ea18b",
+        "id": "2bf19d8f-e5ea-47b2-bb2a-a23911f385b2",
         "area": "COMMUNICATIONS",
         "userId": "responsible-ac22-9",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "c7f7d67631d28d3afee344027b192f637702aedfa5a522e8fb65d30ea4ff1907",
+        "subjectHash": "fb4cc675a1c136eaae78c670817a4f436caa295683859ba00743d8fa1ef486a2",
         "dependsOn": []
       },
       {
-        "id": "e9d9d131-0796-4d31-90da-5c55a51b8222",
+        "id": "297ff2ab-9f7f-4b61-b3ff-4fa926c46ad7",
         "area": "DOCUMENTS",
         "userId": "responsible-ac22-10",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "86c09a1bf20f5b244fc8b909e34e6fa11c0e155dc8cb2c091da9169e24fc07dc",
+        "subjectHash": "4951515156fb4c79b350f4dad49dfff8a11cd3a4cc080943a0b96c3fd9371c58",
         "dependsOn": []
       },
       {
-        "id": "db13ca04-1d0e-4a6f-a66e-47819cffc4f8",
+        "id": "c75d75b0-774a-42ad-a07b-d5db1bd2aaea",
         "area": "ASSESSMENT",
         "userId": "responsible-ac22-11",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "d70c5880fac61a6689b10a600249aaeb87a773b29cfed4ec574da27cb5eb7e60",
+        "subjectHash": "6d824eb78a3189be754e66713a6d343cd35d757a11d3abe25aef665e4f3af3ac",
         "dependsOn": []
       },
       {
-        "id": "f5d651fc-8a96-431c-a798-99c23ed4d979",
+        "id": "d619f8e0-c30a-4d95-b7d1-38ebe9bcbb30",
         "area": "TECHNICAL_READINESS",
         "userId": "responsible-ac22-12",
         "role": "RESPONSIBLE",
         "confirmedAt": "2030-01-01T03:00:00.000Z",
-        "subjectHash": "2bf0d8405895fc05f7bb2494fdb1da790f29131f8b1d99ef695c9284e2c1e94e",
+        "subjectHash": "bad4a2da2bf6eb33538fad3632b601b0603b70fa826ec16ec42cba8a991a0a2e",
         "dependsOn": []
       }
     ],
     "rehearsal": {
       "schemaVersion": 1,
-      "id": "rehearsal-26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
+      "id": "rehearsal-172098b5-d7f8-43b5-a205-27e0e0e8674b",
       "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
       "full": true,
       "isolated": true,
       "status": "PASSED",
-      "eventLogId": "rehearsal-log-rehearsal-26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
-      "officialEventLogId": "official-log-26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
+      "eventLogId": "rehearsal-log-rehearsal-172098b5-d7f8-43b5-a205-27e0e0e8674b",
+      "officialEventLogId": "official-log-172098b5-d7f8-43b5-a205-27e0e0e8674b",
       "checks": {
         "RECIPIENTS": true,
         "CHANNELS": true,
@@ -2662,12 +2662,12 @@
         "SUPPLY_ROUTES": true
       }
     },
-    "rehearsalSha256": "b96e1752e0a8ce249dad682f6711587eefa6b0d201b0ccdf923a9efec1239dd5",
+    "rehearsalSha256": "6dfd5f481afd3393cbaf353595c5ef2655e82c82ab3ecd68f1b9f669f69ca1eb",
     "sealedAt": "2030-01-01T03:00:00Z"
   },
   "initialWorld": {
     "schemaVersion": 1,
-    "scenarioId": "26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
+    "scenarioId": "172098b5-d7f8-43b5-a205-27e0e0e8674b",
     "scenarioRevision": 2,
     "state": "SEALED",
     "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
@@ -3327,7 +3327,7 @@
     "roles": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c",
     "communications": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212",
     "documents": "ec42a156f279d786816a1d116c222f6842cba947d1827c9df5443d683852bb6e",
-    "rehearsal": "b96e1752e0a8ce249dad682f6711587eefa6b0d201b0ccdf923a9efec1239dd5"
+    "rehearsal": "6dfd5f481afd3393cbaf353595c5ef2655e82c82ab3ecd68f1b9f669f69ca1eb"
   },
-  "sha256": "7ad1ce8f71e3eedeb079a0713e8214357c701d3a7e7337196c153db431c6acdd"
+  "sha256": "d1fc8fa9ec20331f54edfde2b8f5e195d4fd6242d4924565905504d0dea6ed20"
 }

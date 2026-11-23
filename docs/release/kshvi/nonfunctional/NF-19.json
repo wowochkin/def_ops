@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "NF-19",
   "status": "passed",
-  "startedAt": "2026-11-22T00:45:25.959Z",
-  "finishedAt": "2026-11-22T00:45:26.554Z",
-  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "startedAt": "2026-11-23T21:08:23.274Z",
+  "finishedAt": "2026-11-23T21:08:23.925Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "command": "npx vitest run packages/kshvi/tests/contracts/schema-purity.test.ts packages/kshvi/tests/contracts/archive-migration.test.ts services/kshvi/tests/contracts/test-pyramid.test.ts",
   "tests": [
     "packages/kshvi/tests/contracts/schema-purity.test.ts",
@@ -13,9 +13,9 @@
   ],
   "externalEvidence": null,
   "limitations": [],
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ packages/kshvi/tests/contracts/schema-purity.test.ts (2 tests) 12ms\n ✓ packages/kshvi/tests/contracts/archive-migration.test.ts (2 tests) 8ms\n ✓ services/kshvi/tests/contracts/test-pyramid.test.ts (3 tests) 72ms\n\n Test Files  3 passed (3)\n      Tests  7 passed (7)\n   Start at  03:45:26\n   Duration  143ms (tests 47%, transform 39%, import 11%, worker 2%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ packages/kshvi/tests/contracts/schema-purity.test.ts (2 tests) 15ms\n ✓ packages/kshvi/tests/contracts/archive-migration.test.ts (2 tests) 10ms\n ✓ services/kshvi/tests/contracts/test-pyramid.test.ts (3 tests) 84ms\n\n Test Files  3 passed (3)\n      Tests  7 passed (7)\n   Start at  00:08:23\n   Duration  159ms (tests 47%, transform 39%, import 11%, worker 2%)\n\n",
   "artifacts": [
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-19.json"
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-19.json"
   ],
   "openErrors": []
 }

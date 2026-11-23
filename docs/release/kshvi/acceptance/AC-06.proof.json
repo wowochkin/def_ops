@@ -1,6 +1,6 @@
 {
-  "runId": "51d280df-e1cb-46da-a62f-f9fcd471763e",
-  "commit": "3789e6076ef8a1119130bf25e440f417f2e13a1b",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "initialRevision": {
     "id": "ac06-communications",
     "revision": 1,
@@ -8,13 +8,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac06/journal.json",
-    "sha256": "472704fd9f4317cd7677404fdb9dd3fe1cd994bd46495f3ee86380a20f085dc4",
+    "sha256": "07ffd4dbd13c2ace9407917de1ff107b3212e6e29bbb6aeab88efe9591074bef",
     "eventCount": 19
   },
   "hashes": {
     "scenario": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420",
     "environment": "1c8d8f17f5e666af1af0fb2fc15a8bfe97bf226d92709b1dbeb3f5516f4c9546",
-    "journal": "472704fd9f4317cd7677404fdb9dd3fe1cd994bd46495f3ee86380a20f085dc4"
+    "journal": "07ffd4dbd13c2ace9407917de1ff107b3212e6e29bbb6aeab88efe9591074bef"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac06/protocol.txt"

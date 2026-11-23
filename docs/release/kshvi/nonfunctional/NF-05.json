@@ -8,19 +8,19 @@
       "serverSamples": [
         {
           "clientTimeMs": 0,
-          "serverTimeMs": 1795308274754,
-          "operationalTimeMs": 1795308274754,
+          "serverTimeMs": 1795469274045,
+          "operationalTimeMs": 1795469274045,
           "source": "authoritative-server",
-          "processMonotonicMs": 121036.367458,
-          "serverStartedAt": 1795308154692
+          "processMonotonicMs": 122469.325416,
+          "serverStartedAt": 1795469153974
         },
         {
-          "clientTimeMs": 1795394674754,
-          "serverTimeMs": 1795308274754,
-          "operationalTimeMs": 1795308274754,
+          "clientTimeMs": 1795555674045,
+          "serverTimeMs": 1795469274045,
+          "operationalTimeMs": 1795469274045,
           "source": "authoritative-server",
-          "processMonotonicMs": 121036.550541,
-          "serverStartedAt": 1795308154692
+          "processMonotonicMs": 122469.477708,
+          "serverStartedAt": 1795469153974
         }
       ]
     },
@@ -29,15 +29,15 @@
   "openErrors": [
     "LOCAL_NTP_NOT_VERIFIED"
   ],
-  "startedAt": "2026-11-22T00:42:33.732Z",
-  "finishedAt": "2026-11-22T00:44:35.053Z",
-  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "startedAt": "2026-11-23T21:25:51.588Z",
+  "finishedAt": "2026-11-23T21:27:54.364Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
   "executionError": null,
   "artifacts": [
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-05.json",
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/load-distributions.json",
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/stand-card.json",
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/offline.json"
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-05.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/offline.json"
   ]
 }

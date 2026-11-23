@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac27-opponent.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n ✓ services/kshvi/tests/acceptance/ac27-opponent.test.ts (1 test) 10040ms\n   ✓ AC-27: реальный Rust worker ведёт противника по разрешённой проекции, а официальный мир повторяется и не читает скрытые данные 10039ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:50\n   Duration  10.54s (tests 96%, transform 4%, import 1%)\n\n",
+  "initialRevision": {
+    "id": "modern-opponent-ac27",
+    "revision": 1,
+    "sha256": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac27/journal.json",
+    "sha256": "403fae1e43ccb1305b13641f8ca01e908adc19af21ab982362d0a6bd16f0e8f8",
+    "eventCount": 1
+  },
+  "hashes": {
+    "scenario": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4",
+    "environment": "e2cefdcd1a9acb892257edfe716aa0f748fc14a2799a3f9fe406fbf076cb86f4",
+    "journal": "403fae1e43ccb1305b13641f8ca01e908adc19af21ab982362d0a6bd16f0e8f8"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac27/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "realRustEvaluations": 4,
+    "sameSeedTraceMatches": 1,
+    "hiddenTruthTraceMatches": 1,
+    "observationChangedChoice": 1,
+    "systemCommands": 1,
+    "duplicateOfficialEffects": 0,
+    "isolatedForksDestroyed": 4,
+    "replayMatches": 1
+  },
+  "limitations": [
+    "Rust worker, доставка и общий CommandService проверены на локальном стенде; распределённая сетевая нагрузка и физическая изоляция узлов проверяются отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac27/journal.json",
+    "docs/release/kshvi/evidence/ac27/decision-traces.json",
+    "docs/release/kshvi/evidence/ac27/protocol.txt",
+    "docs/release/kshvi/evidence/ac27/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-27.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

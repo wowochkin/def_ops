@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "NF-21",
   "status": "passed",
-  "startedAt": "2026-11-22T00:45:27.110Z",
-  "finishedAt": "2026-11-22T00:45:27.700Z",
-  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "startedAt": "2026-11-23T21:08:24.532Z",
+  "finishedAt": "2026-11-23T21:08:25.177Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "command": "npx vitest run apps/editor/tests/kshvi-offline-assets.test.ts services/kshvi/tests/archive-roundtrip.test.ts",
   "tests": [
     "apps/editor/tests/kshvi-offline-assets.test.ts",
@@ -12,9 +12,9 @@
   ],
   "externalEvidence": null,
   "limitations": [],
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ apps/editor/tests/kshvi-offline-assets.test.ts (4 tests) 4ms\n ✓ services/kshvi/tests/archive-roundtrip.test.ts (6 tests) 15ms\n\n Test Files  2 passed (2)\n      Tests  10 passed (10)\n   Start at  03:45:27\n   Duration  110ms (transform 54%, tests 23%, import 19%, worker 3%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/archive-roundtrip.test.ts (6 tests) 28ms\n ✓ apps/editor/tests/kshvi-offline-assets.test.ts (4 tests) 88ms\n\n Test Files  2 passed (2)\n      Tests  10 passed (10)\n   Start at  00:08:24\n   Duration  166ms (tests 56%, transform 32%, import 10%, worker 1%)\n\n",
   "artifacts": [
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-21.json"
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-21.json"
   ],
   "openErrors": []
 }

@@ -1,7 +1,7 @@
 {
-  "runId": "fc9d609b-f046-4859-bc4b-d3363631842f",
-  "commit": "917a583c88616f592857217fc2642c3dd904f507",
-  "uiOutput": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/kshvi-initial-map-audiences.test.ts (3 tests) 6ms\n ✓ apps/editor/tests/kshvi-initial-map.test.tsx (10 tests) 110ms\n\n Test Files  2 passed (2)\n      Tests  13 passed (13)\n   Start at  20:36:43\n   Duration  316ms (tests 40%, environment 31%, import 14%, transform 14%, worker 1%)\n\n",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "uiOutput": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/kshvi-initial-map-audiences.test.ts (3 tests) 6ms\n ✓ apps/editor/tests/kshvi-initial-map.test.tsx (10 tests) 125ms\n\n Test Files  2 passed (2)\n      Tests  13 passed (13)\n   Start at  23:13:10\n   Duration  335ms (tests 43%, environment 29%, import 14%, transform 13%, worker 1%)\n\n",
   "invalidCodes": [
     "OUTSIDE_BOUNDS",
     "POSITION_UNKNOWN",
@@ -726,13 +726,13 @@
       "roles": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c",
       "communications": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212",
       "documents": "ec42a156f279d786816a1d116c222f6842cba947d1827c9df5443d683852bb6e",
-      "rehearsal": "b96e1752e0a8ce249dad682f6711587eefa6b0d201b0ccdf923a9efec1239dd5"
+      "rehearsal": "6dfd5f481afd3393cbaf353595c5ef2655e82c82ab3ecd68f1b9f669f69ca1eb"
     },
-    "rehearsalSha256": "b96e1752e0a8ce249dad682f6711587eefa6b0d201b0ccdf923a9efec1239dd5"
+    "rehearsalSha256": "6dfd5f481afd3393cbaf353595c5ef2655e82c82ab3ecd68f1b9f669f69ca1eb"
   },
   "initialWorld": {
     "schemaVersion": 1,
-    "scenarioId": "26f712bf-b23e-4c80-98d6-2e38e3b8c8d4",
+    "scenarioId": "172098b5-d7f8-43b5-a205-27e0e0e8674b",
     "scenarioRevision": 2,
     "state": "SEALED",
     "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
@@ -798,6 +798,6 @@
     ],
     "events": []
   },
-  "archiveSha256": "7ad1ce8f71e3eedeb079a0713e8214357c701d3a7e7337196c153db431c6acdd",
+  "archiveSha256": "d1fc8fa9ec20331f54edfde2b8f5e195d4fd6242d4924565905504d0dea6ed20",
   "environmentChangeRejected": "ENVIRONMENT_HASH_INVALID"
 }

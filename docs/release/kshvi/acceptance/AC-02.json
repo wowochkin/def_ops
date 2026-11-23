@@ -1,9 +1,9 @@
 {
   "status": "passed",
-  "commit": "d25e2b219a01eaa132a62df5f86e8fe277e2d035",
-  "runId": "f6f26907-bc09-4156-b4c9-7b8126d6b44b",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
   "command": "npx vitest run services/kshvi/tests/acceptance/ac02-environment.test.ts",
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n{\"t\":\"2026-11-22T21:45:42.676Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"msg\":\"listening on :57248\"}\n{\"t\":\"2026-11-22T21:45:42.688Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"33cfaf19-c881-4c9f-a3da-8f5a42cd9a4c\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":5}\n{\"t\":\"2026-11-22T21:45:42.694Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"0e2d2e89-7c28-4eb0-a227-31a55a9fd637\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-22T21:45:42.696Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"9c5c91b6-de8b-4322-891e-3729c0bd2b61\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T21:45:42.711Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"037b8dd3-497c-4b43-806a-a5c6157776d3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/environment\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-22T21:45:42.715Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"5ce0f6be-9004-411f-8166-b2579a1940e6\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-22T21:45:42.717Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"dc4e04ca-2f94-40d7-aac0-eecf0aea85c8\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-22T21:45:42.717Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"82b7862e-2756-4b71-bcfb-38dccb10bdd2\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-22T21:45:42.718Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"9fc01bf7-6e8d-4d5f-b204-7a8fdc9c3d04\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92/weather\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac02-environment.test.ts (1 test) 167ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:45:40\n   Duration  2.05s (transform 67%, import 25%, tests 8%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n{\"t\":\"2026-11-23T20:53:24.745Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"msg\":\"listening on :58460\"}\n{\"t\":\"2026-11-23T20:53:24.756Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"1f9e04f3-7dc6-4d06-b32e-e5000ae52b04\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":5}\n{\"t\":\"2026-11-23T20:53:24.761Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"ea8c7d72-971b-46ee-8947-c9276072db8f\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:24.762Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"f67ab4b1-8dbb-464e-95e9-8db7287968ba\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T20:53:24.777Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"aaee0977-cf07-4314-a5f9-cc5817b1ecf4\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/environment\",\"status\":200,\"ms\":14}\n{\"t\":\"2026-11-23T20:53:24.781Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"f2a03d02-8010-4ad7-94cf-bd265d92f405\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:24.782Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"4162bef5-eda6-4fdf-9988-7532f0c8bc9b\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T20:53:24.782Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"9959cc12-38c9-4585-b00b-f355bf9bfad5\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T20:53:24.784Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"38c781df-cf6f-41aa-8d1d-10e9c5398e88\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92/weather\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac02-environment.test.ts (1 test) 148ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:53:22\n   Duration  2.03s (transform 68%, import 25%, tests 7%)\n\n",
   "initialRevision": {
     "id": "ac02-3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
     "revision": 1,
@@ -11,13 +11,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac02/journal.json",
-    "sha256": "ba3715efd6e106d4c2303ee60cf64c1d7d34cce195238aaa314a641a77a129ee",
+    "sha256": "cada1fb9d44e33254d6a1ab100ff8b4068f5a0ec4cbc56687a3ad178d4356d6b",
     "eventCount": 2
   },
   "hashes": {
     "scenario": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698",
     "environment": "a9b08f5e4fd08c6a3b79cf5cb69e2748f8a039733882695bb8ba9e8637623620",
-    "journal": "ba3715efd6e106d4c2303ee60cf64c1d7d34cce195238aaa314a641a77a129ee"
+    "journal": "cada1fb9d44e33254d6a1ab100ff8b4068f5a0ec4cbc56687a3ad178d4356d6b"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac02/protocol.txt"
@@ -40,8 +40,8 @@
     "docs/release/kshvi/evidence/ac02/environment.json",
     "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-02.json"
   ],
-  "freshInstall": false,
+  "freshInstall": true,
   "offline": true,
-  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
   "openErrors": []
 }

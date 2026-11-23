@@ -1,0 +1,716 @@
+{
+  "schemaVersion": 1,
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "freshRoot": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "install": {
+    "command": "npm ci --offline",
+    "packagesInstalled": 264,
+    "vulnerabilities": 0
+  },
+  "scenarios": [
+    {
+      "id": "scenario-ac01",
+      "acceptanceId": "AC-01",
+      "status": "passed",
+      "initialRevision": {
+        "id": "scenario-ac01",
+        "revision": 3,
+        "sha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c"
+      },
+      "hashes": {
+        "scenario": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+        "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "journal": "b970426d3ccb60a7315f6d6ea1fb2c8b0c9355480c9a566067e221420fc5c7cc"
+      },
+      "protocol": "acceptance/AC-01.json",
+      "metrics": {
+        "sealedRevisions": 1,
+        "independentSessions": 2,
+        "repeatedSessionReused": 1,
+        "readinessConfirmations": 13,
+        "rehearsalPassed": 1
+      }
+    },
+    {
+      "id": "ac02-3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+      "acceptanceId": "AC-02",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac02-3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+        "revision": 1,
+        "sha256": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698"
+      },
+      "hashes": {
+        "scenario": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698",
+        "environment": "a9b08f5e4fd08c6a3b79cf5cb69e2748f8a039733882695bb8ba9e8637623620",
+        "journal": "03df16f99e5ccafdd9691caed76ffe43ab3950e415eacc596d1cb8b1da229be3"
+      },
+      "protocol": "acceptance/AC-02.json",
+      "metrics": {
+        "beforeTemperature": -2,
+        "afterTemperature": 10,
+        "restoredRequests": 10,
+        "weatherChanges": 1
+      }
+    },
+    {
+      "id": "ac03-visibility",
+      "acceptanceId": "AC-03",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac03-visibility",
+        "revision": 1,
+        "sha256": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80"
+      },
+      "hashes": {
+        "scenario": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80",
+        "environment": "f63bde2676f35705961d3f01a14677acd659f45b080049a7936dcf11389e140b",
+        "journal": "9f0b69cd9c6a3b9eed7af13df181150c23dfa5f31f441880ad66aa4ab2791f9c"
+      },
+      "protocol": "acceptance/AC-03.json",
+      "metrics": {
+        "forbiddenResponses": 0,
+        "revokedSubscriptions": 1,
+        "hiddenSearchResults": 0,
+        "auditRecords": 19
+      }
+    },
+    {
+      "id": "ac04-documents",
+      "acceptanceId": "AC-04",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac04-documents",
+        "revision": 1,
+        "sha256": "b7dec32198e208b0d505d179b5d6ece39cd71050ee565fa899e8e12d2fe33ea2"
+      },
+      "hashes": {
+        "scenario": "b7dec32198e208b0d505d179b5d6ece39cd71050ee565fa899e8e12d2fe33ea2",
+        "environment": "09e6cbc1af4f00443cbb4dabaf9a41f724be6326539d1eaf81fb7625ffea8edb",
+        "journal": "59cd3862c53e365b90a362a334ab21518ce07287b2a74a2c995cbf1c1f18236e"
+      },
+      "protocol": "acceptance/AC-04.json",
+      "metrics": {
+        "revisions": 2,
+        "cascadeLegs": 2,
+        "conflictResolved": 1,
+        "exportValid": 1,
+        "events": 18
+      }
+    },
+    {
+      "id": "ac05-inputs",
+      "acceptanceId": "AC-05",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac05-inputs",
+        "revision": 1,
+        "sha256": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c"
+      },
+      "hashes": {
+        "scenario": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c",
+        "environment": "8054e1ecf1cfa669cbdb9fadde574559fef5544722875d61a922c2d6ad0f982b",
+        "journal": "f743edec4db6bcdd14a42adf73014fa646d5dd633b6cd7181ef6ac503ddf3075"
+      },
+      "protocol": "acceptance/AC-05.json",
+      "metrics": {
+        "planned": 1,
+        "reactive": 2,
+        "adaptive": 2,
+        "approvalRequests": 1,
+        "cyclesStopped": 1,
+        "unresolvedStopped": 1
+      }
+    },
+    {
+      "id": "ac06-communications",
+      "acceptanceId": "AC-06",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac06-communications",
+        "revision": 1,
+        "sha256": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420"
+      },
+      "hashes": {
+        "scenario": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420",
+        "environment": "1c8d8f17f5e666af1af0fb2fc15a8bfe97bf226d92709b1dbeb3f5516f4c9546",
+        "journal": "744165361398a23f50976dcea085b2261b04e14f564c26e49e2c326286744a1d"
+      },
+      "protocol": "acceptance/AC-06.json",
+      "metrics": {
+        "attempts": 14,
+        "duplicateEffects": 0,
+        "reserveMessages": 1,
+        "missedReports": 1,
+        "paperDuplicatesReconciled": 1
+      }
+    },
+    {
+      "id": "ac07-time",
+      "acceptanceId": "AC-07",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac07-time",
+        "revision": 1,
+        "sha256": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b"
+      },
+      "hashes": {
+        "scenario": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b",
+        "environment": "8ff8c43e5a58fe2515418479ea17f162aac4447649c6979c09fefdbc4a8b1cfc",
+        "journal": "46891b4daf48bf24362f1497207a5473a611284caa4f60d39a852a6df61754d1"
+      },
+      "protocol": "acceptance/AC-07.json",
+      "metrics": {
+        "pausedCommandsRejected": 1,
+        "backwardJumpsRejected": 1,
+        "playbackRate": 4,
+        "jumpSnapshots": 1,
+        "manualOverrides": 1
+      }
+    },
+    {
+      "id": "ac08-replay",
+      "acceptanceId": "AC-08",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac08-replay",
+        "revision": 1,
+        "sha256": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac"
+      },
+      "hashes": {
+        "scenario": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac",
+        "environment": "0493a27c17a0bde42bbd2df9bd458dc74eeea7ef2be0a6080ac51adb743e55df",
+        "journal": "5a398cfacafdbd7727758de99db019eab8e266f3d3081bc5d121ffc919ced9ec"
+      },
+      "protocol": "acceptance/AC-08.json",
+      "metrics": {
+        "stateHashMatches": 3,
+        "selectedOutcomeMatches": 3,
+        "idempotentReplays": 1,
+        "browserClients": 1,
+        "workerClients": 2
+      }
+    },
+    {
+      "id": "ac09-reconnect",
+      "acceptanceId": "AC-09",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac09-reconnect",
+        "revision": 1,
+        "sha256": "0eadd0d7bc28a48eeb0449a1e699660d74fed00bfa3c1501b3bf516f35378b36"
+      },
+      "hashes": {
+        "scenario": "0eadd0d7bc28a48eeb0449a1e699660d74fed00bfa3c1501b3bf516f35378b36",
+        "environment": "d8a52a33aeacb6dc9990c87d38b73ff39baf9d763a3f6020bb4a2cd60ff20d48",
+        "journal": "4054469f9a98fda3252fa34520bae5491857565baf4d863e0e28e9d6c02e336d"
+      },
+      "protocol": "acceptance/AC-09.json",
+      "metrics": {
+        "connections": 25,
+        "confirmedLost": 0,
+        "duplicateEffects": 0,
+        "roleFiltered": 1,
+        "snapshotRequired": 1
+      }
+    },
+    {
+      "id": "ac10-branch",
+      "acceptanceId": "AC-10",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac10-branch",
+        "revision": 1,
+        "sha256": "9f24f1db5ca96e86c4fc413059321354c6cc4870c6d934837fa6e93b6d32d43b"
+      },
+      "hashes": {
+        "scenario": "9f24f1db5ca96e86c4fc413059321354c6cc4870c6d934837fa6e93b6d32d43b",
+        "environment": "1b34739a7109255cbfbad6b290ab60cfe04df21b0b704eb9171dec7015482a9f",
+        "journal": "248e3a1297bf4828ed97b2c34c084c3e21f11e6429724167339396780ded1d5e"
+      },
+      "protocol": "acceptance/AC-10.json",
+      "metrics": {
+        "publicationRejected": 1,
+        "unauthorizedAdoptionRejected": 1,
+        "adoptedByLeader": 1,
+        "officialHistoryPreserved": 1
+      }
+    },
+    {
+      "id": "g2-ac11",
+      "acceptanceId": "AC-11",
+      "status": "passed",
+      "initialRevision": {
+        "id": "g2-ac11",
+        "revision": 1,
+        "sha256": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee"
+      },
+      "hashes": {
+        "scenario": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee",
+        "environment": "6535e050e67b2cad2dbbab8ff813b0749dc9ece60b649909163e5079c9142392",
+        "journal": "360b69f0ae8a7e94d6704712cd47f978823de9d113a10d17ef37987e9c465a81"
+      },
+      "protocol": "acceptance/AC-11.json",
+      "metrics": {
+        "independentSessions": 2,
+        "domainEvents": 35,
+        "resourceConsumptionEvents": 1,
+        "orderCancellationEvents": 2,
+        "verifiedInfrastructure": 3
+      }
+    },
+    {
+      "id": "offline-ac12",
+      "acceptanceId": "AC-12",
+      "status": "passed",
+      "initialRevision": {
+        "id": "offline-ac12",
+        "revision": 1,
+        "sha256": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f"
+      },
+      "hashes": {
+        "scenario": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f",
+        "environment": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f",
+        "journal": "2f0dc444d76c7e20d21e0b34e84829eaee1339b0f8f6a891ee0d04fc287e8e00"
+      },
+      "protocol": "acceptance/AC-12.json",
+      "metrics": {
+        "networkRequestsOutsideFile": 0,
+        "firstSequence": 0,
+        "secondSequence": 1,
+        "hashChanged": 1
+      }
+    },
+    {
+      "id": "ac13-admin",
+      "acceptanceId": "AC-13",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac13-admin",
+        "revision": 1,
+        "sha256": "9f38f1e93fb0eca79c2ac99f424a0f5221293371514fadd5a0aa6b87a94a5664"
+      },
+      "hashes": {
+        "scenario": "9f38f1e93fb0eca79c2ac99f424a0f5221293371514fadd5a0aa6b87a94a5664",
+        "environment": "1b94cb1f343034fbfb6519861c0a53c6052f6ff2650de45ca8462bdf6e2cb90c",
+        "journal": "fb5d27122dd16539508bc84f52418ba38699a4f68223a014a1a1922bae0b1b15"
+      },
+      "protocol": "acceptance/AC-13.json",
+      "metrics": {
+        "technicalOverviewAllowed": 1,
+        "contentRejected": 1,
+        "backupVerified": 1,
+        "temporaryGrantUsed": 1,
+        "temporaryGrantRevoked": 1,
+        "expiredGrantRejected": 1
+      }
+    },
+    {
+      "id": "ac14-kshvi_ac14_a05fc10a483d490ba2ce92dc5af30f04",
+      "acceptanceId": "AC-14",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac14-kshvi_ac14_a05fc10a483d490ba2ce92dc5af30f04",
+        "revision": 1,
+        "sha256": "10aa884f8e54cbb995b009c1d1dd4fd2e276bd2a4c6b3dd72faa3a2f8e011110"
+      },
+      "hashes": {
+        "scenario": "10aa884f8e54cbb995b009c1d1dd4fd2e276bd2a4c6b3dd72faa3a2f8e011110",
+        "environment": "be40aa02145f08dd79be7dbae7496fe38ba417ce0d80778352d60aefa63d9680",
+        "journal": "92befa4bd52297715fbb2f03860ad46b8139774b56ab40d984f553e19b0cdd6e"
+      },
+      "protocol": "acceptance/AC-14.json",
+      "metrics": {
+        "deliveryP95Ms": 157.29583300001104,
+        "mapP95Ms": 156.8969169999982,
+        "confirmed": 1225,
+        "connections": 50,
+        "activeParticipants": 25,
+        "duplicateEffects": 0,
+        "orderingErrors": 0,
+        "burstMs": 60000.849875,
+        "exportJobsSucceeded": 20
+      }
+    },
+    {
+      "id": "ac15-weather",
+      "acceptanceId": "AC-15",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac15-weather",
+        "revision": 1,
+        "sha256": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e"
+      },
+      "hashes": {
+        "scenario": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+        "environment": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+        "journal": "03f8a3a9822af14790193fd02d7029bc14b3b3649a4255d94228ea3fc4327e10"
+      },
+      "protocol": "acceptance/AC-15.json",
+      "metrics": {
+        "knownWeatherQueries": 1,
+        "noDataResponses": 1,
+        "calculatedWithKnownFactor": 1,
+        "requiresReview": 1,
+        "substitutedUnitFactors": 0
+      }
+    },
+    {
+      "id": "ac16-recovery",
+      "acceptanceId": "AC-16",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac16-recovery",
+        "revision": 1,
+        "sha256": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d"
+      },
+      "hashes": {
+        "scenario": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d",
+        "environment": "5f3e80a7624f4be3f0c8105a81a3ed8fcc8d35cafb23b081f9d0c67b148fca9e",
+        "journal": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d"
+      },
+      "protocol": "acceptance/AC-16.json",
+      "metrics": {
+        "confirmedEvents": 1,
+        "duplicateEventsAfterRetry": 0,
+        "confirmedEventsLost": 0,
+        "restartMs": 6.59008399999999,
+        "nodeRestoreMs": 2.594333000000006,
+        "verifiedBackupFiles": 5,
+        "isolatedRestore": 1
+      }
+    },
+    {
+      "id": "ac17-handover",
+      "acceptanceId": "AC-17",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac17-handover",
+        "revision": 1,
+        "sha256": "a06d96eaeb59e391a4ebdcc4d7b07e669cd254243bc005581c4e11c475a557c2"
+      },
+      "hashes": {
+        "scenario": "a06d96eaeb59e391a4ebdcc4d7b07e669cd254243bc005581c4e11c475a557c2",
+        "environment": "3960d807e4b425a62970de37a80c0555a81401f97227bd6da6194fbdc5d14572",
+        "journal": "7f0cff1f3a4250595e1367485afc14307abfe81358de1c95aaf7ad40985c6b87"
+      },
+      "protocol": "acceptance/AC-17.json",
+      "metrics": {
+        "privilegedStoragePrefixesCleared": 2,
+        "serverLogoutStatus": 204,
+        "unauthorizedAfterLogout": 1,
+        "unrelatedWeatherRegionPreserved": 1
+      }
+    },
+    {
+      "id": "g2-ac18",
+      "acceptanceId": "AC-18",
+      "status": "passed",
+      "initialRevision": {
+        "id": "g2-ac18",
+        "revision": 1,
+        "sha256": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee"
+      },
+      "hashes": {
+        "scenario": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee",
+        "environment": "424e7fd369a35304b1b30e655a8937c1352e1615da73d000e62e29aa0862265e",
+        "journal": "b49419ff8a136d1b4631e8fb64e757ca48aa993cd93499cd41bdd6d7ba33918d"
+      },
+      "protocol": "acceptance/AC-18.json",
+      "metrics": {
+        "knownReactions": 1,
+        "unknownEscalations": 1,
+        "stageTransitions": 1,
+        "hiddenTraineeEvents": 2,
+        "automaticWinners": 0,
+        "preservedSnapshotHashes": 1
+      }
+    },
+    {
+      "id": "ac19-autonomy",
+      "acceptanceId": "AC-19",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac19-autonomy",
+        "revision": 1,
+        "sha256": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460"
+      },
+      "hashes": {
+        "scenario": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460",
+        "environment": "65744481cb6211f81abeed8f7cd1eae8c0816b00f845be207f14578207f9490f",
+        "journal": "cdebdcd593db43cf5d02ca7a160a40b485099a0a594ef5340cf8f7c89b969f96"
+      },
+      "protocol": "acceptance/AC-19.json",
+      "metrics": {
+        "independentProcesses": 2,
+        "probabilisticEvents": 12,
+        "zeroIntensityEvents": 0,
+        "preservedPlannedReactive": 2,
+        "officialOperations": 62,
+        "repeatedOperations": 0,
+        "replayedIntervals": 2,
+        "maximumCascadeDepth": 1,
+        "sealedProfileChangesRejected": 1,
+        "durableEvents": 1
+      }
+    },
+    {
+      "id": "kshvi-autonomous-events",
+      "acceptanceId": "AC-20",
+      "status": "passed",
+      "initialRevision": {
+        "id": "kshvi-autonomous-events",
+        "revision": 1,
+        "sha256": "14444c97839cd1cbcd3fe9d54ed2faec77dfdaba064737d508c8911a20ff6977"
+      },
+      "hashes": {
+        "scenario": "14444c97839cd1cbcd3fe9d54ed2faec77dfdaba064737d508c8911a20ff6977",
+        "environment": "bbfc97d6e9773705eae66d996ddc245e2961b39536254ff874b7e59c4b3a583d",
+        "journal": "9e0c75ad25b0fb64f092c788588adf0ce4f76bb18be366e4391590bd7a34ec36"
+      },
+      "protocol": "acceptance/AC-20.json",
+      "metrics": {
+        "templates": 240,
+        "distinctMechanisms": 240,
+        "categories": 12,
+        "successfulSuitableRehearsals": 240,
+        "rejectedUnsuitableRehearsals": 240,
+        "defectChecksRejected": 7,
+        "openCatalogIssues": 0
+      }
+    },
+    {
+      "id": "ac21-morale-threshold",
+      "acceptanceId": "AC-21",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac21-morale-threshold",
+        "revision": 1,
+        "sha256": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68"
+      },
+      "hashes": {
+        "scenario": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68",
+        "environment": "b4fb6dea4b8ffe3fe452dedf2d103caba535fa14deb5ad3028abded5ad7a41e7",
+        "journal": "805674547efaa0e51fafab91c9919899788a607823e2709fc758ace307fe6b05"
+      },
+      "protocol": "acceptance/AC-21.json",
+      "metrics": {
+        "executedWithHighMorale": 1,
+        "interruptedWithLowMorale": 1,
+        "commanderChoiceChanges": 1,
+        "orderProcessingDifferenceMinutes": 34.425,
+        "recoveryResourceEntries": 1,
+        "duplicateRecoveryConsumptions": 0,
+        "unknownReviews": 1
+      }
+    },
+    {
+      "id": "map-ac22",
+      "acceptanceId": "AC-22",
+      "status": "passed",
+      "initialRevision": {
+        "id": "map-ac22",
+        "revision": 11,
+        "sha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42"
+      },
+      "hashes": {
+        "scenario": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
+        "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "journal": "9f06cddc8ec3afacaa00fc9914a633fa51663048dd5a3015fdf605188a22bab5"
+      },
+      "protocol": "acceptance/AC-22.json",
+      "metrics": {
+        "importedMarkers": 10,
+        "validationErrorTypes": 5,
+        "blueProjectionMarkers": 9,
+        "redProjectionMarkers": 1,
+        "hiddenTruthMarkers": 1,
+        "serverApprovals": 1,
+        "sealedHashMatches": 1,
+        "archiveHashMatches": 1
+      }
+    },
+    {
+      "id": "ac23-plan",
+      "acceptanceId": "AC-23",
+      "status": "passed",
+      "initialRevision": {
+        "id": "ac23-plan",
+        "revision": 1,
+        "sha256": "8da806263c6f85559f7c531fd0fb9e2fc9ab49b0c1f441ed678d89458faf6549"
+      },
+      "hashes": {
+        "scenario": "8da806263c6f85559f7c531fd0fb9e2fc9ab49b0c1f441ed678d89458faf6549",
+        "environment": "969c26f76dcc4cb0b78518bef4c6ecea8b3b1ebd044576d7340c337cb93e6ae7",
+        "journal": "678d03d755a918b258f413028835bd684e01f971a9f8170f500028a7c26c5db3"
+      },
+      "protocol": "acceptance/AC-23.json",
+      "metrics": {
+        "rejectedCapacityIssues": 2,
+        "allocatedQuantity": 50,
+        "sentQuantity": 40,
+        "deliveredQuantity": 40,
+        "inTransitAfterDelivery": 0,
+        "deficit": 5,
+        "ledgerEntries": 5,
+        "repairedEquipment": 1,
+        "partialFormation": 1
+      }
+    },
+    {
+      "id": "readiness-ac24",
+      "acceptanceId": "AC-24",
+      "status": "passed",
+      "initialRevision": {
+        "id": "readiness-ac24",
+        "revision": 1,
+        "sha256": "b7f789c7c5ca95ebdd6a5ef991bdfcddd8e518a6e3ed5d901e39a6c3a756e36a"
+      },
+      "hashes": {
+        "scenario": "b7f789c7c5ca95ebdd6a5ef991bdfcddd8e518a6e3ed5d901e39a6c3a756e36a",
+        "environment": "7646575fe648a2e8e5022a75c5ef7f9dad8fe510d8d21502f05538401cef2fcd",
+        "journal": "88c6232dd318825c13cc0f827dcb1e83db81db83d055053345a2d7f033fc21fc"
+      },
+      "protocol": "acceptance/AC-24.json",
+      "metrics": {
+        "forcesWithPartialReadiness": 3,
+        "blockedBeforeAuthorization": 3,
+        "authorizedTransitions": 3,
+        "readyDistanceMeters": 600,
+        "signalDelayMinutes": 20,
+        "personnelEquipmentDistanceMeters": 297,
+        "supplyAreaDistanceMeters": 240,
+        "duplicateAuthorizationsApplied": 0
+      }
+    },
+    {
+      "id": "agent-1",
+      "acceptanceId": "AC-25",
+      "status": "passed",
+      "initialRevision": {
+        "id": "agent-1",
+        "revision": 1,
+        "sha256": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406"
+      },
+      "hashes": {
+        "scenario": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406",
+        "environment": "9acad94decf986b1a3b91f37bebb26aa0d036938b7fc05a862a5f8d8e221a6d0",
+        "journal": "dc7e54fb19deb9f6d3c0e8fff3d5a3b5df6bef132609796b5113a4fdd8014075"
+      },
+      "protocol": "acceptance/AC-25.json",
+      "metrics": {
+        "delegatedInstances": 3,
+        "completedCycles": 2,
+        "escalatedCycles": 1,
+        "systemEvents": 21,
+        "forbiddenEffects": 0,
+        "duplicateEffects": 0,
+        "humanOverrides": 1,
+        "replayHashMatches": 1
+      }
+    },
+    {
+      "id": "equipment-knowledge-ac26",
+      "acceptanceId": "AC-26",
+      "status": "passed",
+      "initialRevision": {
+        "id": "equipment-knowledge-ac26",
+        "revision": 1,
+        "sha256": "30ad58de39facdbe43bba0d513597b2db66e4b2ce3f88334a44c3c0684eae6f5"
+      },
+      "hashes": {
+        "scenario": "30ad58de39facdbe43bba0d513597b2db66e4b2ce3f88334a44c3c0684eae6f5",
+        "environment": "e6df178eb8b973236527ae3a6f50f2d3b46d356b6973ce51cf5a0dcb0214f2ae",
+        "journal": "5e44d73856b0079d6c33243cf2a0f45e7af48fb3de5d584dc719ef0fb78bd0df"
+      },
+      "protocol": "acceptance/AC-26.json",
+      "metrics": {
+        "independentSourceCopies": 2,
+        "sourceRecordUnchanged": 1,
+        "constructorCopies": 1,
+        "requiredUnknownReviews": 2,
+        "initiallyAllowedTasks": 1,
+        "damagedTasksBlocked": 1,
+        "repairedTasksAllowed": 1,
+        "repairResourceRemaining": 0,
+        "duplicateAllocations": 0
+      }
+    },
+    {
+      "id": "modern-opponent-ac27",
+      "acceptanceId": "AC-27",
+      "status": "passed",
+      "initialRevision": {
+        "id": "modern-opponent-ac27",
+        "revision": 1,
+        "sha256": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4"
+      },
+      "hashes": {
+        "scenario": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4",
+        "environment": "e2cefdcd1a9acb892257edfe716aa0f748fc14a2799a3f9fe406fbf076cb86f4",
+        "journal": "403fae1e43ccb1305b13641f8ca01e908adc19af21ab982362d0a6bd16f0e8f8"
+      },
+      "protocol": "acceptance/AC-27.json",
+      "metrics": {
+        "realRustEvaluations": 4,
+        "sameSeedTraceMatches": 1,
+        "hiddenTruthTraceMatches": 1,
+        "observationChangedChoice": 1,
+        "systemCommands": 1,
+        "duplicateOfficialEffects": 0,
+        "isolatedForksDestroyed": 4,
+        "replayMatches": 1
+      }
+    },
+    {
+      "id": "official-archive-1",
+      "acceptanceId": "AC-28",
+      "status": "passed",
+      "initialRevision": {
+        "id": "official-archive-1",
+        "revision": 1,
+        "sha256": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0"
+      },
+      "hashes": {
+        "scenario": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0",
+        "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "journal": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4"
+      },
+      "protocol": "acceptance/AC-28.json",
+      "metrics": {
+        "randomOutcomesCreated": 4,
+        "agentRequests": 10,
+        "seekWorldMatches": 2,
+        "audienceForbiddenFields": 0,
+        "mapLayers": 4
+      }
+    },
+    {
+      "id": "kshvi-terrain-hydrology-training",
+      "acceptanceId": "AC-29",
+      "status": "passed",
+      "initialRevision": {
+        "id": "kshvi-terrain-hydrology-training",
+        "revision": 1,
+        "sha256": "ccc5273a69dbd9d23e29dbaf2b5319103524f2b5c80440d0ae6143a374e78804"
+      },
+      "hashes": {
+        "scenario": "ccc5273a69dbd9d23e29dbaf2b5319103524f2b5c80440d0ae6143a374e78804",
+        "environment": "93f5afad39d4ac0f4d82fd65c23276b6bd71d2c145ec11b806238f01227847af",
+        "journal": "745a5873fe219e25ccde7d94ee6f753194138b92d55b6f24fb0d6a5d5a7f81a0"
+      },
+      "protocol": "acceptance/AC-29.json",
+      "metrics": {
+        "terrainEvents": 37,
+        "repeatedTerrainEffects": 0,
+        "queuedColumns": 2,
+        "additionalRouteMinutes": 180,
+        "preservedTravelledMeters": 2000,
+        "hiddenChangesBeforeObservation": 1,
+        "unknownWeatherReviews": 1,
+        "domainProcessesCalled": 4
+      }
+    }
+  ]
+}

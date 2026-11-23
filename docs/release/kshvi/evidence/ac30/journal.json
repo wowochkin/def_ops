@@ -1,0 +1,25 @@
+{
+  "runId": "ac30-human-review",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ packages/tactical-symbols/tests/browser-entry.test.ts (1 test) 1ms\n ✓ packages/tactical-symbols/tests/review-fixes.test.ts (3 tests) 3ms\n ✓ packages/tactical-symbols/tests/rendering.test.ts (11 tests) 5ms\n ✓ packages/tactical-symbols/tests/source-registry.test.ts (5 tests) 33ms\n\n Test Files  4 passed (4)\n      Tests  20 passed (20)\n   Start at  23:17:00\n   Duration  165ms (transform 62%, import 22%, tests 14%, worker 2%)\n\n",
+  "archiveSha256": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331",
+  "coverage": {
+    "documents": 29,
+    "fonts": 2,
+    "fragments": 83,
+    "documentsWithFragments": 29,
+    "missingDocuments": [],
+    "uncoveredTopics": [],
+    "unmappedFragments": 83,
+    "status": "PARTIAL",
+    "gaps": [
+      "Реестр содержит страничные фрагменты, а не доказанный перечень всех отдельных знаков.",
+      "Номер отдельного знака и его правило не сопоставляются автоматически; требуется ручная пообъектная сверка.",
+      "Наличие документа в архиве не подтверждает современную нормативную полноту или действующую редакцию.",
+      "Статус IMPORTED не означает векторный перенос, визуальную сверку или методическое утверждение."
+    ]
+  },
+  "derived": {
+    "checked": 83
+  }
+}

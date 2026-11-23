@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac17-handover.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:06:32.664Z\",\"service\":\"kshvi-ac17\",\"level\":\"info\",\"msg\":\"listening on :51334\"}\n{\"t\":\"2026-11-23T21:06:32.695Z\",\"service\":\"kshvi-ac17\",\"level\":\"info\",\"requestId\":\"b899444d-61c0-42ce-ac1b-01b7130f738a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/login\",\"status\":200,\"ms\":23}\n{\"t\":\"2026-11-23T21:06:32.699Z\",\"service\":\"kshvi-ac17\",\"level\":\"info\",\"requestId\":\"da539d47-dbb5-4fbd-97bd-f7c88221f795\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/role\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:32.700Z\",\"service\":\"kshvi-ac17\",\"level\":\"info\",\"requestId\":\"a504fd0d-ad47-411d-83b5-b9fa50e66551\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/auth/logout\",\"status\":204,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:32.700Z\",\"service\":\"kshvi-ac17\",\"level\":\"info\",\"requestId\":\"1985e3f3-9d59-443c-9282-ebb0a11a2fa2\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/auth/me\",\"status\":401,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac17-handover.test.ts (1 test) 895ms\n   ✓ AC-17: UI очищает устройство, а сервер отзывает прежнюю сессию 895ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:29\n   Duration  2.99s (transform 51%, tests 30%, import 18%)\n\n",
+  "initialRevision": {
+    "id": "ac17-handover",
+    "revision": 1,
+    "sha256": "a06d96eaeb59e391a4ebdcc4d7b07e669cd254243bc005581c4e11c475a557c2"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac17/journal.json",
+    "sha256": "7f0cff1f3a4250595e1367485afc14307abfe81358de1c95aaf7ad40985c6b87",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "a06d96eaeb59e391a4ebdcc4d7b07e669cd254243bc005581c4e11c475a557c2",
+    "environment": "3960d807e4b425a62970de37a80c0555a81401f97227bd6da6194fbdc5d14572",
+    "journal": "7f0cff1f3a4250595e1367485afc14307abfe81358de1c95aaf7ad40985c6b87"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac17/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "privilegedStoragePrefixesCleared": 2,
+    "serverLogoutStatus": 204,
+    "unauthorizedAfterLogout": 1,
+    "unrelatedWeatherRegionPreserved": 1
+  },
+  "limitations": [
+    "Очистка IndexedDB проверена на совместимом mock; физическая диагностика кэшей устройства выполняется на целевом стенде."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac17/journal.json",
+    "docs/release/kshvi/evidence/ac17/protocol.txt",
+    "docs/release/kshvi/evidence/ac17/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-17.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

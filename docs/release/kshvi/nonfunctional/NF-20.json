@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "id": "NF-20",
   "status": "passed",
-  "startedAt": "2026-11-22T00:45:26.554Z",
-  "finishedAt": "2026-11-22T00:45:27.110Z",
-  "commit": "48b11b209f824fa6d12eed0fabfd084c32d5ba89",
+  "startedAt": "2026-11-23T21:08:23.925Z",
+  "finishedAt": "2026-11-23T21:08:24.532Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "command": "npx vitest run services/kshvi/tests/observability.test.ts",
   "tests": [
     "services/kshvi/tests/observability.test.ts"
   ],
   "externalEvidence": null,
   "limitations": [],
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-quality\n\n ✓ services/kshvi/tests/observability.test.ts (4 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  03:45:26\n   Duration  73ms (transform 55%, import 26%, tests 14%, worker 5%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/observability.test.ts (4 tests) 4ms\n\n Test Files  1 passed (1)\n      Tests  4 passed (4)\n   Start at  00:08:24\n   Duration  89ms (transform 57%, import 25%, tests 12%, worker 5%)\n\n",
   "artifacts": [
-    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-quality/docs/release/kshvi/nonfunctional/NF-20.json"
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-20.json"
   ],
   "openErrors": []
 }

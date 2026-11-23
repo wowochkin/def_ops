@@ -1,0 +1,31 @@
+{
+  "initialRevision": {
+    "id": "ac05-inputs",
+    "revision": 1,
+    "sha256": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c"
+  },
+  "scenario": {
+    "delegation": {
+      "allowedSeverities": [
+        1
+      ],
+      "allowedAreas": [
+        "area-A"
+      ],
+      "allowedStages": [
+        "stage-1"
+      ],
+      "allowEffects": true
+    },
+    "inputs": [
+      "planned-1",
+      "reactive-1",
+      "adaptive-inside",
+      "adaptive-outside"
+    ],
+    "cycle": [
+      "A",
+      "B"
+    ]
+  }
+}

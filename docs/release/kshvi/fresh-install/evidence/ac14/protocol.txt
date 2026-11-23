@@ -1,0 +1,6 @@
+AC-14: официальный нагрузочный контур завершён.
+runId: 9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf
+commit: 11ab4de1f4cb188976ca9f5c508d601b95273f45
+События: 10000 seed + 1225 live; SSE-кадры: 2450.
+Метрики: {"connections":50,"activeParticipants":25,"deliveryP95Ms":157.29583300001104,"mapP95Ms":156.8969169999982,"confirmedLost":0,"duplicateEffects":0,"orderingErrors":0,"deliveryMissing":0,"sustained":{"targetRate":5,"achievedRate":4.998299911256965,"durationSeconds":5.001700666999999,"commands":25},"burst":{"targetRate":20,"achievedRate":19.999716712345986,"durationSeconds":60.000849875,"commands":1200},"dataset":{"instances":100,"forces":1000,"observationFixtures":2000,"events":10000},"heavyJobs":{"attempted":20,"completed":20,"maxRunning":2,"duringBurst":12,"kinds":["EXPORT","ARCHIVE","MASS_CALCULATION","BULK_REPLAY"]},"burstMs":60000.849875}
+Ограничения: Физическая LAN 1 Гбит/с и локальный NTP не проверены; измерения относятся к loopback-стенду.

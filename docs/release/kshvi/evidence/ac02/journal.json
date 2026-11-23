@@ -1,21 +1,21 @@
 {
-  "runId": "f6f26907-bc09-4156-b4c9-7b8126d6b44b",
-  "commit": "d25e2b219a01eaa132a62df5f86e8fe277e2d035",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "events": [
     {
-      "eventId": "82e9bb74-896b-4f77-bb2b-10ec6c33a925",
+      "eventId": "2a17c3ce-385d-46cf-9014-8a5cb95cb1d6",
       "organizationId": "org-ac02",
       "instanceId": "ac02",
       "branchId": "main",
       "sequence": 1,
       "type": "environment.bound.v1",
       "schemaVersion": 1,
-      "wallClockAt": "2026-11-22T21:45:42.697Z",
+      "wallClockAt": "2026-11-23T20:15:20.602Z",
       "operationalAt": {
         "zone": "UTC",
         "offset": "+00:00",
-        "originalAt": "2026-11-22T21:45:42.697Z",
-        "normalizedAt": "2026-11-22T21:45:42.697Z"
+        "originalAt": "2026-11-23T20:15:20.602Z",
+        "normalizedAt": "2026-11-23T20:15:20.602Z"
       },
       "actor": {
         "id": "director",
@@ -27,7 +27,7 @@
       "versions": {},
       "reducerVersion": 1,
       "payload": {
-        "at": "2026-11-22T21:45:42.697Z",
+        "at": "2026-11-23T20:15:20.602Z",
         "causedBy": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
         "commandId": "bind-environment",
         "recipients": [
@@ -40,11 +40,11 @@
         "manifestSha256": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92"
       },
       "prevHash": null,
-      "hash": "7b0eb18af18cee1bd005e2974485772ab41d9936acb9104751e9f27f70628f7a",
+      "hash": "78768db74dbfc140eaadaa22decb690c7f3f380aec591b7c26f4f587c93c2366",
       "hashVersion": 2
     },
     {
-      "eventId": "af646c99-6a54-493a-9ed1-dd66c26b34a5",
+      "eventId": "36cb5217-cb76-4a86-9bf7-60e06dca5901",
       "organizationId": "org-ac02",
       "instanceId": "ac02",
       "branchId": "main",
@@ -101,8 +101,8 @@
         "commandType": "weather.change",
         "effectiveAt": "2026-01-01T01:00:00.000Z"
       },
-      "prevHash": "7b0eb18af18cee1bd005e2974485772ab41d9936acb9104751e9f27f70628f7a",
-      "hash": "f45d9efadfee98b2526c35b12459a16c93ecfdf8668e81aa9e3ee9f2a140e854",
+      "prevHash": "78768db74dbfc140eaadaa22decb690c7f3f380aec591b7c26f4f587c93c2366",
+      "hash": "beafb990a0c216873074ce80ae5bb19872e8bb68c31e86d3a1ba02e45948fc55",
       "hashVersion": 2
     }
   ]

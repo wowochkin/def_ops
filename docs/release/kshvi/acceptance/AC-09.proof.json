@@ -1,6 +1,6 @@
 {
-  "runId": "a17c63c5-8a8a-4cb0-bb09-c2ae3b51412f",
-  "commit": "6885dd7d165952073c921f1e7020a87825ece9f1",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "initialRevision": {
     "id": "ac09-reconnect",
     "revision": 1,
@@ -8,13 +8,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac09/journal.json",
-    "sha256": "be78dd835be1dcf3c5ab661cf228a84a9d49485ef969ddeac6c4adc90d4af1c0",
+    "sha256": "11b48349fd0149ca495028bd0a044f9a4217c8f23b7fa5c05999ce593897444c",
     "eventCount": 2
   },
   "hashes": {
     "scenario": "0eadd0d7bc28a48eeb0449a1e699660d74fed00bfa3c1501b3bf516f35378b36",
     "environment": "d8a52a33aeacb6dc9990c87d38b73ff39baf9d763a3f6020bb4a2cd60ff20d48",
-    "journal": "be78dd835be1dcf3c5ab661cf228a84a9d49485ef969ddeac6c4adc90d4af1c0"
+    "journal": "11b48349fd0149ca495028bd0a044f9a4217c8f23b7fa5c05999ce593897444c"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac09/protocol.txt"

@@ -1,0 +1,40 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac08-replay",
+    "revision": 1,
+    "sha256": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac08/journal.json",
+    "sha256": "5a398cfacafdbd7727758de99db019eab8e266f3d3081bc5d121ffc919ced9ec",
+    "eventCount": 3
+  },
+  "hashes": {
+    "scenario": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac",
+    "environment": "0493a27c17a0bde42bbd2df9bd458dc74eeea7ef2be0a6080ac51adb743e55df",
+    "journal": "5a398cfacafdbd7727758de99db019eab8e266f3d3081bc5d121ffc919ced9ec"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac08/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "stateHashMatches": 3,
+    "selectedOutcomeMatches": 3,
+    "idempotentReplays": 1,
+    "browserClients": 1,
+    "workerClients": 2
+  },
+  "limitations": [
+    "Chromium проверен в headless-режиме; Firefox отдельно не запускается в текущем окружении."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac08/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac08/journal.json",
+    "docs/release/kshvi/evidence/ac08/protocol.txt",
+    "docs/release/kshvi/evidence/ac08/metrics.json",
+    "docs/release/kshvi/evidence/ac08/environment.json"
+  ]
+}

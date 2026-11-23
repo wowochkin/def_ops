@@ -1,0 +1,6 @@
+{
+  "transport": "HTTP",
+  "dualChain": true,
+  "cascadeLegs": 2,
+  "exportVerified": true
+}

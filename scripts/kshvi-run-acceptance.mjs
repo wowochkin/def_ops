@@ -103,7 +103,7 @@ export function acceptanceEvidenceIssues(proof, fileExists = existsSync, freshne
 export async function runAcceptance({ from = 1, to = 30, reverse = false, evidence = 'docs/release/kshvi/acceptance', fileExists = existsSync, runner = defaultRunner, currentCommit, writeEvidence = true, freshInstall = false, offline = false, cwd = process.cwd(), runId = randomUUID() }) {
   const files = acceptanceFiles(from, to);
   if (reverse) files.reverse();
-  if (writeEvidence) mkdirSync(evidence, { recursive: true });
+  if (writeEvidence) mkdirSync(resolve(cwd, evidence), { recursive: true });
   const commit = currentCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   let status = 0;
   const results = [];
@@ -114,7 +114,7 @@ export async function runAcceptance({ from = 1, to = 30, reverse = false, eviden
     const proofIssues = result.status === 0 ? acceptanceEvidenceIssues(result.evidence, path => fileExists(resolve(cwd, path)), { runId, commit }) : [];
     const passed = result.status === 0 && proofIssues.length === 0;
     if (!passed) status = 1;
-    const evidencePath = resolve(evidence, `${file.id}.json`);
+    const evidencePath = resolve(cwd, evidence, `${file.id}.json`);
     const openErrors = result.status !== 0 ? [result.output || 'Сценарий не прошёл'] : proofIssues;
     const record = {
       status: passed ? 'passed' : 'failed', commit, runId, command: `npx vitest run ${file.path}`, output: result.output,
@@ -124,6 +124,7 @@ export async function runAcceptance({ from = 1, to = 30, reverse = false, eviden
       openErrors,
     };
     if (writeEvidence) writeFileSync(evidencePath, `${JSON.stringify(record, null, 2)}\n`);
+    console.log(`${file.id}: ${record.status}${openErrors.length ? ` (${openErrors.length} ошибок)` : ''}`);
     results.push({ id: file.id, status: record.status, output: result.output, openErrors });
   }
   return { status, results };
@@ -272,6 +273,7 @@ if (invokedPath && invokedPath === fileURLToPath(import.meta.url)) {
     const generic = options.generic ? await runAcceptance({ ...options, cwd: executionRoot, currentCommit, writeEvidence: options.writeGenericEvidence }) : { status: 0, results: [] };
     const fullGeneric = options.from === 1 && options.to === 30;
     const g2 = options.g2 ? runG2({ cwd: executionRoot, currentCommit, requireComplete: options.requireComplete, genericStatus: generic.status || !fullGeneric ? 1 : 0 }) : { status: 0 };
+    console.log(`Приёмка: generic=${generic.status}, G2=${g2.status}, fresh=${executionRoot}, прежний exitCode=${process.exitCode ?? 'none'}`);
     process.exitCode = generic.status || g2.status;
   } catch (error) {
     console.error(`Приёмка КШВИ остановлена: ${error instanceof Error ? error.message : String(error)}`);

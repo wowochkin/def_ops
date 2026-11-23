@@ -26,6 +26,7 @@ const episode = {
 const passport = { purpose: 'Движение с учётом погоды', limitations: ['Только учебный расчёт'], source: { kind: 'ASSUMPTION' as const, note: 'Учебная модель', applicability: 'AC-15' }, knownErrors: [], examples: [{ input: 1, expected: 1 }], approvedBy: 'Методист', version: 1 };
 
 it('AC-15: пробел погоды возвращает NO_DATA и REQUIRES_REVIEW вместо коэффициента 1', { timeout: 30_000 }, async () => {
+  await mkdir('.tmp', { recursive: true });
   const root = await mkdtemp(join('.tmp', 'ac15-environment-'));
   roots.push(root);
   const provider = new CartographyEnvironmentProvider({ baseUrl: 'http://cartography.test/cartography', store: new EnvironmentSnapshotStore(join(root, 'snapshots')), fetch: async input => {

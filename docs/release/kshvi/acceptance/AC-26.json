@@ -1,9 +1,9 @@
 {
   "status": "passed",
-  "commit": "d231e9c5da194278d637c64db96374404b792d5e",
-  "runId": "81636d41-bc89-4cb7-a935-b1ac6729c7b9",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
   "command": "npx vitest run services/kshvi/tests/acceptance/ac26-equipment-knowledge.test.ts",
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n{\"t\":\"2026-11-23T19:38:59.032Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"msg\":\"listening on :59625\"}\n{\"t\":\"2026-11-23T19:38:59.040Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"6609e07e-9724-4229-b52e-25a5d13854d3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/forces/import\",\"status\":201,\"ms\":1}\n{\"t\":\"2026-11-23T19:38:59.043Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"417af001-cff0-4d20-be55-b25d972d4a8f\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/forces/import\",\"status\":201,\"ms\":0}\n{\"t\":\"2026-11-23T19:38:59.045Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"3ba965b0-b79d-4a30-b9fa-8cf463c33237\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/forces/import\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac26-equipment-knowledge.test.ts (1 test) 2924ms\n   ✓ AC-26: серверные копии современной базы и конструктора сохраняют происхождение, а ремонт восстанавливает возможность 2923ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  22:38:54\n   Duration  4.36s (tests 68%, transform 23%, import 9%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n{\"t\":\"2026-11-23T20:55:41.337Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"msg\":\"listening on :60146\"}\n{\"t\":\"2026-11-23T20:55:41.345Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"954575e9-5c99-479c-a9a7-19bc29faaaaa\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/forces/import\",\"status\":201,\"ms\":1}\n{\"t\":\"2026-11-23T20:55:41.348Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"8d8a8321-d422-414e-a140-9b6da6d7743e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/forces/import\",\"status\":201,\"ms\":0}\n{\"t\":\"2026-11-23T20:55:41.349Z\",\"service\":\"kshvi-ac26\",\"level\":\"info\",\"requestId\":\"7792127f-0bbf-4367-97c7-6cf4cf6046c4\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/forces/import\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac26-equipment-knowledge.test.ts (1 test) 2856ms\n   ✓ AC-26: серверные копии современной базы и конструктора сохраняют происхождение, а ремонт восстанавливает возможность 2856ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:55:37\n   Duration  4.25s (tests 68%, transform 23%, import 9%)\n\n",
   "initialRevision": {
     "id": "equipment-knowledge-ac26",
     "revision": 1,
@@ -11,13 +11,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac26/journal.json",
-    "sha256": "bd1aad3649e7891df5aa9d3a434e61bc51c4555ce80a4f6fa6a4ac4cf991a4ca",
+    "sha256": "1b2c056e2deb52a3218fe629d65c17dd7a12bc8a32af36b0291b93f81ee9c474",
     "eventCount": 6
   },
   "hashes": {
     "scenario": "30ad58de39facdbe43bba0d513597b2db66e4b2ce3f88334a44c3c0684eae6f5",
     "environment": "e6df178eb8b973236527ae3a6f50f2d3b46d356b6973ce51cf5a0dcb0214f2ae",
-    "journal": "bd1aad3649e7891df5aa9d3a434e61bc51c4555ce80a4f6fa6a4ac4cf991a4ca"
+    "journal": "1b2c056e2deb52a3218fe629d65c17dd7a12bc8a32af36b0291b93f81ee9c474"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac26/protocol.txt"
@@ -44,8 +44,8 @@
     "docs/release/kshvi/evidence/ac26/metrics.json",
     "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-26.json"
   ],
-  "freshInstall": false,
+  "freshInstall": true,
   "offline": true,
-  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
   "openErrors": []
 }

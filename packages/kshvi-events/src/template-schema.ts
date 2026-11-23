@@ -1,4 +1,4 @@
-import schema from '../schemas/event-template.schema.json';
+import schema from '../schemas/event-template.schema.json' with { type: 'json' };
 import type { ValidationIssue } from './model/event-template';
 
 export const eventTemplateSchema = schema;

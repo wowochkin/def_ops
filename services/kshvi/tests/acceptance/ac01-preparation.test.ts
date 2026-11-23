@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, it } from 'vitest';
 import { addInitialMapMarker, approveInitialMap, createInitialSituationMap, hashCanonical, READINESS_AREAS, REHEARSAL_CHECKS, type SealScenarioInput } from '@def-ops/kshvi';
 import { SealingService } from '../../src/instances/sealing-service';
@@ -64,4 +66,31 @@ it('AC-01: подготовка и фиксация многоступенчат
   expect(second.seed).not.toBe(first.seed);
   expect(first.scenarioSha256).toBe(second.scenarioSha256);
   expect(scenarioView.mapZoom).toBe(8);
+
+  const runId = process.env.KSHVI_ACCEPTANCE_RUN_ID;
+  if (!runId) return;
+  const directory = 'docs/release/kshvi/evidence/ac01';
+  await mkdir(directory, { recursive: true });
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const journalPath = `${directory}/journal.json`;
+  const protocolPath = `${directory}/protocol.txt`;
+  const metricsPath = `${directory}/metrics.json`;
+  const journal = { runId, commit, sealed, sessions: { first, repeated, second } };
+  const journalSha256 = hashCanonical(journal);
+  const metrics = {
+    sealedRevisions: 1, independentSessions: 2, repeatedSessionReused: repeated.id === first.id ? 1 : 0,
+    readinessConfirmations: sealed.confirmations.length, rehearsalPassed: sealed.rehearsal.status === 'PASSED' ? 1 : 0,
+  };
+  await writeFile(journalPath, JSON.stringify(journal, null, 2));
+  await writeFile(metricsPath, JSON.stringify(metrics, null, 2));
+  await writeFile(protocolPath, `AC-01 завершён\nrunId: ${runId}\ncommit: ${commit}\nМногоступенчатое учение запечатано; карта и среда связаны хешами; репетиция и персональные подтверждения проверены; два независимых сеанса созданы; повтор первого запуска идемпотентен.\n`);
+  await writeFile('docs/release/kshvi/acceptance/AC-01.proof.json', JSON.stringify({
+    runId, commit,
+    initialRevision: { id: sealed.id, revision: sealed.revision, sha256: sealed.scenarioSha256 },
+    journal: { path: journalPath, sha256: journalSha256, eventCount: 3 },
+    hashes: { scenario: sealed.scenarioSha256, environment: sealed.environmentSnapshot.manifestSha256, journal: journalSha256 },
+    protocols: [protocolPath], screenshots: [], metrics,
+    limitations: ['Сценарная фиксация и независимость сеансов подтверждены; физическая чистая установка и распределённые рабочие места проверяются отдельно.'],
+    artifacts: [journalPath, protocolPath, metricsPath],
+  }, null, 2));
 });

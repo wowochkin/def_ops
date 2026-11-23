@@ -2,7 +2,8 @@ import { fork, type ChildProcess } from 'node:child_process';
 
 export type HeavyOperation =
   | { kind: 'CPU_WORK'; iterations: number }
-  | { kind: 'COPY_FILE'; source: string; destination: string };
+  | { kind: 'COPY_FILE'; source: string; destination: string }
+  | { kind: 'DOMAIN_WORK'; domainKind: 'EXPORT' | 'ARCHIVE' | 'MASS_CALCULATION' | 'REPLAY'; inputPath: string };
 export type HeavyJob = Readonly<{
   id: string;
   kind: 'EXPORT' | 'ARCHIVE' | 'MASS_CALCULATION' | 'REPLAY';
@@ -13,7 +14,10 @@ export type HeavyJob = Readonly<{
 }>;
 export type HeavyJobResult = Readonly<{
   status: 'SUCCEEDED';
-  result: { pid: number; iterations?: number; bytes?: number; cpuUsage: { userMs: number; systemMs: number } };
+  result: {
+    pid: number; iterations?: number; bytes?: number; cpuUsage: { userMs: number; systemMs: number };
+    kind?: HeavyJob['kind']; rows?: number; sha256?: string; checksum?: number; orderingErrors?: number;
+  };
 }>;
 type JobRecord = {
   job: HeavyJob;

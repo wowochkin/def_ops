@@ -34,6 +34,7 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 
 it('AC-07: пауза, ускорение и скачок сохраняют мир и запрещают обратное время', async () => {
   await withKshviDatabase(async store => {
+    await mkdir('.tmp', { recursive: true });
     const root = await mkdtemp(path.join('.tmp', 'ac07-time-'));
     roots.push(root);
     const fetcher: typeof fetch = async (input, init) => {

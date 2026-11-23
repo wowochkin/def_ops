@@ -1,0 +1,627 @@
+{
+  "expectedDefectCodes": [
+    "DUPLICATE_MECHANISM",
+    "MISSING_PROVENANCE",
+    "UNKNOWN_EFFECT",
+    "NEGATIVE_RESOURCE",
+    "CASCADE_CYCLE",
+    "MISSING_COMPENSATION",
+    "UNSUITABLE_STATE_ACCEPTED"
+  ],
+  "actualIssueCodes": [
+    "CASCADE_CYCLE",
+    "CATALOG_MINIMUM",
+    "COMPENSATION_TARGET",
+    "DUPLICATE_MECHANISM",
+    "MISSING_COMPENSATION",
+    "MISSING_PROVENANCE",
+    "NEGATIVE_RESOURCE",
+    "UNKNOWN_EFFECT",
+    "UNSUITABLE_STATE_ACCEPTED"
+  ],
+  "report": {
+    "reportVersion": 1,
+    "schemaVersion": "1.0.0",
+    "catalogVersion": "unmanifested",
+    "effectContractVersion": "kshvi-domain-effects-v1",
+    "valid": false,
+    "requirements": {
+      "minimum": 9,
+      "perCategory": 0
+    },
+    "totalTemplates": 9,
+    "approvedTemplates": 9,
+    "approvedDistinct": 2,
+    "requiredCategories": [
+      {
+        "category": "CONTROL",
+        "file": "control.json",
+        "total": 9,
+        "approved": 3,
+        "approvedDistinct": 2
+      },
+      {
+        "category": "RECONNAISSANCE",
+        "file": "reconnaissance.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "MANEUVER",
+        "file": "maneuver.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "COMBAT",
+        "file": "combat.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "ENGINEERING",
+        "file": "engineering.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "ENVIRONMENT",
+        "file": "environment.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "LOGISTICS",
+        "file": "logistics.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "MAINTENANCE",
+        "file": "maintenance.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "PERSONNEL",
+        "file": "personnel.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "MEDICAL",
+        "file": "medical.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "SETTLEMENTS",
+        "file": "settlements.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      },
+      {
+        "category": "INTERACTION",
+        "file": "interaction.json",
+        "total": 0,
+        "approved": 0,
+        "approvedDistinct": 0
+      }
+    ],
+    "duplicateMechanisms": [
+      {
+        "hash": "2508e39b1b51d616b0353ae89c9e33a0890efa9a3e4062168f708b0388223339",
+        "templateIds": [
+          "control-01-channel-queue",
+          "defect-numeric-clone"
+        ]
+      }
+    ],
+    "mechanismFingerprints": [
+      {
+        "templateId": "control-01-channel-queue",
+        "category": "CONTROL",
+        "file": "control.json",
+        "hash": "2508e39b1b51d616b0353ae89c9e33a0890efa9a3e4062168f708b0388223339"
+      },
+      {
+        "templateId": "defect-cycle-a",
+        "category": "CONTROL",
+        "file": "control.json",
+        "hash": "f2487a7cae21d3720be015e97c5933e0e4b70709f7393e3b770334749fe6fc75"
+      },
+      {
+        "templateId": "defect-numeric-clone",
+        "category": "CONTROL",
+        "file": "control.json",
+        "hash": "2508e39b1b51d616b0353ae89c9e33a0890efa9a3e4062168f708b0388223339"
+      }
+    ],
+    "rehearsals": [
+      {
+        "templateId": "control-01-channel-queue",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "control-01-channel-queue"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "control-01-channel-queue"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "control-01-channel-queue"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "control-01-channel-queue"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "control-01-channel-queue"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-numeric-clone",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-numeric-clone"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-numeric-clone"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-numeric-clone"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-numeric-clone"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-numeric-clone"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-missing-provenance",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-missing-provenance"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-missing-provenance"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-missing-provenance"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-missing-provenance"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-missing-provenance"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-unknown-effect",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-unknown-effect"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-unknown-effect"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-unknown-effect"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-unknown-effect"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-unknown-effect"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-negative-resource",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-negative-resource"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-negative-resource"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-negative-resource"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-negative-resource"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-negative-resource"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-cycle-a",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-cycle-a"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-cycle-a"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-cycle-a"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-cycle-a"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-cycle-a"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-cycle-b",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-cycle-b"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-cycle-b"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-cycle-b"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-cycle-b"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-cycle-b"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-missing-compensation",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-missing-compensation"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-missing-compensation"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-missing-compensation"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-missing-compensation"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-missing-compensation"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "REJECTED",
+          "applicable": false,
+          "reasonCode": "PRECONDITION_FAILED",
+          "failedPreconditions": [
+            {
+              "fact": "communication.primary_channel.queue_state",
+              "code": "PRECONDITION_FALSE"
+            }
+          ],
+          "evidence": []
+        }
+      },
+      {
+        "templateId": "defect-bad-rehearsal",
+        "file": "control.json",
+        "suitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-bad-rehearsal"
+            }
+          ]
+        },
+        "unsuitable": {
+          "outcome": "APPLIED",
+          "applicable": true,
+          "reasonCode": null,
+          "failedPreconditions": [],
+          "evidence": [
+            {
+              "type": "WORLD_EVENT",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "OBSERVATION",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "REPORT",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "EFFECT_JOURNAL",
+              "templateId": "defect-bad-rehearsal"
+            },
+            {
+              "type": "COMPENSATION_REQUEST",
+              "templateId": "defect-bad-rehearsal"
+            }
+          ]
+        }
+      }
+    ],
+    "issues": [
+      {
+        "code": "MISSING_PROVENANCE",
+        "path": "control.json#/defect-missing-provenance/source",
+        "templateId": "defect-missing-provenance",
+        "message": "Нужен источник или явное русское учебное допущение."
+      },
+      {
+        "code": "UNKNOWN_EFFECT",
+        "path": "control.json#/defect-unknown-effect/effects/0/type",
+        "templateId": "defect-unknown-effect",
+        "message": "Операция отсутствует в закрытом реестре эффектов."
+      },
+      {
+        "code": "COMPENSATION_TARGET",
+        "path": "control.json#/defect-unknown-effect/compensations/0/targetEffectType",
+        "templateId": "defect-unknown-effect",
+        "message": "Компенсация должна ссылаться на эффект этого шаблона."
+      },
+      {
+        "code": "NEGATIVE_RESOURCE",
+        "path": "control.json#/defect-negative-resource/effects/0/quantityParameter",
+        "templateId": "defect-negative-resource",
+        "message": "Расход ресурса не может иметь отрицательную величину или создавать отрицательный остаток."
+      },
+      {
+        "code": "COMPENSATION_TARGET",
+        "path": "control.json#/defect-negative-resource/compensations/0/targetEffectType",
+        "templateId": "defect-negative-resource",
+        "message": "Компенсация должна ссылаться на эффект этого шаблона."
+      },
+      {
+        "code": "MISSING_COMPENSATION",
+        "path": "control.json#/defect-missing-compensation/compensations",
+        "templateId": "defect-missing-compensation",
+        "message": "Нужно правило компенсации последствия."
+      },
+      {
+        "code": "UNSUITABLE_STATE_ACCEPTED",
+        "path": "control.json#/defect-bad-rehearsal/rehearsal/unsuitableFacts",
+        "templateId": "defect-bad-rehearsal",
+        "message": "Неподходящее состояние ошибочно проходит предусловия."
+      },
+      {
+        "code": "CASCADE_CYCLE",
+        "path": "control.json#/defect-cycle-b/cascade",
+        "templateId": "defect-cycle-b",
+        "message": "Цикл каскада: defect-cycle-b → defect-cycle-a."
+      },
+      {
+        "code": "DUPLICATE_MECHANISM",
+        "path": "control.json#/control-01-channel-queue, control.json#/defect-numeric-clone",
+        "templateId": null,
+        "message": "Один содержательный механизм используют записи: control-01-channel-queue, defect-numeric-clone."
+      },
+      {
+        "code": "CATALOG_MINIMUM",
+        "path": "manifest.json",
+        "templateId": null,
+        "message": "В каталоге 2 различных вместо 9."
+      }
+    ]
+  }
+}

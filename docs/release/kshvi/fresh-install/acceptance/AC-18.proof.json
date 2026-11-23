@@ -1,0 +1,39 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "g2-ac18",
+    "revision": 1,
+    "sha256": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac18/journal.json",
+    "sha256": "b49419ff8a136d1b4631e8fb64e757ca48aa993cd93499cd41bdd6d7ba33918d",
+    "eventCount": 35
+  },
+  "hashes": {
+    "scenario": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee",
+    "environment": "424e7fd369a35304b1b30e655a8937c1352e1615da73d000e62e29aa0862265e",
+    "journal": "b49419ff8a136d1b4631e8fb64e757ca48aa993cd93499cd41bdd6d7ba33918d"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac18/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "knownReactions": 1,
+    "unknownEscalations": 1,
+    "stageTransitions": 1,
+    "hiddenTraineeEvents": 2,
+    "automaticWinners": 0,
+    "preservedSnapshotHashes": 1
+  },
+  "limitations": [
+    "Односторонний плейбук подтверждён в серверном G2; физическое размещение обучаемого и группы розыгрыша на отдельных устройствах проверяется на контрольном стенде."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac18/journal.json",
+    "docs/release/kshvi/evidence/ac18/protocol.txt",
+    "docs/release/kshvi/evidence/ac18/metrics.json"
+  ]
+}

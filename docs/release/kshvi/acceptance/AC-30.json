@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "AC-30",
+  "status": "blocked",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "ac30-human-review",
+  "command": "KSHVI_ACCEPTANCE_RUN_ID=ac30-human-review npx vitest run services/kshvi/tests/acceptance/ac30-symbols.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ packages/tactical-symbols/tests/browser-entry.test.ts (1 test) 1ms\n ✓ packages/tactical-symbols/tests/review-fixes.test.ts (3 tests) 3ms\n ✓ packages/tactical-symbols/tests/rendering.test.ts (11 tests) 5ms\n ✓ packages/tactical-symbols/tests/source-registry.test.ts (5 tests) 33ms\n\n Test Files  4 passed (4)\n      Tests  20 passed (20)\n   Start at  23:17:00\n   Duration  165ms (transform 62%, import 22%, tests 14%, worker 2%)\n\n",
+  "metrics": {
+    "sourceDocuments": 29,
+    "sourceFonts": 2,
+    "derivedFragmentsChecked": 83,
+    "importedFragmentsAwaitingReview": 83,
+    "automaticallyApprovedSymbols": 0,
+    "humanMethodicalApprovals": 0
+  },
+  "limitations": [
+    "HUMAN_METHODICAL_APPROVAL_REQUIRED: руководитель и методист должны проверить содержание, объяснения, печатные формы и разбор.",
+    "SOURCE_FRAGMENTS_NOT_INDIVIDUALLY_APPROVED: исходные фрагменты имеют IMPORTED, покрытие PARTIAL; APPROVED автоматически не присваивается."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac30/journal.json",
+    "docs/release/kshvi/evidence/ac30/source-coverage.json",
+    "docs/release/kshvi/evidence/ac30/protocol.txt",
+    "docs/release/kshvi/evidence/ac30/metrics.json",
+    "docs/img/modern-symbols.jpg",
+    "docs/img/modern-symbols-documents.jpg"
+  ],
+  "openErrors": [
+    "HUMAN_METHODICAL_APPROVAL_REQUIRED: руководитель и методист должны проверить содержание, объяснения, печатные формы и разбор.",
+    "SOURCE_FRAGMENTS_NOT_INDIVIDUALLY_APPROVED: исходные фрагменты имеют IMPORTED, покрытие PARTIAL; APPROVED автоматически не присваивается."
+  ]
+}

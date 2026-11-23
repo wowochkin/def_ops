@@ -1,0 +1,9 @@
+{
+  "templates": 240,
+  "distinctMechanisms": 240,
+  "categories": 12,
+  "successfulSuitableRehearsals": 240,
+  "rejectedUnsuitableRehearsals": 240,
+  "defectChecksRejected": 7,
+  "openCatalogIssues": 0
+}

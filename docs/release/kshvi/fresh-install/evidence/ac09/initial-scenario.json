@@ -1,0 +1,13 @@
+{
+  "initialRevision": {
+    "id": "ac09-reconnect",
+    "revision": 1,
+    "sha256": "0eadd0d7bc28a48eeb0449a1e699660d74fed00bfa3c1501b3bf516f35378b36"
+  },
+  "scenario": {
+    "connections": 25,
+    "firstCommand": "first",
+    "secondCommand": "second",
+    "sequenceBeforeReconnect": 1
+  }
+}

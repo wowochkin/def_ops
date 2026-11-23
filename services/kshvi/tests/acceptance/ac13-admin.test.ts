@@ -56,6 +56,7 @@ it('AC-13: технический администратор не читает �
   expect(blocked.status).toBe(200);
   expect((await login('trainee')).response.status).toBe(401);
 
+  await mkdir('.tmp', { recursive: true });
   const root = await mkdtemp(join('.tmp', 'ac13-'));
   roots.push(root);
   const sources = [

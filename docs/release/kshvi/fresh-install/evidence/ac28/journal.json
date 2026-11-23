@@ -1,0 +1,50 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "events": [
+    {
+      "eventId": "demo-event-1",
+      "sequence": 1,
+      "atMs": 1000,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "resourceId": "fuel",
+        "amount": 14,
+        "supplied": 0
+      },
+      "causeIds": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ],
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-auto-branch",
+        "cursor": 4,
+        "state": 27493211
+      }
+    },
+    {
+      "eventId": "demo-event-2",
+      "sequence": 2,
+      "atMs": 2000,
+      "type": "resource.consumed.v1",
+      "payload": {
+        "resourceId": "fuel",
+        "amount": 20,
+        "supplied": 6
+      },
+      "causeIds": [
+        "agent:agent-blue@modern-blue-1",
+        "agent:agent-red@modern-red-1"
+      ],
+      "rng": {
+        "version": "exposition-rng-v1",
+        "seed": 42,
+        "branchId": "ac28-continued-branch",
+        "cursor": 8,
+        "state": 3616359920
+      }
+    }
+  ]
+}

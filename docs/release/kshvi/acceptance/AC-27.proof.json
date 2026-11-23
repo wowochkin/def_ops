@@ -1,6 +1,6 @@
 {
-  "runId": "292d61b2-4097-4fae-948f-0ffded44e51c",
-  "commit": "c6cabd4d1ced755529184160c6d7b7f8482462a8",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "initialRevision": {
     "id": "modern-opponent-ac27",
     "revision": 1,
@@ -8,13 +8,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac27/journal.json",
-    "sha256": "3cf89f1ca0b317983fe764c7bf9a7b464a85a8a7374fb38b51c3b792b89fc770",
+    "sha256": "819840d69ed69098aa1b3fb57d1a25741be4ca26377725f6f4c41a810cab8101",
     "eventCount": 1
   },
   "hashes": {
     "scenario": "7f848a856ad65bb1400c9662af16ff55027d75b75339cf93c9630eafd3befba4",
     "environment": "e2cefdcd1a9acb892257edfe716aa0f748fc14a2799a3f9fe406fbf076cb86f4",
-    "journal": "3cf89f1ca0b317983fe764c7bf9a7b464a85a8a7374fb38b51c3b792b89fc770"
+    "journal": "819840d69ed69098aa1b3fb57d1a25741be4ca26377725f6f4c41a810cab8101"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac27/protocol.txt"

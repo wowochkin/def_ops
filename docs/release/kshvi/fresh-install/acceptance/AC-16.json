@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac16-recovery.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n ✓ services/kshvi/tests/acceptance/ac16-recovery.test.ts (1 test) 349ms\n   ✓ AC-16: аварийный перезапуск и изолированное восстановление сохраняют журнал без дублей 349ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:28\n   Duration  430ms (tests 94%, transform 4%, import 2%)\n\n",
+  "initialRevision": {
+    "id": "ac16-recovery",
+    "revision": 1,
+    "sha256": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac16/recovery-drill.json",
+    "sha256": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d",
+    "eventCount": 1
+  },
+  "hashes": {
+    "scenario": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d",
+    "environment": "5f3e80a7624f4be3f0c8105a81a3ed8fcc8d35cafb23b081f9d0c67b148fca9e",
+    "journal": "13f2a128a47e08cf159ef3bbc283392917b3826e96a92a463aa8ecc910a3c19d"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac16/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "confirmedEvents": 1,
+    "duplicateEventsAfterRetry": 0,
+    "confirmedEventsLost": 0,
+    "restartMs": 6.59008399999999,
+    "nodeRestoreMs": 2.594333000000006,
+    "verifiedBackupFiles": 5,
+    "isolatedRestore": 1
+  },
+  "limitations": [
+    "Полная потеря физического узла и нагрузка 50 рабочих мест не проверялась.",
+    "Проверены локальные PostgreSQL pool restart, идемпотентность, durable worker и файловое восстановление.",
+    "Результат не заменяет стендовый протокол NF-12 и AC-16."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac16/recovery-drill.json",
+    "docs/release/kshvi/evidence/ac16/protocol.txt",
+    "docs/release/kshvi/evidence/ac16/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-16.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

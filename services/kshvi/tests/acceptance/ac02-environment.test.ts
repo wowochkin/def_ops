@@ -34,6 +34,7 @@ const json = (value: unknown, status = 200) => new Response(JSON.stringify(value
 
 it('AC-02: исходная среда неизменна, а плановая погода создаёт новую версию с supersedes', async () => {
   await withKshviDatabase(async store => {
+    await mkdir('.tmp', { recursive: true });
     const root = await mkdtemp(path.join('.tmp', 'ac02-environment-'));
     roots.push(root);
     let sourceDeleted = false;

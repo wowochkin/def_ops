@@ -1,0 +1,2254 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "uiOutput": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n ✓ apps/editor/tests/kshvi-knowledge-import.test.tsx (3 tests) 914ms\n   ✓ открывает импорт из современной базы знаний без локального коммита 893ms\n\n Test Files  1 passed (1)\n      Tests  3 passed (3)\n   Start at  00:06:47\n   Duration  2.37s (tests 40%, transform 38%, import 18%, environment 4%)\n\n",
+  "firstCopy": {
+    "sourceRecordId": "us-abrams",
+    "sourceRevision": 1,
+    "sourceHash": "c03bd506cab4a62d8644b72ae912987d9dc4b6eedd78371af28046021cdc3b96",
+    "recordKind": "REPRESENTATIVE",
+    "modelInputs": false,
+    "simulationValidated": false,
+    "characteristics": [
+      {
+        "field": "role_description",
+        "value": "Семейство основных боевых танков в портфеле программ армии США."
+      },
+      {
+        "field": "role_description",
+        "value": "Основной танк."
+      },
+      {
+        "field": "ammunition_main_capacity",
+        "value": 40
+      },
+      {
+        "field": "ammunition_main_capacity",
+        "value": 42
+      },
+      {
+        "field": "ammunition_secondary_capacity",
+        "value": 900
+      },
+      {
+        "field": "ammunition_secondary_capacity",
+        "value": 11400
+      },
+      {
+        "field": "equipment_description",
+        "value": "Speed: 42 mph; x-country: 30 mph."
+      }
+    ],
+    "sourceRecord": {
+      "id": "us-abrams",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Abrams",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "sources": [
+        "us-equipment",
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство основных боевых танков в портфеле программ армии США.",
+            "unit": null,
+            "source": "us-equipment",
+            "locator": "Назначение и идентификация модели",
+            "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+            "status": "reported"
+          },
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 115, DESCRIPTION",
+            "scope": "Abrams; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A1 SA: номинальная вместимость 120-мм выстрелов; не текущий остаток и не параметр всех Abrams.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A2 SEPv2: номинальная вместимость 120-мм выстрелов; не переносится на SEPv3, SEPv4 или базовый M1A2.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 900,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, .50 caliber: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; не суммировать с 7,62-мм выстрелами.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 11400,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, 7.62 mm: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; отдельная величина от .50 caliber.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 42 mph; x-country: 30 mph.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Общая таблица нескольких вариантов Abrams. Тип 42 mph и модификация для каждой скорости не разделены; параметры не наследуются отдельным карточкам.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    "unknown": [],
+    "status": "IMPORTED",
+    "preview": {
+      "tree": [
+        {
+          "id": "us-abrams:equipment-1",
+          "parentId": "us-army",
+          "sourceRecordId": "us-abrams"
+        }
+      ],
+      "equipment": [
+        {
+          "field": "role_description",
+          "value": "Семейство основных боевых танков в портфеле программ армии США."
+        },
+        {
+          "field": "role_description",
+          "value": "Основной танк."
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 40
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 42
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 900
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 11400
+        },
+        {
+          "field": "equipment_description",
+          "value": "Speed: 42 mph; x-country: 30 mph."
+        }
+      ],
+      "sources": [
+        "us-equipment",
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ]
+    },
+    "id": "1c0f25b2-a0e9-43f6-bba1-1a86f24a9ccd",
+    "sideId": "blue",
+    "parentNodeId": "node-ac26",
+    "scenarioValues": []
+  },
+  "secondCopy": {
+    "sourceRecordId": "us-abrams",
+    "sourceRevision": 1,
+    "sourceHash": "c03bd506cab4a62d8644b72ae912987d9dc4b6eedd78371af28046021cdc3b96",
+    "recordKind": "REPRESENTATIVE",
+    "modelInputs": false,
+    "simulationValidated": false,
+    "characteristics": [
+      {
+        "field": "role_description",
+        "value": "Семейство основных боевых танков в портфеле программ армии США."
+      },
+      {
+        "field": "role_description",
+        "value": "Основной танк."
+      },
+      {
+        "field": "ammunition_main_capacity",
+        "value": 40
+      },
+      {
+        "field": "ammunition_main_capacity",
+        "value": 42
+      },
+      {
+        "field": "ammunition_secondary_capacity",
+        "value": 900
+      },
+      {
+        "field": "ammunition_secondary_capacity",
+        "value": 11400
+      },
+      {
+        "field": "equipment_description",
+        "value": "Speed: 42 mph; x-country: 30 mph."
+      }
+    ],
+    "sourceRecord": {
+      "id": "us-abrams",
+      "kind": "equipment_model",
+      "countryContext": "US",
+      "title": "Abrams",
+      "objectClass": "tank",
+      "summary": "Основной танк.",
+      "sources": [
+        "us-equipment",
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ],
+      "relatedOrganizations": [
+        "us-army"
+      ],
+      "originCountries": [],
+      "operatorCountries": [],
+      "status": "draft",
+      "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+      "granularity": "family",
+      "parentModel": null,
+      "passport": {
+        "profile": "tank",
+        "simulationValidated": false,
+        "characteristics": [
+          {
+            "field": "role_description",
+            "value": "Семейство основных боевых танков в портфеле программ армии США.",
+            "unit": null,
+            "source": "us-equipment",
+            "locator": "Назначение и идентификация модели",
+            "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+            "status": "reported"
+          },
+          {
+            "field": "role_description",
+            "value": "Основной танк.",
+            "unit": null,
+            "source": "us-r-src-portfolio",
+            "locator": "С. 115, DESCRIPTION",
+            "scope": "Abrams; идентификация и назначение по указанному источнику.",
+            "status": "reported"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A1 SA: номинальная вместимость 120-мм выстрелов; не текущий остаток и не параметр всех Abrams.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A2 SEPv2: номинальная вместимость 120-мм выстрелов; не переносится на SEPv3, SEPv4 или базовый M1A2.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 900,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, .50 caliber: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; не суммировать с 7,62-мм выстрелами.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 11400,
+            "unit": "round",
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, 7.62 mm: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; отдельная величина от .50 caliber.",
+            "status": "reported",
+            "qualifier": "exact"
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 42 mph; x-country: 30 mph.",
+            "unit": null,
+            "source": "us-r-src-handbook",
+            "locator": "Печатная с. 59, SPECIFICATIONS",
+            "scope": "Редакция U.S. Army Handbook 2020–2021. Общая таблица нескольких вариантов Abrams. Тип 42 mph и модификация для каждой скорости не разделены; параметры не наследуются отдельным карточкам.",
+            "status": "reported"
+          }
+        ]
+      }
+    },
+    "unknown": [],
+    "status": "IMPORTED",
+    "preview": {
+      "tree": [
+        {
+          "id": "us-abrams:equipment-1",
+          "parentId": "us-army",
+          "sourceRecordId": "us-abrams"
+        }
+      ],
+      "equipment": [
+        {
+          "field": "role_description",
+          "value": "Семейство основных боевых танков в портфеле программ армии США."
+        },
+        {
+          "field": "role_description",
+          "value": "Основной танк."
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 40
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 42
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 900
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 11400
+        },
+        {
+          "field": "equipment_description",
+          "value": "Speed: 42 mph; x-country: 30 mph."
+        }
+      ],
+      "sources": [
+        "us-equipment",
+        "us-r-src-portfolio",
+        "us-r-src-handbook"
+      ]
+    },
+    "id": "48b0e2c5-1c9d-475e-a81e-8e4dfd8ed13e",
+    "sideId": "blue",
+    "parentNodeId": "node-ac26",
+    "scenarioValues": []
+  },
+  "listedCopies": [
+    {
+      "sourceRecordId": "us-abrams",
+      "sourceRevision": 1,
+      "sourceHash": "c03bd506cab4a62d8644b72ae912987d9dc4b6eedd78371af28046021cdc3b96",
+      "recordKind": "REPRESENTATIVE",
+      "modelInputs": false,
+      "simulationValidated": false,
+      "characteristics": [
+        {
+          "field": "role_description",
+          "value": "Семейство основных боевых танков в портфеле программ армии США."
+        },
+        {
+          "field": "role_description",
+          "value": "Основной танк."
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 40
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 42
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 900
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 11400
+        },
+        {
+          "field": "equipment_description",
+          "value": "Speed: 42 mph; x-country: 30 mph."
+        }
+      ],
+      "sourceRecord": {
+        "id": "us-abrams",
+        "kind": "equipment_model",
+        "countryContext": "US",
+        "title": "Abrams",
+        "objectClass": "tank",
+        "summary": "Основной танк.",
+        "sources": [
+          "us-equipment",
+          "us-r-src-portfolio",
+          "us-r-src-handbook"
+        ],
+        "relatedOrganizations": [
+          "us-army"
+        ],
+        "originCountries": [],
+        "operatorCountries": [],
+        "status": "draft",
+        "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+        "granularity": "family",
+        "parentModel": null,
+        "passport": {
+          "profile": "tank",
+          "simulationValidated": false,
+          "characteristics": [
+            {
+              "field": "role_description",
+              "value": "Семейство основных боевых танков в портфеле программ армии США.",
+              "unit": null,
+              "source": "us-equipment",
+              "locator": "Назначение и идентификация модели",
+              "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+              "status": "reported"
+            },
+            {
+              "field": "role_description",
+              "value": "Основной танк.",
+              "unit": null,
+              "source": "us-r-src-portfolio",
+              "locator": "С. 115, DESCRIPTION",
+              "scope": "Abrams; идентификация и назначение по указанному источнику.",
+              "status": "reported"
+            },
+            {
+              "field": "ammunition_main_capacity",
+              "value": 40,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A1 SA: номинальная вместимость 120-мм выстрелов; не текущий остаток и не параметр всех Abrams.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_main_capacity",
+              "value": 42,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A2 SEPv2: номинальная вместимость 120-мм выстрелов; не переносится на SEPv3, SEPv4 или базовый M1A2.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_secondary_capacity",
+              "value": 900,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, .50 caliber: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; не суммировать с 7,62-мм выстрелами.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_secondary_capacity",
+              "value": 11400,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, 7.62 mm: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; отдельная величина от .50 caliber.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "equipment_description",
+              "value": "Speed: 42 mph; x-country: 30 mph.",
+              "unit": null,
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Общая таблица нескольких вариантов Abrams. Тип 42 mph и модификация для каждой скорости не разделены; параметры не наследуются отдельным карточкам.",
+              "status": "reported"
+            }
+          ]
+        }
+      },
+      "unknown": [],
+      "status": "IMPORTED",
+      "preview": {
+        "tree": [
+          {
+            "id": "us-abrams:equipment-1",
+            "parentId": "us-army",
+            "sourceRecordId": "us-abrams"
+          }
+        ],
+        "equipment": [
+          {
+            "field": "role_description",
+            "value": "Семейство основных боевых танков в портфеле программ армии США."
+          },
+          {
+            "field": "role_description",
+            "value": "Основной танк."
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 900
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 11400
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 42 mph; x-country: 30 mph."
+          }
+        ],
+        "sources": [
+          "us-equipment",
+          "us-r-src-portfolio",
+          "us-r-src-handbook"
+        ]
+      },
+      "id": "1c0f25b2-a0e9-43f6-bba1-1a86f24a9ccd",
+      "sideId": "blue",
+      "parentNodeId": "node-ac26",
+      "scenarioValues": []
+    },
+    {
+      "sourceRecordId": "us-abrams",
+      "sourceRevision": 1,
+      "sourceHash": "c03bd506cab4a62d8644b72ae912987d9dc4b6eedd78371af28046021cdc3b96",
+      "recordKind": "REPRESENTATIVE",
+      "modelInputs": false,
+      "simulationValidated": false,
+      "characteristics": [
+        {
+          "field": "role_description",
+          "value": "Семейство основных боевых танков в портфеле программ армии США."
+        },
+        {
+          "field": "role_description",
+          "value": "Основной танк."
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 40
+        },
+        {
+          "field": "ammunition_main_capacity",
+          "value": 42
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 900
+        },
+        {
+          "field": "ammunition_secondary_capacity",
+          "value": 11400
+        },
+        {
+          "field": "equipment_description",
+          "value": "Speed: 42 mph; x-country: 30 mph."
+        }
+      ],
+      "sourceRecord": {
+        "id": "us-abrams",
+        "kind": "equipment_model",
+        "countryContext": "US",
+        "title": "Abrams",
+        "objectClass": "tank",
+        "summary": "Основной танк.",
+        "sources": [
+          "us-equipment",
+          "us-r-src-portfolio",
+          "us-r-src-handbook"
+        ],
+        "relatedOrganizations": [
+          "us-army"
+        ],
+        "originCountries": [],
+        "operatorCountries": [],
+        "status": "draft",
+        "note": "Справочная карточка; не подтверждает текущее наличие, готовность или оператора. Неизвестные скорость, запас хода и боекомплект не заполнены; параметры относятся только к указанной версии источника.",
+        "granularity": "family",
+        "parentModel": null,
+        "passport": {
+          "profile": "tank",
+          "simulationValidated": false,
+          "characteristics": [
+            {
+              "field": "role_description",
+              "value": "Семейство основных боевых танков в портфеле программ армии США.",
+              "unit": null,
+              "source": "us-equipment",
+              "locator": "Назначение и идентификация модели",
+              "scope": "Справочная запись о модели или семействе; требует проверки модификации",
+              "status": "reported"
+            },
+            {
+              "field": "role_description",
+              "value": "Основной танк.",
+              "unit": null,
+              "source": "us-r-src-portfolio",
+              "locator": "С. 115, DESCRIPTION",
+              "scope": "Abrams; идентификация и назначение по указанному источнику.",
+              "status": "reported"
+            },
+            {
+              "field": "ammunition_main_capacity",
+              "value": 40,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A1 SA: номинальная вместимость 120-мм выстрелов; не текущий остаток и не параметр всех Abrams.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_main_capacity",
+              "value": 42,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Только M1A2 SEPv2: номинальная вместимость 120-мм выстрелов; не переносится на SEPv3, SEPv4 или базовый M1A2.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_secondary_capacity",
+              "value": 900,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, .50 caliber: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; не суммировать с 7,62-мм выстрелами.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "ammunition_secondary_capacity",
+              "value": 11400,
+              "unit": "round",
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Строка Machine guns, 7.62 mm: номинальный пулемётный боекомплект. Источник не распределяет эту строку по вариантам; отдельная величина от .50 caliber.",
+              "status": "reported",
+              "qualifier": "exact"
+            },
+            {
+              "field": "equipment_description",
+              "value": "Speed: 42 mph; x-country: 30 mph.",
+              "unit": null,
+              "source": "us-r-src-handbook",
+              "locator": "Печатная с. 59, SPECIFICATIONS",
+              "scope": "Редакция U.S. Army Handbook 2020–2021. Общая таблица нескольких вариантов Abrams. Тип 42 mph и модификация для каждой скорости не разделены; параметры не наследуются отдельным карточкам.",
+              "status": "reported"
+            }
+          ]
+        }
+      },
+      "unknown": [],
+      "status": "IMPORTED",
+      "preview": {
+        "tree": [
+          {
+            "id": "us-abrams:equipment-1",
+            "parentId": "us-army",
+            "sourceRecordId": "us-abrams"
+          }
+        ],
+        "equipment": [
+          {
+            "field": "role_description",
+            "value": "Семейство основных боевых танков в портфеле программ армии США."
+          },
+          {
+            "field": "role_description",
+            "value": "Основной танк."
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 40
+          },
+          {
+            "field": "ammunition_main_capacity",
+            "value": 42
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 900
+          },
+          {
+            "field": "ammunition_secondary_capacity",
+            "value": 11400
+          },
+          {
+            "field": "equipment_description",
+            "value": "Speed: 42 mph; x-country: 30 mph."
+          }
+        ],
+        "sources": [
+          "us-equipment",
+          "us-r-src-portfolio",
+          "us-r-src-handbook"
+        ]
+      },
+      "id": "48b0e2c5-1c9d-475e-a81e-8e4dfd8ed13e",
+      "sideId": "blue",
+      "parentNodeId": "node-ac26",
+      "scenarioValues": []
+    }
+  ],
+  "constructorCopy": {
+    "sourceRecordId": "constructor-ac26",
+    "sourceRevision": 1,
+    "sourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "modelInputs": false,
+    "simulationValidated": false,
+    "characteristics": [
+      {
+        "field": "speed",
+        "value": null
+      }
+    ],
+    "recordKind": "REPRESENTATIVE",
+    "unknown": [
+      "speed"
+    ],
+    "status": "IMPORTED",
+    "preview": {
+      "tree": [],
+      "equipment": [
+        {
+          "field": "speed",
+          "value": null
+        }
+      ],
+      "sources": []
+    },
+    "id": "constructor-copy-ac26",
+    "sideId": "blue",
+    "parentNodeId": "node-ac26",
+    "scenarioValues": [
+      {
+        "field": "speed",
+        "value": 60,
+        "source": {
+          "kind": "ASSUMPTION",
+          "note": "Учебное допущение только для сценарной копии AC-26"
+        }
+      }
+    ]
+  },
+  "initial": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [],
+    "resourceBalances": {},
+    "history": []
+  },
+  "allocated": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [
+      {
+        "targetId": "child-ac26",
+        "quantity": 1
+      }
+    ],
+    "unallocated": 0,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [],
+    "resourceBalances": {},
+    "history": []
+  },
+  "allowed": {
+    "status": "ALLOWED",
+    "allowed": true,
+    "reasons": [],
+    "unknown": [],
+    "serviceableUnits": 1,
+    "usableUnits": 1,
+    "capacity": {
+      "payloadTonnes": 2,
+      "personnel": 4
+    },
+    "resourceConsumptions": []
+  },
+  "assigned": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [
+      {
+        "assignmentId": "assignment-ac26",
+        "kind": "CROSSING_BUILD",
+        "quantity": 1,
+        "at": "2030-01-01T06:00:00.000Z",
+        "causeId": "order-ac26"
+      }
+    ],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [],
+    "resourceBalances": {},
+    "history": []
+  },
+  "degraded": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 0,
+      "DEGRADED": 1,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [
+      "fault-ac26"
+    ],
+    "resourceBalances": {},
+    "history": [
+      {
+        "eventId": "fault-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T06:00:00.000Z",
+        "from": "SERVICEABLE",
+        "to": "DEGRADED",
+        "causeId": "fault-ac26",
+        "reason": "Повреждение перед задачей",
+        "resources": [],
+        "availableResources": [],
+        "quantity": 1
+      }
+    ]
+  },
+  "blocked": {
+    "status": "BLOCKED",
+    "allowed": false,
+    "reasons": [
+      "Недостаточно исправной техники"
+    ],
+    "unknown": [],
+    "serviceableUnits": 0,
+    "usableUnits": 0,
+    "capacity": {
+      "payloadTonnes": 0,
+      "personnel": 0
+    },
+    "resourceConsumptions": []
+  },
+  "repairing": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 0,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 1,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [
+      "fault-ac26",
+      "repair-start-ac26"
+    ],
+    "resourceBalances": {},
+    "history": [
+      {
+        "eventId": "fault-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T06:00:00.000Z",
+        "from": "SERVICEABLE",
+        "to": "DEGRADED",
+        "causeId": "fault-ac26",
+        "reason": "Повреждение перед задачей",
+        "resources": [],
+        "availableResources": [],
+        "quantity": 1
+      },
+      {
+        "eventId": "repair-start-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T06:00:00.000Z",
+        "from": "DEGRADED",
+        "to": "UNDER_REPAIR",
+        "causeId": "repair-order-ac26",
+        "reason": "Начат ремонт",
+        "resources": [],
+        "availableResources": [],
+        "quantity": 1
+      }
+    ]
+  },
+  "repaired": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "KNOWN",
+        "value": 8,
+        "unit": "tonne",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [
+      "fault-ac26",
+      "repair-start-ac26",
+      "repair-finish-ac26"
+    ],
+    "resourceBalances": {
+      "spare-part": {
+        "resourceId": "spare-part",
+        "amount": 0,
+        "unit": "pcs"
+      }
+    },
+    "history": [
+      {
+        "eventId": "fault-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T06:00:00.000Z",
+        "from": "SERVICEABLE",
+        "to": "DEGRADED",
+        "causeId": "fault-ac26",
+        "reason": "Повреждение перед задачей",
+        "resources": [],
+        "availableResources": [],
+        "quantity": 1
+      },
+      {
+        "eventId": "repair-start-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T06:00:00.000Z",
+        "from": "DEGRADED",
+        "to": "UNDER_REPAIR",
+        "causeId": "repair-order-ac26",
+        "reason": "Начат ремонт",
+        "resources": [],
+        "availableResources": [],
+        "quantity": 1
+      },
+      {
+        "eventId": "repair-finish-ac26",
+        "kind": "STATE_CHANGE",
+        "at": "2030-01-01T07:00:00.000Z",
+        "from": "UNDER_REPAIR",
+        "to": "SERVICEABLE",
+        "causeId": "repair-complete-ac26",
+        "reason": "Ремонт завершён",
+        "resources": [
+          {
+            "resourceId": "spare-part",
+            "amount": 1,
+            "unit": "pcs"
+          }
+        ],
+        "availableResources": [
+          {
+            "resourceId": "spare-part",
+            "amount": 1,
+            "unit": "pcs"
+          }
+        ],
+        "quantity": 1
+      }
+    ]
+  },
+  "repeated": {
+    "status": "ALLOWED",
+    "allowed": true,
+    "reasons": [],
+    "unknown": [],
+    "serviceableUnits": 1,
+    "usableUnits": 1,
+    "capacity": {
+      "payloadTonnes": 2,
+      "personnel": 4
+    },
+    "resourceConsumptions": []
+  },
+  "unknownMass": {
+    "schemaVersion": 1,
+    "id": "holding-ac26",
+    "forceId": "force-ac26",
+    "accounting": "AGGREGATE",
+    "equipmentType": {
+      "id": "pontoon-ac26",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "title": "Понтон AC-26",
+      "movementClass": "WHEELED",
+      "massTonnes": {
+        "status": "UNKNOWN",
+        "value": null,
+        "unit": "tonne",
+        "reason": "Нет утверждённого значения"
+      },
+      "dimensions": {
+        "lengthM": {
+          "status": "KNOWN",
+          "value": 6,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "widthM": {
+          "status": "KNOWN",
+          "value": 3,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "heightM": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "m",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "transportCapacity": {
+        "payloadTonnes": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "personnel": {
+          "status": "KNOWN",
+          "value": 4,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "operatingResources": [
+        {
+          "resourceId": "fuel",
+          "amountPerUnit": 0.1,
+          "unit": "tonne",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      ],
+      "allowedTasks": [
+        "CROSSING_BUILD",
+        "TRANSPORT"
+      ],
+      "environmentLimits": [
+        "ROAD_WEIGHT_LIMIT",
+        "CROSSING_CAPACITY"
+      ]
+    },
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": [],
+    "unallocated": 1,
+    "assignments": [],
+    "source": {
+      "sourceId": "constructor-ac26",
+      "revision": 1,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "note": "Учебный сценарный тип"
+    },
+    "initial": {
+      "authorized": 1,
+      "actual": 1,
+      "stateCounts": {
+        "SERVICEABLE": 1,
+        "DEGRADED": 0,
+        "UNDER_REPAIR": 0,
+        "DAMAGED": 0,
+        "DESTROYED": 0,
+        "UNKNOWN": 0
+      },
+      "crew": {
+        "requiredPerUnit": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        },
+        "assigned": {
+          "status": "KNOWN",
+          "value": 2,
+          "unit": "person",
+          "source": {
+            "sourceId": "constructor-ac26",
+            "revision": 1,
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "note": "Учебный сценарный тип"
+          }
+        }
+      },
+      "items": [],
+      "distribution": []
+    },
+    "appliedEventIds": [],
+    "resourceBalances": {},
+    "history": []
+  }
+}

@@ -71,9 +71,9 @@ export function openLimitations(records, verification) {
   });
 }
 
-function existingPaths(root, values) {
+export function existingPaths(root, values) {
   return Array.isArray(values) && values.length > 0 && values.every(value => {
-    const candidate = typeof value === 'string' ? value : value?.path;
+    const candidate = typeof value === 'string' ? value.split('#')[0] : value?.path;
     const path = safePath(root, candidate);
     return path && existsSync(path);
   });

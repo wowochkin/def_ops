@@ -1,0 +1,45 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac19-autonomy",
+    "revision": 1,
+    "sha256": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac19/journal.json",
+    "sha256": "cdebdcd593db43cf5d02ca7a160a40b485099a0a594ef5340cf8f7c89b969f96",
+    "eventCount": 63
+  },
+  "hashes": {
+    "scenario": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460",
+    "environment": "65744481cb6211f81abeed8f7cd1eae8c0816b00f845be207f14578207f9490f",
+    "journal": "cdebdcd593db43cf5d02ca7a160a40b485099a0a594ef5340cf8f7c89b969f96"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac19/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "independentProcesses": 2,
+    "probabilisticEvents": 12,
+    "zeroIntensityEvents": 0,
+    "preservedPlannedReactive": 2,
+    "officialOperations": 62,
+    "repeatedOperations": 0,
+    "replayedIntervals": 2,
+    "maximumCascadeDepth": 1,
+    "sealedProfileChangesRejected": 1,
+    "durableEvents": 1
+  },
+  "limitations": [
+    "Два независимых Node-процесса используют настоящий CommandService и hash-chain; идемпотентность после создания нового экземпляра сервиса подтверждена в PostgreSQL. Полный физический сетевой стенд подтверждается отдельными AC-00 и AC-14."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac19/process-normal.json",
+    "docs/release/kshvi/evidence/ac19/process-reverse.json",
+    "docs/release/kshvi/evidence/ac19/journal.json",
+    "docs/release/kshvi/evidence/ac19/protocol.txt",
+    "docs/release/kshvi/evidence/ac19/metrics.json"
+  ]
+}

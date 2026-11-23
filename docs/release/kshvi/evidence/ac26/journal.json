@@ -1,7 +1,7 @@
 {
-  "runId": "81636d41-bc89-4cb7-a935-b1ac6729c7b9",
-  "commit": "d231e9c5da194278d637c64db96374404b792d5e",
-  "uiOutput": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/kshvi-knowledge-import.test.tsx (3 tests) 905ms\n   ✓ открывает импорт из современной базы знаний без локального коммита 886ms\n\n Test Files  1 passed (1)\n      Tests  3 passed (3)\n   Start at  22:38:56\n   Duration  2.36s (tests 39%, transform 39%, import 18%, environment 4%)\n\n",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "uiOutput": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/kshvi-knowledge-import.test.tsx (3 tests) 874ms\n   ✓ открывает импорт из современной базы знаний без локального коммита 856ms\n\n Test Files  1 passed (1)\n      Tests  3 passed (3)\n   Start at  23:13:04\n   Duration  2.28s (tests 39%, transform 39%, import 18%, environment 4%)\n\n",
   "firstCopy": {
     "sourceRecordId": "us-abrams",
     "sourceRevision": 1,
@@ -180,7 +180,7 @@
         "us-r-src-handbook"
       ]
     },
-    "id": "f41ce3d1-dbba-4733-9c6a-a7860e487dda",
+    "id": "6efb755b-408b-4c08-b351-dd9ba5b1705b",
     "sideId": "blue",
     "parentNodeId": "node-ac26",
     "scenarioValues": []
@@ -363,7 +363,7 @@
         "us-r-src-handbook"
       ]
     },
-    "id": "0bdd2587-e7bc-4e3c-a0d8-8b0279988e62",
+    "id": "e67e70f4-634b-4dc1-85d1-3ecbb52d3c24",
     "sideId": "blue",
     "parentNodeId": "node-ac26",
     "scenarioValues": []
@@ -547,7 +547,7 @@
           "us-r-src-handbook"
         ]
       },
-      "id": "f41ce3d1-dbba-4733-9c6a-a7860e487dda",
+      "id": "6efb755b-408b-4c08-b351-dd9ba5b1705b",
       "sideId": "blue",
       "parentNodeId": "node-ac26",
       "scenarioValues": []
@@ -730,7 +730,7 @@
           "us-r-src-handbook"
         ]
       },
-      "id": "0bdd2587-e7bc-4e3c-a0d8-8b0279988e62",
+      "id": "e67e70f4-634b-4dc1-85d1-3ecbb52d3c24",
       "sideId": "blue",
       "parentNodeId": "node-ac26",
       "scenarioValues": []

@@ -1,7 +1,7 @@
 {
-  "runId": "9079374e-7e1b-46ba-a88a-1842bf40c618",
-  "commit": "7671bb44be402eda290726a495b8352e5b4e5e84",
-  "ui": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/acceptance/ac17-handover.test.tsx (2 tests) 18ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  09:05:43\n   Duration  215ms (environment 53%, import 22%, transform 12%, tests 11%, worker 1%)\n\n",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "ui": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ apps/editor/tests/acceptance/ac17-handover.test.tsx (2 tests) 17ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  23:13:20\n   Duration  209ms (environment 54%, import 22%, transform 12%, tests 11%, worker 1%)\n\n",
   "server": {
     "logout": 204,
     "me": 401

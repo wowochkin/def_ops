@@ -1,21 +1,21 @@
 {
-  "runId": "2d1291d1-528e-41f3-98e4-d23ea131cf7c",
-  "commit": "5a4350c6c2bc873acff8424c7e5e5edaac3e9769",
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
   "events": [
     {
-      "eventId": "134ed71c-25b5-425d-8396-3a85ef301546",
+      "eventId": "6893e35b-d65f-4e4a-9c57-27b9b03e93b6",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
       "sequence": 1,
       "type": "environment.bound.v1",
       "schemaVersion": 1,
-      "wallClockAt": "2026-11-22T22:52:47.576Z",
+      "wallClockAt": "2026-11-23T20:15:07.067Z",
       "operationalAt": {
         "zone": "UTC",
         "offset": "+00:00",
-        "originalAt": "2026-11-22T22:52:47.576Z",
-        "normalizedAt": "2026-11-22T22:52:47.576Z"
+        "originalAt": "2026-11-23T20:15:07.067Z",
+        "normalizedAt": "2026-11-23T20:15:07.067Z"
       },
       "actor": {
         "id": "director",
@@ -27,7 +27,7 @@
       "versions": {},
       "reducerVersion": 1,
       "payload": {
-        "at": "2026-11-22T22:52:47.576Z",
+        "at": "2026-11-23T20:15:07.067Z",
         "causedBy": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb",
         "commandId": "bind-environment",
         "recipients": [
@@ -40,11 +40,11 @@
         "manifestSha256": "36f489feb1a8865626fa12ae913a185eb927cc1ca5068f1f2e949cdda09f1ddb"
       },
       "prevHash": null,
-      "hash": "28b8c66e5c900dc657305726cf7a4c3d776c70daa1d170e5f5ed04a15224cce8",
+      "hash": "bf6728a637681fe4457d786a153ab9ed5327d4a2e4aad45226de8bb2b823c43e",
       "hashVersion": 2
     },
     {
-      "eventId": "d944c32f-1f14-423b-a0c9-7b884bd01f52",
+      "eventId": "5b8ca23e-c2e2-41b7-acc3-ea13e6d4702c",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -188,12 +188,12 @@
         },
         "commandType": "calculation.create"
       },
-      "prevHash": "28b8c66e5c900dc657305726cf7a4c3d776c70daa1d170e5f5ed04a15224cce8",
-      "hash": "54881ab77602cdb60f872810ddfe6126c856eec575b0ffb094145792c414a8e2",
+      "prevHash": "bf6728a637681fe4457d786a153ab9ed5327d4a2e4aad45226de8bb2b823c43e",
+      "hash": "0ec9f9ffa189964fea1a6b96b181c61b71160dd00dc2d573aab22190ee12df67",
       "hashVersion": 2
     },
     {
-      "eventId": "a5616a07-7b98-46e3-bdec-14906f0d4b18",
+      "eventId": "b9be847a-3d87-46ef-9924-88b66f361de3",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -224,12 +224,12 @@
         "commandType": "calculation.approve",
         "recomputedFrom": null
       },
-      "prevHash": "54881ab77602cdb60f872810ddfe6126c856eec575b0ffb094145792c414a8e2",
-      "hash": "f3123c386d1dbb2a07f176a03b5719888416f693675026995a9ef0521793cd5f",
+      "prevHash": "0ec9f9ffa189964fea1a6b96b181c61b71160dd00dc2d573aab22190ee12df67",
+      "hash": "f27fa5c088dfabe295863444d228052a321fe26220acba4bbee8714d4d7b1085",
       "hashVersion": 2
     },
     {
-      "eventId": "3031f86a-1055-45a2-a8e5-7bea4ad5f5a0",
+      "eventId": "db1484ae-15ad-4b7f-86f2-0ba571628e93",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -262,12 +262,12 @@
         "commandType": "calculation.apply",
         "calculationId": "calc-1"
       },
-      "prevHash": "f3123c386d1dbb2a07f176a03b5719888416f693675026995a9ef0521793cd5f",
-      "hash": "ca6596460ef22e8c47b4278a4e1f368cce8d9fed8a638b51b4729e247ca787f4",
+      "prevHash": "f27fa5c088dfabe295863444d228052a321fe26220acba4bbee8714d4d7b1085",
+      "hash": "98961cddad51fa0483952276c4802b2a7e88d6c57cc8eb8667477ffd2a1ff404",
       "hashVersion": 2
     },
     {
-      "eventId": "20ddf871-d0ce-4d2d-9a05-24e6b39e8d0e",
+      "eventId": "0b708784-6269-40b9-a5fd-80f8a87d0dc6",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -334,12 +334,12 @@
         ],
         "commandType": "communication.enqueue"
       },
-      "prevHash": "ca6596460ef22e8c47b4278a4e1f368cce8d9fed8a638b51b4729e247ca787f4",
-      "hash": "76bd6cdf8d904998002078e75b455e2cc4049f5ce96482ab996e9d17e837ddda",
+      "prevHash": "98961cddad51fa0483952276c4802b2a7e88d6c57cc8eb8667477ffd2a1ff404",
+      "hash": "08d002aec4094ba974aeafd23d99c3df25950db0d4b85a2eb180bf9a7d4c7435",
       "hashVersion": 2
     },
     {
-      "eventId": "a39793e2-dc4c-4cfb-913e-db65f3dfba2b",
+      "eventId": "6fb00aa4-952f-41cb-9511-712e29906699",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -396,12 +396,12 @@
         "commandType": "weather.change",
         "effectiveAt": "2026-01-01T01:00:00Z"
       },
-      "prevHash": "76bd6cdf8d904998002078e75b455e2cc4049f5ce96482ab996e9d17e837ddda",
-      "hash": "896428913f1dce77fbf31874749755c6fc0761beefd0f112d9f307b9db9be984",
+      "prevHash": "08d002aec4094ba974aeafd23d99c3df25950db0d4b85a2eb180bf9a7d4c7435",
+      "hash": "30a443a1a0d0722ac3304ad52cd597531c94970709796732c31f3e095ddecfc5",
       "hashVersion": 2
     },
     {
-      "eventId": "3aaaa0e8-bbc0-430c-92b1-602fbdb5b88b",
+      "eventId": "e4f485f4-7498-43ad-93b3-864d5b41c91e",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -432,12 +432,12 @@
         "commandType": "calculation.override",
         "evaluationEffect": "UNCHANGED"
       },
-      "prevHash": "896428913f1dce77fbf31874749755c6fc0761beefd0f112d9f307b9db9be984",
-      "hash": "24ebb41a6da26cf22c20de4171d61912c59643f0e6dcd78d03ed57f3ca112150",
+      "prevHash": "30a443a1a0d0722ac3304ad52cd597531c94970709796732c31f3e095ddecfc5",
+      "hash": "19c2c1a7a55dd10b2e5116498fb563d1144ea2c09187275df9e7da22e1eb7402",
       "hashVersion": 2
     },
     {
-      "eventId": "6f9ab862-4f64-41ff-b6b8-f9a8a74eabed",
+      "eventId": "ef6f9663-a58c-47a0-9508-d5733baa4b9a",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -467,12 +467,12 @@
         "commandId": "time.pause-7",
         "commandType": "time.pause"
       },
-      "prevHash": "24ebb41a6da26cf22c20de4171d61912c59643f0e6dcd78d03ed57f3ca112150",
-      "hash": "a99c29fb7b0569d9445840c72d9321d8410256fe82442e3a3b91a8adc96ba243",
+      "prevHash": "19c2c1a7a55dd10b2e5116498fb563d1144ea2c09187275df9e7da22e1eb7402",
+      "hash": "603f8ef295aecc48d68a5db8b2a95e30a15766213ffeb45117b1a1987d3d3395",
       "hashVersion": 2
     },
     {
-      "eventId": "9b2811ee-0547-4d09-b056-a5a02c1ecabb",
+      "eventId": "947d85dd-5f7e-44a0-aeb1-b168d791601b",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -502,12 +502,12 @@
         "commandType": "time.rate",
         "playbackRate": 4
       },
-      "prevHash": "a99c29fb7b0569d9445840c72d9321d8410256fe82442e3a3b91a8adc96ba243",
-      "hash": "7e80385ab8632d652cd5b6f5c39b565dc3139c2bd71e9ec5ed93d4b7b1d19974",
+      "prevHash": "603f8ef295aecc48d68a5db8b2a95e30a15766213ffeb45117b1a1987d3d3395",
+      "hash": "ded18562d441926f0f58d3a04dc134bd1803d8562a6846fda80eb86db3850620",
       "hashVersion": 2
     },
     {
-      "eventId": "62481921-d4b7-4391-8423-09ee99246773",
+      "eventId": "ccc15ad8-0f38-4911-8066-0853ecac428a",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -543,14 +543,14 @@
         "commandId": "time.jump-9",
         "commandType": "time.jump",
         "playbackRate": 4,
-        "snapshotHash": "532b7b43ca541e2095f77b7528f7068616a8f5cbec905ebd52da176cf4bf9dbe"
+        "snapshotHash": "7fb9bf33b048e894801c41dddc6cc5215976ef5c1cc5b42430a643634129a1e5"
       },
-      "prevHash": "7e80385ab8632d652cd5b6f5c39b565dc3139c2bd71e9ec5ed93d4b7b1d19974",
-      "hash": "251fbb28a9d60af17f336876957b40adc64ecc332edcdb7a2f8f5f1a49de8d24",
+      "prevHash": "ded18562d441926f0f58d3a04dc134bd1803d8562a6846fda80eb86db3850620",
+      "hash": "401c8d3ab7d111d67cc77d95538ca05f168bb6b38264ce9cd8b53b2a3a113c6e",
       "hashVersion": 2
     },
     {
-      "eventId": "fafaa5e5-5f91-47ad-b444-4831391de18b",
+      "eventId": "90dae19d-4cf6-417e-aaeb-806e54932cc7",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -583,12 +583,12 @@
           "message-1"
         ]
       },
-      "prevHash": "251fbb28a9d60af17f336876957b40adc64ecc332edcdb7a2f8f5f1a49de8d24",
-      "hash": "964cddb576cbc3494072a0b7dedab0a4a9464cf6c1a608959e5f6073e93acbf2",
+      "prevHash": "401c8d3ab7d111d67cc77d95538ca05f168bb6b38264ce9cd8b53b2a3a113c6e",
+      "hash": "1119ec6c89422daf8772366aef4a550eb131e200617728a93d49473ada7e143b",
       "hashVersion": 2
     },
     {
-      "eventId": "f52b04bc-ae0c-4b42-90b1-05d6905dba63",
+      "eventId": "7aa58b7c-e8de-44e4-933b-9bf4e8d2a22a",
       "organizationId": "org-ac07",
       "instanceId": "ac07",
       "branchId": "main",
@@ -664,8 +664,8 @@
         "commandId": "communication.advance-11",
         "commandType": "communication.advance"
       },
-      "prevHash": "964cddb576cbc3494072a0b7dedab0a4a9464cf6c1a608959e5f6073e93acbf2",
-      "hash": "30b33293fab3a78aebce21cb710bd0da86e5f703cc6f61302b1cff2287433d94",
+      "prevHash": "1119ec6c89422daf8772366aef4a550eb131e200617728a93d49473ada7e143b",
+      "hash": "dc2985ba55df656c316d0fb3149d56e90c033faf142d8173abb87255d09844e7",
       "hashVersion": 2
     }
   ]

@@ -1,4 +1,4 @@
-import storedProfile from '../../data/profiles/morale-v1.json';
+import storedProfile from '../../data/profiles/morale-v1.json' with { type: 'json' };
 import type {
   MoraleChanges,
   MoraleRecoveryActivity,

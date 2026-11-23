@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac05-inputs.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:37.555Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"msg\":\"listening on :65323\"}\n{\"t\":\"2026-11-23T21:04:37.576Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"d1170124-60b8-4cba-9da9-e9c5e10b4e51\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-23T21:04:37.581Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"67d351f2-9355-40b3-af7f-d49198b91b5e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:37.586Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"8e881481-ad13-4e48-a801-94d9712a3f94\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:37.589Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"d1347c24-58a0-4d9c-9820-491d5eaa7d62\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:37.593Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"47edd55e-29c5-4889-8e37-e0c079d0d2c3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:37.596Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"82e07e8b-b576-43aa-94dc-d2d89fc8b16b\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:37.598Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"e076be5a-00e3-4218-9a66-502c68f87362\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac05/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:37.629Z\",\"service\":\"kshvi-ac05\",\"level\":\"info\",\"requestId\":\"6430f1f9-b240-49d5-b847-d28efa9bfc12\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac05/events\",\"status\":200,\"ms\":47}\n ✓ services/kshvi/tests/acceptance/ac05-inputs.test.ts (1 test) 158ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:35\n   Duration  2.02s (transform 67%, import 25%, tests 8%)\n\n",
+  "initialRevision": {
+    "id": "ac05-inputs",
+    "revision": 1,
+    "sha256": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac05/journal.json",
+    "sha256": "f743edec4db6bcdd14a42adf73014fa646d5dd633b6cd7181ef6ac503ddf3075",
+    "eventCount": 7
+  },
+  "hashes": {
+    "scenario": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c",
+    "environment": "8054e1ecf1cfa669cbdb9fadde574559fef5544722875d61a922c2d6ad0f982b",
+    "journal": "f743edec4db6bcdd14a42adf73014fa646d5dd633b6cd7181ef6ac503ddf3075"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac05/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "planned": 1,
+    "reactive": 2,
+    "adaptive": 2,
+    "approvalRequests": 1,
+    "cyclesStopped": 1,
+    "unresolvedStopped": 1
+  },
+  "limitations": [
+    "Проверяется управляемый цикл вводных; долговременная нагрузка планировщика измеряется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac05/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac05/journal.json",
+    "docs/release/kshvi/evidence/ac05/protocol.txt",
+    "docs/release/kshvi/evidence/ac05/metrics.json",
+    "docs/release/kshvi/evidence/ac05/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-05.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

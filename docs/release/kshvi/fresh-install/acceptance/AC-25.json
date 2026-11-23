@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac25-intermediary.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:06:45.496Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"msg\":\"listening on :51493\"}\n{\"t\":\"2026-11-23T21:06:45.515Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"8676a24b-4860-4a5e-9ef0-91ec1659cb9a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":10}\n{\"t\":\"2026-11-23T21:06:45.519Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"2bd9ab87-2601-482e-a2c0-370041a5686d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.520Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"7cbf1ce2-d08e-4e67-b421-f469b885736d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.521Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"c2a71d8b-1a3f-4ced-b87f-5b4e4c948dac\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.522Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"373e0c29-e1f3-4f49-9519-4c66b81f2d4f\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.523Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"d770d01e-0bf1-4117-b0dd-6165acaa7c4b\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.523Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"0fcc7c63-5418-42ea-8320-fd11f91723a5\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.524Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"ce06d384-31cf-416b-be19-afe6deb06770\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.525Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"b2513b6b-3c2c-46af-90dc-eb289c139865\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.526Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"95d75c03-f230-4c17-91ca-440e7a48ab72\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.527Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"949499ba-a2f9-4fdc-af84-1be9b29502f6\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.528Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"c1039407-b288-4c71-9ec7-eb19232c436d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.529Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"f096ba7a-7a22-4af9-a640-cf128ae7eb88\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.529Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"dd4a5768-95af-4c3d-934e-10e9fa956186\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.530Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"dff626c4-9ec8-4b3c-99d2-dc871aa72a74\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.531Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"076cfcff-59fe-4555-a56f-fcbbfb4528d4\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.532Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"71b6e646-4acd-4897-9316-5e5d2bf58120\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.533Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"f32b9779-5def-4f76-a489-93c4b5695d08\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:06:45.533Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"f76996aa-9e5a-48d8-be19-54144ff94cf9\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.534Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"bbe59008-3c4c-4679-8417-ee8a1952734a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.535Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"3bc5eab7-ca83-4e36-b632-9e7fc33674f5\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":403,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.536Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"ed8dc012-bc8d-4a7b-a9a9-f8923aff7de3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:06:45.537Z\",\"service\":\"kshvi-ac25\",\"level\":\"info\",\"requestId\":\"9e78d8b2-818e-4ea8-ad73-248f64251970\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/agents/commands\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac25-intermediary.test.ts (1 test) 67ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:44\n   Duration  582ms (transform 71%, import 16%, tests 13%)\n\n",
+  "initialRevision": {
+    "id": "agent-1",
+    "revision": 1,
+    "sha256": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac25/journal.json",
+    "sha256": "dc7e54fb19deb9f6d3c0e8fff3d5a3b5df6bef132609796b5113a4fdd8014075",
+    "eventCount": 21
+  },
+  "hashes": {
+    "scenario": "7dec0fe68654fd5a295a7770c3c363fe7095010f9e7c5a18075dca88eebce406",
+    "environment": "9acad94decf986b1a3b91f37bebb26aa0d036938b7fc05a862a5f8d8e221a6d0",
+    "journal": "dc7e54fb19deb9f6d3c0e8fff3d5a3b5df6bef132609796b5113a4fdd8014075"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac25/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "delegatedInstances": 3,
+    "completedCycles": 2,
+    "escalatedCycles": 1,
+    "systemEvents": 21,
+    "forbiddenEffects": 0,
+    "duplicateEffects": 0,
+    "humanOverrides": 1,
+    "replayHashMatches": 1
+  },
+  "limitations": [
+    "Настоящий HTTP и командный журнал проверены в одном процессе; физическое разнесение агентов и восстановление всего узла входят в отдельный стендовый контур."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac25/journal.json",
+    "docs/release/kshvi/evidence/ac25/agent-decision-traces.json",
+    "docs/release/kshvi/evidence/ac25/protocol.txt",
+    "docs/release/kshvi/evidence/ac25/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-25.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

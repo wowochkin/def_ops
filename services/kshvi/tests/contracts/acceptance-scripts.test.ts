@@ -1,4 +1,5 @@
-import { mkdir, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { expect, it } from 'vitest';
@@ -31,6 +32,38 @@ it('запускает отдельные группы NF-06–NF-10 и NF-11–
     }
   } finally {
     await rm(evidence, { recursive: true, force: true });
+  }
+});
+
+it('записывает fresh-install доказательства относительно execution cwd, а не исходного каталога', async () => {
+  const root = await mkdtemp(resolve('.tmp', 'acceptance-cwd-'));
+  const relativeEvidence = `docs/evidence-${randomUUID()}`;
+  const outside = resolve(relativeEvidence);
+  try {
+    const module = await import(resolve('scripts/kshvi-run-acceptance.mjs'));
+    const hash = 'a'.repeat(64);
+    const result = await module.runAcceptance({
+      from: 1, to: 1, cwd: root, evidence: relativeEvidence, currentCommit: 'current', runId: 'fresh-run',
+      fileExists: () => true,
+      runner: async () => ({
+        status: 0, output: 'ok',
+        evidence: {
+          runId: 'fresh-run', commit: 'current',
+          initialRevision: { id: 'initial', revision: 1, sha256: hash },
+          journal: { path: 'journal.json', sha256: hash, eventCount: 1 },
+          hashes: { scenario: hash, environment: hash, journal: hash },
+          protocols: ['protocol.txt'], metrics: { passed: 1 }, limitations: [], artifacts: ['journal.json', 'protocol.txt'],
+        },
+      }),
+    });
+    expect(result.status).toBe(0);
+    const expected = resolve(root, relativeEvidence, 'AC-01.json');
+    expect(existsSync(expected)).toBe(true);
+    expect(JSON.parse(await readFile(expected, 'utf8'))).toMatchObject({ status: 'passed', cwd: root });
+    expect(existsSync(resolve(outside, 'AC-01.json'))).toBe(false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
   }
 });
 

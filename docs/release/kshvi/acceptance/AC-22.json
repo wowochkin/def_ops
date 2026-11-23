@@ -1,9 +1,9 @@
 {
   "status": "passed",
-  "commit": "917a583c88616f592857217fc2642c3dd904f507",
-  "runId": "fc9d609b-f046-4859-bc4b-d3363631842f",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
   "command": "npx vitest run services/kshvi/tests/acceptance/ac22-initial-map.test.ts",
-  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n{\"t\":\"2026-11-23T17:36:43.572Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"msg\":\"listening on :62129\"}\n{\"t\":\"2026-11-23T17:36:43.579Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"requestId\":\"4ca3a0b4-1b4e-494a-9464-9287cf533c21\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/34a1aa95-9e5e-41be-99bc-f2cb296916be/map-approval\",\"status\":422,\"ms\":1}\n{\"t\":\"2026-11-23T17:36:43.582Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"requestId\":\"c42c0b01-4676-43de-a76e-3305ef1ac88e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/34a1aa95-9e5e-41be-99bc-f2cb296916be/map-approval\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac22-initial-map.test.ts (1 test) 1051ms\n   ✓ AC-22: карта исправляется, утверждается сервером и без утечек входит в SEALED и автономный архив 1050ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  20:36:42\n   Duration  1.69s (tests 64%, transform 29%, import 7%)\n\n",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n{\"t\":\"2026-11-23T20:55:33.574Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"msg\":\"listening on :60074\"}\n{\"t\":\"2026-11-23T20:55:33.582Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"requestId\":\"bfb3337e-9ab5-46ca-a835-f6395ccbe3f2\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/e3842e3c-58ae-4cff-aab0-907c87df05d9/map-approval\",\"status\":422,\"ms\":2}\n{\"t\":\"2026-11-23T20:55:33.585Z\",\"service\":\"kshvi-ac22\",\"level\":\"info\",\"requestId\":\"f968ab5b-8eeb-4229-85d2-2e3bbca048e0\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/e3842e3c-58ae-4cff-aab0-907c87df05d9/map-approval\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac22-initial-map.test.ts (1 test) 1090ms\n   ✓ AC-22: карта исправляется, утверждается сервером и без утечек входит в SEALED и автономный архив 1090ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:55:32\n   Duration  1.75s (tests 64%, transform 29%, import 7%)\n\n",
   "initialRevision": {
     "id": "map-ac22",
     "revision": 11,
@@ -11,13 +11,13 @@
   },
   "journal": {
     "path": "docs/release/kshvi/evidence/ac22/journal.json",
-    "sha256": "012980e72ad590194487323a4acdc7a8391a082fd31073a43206cdf9c6816f9c",
+    "sha256": "1a641c27a2bc38ee15fa0c7aedb82555dbe92fe2aea6b1aed7968b60ab6dbf6b",
     "eventCount": 10
   },
   "hashes": {
     "scenario": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
     "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "journal": "012980e72ad590194487323a4acdc7a8391a082fd31073a43206cdf9c6816f9c"
+    "journal": "1a641c27a2bc38ee15fa0c7aedb82555dbe92fe2aea6b1aed7968b60ab6dbf6b"
   },
   "protocols": [
     "docs/release/kshvi/evidence/ac22/protocol.txt"
@@ -44,8 +44,8 @@
     "docs/release/kshvi/evidence/ac22/metrics.json",
     "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-22.json"
   ],
-  "freshInstall": false,
+  "freshInstall": true,
   "offline": true,
-  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
   "openErrors": []
 }

@@ -1,0 +1,370 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "sealed": {
+    "schemaVersion": 1,
+    "id": "scenario-ac01",
+    "revision": 3,
+    "state": "SEALED",
+    "scenario": {
+      "id": "scenario-ac01",
+      "title": "Многоступенчатое учение",
+      "sides": [
+        "blue",
+        "red"
+      ],
+      "trainedLevels": 3,
+      "stages": [
+        "stage-1",
+        "stage-2"
+      ],
+      "mapZoom": 8
+    },
+    "scenarioSha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+    "initialMap": {
+      "schemaVersion": 1,
+      "id": "map-ac01",
+      "revision": 2,
+      "state": "APPROVED",
+      "environment": {
+        "snapshotId": "env-1",
+        "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "bounds": [
+          0,
+          0,
+          1,
+          1
+        ]
+      },
+      "bounds": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "initialOperationalAt": "2030-01-01T06:00:00+03:00",
+      "timeZone": "Europe/Moscow",
+      "weatherFrameRef": "weather-1",
+      "terrainStateRef": "terrain-1",
+      "symbolSet": {
+        "id": "symbols",
+        "revision": 1,
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "attribution": [
+        "OSM"
+      ],
+      "layers": [
+        {
+          "id": "BASEMAP",
+          "independent": true
+        },
+        {
+          "id": "TRUE_FORCES",
+          "independent": true
+        },
+        {
+          "id": "PERSONAL_SITUATION",
+          "independent": true
+        },
+        {
+          "id": "OBSERVATIONS",
+          "independent": true
+        },
+        {
+          "id": "EVENTS",
+          "independent": true
+        },
+        {
+          "id": "RESOURCES",
+          "independent": true
+        },
+        {
+          "id": "COMMUNICATIONS",
+          "independent": true
+        },
+        {
+          "id": "WEATHER",
+          "independent": true
+        },
+        {
+          "id": "CBRN",
+          "independent": true
+        },
+        {
+          "id": "SOCIO_ECONOMIC",
+          "independent": true
+        },
+        {
+          "id": "REFERENCE",
+          "independent": true
+        },
+        {
+          "id": "ACTUAL",
+          "independent": true
+        },
+        {
+          "id": "BRANCHES",
+          "independent": true
+        },
+        {
+          "id": "STAFF_COMMENTS",
+          "independent": true
+        }
+      ],
+      "markers": [
+        {
+          "id": "force",
+          "revision": 1,
+          "kind": "FORCE",
+          "layerId": "TRUE_FORCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source",
+          "authorId": "author",
+          "eventId": "event",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 10,
+            "note": ""
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ]
+          },
+          "links": {
+            "forceId": "force-1"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "force",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "source.doc",
+            "sourcePage": 1
+          }
+        }
+      ],
+      "history": [],
+      "sha256": "faa5dcbea839b434a54887fffbd120a80cbd9ce964708fa528440b37b9cf6ca4"
+    },
+    "environmentSnapshot": {
+      "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "contentRef": "environment/hash",
+      "autonomous": true
+    },
+    "hashes": {
+      "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "initialMap": "faa5dcbea839b434a54887fffbd120a80cbd9ce964708fa528440b37b9cf6ca4",
+      "weather": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "elevation": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "symbols": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "agents": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "eventLibrary": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "models": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "roles": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "communications": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "documents": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "rehearsal": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "confirmations": [
+      {
+        "id": "confirmation-CONCEPT",
+        "area": "CONCEPT",
+        "userId": "user-CONCEPT",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-ENVIRONMENT_MAP",
+        "area": "ENVIRONMENT_MAP",
+        "userId": "user-ENVIRONMENT_MAP",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-COMMAND_INTERMEDIARIES",
+        "area": "COMMAND_INTERMEDIARIES",
+        "userId": "user-COMMAND_INTERMEDIARIES",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-EQUIPMENT",
+        "area": "EQUIPMENT",
+        "userId": "user-EQUIPMENT",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-MORALE_READINESS",
+        "area": "MORALE_READINESS",
+        "userId": "user-MORALE_READINESS",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-LOGISTICS_FORMATION",
+        "area": "LOGISTICS_FORMATION",
+        "userId": "user-LOGISTICS_FORMATION",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-AUTONOMY_AGENTS",
+        "area": "AUTONOMY_AGENTS",
+        "userId": "user-AUTONOMY_AGENTS",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-SYMBOL_LIBRARY",
+        "area": "SYMBOL_LIBRARY",
+        "userId": "user-SYMBOL_LIBRARY",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-MODEL_PROFILE",
+        "area": "MODEL_PROFILE",
+        "userId": "user-MODEL_PROFILE",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-COMMUNICATIONS",
+        "area": "COMMUNICATIONS",
+        "userId": "user-COMMUNICATIONS",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-DOCUMENTS",
+        "area": "DOCUMENTS",
+        "userId": "user-DOCUMENTS",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-ASSESSMENT",
+        "area": "ASSESSMENT",
+        "userId": "user-ASSESSMENT",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      },
+      {
+        "id": "confirmation-TECHNICAL_READINESS",
+        "area": "TECHNICAL_READINESS",
+        "userId": "user-TECHNICAL_READINESS",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T06:00:00+03:00",
+        "subjectHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dependsOn": []
+      }
+    ],
+    "rehearsal": {
+      "schemaVersion": 1,
+      "id": "rehearsal-ac01",
+      "scenarioSha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+      "full": true,
+      "isolated": true,
+      "status": "PASSED",
+      "eventLogId": "rehearsal-log-ac01",
+      "officialEventLogId": "official-log-ac01",
+      "checks": {
+        "RECIPIENTS": true,
+        "CHANNELS": true,
+        "QUEUE": true,
+        "BRANCHES": true,
+        "VISIBILITY": true,
+        "DOCUMENTS": true,
+        "RECOVERY": true,
+        "PRINT_FALLBACK": true,
+        "EVENT_STATISTICS": true,
+        "CASCADE_LIMITS": true,
+        "INTERMEDIARY_CYCLES": true,
+        "OPPONENT": true,
+        "MORALE_IMPACT": true,
+        "SUPPLY_ROUTES": true
+      }
+    },
+    "rehearsalSha256": "3e79abe354aa943b92e763785adb062e579d76e0ebd6d33685d15abb38c8dfec",
+    "sealedAt": "2030-01-01T06:00:00+03:00"
+  },
+  "sessions": {
+    "first": {
+      "schemaVersion": 1,
+      "id": "ac01-first",
+      "scenarioId": "scenario-ac01",
+      "scenarioRevision": 3,
+      "scenarioSha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+      "state": "ACTIVE",
+      "seed": "seed-1",
+      "eventLogId": "events-ac01-first",
+      "events": [],
+      "idempotencyKey": "start-1",
+      "abnormalTermination": false
+    },
+    "repeated": {
+      "schemaVersion": 1,
+      "id": "ac01-first",
+      "scenarioId": "scenario-ac01",
+      "scenarioRevision": 3,
+      "scenarioSha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+      "state": "ACTIVE",
+      "seed": "seed-1",
+      "eventLogId": "events-ac01-first",
+      "events": [],
+      "idempotencyKey": "start-1",
+      "abnormalTermination": false
+    },
+    "second": {
+      "schemaVersion": 1,
+      "id": "ac01-second",
+      "scenarioId": "scenario-ac01",
+      "scenarioRevision": 3,
+      "scenarioSha256": "10fbefe457c37acd7a1c7894dcd59688b6f35b4b5ccbd3a3546055c83d5f486c",
+      "state": "ACTIVE",
+      "seed": "seed-2",
+      "eventLogId": "events-ac01-second",
+      "events": [],
+      "idempotencyKey": "start-2",
+      "abnormalTermination": false
+    }
+  }
+}

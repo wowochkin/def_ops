@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac10-branch.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:51.959Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"msg\":\"listening on :49173\"}\n{\"t\":\"2026-11-23T21:04:51.980Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"59c95753-cadf-472c-b4cd-bddd94436a53\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/commands\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-23T21:04:51.987Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"64c3e479-0f34-4683-b9cb-fb3a6f49eb2c\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T21:04:51.990Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"1771e2ef-41e3-4497-b24b-7b12b8e50a8a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:51.994Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"8b01ab8c-1293-47d2-bff6-3b2860046266\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:51.998Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"b3f97c0b-516f-41f6-aa2b-8152a0e85ac1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches\",\"status\":201,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:52.002Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"060113fe-4bfb-4c0f-9a32-ccbf0d11cc33\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T21:04:52.008Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"043a396a-8d05-4ac4-b97c-64f4113c64de\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/commands\",\"status\":200,\"ms\":5}\n{\"t\":\"2026-11-23T21:04:52.010Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"5b41f38d-cd60-4ff2-9873-4ab4fbf91947\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/compare\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:52.013Z\",\"service\":\"kshvi-ac10\",\"level\":\"error\",\"requestId\":\"d832a19d-1850-43aa-9073-07819064f831\",\"error\":\"Error: обычная публикация ветви запрещена; требуется новое решение руководителя\\n    at publishBranch (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/kshvi/src/replay/branch.ts:109:9)\\n    at BranchDomainService.publish (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/branch-service.ts:111:12)\\n    at Object.handler (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/http/instance-routes.ts:68:21)\\n    at Server.<anonymous> (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/service-kit/src/index.ts:146:19)\"}\n{\"t\":\"2026-11-23T21:04:52.013Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"d832a19d-1850-43aa-9073-07819064f831\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/publish\",\"status\":500,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:52.016Z\",\"service\":\"kshvi-ac10\",\"level\":\"error\",\"requestId\":\"77999bc9-75d8-433a-94ae-57b1f22fe97f\",\"error\":\"Error: Перенос альтернативы требует OFFICIAL_DECISION\\n    at executeConductCommand (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/kshvi/src/commands/conduct.ts:220:95)\\n    at ConductCommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/conduct-command-service.ts:62:29)\\n    at CommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/command-service.ts:56:42)\\n    at BranchDomainService.adopt (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/branch-service.ts:118:40)\\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at Server.<anonymous> (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/service-kit/src/index.ts:146:19)\"}\n{\"t\":\"2026-11-23T21:04:52.016Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"77999bc9-75d8-433a-94ae-57b1f22fe97f\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/adopt\",\"status\":500,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:52.021Z\",\"service\":\"kshvi-ac10\",\"level\":\"info\",\"requestId\":\"30b7c642-e43d-497c-9382-72283f11bb44\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac10/branches/alternative-1/adopt\",\"status\":200,\"ms\":4}\n ✓ services/kshvi/tests/acceptance/ac10-branch.test.ts (1 test) 208ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:49\n   Duration  2.10s (transform 66%, import 24%, tests 10%)\n\n",
+  "initialRevision": {
+    "id": "ac10-branch",
+    "revision": 1,
+    "sha256": "9f24f1db5ca96e86c4fc413059321354c6cc4870c6d934837fa6e93b6d32d43b"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac10/journal.json",
+    "sha256": "248e3a1297bf4828ed97b2c34c084c3e21f11e6429724167339396780ded1d5e",
+    "eventCount": 5
+  },
+  "hashes": {
+    "scenario": "9f24f1db5ca96e86c4fc413059321354c6cc4870c6d934837fa6e93b6d32d43b",
+    "environment": "1b34739a7109255cbfbad6b290ab60cfe04df21b0b704eb9171dec7015482a9f",
+    "journal": "248e3a1297bf4828ed97b2c34c084c3e21f11e6429724167339396780ded1d5e"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac10/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "publicationRejected": 1,
+    "unauthorizedAdoptionRejected": 1,
+    "adoptedByLeader": 1,
+    "officialHistoryPreserved": 1
+  },
+  "limitations": [
+    "Сравнение доказывает изоляцию и различие версий, но не причинное превосходство модели; единый рейтинг не создаётся."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac10/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac10/journal.json",
+    "docs/release/kshvi/evidence/ac10/protocol.txt",
+    "docs/release/kshvi/evidence/ac10/metrics.json",
+    "docs/release/kshvi/evidence/ac10/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-10.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

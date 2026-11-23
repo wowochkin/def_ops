@@ -1,0 +1,163 @@
+{
+  "initialRevision": {
+    "id": "ac03-visibility",
+    "revision": 1,
+    "sha256": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80"
+  },
+  "scenario": {
+    "world": {
+      "forces": [
+        {
+          "id": "force-blue",
+          "side": "blue",
+          "secret": "blue-force-secret"
+        },
+        {
+          "id": "force-red",
+          "side": "red",
+          "secret": "red-force-secret"
+        }
+      ],
+      "observations": [
+        {
+          "id": "observation-blue",
+          "sideId": "blue",
+          "secret": "blue-observation-secret",
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "node-1"
+            ],
+            "roles": []
+          }
+        },
+        {
+          "id": "observation-red",
+          "sideId": "red",
+          "secret": "red-observation-secret",
+          "visibility": {
+            "sideIds": [
+              "red"
+            ],
+            "instanceIds": [
+              "node-1"
+            ],
+            "roles": []
+          }
+        }
+      ],
+      "inputs": [
+        {
+          "id": "future-blue",
+          "availableAt": "2031-01-01T00:00:00Z",
+          "recipients": [
+            "blue"
+          ],
+          "secret": "future-blue-secret"
+        }
+      ],
+      "documents": [
+        {
+          "id": "document-blue",
+          "title": "Секретный приказ blue",
+          "sideId": "blue",
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "node-1"
+            ],
+            "roles": []
+          },
+          "attachments": [
+            {
+              "id": "attachment-blue",
+              "title": "Схема blue",
+              "content": "blue-attachment-secret",
+              "visibility": {
+                "sideIds": [
+                  "blue"
+                ],
+                "instanceIds": [
+                  "node-1"
+                ],
+                "roles": []
+              }
+            },
+            {
+              "id": "attachment-red-hidden",
+              "title": "Личное red",
+              "content": "red-attachment-secret",
+              "visibility": {
+                "sideIds": [
+                  "red"
+                ],
+                "instanceIds": [],
+                "roles": []
+              }
+            }
+          ]
+        },
+        {
+          "id": "document-red",
+          "title": "Секретный приказ red",
+          "sideId": "red",
+          "visibility": {
+            "sideIds": [
+              "red"
+            ],
+            "instanceIds": [
+              "node-1"
+            ],
+            "roles": []
+          },
+          "attachments": []
+        }
+      ],
+      "reference": {
+        "assessment": "red-assessment-secret"
+      }
+    },
+    "instanceId": "instance-main",
+    "roles": [
+      {
+        "id": "leader",
+        "role": "LEADER",
+        "side": "blue"
+      },
+      {
+        "id": "blue",
+        "role": "TRAINEE",
+        "side": "blue"
+      },
+      {
+        "id": "red",
+        "role": "TRAINEE",
+        "side": "red"
+      },
+      {
+        "id": "intermediary",
+        "role": "INTERMEDIARY",
+        "side": "blue"
+      },
+      {
+        "id": "author",
+        "role": "AUTHOR",
+        "side": "blue"
+      },
+      {
+        "id": "approver",
+        "role": "APPROVER",
+        "side": "blue"
+      },
+      {
+        "id": "director",
+        "role": "DIRECTOR",
+        "side": "blue"
+      }
+    ]
+  }
+}

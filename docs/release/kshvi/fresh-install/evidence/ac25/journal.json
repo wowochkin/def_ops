@@ -1,0 +1,5788 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "first": {
+    "cycleId": "agent-1:wake-ac25-1",
+    "status": "COMPLETED",
+    "assignment": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "bindings": [
+        {
+          "instanceId": "higher",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "neighbour",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "support",
+          "sectorIds": [
+            "north"
+          ]
+        }
+      ],
+      "roles": [
+        "INTERMEDIARY"
+      ],
+      "projection": {
+        "projectionId": "projection-agent-1",
+        "sideIds": [
+          "blue"
+        ],
+        "sectorIds": [
+          "north"
+        ]
+      },
+      "allowedActions": [
+        "classifyInput",
+        "updateWorkingMap",
+        "recordAssessment",
+        "makeDecision",
+        "assignTask",
+        "createDocument",
+        "coordinateDocument",
+        "issueDocument",
+        "sendInput",
+        "sendReport",
+        "requestCalculation",
+        "executeOrder",
+        "checkDeadline",
+        "requestData",
+        "reportToLeader",
+        "recordObservation"
+      ],
+      "modernProfile": {
+        "profileId": "modern-intermediary",
+        "version": "1.0.0",
+        "era": "modern",
+        "source": {
+          "kind": "ASSUMPTION",
+          "reference": "Учебный профиль КШВИ"
+        },
+        "maxOptions": 3,
+        "riskLimit": 0.5,
+        "severityLimit": 3
+      },
+      "schedule": {
+        "everyMs": 1000,
+        "timeBudgetMs": 250
+      },
+      "escalation": {
+        "recipients": [
+          "leader-1"
+        ],
+        "requiredData": [
+          "activeOrder"
+        ]
+      },
+      "mode": "DELEGATED",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "status": "ACTIVE",
+      "version": 1
+    },
+    "projection": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "projectionId": "projection-agent-1",
+      "revision": 7,
+      "sequence": 42,
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "tasks": [
+        {
+          "taskId": "task-1",
+          "instanceId": "higher",
+          "status": "EXECUTING",
+          "dueAt": "2030-01-01T00:20:00.000Z"
+        }
+      ],
+      "observations": [
+        {
+          "observationId": "observation-1",
+          "source": "post-1",
+          "observedAt": "2030-01-01T00:09:00.000Z",
+          "deliveredAt": "2030-01-01T00:09:30.000Z",
+          "summary": "Изменение активности",
+          "confidence": 0.6,
+          "stale": false
+        }
+      ],
+      "reports": [
+        {
+          "reportId": "report-1",
+          "instanceId": "higher",
+          "status": "RECEIVED",
+          "receivedAt": "2030-01-01T00:09:40.000Z"
+        }
+      ],
+      "resources": {
+        "transport": 2,
+        "calculation": 1
+      },
+      "requestedActions": [
+        {
+          "actionId": "action-1",
+          "kind": "classifyInput",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-1"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-2",
+          "kind": "updateWorkingMap",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-2"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-3",
+          "kind": "recordAssessment",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-3"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-4",
+          "kind": "makeDecision",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-4"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-5",
+          "kind": "assignTask",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-5"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-6",
+          "kind": "createDocument",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-6"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-7",
+          "kind": "coordinateDocument",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-7"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-8",
+          "kind": "issueDocument",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-8"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-9",
+          "kind": "sendInput",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-9"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-10",
+          "kind": "sendReport",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-10"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-11",
+          "kind": "requestCalculation",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-11"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-12",
+          "kind": "executeOrder",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-12"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-13",
+          "kind": "checkDeadline",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-13"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-14",
+          "kind": "requestData",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-14"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-15",
+          "kind": "reportToLeader",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-15"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-16",
+          "kind": "recordObservation",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-16"
+          },
+          "risk": 0.1,
+          "severity": 1
+        }
+      ]
+    },
+    "classification": {
+      "projectionId": "projection-agent-1",
+      "revision": 7,
+      "received": {
+        "tasks": 1,
+        "observations": 1,
+        "reports": 1,
+        "actions": 16
+      },
+      "workingMap": {
+        "updatedAt": "2030-01-01T00:10:00.000Z",
+        "entries": [
+          {
+            "entryId": "task:task-1",
+            "kind": "TASK",
+            "sourceId": "task-1",
+            "summary": "higher: EXECUTING"
+          },
+          {
+            "entryId": "observation:observation-1",
+            "kind": "OBSERVATION",
+            "sourceId": "observation-1",
+            "summary": "Изменение активности"
+          },
+          {
+            "entryId": "report:report-1",
+            "kind": "REPORT",
+            "sourceId": "report-1",
+            "summary": "higher: RECEIVED"
+          },
+          {
+            "entryId": "action:action-1",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-1",
+            "summary": "classifyInput"
+          },
+          {
+            "entryId": "action:action-2",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-2",
+            "summary": "updateWorkingMap"
+          },
+          {
+            "entryId": "action:action-3",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-3",
+            "summary": "recordAssessment"
+          },
+          {
+            "entryId": "action:action-4",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-4",
+            "summary": "makeDecision"
+          },
+          {
+            "entryId": "action:action-5",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-5",
+            "summary": "assignTask"
+          },
+          {
+            "entryId": "action:action-6",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-6",
+            "summary": "createDocument"
+          },
+          {
+            "entryId": "action:action-7",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-7",
+            "summary": "coordinateDocument"
+          },
+          {
+            "entryId": "action:action-8",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-8",
+            "summary": "issueDocument"
+          },
+          {
+            "entryId": "action:action-9",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-9",
+            "summary": "sendInput"
+          },
+          {
+            "entryId": "action:action-10",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-10",
+            "summary": "sendReport"
+          },
+          {
+            "entryId": "action:action-11",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-11",
+            "summary": "requestCalculation"
+          },
+          {
+            "entryId": "action:action-12",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-12",
+            "summary": "executeOrder"
+          },
+          {
+            "entryId": "action:action-13",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-13",
+            "summary": "checkDeadline"
+          },
+          {
+            "entryId": "action:action-14",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-14",
+            "summary": "requestData"
+          },
+          {
+            "entryId": "action:action-15",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-15",
+            "summary": "reportToLeader"
+          },
+          {
+            "entryId": "action:action-16",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-16",
+            "summary": "recordObservation"
+          }
+        ]
+      }
+    },
+    "assessment": {
+      "changes": [
+        "Ревизия проекции 7, последовательность 42",
+        "Новых запрошенных действий: 16"
+      ],
+      "constraints": [],
+      "unknownData": [],
+      "overdueTaskIds": []
+    },
+    "decision": {
+      "intent": "Удержать назначенный район",
+      "goals": [
+        "Контроль района",
+        "Своевременный доклад"
+      ],
+      "tasks": [
+        "Наблюдение",
+        "Доклад"
+      ],
+      "resourceAllocation": {
+        "transport": 2
+      },
+      "deadlines": [
+        "2030-01-01T00:20:00.000Z"
+      ],
+      "coordination": [
+        "neighbour"
+      ],
+      "reserves": [
+        "support"
+      ],
+      "transitionConditions": [
+        "Новое наблюдение"
+      ],
+      "assumptions": [
+        "Связь доступна"
+      ],
+      "status": "ADOPTED"
+    },
+    "options": [
+      {
+        "optionId": "delegated-actions",
+        "title": "Выполнить делегированные действия",
+        "actions": [
+          {
+            "actionId": "action-1",
+            "kind": "classifyInput",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-1"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-2",
+            "kind": "updateWorkingMap",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-2"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-3",
+            "kind": "recordAssessment",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-3"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-4",
+            "kind": "makeDecision",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-4"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-5",
+            "kind": "assignTask",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-5"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-6",
+            "kind": "createDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-6"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-7",
+            "kind": "coordinateDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-7"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-8",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-8"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-9",
+            "kind": "sendInput",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-9"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-10",
+            "kind": "sendReport",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-10"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-11",
+            "kind": "requestCalculation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-11"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-12",
+            "kind": "executeOrder",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-12"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-13",
+            "kind": "checkDeadline",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-13"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-14",
+            "kind": "requestData",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-14"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-15",
+            "kind": "reportToLeader",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-15"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-16",
+            "kind": "recordObservation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-16"
+            },
+            "risk": 0.1,
+            "severity": 1
+          }
+        ],
+        "utility": {
+          "score": 14.4,
+          "reasons": [
+            "Разрешённых кандидатов до проверки полномочий: 16",
+            "Суммарный заявленный риск вычтен из полезности: 1.6000000000000003",
+            "Неизвестных данных: 0"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-9ab1838d8e2709771a39",
+          "inputHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+          "outcomeHash": "88897f7e0e3eaf531c71afe331e2199ec7e19d8afefaef4c3d82a1459d551ed6",
+          "officialProjectionHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      },
+      {
+        "optionId": "continue-order",
+        "title": "Продолжить действующий приказ",
+        "actions": [],
+        "utility": {
+          "score": 0,
+          "reasons": [
+            "Сохраняется действующий приказ без новых эффектов"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-143e5c027a5eab5d2717",
+          "inputHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+          "outcomeHash": "6a8b02e3f45e4d85561a7debc1f0ed1d56eb5e3ebc58e9330a0adc0786be8628",
+          "officialProjectionHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      }
+    ],
+    "selectedOptionId": "delegated-actions",
+    "proposedCommands": [
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-1",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-1",
+        "kind": "classifyInput",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-1",
+          "reference": "ref-1"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-2",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-2",
+        "kind": "updateWorkingMap",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-2",
+          "reference": "ref-2"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-3",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-3",
+        "kind": "recordAssessment",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-3",
+          "reference": "ref-3"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-4",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-4",
+        "kind": "makeDecision",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-4",
+          "reference": "ref-4"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-5",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-5",
+        "kind": "assignTask",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-5",
+          "reference": "ref-5"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-6",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-6",
+        "kind": "createDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-6",
+          "reference": "ref-6",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-7",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-7",
+        "kind": "coordinateDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-7",
+          "reference": "ref-7",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-8",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-8",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-8",
+          "reference": "ref-8",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-9",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-9",
+        "kind": "sendInput",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-9",
+          "reference": "ref-9",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-10",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-10",
+        "kind": "sendReport",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-10",
+          "reference": "ref-10",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-11",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-11",
+        "kind": "requestCalculation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-11",
+          "reference": "ref-11"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-12",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-12",
+        "kind": "executeOrder",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-12",
+          "reference": "ref-12"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-13",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-13",
+        "kind": "checkDeadline",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-13",
+          "reference": "ref-13"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-14",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-14",
+        "kind": "requestData",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-14",
+          "reference": "ref-14"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-15",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-15",
+        "kind": "reportToLeader",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-15",
+          "reference": "ref-15",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-16",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-16",
+        "kind": "recordObservation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-16",
+          "reference": "ref-16"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-1",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-1",
+        "kind": "classifyInput",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-1",
+          "reference": "ref-1"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-2",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-2",
+        "kind": "updateWorkingMap",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-2",
+          "reference": "ref-2"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-3",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-3",
+        "kind": "recordAssessment",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-3",
+          "reference": "ref-3"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-4",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-4",
+        "kind": "makeDecision",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-4",
+          "reference": "ref-4"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-5",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-5",
+        "kind": "assignTask",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-5",
+          "reference": "ref-5"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-6",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-6",
+        "kind": "createDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-6",
+          "reference": "ref-6",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-7",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-7",
+        "kind": "coordinateDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-7",
+          "reference": "ref-7",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-8",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-8",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-8",
+          "reference": "ref-8",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-9",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-9",
+        "kind": "sendInput",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-9",
+          "reference": "ref-9",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-10",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-10",
+        "kind": "sendReport",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-10",
+          "reference": "ref-10",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-11",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-11",
+        "kind": "requestCalculation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-11",
+          "reference": "ref-11"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-12",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-12",
+        "kind": "executeOrder",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-12",
+          "reference": "ref-12"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-13",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-13",
+        "kind": "checkDeadline",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-13",
+          "reference": "ref-13"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-14",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-14",
+        "kind": "requestData",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-14",
+          "reference": "ref-14"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-15",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-15",
+        "kind": "reportToLeader",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-15",
+          "reference": "ref-15",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-16",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-16",
+        "kind": "recordObservation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-16",
+          "reference": "ref-16"
+        }
+      }
+    ],
+    "responses": [
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-1",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "5d19e441-9d15-524c-88d2-bffb245a8323",
+        "serverRevision": 1
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-2",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "171c8eaf-a48c-5890-a6e8-3a119ccd0a28",
+        "serverRevision": 2
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-3",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "e056323f-c8b6-59e1-8efe-b2a22df739b6",
+        "serverRevision": 3
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-4",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "959f9197-e5e9-5e7e-8fd1-0188e874d103",
+        "serverRevision": 4
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-5",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "5a6b55ee-2685-5520-9786-02be72e81c15",
+        "serverRevision": 5
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-6",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "23b86d51-d92b-5e5f-9755-9adb35da463f",
+        "serverRevision": 6
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-7",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "67d0e006-515b-5f31-a5ab-3695e8b7ea01",
+        "serverRevision": 7
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-8",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "a7e2f8e2-2ba5-5d48-84a5-643d79153f96",
+        "serverRevision": 8
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-9",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "aec02973-4569-5d0e-8529-3f3eec6377c7",
+        "serverRevision": 9
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-10",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "9e00626a-72e4-5bf2-a5bd-6ba609f8c396",
+        "serverRevision": 10
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-11",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "9fb5ec3e-9065-5538-b008-c3b8f82d2369",
+        "serverRevision": 11
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-12",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "98543a4d-0287-59f6-812e-dde1559925b1",
+        "serverRevision": 12
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-13",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "0ebe4854-b865-534a-ad54-d43eef2cb500",
+        "serverRevision": 13
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-14",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "30e6c24d-3bfb-5b6e-a589-18984733e549",
+        "serverRevision": 14
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-15",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "8ea7070f-d308-53a7-a43e-5b3d35eb1a04",
+        "serverRevision": 15
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:7:action-16",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "0755cb41-7bb0-52e4-b3e4-b4dabe0c59e8",
+        "serverRevision": 16
+      }
+    ],
+    "appliedForbiddenEffects": [],
+    "observationSheet": {
+      "assignmentId": "agent-1",
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "entries": [
+        {
+          "entryId": "deadline:task-1",
+          "kind": "DEADLINE",
+          "subjectId": "task-1",
+          "status": "EXECUTING",
+          "detail": "Срок 2030-01-01T00:20:00.000Z"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-1",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-1",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-2",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-2",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-3",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-3",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-4",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-4",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-5",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-5",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-6",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-6",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-7",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-7",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-8",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-8",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-9",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-9",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-10",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-10",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-11",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-11",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-12",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-12",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-13",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-13",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-14",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-14",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-15",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-15",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:7:action-16",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:7:action-16",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        }
+      ]
+    },
+    "language": {
+      "text": "Доклад по приказу order-1; ревизия проекции 7.",
+      "status": "DISABLED",
+      "source": "LOCAL",
+      "claimsVerified": false,
+      "executable": false
+    },
+    "trace": {
+      "cycleId": "agent-1:wake-ac25-1",
+      "assignmentId": "agent-1",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "projection": {
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "projectionId": "projection-agent-1",
+        "revision": 7,
+        "sequence": 42,
+        "operationalAt": "2030-01-01T00:10:00.000Z",
+        "activeOrder": {
+          "orderId": "order-1",
+          "version": 3,
+          "intent": "Удержать назначенный район",
+          "goals": [
+            "Контроль района",
+            "Своевременный доклад"
+          ],
+          "tasks": [
+            "Наблюдение",
+            "Доклад"
+          ],
+          "resources": {
+            "transport": 2
+          },
+          "deadlines": [
+            "2030-01-01T00:20:00.000Z"
+          ],
+          "coordination": [
+            "neighbour"
+          ],
+          "reserves": [
+            "support"
+          ],
+          "transitionConditions": [
+            "Новое наблюдение"
+          ],
+          "assumptions": [
+            "Связь доступна"
+          ],
+          "status": "EXECUTING"
+        },
+        "tasks": [
+          {
+            "taskId": "task-1",
+            "instanceId": "higher",
+            "status": "EXECUTING",
+            "dueAt": "2030-01-01T00:20:00.000Z"
+          }
+        ],
+        "observations": [
+          {
+            "observationId": "observation-1",
+            "source": "post-1",
+            "observedAt": "2030-01-01T00:09:00.000Z",
+            "deliveredAt": "2030-01-01T00:09:30.000Z",
+            "summary": "Изменение активности",
+            "confidence": 0.6,
+            "stale": false
+          }
+        ],
+        "reports": [
+          {
+            "reportId": "report-1",
+            "instanceId": "higher",
+            "status": "RECEIVED",
+            "receivedAt": "2030-01-01T00:09:40.000Z"
+          }
+        ],
+        "resources": {
+          "transport": 2,
+          "calculation": 1
+        },
+        "requestedActions": [
+          {
+            "actionId": "action-1",
+            "kind": "classifyInput",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-1"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-2",
+            "kind": "updateWorkingMap",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-2"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-3",
+            "kind": "recordAssessment",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-3"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-4",
+            "kind": "makeDecision",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-4"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-5",
+            "kind": "assignTask",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-5"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-6",
+            "kind": "createDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-6"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-7",
+            "kind": "coordinateDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-7"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-8",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-8"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-9",
+            "kind": "sendInput",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-9"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-10",
+            "kind": "sendReport",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-10"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-11",
+            "kind": "requestCalculation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-11"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-12",
+            "kind": "executeOrder",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-12"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-13",
+            "kind": "checkDeadline",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-13"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-14",
+            "kind": "requestData",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-14"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-15",
+            "kind": "reportToLeader",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-15"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-16",
+            "kind": "recordObservation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-16"
+            },
+            "risk": 0.1,
+            "severity": 1
+          }
+        ]
+      },
+      "projectionHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "options": [
+        {
+          "optionId": "delegated-actions",
+          "title": "Выполнить делегированные действия",
+          "actions": [
+            {
+              "actionId": "action-1",
+              "kind": "classifyInput",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-1"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-2",
+              "kind": "updateWorkingMap",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-2"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-3",
+              "kind": "recordAssessment",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-3"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-4",
+              "kind": "makeDecision",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-4"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-5",
+              "kind": "assignTask",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-5"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-6",
+              "kind": "createDocument",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-6"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-7",
+              "kind": "coordinateDocument",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-7"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-8",
+              "kind": "issueDocument",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-8"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-9",
+              "kind": "sendInput",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-9"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-10",
+              "kind": "sendReport",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-10"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-11",
+              "kind": "requestCalculation",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-11"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-12",
+              "kind": "executeOrder",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-12"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-13",
+              "kind": "checkDeadline",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-13"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-14",
+              "kind": "requestData",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-14"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-15",
+              "kind": "reportToLeader",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-15"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-16",
+              "kind": "recordObservation",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-16"
+              },
+              "risk": 0.1,
+              "severity": 1
+            }
+          ],
+          "utility": {
+            "score": 14.4,
+            "reasons": [
+              "Разрешённых кандидатов до проверки полномочий: 16",
+              "Суммарный заявленный риск вычтен из полезности: 1.6000000000000003",
+              "Неизвестных данных: 0"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-9ab1838d8e2709771a39",
+            "inputHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+            "outcomeHash": "88897f7e0e3eaf531c71afe331e2199ec7e19d8afefaef4c3d82a1459d551ed6",
+            "officialProjectionHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        },
+        {
+          "optionId": "continue-order",
+          "title": "Продолжить действующий приказ",
+          "actions": [],
+          "utility": {
+            "score": 0,
+            "reasons": [
+              "Сохраняется действующий приказ без новых эффектов"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-143e5c027a5eab5d2717",
+            "inputHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+            "outcomeHash": "6a8b02e3f45e4d85561a7debc1f0ed1d56eb5e3ebc58e9330a0adc0786be8628",
+            "officialProjectionHash": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        }
+      ],
+      "constraints": [],
+      "selectedOptionId": "delegated-actions",
+      "versions": {
+        "profile": "modern-intermediary@1.0.0",
+        "algorithm": "intermediary-cycle@1.0.0",
+        "projectionSchema": "kshvi-agent-projection@1",
+        "timeBudget": 1
+      },
+      "rngKeys": [
+        {
+          "seed": "ecfbdffaa5cdaa3202b4c0d5e264b48f689aa671fb2f5888c900608146ceb8b2",
+          "stream": "intermediary-option-order",
+          "key": "d507f8716f0f00401d090befa25cc8cc10153d77f401ab9b3b15f38de3fd2a94",
+          "cursor": 0
+        }
+      ],
+      "commands": [
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-1",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-1",
+          "kind": "classifyInput",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-1",
+            "reference": "ref-1"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-2",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-2",
+          "kind": "updateWorkingMap",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-2",
+            "reference": "ref-2"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-3",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-3",
+          "kind": "recordAssessment",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-3",
+            "reference": "ref-3"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-4",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-4",
+          "kind": "makeDecision",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-4",
+            "reference": "ref-4"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-5",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-5",
+          "kind": "assignTask",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-5",
+            "reference": "ref-5"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-6",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-6",
+          "kind": "createDocument",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-6",
+            "reference": "ref-6",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-7",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-7",
+          "kind": "coordinateDocument",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-7",
+            "reference": "ref-7",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-8",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-8",
+          "kind": "issueDocument",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-8",
+            "reference": "ref-8",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-9",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-9",
+          "kind": "sendInput",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-9",
+            "reference": "ref-9",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-10",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-10",
+          "kind": "sendReport",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-10",
+            "reference": "ref-10",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-11",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-11",
+          "kind": "requestCalculation",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-11",
+            "reference": "ref-11"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-12",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-12",
+          "kind": "executeOrder",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-12",
+            "reference": "ref-12"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-13",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-13",
+          "kind": "checkDeadline",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-13",
+            "reference": "ref-13"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-14",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-14",
+          "kind": "requestData",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-14",
+            "reference": "ref-14"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-15",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-15",
+          "kind": "reportToLeader",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-15",
+            "reference": "ref-15",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-16",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:7:action-16",
+          "kind": "recordObservation",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-16",
+            "reference": "ref-16"
+          }
+        }
+      ],
+      "responses": [
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-1",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "5d19e441-9d15-524c-88d2-bffb245a8323",
+          "serverRevision": 1
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-2",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "171c8eaf-a48c-5890-a6e8-3a119ccd0a28",
+          "serverRevision": 2
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-3",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "e056323f-c8b6-59e1-8efe-b2a22df739b6",
+          "serverRevision": 3
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-4",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "959f9197-e5e9-5e7e-8fd1-0188e874d103",
+          "serverRevision": 4
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-5",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "5a6b55ee-2685-5520-9786-02be72e81c15",
+          "serverRevision": 5
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-6",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "23b86d51-d92b-5e5f-9755-9adb35da463f",
+          "serverRevision": 6
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-7",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "67d0e006-515b-5f31-a5ab-3695e8b7ea01",
+          "serverRevision": 7
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-8",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "a7e2f8e2-2ba5-5d48-84a5-643d79153f96",
+          "serverRevision": 8
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-9",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "aec02973-4569-5d0e-8529-3f3eec6377c7",
+          "serverRevision": 9
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-10",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "9e00626a-72e4-5bf2-a5bd-6ba609f8c396",
+          "serverRevision": 10
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-11",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "9fb5ec3e-9065-5538-b008-c3b8f82d2369",
+          "serverRevision": 11
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-12",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "98543a4d-0287-59f6-812e-dde1559925b1",
+          "serverRevision": 12
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-13",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "0ebe4854-b865-534a-ad54-d43eef2cb500",
+          "serverRevision": 13
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-14",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "30e6c24d-3bfb-5b6e-a589-18984733e549",
+          "serverRevision": 14
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-15",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "8ea7070f-d308-53a7-a43e-5b3d35eb1a04",
+          "serverRevision": 15
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:7:action-16",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "0755cb41-7bb0-52e4-b3e4-b4dabe0c59e8",
+          "serverRevision": 16
+        }
+      ],
+      "unknownData": [],
+      "traceId": "trace-3a78098437f60b089291615b",
+      "explanation": {
+        "selected": "Выбран вариант «Выполнить делегированные действия»: Разрешённых кандидатов до проверки полномочий: 16; Суммарный заявленный риск вычтен из полезности: 1.6000000000000003; Неизвестных данных: 0",
+        "alternativesRejected": [
+          "«Продолжить действующий приказ» отклонён: Сохраняется действующий приказ без новых эффектов"
+        ],
+        "unknownData": []
+      }
+    }
+  },
+  "second": {
+    "cycleId": "agent-1:wake-ac25-2",
+    "status": "ESCALATED",
+    "assignment": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "bindings": [
+        {
+          "instanceId": "higher",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "neighbour",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "support",
+          "sectorIds": [
+            "north"
+          ]
+        }
+      ],
+      "roles": [
+        "INTERMEDIARY"
+      ],
+      "projection": {
+        "projectionId": "projection-agent-1",
+        "sideIds": [
+          "blue"
+        ],
+        "sectorIds": [
+          "north"
+        ]
+      },
+      "allowedActions": [
+        "classifyInput",
+        "updateWorkingMap",
+        "recordAssessment",
+        "makeDecision",
+        "assignTask",
+        "createDocument",
+        "coordinateDocument",
+        "issueDocument",
+        "sendInput",
+        "sendReport",
+        "requestCalculation",
+        "executeOrder",
+        "checkDeadline",
+        "requestData",
+        "reportToLeader",
+        "recordObservation"
+      ],
+      "modernProfile": {
+        "profileId": "modern-intermediary",
+        "version": "1.0.0",
+        "era": "modern",
+        "source": {
+          "kind": "ASSUMPTION",
+          "reference": "Учебный профиль КШВИ"
+        },
+        "maxOptions": 3,
+        "riskLimit": 0.5,
+        "severityLimit": 3
+      },
+      "schedule": {
+        "everyMs": 1000,
+        "timeBudgetMs": 250
+      },
+      "escalation": {
+        "recipients": [
+          "leader-1"
+        ],
+        "requiredData": [
+          "activeOrder"
+        ]
+      },
+      "mode": "DELEGATED",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "status": "INTERCEPTED",
+      "version": 2
+    },
+    "projection": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "projectionId": "projection-agent-1",
+      "revision": 8,
+      "sequence": 43,
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "tasks": [
+        {
+          "taskId": "task-1",
+          "instanceId": "higher",
+          "status": "EXECUTING",
+          "dueAt": "2030-01-01T00:20:00.000Z"
+        }
+      ],
+      "observations": [
+        {
+          "observationId": "observation-ac25-new",
+          "source": "post-1",
+          "observedAt": "2030-01-01T00:09:00.000Z",
+          "deliveredAt": "2030-01-01T00:09:30.000Z",
+          "summary": "Новые сведения",
+          "confidence": 0.6,
+          "stale": false
+        }
+      ],
+      "reports": [
+        {
+          "reportId": "report-1",
+          "instanceId": "higher",
+          "status": "RECEIVED",
+          "receivedAt": "2030-01-01T00:09:40.000Z"
+        }
+      ],
+      "resources": {
+        "transport": 2,
+        "calculation": 1
+      },
+      "requestedActions": [
+        {
+          "actionId": "action-5",
+          "kind": "assignTask",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-5"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-8",
+          "kind": "issueDocument",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-8"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-11",
+          "kind": "requestCalculation",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-11"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "action-12",
+          "kind": "executeOrder",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "ref-12"
+          },
+          "risk": 0.1,
+          "severity": 1
+        },
+        {
+          "actionId": "forbidden-ac25",
+          "kind": "changeScenarioConcept",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {}
+        }
+      ]
+    },
+    "classification": {
+      "projectionId": "projection-agent-1",
+      "revision": 8,
+      "received": {
+        "tasks": 1,
+        "observations": 1,
+        "reports": 1,
+        "actions": 5
+      },
+      "workingMap": {
+        "updatedAt": "2030-01-01T00:10:00.000Z",
+        "entries": [
+          {
+            "entryId": "task:task-1",
+            "kind": "TASK",
+            "sourceId": "task-1",
+            "summary": "higher: EXECUTING"
+          },
+          {
+            "entryId": "observation:observation-ac25-new",
+            "kind": "OBSERVATION",
+            "sourceId": "observation-ac25-new",
+            "summary": "Новые сведения"
+          },
+          {
+            "entryId": "report:report-1",
+            "kind": "REPORT",
+            "sourceId": "report-1",
+            "summary": "higher: RECEIVED"
+          },
+          {
+            "entryId": "action:action-5",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-5",
+            "summary": "assignTask"
+          },
+          {
+            "entryId": "action:action-8",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-8",
+            "summary": "issueDocument"
+          },
+          {
+            "entryId": "action:action-11",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-11",
+            "summary": "requestCalculation"
+          },
+          {
+            "entryId": "action:action-12",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "action-12",
+            "summary": "executeOrder"
+          },
+          {
+            "entryId": "action:forbidden-ac25",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "forbidden-ac25",
+            "summary": "changeScenarioConcept"
+          }
+        ]
+      }
+    },
+    "assessment": {
+      "changes": [
+        "Ревизия проекции 8, последовательность 43",
+        "Новых запрошенных действий: 5"
+      ],
+      "constraints": [],
+      "unknownData": [],
+      "overdueTaskIds": []
+    },
+    "decision": {
+      "intent": "Удержать назначенный район",
+      "goals": [
+        "Контроль района",
+        "Своевременный доклад"
+      ],
+      "tasks": [
+        "Наблюдение",
+        "Доклад"
+      ],
+      "resourceAllocation": {
+        "transport": 2
+      },
+      "deadlines": [
+        "2030-01-01T00:20:00.000Z"
+      ],
+      "coordination": [
+        "neighbour"
+      ],
+      "reserves": [
+        "support"
+      ],
+      "transitionConditions": [
+        "Новое наблюдение"
+      ],
+      "assumptions": [
+        "Связь доступна"
+      ],
+      "status": "ADOPTED"
+    },
+    "options": [
+      {
+        "optionId": "delegated-actions",
+        "title": "Выполнить делегированные действия",
+        "actions": [
+          {
+            "actionId": "action-5",
+            "kind": "assignTask",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-5"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-8",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-8"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-11",
+            "kind": "requestCalculation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-11"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-12",
+            "kind": "executeOrder",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-12"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "forbidden-ac25",
+            "kind": "changeScenarioConcept",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {}
+          }
+        ],
+        "utility": {
+          "score": 4.6,
+          "reasons": [
+            "Разрешённых кандидатов до проверки полномочий: 5",
+            "Суммарный заявленный риск вычтен из полезности: 0.4",
+            "Неизвестных данных: 0"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-576e80e1bd877dbcf5a5",
+          "inputHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+          "outcomeHash": "a4be0455f56f8ee37eae8bae425385e823b711487496351bea89a383c20c04a0",
+          "officialProjectionHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      },
+      {
+        "optionId": "continue-order",
+        "title": "Продолжить действующий приказ",
+        "actions": [],
+        "utility": {
+          "score": 0,
+          "reasons": [
+            "Сохраняется действующий приказ без новых эффектов"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-7215ce065e14dbe9fd2b",
+          "inputHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+          "outcomeHash": "e9a70c7580f060d0d0c4702b8996ad9bb575dd1edaf7e6e44cd0523ff1ad4e29",
+          "officialProjectionHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      }
+    ],
+    "selectedOptionId": "delegated-actions",
+    "proposedCommands": [
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-5",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-5",
+        "kind": "assignTask",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-5",
+          "reference": "ref-5"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-8",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-8",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-8",
+          "reference": "ref-8",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 8.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-11",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-11",
+        "kind": "requestCalculation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-11",
+          "reference": "ref-11"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-12",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-12",
+        "kind": "executeOrder",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-12",
+          "reference": "ref-12"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:forbidden-ac25",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:forbidden-ac25",
+        "kind": "changeScenarioConcept",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "forbidden-ac25"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-5",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-5",
+        "kind": "assignTask",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-5",
+          "reference": "ref-5"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-8",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-8",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-8",
+          "reference": "ref-8",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 8.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-11",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-11",
+        "kind": "requestCalculation",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-11",
+          "reference": "ref-11"
+        }
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-12",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-12",
+        "kind": "executeOrder",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "action-12",
+          "reference": "ref-12"
+        }
+      }
+    ],
+    "responses": [
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-5",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "78bc0722-7cf2-5aef-8eac-61b6bd27a74d",
+        "serverRevision": 17
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-8",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "0a0403e3-baa5-50e7-9f6e-8290a37f5022",
+        "serverRevision": 18
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-11",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "d0e1fe13-5711-5fe3-bbbe-19f9e5b2cd59",
+        "serverRevision": 19
+      },
+      {
+        "commandId": "agent-1:projection-agent-1:8:action-12",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "ba07e9c7-a25a-538b-a965-e6932b492824",
+        "serverRevision": 20
+      }
+    ],
+    "appliedForbiddenEffects": [],
+    "escalation": {
+      "assignmentId": "agent-1",
+      "reason": "OUTSIDE_DELEGATION",
+      "detail": "Действие changeScenarioConcept не применено: OUTSIDE_DELEGATION",
+      "recipients": [
+        "leader-1"
+      ],
+      "currentTask": "order-1",
+      "usedData": {
+        "projectionId": "projection-agent-1",
+        "revision": 8,
+        "sequence": 43
+      },
+      "proposedAction": {
+        "actionId": "forbidden-ac25",
+        "kind": "changeScenarioConcept",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "payload": {}
+      },
+      "availableInterventions": [
+        "CONFIRM",
+        "MODIFY",
+        "REJECT",
+        "PAUSE"
+      ],
+      "worldContinues": true,
+      "rollback": false
+    },
+    "observationSheet": {
+      "assignmentId": "agent-1",
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "entries": [
+        {
+          "entryId": "deadline:task-1",
+          "kind": "DEADLINE",
+          "subjectId": "task-1",
+          "status": "EXECUTING",
+          "detail": "Срок 2030-01-01T00:20:00.000Z"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:8:action-5",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:8:action-5",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:8:action-8",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:8:action-8",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:8:action-11",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:8:action-11",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:8:action-12",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:8:action-12",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        },
+        {
+          "entryId": "escalation:OUTSIDE_DELEGATION",
+          "kind": "ESCALATION",
+          "subjectId": "agent-1",
+          "status": "OUTSIDE_DELEGATION",
+          "detail": "Действие changeScenarioConcept не применено: OUTSIDE_DELEGATION"
+        }
+      ]
+    },
+    "language": {
+      "text": "Доклад по приказу order-1; ревизия проекции 8.",
+      "status": "DISABLED",
+      "source": "LOCAL",
+      "claimsVerified": false,
+      "executable": false
+    },
+    "trace": {
+      "cycleId": "agent-1:wake-ac25-2",
+      "assignmentId": "agent-1",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "projection": {
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "projectionId": "projection-agent-1",
+        "revision": 8,
+        "sequence": 43,
+        "operationalAt": "2030-01-01T00:10:00.000Z",
+        "activeOrder": {
+          "orderId": "order-1",
+          "version": 3,
+          "intent": "Удержать назначенный район",
+          "goals": [
+            "Контроль района",
+            "Своевременный доклад"
+          ],
+          "tasks": [
+            "Наблюдение",
+            "Доклад"
+          ],
+          "resources": {
+            "transport": 2
+          },
+          "deadlines": [
+            "2030-01-01T00:20:00.000Z"
+          ],
+          "coordination": [
+            "neighbour"
+          ],
+          "reserves": [
+            "support"
+          ],
+          "transitionConditions": [
+            "Новое наблюдение"
+          ],
+          "assumptions": [
+            "Связь доступна"
+          ],
+          "status": "EXECUTING"
+        },
+        "tasks": [
+          {
+            "taskId": "task-1",
+            "instanceId": "higher",
+            "status": "EXECUTING",
+            "dueAt": "2030-01-01T00:20:00.000Z"
+          }
+        ],
+        "observations": [
+          {
+            "observationId": "observation-ac25-new",
+            "source": "post-1",
+            "observedAt": "2030-01-01T00:09:00.000Z",
+            "deliveredAt": "2030-01-01T00:09:30.000Z",
+            "summary": "Новые сведения",
+            "confidence": 0.6,
+            "stale": false
+          }
+        ],
+        "reports": [
+          {
+            "reportId": "report-1",
+            "instanceId": "higher",
+            "status": "RECEIVED",
+            "receivedAt": "2030-01-01T00:09:40.000Z"
+          }
+        ],
+        "resources": {
+          "transport": 2,
+          "calculation": 1
+        },
+        "requestedActions": [
+          {
+            "actionId": "action-5",
+            "kind": "assignTask",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-5"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-8",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-8"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-11",
+            "kind": "requestCalculation",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-11"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "action-12",
+            "kind": "executeOrder",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "ref-12"
+            },
+            "risk": 0.1,
+            "severity": 1
+          },
+          {
+            "actionId": "forbidden-ac25",
+            "kind": "changeScenarioConcept",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {}
+          }
+        ]
+      },
+      "projectionHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "options": [
+        {
+          "optionId": "delegated-actions",
+          "title": "Выполнить делегированные действия",
+          "actions": [
+            {
+              "actionId": "action-5",
+              "kind": "assignTask",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-5"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-8",
+              "kind": "issueDocument",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-8"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-11",
+              "kind": "requestCalculation",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-11"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "action-12",
+              "kind": "executeOrder",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "ref-12"
+              },
+              "risk": 0.1,
+              "severity": 1
+            },
+            {
+              "actionId": "forbidden-ac25",
+              "kind": "changeScenarioConcept",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {}
+            }
+          ],
+          "utility": {
+            "score": 4.6,
+            "reasons": [
+              "Разрешённых кандидатов до проверки полномочий: 5",
+              "Суммарный заявленный риск вычтен из полезности: 0.4",
+              "Неизвестных данных: 0"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-576e80e1bd877dbcf5a5",
+            "inputHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+            "outcomeHash": "a4be0455f56f8ee37eae8bae425385e823b711487496351bea89a383c20c04a0",
+            "officialProjectionHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        },
+        {
+          "optionId": "continue-order",
+          "title": "Продолжить действующий приказ",
+          "actions": [],
+          "utility": {
+            "score": 0,
+            "reasons": [
+              "Сохраняется действующий приказ без новых эффектов"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-7215ce065e14dbe9fd2b",
+            "inputHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+            "outcomeHash": "e9a70c7580f060d0d0c4702b8996ad9bb575dd1edaf7e6e44cd0523ff1ad4e29",
+            "officialProjectionHash": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        }
+      ],
+      "constraints": [],
+      "selectedOptionId": "delegated-actions",
+      "versions": {
+        "profile": "modern-intermediary@1.0.0",
+        "algorithm": "intermediary-cycle@1.0.0",
+        "projectionSchema": "kshvi-agent-projection@1",
+        "timeBudget": 1
+      },
+      "rngKeys": [
+        {
+          "seed": "80d5ec99823fbcc1eb9e0a3f999d99b88c397e83c5bbf51187088ddca199fc65",
+          "stream": "intermediary-option-order",
+          "key": "ecc38d2d28be83c6f611dfb59d2a74a5899f7736dfc9ea34a957d82c49133953",
+          "cursor": 0
+        }
+      ],
+      "commands": [
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-5",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-5",
+          "kind": "assignTask",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 8,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-5",
+            "reference": "ref-5"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-8",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-8",
+          "kind": "issueDocument",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 8,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-8",
+            "reference": "ref-8",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 8.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-11",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-11",
+          "kind": "requestCalculation",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 8,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-11",
+            "reference": "ref-11"
+          }
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-12",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:8:action-12",
+          "kind": "executeOrder",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 8,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "action-12",
+            "reference": "ref-12"
+          }
+        }
+      ],
+      "responses": [
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-5",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "78bc0722-7cf2-5aef-8eac-61b6bd27a74d",
+          "serverRevision": 17
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-8",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "0a0403e3-baa5-50e7-9f6e-8290a37f5022",
+          "serverRevision": 18
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-11",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "d0e1fe13-5711-5fe3-bbbe-19f9e5b2cd59",
+          "serverRevision": 19
+        },
+        {
+          "commandId": "agent-1:projection-agent-1:8:action-12",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "ba07e9c7-a25a-538b-a965-e6932b492824",
+          "serverRevision": 20
+        }
+      ],
+      "escalationReason": "OUTSIDE_DELEGATION",
+      "unknownData": [],
+      "traceId": "trace-902349679a517fb2f42bb6b3",
+      "explanation": {
+        "selected": "Выбран вариант «Выполнить делегированные действия»: Разрешённых кандидатов до проверки полномочий: 5; Суммарный заявленный риск вычтен из полезности: 0.4; Неизвестных данных: 0",
+        "alternativesRejected": [
+          "«Продолжить действующий приказ» отклонён: Сохраняется действующий приказ без новых эффектов"
+        ],
+        "unknownData": []
+      }
+    }
+  },
+  "third": {
+    "cycleId": "agent-1:wake-ac25-3",
+    "status": "COMPLETED",
+    "assignment": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "bindings": [
+        {
+          "instanceId": "higher",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "neighbour",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "support",
+          "sectorIds": [
+            "north"
+          ]
+        }
+      ],
+      "roles": [
+        "INTERMEDIARY"
+      ],
+      "projection": {
+        "projectionId": "projection-agent-1",
+        "sideIds": [
+          "blue"
+        ],
+        "sectorIds": [
+          "north"
+        ]
+      },
+      "allowedActions": [
+        "classifyInput",
+        "updateWorkingMap",
+        "recordAssessment",
+        "makeDecision",
+        "assignTask",
+        "createDocument",
+        "coordinateDocument",
+        "issueDocument",
+        "sendInput",
+        "sendReport",
+        "requestCalculation",
+        "executeOrder",
+        "checkDeadline",
+        "requestData",
+        "reportToLeader",
+        "recordObservation"
+      ],
+      "modernProfile": {
+        "profileId": "modern-intermediary",
+        "version": "1.0.0",
+        "era": "modern",
+        "source": {
+          "kind": "ASSUMPTION",
+          "reference": "Учебный профиль КШВИ"
+        },
+        "maxOptions": 3,
+        "riskLimit": 0.5,
+        "severityLimit": 3
+      },
+      "schedule": {
+        "everyMs": 1000,
+        "timeBudgetMs": 250
+      },
+      "escalation": {
+        "recipients": [
+          "leader-1"
+        ],
+        "requiredData": [
+          "activeOrder"
+        ]
+      },
+      "mode": "DELEGATED",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "status": "ACTIVE",
+      "version": 4
+    },
+    "projection": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "projectionId": "projection-agent-1",
+      "revision": 9,
+      "sequence": 44,
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "tasks": [
+        {
+          "taskId": "task-1",
+          "instanceId": "higher",
+          "status": "EXECUTING",
+          "dueAt": "2030-01-01T00:20:00.000Z"
+        }
+      ],
+      "observations": [
+        {
+          "observationId": "observation-1",
+          "source": "post-1",
+          "observedAt": "2030-01-01T00:09:00.000Z",
+          "deliveredAt": "2030-01-01T00:09:30.000Z",
+          "summary": "Изменение активности",
+          "confidence": 0.6,
+          "stale": false
+        }
+      ],
+      "reports": [
+        {
+          "reportId": "report-1",
+          "instanceId": "higher",
+          "status": "RECEIVED",
+          "receivedAt": "2030-01-01T00:09:40.000Z"
+        }
+      ],
+      "resources": {
+        "transport": 2,
+        "calculation": 1
+      },
+      "requestedActions": [
+        {
+          "actionId": "human-action-ac25",
+          "kind": "issueDocument",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "payload": {
+            "reference": "human-version-ac25"
+          }
+        }
+      ]
+    },
+    "classification": {
+      "projectionId": "projection-agent-1",
+      "revision": 9,
+      "received": {
+        "tasks": 1,
+        "observations": 1,
+        "reports": 1,
+        "actions": 1
+      },
+      "workingMap": {
+        "updatedAt": "2030-01-01T00:10:00.000Z",
+        "entries": [
+          {
+            "entryId": "task:task-1",
+            "kind": "TASK",
+            "sourceId": "task-1",
+            "summary": "higher: EXECUTING"
+          },
+          {
+            "entryId": "observation:observation-1",
+            "kind": "OBSERVATION",
+            "sourceId": "observation-1",
+            "summary": "Изменение активности"
+          },
+          {
+            "entryId": "report:report-1",
+            "kind": "REPORT",
+            "sourceId": "report-1",
+            "summary": "higher: RECEIVED"
+          },
+          {
+            "entryId": "action:human-action-ac25",
+            "kind": "REQUESTED_ACTION",
+            "sourceId": "human-action-ac25",
+            "summary": "issueDocument"
+          }
+        ]
+      }
+    },
+    "assessment": {
+      "changes": [
+        "Ревизия проекции 9, последовательность 44",
+        "Новых запрошенных действий: 1"
+      ],
+      "constraints": [],
+      "unknownData": [],
+      "overdueTaskIds": []
+    },
+    "decision": {
+      "intent": "Удержать назначенный район",
+      "goals": [
+        "Контроль района",
+        "Своевременный доклад"
+      ],
+      "tasks": [
+        "Наблюдение",
+        "Доклад"
+      ],
+      "resourceAllocation": {
+        "transport": 2
+      },
+      "deadlines": [
+        "2030-01-01T00:20:00.000Z"
+      ],
+      "coordination": [
+        "neighbour"
+      ],
+      "reserves": [
+        "support"
+      ],
+      "transitionConditions": [
+        "Новое наблюдение"
+      ],
+      "assumptions": [
+        "Связь доступна"
+      ],
+      "status": "ADOPTED"
+    },
+    "options": [
+      {
+        "optionId": "delegated-actions",
+        "title": "Выполнить делегированные действия",
+        "actions": [
+          {
+            "actionId": "human-action-ac25",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "human-version-ac25"
+            }
+          }
+        ],
+        "utility": {
+          "score": 1,
+          "reasons": [
+            "Разрешённых кандидатов до проверки полномочий: 1",
+            "Суммарный заявленный риск вычтен из полезности: 0",
+            "Неизвестных данных: 0"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-6683d5e466983e78dd90",
+          "inputHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+          "outcomeHash": "fd119a827aebd7c7bd7d77f0c995053501da77b2fd5e8a38c46f681f3467f18f",
+          "officialProjectionHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      },
+      {
+        "optionId": "continue-order",
+        "title": "Продолжить действующий приказ",
+        "actions": [],
+        "utility": {
+          "score": 0,
+          "reasons": [
+            "Сохраняется действующий приказ без новых эффектов"
+          ]
+        },
+        "replay": {
+          "replayId": "fork-d8ee9056a65f39e16559",
+          "inputHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+          "outcomeHash": "5175c8946f5b9f54507b02ba4ca61a1239c47a1a1027618aeab996cbf10cb865",
+          "officialProjectionHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+          "isolated": true,
+          "writeAccess": false,
+          "officialWorldChanged": false
+        }
+      }
+    ],
+    "selectedOptionId": "delegated-actions",
+    "proposedCommands": [
+      {
+        "commandId": "agent-1:projection-agent-1:9:human-action-ac25",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 9,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "human-action-ac25",
+          "reference": "human-version-ac25",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 9.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      }
+    ],
+    "commands": [
+      {
+        "commandId": "agent-1:projection-agent-1:9:human-action-ac25",
+        "idempotencyKey": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+        "kind": "issueDocument",
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "instanceId": "higher",
+        "sectorId": "north",
+        "actor": {
+          "kind": "system",
+          "id": "agent-1",
+          "assignmentId": "agent-1"
+        },
+        "expectedProjectionRevision": 9,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "payload": {
+          "actionId": "human-action-ac25",
+          "reference": "human-version-ac25",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 9.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false
+        }
+      }
+    ],
+    "responses": [
+      {
+        "commandId": "agent-1:projection-agent-1:9:human-action-ac25",
+        "accepted": true,
+        "idempotent": false,
+        "effectApplied": true,
+        "status": "APPLIED",
+        "eventId": "deedd84c-327c-56f8-885b-941f580c9909",
+        "serverRevision": 21
+      }
+    ],
+    "appliedForbiddenEffects": [],
+    "observationSheet": {
+      "assignmentId": "agent-1",
+      "operationalAt": "2030-01-01T00:10:00.000Z",
+      "entries": [
+        {
+          "entryId": "deadline:task-1",
+          "kind": "DEADLINE",
+          "subjectId": "task-1",
+          "status": "EXECUTING",
+          "detail": "Срок 2030-01-01T00:20:00.000Z"
+        },
+        {
+          "entryId": "command:agent-1:projection-agent-1:9:human-action-ac25",
+          "kind": "COMMAND",
+          "subjectId": "agent-1:projection-agent-1:9:human-action-ac25",
+          "status": "APPLIED",
+          "detail": "Ответ сервера зафиксирован"
+        }
+      ]
+    },
+    "language": {
+      "text": "Доклад по приказу order-1; ревизия проекции 9.",
+      "status": "DISABLED",
+      "source": "LOCAL",
+      "claimsVerified": false,
+      "executable": false
+    },
+    "trace": {
+      "cycleId": "agent-1:wake-ac25-3",
+      "assignmentId": "agent-1",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "projection": {
+        "assignmentId": "agent-1",
+        "exerciseId": "exercise-1",
+        "projectionId": "projection-agent-1",
+        "revision": 9,
+        "sequence": 44,
+        "operationalAt": "2030-01-01T00:10:00.000Z",
+        "activeOrder": {
+          "orderId": "order-1",
+          "version": 3,
+          "intent": "Удержать назначенный район",
+          "goals": [
+            "Контроль района",
+            "Своевременный доклад"
+          ],
+          "tasks": [
+            "Наблюдение",
+            "Доклад"
+          ],
+          "resources": {
+            "transport": 2
+          },
+          "deadlines": [
+            "2030-01-01T00:20:00.000Z"
+          ],
+          "coordination": [
+            "neighbour"
+          ],
+          "reserves": [
+            "support"
+          ],
+          "transitionConditions": [
+            "Новое наблюдение"
+          ],
+          "assumptions": [
+            "Связь доступна"
+          ],
+          "status": "EXECUTING"
+        },
+        "tasks": [
+          {
+            "taskId": "task-1",
+            "instanceId": "higher",
+            "status": "EXECUTING",
+            "dueAt": "2030-01-01T00:20:00.000Z"
+          }
+        ],
+        "observations": [
+          {
+            "observationId": "observation-1",
+            "source": "post-1",
+            "observedAt": "2030-01-01T00:09:00.000Z",
+            "deliveredAt": "2030-01-01T00:09:30.000Z",
+            "summary": "Изменение активности",
+            "confidence": 0.6,
+            "stale": false
+          }
+        ],
+        "reports": [
+          {
+            "reportId": "report-1",
+            "instanceId": "higher",
+            "status": "RECEIVED",
+            "receivedAt": "2030-01-01T00:09:40.000Z"
+          }
+        ],
+        "resources": {
+          "transport": 2,
+          "calculation": 1
+        },
+        "requestedActions": [
+          {
+            "actionId": "human-action-ac25",
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "payload": {
+              "reference": "human-version-ac25"
+            }
+          }
+        ]
+      },
+      "projectionHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+      "activeOrder": {
+        "orderId": "order-1",
+        "version": 3,
+        "intent": "Удержать назначенный район",
+        "goals": [
+          "Контроль района",
+          "Своевременный доклад"
+        ],
+        "tasks": [
+          "Наблюдение",
+          "Доклад"
+        ],
+        "resources": {
+          "transport": 2
+        },
+        "deadlines": [
+          "2030-01-01T00:20:00.000Z"
+        ],
+        "coordination": [
+          "neighbour"
+        ],
+        "reserves": [
+          "support"
+        ],
+        "transitionConditions": [
+          "Новое наблюдение"
+        ],
+        "assumptions": [
+          "Связь доступна"
+        ],
+        "status": "EXECUTING"
+      },
+      "options": [
+        {
+          "optionId": "delegated-actions",
+          "title": "Выполнить делегированные действия",
+          "actions": [
+            {
+              "actionId": "human-action-ac25",
+              "kind": "issueDocument",
+              "instanceId": "higher",
+              "sectorId": "north",
+              "payload": {
+                "reference": "human-version-ac25"
+              }
+            }
+          ],
+          "utility": {
+            "score": 1,
+            "reasons": [
+              "Разрешённых кандидатов до проверки полномочий: 1",
+              "Суммарный заявленный риск вычтен из полезности: 0",
+              "Неизвестных данных: 0"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-6683d5e466983e78dd90",
+            "inputHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+            "outcomeHash": "fd119a827aebd7c7bd7d77f0c995053501da77b2fd5e8a38c46f681f3467f18f",
+            "officialProjectionHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        },
+        {
+          "optionId": "continue-order",
+          "title": "Продолжить действующий приказ",
+          "actions": [],
+          "utility": {
+            "score": 0,
+            "reasons": [
+              "Сохраняется действующий приказ без новых эффектов"
+            ]
+          },
+          "replay": {
+            "replayId": "fork-d8ee9056a65f39e16559",
+            "inputHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+            "outcomeHash": "5175c8946f5b9f54507b02ba4ca61a1239c47a1a1027618aeab996cbf10cb865",
+            "officialProjectionHash": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+            "isolated": true,
+            "writeAccess": false,
+            "officialWorldChanged": false
+          }
+        }
+      ],
+      "constraints": [],
+      "selectedOptionId": "delegated-actions",
+      "versions": {
+        "profile": "modern-intermediary@1.0.0",
+        "algorithm": "intermediary-cycle@1.0.0",
+        "projectionSchema": "kshvi-agent-projection@1",
+        "timeBudget": 1
+      },
+      "rngKeys": [
+        {
+          "seed": "32f3323a7ca5cece0cd71a72dd6fe69583a72e4cd0e0aa699d6c3d61f5cbd117",
+          "stream": "intermediary-option-order",
+          "key": "cedb62e8d33445e8118c4e451540dd5250b9c4a8110217fef26bf632c7462844",
+          "cursor": 0
+        }
+      ],
+      "commands": [
+        {
+          "commandId": "agent-1:projection-agent-1:9:human-action-ac25",
+          "idempotencyKey": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+          "kind": "issueDocument",
+          "assignmentId": "agent-1",
+          "exerciseId": "exercise-1",
+          "instanceId": "higher",
+          "sectorId": "north",
+          "actor": {
+            "kind": "system",
+            "id": "agent-1",
+            "assignmentId": "agent-1"
+          },
+          "expectedProjectionRevision": 9,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "payload": {
+            "actionId": "human-action-ac25",
+            "reference": "human-version-ac25",
+            "narrative": "Доклад по приказу order-1; ревизия проекции 9.",
+            "narrativeSource": "LOCAL",
+            "narrativeExecutable": false
+          }
+        }
+      ],
+      "responses": [
+        {
+          "commandId": "agent-1:projection-agent-1:9:human-action-ac25",
+          "accepted": true,
+          "idempotent": false,
+          "effectApplied": true,
+          "status": "APPLIED",
+          "eventId": "deedd84c-327c-56f8-885b-941f580c9909",
+          "serverRevision": 21
+        }
+      ],
+      "unknownData": [],
+      "traceId": "trace-88b5ba3dfd933b7cb168c820",
+      "explanation": {
+        "selected": "Выбран вариант «Выполнить делегированные действия»: Разрешённых кандидатов до проверки полномочий: 1; Суммарный заявленный риск вычтен из полезности: 0; Неизвестных данных: 0",
+        "alternativesRejected": [
+          "«Продолжить действующий приказ» отклонён: Сохраняется действующий приказ без новых эффектов"
+        ],
+        "unknownData": []
+      }
+    }
+  },
+  "interception": {
+    "assignment": {
+      "assignmentId": "agent-1",
+      "exerciseId": "exercise-1",
+      "bindings": [
+        {
+          "instanceId": "higher",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "neighbour",
+          "sectorIds": [
+            "north"
+          ]
+        },
+        {
+          "instanceId": "support",
+          "sectorIds": [
+            "north"
+          ]
+        }
+      ],
+      "roles": [
+        "INTERMEDIARY"
+      ],
+      "projection": {
+        "projectionId": "projection-agent-1",
+        "sideIds": [
+          "blue"
+        ],
+        "sectorIds": [
+          "north"
+        ]
+      },
+      "allowedActions": [
+        "classifyInput",
+        "updateWorkingMap",
+        "recordAssessment",
+        "makeDecision",
+        "assignTask",
+        "createDocument",
+        "coordinateDocument",
+        "issueDocument",
+        "sendInput",
+        "sendReport",
+        "requestCalculation",
+        "executeOrder",
+        "checkDeadline",
+        "requestData",
+        "reportToLeader",
+        "recordObservation"
+      ],
+      "modernProfile": {
+        "profileId": "modern-intermediary",
+        "version": "1.0.0",
+        "era": "modern",
+        "source": {
+          "kind": "ASSUMPTION",
+          "reference": "Учебный профиль КШВИ"
+        },
+        "maxOptions": 3,
+        "riskLimit": 0.5,
+        "severityLimit": 3
+      },
+      "schedule": {
+        "everyMs": 1000,
+        "timeBudgetMs": 250
+      },
+      "escalation": {
+        "recipients": [
+          "leader-1"
+        ],
+        "requiredData": [
+          "activeOrder"
+        ]
+      },
+      "mode": "DELEGATED",
+      "actor": {
+        "kind": "system",
+        "id": "agent-1",
+        "assignmentId": "agent-1"
+      },
+      "status": "INTERCEPTED",
+      "version": 3
+    },
+    "record": {
+      "actor": {
+        "kind": "human",
+        "id": "leader-ac25"
+      },
+      "worldSequence": 43,
+      "worldContinues": true,
+      "rollback": false
+    }
+  },
+  "override": {
+    "basedOnTraceId": "trace-902349679a517fb2f42bb6b3",
+    "author": {
+      "kind": "human",
+      "id": "leader-ac25"
+    },
+    "action": {
+      "actionId": "human-action-ac25",
+      "kind": "issueDocument",
+      "instanceId": "higher",
+      "sectorId": "north",
+      "payload": {
+        "reference": "human-version-ac25"
+      }
+    },
+    "rollback": false
+  },
+  "forbidden": {
+    "commandId": "forbidden-network-ac25",
+    "accepted": false,
+    "idempotent": false,
+    "effectApplied": false,
+    "status": "REJECTED",
+    "reason": "OUTSIDE_DELEGATION"
+  },
+  "events": [
+    {
+      "eventId": "5d19e441-9d15-524c-88d2-bffb245a8323",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "input.classify.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-1",
+        "reference": "ref-1",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-1",
+        "commandType": "input.classify.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-1"
+      },
+      "prevHash": null,
+      "hash": "7b804be5e8c4faed421c497a25428c2b09ca3df8a29270b848f12179f481e814",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "171c8eaf-a48c-5890-a6e8-3a119ccd0a28",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "projection.workingMap.update.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-2",
+        "reference": "ref-2",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-2",
+        "commandType": "projection.workingMap.update.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-2"
+      },
+      "prevHash": "7b804be5e8c4faed421c497a25428c2b09ca3df8a29270b848f12179f481e814",
+      "hash": "4b6852b2ecceb1494cb9714c8d409fda776e9f56631435a4ab62bb96c326c064",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "e056323f-c8b6-59e1-8efe-b2a22df739b6",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "assessment.record.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-3"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-3",
+        "reference": "ref-3",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-3",
+        "commandType": "assessment.record.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-3"
+      },
+      "prevHash": "4b6852b2ecceb1494cb9714c8d409fda776e9f56631435a4ab62bb96c326c064",
+      "hash": "c7f19f46d68b95fdcd009df3014f77dd02bf203dcdd9f9abb01d51fdf0e48d01",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "959f9197-e5e9-5e7e-8fd1-0188e874d103",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "decision.accept.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-4"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-4",
+        "reference": "ref-4",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-4",
+        "commandType": "decision.accept.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-4"
+      },
+      "prevHash": "c7f19f46d68b95fdcd009df3014f77dd02bf203dcdd9f9abb01d51fdf0e48d01",
+      "hash": "ccee90defc527b2efdccc8eb2fd5a1b9909df0801ba0416c2ad6509728c9b370",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "5a6b55ee-2685-5520-9786-02be72e81c15",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 5,
+      "type": "task.assign.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-5"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-5",
+        "reference": "ref-5",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-5",
+        "commandType": "task.assign.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-5"
+      },
+      "prevHash": "ccee90defc527b2efdccc8eb2fd5a1b9909df0801ba0416c2ad6509728c9b370",
+      "hash": "f3d0fc8debf7610696f055891600d2695966c91a50fc2d1360437fca956d7c5f",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "23b86d51-d92b-5e5f-9755-9adb35da463f",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 6,
+      "type": "document.revision.create.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-6"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-6",
+        "reference": "ref-6",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-6",
+        "commandType": "document.revision.create.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-6"
+      },
+      "prevHash": "f3d0fc8debf7610696f055891600d2695966c91a50fc2d1360437fca956d7c5f",
+      "hash": "70f62d499565cfdb1f5c95f281cd458d741477654142c54fbea94b129cad801a",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "67d0e006-515b-5f31-a5ab-3695e8b7ea01",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 7,
+      "type": "document.coordinate.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-7"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-7",
+        "reference": "ref-7",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-7",
+        "commandType": "document.coordinate.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-7"
+      },
+      "prevHash": "70f62d499565cfdb1f5c95f281cd458d741477654142c54fbea94b129cad801a",
+      "hash": "be7a3e2238ed54bacae939726875f72691e48e12658c8c1dbe556ee2854a328b",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "a7e2f8e2-2ba5-5d48-84a5-643d79153f96",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 8,
+      "type": "document.issue.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-8"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-8",
+        "reference": "ref-8",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-8",
+        "commandType": "document.issue.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-8"
+      },
+      "prevHash": "be7a3e2238ed54bacae939726875f72691e48e12658c8c1dbe556ee2854a328b",
+      "hash": "f12ec38ca25d00c413a6f5c0a2eada75132872a795eca3abfe5b80dc787ef0fe",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "aec02973-4569-5d0e-8529-3f3eec6377c7",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 9,
+      "type": "input.create.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-9"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-9",
+        "reference": "ref-9",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-9",
+        "commandType": "input.create.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-9"
+      },
+      "prevHash": "f12ec38ca25d00c413a6f5c0a2eada75132872a795eca3abfe5b80dc787ef0fe",
+      "hash": "965aa8187951ff85e0a150a976c13f0fd5867548ee75aa5f08a4f98851626c83",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "9e00626a-72e4-5bf2-a5bd-6ba609f8c396",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 10,
+      "type": "report.create.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-10"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-10",
+        "reference": "ref-10",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-10",
+        "commandType": "report.create.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-10"
+      },
+      "prevHash": "965aa8187951ff85e0a150a976c13f0fd5867548ee75aa5f08a4f98851626c83",
+      "hash": "eac65b2396e094020054903d23fdac3ac8786f823a8038f2a41e79e3a6b1afa7",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "9fb5ec3e-9065-5538-b008-c3b8f82d2369",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 11,
+      "type": "calculation.request.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-11"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-11",
+        "reference": "ref-11",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-11",
+        "commandType": "calculation.request.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-11"
+      },
+      "prevHash": "eac65b2396e094020054903d23fdac3ac8786f823a8038f2a41e79e3a6b1afa7",
+      "hash": "b97af67c678d31158f46d0775fc488840ef6b8d16ecc4868d0a300efabc2b8c3",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "98543a4d-0287-59f6-812e-dde1559925b1",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 12,
+      "type": "order.execute.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-12"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-12",
+        "reference": "ref-12",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-12",
+        "commandType": "order.execute.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-12"
+      },
+      "prevHash": "b97af67c678d31158f46d0775fc488840ef6b8d16ecc4868d0a300efabc2b8c3",
+      "hash": "7dba2936ccc9bec72918670c6705299578f87ae54b8787c2f2b72dcf6460eb2e",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "0ebe4854-b865-534a-ad54-d43eef2cb500",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 13,
+      "type": "deadline.check.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-13"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-13",
+        "reference": "ref-13",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-13",
+        "commandType": "deadline.check.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-13"
+      },
+      "prevHash": "7dba2936ccc9bec72918670c6705299578f87ae54b8787c2f2b72dcf6460eb2e",
+      "hash": "b70fcec349d5773ef27d2371a3bf64467c9f8d30465ae8672b4596f8c93278e9",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "30e6c24d-3bfb-5b6e-a589-18984733e549",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 14,
+      "type": "data.request.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-14"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-14",
+        "reference": "ref-14",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-14",
+        "commandType": "data.request.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-14"
+      },
+      "prevHash": "b70fcec349d5773ef27d2371a3bf64467c9f8d30465ae8672b4596f8c93278e9",
+      "hash": "32b646694f367cc46c043459801379146ae7803ab34419e67337d235d3e6ade1",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "8ea7070f-d308-53a7-a43e-5b3d35eb1a04",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 15,
+      "type": "report.create.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-15"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-15",
+        "reference": "ref-15",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-15",
+        "commandType": "report.create.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-15"
+      },
+      "prevHash": "32b646694f367cc46c043459801379146ae7803ab34419e67337d235d3e6ade1",
+      "hash": "5ce1de6e1979d99cac63b6c453a420019fb0bdf1e261638c98f0d651bf31afdb",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "0755cb41-7bb0-52e4-b3e4-b4dabe0c59e8",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 16,
+      "type": "observation.record.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:7:action-16"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-16",
+        "reference": "ref-16",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-16",
+        "commandType": "observation.record.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-16"
+      },
+      "prevHash": "5ce1de6e1979d99cac63b6c453a420019fb0bdf1e261638c98f0d651bf31afdb",
+      "hash": "d90ea934ea1eca20f446e39ac521f73cbc750d659e3c92aae84825ac2d3c4e08",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "78bc0722-7cf2-5aef-8eac-61b6bd27a74d",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 17,
+      "type": "task.assign.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:8:action-5"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-5",
+        "reference": "ref-5",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-5",
+        "commandType": "task.assign.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-5"
+      },
+      "prevHash": "d90ea934ea1eca20f446e39ac521f73cbc750d659e3c92aae84825ac2d3c4e08",
+      "hash": "cdaefac3954d16d657e5e380fb164bb80811222a0d087c95f9a88cd948f5d53c",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "0a0403e3-baa5-50e7-9f6e-8290a37f5022",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 18,
+      "type": "document.issue.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:8:action-8"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-8",
+        "reference": "ref-8",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 8.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-8",
+        "commandType": "document.issue.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-8"
+      },
+      "prevHash": "cdaefac3954d16d657e5e380fb164bb80811222a0d087c95f9a88cd948f5d53c",
+      "hash": "7fb00cce814a9e23c4f1daa5013f7c0b7969f7034cab05a5d7d856325fd2ebeb",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "d0e1fe13-5711-5fe3-bbbe-19f9e5b2cd59",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 19,
+      "type": "calculation.request.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:8:action-11"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-11",
+        "reference": "ref-11",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-11",
+        "commandType": "calculation.request.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-11"
+      },
+      "prevHash": "7fb00cce814a9e23c4f1daa5013f7c0b7969f7034cab05a5d7d856325fd2ebeb",
+      "hash": "a6ac0280c447122464a9dd466dac97084248fde7ac3374c7f5806034807a61ff",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "ba07e9c7-a25a-538b-a965-e6932b492824",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 20,
+      "type": "order.execute.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:8:action-12"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "action-12",
+        "reference": "ref-12",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-12",
+        "commandType": "order.execute.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-12"
+      },
+      "prevHash": "a6ac0280c447122464a9dd466dac97084248fde7ac3374c7f5806034807a61ff",
+      "hash": "cb4e4d8f239f45efd613d6ee67958a0a17536b998a54277819a2c6360937e463",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "deedd84c-327c-56f8-885b-941f580c9909",
+      "organizationId": "org-ac25",
+      "instanceId": "higher",
+      "branchId": "main",
+      "sequence": 21,
+      "type": "document.issue.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:10:00.000Z",
+      "operationalAt": {
+        "normalizedAt": "2030-01-01T00:10:00.000Z",
+        "originalAt": "2030-01-01T00:10:00.000Z",
+        "zone": "UTC",
+        "offset": "+00:00"
+      },
+      "actor": {
+        "id": "agent-1",
+        "kind": "SYSTEM"
+      },
+      "causeIds": [
+        "agent:agent-1:projection-agent-1:9:human-action-ac25"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "actionId": "human-action-ac25",
+        "reference": "human-version-ac25",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 9.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 9,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+        "commandType": "document.issue.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:9:human-action-ac25"
+      },
+      "prevHash": "cb4e4d8f239f45efd613d6ee67958a0a17536b998a54277819a2c6360937e463",
+      "hash": "d9a4020bf5c7a07403c923a44c9225471f8e0e31e15616221e4b4ababae66759",
+      "hashVersion": 2
+    }
+  ],
+  "replayedState": {
+    "Time": {
+      "operationalAt": null,
+      "wallClockAt": null
+    },
+    "Forces": {},
+    "Equipment": {},
+    "Tasks": {
+      "action-5": {
+        "actionId": "action-5",
+        "reference": "ref-5",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-5",
+        "commandType": "task.assign.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-5",
+        "operationType": "task.assign.v1",
+        "eventId": "78bc0722-7cf2-5aef-8eac-61b6bd27a74d",
+        "status": "ASSIGNED"
+      },
+      "action-12": {
+        "actionId": "action-12",
+        "reference": "ref-12",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-12",
+        "commandType": "order.execute.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-12",
+        "operationType": "order.execute.v1",
+        "eventId": "ba07e9c7-a25a-538b-a965-e6932b492824",
+        "status": "EXECUTING"
+      }
+    },
+    "Resources": {},
+    "Supply": {},
+    "Readiness": {},
+    "MoralePsych": {},
+    "Formation": {},
+    "Terrain": {},
+    "Weather": {},
+    "Observations": {
+      "action-16": {
+        "actionId": "action-16",
+        "reference": "ref-16",
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-16",
+        "commandType": "observation.record.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-16",
+        "operationType": "observation.record.v1",
+        "eventId": "0755cb41-7bb0-52e4-b3e4-b4dabe0c59e8",
+        "status": "RECORDED"
+      }
+    },
+    "Communications": {},
+    "Documents": {
+      "action-6": {
+        "actionId": "action-6",
+        "reference": "ref-6",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-6",
+        "commandType": "document.revision.create.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-6"
+      },
+      "action-7": {
+        "actionId": "action-7",
+        "reference": "ref-7",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 7,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:7:action-7",
+        "commandType": "document.coordinate.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:7:action-7",
+        "operationType": "document.coordinate.v1",
+        "eventId": "67d0e006-515b-5f31-a5ab-3695e8b7ea01",
+        "status": "COORDINATED"
+      },
+      "action-8": {
+        "actionId": "action-8",
+        "reference": "ref-8",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 8.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 8,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:8:action-8",
+        "commandType": "document.issue.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:8:action-8",
+        "operationType": "document.issue.v1",
+        "eventId": "0a0403e3-baa5-50e7-9f6e-8290a37f5022",
+        "status": "ISSUED"
+      },
+      "human-action-ac25": {
+        "actionId": "human-action-ac25",
+        "reference": "human-version-ac25",
+        "narrative": "Доклад по приказу order-1; ревизия проекции 9.",
+        "narrativeSource": "LOCAL",
+        "narrativeExecutable": false,
+        "agentAssignmentId": "agent-1",
+        "agentExerciseId": "exercise-1",
+        "expectedProjectionRevision": 9,
+        "issuedAt": "2030-01-01T00:10:00.000Z",
+        "commandId": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+        "commandType": "document.issue.v1",
+        "at": "2030-01-01T00:10:00.000Z",
+        "causedBy": "agent:agent-1:projection-agent-1:9:human-action-ac25",
+        "operationType": "document.issue.v1",
+        "eventId": "deedd84c-327c-56f8-885b-941f580c9909",
+        "status": "ISSUED"
+      }
+    },
+    "ScenarioState": {
+      "scenarioId": "higher",
+      "status": "DRAFT",
+      "Inputs": {
+        "action-1": {
+          "actionId": "action-1",
+          "reference": "ref-1",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-1",
+          "commandType": "input.classify.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-1",
+          "operationType": "input.classify.v1",
+          "eventId": "5d19e441-9d15-524c-88d2-bffb245a8323",
+          "status": "CLASSIFIED"
+        },
+        "action-9": {
+          "actionId": "action-9",
+          "reference": "ref-9",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false,
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-9",
+          "commandType": "input.create.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-9"
+        }
+      },
+      "WorkingMaps": {
+        "action-2": {
+          "actionId": "action-2",
+          "reference": "ref-2",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-2",
+          "commandType": "projection.workingMap.update.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-2",
+          "operationType": "projection.workingMap.update.v1",
+          "eventId": "171c8eaf-a48c-5890-a6e8-3a119ccd0a28",
+          "status": "UPDATED"
+        }
+      },
+      "Assessments": {
+        "action-3": {
+          "actionId": "action-3",
+          "reference": "ref-3",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-3",
+          "commandType": "assessment.record.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-3",
+          "operationType": "assessment.record.v1",
+          "eventId": "e056323f-c8b6-59e1-8efe-b2a22df739b6",
+          "status": "RECORDED"
+        }
+      },
+      "Decisions": {
+        "action-4": {
+          "actionId": "action-4",
+          "reference": "ref-4",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-4",
+          "commandType": "decision.accept.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-4",
+          "operationType": "decision.accept.v1",
+          "eventId": "959f9197-e5e9-5e7e-8fd1-0188e874d103",
+          "status": "ACCEPTED"
+        }
+      },
+      "Reports": {
+        "action-10": {
+          "actionId": "action-10",
+          "reference": "ref-10",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false,
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-10",
+          "commandType": "report.create.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-10",
+          "operationType": "report.create.v1",
+          "eventId": "9e00626a-72e4-5bf2-a5bd-6ba609f8c396",
+          "status": "RECORDED"
+        },
+        "action-15": {
+          "actionId": "action-15",
+          "reference": "ref-15",
+          "narrative": "Доклад по приказу order-1; ревизия проекции 7.",
+          "narrativeSource": "LOCAL",
+          "narrativeExecutable": false,
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-15",
+          "commandType": "report.create.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-15",
+          "operationType": "report.create.v1",
+          "eventId": "8ea7070f-d308-53a7-a43e-5b3d35eb1a04",
+          "status": "RECORDED"
+        }
+      },
+      "CalculationRequests": {
+        "action-11": {
+          "actionId": "action-11",
+          "reference": "ref-11",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 8,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:8:action-11",
+          "commandType": "calculation.request.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:8:action-11",
+          "operationType": "calculation.request.v1",
+          "eventId": "d0e1fe13-5711-5fe3-bbbe-19f9e5b2cd59",
+          "status": "REQUESTED"
+        }
+      },
+      "DeadlineChecks": {
+        "action-13": {
+          "actionId": "action-13",
+          "reference": "ref-13",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-13",
+          "commandType": "deadline.check.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-13",
+          "operationType": "deadline.check.v1",
+          "eventId": "0ebe4854-b865-534a-ad54-d43eef2cb500",
+          "status": "CHECKED"
+        }
+      },
+      "DataRequests": {
+        "action-14": {
+          "actionId": "action-14",
+          "reference": "ref-14",
+          "agentAssignmentId": "agent-1",
+          "agentExerciseId": "exercise-1",
+          "expectedProjectionRevision": 7,
+          "issuedAt": "2030-01-01T00:10:00.000Z",
+          "commandId": "agent:agent-1:projection-agent-1:7:action-14",
+          "commandType": "data.request.v1",
+          "at": "2030-01-01T00:10:00.000Z",
+          "causedBy": "agent:agent-1:projection-agent-1:7:action-14",
+          "operationType": "data.request.v1",
+          "eventId": "30e6c24d-3bfb-5b6e-a589-18984733e549",
+          "status": "REQUESTED"
+        }
+      }
+    },
+    "EventScheduler": {
+      "cursor": 0
+    },
+    "AgentStates": {}
+  }
+}

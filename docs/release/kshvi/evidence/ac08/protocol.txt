@@ -1,4 +1,4 @@
 AC-08 завершён
-runId: 30e3d00f-3bb1-4204-a9d6-8dac4b6684c2
-commit: 8f2e274fe0fa58852f8ab468ca4af19a3d846e65
+runId: bf4cc21a-8642-4487-bb46-3d6b6b810fb1
+commit: 11ab4de1f4cb188976ca9f5c508d601b95273f45
 Два worker и Chromium совпали по stateHash и исходу; повтор команды не создал событие; старый reducerVersion сохранён.

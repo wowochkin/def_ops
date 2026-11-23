@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac07-time.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:42.613Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"msg\":\"listening on :65375\"}\n{\"t\":\"2026-11-23T21:04:42.624Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"fd922290-0a32-40c0-abff-ebab825155b2\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":5}\n{\"t\":\"2026-11-23T21:04:42.642Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"3533e232-c87c-4b17-bdab-a8e5630f4162\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/environment\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-23T21:04:42.647Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"97d5ebc9-698a-4b33-a7bd-3de06d37f741\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T21:04:42.650Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"62115d61-d8df-4947-8429-680b6bd84bab\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.653Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"2c848962-4f1f-4b2a-a502-f90a7d869a43\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.656Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"69cf31d4-8e0e-4016-b15a-cdfe5bf03d01\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.660Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"53f0a61c-27fe-42c2-a146-ac9d4c97ff2d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.663Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"c01ea258-a085-41fd-9603-12864d5d4788\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:42.666Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"0687f5b6-929a-4966-9b04-32a125af1705\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.669Z\",\"service\":\"kshvi-ac07\",\"level\":\"error\",\"requestId\":\"5bc24e3b-063a-40b5-a6e9-950aeef269f5\",\"error\":\"Error: На паузе изменение официального мира запрещено\\n    at executeConductCommand (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/kshvi/src/commands/conduct.ts:201:11)\\n    at ConductCommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/conduct-command-service.ts:62:29)\\n    at CommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/command-service.ts:56:42)\\n    at Object.handler (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/http/instance-routes.ts:50:21)\\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at Server.<anonymous> (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/service-kit/src/index.ts:146:19)\"}\n{\"t\":\"2026-11-23T21:04:42.669Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"5bc24e3b-063a-40b5-a6e9-950aeef269f5\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":500,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.673Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"f09ce70a-838a-4062-9d16-14ad458c03d0\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T21:04:42.676Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"efbabb7a-2829-42d1-9958-e8ab1485ddbc\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:42.677Z\",\"service\":\"kshvi-ac07\",\"level\":\"error\",\"requestId\":\"455828a4-98b3-4afc-8819-543e9bd66cae\",\"error\":\"Error: Обратный перенос официального времени запрещён\\n    at executeConductCommand (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/kshvi/src/commands/conduct.ts:693:123)\\n    at ConductCommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/conduct-command-service.ts:62:29)\\n    at CommandService.execute (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/instances/command-service.ts:56:42)\\n    at Object.handler (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/services/kshvi/src/http/instance-routes.ts:50:21)\\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at Server.<anonymous> (/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/packages/service-kit/src/index.ts:146:19)\"}\n{\"t\":\"2026-11-23T21:04:42.677Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"455828a4-98b3-4afc-8819-543e9bd66cae\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":500,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:42.679Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"e7fdb3ec-9a84-46c4-904e-c79f4530ad96\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:42.681Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"934cb4c8-ab08-4a7b-81f3-a1af2f635d15\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac07/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:42.683Z\",\"service\":\"kshvi-ac07\",\"level\":\"info\",\"requestId\":\"dee9e56c-fa4c-43fc-9540-4495047e3901\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac07/weather\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac07-time.test.ts (1 test) 184ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:40\n   Duration  2.06s (transform 66%, import 25%, tests 9%)\n\n",
+  "initialRevision": {
+    "id": "ac07-time",
+    "revision": 1,
+    "sha256": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac07/journal.json",
+    "sha256": "46891b4daf48bf24362f1497207a5473a611284caa4f60d39a852a6df61754d1",
+    "eventCount": 12
+  },
+  "hashes": {
+    "scenario": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b",
+    "environment": "8ff8c43e5a58fe2515418479ea17f162aac4447649c6979c09fefdbc4a8b1cfc",
+    "journal": "46891b4daf48bf24362f1497207a5473a611284caa4f60d39a852a6df61754d1"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac07/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "pausedCommandsRejected": 1,
+    "backwardJumpsRejected": 1,
+    "playbackRate": 4,
+    "jumpSnapshots": 1,
+    "manualOverrides": 1
+  },
+  "limitations": [
+    "Ускорение проверяется как версионный параметр и скачок; длительный прогон реального времени не входит в этот сценарий."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac07/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac07/journal.json",
+    "docs/release/kshvi/evidence/ac07/protocol.txt",
+    "docs/release/kshvi/evidence/ac07/metrics.json",
+    "docs/release/kshvi/evidence/ac07/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-07.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

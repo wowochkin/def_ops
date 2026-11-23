@@ -1,4 +1,4 @@
 AC-20 завершён
-runId: bdf2bed9-6f1a-4661-bdf6-8e14084cdf2c
-commit: ab0b27fe179fad14f87f3372f0f692c23b5f836a
+runId: bf4cc21a-8642-4487-bb46-3d6b6b810fb1
+commit: 11ab4de1f4cb188976ca9f5c508d601b95273f45
 240 записей и 240 различных механизмов; 12 категорий по 20; каждая запись применена в подходящем состоянии и отклонена в неподходящем; дефекты DUPLICATE_MECHANISM, MISSING_PROVENANCE, UNKNOWN_EFFECT, NEGATIVE_RESOURCE, CASCADE_CYCLE, MISSING_COMPENSATION, UNSUITABLE_STATE_ACCEPTED отклонены.

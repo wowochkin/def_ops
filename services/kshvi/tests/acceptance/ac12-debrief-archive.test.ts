@@ -14,6 +14,7 @@ const roots: string[] = [];
 afterEach(async () => { while (roots.length) await rm(roots.pop()!, { recursive: true, force: true }); });
 
 it('AC-12: автономный архив проверяется и воспроизводится в браузере без сервисов и сети', { timeout: 60_000 }, async () => {
+  await mkdir('.tmp', { recursive: true });
   const root = await mkdtemp(join('.tmp', 'ac12-offline-'));
   roots.push(root);
   const bundle = exportArchive({
@@ -71,7 +72,7 @@ it('AC-12: автономный архив проверяется и воспр�
   await writeFile('docs/release/kshvi/acceptance/AC-12.proof.json', JSON.stringify({
     runId, commit, initialRevision,
     journal: { path: journalPath, sha256: hashCanonical({ firstHash, secondHash, sequence }), eventCount: 2 },
-    hashes: { scenario: initialRevision.sha256, environment: bundle.manifest.manifestSha256, journal: hashCanonical({ firstHash, secondHash }) },
+    hashes: { scenario: initialRevision.sha256, environment: bundle.manifest.manifestSha256, journal: hashCanonical({ firstHash, secondHash, sequence }) },
     protocols: [protocolPath], screenshots: ['docs/release/kshvi/evidence/ac12/offline.png'], metrics,
     limitations: ['Автономность доказана на встроенной учебной реплей-фикстуре; человеческая оценка содержания разбора выполняется отдельно.'],
     artifacts: [journalPath, protocolPath, metricsPath, 'docs/release/kshvi/evidence/ac12/offline.png', 'docs/release/kshvi/evidence/ac12/offline-viewer.html'],

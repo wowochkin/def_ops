@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "Исправление всех 21 замечаний независимой ревизии Tasks 44–47",
+  "reviewSource": ".tmp/independent-review.log",
+  "items": {
+    "R01": { "test": "services/kshvi/tests/review-archive-regressions.test.ts#R01", "result": "PASS", "fix": "Семантическая схема каждого обязательного компонента; null, пустые объекты и неправильные типы дают неполный пакет" },
+    "R02": { "test": "services/kshvi/tests/review-archive-regressions.test.ts#R02", "result": "PASS", "fix": "Журнал читается по пути записи replay.archive в манифесте" },
+    "R03": { "test": "services/kshvi/tests/review-archive-regressions.test.ts#R03", "result": "PASS", "fix": "Импорт требует actor, организацию, archive.import и отдельное archive.publish" },
+    "R04": { "test": "services/kshvi/tests/review-archive-regressions.test.ts#R04", "result": "PASS", "fix": "Серверная политика компонентов, сторон, аудитории и allow-list полей участников применяется в exportArchive" },
+    "R05": { "test": "services/kshvi/tests/review-access-regressions.test.ts#R05", "result": "PASS", "fix": "Перспектива участника связана с владельцем, организацией, стороной и replay.read/replay.read.any" },
+    "R06": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R06", "result": "PASS", "fix": "publishDebrief повторно фильтрует материалы и отклонения по новой аудитории" },
+    "R07": { "test": "apps/archive-viewer/tests/review-regressions.test.ts#R07 + apps/archive-viewer/tests/standalone.spec.ts", "result": "PASS", "fix": "Standalone проверяет манифест, SHA-256, ссылки, схему содержимого, путь журнала и LIMITED_RESEARCH до показа" },
+    "R08": { "test": "services/kshvi/tests/review-archive-regressions.test.ts#R08", "result": "PASS", "fix": "HTML escaping и CSP connect-src/object-src none в генерируемом viewer" },
+    "R09": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R09", "result": "PASS", "fix": "occurredAt фильтруется по включительным границам MetricDefinition.period" },
+    "R10": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R10", "result": "PASS", "fix": "Отклонения имеют и фильтруются по instanceId, sideId, trainingQuestions и audience" },
+    "R11": { "test": "apps/editor/tests/kshvi-review-regressions.test.tsx#R11", "result": "PASS", "fix": "useEffect синхронизирует внутренний кадр с новым initialFrame" },
+    "R12": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R12", "result": "PASS", "fix": "Сравнение использует оперативное и астрономическое время последнего события или снимка" },
+    "R13": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R13", "result": "PASS", "fix": "branchSequence продолжает максимум snapshot/events текущей линии" },
+    "R14": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R14", "result": "PASS", "fix": "replayClockAt фильтрует снимки и события по branchId" },
+    "R15": { "test": "packages/kshvi/tests/review-domain-regressions.test.ts#R15", "result": "PASS", "fix": "Контрольная точка выбирается по sequence и branchId" },
+    "R16": { "test": "services/kshvi/tests/review-jobs-regressions.test.ts#R16", "result": "PASS", "fix": "Ключ идемпотентности включает userId; get проверяет владельца и права" },
+    "R17": { "test": "services/kshvi/tests/review-jobs-regressions.test.ts#R17", "result": "PASS", "fix": "cancel/retry требуют владельца и archive.jobs.cancel или отдельное any-право" },
+    "R18": { "test": "services/kshvi/tests/review-jobs-regressions.test.ts#R18", "result": "PASS", "fix": "Синхронная работа выполняется в реальном worker_threads, busy-loop не блокирует основной event loop" },
+    "R19": { "test": "services/kshvi/tests/review-jobs-regressions.test.ts#R19", "result": "PASS", "fix": "timeout/cancel завершает Worker; retry разрешён только после exit, файловая хронология исключает старые эффекты и пересечение попыток" },
+    "R20": { "test": "services/kshvi/tests/review-access-regressions.test.ts#R20", "result": "PASS", "fix": "BranchService проверяет организацию, владельца и Branch.rights для чтения, создания и изменения" },
+    "R21": { "test": "services/kshvi/tests/review-access-regressions.test.ts#R21", "result": "PASS", "fix": "Каждый вложенный объект панели получает TRUTH или PARTICIPANT, поддельный source перезаписывается" }
+  },
+  "verification": {
+    "regressions": "R01–R21: 21/21 FAIL→PASS",
+    "profile": "59 test files passed, 1 skipped; 218 tests passed, 8 skipped",
+    "playwright": "4/4 PASS: replay, generated viewer+tamper, standalone valid/tampered/limited",
+    "typecheck": "npm run typecheck — PASS",
+    "fullWithDatabase": "TEST_DATABASE_URL=postgres://vladimirabramov@127.0.0.1:5432/postgres npm test — 343 files passed, 1 skipped; 3164 tests passed, 36 skipped",
+    "build": "npm run build и npm run build -w @def-ops/archive-viewer — PASS",
+    "documentation": "docs/system.md, docs/system.pdf, docs/system.docx и два JPEG 1440×900 обновлены"
+  },
+  "limitations": [
+    "Физическая изоляция на отдельной машине и матрица нескольких клиентов не заявляются: выполнены Node и браузерные проверки с блокировкой сети.",
+    "Долговечность подтверждена отдельно для PostgresArchiveJobManager; прежний in-memory ArchiveJobManager остаётся недолговечным.",
+    "Нагрузочное тестирование не выполнялось; R18/R19 проверяют изоляцию worker и безопасный повтор, а не производительность под нагрузкой.",
+    "Для сборки документации использован локальный pandoc 3.6.4 внутри worktree; глобальная установка не изменялась."
+  ]
+}

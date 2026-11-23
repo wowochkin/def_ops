@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac02-environment.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:29.423Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"msg\":\"listening on :65243\"}\n{\"t\":\"2026-11-23T21:04:29.435Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"15553d11-9be1-4218-8855-e52eacc17bf1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":6}\n{\"t\":\"2026-11-23T21:04:29.440Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"9d1b770a-e2ab-4051-b655-5ecf1092bece\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/environment/snapshots\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:29.442Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"31995059-9c60-4de9-886e-e95aec56c0e1\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:29.456Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"f3da2422-7736-432f-b7f4-737a54d98c67\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/environment\",\"status\":200,\"ms\":14}\n{\"t\":\"2026-11-23T21:04:29.460Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"acfc8303-2daf-485b-9371-cfca4ffa0828\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac02/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:29.461Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"58247063-b0ec-4935-a485-85e29c8a7b5f\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:29.462Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"e9b37b17-9b00-4f26-8a96-bdeaec2de99d\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/ac02/weather\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:29.463Z\",\"service\":\"kshvi-ac02\",\"level\":\"info\",\"requestId\":\"17e55ae4-2f07-4380-a3ef-2c3ff7a4471c\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/environment/snapshots/3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92/weather\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac02-environment.test.ts (1 test) 163ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:27\n   Duration  2.07s (transform 67%, import 25%, tests 8%)\n\n",
+  "initialRevision": {
+    "id": "ac02-3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+    "revision": 1,
+    "sha256": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac02/journal.json",
+    "sha256": "03df16f99e5ccafdd9691caed76ffe43ab3950e415eacc596d1cb8b1da229be3",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "f1618f0c92d2a2716496bac54d5473464f17b76df2b5b642f43fe7245a7b2698",
+    "environment": "a9b08f5e4fd08c6a3b79cf5cb69e2748f8a039733882695bb8ba9e8637623620",
+    "journal": "03df16f99e5ccafdd9691caed76ffe43ab3950e415eacc596d1cb8b1da229be3"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac02/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "beforeTemperature": -2,
+    "afterTemperature": 10,
+    "restoredRequests": 10,
+    "weatherChanges": 1
+  },
+  "limitations": [
+    "Соседний источник моделируется локальной фикстурой; физическое переименование внешнего атласа не входит в контур."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac02/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac02/journal.json",
+    "docs/release/kshvi/evidence/ac02/protocol.txt",
+    "docs/release/kshvi/evidence/ac02/metrics.json",
+    "docs/release/kshvi/evidence/ac02/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-02.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

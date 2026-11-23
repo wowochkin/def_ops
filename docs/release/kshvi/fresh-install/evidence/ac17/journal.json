@@ -1,0 +1,15 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "ui": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n ✓ apps/editor/tests/acceptance/ac17-handover.test.tsx (2 tests) 19ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  00:06:32\n   Duration  259ms (environment 56%, import 22%, transform 11%, tests 10%, worker 1%)\n\n",
+  "server": {
+    "logout": 204,
+    "me": 401
+  },
+  "metrics": {
+    "privilegedStoragePrefixesCleared": 2,
+    "serverLogoutStatus": 204,
+    "unauthorizedAfterLogout": 1,
+    "unrelatedWeatherRegionPreserved": 1
+  }
+}

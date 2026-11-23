@@ -1,6 +1,7 @@
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import { performance } from 'node:perf_hooks';
-import { Worker } from 'node:worker_threads';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
 import { ResourceBudget } from '../admin/resource-budget';
 import { SubscriptionService } from '../http/subscription-service';
 import type { KshviEventStore } from '../store/event-store';
@@ -92,38 +93,6 @@ function sendJson(response: ServerResponse, status: number, body: unknown): void
   response.end(JSON.stringify(body));
 }
 
-async function runWorker(kind: HeavyJobKind, rows: readonly unknown[]): Promise<unknown> {
-  const source = `
-    const { parentPort, workerData } = require('node:worker_threads');
-    const { createHash } = require('node:crypto');
-    const hash = createHash('sha256');
-    let checksum = 0;
-    let previousSequence = 0;
-    let orderingErrors = 0;
-    for (const row of workerData.rows) {
-      const text = JSON.stringify(row);
-      hash.update(text);
-      if (workerData.kind === 'MASS_CALCULATION') {
-        for (let index = 0; index < text.length * 20; index += 1) checksum = (checksum * 33 + text.charCodeAt(index % text.length)) >>> 0;
-      } else if (workerData.kind === 'REPLAY') {
-        const sequence = Number(row.sequence);
-        if (previousSequence && sequence < previousSequence) orderingErrors += 1;
-        previousSequence = sequence;
-        checksum = (checksum + sequence) >>> 0;
-      } else {
-        checksum = (checksum + text.length) >>> 0;
-      }
-    }
-    parentPort.postMessage({ kind: workerData.kind, rows: workerData.rows.length, sha256: hash.digest('hex'), checksum, orderingErrors });
-  `;
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(source, { eval: true, workerData: { kind, rows }, resourceLimits: { maxOldGenerationSizeMb: 128, stackSizeMb: 4 } });
-    worker.once('message', resolve);
-    worker.once('error', reject);
-    worker.once('exit', code => { if (code !== 0) reject(new Error(`Тяжёлое задание завершилось с кодом ${code}`)); });
-  });
-}
-
 async function startNetworkStand(store: KshviEventStore, plan: FixturePlan) {
   const clients = new Map<number, { response: ServerResponse; subscription: SubscriptionService }>();
   const mapState = new Map(plan.instances.map(instance => [instance.instanceId, { lastEventId: null as string | null, sequence: instance.eventCount }]));
@@ -148,9 +117,20 @@ async function startNetworkStand(store: KshviEventStore, plan: FixturePlan) {
 
   const runHeavy = async (kind: HeavyJobKind, response: ServerResponse) => {
     const id = `heavy-${heavySequence += 1}`;
+    const inputPath = resolve('.tmp', 'kshvi-heavy-jobs', `${id}.json`);
     let started = false;
     try {
-      const initial = budget.submit({ id, kind, cpuUnits: 2, memoryMb: 128, operation: { kind: 'CPU_WORK', iterations: 1000 } });
+      const rows = await store.pool.query(
+        `select event_id, instance_id, sequence, type, payload, hash from ${store.schema}.events
+         where organization_id = $1 order by instance_id, sequence limit 500`,
+        [plan.organizationId],
+      );
+      await mkdir(dirname(inputPath), { recursive: true });
+      await writeFile(inputPath, JSON.stringify(rows.rows), { mode: 0o600 });
+      const initial = budget.submit({
+        id, kind, cpuUnits: 2, memoryMb: 128,
+        operation: { kind: 'DOMAIN_WORK', domainKind: kind, inputPath },
+      });
       if (initial.status === 'RUNNING') {
         started = true;
         runningHeavy += 1;
@@ -162,18 +142,13 @@ async function startNetworkStand(store: KshviEventStore, plan: FixturePlan) {
         runningHeavy += 1;
         maxRunningHeavy = Math.max(maxRunningHeavy, runningHeavy);
       }
-      const rows = await store.pool.query(
-        `select event_id, instance_id, sequence, type, payload, hash from ${store.schema}.events
-         where organization_id = $1 order by instance_id, sequence limit 500`,
-        [plan.organizationId],
-      );
-      await budget.wait(id);
-      const result = await runWorker(kind, rows.rows);
-      sendJson(response, 200, { id, status: 'succeeded', result });
+      const completed = await budget.wait(id);
+      sendJson(response, 200, { id, status: 'succeeded', result: completed.result });
     } catch (error) {
       sendJson(response, 500, { id, status: 'failed', error: error instanceof Error ? error.message : String(error) });
     } finally {
       if (started) runningHeavy -= 1;
+      await rm(inputPath, { force: true });
     }
   };
 

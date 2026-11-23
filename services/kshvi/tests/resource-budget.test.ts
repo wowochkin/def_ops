@@ -1,3 +1,5 @@
+import { writeFile, rm } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import { ResourceBudget } from '../src/admin/resource-budget';
 
@@ -47,6 +49,25 @@ it('пропускает критическую интерактивную ко�
   await service.wait('heavy-2');
   expect(events.indexOf('interactive:critical-command')).toBeLessThan(events.indexOf('started:heavy-2'));
   expect(service.snapshot()).toMatchObject({ running: 0, queued: 0, interactiveCommandsAccepted: 1, completed: 2 });
+});
+
+it('выполняет фактический реплей внутри того же учтённого дочернего процесса', async () => {
+  const inputPath = resolve('.tmp', 'resource-budget-domain-work.json');
+  await writeFile(inputPath, JSON.stringify([{ sequence: 1 }, { sequence: 0 }]));
+  const service = budget([]);
+  try {
+    service.submit({
+      id: 'domain-work', kind: 'REPLAY', cpuUnits: 1, memoryMb: 64,
+      operation: { kind: 'DOMAIN_WORK', domainKind: 'REPLAY', inputPath } as never,
+    });
+    const result = await service.wait('domain-work');
+    expect(result.result).toMatchObject({ kind: 'REPLAY', rows: 2, orderingErrors: 1 });
+    expect(result.result.sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.result.pid).not.toBe(process.pid);
+    expect(service.snapshot()).toMatchObject({ running: 0, queued: 0, completed: 1 });
+  } finally {
+    await rm(inputPath, { force: true });
+  }
 });
 
 it('отклоняет превышение CPU и памяти до запуска процесса', () => {
