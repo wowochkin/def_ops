@@ -6,6 +6,7 @@ import { hashCanonical } from '../../../../../../packages/kshvi/src/scenario/ini
 import type { SymbolSet } from '../../../../../../packages/tactical-symbols/src/model';
 import type { ExerciseCard, JsonValue, KshviClient } from '../kshvi-api';
 import { InitialMapStep, type InitialMapSymbolOption } from './InitialMapStep';
+import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
 
 const numericFields = [
@@ -153,7 +154,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
       <p>Снимок: <code title={snapshot.id}>{snapshot.id.slice(0, 12)}…</code> · автор редакции: {authorId}</p>
       {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков не утверждён методистом. Доступные для официального нанесения знаки: только APPROVED.</p>}
       <InitialMapCanvas snapshot={snapshot} map={map} />
-      <InitialMapStep map={map} onChange={setMap} audiences={[]} availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
+      <InitialMapStep map={map} onChange={setMap} audiences={initialMapAudiences(map.markers)} availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
     </>}
   </section>;
 }

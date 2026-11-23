@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   addInitialMapMarker,
   approveInitialMap,
@@ -65,15 +65,23 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
   const approvedSymbols = availableSymbols.filter(symbol => symbol.status === 'APPROVED'
     && (!query || [symbol.id, symbol.nameRu, symbol.purpose, symbol.service, symbol.objectType]
       .some(value => value?.toLocaleLowerCase('ru').includes(query))));
+  const canReadTruth = truthRole === 'DIRECTOR' || truthRole === 'UMPIRE';
   const [current, setCurrent] = useState(map);
-  const [projection, setProjection] = useState(audiences[0]?.instanceId ?? 'TRUTH');
+  const [projection, setProjection] = useState(audiences[0]?.instanceId ?? (canReadTruth ? 'TRUTH' : 'NONE'));
   const [form, setForm] = useState<ManualForm>({ ...emptyForm, symbolId: approvedSymbols[0]?.id ?? '' });
   const [geoJson, setGeoJson] = useState('');
   const [issues, setIssues] = useState<readonly InitialMapIssue[]>([]);
   const [notice, setNotice] = useState('');
   const [approved, setApproved] = useState<ApprovedInitialMap | null>(null);
   const audience = audiences.find(item => item.instanceId === projection);
-  const projected = projection === 'TRUTH'
+  useEffect(() => {
+    if (projection === 'TRUTH' && !canReadTruth) setProjection(audiences[0]?.instanceId ?? 'NONE');
+    else if (projection === 'NONE' && audiences[0]) setProjection(audiences[0].instanceId);
+    else if (projection !== 'TRUTH' && projection !== 'NONE' && !audience) {
+      setProjection(audiences[0]?.instanceId ?? (canReadTruth ? 'TRUTH' : 'NONE'));
+    }
+  }, [audiences, audience, canReadTruth, projection]);
+  const projected = projection === 'TRUTH' && canReadTruth
     ? projectInitialMap(current, { mode: 'TRUTH', role: truthRole })
     : audience
       ? projectInitialMap(current, { mode: 'INSTANCE', sideId: audience.sideId, instanceId: audience.instanceId, role: audience.role })
@@ -102,7 +110,9 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
         instanceIds: form.instanceIds.split(',').map(item => item.trim()).filter(Boolean),
       },
       links: { forceId: form.forceId.trim() }, sideId: form.sideId.trim(),
-      symbol: selectedSymbol ?? { id: '', version: '', sideId: '', status: 'IMPORTED', sourceDocument: '', sourcePage: 0 },
+      symbol: selectedSymbol
+        ? { ...selectedSymbol, sideId: form.sideId.trim() }
+        : { id: '', version: '', sideId: '', status: 'IMPORTED', sourceDocument: '', sourcePage: 0 },
     };
     const found = validateInitialMap({ bounds: current.bounds, markers: [marker] });
     if (found.some(item => item.severity === 'ERROR')) {
@@ -154,9 +164,11 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
     <p>Отдельная редакция поверх неизменяемого снимка среды: <ShortHash value={current.environment.snapshotId} /></p>
     <label htmlFor="initial-map-projection">Начальная проекция</label>
     <select id="initial-map-projection" value={projection} onChange={event => setProjection(event.target.value)}>
+      {projection === 'NONE' && <option value="NONE">Проекция не задана</option>}
       {audiences.map(item => <option key={item.instanceId} value={item.instanceId}>{item.label}</option>)}
-      {(truthRole === 'DIRECTOR' || truthRole === 'UMPIRE') && <option value="TRUTH">Истинная служебная карта</option>}
+      {canReadTruth && <option value="TRUTH">Истинная служебная карта</option>}
     </select>
+    {!audiences.length && !canReadTruth && <p>Добавьте инстанции видимости к отметкам — после этого здесь появятся их начальные сведения без истинной закрытой обстановки.</p>}
     <InitialMapLayers map={projected} />
 
     <details>

@@ -268,6 +268,12 @@ function importedMarker(feature: Readonly<Record<string, unknown>>): MapMarker {
       status: text(symbol.status) as MapSymbolUse['status'], sourceDocument: text(symbol.sourceDocument),
       sourcePage: typeof symbol.sourcePage === 'number' ? symbol.sourcePage : 0,
     },
+    ...(typeof properties.loadTonnes === 'number' ? { loadTonnes: properties.loadTonnes } : {}),
+    ...(typeof properties.crossingCapacityTonnes === 'number' ? { crossingCapacityTonnes: properties.crossingCapacityTonnes } : {}),
+    ...(typeof properties.passable === 'boolean' ? { passable: properties.passable } : {}),
+    ...(typeof properties.routeId === 'string' || properties.routeId === null ? { routeId: properties.routeId } : {}),
+    ...(typeof properties.offRoadJustification === 'string' ? { offRoadJustification: properties.offRoadJustification } : {}),
+    ...(typeof properties.geometryRequired === 'boolean' ? { geometryRequired: properties.geometryRequired } : {}),
   };
 }
 

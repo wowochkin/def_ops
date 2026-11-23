@@ -165,3 +165,24 @@ describe('InitialMapStep: SYM-07 при вставке на карту', () => {
     expect(screen.queryByRole('option', { name: /infantry/ })).toBeNull();
   });
 });
+
+
+describe('AC-22: связка проекций и стороны знака', () => {
+  it('не падает у обучаемого до появления инстанций и объясняет следующий шаг', () => {
+    render(<InitialMapStep map={emptyMap()} onChange={vi.fn()} audiences={[]} availableSymbols={symbols} truthRole="TRAINEE" />);
+    expect(screen.getByText(/Добавьте инстанции видимости/)).toBeTruthy();
+    expect(screen.queryByText('blue-force')).toBeNull();
+  });
+
+  it('назначает знаку сторону наносимого объекта, а не фиктивный UNKNOWN', () => {
+    const onChange = vi.fn();
+    const redAudiences = [{ sideId: 'red', instanceId: 'red-hq', role: 'TRAINEE', label: 'Красный штаб' }];
+    render(<InitialMapStep map={emptyMap()} onChange={onChange} audiences={redAudiences} availableSymbols={[{ ...approvedSymbol, sideId: 'UNKNOWN' }]} truthRole="DIRECTOR" />);
+    fillManualMarker();
+    fireEvent.change(screen.getByLabelText('Сторона'), { target: { value: 'red' } });
+    fireEvent.change(screen.getByLabelText('Инстанции видимости'), { target: { value: 'red-hq' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить отметку' }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].markers[0].symbol.sideId).toBe('red');
+  });
+});
