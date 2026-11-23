@@ -110,7 +110,7 @@ function documentRevision(environment: { id: string; manifestSha256: string }): 
   };
 }
 
-async function runOfficialG2(store: KshviEventStore) {
+export async function runOfficialG2(store: KshviEventStore) {
   const runId = process.env.KSHVI_G2_RUN_ID ?? randomUUID();
   const startedAt = new Date().toISOString();
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
