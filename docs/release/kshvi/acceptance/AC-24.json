@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "commit": "3348e4a2cb0738c848495b578a7e56d054891365",
+  "runId": "00af233a-6169-4601-8d05-9f8f12f40f76",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac24-readiness.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/acceptance/ac24-readiness.test.ts (1 test) 610ms\n   ✓ AC-24: SEALED не завершает готовность, а разрешённый первый приказ сохраняет разные последствия трёх сил 610ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  22:23:35\n   Duration  700ms (tests 94%, transform 5%, import 1%)\n\n",
+  "initialRevision": {
+    "id": "readiness-ac24",
+    "revision": 1,
+    "sha256": "b7f789c7c5ca95ebdd6a5ef991bdfcddd8e518a6e3ed5d901e39a6c3a756e36a"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac24/journal.json",
+    "sha256": "5dcafec20eb3f6d435bacc1c4a9d1f362c123e043a27e1a4a3d7e267e4416a49",
+    "eventCount": 7
+  },
+  "hashes": {
+    "scenario": "b7f789c7c5ca95ebdd6a5ef991bdfcddd8e518a6e3ed5d901e39a6c3a756e36a",
+    "environment": "7646575fe648a2e8e5022a75c5ef7f9dad8fe510d8d21502f05538401cef2fcd",
+    "journal": "5dcafec20eb3f6d435bacc1c4a9d1f362c123e043a27e1a4a3d7e267e4416a49"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac24/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "forcesWithPartialReadiness": 3,
+    "blockedBeforeAuthorization": 3,
+    "authorizedTransitions": 3,
+    "readyDistanceMeters": 600,
+    "signalDelayMinutes": 20,
+    "personnelEquipmentDistanceMeters": 297,
+    "supplyAreaDistanceMeters": 240,
+    "duplicateAuthorizationsApplied": 0
+  },
+  "limitations": [
+    "Доменный этап и влияние на первый приказ подтверждены; визуальная и методическая оценка отображения на конкретном стенде выполняется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac24/journal.json",
+    "docs/release/kshvi/evidence/ac24/first-order-comparison.json",
+    "docs/release/kshvi/evidence/ac24/protocol.txt",
+    "docs/release/kshvi/evidence/ac24/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-24.json"
+  ],
+  "freshInstall": false,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release",
+  "openErrors": []
+}

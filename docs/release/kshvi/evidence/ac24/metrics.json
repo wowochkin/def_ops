@@ -1,0 +1,10 @@
+{
+  "forcesWithPartialReadiness": 3,
+  "blockedBeforeAuthorization": 3,
+  "authorizedTransitions": 3,
+  "readyDistanceMeters": 600,
+  "signalDelayMinutes": 20,
+  "personnelEquipmentDistanceMeters": 297,
+  "supplyAreaDistanceMeters": 240,
+  "duplicateAuthorizationsApplied": 0
+}
