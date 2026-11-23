@@ -5,6 +5,11 @@ it('не выдумывает действие вне плейбука', () => {
   expect(evaluatePlaybook({ rules: [{ when: 'contact', command: 'report' }] }, { kind: 'unknown' })).toEqual({ kind: 'ESCALATE', reason: 'NO_RULE' });
 });
 
+it('не позволяет правилу подменить зарезервированное неизвестное условие', () => {
+  expect(evaluatePlaybook({ id: 'playbook-unknown', version: 1, rules: [{ when: 'unknown', command: 'arbitrary-action' }] }, { kind: 'unknown' }))
+    .toEqual({ kind: 'ESCALATE', reason: 'NO_RULE' });
+});
+
 it('воспроизводимо выполняет известное обязательное правило с объяснением', () => {
   const playbook = { id: 'playbook-1', version: 3, rules: [{ id: 'rule-contact', when: 'contact', command: 'report', mandatory: true }] } as const;
   const first = evaluatePlaybook(playbook, { kind: 'contact' });

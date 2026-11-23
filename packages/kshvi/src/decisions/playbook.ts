@@ -17,13 +17,12 @@ export type PlaybookResult =
   | Readonly<{ kind: 'ESCALATE'; reason: 'NO_RULE' }>;
 
 export function evaluatePlaybook(playbook: Playbook, condition: PlaybookCondition): PlaybookResult {
-  if (!condition.kind.trim()) return { kind: 'ESCALATE', reason: 'NO_RULE' };
+  if (!condition.kind.trim() || condition.kind === 'unknown') return { kind: 'ESCALATE', reason: 'NO_RULE' };
   const rule = playbook.rules.find(candidate => candidate.when === condition.kind);
   if (rule) return {
     kind: 'COMMAND', command: rule.command, ruleId: rule.id ?? `${playbook.id ?? 'playbook'}:${rule.when}`,
     playbookVersion: playbook.version ?? 1,
   };
-  if (condition.kind === 'unknown') return { kind: 'ESCALATE', reason: 'NO_RULE' };
   if (playbook.agent) return { kind: 'AGENT', allowedCommands: [...playbook.agent.allowedCommands], reason: 'NO_MANDATORY_RULE' };
   return { kind: 'ESCALATE', reason: 'NO_RULE' };
 }
