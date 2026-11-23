@@ -1,0 +1,97 @@
+{
+  "initial": {
+    "authorized": 1,
+    "actual": 1,
+    "stateCounts": {
+      "SERVICEABLE": 1,
+      "DEGRADED": 0,
+      "UNDER_REPAIR": 0,
+      "DAMAGED": 0,
+      "DESTROYED": 0,
+      "UNKNOWN": 0
+    },
+    "crew": {
+      "requiredPerUnit": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      },
+      "assigned": {
+        "status": "KNOWN",
+        "value": 2,
+        "unit": "person",
+        "source": {
+          "sourceId": "constructor-ac26",
+          "revision": 1,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "note": "Учебный сценарный тип"
+        }
+      }
+    },
+    "items": [],
+    "distribution": []
+  },
+  "history": [
+    {
+      "eventId": "fault-ac26",
+      "kind": "STATE_CHANGE",
+      "at": "2030-01-01T06:00:00.000Z",
+      "from": "SERVICEABLE",
+      "to": "DEGRADED",
+      "causeId": "fault-ac26",
+      "reason": "Повреждение перед задачей",
+      "resources": [],
+      "availableResources": [],
+      "quantity": 1
+    },
+    {
+      "eventId": "repair-start-ac26",
+      "kind": "STATE_CHANGE",
+      "at": "2030-01-01T06:00:00.000Z",
+      "from": "DEGRADED",
+      "to": "UNDER_REPAIR",
+      "causeId": "repair-order-ac26",
+      "reason": "Начат ремонт",
+      "resources": [],
+      "availableResources": [],
+      "quantity": 1
+    },
+    {
+      "eventId": "repair-finish-ac26",
+      "kind": "STATE_CHANGE",
+      "at": "2030-01-01T07:00:00.000Z",
+      "from": "UNDER_REPAIR",
+      "to": "SERVICEABLE",
+      "causeId": "repair-complete-ac26",
+      "reason": "Ремонт завершён",
+      "resources": [
+        {
+          "resourceId": "spare-part",
+          "amount": 1,
+          "unit": "pcs"
+        }
+      ],
+      "availableResources": [
+        {
+          "resourceId": "spare-part",
+          "amount": 1,
+          "unit": "pcs"
+        }
+      ],
+      "quantity": 1
+    }
+  ],
+  "resourceBalances": {
+    "spare-part": {
+      "resourceId": "spare-part",
+      "amount": 0,
+      "unit": "pcs"
+    }
+  }
+}
