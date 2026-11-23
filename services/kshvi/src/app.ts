@@ -71,7 +71,11 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
     const body = await ctx.json<{ username?: string; password?: string }>();
     if (!body.username || !body.password) throw new HttpError(422, 'invalid_credentials', 'Проверьте заполнение данных');
     const login = await sessions.login(body.username, body.password);
-    return reply(200, { csrfToken: login.csrfToken, participant: publicParticipant(login.participant) }, { 'Set-Cookie': login.cookie });
+    return reply(200, {
+      csrfToken: login.csrfToken,
+      participant: publicParticipant(login.participant),
+      roles: login.roles.map(({ id, role, sideId }) => ({ id, role, sideId })),
+    }, { 'Set-Cookie': login.cookie });
   });
 
   router.get(`${KSHVI_ROUTE_PREFIX}/auth/me`, async ctx => publicParticipant(await participant(ctx)));

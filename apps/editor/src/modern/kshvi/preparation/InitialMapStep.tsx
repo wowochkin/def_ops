@@ -26,6 +26,7 @@ export type InitialMapStepProps = Readonly<{
   audiences: readonly InitialMapAudience[];
   availableSymbols: readonly InitialMapSymbolOption[];
   truthRole: string;
+  onApprove?: (map: InitialSituationMap) => Promise<ApprovedInitialMap>;
 }>;
 
 type ManualForm = {
@@ -51,7 +52,14 @@ const emptyForm: ManualForm = {
   validFrom: '', validUntil: '', instanceIds: '', forceId: '', confidence: '', uncertaintyM: '', symbolId: '',
 };
 
-export function InitialMapStep({ map, onChange, audiences, availableSymbols, truthRole }: InitialMapStepProps) {
+function ShortHash({ value }: { value: string }) {
+  return <span className="initial-map-hash">
+    <code title={value}>{value.slice(0, 12)}…</code>
+    <button type="button" onClick={() => { void navigator.clipboard?.writeText(value); }}>Копировать ID</button>
+  </span>;
+}
+
+export function InitialMapStep({ map, onChange, audiences, availableSymbols, truthRole, onApprove }: InitialMapStepProps) {
   const [symbolQuery, setSymbolQuery] = useState('');
   const query = symbolQuery.trim().toLocaleLowerCase('ru');
   const approvedSymbols = availableSymbols.filter(symbol => symbol.status === 'APPROVED'
@@ -128,14 +136,14 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
     }
   };
 
-  const approve = () => {
+  const approve = async () => {
     try {
-      const next = approveInitialMap(current);
+      const next = onApprove ? await onApprove(current) : approveInitialMap(current);
       setCurrent(next);
       setApproved(next);
       onChange(next);
       setIssues([]);
-      setNotice('Карта утверждена');
+      setNotice(onApprove ? 'Карта утверждена сервером' : 'Карта утверждена');
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Карта не утверждена');
     }
@@ -143,7 +151,7 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
 
   return <section aria-labelledby="initial-map-title">
     <h2 id="initial-map-title">Карта исходной обстановки</h2>
-    <p>Отдельная редакция поверх неизменяемого снимка среды: {current.environment.snapshotId}</p>
+    <p>Отдельная редакция поверх неизменяемого снимка среды: <ShortHash value={current.environment.snapshotId} /></p>
     <label htmlFor="initial-map-projection">Начальная проекция</label>
     <select id="initial-map-projection" value={projection} onChange={event => setProjection(event.target.value)}>
       {audiences.map(item => <option key={item.instanceId} value={item.instanceId}>{item.label}</option>)}
@@ -151,8 +159,10 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
     </select>
     <InitialMapLayers map={projected} />
 
-    <fieldset>
-      <legend>Ручное нанесение</legend>
+    <details>
+      <summary>Ручное нанесение</summary>
+      <fieldset>
+        <legend>Параметры отметки</legend>
       <label htmlFor="initial-map-id">Идентификатор отметки</label>
       <input id="initial-map-id" value={form.id} onChange={event => update('id', event.target.value)} />
       <label htmlFor="initial-map-kind">Тип отметки</label>
@@ -191,12 +201,15 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
       </select>
       {selectedSymbol && <p>{selectedSymbol.sourceDocument}, стр. {selectedSymbol.sourcePage}</p>}
       <button type="button" onClick={addManual}>Добавить отметку</button>
-    </fieldset>
-
-    <label htmlFor="initial-map-geojson">GeoJSON</label>
-    <textarea id="initial-map-geojson" value={geoJson} onChange={event => setGeoJson(event.target.value)} />
-    <button type="button" onClick={importDocument}>Импортировать GeoJSON</button>
-    <button type="button" onClick={approve}>Утвердить карту</button>
+      </fieldset>
+    </details>
+    <details>
+      <summary>Импорт GeoJSON</summary>
+      <label htmlFor="initial-map-geojson">GeoJSON</label>
+      <textarea id="initial-map-geojson" value={geoJson} onChange={event => setGeoJson(event.target.value)} />
+      <button type="button" onClick={importDocument}>Импортировать GeoJSON</button>
+    </details>
+    <button className="kshvi-primary" type="button" onClick={() => void approve()}>Утвердить карту на сервере</button>
     {notice && <p role="status">{notice}</p>}
     {issues.length > 0 && <ul aria-label="Ошибки исходной карты">{issues.map((item, index) => <li key={`${item.code}-${item.objectId ?? index}`}>
       {item.code}: {item.message}

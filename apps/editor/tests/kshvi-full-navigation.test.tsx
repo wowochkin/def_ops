@@ -52,6 +52,7 @@ it('ведёт выбранное учение через подготовку, 
 
   fireEvent.click(await screen.findByRole('button', { name: 'Рабочий цикл Сквозное учение' }));
   expect(await screen.findByRole('heading', { name: 'Подготовка официального сеанса' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /Запуск/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Запустить официальный сеанс' }));
   expect(await screen.findByRole('heading', { name: 'Руководитель учения' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Пауза' }));

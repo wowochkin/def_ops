@@ -1,5 +1,6 @@
 import { createService, env, onShutdown } from '@def-ops/service-kit';
 import { SessionManager } from './auth/sessions';
+import { ensureDevelopmentAccount } from './auth/development-account';
 import { SecurityAudit } from './auth/security-audit';
 import { CartographyEnvironmentProvider } from './environment/cartography-provider';
 import { EnvironmentSnapshotStore } from './environment/snapshot-store';
@@ -17,6 +18,7 @@ const environmentStore = new EnvironmentSnapshotStore(env('KSHVI_ENVIRONMENT_DIR
 const persistence = await createKshviPersistence(process.env, { environment: environmentStore });
 const pool = persistence.pool;
 const sessions = new SessionManager({ store: persistence.sessionStore });
+await ensureDevelopmentAccount(sessions, process.env);
 const audit = new SecurityAudit();
 const environmentProvider = new CartographyEnvironmentProvider({
   baseUrl: env('CARTOGRAPHY_URL', 'http://localhost:8104/cartography'),

@@ -3,6 +3,8 @@ import { coverageReport, symbolSet, type SymbolAffiliation, type SymbolKind, typ
 import { sourceRegistry } from '@def-ops/tactical-symbols/source/browser';
 import { searchSymbols } from './symbols-api';
 import { SymbolCard } from './SymbolCard';
+import { SourceDocuments } from './SourceDocuments';
+import { affiliationLabels, forceTypeLabels, kindLabels, symbolStatusLabels } from './symbol-labels';
 import './symbols.css';
 
 export type SymbolsViewProps = Readonly<{
@@ -13,6 +15,7 @@ export type SymbolsViewProps = Readonly<{
 }>;
 
 export function SymbolsView({ set = symbolSet, historySets, canInsert = false, onInsert }: SymbolsViewProps) {
+  const [mode, setMode] = useState<'SYMBOLS' | 'DOCUMENTS'>('SYMBOLS');
   const [query, setQuery] = useState('');
   const [forceType, setForceType] = useState('ALL');
   const [affiliation, setAffiliation] = useState<SymbolAffiliation | 'ALL'>('ALL');
@@ -32,29 +35,44 @@ export function SymbolsView({ set = symbolSet, historySets, canInsert = false, o
   const history = selected
     ? (historySets ?? [set]).flatMap(item => item.symbols.filter(symbol => symbol.id === selected.id).map(symbol => ({ symbol, setVersion: item.version })))
     : [];
+  const levelLabels: Record<string, string> = { ARMY: 'Армия', BATTALION: 'Батальон' };
+
   return <section className="symbols-view">
-    <header><p>Современный режим · справочник</p><h1>Условные знаки</h1>
-      <p>{coverage.documents} документов · {coverage.fonts} шрифта · {coverage.fragments} фрагмента</p>
+    <header className="symbols-heading">
+      <div><p>Современный режим · справочник</p><h1>Условные знаки</h1><p>{coverage.documents} документов · {coverage.fonts} шрифта · {coverage.fragments} фрагмента</p></div>
+      <div className="symbols-coverage"><strong>{coverage.documents}</strong> документов<strong>{coverage.fonts}</strong> шрифта<strong>{coverage.fragments}</strong> страницы</div>
+      <div className="symbols-mode" role="group" aria-label="Представление справочника">
+        <button aria-pressed={mode === 'SYMBOLS'} onClick={() => setMode('SYMBOLS')}>По знакам</button>
+        <button aria-pressed={mode === 'DOCUMENTS'} onClick={() => setMode('DOCUMENTS')}>По документам</button>
+      </div>
+    </header>
+
+    <div className="symbols-toolbar">
+      <label>{mode === 'SYMBOLS' ? 'Поиск знака' : 'Поиск по документам'}<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={mode === 'SYMBOLS' ? 'Название, код или назначение' : 'Название документа или тема'} /></label>
+      {mode === 'SYMBOLS' && <>
+        <label>Категория<select value={forceType} onChange={event => setForceType(event.target.value)}><option value="ALL">Все категории</option>{forceTypes.map(type => <option key={type} value={type}>{forceTypeLabels[type] ?? type}</option>)}</select></label>
+        <label>Принадлежность<select value={affiliation} onChange={event => setAffiliation(event.target.value as SymbolAffiliation | 'ALL')}><option value="ALL">Все</option>{Object.entries(affiliationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Геометрия<select value={kind} onChange={event => setKind(event.target.value as SymbolKind | 'ALL')}><option value="ALL">Все</option>{Object.entries(kindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Статус<select value={status} onChange={event => setStatus(event.target.value as SymbolStatus | 'ALL')}><option value="ALL">Все</option>{Object.entries(symbolStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Уровень<select value={organizationalLevel} onChange={event => setOrganizationalLevel(event.target.value)}><option value="ALL">Все</option>{levels.map(value => <option key={value} value={value}>{levelLabels[value] ?? value}</option>)}</select></label>
+        <label>Глава документа<select value={documentId} onChange={event => setDocumentId(event.target.value)}><option value="ALL">Все главы</option>{sourceRegistry.documents.map(document => <option key={document.id} value={document.id}>{document.originalName}</option>)}</select></label>
+      </>}
+    </div>
+
+    {mode === 'SYMBOLS' ? <>
+      <div className="symbols-result-summary"><span>{symbols.length} знаков</span><span>Сверка ещё не завершена</span></div>
+      <div className="symbols-layout">
+        <nav className="symbols-catalog" aria-label="Каталог знаков">{symbols.map(symbol => <button key={symbol.id} aria-pressed={selected?.id === symbol.id} onClick={() => setSelectedId(symbol.id)}>
+          <strong>{symbol.name}</strong><small>{forceTypeLabels[symbol.forceType] ?? symbol.forceType}</small><span>{symbolStatusLabels[symbol.status]}</span>
+        </button>)}</nav>
+        {selected ? <SymbolCard key={selected.id} symbol={selected} setVersion={set.version} history={history} canInsert={canInsert} onInsert={onInsert} /> : <section className="symbols-empty"><h2>Совпадений нет</h2><p>Измените запрос или сбросьте фильтры.</p></section>}
+      </div>
+    </> : <SourceDocuments query={query} onSelectSymbol={id => { setSelectedId(id); setMode('SYMBOLS'); }} />}
+
+    <details className="symbols-limitations"><summary>Ограничения справочника и сверки</summary>
       <p>Методическое утверждение ещё не выполнено</p>
       {coverage.missingDocuments.length > 0 && <p role="alert">Отсутствуют документы: {coverage.missingDocuments.join(', ')}</p>}
-      {coverage.gaps.map(gap => <p key={gap}>{gap}</p>)}
-      {set.gaps.map(gap => <p key={gap}>{gap}</p>)}
-    </header>
-    <div className="symbols-toolbar">
-      <label>Поиск знака<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Название, код или назначение" /></label>
-      <label>Категория<select value={forceType} onChange={event => setForceType(event.target.value)}><option value="ALL">Все категории</option>{forceTypes.map(type => <option key={type} value={type}>{type}</option>)}</select></label>
-      <label>Принадлежность<select value={affiliation} onChange={event => setAffiliation(event.target.value as SymbolAffiliation | 'ALL')}><option value="ALL">Все</option>{['FRIENDLY', 'HOSTILE', 'NEUTRAL', 'UNKNOWN'].map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Геометрия<select value={kind} onChange={event => setKind(event.target.value as SymbolKind | 'ALL')}><option value="ALL">Все</option>{['POINT', 'LINE', 'AREA'].map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Статус<select value={status} onChange={event => setStatus(event.target.value as SymbolStatus | 'ALL')}><option value="ALL">Все</option>{['IMPORTED', 'MAPPED', 'VERIFIED', 'APPROVED', 'DEPRECATED'].map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Уровень<select value={organizationalLevel} onChange={event => setOrganizationalLevel(event.target.value)}><option value="ALL">Все</option>{levels.map(value => <option key={value}>{value}</option>)}</select></label>
-      <label>Глава документа<select value={documentId} onChange={event => setDocumentId(event.target.value)}><option value="ALL">Все главы</option>{sourceRegistry.documents.map(document => <option key={document.id} value={document.id}>{document.originalName}</option>)}</select></label>
-    </div>
-    <nav aria-label="Главы исходных документов">{sourceRegistry.documents.map(document => <button key={document.id} aria-pressed={documentId === document.id} onClick={() => setDocumentId(document.id)}>
-      {document.originalName}<small>{document.topics.join(', ')}</small>
-    </button>)}</nav>
-    <div className="symbols-layout">
-      <nav aria-label="Каталог знаков">{symbols.map(symbol => <button key={symbol.id} aria-pressed={selected?.id === symbol.id} onClick={() => setSelectedId(symbol.id)}>{symbol.name}<small>{symbol.forceType} · {symbol.status}</small></button>)}</nav>
-      {selected ? <SymbolCard key={selected.id} symbol={selected} setVersion={set.version} history={history} canInsert={canInsert} onInsert={onInsert} /> : <p>Совпадений нет</p>}
-    </div>
+      {[...new Set([...coverage.gaps, ...set.gaps])].map(gap => <p key={gap}>{gap}</p>)}
+    </details>
   </section>;
 }

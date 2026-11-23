@@ -6,4 +6,7 @@ it('нативный клиент запускает КШВИ и передаё�
   expect(launch).toContain("{ name: 'kshvi'");
   expect(launch).toContain('kshvi: await freePort()');
   expect(launch).toContain('KSHVI_URL: url(\'kshvi\')');
+  expect(launch).toContain('CARTOGRAPHY_URL: `${url(\'cartography\')}/cartography`');
+  expect(launch).toContain('KSHVI_INTERNAL_URL: url(\'kshvi\')');
+  expect(launch).toContain("KSHVI_DEVELOPMENT_AUTH: '1'");
 });

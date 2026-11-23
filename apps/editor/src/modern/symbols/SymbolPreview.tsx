@@ -8,7 +8,7 @@ export function SymbolPreview({ symbol }: { symbol: SymbolDefinition }) {
   const labels = { ...symbol.labels };
   if (label) labels.top = label;
   const modifiers = activeModifierIds.map(id => symbol.modifiers.find(modifier => modifier.id === id) ?? { id, kind: 'GRAPHIC_INDEX' as const, value: id });
-  const svg = renderSymbol({ ...symbol, labels, modifiers }, { width: 180, height: 180, detail: semantic ? 'SEMANTIC' : 'FULL' });
+  const svg = renderSymbol({ ...symbol, labels, modifiers }, { width: 320, height: 320, detail: semantic ? 'SEMANTIC' : 'FULL' });
   return <div className="symbol-preview">
     <div role="img" aria-label="Векторный образец знака" dangerouslySetInnerHTML={{ __html: svg }} />
     <label>Подпись сверху<input value={label} onChange={event => setLabel(event.target.value)} placeholder="Без подписи" /></label>

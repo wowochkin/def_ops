@@ -1,6 +1,7 @@
 import { renderSymbol, type SymbolDefinition, type SymbolUsage } from '@def-ops/tactical-symbols';
 import { fragmentUrl, sourceDocumentTitle } from './symbols-api';
 import { SymbolPreview } from './SymbolPreview';
+import { symbolStatusLabels } from './symbol-labels';
 
 export type SymbolVersionHistoryEntry = Readonly<{ symbol: SymbolDefinition; setVersion: string }>;
 export type SymbolCardProps = Readonly<{
@@ -32,28 +33,40 @@ export function SymbolCard({ symbol, setVersion, history = [], canInsert = false
     ? 'Сначала требуется методическое утверждение'
     : !canInsert ? 'Недостаточно права для вставки на карту' : !onInsert ? 'Команда вставки не подключена' : undefined;
   return <article className="symbol-card">
-    <h2>{symbol.name}</h2>
-    <p>{symbol.purpose}</p>
-    <p>Код: {symbol.code} · Версия: {symbol.version} · Геометрия: {symbol.geometry.version}</p>
-    <p>Статус: <strong>{symbol.status}</strong></p>
-    <SymbolPreview symbol={symbol} />
-    <section>
-      <h3>Пример на топооснове</h3>
-      <div role="img" aria-label="Пример на топооснове" dangerouslySetInnerHTML={{ __html: topography(symbol) }} />
-    </section>
-    <section>
+    <header className="symbol-card-heading">
+      <div><h2>{symbol.name}</h2><p>{symbol.purpose}</p></div>
+      <span className={`symbol-status symbol-status-${symbol.status.toLocaleLowerCase()}`}>{symbolStatusLabels[symbol.status]}</span>
+    </header>
+    <div className="symbol-card-meta">
+      <span>Код <strong>{symbol.code}</strong></span><span>Версия {symbol.version}</span><span>Геометрия {symbol.geometry.version}</span><code>{symbol.status}</code>
+    </div>
+    <div className="symbol-card-workspace">
+      <section className="symbol-vector-panel">
+        <h3>Векторный образец</h3>
+        <SymbolPreview symbol={symbol} />
+        <details className="symbol-topography">
+          <summary>Пример на топооснове</summary>
+          <div role="img" aria-label="Пример на топооснове" dangerouslySetInnerHTML={{ __html: topography(symbol) }} />
+        </details>
+      </section>
+      <section className="symbol-source-panel">
+        <h3>Источник и страница</h3>
+        <p className="symbol-source-title">{sourceDocumentTitle(symbol.source.fragmentId)}</p>
+        <p>Страница {symbol.source.page} · исходный фрагмент для визуальной сверки</p>
+        <div className="symbol-source-image"><img src={fragmentUrl(symbol.source.fragmentId)} alt="Исходный фрагмент страницы" /></div>
+        {symbol.source.ruleText && <blockquote>{symbol.source.ruleText}</blockquote>}
+        {symbol.source.gaps.length > 0 && <details><summary>Ограничения источника</summary>{symbol.source.gaps.map(gap => <p key={gap}>{gap}</p>)}</details>}
+      </section>
+    </div>
+    <section className="symbol-history-panel">
       <h3>История версий</h3>
       <ol>{versions.map(entry => <li key={`${entry.setVersion}-${entry.symbol.version}-${entry.symbol.geometry.version}`}>
         Набор {entry.setVersion} · знак {entry.symbol.version} · геометрия {entry.symbol.geometry.version} · {entry.symbol.status}
       </li>)}</ol>
     </section>
-    <section>
-      <h3>Источник и страница</h3>
-      <p>{sourceDocumentTitle(symbol.source.fragmentId)}, страница {symbol.source.page}</p>
-      {symbol.source.ruleText && <p>{symbol.source.ruleText}</p>}
-      <img src={fragmentUrl(symbol.source.fragmentId)} alt="Исходный фрагмент страницы" />
-      {symbol.source.gaps.map(gap => <p key={gap}>{gap}</p>)}
-    </section>
-    <button disabled={!allowed} title={title} onClick={() => onInsert?.(usage)}>Вставить на карту</button>
+    <footer className="symbol-card-actions">
+      <p>{title ?? 'На карту будет вставлена зафиксированная версия знака.'}</p>
+      <button disabled={!allowed} title={title} onClick={() => onInsert?.(usage)}>Вставить на карту</button>
+    </footer>
   </article>;
 }

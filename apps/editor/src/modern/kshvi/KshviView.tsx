@@ -15,6 +15,8 @@ import {
   type SessionCommand,
 } from './kshvi-api';
 import { LibraryView, type LibraryExercise } from './LibraryView';
+import { LoginPanel } from './LoginPanel';
+import { readWorkspaceReference, WORKSPACE_EXERCISE_KEY, WORKSPACE_SESSION_KEY, writeWorkspaceReference } from './workspace-session';
 import { PreparationWorkspace } from './preparation/PreparationWorkspace';
 import { ConductWorkspace } from './conduct/ConductWorkspace';
 import { ReplayWorkspace } from './replay/ReplayWorkspace';
@@ -117,6 +119,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const client = providedClient ?? fallbackClient;
   const [serverAuthorities, setServerAuthorities] = useState<readonly string[]>(readAuthorities);
   const [serverRole, setServerRole] = useState(providedRole ?? 'TRAINEE');
+  const [serverUserId, setServerUserId] = useState('UNKNOWN');
+  const [authenticated, setAuthenticated] = useState(Boolean(providedAuthorities));
   const authorities = providedAuthorities ?? serverAuthorities;
   const role = providedRole ?? serverRole;
   const can = useCallback((authority: string) => authorities.includes(authority), [authorities]);
@@ -131,13 +135,32 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [comparison, setComparison] = useState<ExerciseCard | null>(null);
-  const [selectedExercise, setSelectedExercise] = useState<LibraryExercise | null>(null);
-  const [session, setSession] = useState<ExerciseSession | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<LibraryExercise | null>(() => readWorkspaceReference(WORKSPACE_EXERCISE_KEY));
+  const [session, setSession] = useState<ExerciseSession | null>(() => readWorkspaceReference(WORKSPACE_SESSION_KEY));
   const [replayFrame, setReplayFrame] = useState<ReplayFrame | null>(null);
   const [debrief, setDebrief] = useState<DebriefRecord | null>(null);
   const [archiveRecord, setArchiveRecord] = useState<ArchiveRecord | null>(null);
   const [exposition, setExposition] = useState<ExpositionRecord | null>(null);
   const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
+
+  useEffect(() => { writeWorkspaceReference(WORKSPACE_EXERCISE_KEY, selectedExercise); }, [selectedExercise]);
+  useEffect(() => { writeWorkspaceReference(WORKSPACE_SESSION_KEY, session); }, [session]);
+  useEffect(() => {
+    let current = true;
+    const exercise = readWorkspaceReference<LibraryExercise>(WORKSPACE_EXERCISE_KEY);
+    const activeSession = readWorkspaceReference<ExerciseSession>(WORKSPACE_SESSION_KEY);
+    if (exercise) {
+      void client.getCard(exercise.id).then(card => {
+        if (current) setSelectedExercise(card);
+      }).catch(() => {
+        if (current) { setSelectedExercise(null); setSession(null); }
+      });
+      if (activeSession) void client.getSession(exercise.id, activeSession.id).then(confirmed => {
+        if (current) setSession(confirmed);
+      }).catch(() => { if (current) setSession(null); });
+    }
+    return () => { current = false; };
+  }, [client]);
 
   useEffect(() => {
     if (providedAuthorities) return;
@@ -145,8 +168,12 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     void client.me().then(participant => {
       if (!current) return;
       if (Array.isArray(participant.authorities)) setServerAuthorities(participant.authorities);
-      if (participant.activeRole) setServerRole(participant.activeRole);
-    }).catch(() => { /* библиотека остаётся доступна только для чтения */ });
+      setServerUserId(participant.userId);
+      if (participant.activeRole) {
+        setServerRole(participant.activeRole);
+        setAuthenticated(true);
+      }
+    }).catch(() => { if (current) setAuthenticated(false); });
     return () => { current = false; };
   }, [client, providedAuthorities]);
 
@@ -165,6 +192,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
 
   useEffect(() => {
     if (activeTab !== 'library' && activeTab !== 'archive') return;
+    if (!providedAuthorities && !authenticated) return;
     let current = true;
     setLoading(true);
     setError('');
@@ -177,7 +205,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       if (current) setLoading(false);
     });
     return () => { current = false; };
-  }, [activeTab, client, filters, reload]);
+  }, [activeTab, authenticated, client, filters, providedAuthorities, reload]);
 
   useEffect(() => {
     if (activeTab === 'replay' && session && selectedExercise) {
@@ -367,6 +395,18 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     onOpenWorkflow={!archiveMode && can('exercise:read') ? openWorkflow : undefined}
   />;
 
+  if (!providedAuthorities && !authenticated) return <section className="modern-kshvi" aria-label="Командно-штабные военные игры">
+    <h1>КШВИ</h1>
+    <LoginPanel client={client} onAuthenticated={participant => {
+      if (!participant.activeRole) { setAuthenticated(false); return; }
+      setServerAuthorities(participant.authorities);
+      setServerUserId(participant.userId);
+      setServerRole(participant.activeRole);
+      setAuthenticated(true);
+      setReload(value => value + 1);
+    }} />
+  </section>;
+
   return <section className="modern-kshvi" aria-label="Командно-штабные военные игры">
     <header className="kshvi-heading">
       <div><p className="kshvi-kicker">Современный режим · полный цикл</p><h1>КШВИ</h1>
@@ -388,15 +428,19 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     </>}
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
     {activeTab === 'preparation' && <>
-      <LocalEditor />
+      {!selectedExercise && <LocalEditor />}
       <section className="kshvi-official-preparation" aria-labelledby="kshvi-preparation-title">
         <h2 id="kshvi-preparation-title">Подготовка официального сеанса</h2>
-        {selectedExercise ? <>
-          <p>{selectedExercise.title} · редакция {selectedExercise.revision} · состояние {selectedExercise.state}</p>
-          <button type="button" className="kshvi-primary" disabled={busy || !can('exercise:conduct') || selectedExercise.state !== 'SEALED'} onClick={() => void startOfficialSession()}>Запустить официальный сеанс</button>
-          {selectedExercise.state !== 'SEALED' && <p>Сначала завершите подтверждения и зафиксируйте сценарий SEALED.</p>}
-        </> : <p>Выберите «Рабочий цикл» в карточке учения библиотеки.</p>}
-        <PreparationWorkspace />
+        {selectedExercise
+          ? <p>{selectedExercise.title} · редакция {selectedExercise.revision}</p>
+          : <p>Выберите «Рабочий цикл» в карточке учения библиотеки.</p>}
+        <PreparationWorkspace
+          client={client} exerciseId={selectedExercise?.id} revision={selectedExercise?.revision}
+          authorId={serverUserId} truthRole={role} onRevision={updated => setSelectedExercise(updated)}
+          exerciseState={selectedExercise?.state}
+          canStartOfficial={!busy && can('exercise:conduct') && selectedExercise?.state === 'SEALED'}
+          onStartOfficial={() => void startOfficialSession()}
+        />
       </section>
     </>}
     {activeTab === 'conduct' && <section className="kshvi-conduct-container">

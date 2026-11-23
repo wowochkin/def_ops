@@ -93,7 +93,11 @@ const services = [
     GIS_PYTHON: process.env.GIS_PYTHON || (process.env.DEFOPS_VOICE_RUNTIME ? voicePython('', process.platform, process.env.DEFOPS_VOICE_RUNTIME) : ''),
     GIS_ADDONS: process.env.GIS_ADDONS || (existsSync(join(here, 'gis/addons/defops-gis-runtime.json')) ? join(here, 'gis/addons') : ''),
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
-  { name: 'kshvi', env: { KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default' } },
+  { name: 'kshvi', env: {
+    KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default',
+    CARTOGRAPHY_URL: `${url('cartography')}/cartography`, KSHVI_INTERNAL_URL: url('kshvi'),
+    ...(dev ? { KSHVI_DEVELOPMENT_AUTH: '1' } : {}),
+  } },
   { name: 'gateway', env: {
     DOCUMENTS_URL: url('documents'), RENDER_URL: url('render'), REGISTRY_URL: url('registry'), CARTOGRAPHY_URL: url('cartography'), KSHVI_URL: url('kshvi'),
     VOICE_STATE: join(data, 'voice', 'state.json'),

@@ -1,4 +1,7 @@
 import type { ExpositionSession } from '../../../../../packages/kshvi/src/exposition/exposition-session';
+import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot } from '../../../../../packages/kshvi/src/environment/provider';
+import type { InitialSituationMap } from '../../../../../packages/kshvi/src/scenario/initial-map';
+import type { SymbolSet } from '../../../../../packages/tactical-symbols/src/model';
 import type { AudienceProjectionView } from './exposition/AudienceProjector';
 import type { AdminOverviewService } from '../../../../../services/kshvi/src/admin/admin-overview-service';
 
@@ -89,6 +92,8 @@ export type Participant = Readonly<{
   organizationId: string;
   authorities: readonly string[];
 }>;
+export type RoleOption = Readonly<{ id: string; role: string; sideId: string | null }>;
+export type LoginResult = Readonly<{ csrfToken: string; participant: Participant; roles: readonly RoleOption[] }>;
 
 export type SessionCommand = 'PAUSE' | 'RESUME' | 'PRIVATE_STOP' | 'GENERAL_STOP' | 'JUMP' | 'COMPLETE' | 'ABORT';
 export type ReplayFrame = Readonly<{
@@ -109,6 +114,8 @@ export type ExpositionRecord = Readonly<{ purpose: 'EXPOSITION'; session: Exposi
 export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>>;
 
 export interface KshviClient {
+  login(username: string, password: string): Promise<LoginResult>;
+  selectRole(roleId: string): Promise<Participant>;
   me(): Promise<Participant>;
   list(filters?: ExerciseFilters): Promise<readonly ExerciseSummary[]>;
   getCard(exerciseId: string): Promise<ExerciseCard>;
@@ -116,6 +123,10 @@ export interface KshviClient {
   copy(exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
+  listEnvironmentAtlases(): Promise<readonly AtlasMeta[]>;
+  createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot>;
+  symbolCatalog(): Promise<{ set: SymbolSet }>;
+  approveInitialMap(exerciseId: string, input: { expectedRevision: number; map: InitialSituationMap }): Promise<{ sha256: string }>;
   listSessions(exerciseId: string): Promise<readonly ExerciseSession[]>;
   getSession(exerciseId: string, sessionId: string): Promise<ExerciseSession>;
   createSession(exerciseId: string, input: { revision: number }): Promise<ExerciseSession>;
@@ -147,9 +158,11 @@ export class ExerciseClient implements KshviClient {
   private readonly fetcher: Fetcher;
   private readonly csrfToken: () => string;
   private readonly extraHeaders: () => Readonly<Record<string, string>>;
+  private sessionCsrfToken = '';
 
   constructor(options: ExerciseClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? '/api/kshvi').replace(/\/$/, '');
+    try { this.sessionCsrfToken = globalThis.sessionStorage?.getItem(`def_ops.kshvi.csrf:${this.baseUrl}`) ?? ''; } catch { this.sessionCsrfToken = ''; }
     this.fetcher = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
     this.csrfToken = options.csrfToken ?? (() => '');
     this.extraHeaders = options.headers ?? (() => ({}));
@@ -159,7 +172,7 @@ export class ExerciseClient implements KshviClient {
     const headers: Record<string, string> = {
       ...this.extraHeaders(),
       'X-Source-System': 'kshvi-editor',
-      'X-CSRF-Token': this.csrfToken(),
+      'X-CSRF-Token': this.sessionCsrfToken || this.csrfToken(),
     };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     const response = await this.fetcher(`${this.baseUrl}${path}`, {
@@ -175,6 +188,13 @@ export class ExerciseClient implements KshviClient {
     return data as T;
   }
 
+  async login(username: string, password: string): Promise<LoginResult> {
+    const result = await this.request<LoginResult>('POST', '/auth/login', { username, password });
+    this.sessionCsrfToken = result.csrfToken;
+    try { globalThis.sessionStorage?.setItem(`def_ops.kshvi.csrf:${this.baseUrl}`, result.csrfToken); } catch { /* память текущей вкладки недоступна */ }
+    return result;
+  }
+  selectRole(roleId: string): Promise<Participant> { return this.request('POST', '/auth/role', { roleId }); }
   me(): Promise<Participant> { return this.request('GET', '/auth/me'); }
   async list(filters: ExerciseFilters = {}): Promise<readonly ExerciseSummary[]> {
     const query = new URLSearchParams();
@@ -197,6 +217,14 @@ export class ExerciseClient implements KshviClient {
   }
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/revisions`, input);
+  }
+  listEnvironmentAtlases(): Promise<readonly AtlasMeta[]> { return this.request('GET', '/environment/atlases'); }
+  createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot> {
+    return this.request('POST', '/environment/snapshots', input);
+  }
+  symbolCatalog(): Promise<{ set: SymbolSet }> { return this.request('GET', '/symbols/catalog'); }
+  approveInitialMap(exerciseId: string, input: { expectedRevision: number; map: InitialSituationMap }): Promise<{ sha256: string }> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/map-approval`, input);
   }
   async listSessions(exerciseId: string): Promise<readonly ExerciseSession[]> {
     const result = await this.request<{ items: ExerciseSession[] }>('GET', `/exercises/${encodeURIComponent(exerciseId)}/sessions`);

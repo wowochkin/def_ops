@@ -107,7 +107,7 @@ export class SessionManager {
     return updated;
   }
 
-  async login(username: string, password: string): Promise<{ token: string; csrfToken: string; cookie: string; participant: ParticipantContext }> {
+  async login(username: string, password: string): Promise<{ token: string; csrfToken: string; cookie: string; participant: ParticipantContext; roles: readonly Pick<RoleAssignment, 'id' | 'role' | 'sideId'>[] }> {
     const account = await this.store.findAccount(username);
     if (!account || account.state !== 'ACTIVE' || !(await verifyPassword(password, account.passwordHash))) unauthorized();
     const token = randomBytes(32).toString('base64url');
@@ -118,7 +118,10 @@ export class SessionManager {
     };
     await this.store.saveSession(session);
     const participant = await this.authenticate(token);
-    return { token, csrfToken, cookie: sessionCookie(token, Math.floor(this.ttlMs / 1000)), participant };
+    return {
+      token, csrfToken, cookie: sessionCookie(token, Math.floor(this.ttlMs / 1000)), participant,
+      roles: account.roles.map(({ id, role, sideId }) => ({ id, role, sideId })),
+    };
   }
 
   async authenticate(token: string, organizationHint?: string): Promise<ParticipantContext> {
