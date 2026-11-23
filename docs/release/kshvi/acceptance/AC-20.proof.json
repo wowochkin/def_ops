@@ -1,0 +1,41 @@
+{
+  "runId": "bdf2bed9-6f1a-4661-bdf6-8e14084cdf2c",
+  "commit": "ab0b27fe179fad14f87f3372f0f692c23b5f836a",
+  "initialRevision": {
+    "id": "kshvi-autonomous-events",
+    "revision": 1,
+    "sha256": "14444c97839cd1cbcd3fe9d54ed2faec77dfdaba064737d508c8911a20ff6977"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac20/catalog-quality.json",
+    "sha256": "9e0c75ad25b0fb64f092c788588adf0ce4f76bb18be366e4391590bd7a34ec36",
+    "eventCount": 240
+  },
+  "hashes": {
+    "scenario": "14444c97839cd1cbcd3fe9d54ed2faec77dfdaba064737d508c8911a20ff6977",
+    "environment": "bbfc97d6e9773705eae66d996ddc245e2961b39536254ff874b7e59c4b3a583d",
+    "journal": "9e0c75ad25b0fb64f092c788588adf0ce4f76bb18be366e4391590bd7a34ec36"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac20/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "templates": 240,
+    "distinctMechanisms": 240,
+    "categories": 12,
+    "successfulSuitableRehearsals": 240,
+    "rejectedUnsuitableRehearsals": 240,
+    "defectChecksRejected": 7,
+    "openCatalogIssues": 0
+  },
+  "limitations": [
+    "Автоматическая проверка доказывает схему, уникальность механизма и репетиции, но не заменяет независимую методическую оценку содержания по AC-30."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac20/catalog-quality.json",
+    "docs/release/kshvi/evidence/ac20/defects.json",
+    "docs/release/kshvi/evidence/ac20/protocol.txt",
+    "docs/release/kshvi/evidence/ac20/metrics.json"
+  ]
+}
