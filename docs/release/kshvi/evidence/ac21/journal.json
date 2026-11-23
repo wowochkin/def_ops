@@ -1,0 +1,1048 @@
+{
+  "runId": "6f6f0fa4-f3e6-4f40-9255-b37edc5f1870",
+  "commit": "65517925a0527e153f80dde43f53b8721c9f05c5",
+  "initialRevision": {
+    "id": "ac21-morale-threshold",
+    "revision": 1,
+    "sha256": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68"
+  },
+  "high": {
+    "transition": {
+      "status": "CALCULATED",
+      "state": {
+        "schemaVersion": 1,
+        "profileVersion": 1,
+        "subject": {
+          "kind": "SIMULATED_FORCE",
+          "forceId": "force-1"
+        },
+        "scale": {
+          "id": "morale-unit-interval",
+          "version": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "ranges": [
+            {
+              "id": "CRITICAL",
+              "minimum": 0,
+              "maximum": 0.2,
+              "semantic": "Критический диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "LOW",
+              "minimum": 0.2,
+              "maximum": 0.45,
+              "semantic": "Сниженный диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "STABLE",
+              "minimum": 0.45,
+              "maximum": 0.75,
+              "semantic": "Устойчивый диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "HIGH",
+              "minimum": 0.75,
+              "maximum": 1,
+              "semantic": "Высокий диапазон сценарной способности к управлению и исполнению"
+            }
+          ],
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "MPS-01/SIM-18: нормированная шкала переходов",
+            "assumptionId": "MPS-SCALE-V1",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы КШВИ; не психологическая диагностика людей"
+          }
+        },
+        "components": {
+          "morale": {
+            "status": "KNOWN",
+            "value": 0.9,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "cohesion": {
+            "status": "KNOWN",
+            "value": 0.9,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "stress": {
+            "status": "KNOWN",
+            "value": 0.1,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "fatigue": {
+            "status": "KNOWN",
+            "value": 0.2,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "commandTrust": {
+            "status": "KNOWN",
+            "value": 0.92,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "recoveryCapacity": {
+            "status": "KNOWN",
+            "value": 0.9,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          }
+        },
+        "at": "2030-01-01T09:30:00.000Z",
+        "stateEnteredAt": "2030-01-01T09:00:00.000Z",
+        "appliedEventIds": [
+          "command-continuity-1"
+        ],
+        "history": [
+          {
+            "at": "2030-01-01T09:30:00.000Z",
+            "intervalMinutes": 30,
+            "contributions": [
+              {
+                "eventId": "command-continuity-1",
+                "factor": "MORALE_IMPACT",
+                "kind": "COMMAND_CONTINUITY",
+                "changes": {
+                  "commandTrust": 0.02
+                },
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "AC-21: синтетический пороговый прогон",
+                  "assumptionId": "AC21-MPS-01",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы; не оценка реальных участников"
+                }
+              }
+            ],
+            "intervalChanges": {
+              "commandTrust": 0.02
+            },
+            "duplicateEventIds": [],
+            "recoveryStatus": "NONE"
+          }
+        ]
+      },
+      "appliedEventIds": [
+        "command-continuity-1"
+      ],
+      "duplicateEventIds": [],
+      "contributions": [
+        {
+          "eventId": "command-continuity-1",
+          "factor": "MORALE_IMPACT",
+          "kind": "COMMAND_CONTINUITY",
+          "changes": {
+            "commandTrust": 0.02
+          },
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "AC-21: синтетический пороговый прогон",
+            "assumptionId": "AC21-MPS-01",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы; не оценка реальных участников"
+          }
+        }
+      ],
+      "unknown": [],
+      "recovery": null,
+      "resourceConsumptions": []
+    },
+    "effect": {
+      "status": "CALCULATED",
+      "unknown": [],
+      "orderProcessingMinutes": 16.5,
+      "orderDelayMinutes": 4.5,
+      "readyToStart": true,
+      "executionScore": 1,
+      "movementRateFactor": 0.96,
+      "reportDelayMinutes": 7.999999999999999,
+      "taskStatus": "EXECUTED",
+      "interruption": {
+        "threshold": 0.65,
+        "eligible": true,
+        "reason": "THRESHOLD_NOT_CROSSED"
+      },
+      "contributions": {
+        "readiness": 1,
+        "equipment": 1,
+        "resources": 1,
+        "fatigue": -0.06,
+        "morale": 0.08460000000000006
+      },
+      "causalChain": [
+        "MORALE_COMPONENTS",
+        "ORDER_PROCESSING",
+        "TASK_EXECUTION",
+        "COMMANDER_CHOICE",
+        "FINAL_SITUATION"
+      ],
+      "finalSituation": {
+        "status": "CALCULATED",
+        "progress": 1,
+        "objectiveHeld": true,
+        "unrelatedResource": {
+          "resourceId": "fuel",
+          "amount": 37,
+          "unit": "tonne"
+        }
+      }
+    },
+    "decision": {
+      "status": "DECIDED",
+      "selectedOptionId": "continue",
+      "evaluatedOptions": [
+        {
+          "option": {
+            "optionId": "continue",
+            "action": "CONTINUE_TASK",
+            "baseUtility": 0.55,
+            "demand": "HIGH",
+            "risk": 0.8,
+            "ordered": true
+          },
+          "moraleContribution": 0.31279999999999997,
+          "lossToleranceContribution": -0.0031999999999999997,
+          "adjustedUtility": 0.8596
+        },
+        {
+          "option": {
+            "optionId": "consolidate",
+            "action": "CONSOLIDATE",
+            "baseUtility": 0.5,
+            "demand": "LOW",
+            "risk": 0.1,
+            "ordered": true
+          },
+          "moraleContribution": -0.18694,
+          "lossToleranceContribution": 0,
+          "adjustedUtility": 0.31306
+        }
+      ],
+      "unknown": [],
+      "explanation": "Вариант выбран портом по полезности с раздельными вкладами оценки МПС и характера командира"
+    }
+  },
+  "low": {
+    "transition": {
+      "status": "CALCULATED",
+      "state": {
+        "schemaVersion": 1,
+        "profileVersion": 1,
+        "subject": {
+          "kind": "SIMULATED_FORCE",
+          "forceId": "force-1"
+        },
+        "scale": {
+          "id": "morale-unit-interval",
+          "version": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "ranges": [
+            {
+              "id": "CRITICAL",
+              "minimum": 0,
+              "maximum": 0.2,
+              "semantic": "Критический диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "LOW",
+              "minimum": 0.2,
+              "maximum": 0.45,
+              "semantic": "Сниженный диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "STABLE",
+              "minimum": 0.45,
+              "maximum": 0.75,
+              "semantic": "Устойчивый диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "HIGH",
+              "minimum": 0.75,
+              "maximum": 1,
+              "semantic": "Высокий диапазон сценарной способности к управлению и исполнению"
+            }
+          ],
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "MPS-01/SIM-18: нормированная шкала переходов",
+            "assumptionId": "MPS-SCALE-V1",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы КШВИ; не психологическая диагностика людей"
+          }
+        },
+        "components": {
+          "morale": {
+            "status": "KNOWN",
+            "value": 0.1,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "cohesion": {
+            "status": "KNOWN",
+            "value": 0.2,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "stress": {
+            "status": "KNOWN",
+            "value": 0.9,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "fatigue": {
+            "status": "KNOWN",
+            "value": 0.2,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "commandTrust": {
+            "status": "KNOWN",
+            "value": 0.12000000000000001,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "recoveryCapacity": {
+            "status": "KNOWN",
+            "value": 0.1,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          }
+        },
+        "at": "2030-01-01T09:30:00.000Z",
+        "stateEnteredAt": "2030-01-01T09:00:00.000Z",
+        "appliedEventIds": [
+          "command-continuity-1"
+        ],
+        "history": [
+          {
+            "at": "2030-01-01T09:30:00.000Z",
+            "intervalMinutes": 30,
+            "contributions": [
+              {
+                "eventId": "command-continuity-1",
+                "factor": "MORALE_IMPACT",
+                "kind": "COMMAND_CONTINUITY",
+                "changes": {
+                  "commandTrust": 0.02
+                },
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "AC-21: синтетический пороговый прогон",
+                  "assumptionId": "AC21-MPS-01",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы; не оценка реальных участников"
+                }
+              }
+            ],
+            "intervalChanges": {
+              "commandTrust": 0.02
+            },
+            "duplicateEventIds": [],
+            "recoveryStatus": "NONE"
+          }
+        ]
+      },
+      "appliedEventIds": [
+        "command-continuity-1"
+      ],
+      "duplicateEventIds": [],
+      "contributions": [
+        {
+          "eventId": "command-continuity-1",
+          "factor": "MORALE_IMPACT",
+          "kind": "COMMAND_CONTINUITY",
+          "changes": {
+            "commandTrust": 0.02
+          },
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "AC-21: синтетический пороговый прогон",
+            "assumptionId": "AC21-MPS-01",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы; не оценка реальных участников"
+          }
+        }
+      ],
+      "unknown": [],
+      "recovery": null,
+      "resourceConsumptions": []
+    },
+    "effect": {
+      "status": "CALCULATED",
+      "unknown": [],
+      "orderProcessingMinutes": 50.925,
+      "orderDelayMinutes": 38.925,
+      "readyToStart": true,
+      "executionScore": 0.59314,
+      "movementRateFactor": 0.6539999999999999,
+      "reportDelayMinutes": 30.95,
+      "taskStatus": "INTERRUPTED",
+      "interruption": {
+        "threshold": 0.65,
+        "eligible": true,
+        "reason": "MORALE_THRESHOLD_AND_MINIMUM_STATE_DURATION"
+      },
+      "contributions": {
+        "readiness": 1,
+        "equipment": 1,
+        "resources": 1,
+        "fatigue": -0.06,
+        "morale": -0.34686
+      },
+      "causalChain": [
+        "MORALE_COMPONENTS",
+        "ORDER_PROCESSING",
+        "TASK_EXECUTION",
+        "COMMANDER_CHOICE",
+        "FINAL_SITUATION"
+      ],
+      "finalSituation": {
+        "status": "CALCULATED",
+        "progress": 0.21530982000000007,
+        "objectiveHeld": false,
+        "unrelatedResource": {
+          "resourceId": "fuel",
+          "amount": 37,
+          "unit": "tonne"
+        }
+      }
+    },
+    "decision": {
+      "status": "DECIDED",
+      "selectedOptionId": "consolidate",
+      "evaluatedOptions": [
+        {
+          "option": {
+            "optionId": "continue",
+            "action": "CONTINUE_TASK",
+            "baseUtility": 0.55,
+            "demand": "HIGH",
+            "risk": 0.8,
+            "ordered": true
+          },
+          "moraleContribution": -0.28542999999999996,
+          "lossToleranceContribution": -0.027680000000000003,
+          "adjustedUtility": 0.23689000000000007
+        },
+        {
+          "option": {
+            "optionId": "consolidate",
+            "action": "CONSOLIDATE",
+            "baseUtility": 0.5,
+            "demand": "LOW",
+            "risk": 0.1,
+            "ordered": true
+          },
+          "moraleContribution": 0.17058274999999998,
+          "lossToleranceContribution": 0,
+          "adjustedUtility": 0.67058275
+        }
+      ],
+      "unknown": [],
+      "explanation": "Вариант выбран портом по полезности с раздельными вкладами оценки МПС и характера командира"
+    }
+  },
+  "control": {
+    "status": "CALCULATED",
+    "unknown": [],
+    "orderProcessingMinutes": 16.5,
+    "orderDelayMinutes": 4.5,
+    "readyToStart": true,
+    "executionScore": 1,
+    "movementRateFactor": 0.96,
+    "reportDelayMinutes": 7.999999999999999,
+    "taskStatus": "EXECUTED",
+    "interruption": {
+      "threshold": 0.65,
+      "eligible": true,
+      "reason": "THRESHOLD_NOT_CROSSED"
+    },
+    "contributions": {
+      "readiness": 1,
+      "equipment": 1,
+      "resources": 1,
+      "fatigue": -0.06,
+      "morale": 0.08460000000000006
+    },
+    "causalChain": [
+      "MORALE_COMPONENTS",
+      "ORDER_PROCESSING",
+      "TASK_EXECUTION",
+      "COMMANDER_CHOICE",
+      "FINAL_SITUATION"
+    ],
+    "finalSituation": {
+      "status": "CALCULATED",
+      "progress": 1,
+      "objectiveHeld": true,
+      "unrelatedResource": {
+        "resourceId": "fuel",
+        "amount": 38,
+        "unit": "tonne"
+      }
+    }
+  },
+  "recovery": {
+    "recovered": {
+      "status": "CALCULATED",
+      "state": {
+        "schemaVersion": 1,
+        "profileVersion": 1,
+        "subject": {
+          "kind": "SIMULATED_FORCE",
+          "forceId": "force-1"
+        },
+        "scale": {
+          "id": "morale-unit-interval",
+          "version": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "ranges": [
+            {
+              "id": "CRITICAL",
+              "minimum": 0,
+              "maximum": 0.2,
+              "semantic": "Критический диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "LOW",
+              "minimum": 0.2,
+              "maximum": 0.45,
+              "semantic": "Сниженный диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "STABLE",
+              "minimum": 0.45,
+              "maximum": 0.75,
+              "semantic": "Устойчивый диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "HIGH",
+              "minimum": 0.75,
+              "maximum": 1,
+              "semantic": "Высокий диапазон сценарной способности к управлению и исполнению"
+            }
+          ],
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "MPS-01/SIM-18: нормированная шкала переходов",
+            "assumptionId": "MPS-SCALE-V1",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы КШВИ; не психологическая диагностика людей"
+          }
+        },
+        "components": {
+          "morale": {
+            "status": "KNOWN",
+            "value": 0.22,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "cohesion": {
+            "status": "KNOWN",
+            "value": 0.23,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "stress": {
+            "status": "KNOWN",
+            "value": 0.75,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "fatigue": {
+            "status": "KNOWN",
+            "value": 0,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "commandTrust": {
+            "status": "KNOWN",
+            "value": 0.1,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "recoveryCapacity": {
+            "status": "KNOWN",
+            "value": 0.18,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          }
+        },
+        "at": "2030-01-01T10:00:00.000Z",
+        "stateEnteredAt": "2030-01-01T10:00:00.000Z",
+        "appliedEventIds": [
+          "rest-ac21"
+        ],
+        "history": [
+          {
+            "at": "2030-01-01T10:00:00.000Z",
+            "intervalMinutes": 60,
+            "contributions": [
+              {
+                "eventId": "rest-ac21",
+                "factor": "RECOVERY",
+                "kind": "REST_AND_SLEEP",
+                "changes": {
+                  "morale": 0.12,
+                  "cohesion": 0.03,
+                  "stress": -0.15,
+                  "fatigue": -0.2,
+                  "recoveryCapacity": 0.08
+                },
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "AC-21: синтетический пороговый прогон",
+                  "assumptionId": "AC21-MPS-01",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы; не оценка реальных участников"
+                }
+              }
+            ],
+            "intervalChanges": {
+              "morale": 0.12,
+              "cohesion": 0.03,
+              "stress": -0.15,
+              "fatigue": -0.2,
+              "recoveryCapacity": 0.08
+            },
+            "duplicateEventIds": [],
+            "recoveryStatus": "APPLIED"
+          }
+        ]
+      },
+      "appliedEventIds": [
+        "rest-ac21"
+      ],
+      "duplicateEventIds": [],
+      "contributions": [
+        {
+          "eventId": "rest-ac21",
+          "factor": "RECOVERY",
+          "kind": "REST_AND_SLEEP",
+          "changes": {
+            "morale": 0.12,
+            "cohesion": 0.03,
+            "stress": -0.15,
+            "fatigue": -0.2,
+            "recoveryCapacity": 0.08
+          },
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "AC-21: синтетический пороговый прогон",
+            "assumptionId": "AC21-MPS-01",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы; не оценка реальных участников"
+          }
+        }
+      ],
+      "unknown": [],
+      "recovery": {
+        "eventId": "rest-ac21",
+        "status": "APPLIED",
+        "reasons": []
+      },
+      "resourceConsumptions": [
+        {
+          "eventId": "rest-ac21",
+          "resourceId": "recovery-support",
+          "amount": 1,
+          "unit": "support-unit"
+        }
+      ]
+    },
+    "repeated": {
+      "status": "CALCULATED",
+      "state": {
+        "schemaVersion": 1,
+        "profileVersion": 1,
+        "subject": {
+          "kind": "SIMULATED_FORCE",
+          "forceId": "force-1"
+        },
+        "scale": {
+          "id": "morale-unit-interval",
+          "version": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "ranges": [
+            {
+              "id": "CRITICAL",
+              "minimum": 0,
+              "maximum": 0.2,
+              "semantic": "Критический диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "LOW",
+              "minimum": 0.2,
+              "maximum": 0.45,
+              "semantic": "Сниженный диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "STABLE",
+              "minimum": 0.45,
+              "maximum": 0.75,
+              "semantic": "Устойчивый диапазон сценарной способности к управлению и исполнению"
+            },
+            {
+              "id": "HIGH",
+              "minimum": 0.75,
+              "maximum": 1,
+              "semantic": "Высокий диапазон сценарной способности к управлению и исполнению"
+            }
+          ],
+          "source": {
+            "kind": "EDUCATIONAL_ASSUMPTION",
+            "reference": "MPS-01/SIM-18: нормированная шкала переходов",
+            "assumptionId": "MPS-SCALE-V1",
+            "approvedBy": "Методист КШВИ",
+            "applicability": "Только моделируемые силы КШВИ; не психологическая диагностика людей"
+          }
+        },
+        "components": {
+          "morale": {
+            "status": "KNOWN",
+            "value": 0.22,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "cohesion": {
+            "status": "KNOWN",
+            "value": 0.23,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "stress": {
+            "status": "KNOWN",
+            "value": 0.75,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "fatigue": {
+            "status": "KNOWN",
+            "value": 0,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "commandTrust": {
+            "status": "KNOWN",
+            "value": 0.1,
+            "uncertainty": "EXACT_SCENARIO_VALUE",
+            "observedAt": "2030-01-01T09:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          },
+          "recoveryCapacity": {
+            "status": "KNOWN",
+            "value": 0.18,
+            "uncertainty": "ESTIMATED",
+            "observedAt": "2030-01-01T10:00:00.000Z",
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "AC-21: синтетический пороговый прогон",
+              "assumptionId": "AC21-MPS-01",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы; не оценка реальных участников"
+            }
+          }
+        },
+        "at": "2030-01-01T11:00:00.000Z",
+        "stateEnteredAt": "2030-01-01T10:00:00.000Z",
+        "appliedEventIds": [
+          "rest-ac21"
+        ],
+        "history": [
+          {
+            "at": "2030-01-01T10:00:00.000Z",
+            "intervalMinutes": 60,
+            "contributions": [
+              {
+                "eventId": "rest-ac21",
+                "factor": "RECOVERY",
+                "kind": "REST_AND_SLEEP",
+                "changes": {
+                  "morale": 0.12,
+                  "cohesion": 0.03,
+                  "stress": -0.15,
+                  "fatigue": -0.2,
+                  "recoveryCapacity": 0.08
+                },
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "AC-21: синтетический пороговый прогон",
+                  "assumptionId": "AC21-MPS-01",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы; не оценка реальных участников"
+                }
+              }
+            ],
+            "intervalChanges": {
+              "morale": 0.12,
+              "cohesion": 0.03,
+              "stress": -0.15,
+              "fatigue": -0.2,
+              "recoveryCapacity": 0.08
+            },
+            "duplicateEventIds": [],
+            "recoveryStatus": "APPLIED"
+          },
+          {
+            "at": "2030-01-01T11:00:00.000Z",
+            "intervalMinutes": 60,
+            "contributions": [],
+            "intervalChanges": {},
+            "duplicateEventIds": [
+              "rest-ac21"
+            ],
+            "recoveryStatus": "DUPLICATE"
+          }
+        ]
+      },
+      "appliedEventIds": [],
+      "duplicateEventIds": [
+        "rest-ac21"
+      ],
+      "contributions": [],
+      "unknown": [],
+      "recovery": {
+        "eventId": "rest-ac21",
+        "status": "DUPLICATE",
+        "reasons": [
+          "Мероприятие уже учтено"
+        ]
+      },
+      "resourceConsumptions": []
+    },
+    "entries": [
+      {
+        "id": "opening-recovery",
+        "operation": "OPENING",
+        "resourceId": "recovery-support",
+        "unit": "support-unit",
+        "quantity": 2,
+        "nodeId": "force-1",
+        "at": "2030-01-01T09:00:00.000Z",
+        "causeId": "scenario-start",
+        "actorId": "director"
+      },
+      {
+        "id": "rest-ac21",
+        "operation": "CONSUME",
+        "resourceId": "recovery-support",
+        "unit": "support-unit",
+        "quantity": 1,
+        "nodeId": "force-1",
+        "at": "2030-01-01T10:00:00.000Z",
+        "causeId": "rest-ac21",
+        "actorId": "morale-model"
+      }
+    ]
+  },
+  "unknown": {
+    "status": "REQUIRES_REVIEW",
+    "unknown": [
+      "morale"
+    ],
+    "orderProcessingMinutes": null,
+    "orderDelayMinutes": null,
+    "readyToStart": false,
+    "executionScore": null,
+    "movementRateFactor": null,
+    "reportDelayMinutes": null,
+    "taskStatus": "REQUIRES_REVIEW",
+    "interruption": {
+      "threshold": 0.65,
+      "eligible": false,
+      "reason": "UNKNOWN_MORALE"
+    },
+    "contributions": {
+      "readiness": 1,
+      "equipment": 1,
+      "resources": 1,
+      "fatigue": -0.06,
+      "morale": null
+    },
+    "causalChain": [
+      "MORALE_COMPONENTS",
+      "ORDER_PROCESSING",
+      "TASK_EXECUTION",
+      "COMMANDER_CHOICE",
+      "FINAL_SITUATION"
+    ],
+    "finalSituation": {
+      "status": "REQUIRES_REVIEW",
+      "progress": null,
+      "objectiveHeld": null,
+      "unrelatedResource": {
+        "resourceId": "fuel",
+        "amount": 37,
+        "unit": "tonne"
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "runId": "6f6f0fa4-f3e6-4f40-9255-b37edc5f1870",
+  "commit": "65517925a0527e153f80dde43f53b8721c9f05c5",
+  "initialRevision": {
+    "id": "ac21-morale-threshold",
+    "revision": 1,
+    "sha256": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac21/journal.json",
+    "sha256": "1f15def47ca7d03269325f586200a7ab28ea3d331d36c47c502509fa75147845",
+    "eventCount": 4
+  },
+  "hashes": {
+    "scenario": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68",
+    "environment": "b4fb6dea4b8ffe3fe452dedf2d103caba535fa14deb5ad3028abded5ad7a41e7",
+    "journal": "1f15def47ca7d03269325f586200a7ab28ea3d331d36c47c502509fa75147845"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac21/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "executedWithHighMorale": 1,
+    "interruptedWithLowMorale": 1,
+    "commanderChoiceChanges": 1,
+    "orderProcessingDifferenceMinutes": 34.425,
+    "recoveryResourceEntries": 1,
+    "duplicateRecoveryConsumptions": 0,
+    "unknownReviews": 1
+  },
+  "limitations": [
+    "Пороговый эпизод синтетический и использует только учебные допущения профиля МПС; коэффициенты не являются психологической диагностикой людей и требуют методической оценки AC-30."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac21/journal.json",
+    "docs/release/kshvi/evidence/ac21/protocol.txt",
+    "docs/release/kshvi/evidence/ac21/metrics.json"
+  ]
+}
