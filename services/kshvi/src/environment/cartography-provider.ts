@@ -14,6 +14,7 @@ import {
 import { canonicalJson } from '../../../../packages/kshvi/src/events/canonical';
 import { EnvironmentSnapshotStore, emptyArtifact, prepareContent, type PreparedContent, type SnapshotDraft } from './snapshot-store';
 import { readSnapshotTile } from './snapshot-tiles';
+import { styleWithBounds } from './snapshot-style';
 
 export type CartographyEnvironmentOptions = Readonly<{
   baseUrl: string;
@@ -284,7 +285,10 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
     if (!atlas || !ref) throw new HttpError(404, 'snapshot_content_not_found', 'Содержимое снимка не найдено или запрещено лицензией');
     if (kind === 'export') return this.#store.read(ref, snapshot.id);
     const document = await this.#store.readJson<unknown>(ref, snapshot.id);
-    if (kind === 'style') return JSON.parse(JSON.stringify(document).split('{snapshotId}').join(snapshot.id)) as object;
+    if (kind === 'style') {
+      const resolved = JSON.parse(JSON.stringify(document).split('{snapshotId}').join(snapshot.id)) as unknown;
+      return styleWithBounds(resolved, atlas.meta.bounds);
+    }
     return document as object;
   }
 }
