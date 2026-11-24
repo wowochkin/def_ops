@@ -261,9 +261,10 @@ header .op-range { width: 70px; }
 .modern-welcome h1 { font-size: clamp(34px, 5vw, 64px); font-weight: 500; line-height: 1.1; margin: 20px 0 26px; color: #eff5f3; }
 .modern-welcome > p:not(.modern-kicker) { max-width: 600px; font-size: 18px; line-height: 1.6; }
 .modern-welcome .modern-status { margin-top: 52px; padding-top: 20px; border-top: 1px solid #34474f; color: #99afb8; }
-.modern-nav { display: flex; gap: 20px; padding: 0 28px; border-bottom: 1px solid #34474f; }
-.modern-nav button { padding: 15px 0 12px; background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-size: 14px; color: #99afb8; }
-.modern-nav button[aria-current="page"] { color: #c2e1d9; border-bottom-color: #a8cbc6; }
+.modern-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding: 0 28px; border-bottom: 1px solid #34474f; }
+.modern-nav button { width: 100%; min-width: 0; padding: 15px 12px 12px; background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-size: 14px; color: #99afb8; text-align: center; white-space: nowrap; }
+.modern-nav button:hover:not(:disabled) { background: #1c3339; color: #eff5f3; border-color: transparent; border-bottom-color: #718e88; }
+.modern-nav button[aria-current="page"], .modern-nav button[aria-current="page"]:hover:not(:disabled) { color: #e4eeeb; background: #24443d; border-bottom-color: #a8cbc6; }
 .modern-nav button:focus-visible, .modern-open-knowledge:focus-visible { outline: 2px solid #a8cbc6; outline-offset: 3px; }
 .modern-open-knowledge { margin-top: 16px; padding: 14px 20px; background: #c0dcd9; border: 1px solid #c0dcd9; border-radius: 5px; color: #10282b; font-size: 17px; }
 .modern-open-knowledge span { margin-left: 24px; }

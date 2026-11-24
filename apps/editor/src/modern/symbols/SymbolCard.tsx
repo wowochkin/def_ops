@@ -1,6 +1,7 @@
 import { renderSymbol, type SymbolDefinition, type SymbolUsage } from '@def-ops/tactical-symbols';
-import { fragmentUrl, sourceDocumentTitle } from './symbols-api';
+import { sourceDocumentTitle } from './symbols-api';
 import { SymbolPreview } from './SymbolPreview';
+import { SourceImage } from './SourceImage';
 import { symbolStatusLabels } from './symbol-labels';
 
 export type SymbolVersionHistoryEntry = Readonly<{ symbol: SymbolDefinition; setVersion: string }>;
@@ -38,7 +39,7 @@ export function SymbolCard({ symbol, setVersion, history = [], canInsert = false
       <span className={`symbol-status symbol-status-${symbol.status.toLocaleLowerCase()}`}>{symbolStatusLabels[symbol.status]}</span>
     </header>
     <div className="symbol-card-meta">
-      <span>Код <strong>{symbol.code}</strong></span><span>Версия {symbol.version}</span><span>Геометрия {symbol.geometry.version}</span><code>{symbol.status}</code>
+      <span>Код <strong>{symbol.code}</strong></span><span>Исходный номер {symbol.source.symbolNumber ?? 'не задан'}</span><span>Вариант {symbol.source.variant ?? 'общий образец'}</span><span>Версия {symbol.version}</span><span>Геометрия {symbol.geometry.version}</span><code>{symbol.status}</code>
     </div>
     <div className="symbol-card-workspace">
       <section className="symbol-vector-panel">
@@ -53,7 +54,7 @@ export function SymbolCard({ symbol, setVersion, history = [], canInsert = false
         <h3>Источник и страница</h3>
         <p className="symbol-source-title">{sourceDocumentTitle(symbol.source.fragmentId)}</p>
         <p>Страница {symbol.source.page} · исходный фрагмент для визуальной сверки</p>
-        <div className="symbol-source-image"><img src={fragmentUrl(symbol.source.fragmentId)} alt="Исходный фрагмент страницы" /></div>
+        <div className="symbol-source-image"><SourceImage fragmentId={symbol.source.fragmentId} alt="Исходный фрагмент страницы" /></div>
         {symbol.source.ruleText && <blockquote>{symbol.source.ruleText}</blockquote>}
         {symbol.source.gaps.length > 0 && <details><summary>Ограничения источника</summary>{symbol.source.gaps.map(gap => <p key={gap}>{gap}</p>)}</details>}
       </section>

@@ -14,6 +14,11 @@ data
 !packages/kshvi/assets/data/**
 !packages/kshvi/assets/vendor
 !packages/kshvi/assets/vendor/**
+# эталонные векторные страницы и каталоги знаков — воспроизводимые исходники справочника
+!packages/tactical-symbols/data
+!packages/tactical-symbols/data/**
+packages/tactical-symbols/.work/
+.kimi-tmp/
 
 # корпоративные сертификаты для сборки (не коммитятся)
 deploy/extra-ca/*.crt

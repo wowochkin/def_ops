@@ -84,14 +84,22 @@ export const sourceRegistry = registryData as SourceRegistry;
 export function coverageReport(registry: SourceRegistry = sourceRegistry) {
   const coveredTopics = new Set(registry.documents.flatMap(document => document.topics));
   const documentIdsWithFragments = new Set(registry.fragments.map(fragment => fragment.documentId));
+  const expectedNames = new Set([
+    ...registry.documents.map(document => document.originalName),
+    ...registry.fragments.map(fragment => fragment.sourceDocument),
+  ]);
+  const missingDocuments = [...expectedNames].filter(originalName => {
+    const document = registry.documents.find(candidate => candidate.originalName === originalName);
+    return !document || document.status !== 'IMPORTED' || document.coverage !== 'FRAGMENTS_EXTRACTED' || !documentIdsWithFragments.has(document.id);
+  });
+  const missingCount = Math.max(0, registry.archive.documentCount - registry.documents.length - missingDocuments.length);
+  missingDocuments.push(...Array.from({ length: missingCount }, (_, index) => `Незарегистрированный документ ${index + 1}`));
   return {
     documents: registry.documents.length,
     fonts: registry.fonts.length,
     fragments: registry.fragments.length,
     documentsWithFragments: documentIdsWithFragments.size,
-    missingDocuments: registry.documents
-      .filter(document => document.status !== 'IMPORTED')
-      .map(document => document.originalName),
+    missingDocuments,
     uncoveredTopics: REQUIRED_SOURCE_TOPICS.filter(topic => !coveredTopics.has(topic)),
     unmappedFragments: registry.fragments.filter(fragment => fragment.status === 'IMPORTED').length,
     status: registry.fragments.some(fragment => fragment.symbolNumber !== null) ? 'MAPPED_IN_PROGRESS' as const : 'PARTIAL' as const,

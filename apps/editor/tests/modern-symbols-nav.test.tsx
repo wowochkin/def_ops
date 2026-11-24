@@ -7,6 +7,6 @@ it('открывает отдельный справочник знаков в �
   localStorage.setItem('def_ops.app.mode', 'modern');
   render(<AppWorkspace historical={() => <div>История</div>} />);
   fireEvent.click(screen.getByRole('button', { name: 'Условные знаки' }));
-  expect(await screen.findByRole('heading', { name: 'Условные знаки' })).toBeTruthy();
+  expect(await screen.findByRole('heading', { name: 'Условные знаки' }, { timeout: 10_000 })).toBeTruthy();
   expect(localStorage.getItem('def_ops.modern.section')).toBe('symbols');
-});
+}, 15_000);

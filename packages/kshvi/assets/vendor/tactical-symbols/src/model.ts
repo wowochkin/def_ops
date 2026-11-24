@@ -10,7 +10,7 @@ export type GeometryTemplate =
   | 'UNIT' | 'COMMAND_POST' | 'MOVEMENT' | 'EVACUATION' | 'BOUNDARY' | 'DIRECTION'
   | 'AREA' | 'OBSTACLE' | 'DESTROYED_BRIDGE' | 'FLOODING' | 'FORD' | 'FERRY'
   | 'PONTOON' | 'BRIDGE' | 'ICE_CROSSING' | 'WAREHOUSE' | 'BASE' | 'REFUEL'
-  | 'SERVICE' | 'REPAIR';
+  | 'SERVICE' | 'REPAIR' | 'SOURCE_VECTOR';
 
 export type GeometryParameter = string | number | boolean;
 
@@ -47,6 +47,7 @@ export interface SymbolSourceBinding {
   readonly sourceDocument: string;
   readonly page: number | null;
   readonly symbolNumber: string | null;
+  readonly variant?: number | null;
   readonly fragmentId: string;
   readonly ruleText: string | null;
   readonly referenceFragment: Readonly<{
@@ -55,6 +56,21 @@ export interface SymbolSourceBinding {
     sha256: string;
   }>;
   readonly gaps: readonly string[];
+}
+
+export interface SourceInscription {
+  readonly id: string;
+  readonly text: string;
+  readonly elements: readonly number[];
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly fontSize: number;
+  readonly fill: string;
+  readonly fontFamily?: string;
+  readonly fontWeight?: string;
+  readonly fontStyle?: string;
 }
 
 export interface SymbolDefinition {
@@ -72,6 +88,7 @@ export interface SymbolDefinition {
   readonly modifiers: readonly SymbolModifier[];
   readonly allowedModifierIds: readonly string[];
   readonly labels: SymbolLabels;
+  readonly inscriptions?: readonly SourceInscription[];
   readonly labelLayout: Readonly<Record<string, SymbolLabelLayout>>;
   readonly color: string;
   readonly anchor: SymbolAnchor;
@@ -93,6 +110,7 @@ export interface RenderSymbolInput {
   readonly anchor: SymbolAnchor;
   readonly modifiers: readonly SymbolModifier[];
   readonly labels: SymbolLabels;
+  readonly inscriptions?: readonly SourceInscription[];
   readonly version?: string;
   readonly name?: string;
   readonly kind?: SymbolKind;

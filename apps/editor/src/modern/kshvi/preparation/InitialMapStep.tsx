@@ -4,6 +4,7 @@ import {
   approveInitialMap,
   importInitialMap,
   projectInitialMap,
+  updateInitialMapMarker,
   validateInitialMap,
   type ApprovedInitialMap,
   type InitialSituationMap,
@@ -12,6 +13,7 @@ import {
 } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import type { InitialMapIssue } from '../../../../../../packages/kshvi/src/scenario/initial-map-validation';
 import { InitialMapLayers } from './InitialMapLayers';
+import { geometryText, markerGeometryKind, parseGeometryText } from './geometry-text';
 
 export type InitialMapAudience = Readonly<{ sideId: string; instanceId: string; role: string; label: string }>;
 export type InitialMapSymbolOption = MapSymbolUse & Readonly<{
@@ -19,6 +21,7 @@ export type InitialMapSymbolOption = MapSymbolUse & Readonly<{
   purpose?: string;
   service?: string;
   objectType?: string;
+  kind?: 'POINT' | 'LINE' | 'AREA';
 }>;
 export type InitialMapStepProps = Readonly<{
   map: InitialSituationMap;
@@ -73,6 +76,8 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
   const [issues, setIssues] = useState<readonly InitialMapIssue[]>([]);
   const [notice, setNotice] = useState('');
   const [approved, setApproved] = useState<ApprovedInitialMap | null>(null);
+  const [geometryValue, setGeometryValue] = useState('');
+  const [editingId, setEditingId] = useState('');
   const audience = audiences.find(item => item.instanceId === projection);
   useEffect(() => {
     if (projection === 'TRUTH' && !canReadTruth) setProjection(audiences[0]?.instanceId ?? 'NONE');
@@ -87,18 +92,42 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
       ? projectInitialMap(current, { mode: 'INSTANCE', sideId: audience.sideId, instanceId: audience.instanceId, role: audience.role })
       : { ...current, markers: [], history: [] };
   const selectedSymbol = approvedSymbols.find(symbol => symbol.id === form.symbolId) ?? approvedSymbols[0];
+  const geometryKind = selectedSymbol?.kind ?? (form.kind === 'AREA' ? 'AREA' : ['ROUTE', 'COLUMN', 'BOUNDARY'].includes(form.kind) ? 'LINE' : 'POINT');
   const update = (field: keyof ManualForm, value: string) => setForm(previous => ({ ...previous, [field]: value }));
   const commit = (next: InitialSituationMap) => {
     setCurrent(next);
     setApproved(null);
     onChange(next);
   };
+  const editGeometry = (marker: MapMarker) => {
+    if (!marker.geometry) return;
+    setEditingId(marker.id);
+    setGeometryValue(geometryText(marker.geometry));
+    setNotice('');
+  };
+  const saveGeometry = () => {
+    const marker = current.markers.find(item => item.id === editingId);
+    if (!marker) return;
+    try {
+      commit(updateInitialMapMarker(current, marker.id, { geometry: parseGeometryText(geometryValue, markerGeometryKind(marker)) }));
+      setEditingId('');
+      setNotice('Геометрия обновлена');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Не удалось обновить геометрию');
+    }
+  };
 
   const addManual = () => {
     setNotice('');
-    const coordinates = form.lon.trim() && form.lat.trim()
-      ? { type: 'Point' as const, coordinates: [Number(form.lon), Number(form.lat)] as const }
-      : null;
+    let coordinates: MapMarker['geometry'];
+    try {
+      coordinates = geometryKind === 'POINT'
+        ? form.lon.trim() && form.lat.trim() ? { type: 'Point', coordinates: [Number(form.lon), Number(form.lat)] as const } : null
+        : parseGeometryText(geometryValue, geometryKind);
+    } catch (error) {
+      setIssues([{ code: 'GEOMETRY_TEXT_INVALID', severity: 'ERROR', message: error instanceof Error ? error.message : 'Проверьте координаты' }]);
+      return;
+    }
     const marker: MapMarker = {
       id: form.id.trim(), revision: 1, kind: form.kind, layerId: 'TRUE_FORCES', truth: 'TRUTH', geometry: coordinates,
       sourceId: form.sourceId.trim(), authorId: form.authorId.trim(), eventId: form.eventId.trim(),
@@ -169,7 +198,14 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
       {canReadTruth && <option value="TRUTH">Истинная служебная карта</option>}
     </select>
     {!audiences.length && !canReadTruth && <p>Добавьте инстанции видимости к отметкам — после этого здесь появятся их начальные сведения без истинной закрытой обстановки.</p>}
-    <InitialMapLayers map={projected} />
+    <InitialMapLayers map={projected} onEditGeometry={editGeometry} />
+    {editingId && <section aria-labelledby="geometry-editor-title">
+      <h3 id="geometry-editor-title">Геометрия: {editingId}</h3>
+      <label htmlFor="initial-map-geometry-edit">Координаты редактируемой отметки</label>
+      <textarea id="initial-map-geometry-edit" value={geometryValue} onChange={event => setGeometryValue(event.target.value)} />
+      <button type="button" onClick={saveGeometry}>Сохранить геометрию</button>
+      <button type="button" onClick={() => setEditingId('')}>Отмена</button>
+    </section>}
 
     <details>
       <summary>Ручное нанесение</summary>
@@ -183,10 +219,15 @@ export function InitialMapStep({ map, onChange, audiences, availableSymbols, tru
       </select>
       <label htmlFor="initial-map-side">Сторона</label>
       <input id="initial-map-side" value={form.sideId} onChange={event => update('sideId', event.target.value)} />
-      <label htmlFor="initial-map-lon">Долгота</label>
-      <input id="initial-map-lon" inputMode="decimal" value={form.lon} onChange={event => update('lon', event.target.value)} />
-      <label htmlFor="initial-map-lat">Широта</label>
-      <input id="initial-map-lat" inputMode="decimal" value={form.lat} onChange={event => update('lat', event.target.value)} />
+      {geometryKind === 'POINT' ? <>
+        <label htmlFor="initial-map-lon">Долгота</label>
+        <input id="initial-map-lon" inputMode="decimal" value={form.lon} onChange={event => update('lon', event.target.value)} />
+        <label htmlFor="initial-map-lat">Широта</label>
+        <input id="initial-map-lat" inputMode="decimal" value={form.lat} onChange={event => update('lat', event.target.value)} />
+      </> : <>
+        <label htmlFor="initial-map-geometry">{geometryKind === 'LINE' ? 'Точки маршрута' : 'Кольцо области'}</label>
+        <textarea id="initial-map-geometry" value={geometryValue} onChange={event => setGeometryValue(event.target.value)} placeholder="30.1, 50.2; 30.4, 50.3; …" />
+      </>}
       <label htmlFor="initial-map-source">Источник</label>
       <input id="initial-map-source" value={form.sourceId} onChange={event => update('sourceId', event.target.value)} />
       <label htmlFor="initial-map-author">Автор</label>

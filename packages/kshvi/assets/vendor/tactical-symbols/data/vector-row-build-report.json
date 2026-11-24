@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "sourceAuditSha256": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331",
+  "numberedGroups": 610,
+  "symbols": 925,
+  "vectorPages": 700,
+  "failures": [],
+  "fallbacks": [
+    {
+      "number": "160",
+      "variant": 8,
+      "pageId": "doc-007-page-001"
+    },
+    {
+      "number": "190",
+      "variant": 3,
+      "pageId": "doc-010-page-001"
+    },
+    {
+      "number": "190",
+      "variant": 4,
+      "pageId": "doc-010-page-001"
+    },
+    {
+      "number": "239",
+      "variant": 3,
+      "pageId": "doc-013-page-001"
+    },
+    {
+      "number": "606",
+      "variant": 1,
+      "pageId": "doc-028-page-001"
+    },
+    {
+      "number": "606",
+      "variant": 2,
+      "pageId": "doc-028-page-001"
+    }
+  ],
+  "variantFailures": []
+}

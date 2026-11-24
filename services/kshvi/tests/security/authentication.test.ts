@@ -41,6 +41,23 @@ it('требует сессию и организацию на API, команд
   }
 });
 
+it('публичный справочник знаков и его страницы не требуют сессию КШВИ', async () => {
+  const sessions = new SessionManager({ store: new InMemorySessionStore() });
+  const service = createService({ name: 'kshvi-public-symbols-test', port: 0, router: buildRouter({ sessions }) });
+  const port = await service.listen();
+  const base = `http://127.0.0.1:${port}`;
+  try {
+    expect((await fetch(`${base}/kshvi/symbols/catalog`)).status).toBe(200);
+    const fragment = await fetch(`${base}/kshvi/symbols/fragments/doc-002-page-001`);
+    expect(fragment.status).toBe(200);
+    expect(fragment.headers.get('content-type')).toBe('image/jpeg');
+    expect((await fragment.arrayBuffer()).byteLength).toBeGreaterThan(1000);
+    expect((await fetch(`${base}/kshvi/exercises`)).status).toBe(401);
+  } finally {
+    await service.close();
+  }
+});
+
 it('хеширует пароли и не принимает открытый пароль как сохранённый хеш', async () => {
   const encoded = await hashPassword('secret123');
   expect(encoded).not.toContain('secret123');

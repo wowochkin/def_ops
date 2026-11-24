@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ConductWorkspace, type ConductRole } from './ConductWorkspace';
 import { HttpConductClient } from './conduct-api';
 import './conduct.css';
+import './preview.css';
 
 const roles = [
   ['TRAINEE', 'Обучаемый'], ['LEADER', 'Руководитель'], ['PLAYGROUP', 'Группа розыгрыша'],

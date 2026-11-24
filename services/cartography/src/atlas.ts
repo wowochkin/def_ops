@@ -6,8 +6,10 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { GeoJSONVT } from '@maplibre/geojson-vt';
 import { fromGeojsonVt } from '@maplibre/vt-pbf';
-import { tileRange, tileCount, type BBox } from '@def-ops/core';
+import { tileRange, tileCount, type BBox, type LngLat } from '@def-ops/core';
 import { railwayFilter, railwaySources } from '../../../packages/core/src/railway-style';
+import { maskTile, tileRelation } from './coverage';
+import sharp from 'sharp';
 import { writeAtomic } from './tiles';
 import type { StyleSpecification, LayerSpecification, FilterSpecification } from '@maplibre/maplibre-gl-style-spec';
 export interface AtlasMeta { thematic?:boolean; id: string; name: string; format: 'pbf' | 'png' | 'jpg' | 'webp'; kind: 'vector' | 'raster' | 'terrain'; minzoom: number; maxzoom: number; bounds: BBox; attribution: string; layers: { id: string; fields?: Record<string,string> }[]; bytes: number; sha256?: string; importedAt?: string; source?: string }
@@ -57,14 +59,31 @@ export class AtlasStore {
   if (![z,x,y].every(Number.isInteger)||z<0||z>22||x<0||y<0||x>=2**z||y>=2**z) throw Error('Недопустимый адрес тайла');
   const m=await this.get(tenant,id), db=new DatabaseSync(this.file(tenant,id),{readOnly:true});
   try {const r=db.prepare('select tile_data d from tiles where zoom_level=? and tile_column=? and tile_row=? limit 1').get(z,x,2**z-1-y) as {d:Uint8Array}|undefined;
-   return r?.d.length?{bytes:Buffer.from(r.d),format:m.format}:null;
+   if(!r?.d.length)return null;
+   const original={bytes:Buffer.from(r.d),format:m.format};
+   if(m.kind==='vector')return original;
+   const boxes:BBox[]=m.bounds[0]<=m.bounds[2]?[m.bounds]:[[m.bounds[0],m.bounds[1],180,m.bounds[3]],[-180,m.bounds[1],m.bounds[2],m.bounds[3]]];
+   const rings=boxes.map(([w,s,e,n]):LngLat[]=>[[w,s],[e,s],[e,n],[w,n]]);
+   const relations=rings.map(ring=>tileRelation(ring,z,x,y));
+   if(relations.includes('inside'))return original;
+   if(!relations.includes('crossing'))return null;
+   const decoded=await sharp(original.bytes).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+   const size=decoded.info.width===decoded.info.height?decoded.info.width:256;
+   const raw=decoded.info.width===size&&decoded.info.height===size?decoded.data:
+    await sharp(original.bytes).resize(size,size,{fit:'fill'}).ensureAlpha().raw().toBuffer();
+   const combined=Buffer.alloc(raw.length);
+   for(const [i,relation]of relations.entries())if(relation==='crossing'){
+    const masked=maskTile(Buffer.from(raw),rings[i],z,x,y,size);
+    for(let p=0;p<masked.length;p+=4)if(masked[p+3])masked.copy(combined,p,p,p+4);
+   }
+   return {bytes:await sharp(combined,{raw:{width:size,height:size,channels:4}}).png().toBuffer(),format:'png' as const};
   } finally {db.close();}
  }
  async remove(tenant:string,id:string) {await fs.rm(this.file(tenant,id),{force:true});await fs.rm(path.join(this.dir(tenant),`${id}.json`),{force:true});}
 }
 /** Универсальный локальный стиль: сохранён каждый source-layer, тип геометрии не предполагается по имени. */
 export function atlasStyle(m:AtlasMeta,prefix:string):StyleSpecification {
- const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,attribution:m.attribution};
+ const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,bounds:m.bounds,attribution:m.attribution};
  const layers:LayerSpecification[]=[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}];
  if(m.kind==='vector') {
   const color=(id:string)=>/water/i.test(id)?'#9ecad0':/building/i.test(id)?'#bdb4a4':/landcover|landuse|park|forest/i.test(id)?'#bdcbb0':/road|transport|rail/i.test(id)?'#b39872':'#9ca9a2';

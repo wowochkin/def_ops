@@ -63,7 +63,7 @@ export function SymbolsView({ set = symbolSet, historySets, canInsert = false, o
       <div className="symbols-result-summary"><span>{symbols.length} знаков</span><span>Сверка ещё не завершена</span></div>
       <div className="symbols-layout">
         <nav className="symbols-catalog" aria-label="Каталог знаков">{symbols.map(symbol => <button key={symbol.id} aria-pressed={selected?.id === symbol.id} onClick={() => setSelectedId(symbol.id)}>
-          <strong>{symbol.name}</strong><small>{forceTypeLabels[symbol.forceType] ?? symbol.forceType}</small><span>{symbolStatusLabels[symbol.status]}</span>
+          <strong>{symbol.name}</strong><small>Код {symbol.code} · {forceTypeLabels[symbol.forceType] ?? symbol.forceType}</small><span>{symbolStatusLabels[symbol.status]}</span>
         </button>)}</nav>
         {selected ? <SymbolCard key={selected.id} symbol={selected} setVersion={set.version} history={history} canInsert={canInsert} onInsert={onInsert} /> : <section className="symbols-empty"><h2>Совпадений нет</h2><p>Измените запрос или сбросьте фильтры.</p></section>}
       </div>

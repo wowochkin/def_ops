@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { symbolSet } from '@def-ops/tactical-symbols';
 import { sourceRegistry, type SourceTopic } from '@def-ops/tactical-symbols/source/browser';
-import { fragmentUrl } from './symbols-api';
+import { SourceImage } from './SourceImage';
 
 const topicLabels: Readonly<Record<SourceTopic, string>> = {
   COMMAND_POSTS: 'Пункты управления', BOUNDARY_LINES: 'Разграничительные линии', MOVEMENT: 'Движение и маршруты',
@@ -67,7 +67,7 @@ export function SourceDocuments({ query, onSelectSymbol }: {
       </div>
       {fragment ? <>
         <div className="source-page-scroll">
-          <img style={{ width: `${zoom * 100}%` }} src={fragmentUrl(fragment.id)} alt={`Исходная страница ${fragment.page} документа ${document.originalName}`} />
+          <SourceImage fragmentId={fragment.id} style={{ width: `${zoom * 100}%` }} alt={`Исходная страница ${fragment.page} документа ${document.originalName}`} />
         </div>
         <footer>
           <p>SHA-256 фрагмента: <code title={fragment.referenceFragment.sha256}>{fragment.referenceFragment.sha256.slice(0, 16)}…</code></p>

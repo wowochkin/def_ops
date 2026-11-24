@@ -8,6 +8,7 @@ import type { ExerciseCard, JsonValue, KshviClient } from '../kshvi-api';
 import { InitialMapStep, type InitialMapSymbolOption } from './InitialMapStep';
 import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
+import { DateTimeField } from '../../DateTimeField';
 
 const numericFields = [
   ['temperature', 'Температура, °C'], ['humidity', 'Влажность, %'], ['pressure', 'Давление, hPa'],
@@ -26,7 +27,7 @@ function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
   return set.symbols.map(symbol => ({
     id: symbol.id, version: symbol.version, sideId: 'UNKNOWN', status: symbol.status,
     sourceDocument: symbol.source.sourceDocument, sourcePage: symbol.source.page ?? 0,
-    nameRu: symbol.name, purpose: symbol.purpose, objectType: symbol.objectType,
+    nameRu: symbol.name, purpose: symbol.purpose, objectType: symbol.objectType, kind: symbol.kind,
   }));
 }
 
@@ -133,8 +134,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
         <option value="" disabled>Выберите атлас</option>
         {atlases.map(atlas => <option key={atlas.id} value={atlas.id}>{atlas.name}</option>)}
       </select>
-      <label htmlFor="kshvi-weather-start">Начало сценария, UTC</label>
-      <input id="kshvi-weather-start" type="datetime-local" value={scenario.start.slice(0, 16)} onChange={event => { if (event.target.value) patch('start', `${event.target.value}:00Z`); }} required />
+      <DateTimeField id="kshvi-weather-start" label="Начало сценария, UTC" value={scenario.start.slice(0, 16)} onChange={value => { if (value) patch('start', `${value}:00Z`); }} required />
       <label htmlFor="kshvi-weather-seed">Зерно погодного сценария</label>
       <input id="kshvi-weather-seed" type="number" value={scenario.seed} onChange={event => patch('seed', Number(event.target.value))} required />
       <details>

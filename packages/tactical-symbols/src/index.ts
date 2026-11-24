@@ -44,6 +44,7 @@ export type { RenderSymbolOptions } from './render-svg';
 export {
   expandSymbolCluster,
   symbolFeatures,
+  symbolImageId,
   symbolImages,
   symbolLayers,
   symbolSource,
@@ -63,4 +64,5 @@ export {
   symbolSet,
 } from './registry';
 export type { SymbolLegendEntry } from './registry';
+export { areaFeature, lineFeature } from './editable-geometry';
 export { coverageReport, sourceRegistry } from './source/registry';

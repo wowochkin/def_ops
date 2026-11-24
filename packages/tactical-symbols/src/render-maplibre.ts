@@ -36,9 +36,11 @@ export interface SymbolFeatureCollection {
   readonly features: readonly SymbolFeature[];
 }
 
-function iconId(symbol: RenderSymbolInput & { readonly geometry?: SymbolDefinition['geometry'] }): string {
+export function symbolImageId(symbol: RenderSymbolInput & { readonly geometry?: SymbolDefinition['geometry'] }): string {
   return `tactical:${symbol.id}:${symbol.version ?? '0.0.0'}:${symbol.geometry?.version ?? 1}`;
 }
+
+const iconId = symbolImageId;
 
 function labelOf(symbol: SymbolDefinition): string {
   const value = symbol.labels.top ?? symbol.labels.bottom ?? symbol.name;

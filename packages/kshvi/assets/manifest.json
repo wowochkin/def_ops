@@ -3590,6 +3590,32 @@
       "offlineReady": true
     },
     {
+      "id": "vendor-tactical-symbols-data-sets-ru-modern-v2-json",
+      "name": "vendor/tactical-symbols/data/sets/ru-modern-v2.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/sets/ru-modern-v2.json",
+      "sha256": "cdb53fd056d1554c37ffbf0a1f0003c21cf241b90117c5cb1e0ec327ff4790a8",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-sets-ru-modern-v3-json",
+      "name": "vendor/tactical-symbols/data/sets/ru-modern-v3.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/sets/ru-modern-v3.json",
+      "sha256": "46649622f4ab36637b1e4181d2f6dd72dc22ef682e56d6e8558eb9b1833510a6",
+      "offlineReady": true
+    },
+    {
       "id": "vendor-tactical-symbols-data-source-registry-json",
       "name": "vendor/tactical-symbols/data/source-registry.json",
       "kind": "SYMBOLS",
@@ -3603,6 +3629,97 @@
       "offlineReady": true
     },
     {
+      "id": "vendor-tactical-symbols-data-vector-build-report-json",
+      "name": "vendor/tactical-symbols/data/vector-build-report.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-build-report.json",
+      "sha256": "fb42c94b40419679e34cfc24288ce2e7f7a8ede001a226cef5fcbe382f3a08f8",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-vector-catalog-report-json",
+      "name": "vendor/tactical-symbols/data/vector-catalog-report.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-catalog-report.json",
+      "sha256": "3b298d0edaba8af4bb10ca89b52729c1663cdd272704fdf1f39aa3365defd313",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-vector-definitions-json",
+      "name": "vendor/tactical-symbols/data/vector-definitions.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-definitions.json",
+      "sha256": "b7675d7cb2810e93a272f1d148de80e1adb1addb7586c3a888c3a7fde376096d",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-vector-pages-json",
+      "name": "vendor/tactical-symbols/data/vector-pages.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-pages.json",
+      "sha256": "599b53c4cd955344892bbc46fa9077588ea29cc437abb5b4245484ff37b06017",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-vector-row-build-report-json",
+      "name": "vendor/tactical-symbols/data/vector-row-build-report.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-row-build-report.json",
+      "sha256": "7f3d715529b5df66e7a21682921c3027d0eda659ad674aeaa45333b4800db273",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-data-vector-rows-json",
+      "name": "vendor/tactical-symbols/data/vector-rows.json",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/data/vector-rows.json",
+      "sha256": "d2caba1eb96b6ee6db002e7342f5749b7f975d8ac028c5e6c8ddccb7070139e4",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-src-editable-geometry-ts",
+      "name": "vendor/tactical-symbols/src/editable-geometry.ts",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/src/editable-geometry.ts",
+      "sha256": "6bb1e867e6a79c3740ea7fe4e7de3dfd8ec1e61f530f1d039ac949c8bcb8a858",
+      "offlineReady": true
+    },
+    {
       "id": "vendor-tactical-symbols-src-geometry-ts",
       "name": "vendor/tactical-symbols/src/geometry.ts",
       "kind": "SYMBOLS",
@@ -3612,7 +3729,7 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/geometry.ts",
-      "sha256": "0e4ae77ba20fba8a5d6626c9f294605144594de1ee823c7bcef2e422096ba65a",
+      "sha256": "8e1f6b1bf5e64b42edc89c92d7daed6d81205473778b319669318ca268bc015b",
       "offlineReady": true
     },
     {
@@ -3625,7 +3742,7 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/index.ts",
-      "sha256": "222d444bc1a7c67bbb4f84021af820c4704ddf94e487a45f59ca28fe092ca19d",
+      "sha256": "ab5d3f2ac0fdcf57f86e43aa6f7b8e4a69ec6742b83d5466cc1cffb4ff8908b4",
       "offlineReady": true
     },
     {
@@ -3638,7 +3755,7 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/model.ts",
-      "sha256": "9c33633c645dd98125b8c8c013ae37dbdffd5bb705901d8b4d5dc11d20dcb82e",
+      "sha256": "20f5e60ebcb1683845af15612ea3eeeeaf4447b519b03dc5c73b74d88430a29c",
       "offlineReady": true
     },
     {
@@ -3651,7 +3768,7 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/registry.ts",
-      "sha256": "079f48442469955f7e50086892fac92596ee8b57eef936648d1452b55bbf6812",
+      "sha256": "3b6ffb5514c9f219d1e8b2195c3fc565843f0f904b17aae78db2790d240b89e7",
       "offlineReady": true
     },
     {
@@ -3664,7 +3781,7 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/render-maplibre.ts",
-      "sha256": "42ca5c2ecb4d74b71c55bcb7ac3373308fe6fc6cfb717d7f1953754214622ab6",
+      "sha256": "9013c2f9e000daa29491601ad3ccdaab7c05fa1cf91f970a6365ecf88d721f0c",
       "offlineReady": true
     },
     {
@@ -3677,7 +3794,20 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "ALLOWED",
       "path": "vendor/tactical-symbols/src/render-svg.ts",
-      "sha256": "250dfcecc2d70073c2bea29a3ea4af642ce76f941fb06a4cfc02bbb753970262",
+      "sha256": "5db06a23c6b85fc73c4139d78f624273aa0a289001092820d4816f9466a10cb3",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-vector-ts",
+      "name": "vendor/tactical-symbols/src/source-vector.ts",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "ALLOWED",
+      "path": "vendor/tactical-symbols/src/source-vector.ts",
+      "sha256": "72e4797cbaa6e2b3b3c38be359e1fadb034708c8fbce1a483b35188fffa52307",
       "offlineReady": true
     },
     {
@@ -3729,7 +3859,20 @@
       "attribution": "data/source-registry.json и NOTICE.txt",
       "autonomousArchive": "LINK_ONLY",
       "path": "vendor/tactical-symbols/src/source/registry.ts",
-      "sha256": "94078a6bee3d0ec6fe2fbf02c79489afca77540a97fb208ca5668d37fcdd8ee4",
+      "sha256": "dc96ae9766f983f2c001dd6fe2543f23956cd5791b937f7d8d6cb8da668ea760",
+      "offlineReady": true
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-vector-extract-ts",
+      "name": "vendor/tactical-symbols/src/source/vector-extract.ts",
+      "kind": "SYMBOLS",
+      "source": "packages/tactical-symbols",
+      "version": "0.1.0",
+      "license": "По реестру источников",
+      "attribution": "data/source-registry.json и NOTICE.txt",
+      "autonomousArchive": "LINK_ONLY",
+      "path": "vendor/tactical-symbols/src/source/vector-extract.ts",
+      "sha256": "72c5b4c9957c533bb8081d9e5dedfc90b8cb22a5b65333cf1196a67e47c2ad58",
       "offlineReady": true
     }
   ]

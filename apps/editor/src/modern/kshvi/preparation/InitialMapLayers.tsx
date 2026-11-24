@@ -1,4 +1,4 @@
-import type { InitialSituationMap, MapLayerId } from '../../../../../../packages/kshvi/src/scenario/initial-map';
+import type { InitialSituationMap, MapLayerId, MapMarker } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 
 const LAYER_NAMES: Record<MapLayerId, string> = {
   BASEMAP: 'Топооснова',
@@ -17,7 +17,7 @@ const LAYER_NAMES: Record<MapLayerId, string> = {
   STAFF_COMMENTS: 'Служебные комментарии',
 };
 
-export function InitialMapLayers({ map }: Readonly<{ map: InitialSituationMap }>) {
+export function InitialMapLayers({ map, onEditGeometry }: Readonly<{ map: InitialSituationMap; onEditGeometry?: (marker: MapMarker) => void }>) {
   const symbols = new Map(map.markers.map(item => [`${item.symbol.id}@${item.symbol.version}`, item.symbol] as const));
   return <div>
     <section aria-labelledby="initial-map-layers-title">
@@ -32,6 +32,7 @@ export function InitialMapLayers({ map }: Readonly<{ map: InitialSituationMap }>
       <h3 id="initial-map-objects-title">Отметки текущей проекции</h3>
       {map.markers.length ? <ul>{map.markers.map(item => <li key={item.id}>
         <strong>{item.id}</strong> — {item.kind}; источник: {item.sourceId}; период: {item.validFrom} — {item.validUntil}
+        {onEditGeometry && item.geometry && <button type="button" aria-label={`Изменить геометрию ${item.id}`} onClick={() => onEditGeometry(item)}>Изменить</button>}
       </li>)}</ul> : <p>Отметки отсутствуют; координаты автоматически не подставляются</p>}
     </section>
     <section aria-labelledby="initial-map-legend-title">

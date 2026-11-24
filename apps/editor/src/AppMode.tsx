@@ -50,7 +50,6 @@ export function AppWorkspace({ historical }: { historical(active: boolean, onMod
         <button type="button" aria-current={modernSection === 'atlas' || modernSection === 'weather' ? 'page' : undefined} onClick={() => openModern('atlas')}>Карта и погода</button>
         <button type="button" aria-current={modernSection === 'kshvi' ? 'page' : undefined} onClick={() => openModern('kshvi')}>КШВИ</button>
         <button type="button" aria-current={modernSection === 'symbols' ? 'page' : undefined} onClick={() => openModern('symbols')}>Условные знаки</button>
-        <button type="button" aria-current={modernSection === 'replay' ? 'page' : undefined} onClick={() => openModern('replay')}>Переигровка</button>
       </nav>
       {modernSection === 'replay' ? <Suspense fallback={<p className="modern-loading">Открываем переигровку…</p>}><ReplayView /></Suspense> : modernSection === 'symbols' ? <Suspense fallback={<p className="modern-loading">Открываем условные знаки…</p>}><SymbolsView /></Suspense> : modernSection === 'kshvi' ? <Suspense fallback={<p className="modern-loading">Открываем КШВИ…</p>}><KshviView /></Suspense> : modernSection === 'weather' || modernSection === 'atlas' ? <Suspense fallback={<p className="modern-loading">Открываем карту и погоду…</p>}><AtlasView /></Suspense> : modernSection === 'knowledge' ? <Suspense fallback={<p className="modern-loading">Открываем базу знаний…</p>}><ModernKnowledgeView /></Suspense> : <section className="modern-welcome">
         <p className="modern-kicker">Рабочее пространство</p>

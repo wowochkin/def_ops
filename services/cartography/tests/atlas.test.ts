@@ -27,6 +27,34 @@ it('произвольные векторные слои, XYZ/TMS, сохран�
   await expect(store.tile('t','../bad',0,0,0)).rejects.toThrow();
  } finally { await rm(dir,{recursive:true,force:true}); }
 });
+it.each(['vector','raster','terrain'] as const)('стиль набора %s сохраняет точную рамку области', kind => {
+ const meta:Parameters<typeof atlasStyle>[0]={id:'area',name:'Область',format:kind==='vector'?'pbf':'png',kind,minzoom:0,maxzoom:0,bounds:[12,51,14,53],attribution:'test',layers:[],bytes:1};
+ expect(atlasStyle(meta,'/api').sources.atlas).toMatchObject({bounds:meta.bounds});
+});
+
+it('существующий растровый MBTiles обрезается по точной рамке, включая крайние тайлы', async () => {
+ const sharp=(await import('sharp')).default;
+ const dir=await mkdtemp(join(tmpdir(),'atlas-clipped-'));
+ try {
+  const file=join(dir,'input.mbtiles'),db=new DatabaseSync(file);
+  db.exec('create table metadata(name text,value text);create table tiles(zoom_level integer,tile_column integer,tile_row integer,tile_data blob)');
+  const insert=db.prepare('insert into metadata values(?,?)');
+  for(const [k,v]of Object.entries({name:'Область',format:'png',minzoom:'0',maxzoom:'0',bounds:'12,51,14,53',attribution:'test'}))insert.run(k,v);
+  const red=await sharp({create:{width:256,height:256,channels:4,background:{r:255,g:0,b:0,alpha:1}}}).png().toBuffer();
+  db.prepare('insert into tiles values(0,0,0,?)').run(red);db.close();
+  const store=new AtlasStore(join(dir,'store')),meta=await store.importFile('t',file),tile=await store.tile('t',meta.id,0,0,0);
+  expect(tile).not.toBeNull();
+  const {data,info}=await sharp(tile!.bytes).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  const alpha=(lon:number,lat:number)=>{
+   const x=Math.floor((lon+180)/360*info.width),y=Math.floor((1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*info.height);
+   return data[(y*info.width+x)*4+3];
+  };
+  expect(alpha(13,52)).toBe(255);
+  expect(alpha(-13,52)).toBe(0);
+  expect(alpha(13,20)).toBe(0);
+ } finally {await rm(dir,{recursive:true,force:true});}
+});
+
 it('GeoJSON превращается в настоящие MVT с независимыми слоями', async () => {
  const dir=await mkdtemp(join(tmpdir(),'atlas-geo-'));
  try {

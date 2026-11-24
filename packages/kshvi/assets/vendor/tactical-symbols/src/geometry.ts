@@ -39,7 +39,7 @@ export function validateModifiers(symbol: RenderSymbolInput): void {
   const active = new Set(symbol.modifiers.map(modifier => modifier.id));
   if (active.size !== symbol.modifiers.length) throw new Error('Идентификаторы модификаторов должны быть уникальны');
   for (const modifier of symbol.modifiers) {
-    if (symbol.allowedModifierIds && symbol.allowedModifierIds.length > 0 && !symbol.allowedModifierIds.includes(modifier.id)) {
+    if (symbol.allowedModifierIds && !symbol.allowedModifierIds.includes(modifier.id)) {
       throw new Error(`Недопустимый модификатор ${modifier.id} для знака ${symbol.id}`);
     }
     for (const incompatibleId of modifier.incompatibleWith ?? []) {
@@ -209,5 +209,7 @@ export function geometryPrimitives(geometry: VectorGeometry): readonly VectorPri
       return [
         { type: 'path', d: 'M25 25 L75 75 M75 25 L25 75', strokeWidth: 3 },
       ];
+    case 'SOURCE_VECTOR':
+      return [];
   }
 }

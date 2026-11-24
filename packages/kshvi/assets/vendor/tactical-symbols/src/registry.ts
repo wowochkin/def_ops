@@ -1,4 +1,4 @@
-import rawSymbolSet from '../data/sets/ru-modern-v1.json' with { type: 'json' };
+import rawSymbolSet from '../data/sets/ru-modern-v3.json' with { type: 'json' };
 import type {
   SymbolDefinition,
   SymbolDefinitionInput,
@@ -33,7 +33,8 @@ function hydrateSet(input: SymbolSetInput): SymbolSet {
 export const symbolSet: SymbolSet = hydrateSet(rawSymbolSet as unknown as SymbolSetInput);
 
 export function getSymbol(id: string, set: SymbolSet = symbolSet): SymbolDefinition {
-  const symbol = set.symbols.find(candidate => candidate.id === id);
+  const symbol = set.symbols.find(candidate => candidate.id === id)
+    ?? (/^source-\d+$/.test(id) ? set.symbols.find(candidate => candidate.id === `${id}-1`) : undefined);
   if (!symbol) throw new Error(`Знак ${id} не найден в наборе ${set.version}`);
   return symbol;
 }

@@ -209,5 +209,7 @@ export function geometryPrimitives(geometry: VectorGeometry): readonly VectorPri
       return [
         { type: 'path', d: 'M25 25 L75 75 M75 25 L25 75', strokeWidth: 3 },
       ];
+    case 'SOURCE_VECTOR':
+      return [];
   }
 }

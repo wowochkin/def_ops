@@ -95,6 +95,7 @@ const services = [
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'kshvi', env: {
     KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default',
+    DEFOPS_SYMBOLS_ROOT: existsSync(join(portable, 'vendor/tactical-symbols')) ? join(portable, 'vendor/tactical-symbols') : join(repo, 'packages/tactical-symbols'),
     CARTOGRAPHY_URL: `${url('cartography')}/cartography`, KSHVI_INTERNAL_URL: url('kshvi'),
     ...(dev ? { KSHVI_DEVELOPMENT_AUTH: '1' } : {}),
   } },

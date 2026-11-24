@@ -133,7 +133,8 @@ export function buildRouter({ sessions, exerciseStore = new InMemoryExerciseStor
   const match = router.match.bind(router);
   router.match = (method, path) => {
     const route = match(method, path);
-    if (!route || route === 'method' || path === `${KSHVI_ROUTE_PREFIX}/auth/login`) return route;
+    const publicSymbolRead = method === 'GET' && path.startsWith(`${KSHVI_ROUTE_PREFIX}/symbols/`);
+    if (!route || route === 'method' || path === `${KSHVI_ROUTE_PREFIX}/auth/login` || publicSymbolRead) return route;
     return {
       ...route,
       handler: async ctx => {

@@ -1,5 +1,3 @@
-:root { background: #0d1c21; color-scheme: dark; }
-body { margin: 0; background: #0d1c21; color: #e8f0eb; font: 16px/1.45 'Roboto Condensed', 'PT Sans Narrow', sans-serif; }
 .kshvi-preview-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px clamp(14px, 3vw, 40px); background: #11242a; border-bottom: 1px solid #385157; position: sticky; top: 0; z-index: 2; }
 .kshvi-preview-nav button[aria-current="page"] { border-color: #b4dcce; color: #b4dcce; }
 .kshvi-conduct-workspace, .kshvi-handover { max-width: 1600px; margin: 0 auto; padding: 22px clamp(14px, 3vw, 40px) 56px; background: #0d1c21; color: #e8f0eb; }

@@ -14,7 +14,7 @@ export function registerSymbolRoutes(router: Router): void {
   router.get('/kshvi/symbols/fragments/:id', async ctx => {
     const fragment = sourceRegistry.fragments.find(candidate => candidate.id === ctx.params.id);
     if (!fragment) throw new HttpError(404, 'not_found', 'Фрагмент источника не найден');
-    const root = resolve('packages/tactical-symbols');
+    const root = resolve(process.env.DEFOPS_SYMBOLS_ROOT ?? 'packages/tactical-symbols');
     const path = resolve(root, fragment.referenceFragment.path);
     if (!path.startsWith(`${root}${sep}`)) throw new HttpError(422, 'invalid_fragment', 'Некорректный путь фрагмента');
     const bytes = await fs.readFile(path);

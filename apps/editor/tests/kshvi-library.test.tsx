@@ -58,6 +58,34 @@ describe('библиотека КШВИ', () => {
     expect(onFiltersChange).toHaveBeenCalledWith({ query: 'Рубеж', state: 'DRAFT', scale: 'operational', purpose: 'planned' });
   });
 
+  it('выбирает дату и время в собственном календаре, не подставляя неизвестные сроки', async () => {
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    const view = render(<LibraryView items={[]} onCreate={onCreate} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Создать учение' }));
+    const start = screen.getByRole('button', { name: 'Начало' });
+    const end = screen.getByRole('button', { name: 'Окончание' });
+    expect(start.textContent).toContain('Выбрать дату и время');
+    expect(end.textContent).toContain('Выбрать дату и время');
+    expect(view.container.querySelectorAll('input[type="datetime-local"]')).toHaveLength(0);
+
+    const now = new Date();
+    fireEvent.click(start);
+    expect(screen.getByRole('dialog', { name: 'Дата и время: Начало' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Год'), { target: { value: String(now.getFullYear() - 1) } });
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^15 \\D+ ${now.getFullYear() - 1}$`) }));
+    fireEvent.change(screen.getByLabelText('Время'), { target: { value: '14:45' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Готово' }));
+    const expected = new Date(now.getFullYear() - 1, now.getMonth(), 15, 14, 45).toISOString();
+
+    fireEvent.click(end);
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Дата и время: Окончание' }), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Название учения'), { target: { value: 'Календарь' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить на сервере' }));
+    await waitFor(() => expect(onCreate).toHaveBeenCalled());
+    expect(onCreate.mock.calls[0][0]).toMatchObject({ startsAt: expected, endsAt: null });
+  });
+
   it('вызывает копирование, сравнение редакций, архивирование и переход к последнему сеансу', () => {
     const onCopy = vi.fn();
     const onCompare = vi.fn();
@@ -116,7 +144,7 @@ describe('оболочка КШВИ и навигация', () => {
     expect(await screen.findByRole('heading', { name: 'КШВИ' })).toBeTruthy();
     expect(localStorage.getItem('def_ops.modern.section')).toBe('kshvi');
     expect(localStorage.getItem('def_ops.modern.weather.region')).toBe('{"bounds":[1,2,3,4]}');
-    expect(screen.getByRole('button', { name: 'Переигровка' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Переигровка' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Исторический режим' }));
     expect(await screen.findByText('Историческая навигация')).toBeTruthy();
   });

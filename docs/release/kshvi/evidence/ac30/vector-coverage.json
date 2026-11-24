@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "archiveSha256": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331",
+  "setVersion": "ru-modern-v3",
+  "numberedSourceEntries": 610,
+  "numberedVariants": 905,
+  "unnumberedMpoSymbols": 20,
+  "totalSymbols": 925,
+  "vectorPages": 700,
+  "emptySelections": 0,
+  "unresolvedVariantGroups": 0,
+  "originalPageFallbacks": 6,
+  "externalResources": false,
+  "rasterSubstitution": false,
+  "automaticallyApprovedSymbols": 0,
+  "humanMethodicalApproval": false
+}

@@ -1,4 +1,5 @@
 import { geometryPrimitives, simplifySymbol, validateModifiers, type SymbolSize } from './geometry';
+import { renderSourceVector } from './source-vector';
 import type {
   RenderSymbolInput,
   SymbolAffiliation,
@@ -99,6 +100,34 @@ export function renderSymbol(symbol: RenderSymbolInput, options: RenderSymbolOpt
   );
   const effective = detail === 'SEMANTIC' ? simplifySymbol(symbol) : symbol;
   const geometry = effective.geometry ?? { version: 1, template: 'UNIT' as const, parameters: {} };
+  if (geometry.template === 'SOURCE_VECTOR') {
+    const { pageId, viewBox, elements } = geometry.parameters;
+    if (typeof pageId !== 'string' || typeof viewBox !== 'string') throw new Error('Исходный векторный знак должен содержать pageId и viewBox');
+    const inscriptionIds = new Set((effective.inscriptions ?? []).map(inscription => inscription.id));
+    const customLabels = Object.entries(effective.labels).filter(([key, value]) => !inscriptionIds.has(key) && value !== null && value !== '');
+    const customModifiers = effective.modifiers;
+    let sourceViewBox = viewBox;
+    let overlay = '';
+    if (customLabels.length || customModifiers.length) {
+      const box = viewBox.split(/\s+/).map(Number);
+      const fontSize = Math.max(10, box[3] / 10);
+      const topCount = customLabels.filter(([key]) => key !== 'bottom').length;
+      const bottomCount = customLabels.filter(([key]) => key === 'bottom').length + customModifiers.length;
+      sourceViewBox = [box[0], box[1] - (topCount ? fontSize * 1.8 : 0), box[2], box[3] + (topCount ? fontSize * 1.8 : 0) + (bottomCount ? fontSize * 1.8 * bottomCount : 0)].join(' ');
+      const color = effective.color ?? affiliationColors[effective.affiliation ?? 'UNKNOWN'];
+      const top = customLabels.filter(([key]) => key !== 'bottom').map(([key, value]) => `<text data-label="${escapeXml(key)}" x="${number(box[0] + box[2] / 2)}" y="${number(box[1] - fontSize * 0.5)}" fill="${color}" font-family="sans-serif" font-size="${number(fontSize)}" text-anchor="middle" stroke="white" stroke-width="0.35" paint-order="stroke">${escapeXml(String(value))}</text>`);
+      const bottomLabels = customLabels.filter(([key]) => key === 'bottom').map(([key, value], index) => `<text data-label="${escapeXml(key)}" x="${number(box[0] + box[2] / 2)}" y="${number(box[1] + box[3] + fontSize * (index + 1))}" fill="${color}" font-family="sans-serif" font-size="${number(fontSize)}" text-anchor="middle">${escapeXml(String(value))}</text>`);
+      const modifiers = customModifiers.map((modifier, index) => `<text data-modifier="${escapeXml(modifier.id)}" x="${number(box[0] + box[2] / 2)}" y="${number(box[1] + box[3] + fontSize * (bottomLabels.length + index + 1))}" fill="${color}" font-family="sans-serif" font-size="${number(fontSize)}" text-anchor="middle">${escapeXml(modifier.value)}</text>`);
+      overlay = [...top, ...bottomLabels, ...modifiers].join('');
+    }
+    return renderSourceVector(pageId, sourceViewBox, {
+      width: options.width, height: options.height, label: effective.name ?? effective.id,
+      ...(typeof elements === 'string' ? { elements } : {}),
+      ...(effective.inscriptions ? { inscriptions: effective.inscriptions } : {}), labels: effective.labels,
+    })
+      .replace('</svg>', `${overlay}</svg>`)
+      .replace('<svg ', `<svg data-symbol-id="${escapeXml(effective.id)}" data-object-type="${escapeXml(effective.objectType ?? 'UNKNOWN')}" data-detail="${detail}" data-anchor-x="${number(effective.anchor[0])}" data-anchor-y="${number(effective.anchor[1])}" `);
+  }
   const color = effective.color ?? affiliationColors[effective.affiliation ?? 'UNKNOWN'];
   const frame = framePrimitive(effective.frame);
   const primitives = [...(frame ? [frame] : []), ...geometryPrimitives(geometry)];

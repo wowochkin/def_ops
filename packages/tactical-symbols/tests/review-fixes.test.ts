@@ -15,20 +15,20 @@ it('пустой allowedModifierIds запрещает любой непереч
   }, { width: 64, height: 64 })).toThrow('Недопустимый модификатор');
 });
 
-it('MapLibre использует параметрические шаблоны, модификаторы и подписи линий и районов', () => {
-  const movement = getSymbol('movement-route');
-  const area = getSymbol('area');
+it('MapLibre использует исходные шаблоны, модификаторы и подписи линий и районов', () => {
+  const movement = getSymbol('source-68');
+  const area = getSymbol('source-118');
   const features = symbolFeatures([
     {
       id: 'movement-1', setVersion: 'test-set', geometry: { type: 'LineString', coordinates: [[30, 50], [31, 51]] },
-      symbol: { ...movement, labels: { top: 'Маршрут А' }, modifiers: [{ id: 'main', kind: 'TASK', value: 'основной' }] },
+      symbol: { ...movement, allowedModifierIds: ['main'], labels: { top: 'Маршрут А' }, modifiers: [{ id: 'main', kind: 'TASK', value: 'основной' }] },
     },
     {
       id: 'area-1', setVersion: 'test-set', geometry: { type: 'Polygon', coordinates: [[[30, 50], [31, 50], [31, 51], [30, 50]]] },
       symbol: { ...area, labels: { top: 'Район Б' } },
     },
   ]);
-  expect(features.features[0].properties).toMatchObject({ geometryTemplate: 'MOVEMENT', label: 'Маршрут А' });
+  expect(features.features[0].properties).toMatchObject({ geometryTemplate: 'SOURCE_VECTOR', label: 'Маршрут А' });
   expect(features.features[0].properties.modifiers).toEqual([{ id: 'main', kind: 'TASK', value: 'основной' }]);
   expect(features.features[0].properties.geometryParameters).toBeDefined();
   expect(features.features[1].properties.label).toBe('Район Б');
@@ -38,7 +38,7 @@ it('MapLibre использует параметрические шаблоны,
   expect(layers.find(layer => layer.id === 'tactical-symbols-areas-pattern')).toMatchObject({ type: 'fill', paint: { 'fill-pattern': ['get', 'icon'] } });
   expect(layers.find(layer => layer.id === 'tactical-symbols-lines')?.paint).toMatchObject({ 'line-dasharray': ['get', 'lineDasharray'] });
 
-  const pontoon = getSymbol('pontoon-crossing');
+  const pontoon = { ...getSymbol('source-1'), id: 'pontoon-test', geometry: { version: 1, template: 'PONTOON' as const, parameters: { spans: 3 } } };
   const changed = { ...pontoon, geometry: { ...pontoon.geometry, parameters: { ...pontoon.geometry.parameters, spans: 5 } } };
   const [ordinaryImage, changedImage] = symbolImages([pontoon, changed]);
   expect(changedImage.svg).not.toBe(ordinaryImage.svg);

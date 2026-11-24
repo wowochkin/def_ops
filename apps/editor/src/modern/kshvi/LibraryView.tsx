@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
+import { DateTimeField } from '../DateTimeField';
 import type {
   CreateExerciseInput,
   ExerciseFilters,
@@ -123,12 +124,8 @@ export function LibraryView({
             {Object.entries(scaleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>
-        <label htmlFor={`${uid}-new-start`}>Начало
-          <input id={`${uid}-new-start`} type="datetime-local" value={startsAt} onChange={event => setStartsAt(event.target.value)} />
-        </label>
-        <label htmlFor={`${uid}-new-end`}>Окончание
-          <input id={`${uid}-new-end`} type="datetime-local" value={endsAt} onChange={event => setEndsAt(event.target.value)} />
-        </label>
+        <DateTimeField id={`${uid}-new-start`} label="Начало" value={startsAt} onChange={setStartsAt} />
+        <DateTimeField id={`${uid}-new-end`} label="Окончание" value={endsAt} onChange={setEndsAt} />
       </div>
       <p className="kshvi-form-note">Новый проект получит первую редакцию. Датами можно дополнить карточку позже; неизвестные сроки не подставляются автоматически.</p>
       <button className="kshvi-primary" type="submit" disabled={saving || busy}>{saving ? 'Ждём подтверждение сервера…' : 'Сохранить на сервере'}</button>

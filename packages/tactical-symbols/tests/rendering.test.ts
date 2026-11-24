@@ -45,26 +45,26 @@ describe('жизненный цикл и версии знаков', () => {
   });
 
   it('фиксирует точную версию в сценарии и блокирует непроверенный набор', () => {
-    const usage = pinSymbolUsage(symbolSet, 'command-post');
+    const usage = pinSymbolUsage(symbolSet, 'source-1');
     expect(usage).toMatchObject({
-      symbolId: 'command-post',
-      symbolVersion: '1.0.0',
-      setVersion: 'ru-modern-v1',
+      symbolId: 'source-1-1',
+      symbolVersion: '3.0.0',
+      setVersion: 'ru-modern-v3',
       geometryVersion: 1,
     });
     expect(() => assertSymbolsApproved([usage], [symbolSet])).toThrow('APPROVED');
 
-    const commandPost = getSymbol('command-post');
+    const commandPost = getSymbol('source-1');
     const laterSet = {
       ...symbolSet,
-      version: 'ru-modern-v2',
-      symbols: [{ ...commandPost, version: '2.0.0', status: 'APPROVED' as const }],
+      version: 'ru-modern-v4',
+      symbols: [{ ...commandPost, version: '3.1.0', status: 'APPROVED' as const }],
     };
     expect(symbolLegend([usage], [symbolSet, laterSet])).toEqual([{
-      symbolId: 'command-post',
+      symbolId: 'source-1-1',
       name: commandPost.name,
-      symbolVersion: '1.0.0',
-      setVersion: 'ru-modern-v1',
+      symbolVersion: '3.0.0',
+      setVersion: 'ru-modern-v3',
       geometryVersion: 1,
       status: 'MAPPED',
     }]);
@@ -83,7 +83,7 @@ describe('параметрический SVG', () => {
   });
 
   it('проверяет правила сочетания модификаторов', () => {
-    const commandPost = getSymbol('command-post');
+    const commandPost = { ...getSymbol('source-1'), allowedModifierIds: ['main', 'auxiliary'] };
     expect(() => renderSymbol({
       ...commandPost,
       modifiers: [
@@ -94,7 +94,7 @@ describe('параметрический SVG', () => {
   });
 
   it('изменяет векторную геометрию от параметров и экранирует русские подписи', () => {
-    const crossing = getSymbol('pontoon-crossing');
+    const crossing = { ...getSymbol('source-1'), id: 'pontoon-test', geometry: { version: 1, template: 'PONTOON' as const, parameters: { spans: 3 } } };
     const ordinary = renderSymbol(crossing, { width: 96, height: 96 });
     const changed = renderSymbol({
       ...crossing,
@@ -108,7 +108,7 @@ describe('параметрический SVG', () => {
   });
 
   it('семантически упрощает без потери принадлежности, типа, якоря и версии', () => {
-    const commandPost = getSymbol('command-post');
+    const commandPost = getSymbol('source-1');
     const simplified = simplifySymbol({
       ...commandPost,
       labels: { top: 'Штаб армии' },
@@ -159,23 +159,17 @@ describe('сложные переправы, дороги и МТО', () => {
   });
 
   it('рендерит все обязательные семейства без TTF и внешних ресурсов', () => {
-    const ids = [
-      'command-post', 'ground-unit', 'boundary-line', 'movement-route', 'evacuation-route',
-      'direction', 'area', 'destroyed-bridge', 'flooding', 'ford', 'ferry-crossing',
-      'pontoon-crossing', 'bridge-crossing', 'ice-crossing', 'warehouse', 'base',
-      'refuel-point', 'service-point', 'repair-point',
-    ] as const;
-    for (const id of ids) {
-      const definition = getSymbol(id);
+    for (const definition of symbolSet.symbols) {
       const svg = renderSymbol(definition, { width: 80, height: 80 });
-      expect(svg, id).toContain('<svg');
-      expect(svg, id).toMatch(/<(path|rect|circle|polygon|polyline|line)\b/);
-      expect(svg, id).not.toContain('<image');
-      expect(svg, id).not.toMatch(/(?:src|href)=["']https?:|\.ttf|@font-face/);
-      expect(definition.status, id).toBe('MAPPED');
-      expect(definition.source.symbolNumber, id).toBeNull();
-      expect(definition.source.referenceFragment.sha256, id).toMatch(/^[a-f0-9]{64}$/);
-      expect(definition.source.gaps.length, id).toBeGreaterThan(0);
+      expect(svg, definition.id).toContain('<svg');
+      expect(svg, definition.id).toMatch(/<(path|rect|circle|polygon|polyline|line|use)\b/);
+      expect(svg, definition.id).not.toContain('<image');
+      expect(svg, definition.id).not.toMatch(/(?:src|href)=["']https?:|\.ttf|@font-face/);
+      expect(definition.status, definition.id).toBe('MAPPED');
+      if (definition.id.startsWith('source-')) expect(definition.source.symbolNumber, definition.id).toMatch(/^\d+$/);
+      else expect(definition.source.symbolNumber, definition.id).toBeNull();
+      expect(definition.source.referenceFragment.sha256, definition.id).toMatch(/^[a-f0-9]{64}$/);
+      expect(definition.source.gaps.length, definition.id).toBeGreaterThan(0);
     }
     expect(symbolSet.symbols.some(symbol => symbol.status === 'APPROVED')).toBe(false);
   });
@@ -184,19 +178,19 @@ describe('сложные переправы, дороги и МТО', () => {
 describe('MapLibre без внешних ресурсов', () => {
   it('создаёт точки, линии, площади, кластеры и локальные SVG-образы', () => {
     const instances = [
-      { id: 'cp-1', setVersion: symbolSet.version, symbol: getSymbol('command-post'), geometry: { type: 'Point', coordinates: [30, 50] } },
-      { id: 'cp-2', setVersion: symbolSet.version, symbol: getSymbol('warehouse'), geometry: { type: 'Point', coordinates: [31, 51] } },
-      { id: 'route-1', setVersion: symbolSet.version, symbol: getSymbol('movement-route'), geometry: { type: 'LineString', coordinates: [[30, 50], [31, 51]] } },
-      { id: 'area-1', setVersion: symbolSet.version, symbol: getSymbol('area'), geometry: { type: 'Polygon', coordinates: [[[30, 50], [31, 50], [31, 51], [30, 50]]] } },
+      { id: 'cp-1', setVersion: symbolSet.version, symbol: getSymbol('source-1'), geometry: { type: 'Point', coordinates: [30, 50] } },
+      { id: 'cp-2', setVersion: symbolSet.version, symbol: getSymbol('source-429'), geometry: { type: 'Point', coordinates: [31, 51] } },
+      { id: 'route-1', setVersion: symbolSet.version, symbol: getSymbol('source-68'), geometry: { type: 'LineString', coordinates: [[30, 50], [31, 51]] } },
+      { id: 'area-1', setVersion: symbolSet.version, symbol: getSymbol('source-118'), geometry: { type: 'Polygon', coordinates: [[[30, 50], [31, 50], [31, 51], [30, 50]]] } },
     ] as const;
     const features = symbolFeatures(instances, { width: 64, height: 64 });
     const source = symbolSource(features);
     const layers = symbolLayers();
-    const images = symbolImages([getSymbol('command-post'), getSymbol('warehouse')], { width: 64, height: 64 });
+    const images = symbolImages([getSymbol('source-1'), getSymbol('source-429')], { width: 64, height: 64 });
 
     expect(features.features).toHaveLength(4);
     expect(features.features[0].properties).toMatchObject({
-      symbolId: 'command-post', symbolVersion: '1.0.0', setVersion: 'ru-modern-v1', offset: [0, -32],
+      symbolId: 'source-1-1', symbolVersion: '3.0.0', setVersion: 'ru-modern-v3', offset: [0, 0],
     });
     expect(source).toMatchObject({ type: 'geojson', cluster: true, clusterMaxZoom: 14 });
     expect(layers.map(layer => layer.id)).toEqual(expect.arrayContaining([
