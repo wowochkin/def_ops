@@ -43,14 +43,15 @@ function coordinate(lon:number,lat:number){
   const n=(v:number)=>Math.abs(v).toLocaleString('ru-RU',{maximumFractionDigits:4});
   return n(lat)+'° '+(lat<0?'ю.':'с.')+' '+n(lon)+'° '+(lon<0?'з.':'в.');
 }
-export function AtlasCatalog({groups,selected,disabled,terrainId,toggle,toggleLayer,terrain,show,remove,download,busy,load,names,rename}:{
+export function AtlasCatalog({groups,selected,disabled,terrainId,toggle,toggleLayer,terrain,show,remove,removeRegion,download,busy,load,names,rename}:{
   names:Record<string,string>;rename:(key:string,value:string)=>void;
   groups:RegionGroup[];selected:string[];disabled:Set<string>;terrainId:string|null;
   toggle:(id:string)=>void;toggleLayer:(key:string)=>void;terrain:(id:string)=>void;show:(group:RegionGroup)=>void;
-  remove:(id:string)=>void;download:(id:string)=>string;busy:boolean;load:()=>void;
+  remove:(id:string)=>void;removeRegion:(group:RegionGroup)=>void;download:(id:string)=>string;busy:boolean;load:()=>void;
 }){
   const [search,setSearch]=useState('');
   const [confirmId,setConfirmId]=useState<string|null>(null);
+  const [confirmRegion,setConfirmRegion]=useState<string|null>(null);
   return <section className="env-panel atlas-catalog"><h2>Области карты</h2>
     {!groups.length&&<><p>Загруженные карты появятся здесь.</p><button onClick={load}>Загрузить карту</button></>}
     {groups.length>1&&<label>Найти область<input type="search" placeholder="Название или координаты" value={search} onChange={e=>setSearch(e.target.value)}/></label>}
@@ -64,7 +65,8 @@ export function AtlasCatalog({groups,selected,disabled,terrainId,toggle,toggleLa
       return <details key={g.key} className="atlas-region">
         <summary><strong>{name}</strong><small>{coordinate(w,s)} — {coordinate(e,n)}</small>
           <small>Наборы на карте · {g.maps.filter(m=>selected.includes(m.id)).length} из {g.maps.length}</small></summary>
-        <button onClick={()=>show(g)}>Открыть область</button>
+        <div className="env-actions"><button onClick={()=>show(g)}>Открыть область</button><button className="kshvi-danger" disabled={busy} onClick={()=>setConfirmRegion(g.key)}>Удалить область</button></div>
+        {confirmRegion===g.key&&<div role="alert"><p>{`Удалить область «${name}» со всеми наборами (${g.maps.length})? Зафиксированные снимки КШВИ не изменятся.`}</p><div className="env-actions"><button disabled={busy} onClick={()=>{setConfirmRegion(null);removeRegion(g);}}>Подтвердить удаление области</button><button disabled={busy} onClick={()=>setConfirmRegion(null)}>Отмена</button></div></div>}
         {themes.length>0&&<fieldset className="atlas-object-themes"><legend>Объекты на векторной карте</legend>
           {themes.map(t=>{
             const key=regionThemeKey(g.key,t.id);

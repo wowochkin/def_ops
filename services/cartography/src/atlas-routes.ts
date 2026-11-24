@@ -10,6 +10,7 @@ import {atlasElevations} from './atlas-elevation';
 import {resolveSources} from './atlas-sources';
 import { AtlasStore, atlasStyle, validBounds, type ConvertOptions } from './atlas';
 import { AtlasJobs, type AtlasInput } from './atlas-jobs';
+import { deleteAtlasRegion, type DeleteAtlasItem } from './atlas-region-delete';
 import { type TileStore } from './tiles';
 import { ensureAssets, ohmAssetsDir, OHM_DEFAULTS } from './ohm';
 const sources=[
@@ -56,6 +57,12 @@ export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-o
    await pipeline(c.req,new Transform({transform(chunk:Buffer,_enc,cb){size+=chunk.length;cb(size>max?Error('Превышен предел импорта'):null,chunk);}}),createWriteStream(file));
    return reply(202,await jobs.start(c.tenant,{kind,file,options:o}));
   }catch(e){await fs.rm(file,{force:true});throw e;}
+ });
+ r.post('/cartography/atlas/regions/delete',async c=>{
+  const body=await c.json<{items?:DeleteAtlasItem[]}>();
+  if(!body||!Array.isArray(body.items)||!body.items.length||body.items.length>256||body.items.some(item=>!item||typeof item.id!=='string'||!/^[a-f0-9]{64}$/i.test(item.sha256)))throw new HttpError(422,'invalid_region_delete','Укажите от 1 до 256 наборов с идентификаторами и SHA-256');
+  if(new Set(body.items.map(item=>item.id)).size!==body.items.length)throw new HttpError(422,'duplicate_region_maps','Повтор идентификатора набора в одной операции');
+  return deleteAtlasRegion(store,jobs,c.tenant,body.items);
  });
  r.post('/cartography/atlas/:id/elevations',async c=>atlasElevations(store,c.tenant,c.params.id,(await c.json<{points:[number,number][]}>()).points));
  r.get('/cartography/atlas/:id/style',async c=>atlasStyle(await store.get(c.tenant,c.params.id),prefix(c)));

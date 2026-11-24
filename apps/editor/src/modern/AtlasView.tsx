@@ -102,6 +102,25 @@ export function AtlasView(){
    setDisabled(old=>new Set([...old].filter(key=>!key.startsWith(id+'/'))));
    setTerrainId(old=>old===id?null:old);
  }
+ async function removeRegion(group:Parameters<typeof openAtlasRegion>[1]){
+  if(group.maps.some(map=>!map.sha256))throw Error('Не все наборы имеют подтверждённый SHA-256');
+  const items=group.maps.map(map=>({id:map.id,sha256:map.sha256!}));
+  const result=await environmentApi<{deleted:string[];unchanged:{id:string;reason:string}[]}>('/atlas/regions/delete',{method:'POST',body:JSON.stringify({items})});
+  const removed=new Set(result.deleted);
+  await refresh();
+  setSelected(old=>old.filter(id=>!removed.has(id)));
+  setDisabled(old=>new Set([...old].filter(key=>!removed.has(key.split('/')[0]))));
+  setTerrainId(old=>old&&removed.has(old)?null:old);
+  setRegionStates(old=>{
+   const current=old[group.key];
+   const next={...old};
+   if(!result.unchanged.length)delete next[group.key];
+   else if(current)next[group.key]={...current,selected:current.selected.filter(id=>!removed.has(id)),disabled:current.disabled.filter(key=>!removed.has(key.split('/')[0])),terrainId:current.terrainId&&removed.has(current.terrainId)?null:current.terrainId};
+   return next;
+  });
+  if(result.unchanged.length)setActionError({tab:'layers',scope:regionKey,message:`Не удалено: ${result.unchanged.map(item=>`${item.id} — ${item.reason}`).join('; ')}`});
+  else rename(group.key,'');
+ }
  function toggle(id:string){if(terrainId===id)setTerrainId(null);setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);}
  const active=useMemo(()=>selected.map(id=>packages.find(p=>p.id===id)).filter((p):p is AtlasMeta=>!!p),[selected,packages]);
  const overview=resolveOverview({requested:showOverview});
@@ -131,7 +150,7 @@ export function AtlasView(){
    <AtlasCatalog names={names} rename={rename} groups={groups} selected={selected} disabled={disabled} terrainId={terrainId} toggle={toggle} show={openRegion}
     toggleLayer={key=>setDisabled(old=>{const next=new Set(old);if(!next.delete(key))next.add(key);return next;})}
     terrain={id=>{if(terrainId===id){setTerrainId(null);return;}setSelected(old=>old.includes(id)?old:[...old,id]);setTerrainId(id);}}
-    download={downloadLink} busy={busy} load={()=>setControlTab('maps')} remove={id=>void task(()=>removeMap(id))}/>
+    download={downloadLink} busy={busy} load={()=>setControlTab('maps')} remove={id=>void task(()=>removeMap(id))} removeRegion={group=>void task(()=>removeRegion(group))}/>
    <SeasonControls bounds={region.bounds} enabled={seasons} toggle={k=>setSeasons(old=>old.includes(k)?old.filter(x=>x!==k):[...old,k])}
     month={seasonMonth} choice={monthChoice} choose={setMonthChoice} values={transparency} change={change}/>
     <details><summary>Координаты области</summary><label>Рамка: запад, юг, восток, север<input value={draft} onChange={e=>{setDraft(e.target.value);setPlan(null);}} onBlur={()=>{if(draft!==regionKey)applyBounds(draft.split(',').map(v=>v.trim()?Number(v):NaN));}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/></label>{regionError&&<p role="alert">{regionError}</p>}</details>
