@@ -8,7 +8,7 @@ import type {AtlasMeta} from '../../../../services/cartography/src/atlas';
 import type {AtlasJob} from '../../../../services/cartography/src/atlas-jobs';
 
 type Bounds = AtlasMeta['bounds'];
-interface RegionGroup { key:string; bounds:Bounds; maps:AtlasMeta[] }
+interface RegionGroup { key:string; bounds:Bounds; maps:readonly AtlasMeta[] }
 export function catalogRegions(maps:AtlasMeta[], jobs:AtlasJob[]) {
   const requested = new Map(jobs.filter(j=>j.state==='done' && j.result && j.input.kind!=='mbtiles')
     .map(j=>[j.result!.id,j.input.options.bounds]));
@@ -18,7 +18,7 @@ export function catalogRegions(maps:AtlasMeta[], jobs:AtlasJob[]) {
     const key=areaKey(bounds);
     let group=groups.get(key);
     if(!group){group={key,bounds,maps:[]};groups.set(key,group);}
-    group.maps.push(map);
+    group.maps=[...group.maps,map];
   }
   return [...groups.values()].sort((a,b)=>b.bounds[3]-a.bounds[3]||a.bounds[0]-b.bounds[0]);
 }
@@ -46,7 +46,7 @@ function coordinate(lon:number,lat:number){
 export function AtlasCatalog({groups,selected,disabled,terrainId,toggle,toggleLayer,terrain,show,remove,download,busy,load,names,rename}:{
   names:Record<string,string>;rename:(key:string,value:string)=>void;
   groups:RegionGroup[];selected:string[];disabled:Set<string>;terrainId:string|null;
-  toggle:(id:string)=>void;toggleLayer:(key:string)=>void;terrain:(id:string)=>void;show:(bounds:Bounds)=>void;
+  toggle:(id:string)=>void;toggleLayer:(key:string)=>void;terrain:(id:string)=>void;show:(group:RegionGroup)=>void;
   remove:(id:string)=>void;download:(id:string)=>string;busy:boolean;load:()=>void;
 }){
   const [search,setSearch]=useState('');
@@ -64,7 +64,7 @@ export function AtlasCatalog({groups,selected,disabled,terrainId,toggle,toggleLa
       return <details key={g.key} className="atlas-region">
         <summary><strong>{name}</strong><small>{coordinate(w,s)} — {coordinate(e,n)}</small>
           <small>Наборы на карте · {g.maps.filter(m=>selected.includes(m.id)).length} из {g.maps.length}</small></summary>
-        <button onClick={()=>show([...g.bounds])}>Показать область</button>
+        <button onClick={()=>show(g)}>Открыть область</button>
         {themes.length>0&&<fieldset className="atlas-object-themes"><legend>Объекты на векторной карте</legend>
           {themes.map(t=>{
             const key=regionThemeKey(g.key,t.id);

@@ -16,7 +16,7 @@ export function isLandCover(p:AtlasMeta){
 }
 type MapBounds = WeatherRegion['bounds'];
 interface AtlasMapProps {
- packages: AtlasMeta[];
+ packages: readonly AtlasMeta[];
  bounds: MapBounds;
  regions?: ReadonlyMap<string,string>;
  disabled?: Set<string>;
