@@ -205,7 +205,7 @@ export class ExpoSession {
   private card(id: string) { return (this.bank.cards.find((c) => c.id === id) ?? this.extra.find((c) => c.id === id))!; }
 
   private scales(events: EventResult[], time: string, hour: number, loss = 0): Scales {
-    const a = axes(events, this.def.keyEvents, time, loss, refAt(this.bank.reference[this.front]?.losses, hour));
+    const a = axes(events, this.def.keyEvents, time, loss, refAt(this.bank.reference[this.front]?.losses, hour), hour >= this.bank.end);
     return { axes: a, notes: { speed: axisNote('speed', a), cost: axisNote('cost', a), intent: axisNote('intent', a) } };
   }
 

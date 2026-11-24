@@ -74,3 +74,22 @@ describe('нуль шкал — ход «как было»', () => {
     clearExpoBaseline();
   });
 });
+
+
+describe('итоговый досчёт просроченных и невыполненных задач', () => {
+  it('учитывает опоздание несвершившегося события и не награждает экономию на невыполненном', () => {
+    const events = [
+      ev('a', '1945-04-18', '1945-04-18', 0),
+      ev('b', '1945-04-19', null, null),
+    ];
+    const result = axes(events, ['a', 'b'], '1945-04-22T05:00', 500, 1000, true);
+    expect(result).toMatchObject({ done: 1, due: 2, lossRatio: 0.5 });
+    expect(result.days).toBe(1.5);
+    expect(result.speed).toBeCloseTo(-0.5);
+    expect(result.cost).toBe(0);
+
+    const beforeFinal = axes(events, ['a', 'b'], '1945-04-22T05:00', 500, 1000, false);
+    expect(beforeFinal.days).toBe(0);
+    expect(beforeFinal.cost).toBe(0);
+  });
+});
