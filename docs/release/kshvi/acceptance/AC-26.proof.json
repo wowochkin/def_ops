@@ -1,0 +1,43 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "equipment-knowledge-ac26",
+    "revision": 1,
+    "sha256": "30ad58de39facdbe43bba0d513597b2db66e4b2ce3f88334a44c3c0684eae6f5"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac26/journal.json",
+    "sha256": "efb3eb18c23f601236f2e4278bfc3bcab882deaac7d14ee95c84250511bfab70",
+    "eventCount": 6
+  },
+  "hashes": {
+    "scenario": "30ad58de39facdbe43bba0d513597b2db66e4b2ce3f88334a44c3c0684eae6f5",
+    "environment": "e6df178eb8b973236527ae3a6f50f2d3b46d356b6973ce51cf5a0dcb0214f2ae",
+    "journal": "efb3eb18c23f601236f2e4278bfc3bcab882deaac7d14ee95c84250511bfab70"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac26/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "independentSourceCopies": 2,
+    "sourceRecordUnchanged": 1,
+    "constructorCopies": 1,
+    "requiredUnknownReviews": 2,
+    "initiallyAllowedTasks": 1,
+    "damagedTasksBlocked": 1,
+    "repairedTasksAllowed": 1,
+    "repairResourceRemaining": 0,
+    "duplicateAllocations": 0
+  },
+  "limitations": [
+    "Серверный импорт и событийный автомат техники проверены; содержательная оценка конкретных военных характеристик остаётся предметом методической AC-30."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac26/journal.json",
+    "docs/release/kshvi/evidence/ac26/equipment-history.json",
+    "docs/release/kshvi/evidence/ac26/protocol.txt",
+    "docs/release/kshvi/evidence/ac26/metrics.json"
+  ]
+}

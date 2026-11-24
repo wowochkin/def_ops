@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac29-terrain.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n ✓ services/kshvi/tests/acceptance/ac29-terrain.test.ts (1 test) 987ms\n   ✓ AC-29: погода, гидрология, скрытое повреждение и очередь меняют маршрут и снабжение без отката пути 987ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:55:51\n   Duration  1.40s (tests 73%, transform 22%, import 5%)\n\n",
+  "initialRevision": {
+    "id": "kshvi-terrain-hydrology-training",
+    "revision": 1,
+    "sha256": "ccc5273a69dbd9d23e29dbaf2b5319103524f2b5c80440d0ae6143a374e78804"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac29/journal.json",
+    "sha256": "d9109b91b5736087f270125d8f7a670835b2727fe988a3fd6e64c9080c66f8e1",
+    "eventCount": 37
+  },
+  "hashes": {
+    "scenario": "ccc5273a69dbd9d23e29dbaf2b5319103524f2b5c80440d0ae6143a374e78804",
+    "environment": "93f5afad39d4ac0f4d82fd65c23276b6bd71d2c145ec11b806238f01227847af",
+    "journal": "d9109b91b5736087f270125d8f7a670835b2727fe988a3fd6e64c9080c66f8e1"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac29/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "terrainEvents": 37,
+    "repeatedTerrainEffects": 0,
+    "queuedColumns": 2,
+    "additionalRouteMinutes": 180,
+    "preservedTravelledMeters": 2000,
+    "hiddenChangesBeforeObservation": 1,
+    "unknownWeatherReviews": 1,
+    "domainProcessesCalled": 4
+  },
+  "limitations": [
+    "Динамическая модель и проекции проверены на версионном профиле; фактическая географическая точность конкретного атласа оценивается отдельно по источникам и на контрольном стенде."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac29/journal.json",
+    "docs/release/kshvi/evidence/ac29/route-comparison.json",
+    "docs/release/kshvi/evidence/ac29/protocol.txt",
+    "docs/release/kshvi/evidence/ac29/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-29.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
+  "openErrors": []
+}

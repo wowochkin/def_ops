@@ -1,0 +1,1356 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "events": [
+    {
+      "eventId": "5904e752-add8-498f-8ac7-78222b954154",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "communication.queued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.enqueue-0"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "sideId": "blue",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-1",
+          "duplicate": false,
+          "messageId": "message-1",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-1",
+        "commandId": "communication.enqueue-0",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "communication.enqueue"
+      },
+      "prevHash": null,
+      "hash": "32591451046162958c2e01374ba6a6a430ac706ecf413987fd235324ba28da11",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "1892aec7-5130-457c-b9dd-44853ea4116a",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "communication.queued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.enqueue-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "sideId": "blue",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.enqueue-1",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "communication.enqueue"
+      },
+      "prevHash": "32591451046162958c2e01374ba6a6a430ac706ecf413987fd235324ba28da11",
+      "hash": "9bdb33ba22b81a3e8f6a7d4eed10ede35b303f83ceed9b9cc765d2d0e6a24643",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "15bee679-8743-42ee-becf-4475e418cd22",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "communication.admitted.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.admit-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "causedBy": "primary",
+        "commandId": "communication.admit-2",
+        "queuedIds": [
+          "message-2"
+        ],
+        "commandType": "communication.admit",
+        "inTransitIds": [
+          "message-1"
+        ]
+      },
+      "prevHash": "9bdb33ba22b81a3e8f6a7d4eed10ede35b303f83ceed9b9cc765d2d0e6a24643",
+      "hash": "b6beeafc78a14214c5b09719c641f1ce18fcbe620a2989c45a7f6d369e9819ad",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "d120f79c-703f-4a53-a8f6-21978e3ba8c3",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "communication.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:01:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:01:00.000Z",
+        "normalizedAt": "2030-01-01T00:01:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.advance-3"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:01:00Z",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": "DELIVERED",
+          "status": "delivered",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-1",
+          "duplicate": false,
+          "messageId": "message-1",
+          "sizeBytes": 100,
+          "startedAt": "2030-01-01T00:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2030-01-01T00:01:00Z",
+          "domainEffect": "APPLIED",
+          "recipientIds": [
+            "node-1"
+          ],
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "delivered"
+          },
+          "appliedDomainKeys": [
+            "order-1:node-1"
+          ],
+          "domainEffectApplied": true,
+          "deliveryJournalEntry": {
+            "at": "2030-01-01T00:01:00Z",
+            "attempt": 1,
+            "domainKey": "order-1",
+            "duplicate": false,
+            "messageId": "message-1"
+          }
+        },
+        "causedBy": "message-1",
+        "commandId": "communication.advance-3",
+        "commandType": "communication.advance"
+      },
+      "prevHash": "b6beeafc78a14214c5b09719c641f1ce18fcbe620a2989c45a7f6d369e9819ad",
+      "hash": "e18f10be27651b68f9ed076ad7afaad1623ea8eec6344e8448278f5239bda90b",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "7b02e680-5043-4af6-9043-289cf4a1fd54",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 5,
+      "type": "communication.admitted.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.admit-4"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "causedBy": "primary",
+        "commandId": "communication.admit-4",
+        "queuedIds": [],
+        "commandType": "communication.admit",
+        "inTransitIds": [
+          "message-2"
+        ]
+      },
+      "prevHash": "e18f10be27651b68f9ed076ad7afaad1623ea8eec6344e8448278f5239bda90b",
+      "hash": "ce392963b65a9f52f6e238449d53a13fd130537ad059c44ca991c3b919840758",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "8d236bf8-7e29-425d-aa57-cf88f62337bc",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 6,
+      "type": "communication.failure.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.failure-5"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "type": "DELAY",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 300,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "inTransit",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": "2030-01-01T00:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.failure-5",
+        "messageId": "message-2",
+        "commandType": "communication.failure",
+        "impactPreview": {
+          "branchIds": [
+            "main"
+          ],
+          "deadlineIds": [
+            "deadline-1"
+          ],
+          "documentIds": [
+            "document-1"
+          ]
+        },
+        "duplicateRequested": false
+      },
+      "prevHash": "ce392963b65a9f52f6e238449d53a13fd130537ad059c44ca991c3b919840758",
+      "hash": "7193862860361f66c47dbdbe6601bc5e98216003df6c55f01916cf024b2ccbb7",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "75a31fbe-990c-4d75-bc38-341686cdb916",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 7,
+      "type": "communication.failure.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:02:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:02:00.000Z",
+        "normalizedAt": "2030-01-01T00:02:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.failure-6"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:02:00Z",
+        "type": "LOSS",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 300,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": "FAILED",
+          "status": "failed",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": "2030-01-01T00:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2030-01-01T00:02:00Z",
+          "failureReason": "Основание loss-1",
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.failure-6",
+        "messageId": "message-2",
+        "commandType": "communication.failure",
+        "impactPreview": {
+          "branchIds": [
+            "main"
+          ],
+          "deadlineIds": [
+            "deadline-1"
+          ],
+          "documentIds": [
+            "document-1"
+          ]
+        },
+        "duplicateRequested": false
+      },
+      "prevHash": "7193862860361f66c47dbdbe6601bc5e98216003df6c55f01916cf024b2ccbb7",
+      "hash": "535214b9791016b9d0c71ecf50040eaf92c8b87089fb329971b555539677e3d1",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "271077fb-42f1-4940-97a0-637053f9bd3c",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 8,
+      "type": "communication.retried.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:03:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:03:00.000Z",
+        "normalizedAt": "2030-01-01T00:03:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.retry-7"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:03:00Z",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 300,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 2,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:03:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "previousAttempt": {
+            "route": {
+              "events": [],
+              "delayMs": 300,
+              "nodeIds": [
+                "node-1"
+              ],
+              "channelId": "primary",
+              "selectedReserve": false
+            },
+            "result": "FAILED",
+            "status": "failed",
+            "attempt": 1,
+            "partial": false,
+            "priority": 1,
+            "queuedAt": "2030-01-01T00:00:00Z",
+            "domainKey": "order-2",
+            "duplicate": false,
+            "messageId": "message-2",
+            "sizeBytes": 100,
+            "startedAt": "2030-01-01T00:00:00Z",
+            "recipients": [
+              "node-1"
+            ],
+            "senderRole": "DIRECTOR",
+            "completedAt": "2030-01-01T00:02:00Z",
+            "failureReason": "Основание loss-1",
+            "fromInstanceId": "ac06",
+            "recipientResults": {
+              "node-1": "queued"
+            },
+            "appliedDomainKeys": [],
+            "domainEffectApplied": false
+          },
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.retry-7",
+        "commandType": "communication.retry"
+      },
+      "prevHash": "535214b9791016b9d0c71ecf50040eaf92c8b87089fb329971b555539677e3d1",
+      "hash": "e74b0c2b6a42667da1b9bb1fa6f08f2678cb82e33126d79a36ae9952f09a4d25",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "0400aafd-277e-46d1-ac85-2e84f56bf340",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 9,
+      "type": "communication.admitted.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.admit-8"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "causedBy": "primary",
+        "commandId": "communication.admit-8",
+        "queuedIds": [],
+        "commandType": "communication.admit",
+        "inTransitIds": [
+          "message-2"
+        ]
+      },
+      "prevHash": "e74b0c2b6a42667da1b9bb1fa6f08f2678cb82e33126d79a36ae9952f09a4d25",
+      "hash": "ed62801345d07b380f725968f96a71f4a60c911d1066964da9e772b124da8e13",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "3d2d207e-2534-42de-804e-1bedd25f2cfe",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 10,
+      "type": "communication.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:04:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:04:00.000Z",
+        "normalizedAt": "2030-01-01T00:04:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.advance-9"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:04:00Z",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 300,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": "DELIVERED",
+          "status": "delivered",
+          "attempt": 2,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:03:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": "2030-01-01T00:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2030-01-01T00:04:00Z",
+          "domainEffect": "APPLIED",
+          "recipientIds": [
+            "node-1"
+          ],
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "previousAttempt": {
+            "route": {
+              "events": [],
+              "delayMs": 300,
+              "nodeIds": [
+                "node-1"
+              ],
+              "channelId": "primary",
+              "selectedReserve": false
+            },
+            "result": "FAILED",
+            "status": "failed",
+            "attempt": 1,
+            "partial": false,
+            "priority": 1,
+            "queuedAt": "2030-01-01T00:00:00Z",
+            "domainKey": "order-2",
+            "duplicate": false,
+            "messageId": "message-2",
+            "sizeBytes": 100,
+            "startedAt": "2030-01-01T00:00:00Z",
+            "recipients": [
+              "node-1"
+            ],
+            "senderRole": "DIRECTOR",
+            "completedAt": "2030-01-01T00:02:00Z",
+            "failureReason": "Основание loss-1",
+            "fromInstanceId": "ac06",
+            "recipientResults": {
+              "node-1": "queued"
+            },
+            "appliedDomainKeys": [],
+            "domainEffectApplied": false
+          },
+          "recipientResults": {
+            "node-1": "delivered"
+          },
+          "appliedDomainKeys": [
+            "order-2:node-1"
+          ],
+          "domainEffectApplied": true,
+          "deliveryJournalEntry": {
+            "at": "2030-01-01T00:04:00Z",
+            "attempt": 2,
+            "domainKey": "order-2",
+            "duplicate": false,
+            "messageId": "message-2"
+          }
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.advance-9",
+        "commandType": "communication.advance"
+      },
+      "prevHash": "ed62801345d07b380f725968f96a71f4a60c911d1066964da9e772b124da8e13",
+      "hash": "b8978876c04abb4f265dd6ed936760c0a660133cf848ff67ca8021cb42b9b46a",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "c5565370-d30c-4d09-9f73-c60f323ab76d",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 11,
+      "type": "communication.failure.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:05:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:05:00.000Z",
+        "normalizedAt": "2030-01-01T00:05:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.failure-10"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:05:00Z",
+        "type": "DUPLICATE",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 300,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": "DELIVERED",
+          "status": "delivered",
+          "attempt": 2,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:03:00Z",
+          "domainKey": "order-2",
+          "duplicate": false,
+          "messageId": "message-2",
+          "sizeBytes": 100,
+          "startedAt": "2030-01-01T00:00:00Z",
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2030-01-01T00:04:00Z",
+          "domainEffect": "APPLIED",
+          "recipientIds": [
+            "node-1"
+          ],
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "previousAttempt": {
+            "route": {
+              "events": [],
+              "delayMs": 300,
+              "nodeIds": [
+                "node-1"
+              ],
+              "channelId": "primary",
+              "selectedReserve": false
+            },
+            "result": "FAILED",
+            "status": "failed",
+            "attempt": 1,
+            "partial": false,
+            "priority": 1,
+            "queuedAt": "2030-01-01T00:00:00Z",
+            "domainKey": "order-2",
+            "duplicate": false,
+            "messageId": "message-2",
+            "sizeBytes": 100,
+            "startedAt": "2030-01-01T00:00:00Z",
+            "recipients": [
+              "node-1"
+            ],
+            "senderRole": "DIRECTOR",
+            "completedAt": "2030-01-01T00:02:00Z",
+            "failureReason": "Основание loss-1",
+            "fromInstanceId": "ac06",
+            "recipientResults": {
+              "node-1": "queued"
+            },
+            "appliedDomainKeys": [],
+            "domainEffectApplied": false
+          },
+          "recipientResults": {
+            "node-1": "delivered"
+          },
+          "appliedDomainKeys": [
+            "order-2:node-1"
+          ],
+          "domainEffectApplied": true,
+          "deliveryJournalEntry": {
+            "at": "2030-01-01T00:04:00Z",
+            "attempt": 2,
+            "domainKey": "order-2",
+            "duplicate": false,
+            "messageId": "message-2"
+          }
+        },
+        "causedBy": "message-2",
+        "commandId": "communication.failure-10",
+        "messageId": "message-2",
+        "commandType": "communication.failure",
+        "impactPreview": {
+          "branchIds": [
+            "main"
+          ],
+          "deadlineIds": [
+            "deadline-1"
+          ],
+          "documentIds": [
+            "document-1"
+          ]
+        },
+        "duplicateRequested": true
+      },
+      "prevHash": "b8978876c04abb4f265dd6ed936760c0a660133cf848ff67ca8021cb42b9b46a",
+      "hash": "e1f7511be6dd192c2ded21d80abaf5e05cb1e32934d2539d577cf4f9c9aef7b4",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "6d48d1e8-5d85-46bc-bb57-24c7e2b2ce72",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 12,
+      "type": "communication.queued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:00:00.000Z",
+        "normalizedAt": "2030-01-01T00:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.enqueue-11"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:00:00Z",
+        "sideId": "blue",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-3",
+          "duplicate": false,
+          "messageId": "message-3",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-3",
+        "commandId": "communication.enqueue-11",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "communication.enqueue"
+      },
+      "prevHash": "e1f7511be6dd192c2ded21d80abaf5e05cb1e32934d2539d577cf4f9c9aef7b4",
+      "hash": "5503c322d9d5367aed6c425a8f61489e25e0e43ffd7211b092ea85353ac2b63e",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "ae37ae54-b108-46fc-937c-4ddd40df8c98",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 13,
+      "type": "communication.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:05:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:05:00.000Z",
+        "normalizedAt": "2030-01-01T00:05:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.advance-12"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:05:00Z",
+        "attempt": {
+          "route": {
+            "events": [],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-1"
+            ],
+            "channelId": "primary",
+            "selectedReserve": false
+          },
+          "result": "CANCELLED",
+          "status": "cancelled",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:00:00Z",
+          "domainKey": "order-3",
+          "duplicate": false,
+          "messageId": "message-3",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": "2030-01-01T00:05:00Z",
+          "failureReason": "Отмена до передачи",
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-3",
+        "commandId": "communication.advance-12",
+        "commandType": "communication.advance"
+      },
+      "prevHash": "5503c322d9d5367aed6c425a8f61489e25e0e43ffd7211b092ea85353ac2b63e",
+      "hash": "2652ff8715300dc17eae78d9076e0f18cc4171e83425f4a999318a261198d36a",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "15636c1a-cf2b-4303-ad4f-681807a07fbb",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 14,
+      "type": "communication.infrastructure.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:06:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:06:00.000Z",
+        "normalizedAt": "2030-01-01T00:06:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.infrastructure-13"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:06:00Z",
+        "events": [
+          {
+            "at": "2030-01-01T00:02:00Z",
+            "type": "NODE_FAILURE",
+            "scope": {
+              "nodeIds": [
+                "node-1"
+              ],
+              "channelIds": [
+                "primary"
+              ]
+            }
+          }
+        ],
+        "causedBy": "node-failure-1",
+        "commandId": "communication.infrastructure-13",
+        "commandType": "communication.infrastructure",
+        "impactPreview": {
+          "branchIds": [
+            "main"
+          ],
+          "deadlineIds": [
+            "deadline-1"
+          ],
+          "documentIds": [
+            "document-1"
+          ]
+        }
+      },
+      "prevHash": "2652ff8715300dc17eae78d9076e0f18cc4171e83425f4a999318a261198d36a",
+      "hash": "78f7429c66f2b5fc7766aa07d2e5ef68c9df0da3e77dafb71697c2bd658ae0b2",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "f90cd428-306f-4691-9905-f3d9167be5bb",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 15,
+      "type": "communication.queued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:06:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:06:00.000Z",
+        "normalizedAt": "2030-01-01T00:06:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.enqueue-14"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:06:00Z",
+        "sideId": "blue",
+        "attempt": {
+          "route": {
+            "events": [
+              {
+                "at": "2030-01-01T00:06:00Z",
+                "type": "RESERVE_ROUTE_SELECTED",
+                "channelId": "reserve",
+                "replacedChannelId": "primary"
+              }
+            ],
+            "delayMs": 200,
+            "nodeIds": [
+              "node-2"
+            ],
+            "channelId": "reserve",
+            "selectedReserve": true
+          },
+          "result": null,
+          "status": "queued",
+          "attempt": 1,
+          "partial": false,
+          "priority": 1,
+          "queuedAt": "2030-01-01T00:06:00Z",
+          "domainKey": "order-4",
+          "duplicate": false,
+          "messageId": "message-4",
+          "sizeBytes": 100,
+          "startedAt": null,
+          "recipients": [
+            "node-1"
+          ],
+          "senderRole": "DIRECTOR",
+          "completedAt": null,
+          "failureReason": null,
+          "fromInstanceId": "ac06",
+          "recipientResults": {
+            "node-1": "queued"
+          },
+          "appliedDomainKeys": [],
+          "domainEffectApplied": false
+        },
+        "causedBy": "message-4",
+        "commandId": "communication.enqueue-14",
+        "recipients": [
+          "node-1"
+        ],
+        "commandType": "communication.enqueue"
+      },
+      "prevHash": "78f7429c66f2b5fc7766aa07d2e5ef68c9df0da3e77dafb71697c2bd658ae0b2",
+      "hash": "2da083b988fab3d664a926c8e5cedec23027b93a1872bb830c55ef9b3101e842",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "68066571-b300-49b5-a2f8-24a33dc0341c",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 16,
+      "type": "communication.infrastructure.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:07:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:07:00.000Z",
+        "normalizedAt": "2030-01-01T00:07:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "communication.infrastructure-15"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:07:00Z",
+        "events": [
+          {
+            "at": "2030-01-01T00:02:00Z",
+            "type": "RECOVERY",
+            "scope": {
+              "nodeIds": [
+                "node-1"
+              ],
+              "channelIds": [
+                "primary"
+              ]
+            }
+          }
+        ],
+        "causedBy": "recovery-1",
+        "commandId": "communication.infrastructure-15",
+        "commandType": "communication.infrastructure",
+        "impactPreview": {
+          "branchIds": [
+            "main"
+          ],
+          "deadlineIds": [
+            "deadline-1"
+          ],
+          "documentIds": [
+            "document-1"
+          ]
+        }
+      },
+      "prevHash": "2da083b988fab3d664a926c8e5cedec23027b93a1872bb830c55ef9b3101e842",
+      "hash": "c43df08af8c4c08f3c9952e1ebf665c27bcd17cef615743e9643e4c358b3cab3",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "95f93dab-e3b9-4519-9b8c-e971766ca016",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 17,
+      "type": "report.deadline.checked.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:03:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:03:00.000Z",
+        "normalizedAt": "2030-01-01T00:03:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "report.check-16"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:03:00Z",
+        "result": {
+          "status": "REPORT_NOT_SENT",
+          "escalation": {
+            "reason": "REPORT_NOT_SENT",
+            "toRole": "DIRECTOR"
+          },
+          "missingFields": [],
+          "missedDeadline": true,
+          "observableFacts": [
+            {
+              "at": "2030-01-01T00:03:00Z",
+              "type": "REPORT_DEADLINE_MISSED",
+              "eventId": "event-1",
+              "scheduleId": "urgent-report"
+            }
+          ]
+        },
+        "causedBy": "urgent-report",
+        "commandId": "report.check-16",
+        "scheduleId": "urgent-report",
+        "commandType": "report.check"
+      },
+      "prevHash": "c43df08af8c4c08f3c9952e1ebf665c27bcd17cef615743e9643e4c358b3cab3",
+      "hash": "b75405e5453ccfd5703cdcc3f459939438af0799e592d21a3b49bd111ba68024",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "53282309-44d4-4da8-959c-d862b8dcd9d2",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 18,
+      "type": "report.deadline.checked.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:03:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:03:00.000Z",
+        "normalizedAt": "2030-01-01T00:03:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "report.check-17"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:03:00Z",
+        "result": {
+          "status": "EVENT_NOT_OCCURRED",
+          "escalation": null,
+          "missingFields": [],
+          "missedDeadline": false,
+          "observableFacts": []
+        },
+        "causedBy": "urgent-report",
+        "commandId": "report.check-17",
+        "scheduleId": "urgent-report",
+        "commandType": "report.check"
+      },
+      "prevHash": "b75405e5453ccfd5703cdcc3f459939438af0799e592d21a3b49bd111ba68024",
+      "hash": "15a9b95844c29e3d96e04bfd4b83e210674ab488741e088eafb7e23d0af3c452",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "fb355eb3-8c60-45f3-b935-f8f899b46b0c",
+      "organizationId": "org-ac06",
+      "instanceId": "ac06",
+      "branchId": "main",
+      "sequence": 19,
+      "type": "paper.exchange.recorded.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T00:08:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T00:08:00.000Z",
+        "normalizedAt": "2030-01-01T00:08:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "paper.record-18"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T00:08:00Z",
+        "result": {
+          "facts": [
+            {
+              "type": "ISSUED",
+              "actorId": "director",
+              "actualAt": "2030-01-01T00:00:00Z",
+              "recordedAt": "2030-01-01T00:08:00Z"
+            },
+            {
+              "type": "RECEIVED",
+              "actorId": "node-1",
+              "actualAt": "2030-01-01T00:01:00Z",
+              "recordedAt": "2030-01-01T00:08:00Z"
+            }
+          ],
+          "source": {
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "revision": 1,
+            "documentId": "document-1"
+          },
+          "evidence": {
+            "kind": "SCAN",
+            "reference": "scan/document-1.pdf"
+          },
+          "duplicate": true,
+          "enteredBy": "director",
+          "appliedDomainKeys": [
+            "order-1:node-1",
+            "order-2:node-1"
+          ],
+          "cancelledMessageIds": [],
+          "domainEffectApplied": false,
+          "electronicResolution": "RECONCILED_DUPLICATE"
+        },
+        "causedBy": "document-1",
+        "commandId": "paper.record-18",
+        "commandType": "paper.record"
+      },
+      "prevHash": "15a9b95844c29e3d96e04bfd4b83e210674ab488741e088eafb7e23d0af3c452",
+      "hash": "e0603d09256673fe2a008f0213c3966048cbf1007e70d96ef9babd4b82b60a99",
+      "hashVersion": 2
+    }
+  ]
+}

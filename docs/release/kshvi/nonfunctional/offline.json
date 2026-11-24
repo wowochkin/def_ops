@@ -1,0 +1,2047 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-01-OFFLINE",
+  "startedAt": "2026-11-23T20:40:33.899Z",
+  "finishedAt": "2026-11-23T20:40:33.979Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "command": "node scripts/kshvi-offline-check.mjs --deny-external",
+  "status": "passed",
+  "issues": [],
+  "localAssetsVerified": true,
+  "localAssetErrors": [],
+  "assets": [
+    {
+      "id": "data-training-atlas-json",
+      "kind": "ATLAS",
+      "path": "data/training-atlas.json",
+      "bytes": 262,
+      "sha256": "e436775027030ea18ac35deb2d0e33964d0d9d864f8518e7b56af2e5e748e871"
+    },
+    {
+      "id": "data-training-weather-json",
+      "kind": "WEATHER",
+      "path": "data/training-weather.json",
+      "bytes": 224,
+      "sha256": "bb030640250182809f87f1db77fe9db164b636c6fdaca0f86ceabac2167f5b92"
+    },
+    {
+      "id": "fonts-OFL-txt",
+      "kind": "FONT",
+      "path": "fonts/OFL.txt",
+      "bytes": 4437,
+      "sha256": "a9ad947bd2dde50d9bf028b719cf6def7d573e27f550e3ac1558428fa3a793a4"
+    },
+    {
+      "id": "fonts-pt-sans-narrow-cyrillic-400-normal-woff2",
+      "kind": "FONT",
+      "path": "fonts/pt-sans-narrow-cyrillic-400-normal.woff2",
+      "bytes": 22208,
+      "sha256": "ff565657aca50b0d3ad4dd38ae9121543149796ea8db25b6a0b6ad78d11e3bcc"
+    },
+    {
+      "id": "vendor-knowledge-NOTICE-txt",
+      "kind": "REFERENCE",
+      "path": "vendor/knowledge/NOTICE.txt",
+      "bytes": 398,
+      "sha256": "aa261ae098ecf12fe6db725cda86e3c802d50add02fe1d6471872d01d5dfe9b1"
+    },
+    {
+      "id": "vendor-knowledge-model-index-json",
+      "kind": "REFERENCE",
+      "path": "vendor/knowledge/model-index.json",
+      "bytes": 2152008,
+      "sha256": "5d9b1576cd5c6c8ab3f194f5a4f9e2028b636feb1d13ce79551a80ac9f838b7e"
+    },
+    {
+      "id": "vendor-knowledge-seed-json",
+      "kind": "REFERENCE",
+      "path": "vendor/knowledge/seed.json",
+      "bytes": 6291330,
+      "sha256": "fe37cd9292ab252015518741d6abf170c9407c57d51b36b497d1ea00a6a57128"
+    },
+    {
+      "id": "vendor-pdfmake-CHANGELOG-md",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/CHANGELOG.md",
+      "bytes": 5796,
+      "sha256": "74f32dd366a4ef73a919e14270fadf38889601e2bc1a3b292ae38161fe00f798"
+    },
+    {
+      "id": "vendor-pdfmake-LICENSE",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/LICENSE",
+      "bytes": 1134,
+      "sha256": "963c9bfe4117623556e66c36524176bf38948b749e983c35af93c961caad8ce9"
+    },
+    {
+      "id": "vendor-pdfmake-README-md",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/README.md",
+      "bytes": 2797,
+      "sha256": "10a04c0d55fd8107a217583dd1a69058714e2f43538ea59e7c683211e334c2ef"
+    },
+    {
+      "id": "vendor-pdfmake-build-vfs-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build-vfs.js",
+      "bytes": 1664,
+      "sha256": "8e7ad693b19184d3e40f1a3a2d9a290d1140a100ba366c872a70ec3561d64f7f"
+    },
+    {
+      "id": "vendor-pdfmake-build-pdfmake-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build/pdfmake.js",
+      "bytes": 2847417,
+      "sha256": "57a83e4242669e054e10a9bb40eba51c1062c1bf5bb4d7df42f55ea132ddc11d"
+    },
+    {
+      "id": "vendor-pdfmake-build-pdfmake-js-map",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build/pdfmake.js.map",
+      "bytes": 3901449,
+      "sha256": "fd324be5c3216c4f1d0bd6b97940027a33fb42ee2a098f321dccfc8b4e068856"
+    },
+    {
+      "id": "vendor-pdfmake-build-pdfmake-min-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build/pdfmake.min.js",
+      "bytes": 1399635,
+      "sha256": "4410187c36ed6dd8cbfbaeea5b6fab6244238b3479c6de1cfe125d2c61fc2ba0"
+    },
+    {
+      "id": "vendor-pdfmake-build-pdfmake-min-js-map",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build/pdfmake.min.js.map",
+      "bytes": 4225171,
+      "sha256": "7b45a8c039db4915bceb165e6101746f5501b9a05c0e8264e2522a6acde057c5"
+    },
+    {
+      "id": "vendor-pdfmake-build-vfs-fonts-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/build/vfs_fonts.js",
+      "bytes": 854730,
+      "sha256": "23e7c970fa9e75d296ea565939502a69ab2184cf40756c7d4670b6dabf470b58"
+    },
+    {
+      "id": "vendor-pdfmake-package-json",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/package.json",
+      "bytes": 2596,
+      "sha256": "717a131fd5e1c692b324625ec4b65c8309b63f531a70912c66424a20bf166ba5"
+    },
+    {
+      "id": "vendor-pdfmake-src-3rd-party-svg-to-pdfkit-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/3rd-party/svg-to-pdfkit.js",
+      "bytes": 84,
+      "sha256": "9df04e28d919f54fdb2c8f08ae4aec211a6d743acf6da2e6ef00cae78c99ac8f"
+    },
+    {
+      "id": "vendor-pdfmake-src-3rd-party-svg-to-pdfkit-LICENSE",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/3rd-party/svg-to-pdfkit/LICENSE",
+      "bytes": 1102,
+      "sha256": "1a6f86f586505f2f8ebfce578ed37ae4f21d68a9dc3bbb5ac0fe97e11c167b89"
+    },
+    {
+      "id": "vendor-pdfmake-src-3rd-party-svg-to-pdfkit-source-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/3rd-party/svg-to-pdfkit/source.js",
+      "bytes": 124868,
+      "sha256": "35a3a8ca96712459f3d9ee0878cb40f7e50c679161f39963202714b6cf7c8ea6"
+    },
+    {
+      "id": "vendor-pdfmake-src-browser-extensions-URLBrowserResolver-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/browser-extensions/URLBrowserResolver.js",
+      "bytes": 2320,
+      "sha256": "1eb80d39c4e8caaa2b9f89f9d9fc754bf947d97a024f2b344d5bbe871fdbda99"
+    },
+    {
+      "id": "vendor-pdfmake-src-browser-extensions-pdfMake-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/browser-extensions/pdfMake.js",
+      "bytes": 9529,
+      "sha256": "2e97d5d3c7e63d748693a4d18950de9227dd5e562db8e80fb98c23890f2c7c97"
+    },
+    {
+      "id": "vendor-pdfmake-src-browser-extensions-virtual-fs-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/browser-extensions/virtual-fs.js",
+      "bytes": 1365,
+      "sha256": "b42b99d9d0d9bf948e4683122c3bfce58146e472457551c73772a6d278aaa8d5"
+    },
+    {
+      "id": "vendor-pdfmake-src-columnCalculator-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/columnCalculator.js",
+      "bytes": 5017,
+      "sha256": "cf4dd3aa63b49db5ca48bc097c5154f607d6a0bd81ccb348c7e9684d806aa8c1"
+    },
+    {
+      "id": "vendor-pdfmake-src-docMeasure-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/docMeasure.js",
+      "bytes": 22884,
+      "sha256": "40f1cd15da6d96ef3238eaaf30503cab3680e19b8b746e34717e2e54c0ea426c"
+    },
+    {
+      "id": "vendor-pdfmake-src-docPreprocessor-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/docPreprocessor.js",
+      "bytes": 6697,
+      "sha256": "7261a89704f8bb3ec8ffc2cf301cb5af89d46bdfed15fc7913b044e23ce38d6d"
+    },
+    {
+      "id": "vendor-pdfmake-src-documentContext-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/documentContext.js",
+      "bytes": 9606,
+      "sha256": "ed03b908bd81b543bec242626168cc520be9bf08fb84a8535a04b70e9d101c87"
+    },
+    {
+      "id": "vendor-pdfmake-src-elementWriter-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/elementWriter.js",
+      "bytes": 8540,
+      "sha256": "346f8d029ae4c16a594f5984a5ea045827c91207ed35512e64e20c88c34becd7"
+    },
+    {
+      "id": "vendor-pdfmake-src-fontProvider-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/fontProvider.js",
+      "bytes": 1775,
+      "sha256": "db2839659697582fb96663554e4b20049ff9a6a595322caf2ce8a2c8e39deb83"
+    },
+    {
+      "id": "vendor-pdfmake-src-helpers-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/helpers.js",
+      "bytes": 2768,
+      "sha256": "4912d69ead3ec33bcf633656c7bd8034f9eb2960b7a6774434c1314abfe5864b"
+    },
+    {
+      "id": "vendor-pdfmake-src-imageMeasure-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/imageMeasure.js",
+      "bytes": 1474,
+      "sha256": "1e2b5a13cc598241637fccf81bf0f11d93ed80143e8cb777e957c90ccad97019"
+    },
+    {
+      "id": "vendor-pdfmake-src-layoutBuilder-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/layoutBuilder.js",
+      "bytes": 38367,
+      "sha256": "ce3cbfbf1e73d0128f601a921bcf656f46ca2f8d30f0c1001666ccb07227ee08"
+    },
+    {
+      "id": "vendor-pdfmake-src-line-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/line.js",
+      "bytes": 2006,
+      "sha256": "54ce7be47aecbdba2941ca36bc5ecb829ee58d74f555ae1a05ad8cdccf376e3f"
+    },
+    {
+      "id": "vendor-pdfmake-src-pageElementWriter-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/pageElementWriter.js",
+      "bytes": 5731,
+      "sha256": "1cc51a867a72c146563786bb624a78a7f3f67bd58634e60bd27dc0253f826364"
+    },
+    {
+      "id": "vendor-pdfmake-src-pdfKitEngine-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/pdfKitEngine.js",
+      "bytes": 461,
+      "sha256": "70740242de852e16b01cd23ca1421e72c761b099ec8d9bfe877d37b7a45611cd"
+    },
+    {
+      "id": "vendor-pdfmake-src-printer-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/printer.js",
+      "bytes": 23211,
+      "sha256": "d7bbd4e9158660a239a36c2931eb24302575aa3c2d866912c0017dd0ce53d486"
+    },
+    {
+      "id": "vendor-pdfmake-src-qrEnc-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/qrEnc.js",
+      "bytes": 26949,
+      "sha256": "f305735dd2ebbaeae18dac77c0a52c9b7da5f36b6d36b5f7508a4d4af3fe2de9"
+    },
+    {
+      "id": "vendor-pdfmake-src-standardPageSizes-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/standardPageSizes.js",
+      "bytes": 1326,
+      "sha256": "3deb78081d99ce1a2bdaf175e543cab6e38fca71fb0e5243b46c46ad0526f61b"
+    },
+    {
+      "id": "vendor-pdfmake-src-styleContextStack-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/styleContextStack.js",
+      "bytes": 4108,
+      "sha256": "d4cda509d095f092076bcb3feef25cc42fe0d86f7bc87ada91b6f1f96013c88e"
+    },
+    {
+      "id": "vendor-pdfmake-src-svgMeasure-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/svgMeasure.js",
+      "bytes": 2574,
+      "sha256": "acc7cf0b1144e227178e788410acc7fc11fd548ecaac67894b6030a4ddbc8052"
+    },
+    {
+      "id": "vendor-pdfmake-src-tableProcessor-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/tableProcessor.js",
+      "bytes": 19907,
+      "sha256": "9df48194f6fc423bab053264bb8926f92a14e1c15571f90cc68d3ac2b51ec136"
+    },
+    {
+      "id": "vendor-pdfmake-src-textDecorator-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/textDecorator.js",
+      "bytes": 4908,
+      "sha256": "14513d776d7495097a2c852864ff63d052d499d59ded47d49f141a1b15869ee2"
+    },
+    {
+      "id": "vendor-pdfmake-src-textTools-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/textTools.js",
+      "bytes": 12415,
+      "sha256": "5fdb89aee00793ac338767393315de2d6f285c7b9fc394ad2b4cc7c198fff5b5"
+    },
+    {
+      "id": "vendor-pdfmake-src-traversalTracker-js",
+      "kind": "PDF_GENERATOR",
+      "path": "vendor/pdfmake/src/traversalTracker.js",
+      "bytes": 1036,
+      "sha256": "29ae3883d49a0d16ab9489c2f381d3294262c05a7129f8012ae616351a4aa919"
+    },
+    {
+      "id": "vendor-python-docx-LICENSE",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/LICENSE",
+      "bytes": 1104,
+      "sha256": "7652f271e46d0d533e9dc463f3b5fcbdcacf4d6a9c8d6b554d15efd0f37f6132"
+    },
+    {
+      "id": "vendor-python-docx-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/__init__.py",
+      "bytes": 1832,
+      "sha256": "fcda35a3fee0a7c9e2b09713a74b274cea562a2b28dcc2f9250d4e05bd074012"
+    },
+    {
+      "id": "vendor-python-docx-api-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/api.py",
+      "bytes": 1350,
+      "sha256": "d77539ea23d2336b4c44311bd373a64994240c03e6c068dfc68b189164b6b5c7"
+    },
+    {
+      "id": "vendor-python-docx-blkcntnr-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/blkcntnr.py",
+      "bytes": 3525,
+      "sha256": "ff17bb533dd1042cf84cf297a48cd1c6d1a0fb560f6f78001bd62fb12532a0b5"
+    },
+    {
+      "id": "vendor-python-docx-comments-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/comments.py",
+      "bytes": 6385,
+      "sha256": "32668fed4f6664e505b1185a64d21b5dab6a38e03cfa9382e9496a580b931ec7"
+    },
+    {
+      "id": "vendor-python-docx-dml-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/dml/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-dml-color-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/dml/color.py",
+      "bytes": 4439,
+      "sha256": "3bbc5e570b426ce3d6d5a34a487101a9cc6962739414c8ca2afdaf736ae2246a"
+    },
+    {
+      "id": "vendor-python-docx-document-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/document.py",
+      "bytes": 11194,
+      "sha256": "b54354a7f068191e37dc9b4256480f0222665b60d22951f365402b0a7b46d9ce"
+    },
+    {
+      "id": "vendor-python-docx-drawing-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/drawing/__init__.py",
+      "bytes": 2243,
+      "sha256": "84c6fe615dd015df236b77973f059c327b6959046ff0e91e6ace3b457354df37"
+    },
+    {
+      "id": "vendor-python-docx-enum-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-enum-base-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/base.py",
+      "bytes": 5070,
+      "sha256": "ae1ea6168c14e2a0baba7867e97bdfe79aed63734787d43e024d140054cceb96"
+    },
+    {
+      "id": "vendor-python-docx-enum-dml-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/dml.py",
+      "bytes": 3346,
+      "sha256": "0eaaa4631974f625d0803359c7197fc22fe7f6b03b993a2475ed53a4edf28265"
+    },
+    {
+      "id": "vendor-python-docx-enum-section-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/section.py",
+      "bytes": 2391,
+      "sha256": "98d375905d66748250f365c51599dddf25d79c2bb999f9d7ce8a5a96798f0aaa"
+    },
+    {
+      "id": "vendor-python-docx-enum-shape-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/shape.py",
+      "bytes": 396,
+      "sha256": "0ca426e89dc8b36d39d1b4f946c794a703c765997d6add0e0108d4d616b61f88"
+    },
+    {
+      "id": "vendor-python-docx-enum-style-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/style.py",
+      "bytes": 10137,
+      "sha256": "67d70147b377982999e789ca2712aa3e147848ccbf86a2511f6c9a6c3c512e8f"
+    },
+    {
+      "id": "vendor-python-docx-enum-table-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/table.py",
+      "bytes": 3943,
+      "sha256": "ecfb90fbe3c69d268d884d01bb8549f6de8b3a033e84d366284725fb74b67949"
+    },
+    {
+      "id": "vendor-python-docx-enum-text-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/enum/text.py",
+      "bytes": 10276,
+      "sha256": "a3a6dda49a2dda2638d149e7050d6e19f744f281c59b776d5d4ae6b7d78c96f1"
+    },
+    {
+      "id": "vendor-python-docx-exceptions-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/exceptions.py",
+      "bytes": 454,
+      "sha256": "59688ccb766db1f2914b7d56bf4f5e80b667a4f917d07eba07c26438f082dc53"
+    },
+    {
+      "id": "vendor-python-docx-image-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/__init__.py",
+      "bytes": 664,
+      "sha256": "ca07a6f978f328fdeea3efbe661b1321930b12da2e35b2044f1800dd892bc3b2"
+    },
+    {
+      "id": "vendor-python-docx-image-bmp-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/bmp.py",
+      "bytes": 1347,
+      "sha256": "c3f261bba841c8072424dc8a848df31ce2ac1f289b1e0c4322388f23d7afef4e"
+    },
+    {
+      "id": "vendor-python-docx-image-constants-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/constants.py",
+      "bytes": 3466,
+      "sha256": "63e304f59d8a0cbb231500ee9fc5f1857acbe87357864519a861ee0875c431fe"
+    },
+    {
+      "id": "vendor-python-docx-image-exceptions-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/exceptions.py",
+      "bytes": 383,
+      "sha256": "ffaae48d75dc6c5c5bfc7f89d242b843527d45a2f1dd3550e61a0e54436f41a2"
+    },
+    {
+      "id": "vendor-python-docx-image-gif-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/gif.py",
+      "bytes": 1118,
+      "sha256": "d11ecbd2bee48dff38e2976937a50a1084ac110cce3c0c80ddc8215d77495b6b"
+    },
+    {
+      "id": "vendor-python-docx-image-helpers-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/helpers.py",
+      "bytes": 3089,
+      "sha256": "8f2d1f401a887ecb69f44c5f2b0ddd18d2a8ce7ef846799203f6309a896c0ea3"
+    },
+    {
+      "id": "vendor-python-docx-image-image-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/image.py",
+      "bytes": 8005,
+      "sha256": "c2599628b6da9e90e1273646dca7ee051957c370c50ae5171c8fc271e7185f21"
+    },
+    {
+      "id": "vendor-python-docx-image-jpeg-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/jpeg.py",
+      "bytes": 15386,
+      "sha256": "90698af18f83970446c38f8f2be39d32025431daa188a3a0071ac52b87975715"
+    },
+    {
+      "id": "vendor-python-docx-image-png-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/png.py",
+      "bytes": 8214,
+      "sha256": "846a45ecdafbac1502904f4da07b5022b28cf21a6205a2575a2a36f2f7d9b345"
+    },
+    {
+      "id": "vendor-python-docx-image-tiff-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/image/tiff.py",
+      "bytes": 10379,
+      "sha256": "2d9c7e3f6b8c4b381dcc77c8591a91aad9db86e22a58163f70b931f7f1d3acfb"
+    },
+    {
+      "id": "vendor-python-docx-opc-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-opc-constants-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/constants.py",
+      "bytes": 17026,
+      "sha256": "cf0ce03fecc1a1b27f2e359da65940e187e744a6d4c9a48e7d302f355aef3b8c"
+    },
+    {
+      "id": "vendor-python-docx-opc-coreprops-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/coreprops.py",
+      "bytes": 3468,
+      "sha256": "21f41ea82e68e24f4e6e3fe443864a7c597a20bede226edd7080b5019915bda7"
+    },
+    {
+      "id": "vendor-python-docx-opc-exceptions-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/exceptions.py",
+      "bytes": 264,
+      "sha256": "a6a6b51ae1713251990c180606a9ed67ff1a0c834bc28da0b4fb8d470003cf23"
+    },
+    {
+      "id": "vendor-python-docx-opc-oxml-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/oxml.py",
+      "bytes": 8325,
+      "sha256": "204dc7e05f835abf104998b4a7173bebb6a9537364f818454ecec78930f9724d"
+    },
+    {
+      "id": "vendor-python-docx-opc-package-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/package.py",
+      "bytes": 8727,
+      "sha256": "450c3f96ea860da100ca5853a7ea2530267d3bdcefbfa49ef79221ed4a52b155"
+    },
+    {
+      "id": "vendor-python-docx-opc-packuri-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/packuri.py",
+      "bytes": 3729,
+      "sha256": "d7eb910308c87ed978ef99e8cefb2c1284bed04073d30fa826f4fe7cd61cc7da"
+    },
+    {
+      "id": "vendor-python-docx-opc-part-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/part.py",
+      "bytes": 9025,
+      "sha256": "be2d13dc9886d525249eae5a41d34bf592529c363c077f37d9d89247f99a489e"
+    },
+    {
+      "id": "vendor-python-docx-opc-parts-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/parts/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-opc-parts-coreprops-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/parts/coreprops.py",
+      "bytes": 1775,
+      "sha256": "541733747f82223fad704e1b075d4bc7099990518cd801b5055ca22760369826"
+    },
+    {
+      "id": "vendor-python-docx-opc-phys-pkg-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/phys_pkg.py",
+      "bytes": 4005,
+      "sha256": "f9e3590c16cb4a11e8dd6d628257f50b037f9e42bcaa79935a9e80060efb7230"
+    },
+    {
+      "id": "vendor-python-docx-opc-pkgreader-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/pkgreader.py",
+      "bytes": 9588,
+      "sha256": "8943d9ec16b890d5e33c1faad664043b8e1e5666e73f4f29a385851fe1c3d881"
+    },
+    {
+      "id": "vendor-python-docx-opc-pkgwriter-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/pkgwriter.py",
+      "bytes": 4524,
+      "sha256": "b210deb81b56d816c53931eb5f1f11f7b3d615a1ff7c4dfb25805f6f0e90591b"
+    },
+    {
+      "id": "vendor-python-docx-opc-rel-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/rel.py",
+      "bytes": 5600,
+      "sha256": "4d1ebff72e9b826aa50d9aae45fffd89946a37ff7c53f2c427bc5fa4c5b55489"
+    },
+    {
+      "id": "vendor-python-docx-opc-shared-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/shared.py",
+      "bytes": 996,
+      "sha256": "667d9abe0da0d09d9f906e588057c26e5d77f205dec7cb2d47e43054972e4886"
+    },
+    {
+      "id": "vendor-python-docx-opc-spec-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/opc/spec.py",
+      "bytes": 638,
+      "sha256": "18ff1811bedb4a6650d22df7f0cde54025599bac949e45219b73c5295816f1b4"
+    },
+    {
+      "id": "vendor-python-docx-oxml-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/__init__.py",
+      "bytes": 8243,
+      "sha256": "088b1ae226528ead902bbfd5d7160533a1f5df22e1f6ea036772df8c6584c7b2"
+    },
+    {
+      "id": "vendor-python-docx-oxml-comments-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/comments.py",
+      "bytes": 4912,
+      "sha256": "83815901abcdddda43fbb18bd1685e5e4fcc6dfb1e6b76b97cf5cd8ce8d8d5ef"
+    },
+    {
+      "id": "vendor-python-docx-oxml-coreprops-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/coreprops.py",
+      "bytes": 10768,
+      "sha256": "1a40d1c68c5f3aeb20368689d44c343442e1518856385ac9b3ad7fbcf537d7d5"
+    },
+    {
+      "id": "vendor-python-docx-oxml-document-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/document.py",
+      "bytes": 3593,
+      "sha256": "0eb8ba65adfff45d78b958283fe12cd953a2b22c4faea05ebba411fc0a9eae20"
+    },
+    {
+      "id": "vendor-python-docx-oxml-drawing-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/drawing.py",
+      "bytes": 397,
+      "sha256": "264aa22aad879a1742f2a597fe96af108b239816f666b064a151a7484b2d4a28"
+    },
+    {
+      "id": "vendor-python-docx-oxml-exceptions-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/exceptions.py",
+      "bytes": 261,
+      "sha256": "bf851212d79ea5ce4495d5a40368e16f9d37acb4c32c2afc65d47521b20a31d7"
+    },
+    {
+      "id": "vendor-python-docx-oxml-ns-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/ns.py",
+      "bytes": 3779,
+      "sha256": "8ec923c35bbd89137911451963e345f06fa4bc6203fd6d8588c0260e07b382b0"
+    },
+    {
+      "id": "vendor-python-docx-oxml-numbering-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/numbering.py",
+      "bytes": 3965,
+      "sha256": "fcb0e2cfbc5b4c8f945277c16521f9b50efa7f88eeda6d5e1e7c1f089f7e3c2c"
+    },
+    {
+      "id": "vendor-python-docx-oxml-parser-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/parser.py",
+      "bytes": 2324,
+      "sha256": "666e771a85a8e8abc8608caaeb8b3c927cbf573528a33bc6aeae96b16513ab15"
+    },
+    {
+      "id": "vendor-python-docx-oxml-section-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/section.py",
+      "bytes": 20395,
+      "sha256": "9f2e9f84ee69e17135e828e65e0b15d9ffcb521c88fddd2f7e7c726339eadc8e"
+    },
+    {
+      "id": "vendor-python-docx-oxml-settings-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/settings.py",
+      "bytes": 4264,
+      "sha256": "79ac94fc13c0ebf486bc813ebbb9675aeb8ae5eb1256b062e97e549ea687947b"
+    },
+    {
+      "id": "vendor-python-docx-oxml-shape-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/shape.py",
+      "bytes": 8883,
+      "sha256": "be1ab576209db7f4d0c3003a4313e8cc80ffab0754fc0423226ade4e6f46649c"
+    },
+    {
+      "id": "vendor-python-docx-oxml-shared-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/shared.py",
+      "bytes": 1857,
+      "sha256": "880a8339ccbe0e73a6e461ac4995cb49e98d7a34aa0a3973841f3a94f12d0d83"
+    },
+    {
+      "id": "vendor-python-docx-oxml-simpletypes-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/simpletypes.py",
+      "bytes": 13019,
+      "sha256": "da90f8be01194e1269081e0cf8bf213fbb932178259dd95945d36bbaf0d9c26d"
+    },
+    {
+      "id": "vendor-python-docx-oxml-styles-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/styles.py",
+      "bytes": 10643,
+      "sha256": "d54db891c0bd861ccc3f335c835f51542509975fea59ab970892071bf2a9d08a"
+    },
+    {
+      "id": "vendor-python-docx-oxml-table-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/table.py",
+      "bytes": 33610,
+      "sha256": "a92e3a6bf4ecdcaccdca050d794c5a4c854d0c965b6d6349a8cb1ea376556910"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-font-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/font.py",
+      "bytes": 10882,
+      "sha256": "974eff74d110e8e69f78abeab72861592a041d65bab82bc8dad589b5f702c256"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-hyperlink-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/hyperlink.py",
+      "bytes": 1467,
+      "sha256": "b71e9242261a6b5db7f9ad097d44bcd26b4008e630368cb6e13ae06b64a1827f"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-pagebreak-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/pagebreak.py",
+      "bytes": 11192,
+      "sha256": "d622b5d86028c19a454635409a767f329aa7eced0fa8f4ab55cda6c9473828ce"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-paragraph-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/paragraph.py",
+      "bytes": 3538,
+      "sha256": "a29e02cb82e37122310c3d4240829e45b52c04be4005547c71829bdcaca79664"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-parfmt-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/parfmt.py",
+      "bytes": 12221,
+      "sha256": "e536027fe41f730944097524acb49815f7b0140d4989e2864ed9b75f4d5fbbae"
+    },
+    {
+      "id": "vendor-python-docx-oxml-text-run-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/text/run.py",
+      "bytes": 11014,
+      "sha256": "be98349fe24fc012de6a4caeb4f790e301d11a92f63e3a9628cceb8162a26e15"
+    },
+    {
+      "id": "vendor-python-docx-oxml-xmlchemy-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/oxml/xmlchemy.py",
+      "bytes": 25458,
+      "sha256": "af31312da2606df6917f79ed9da4fa67abc45cf43fcf9cefc614bbf5cbe9e471"
+    },
+    {
+      "id": "vendor-python-docx-package-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/package.py",
+      "bytes": 3971,
+      "sha256": "6ed9c824430906603bcf298ee37bdb36a0c3166d59a04881e27376b209fab2e8"
+    },
+    {
+      "id": "vendor-python-docx-parts-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-parts-comments-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/comments.py",
+      "bytes": 1760,
+      "sha256": "0e6c61fe2f000d1a3ec0b7cef4b5742f2868e570bfefaa14d4d24df22b70f257"
+    },
+    {
+      "id": "vendor-python-docx-parts-document-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/document.py",
+      "bytes": 6417,
+      "sha256": "0ea6a46e07b9fdd89e1923897c603e3a93cca0b3b63ac4db73deec738dc38a14"
+    },
+    {
+      "id": "vendor-python-docx-parts-hdrftr-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/hdrftr.py",
+      "bytes": 1709,
+      "sha256": "fd4d0f0a35642ba116c24c996fda13ba794d6fac79e6b1020f5c450f3c1494f3"
+    },
+    {
+      "id": "vendor-python-docx-parts-image-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/image.py",
+      "bytes": 2739,
+      "sha256": "73e0c5e5816fa75a954f1ed9a27fb1397c34a8f73fdcba1e5fda8c4853ecea6a"
+    },
+    {
+      "id": "vendor-python-docx-parts-numbering-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/numbering.py",
+      "bytes": 1054,
+      "sha256": "b260ac704e08bbd5a161308d7f975a1c8ada958a0fae4e8abcbd3278588b88b8"
+    },
+    {
+      "id": "vendor-python-docx-parts-settings-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/settings.py",
+      "bytes": 1717,
+      "sha256": "96a703cc334b11cf0497198d30ac32eae36039eb1f61cbc10e12b3eee50c9dbe"
+    },
+    {
+      "id": "vendor-python-docx-parts-story-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/story.py",
+      "bytes": 3857,
+      "sha256": "fe1aeaed9fae219b70154acadcf28c98684e72efd882e7a3d7136bfaa6c9b2c2"
+    },
+    {
+      "id": "vendor-python-docx-parts-styles-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/parts/styles.py",
+      "bytes": 1391,
+      "sha256": "2f2eda2723e0b704364d1230b94b47cffc75674147f494edb0da219a5d7eca43"
+    },
+    {
+      "id": "vendor-python-docx-py-typed",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/py.typed",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-section-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/section.py",
+      "bytes": 18412,
+      "sha256": "af648b3fa1170ad1cf9aff0fb5a4ee6198355b2f25f4ca151e503d2474f74a20"
+    },
+    {
+      "id": "vendor-python-docx-settings-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/settings.py",
+      "bytes": 1082,
+      "sha256": "b562543a3dca001824ff76d7a318481d55956391e698a2a5dadb2a89cd9837f7"
+    },
+    {
+      "id": "vendor-python-docx-shape-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/shape.py",
+      "bytes": 2969,
+      "sha256": "e5a81ab2b7971ec54839d775cfc77eddeacfbe5b1b0512508c743420b49f79a2"
+    },
+    {
+      "id": "vendor-python-docx-shared-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/shared.py",
+      "bytes": 13506,
+      "sha256": "37a60824a8907affb45c80b4343f5f260d5e56dd661bf3042e74dac1ffdefbd8"
+    },
+    {
+      "id": "vendor-python-docx-styles-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/styles/__init__.py",
+      "bytes": 1406,
+      "sha256": "68226a847e09846fdc226de2c15246b56a565b4017271dd031a83b30e466add2"
+    },
+    {
+      "id": "vendor-python-docx-styles-latent-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/styles/latent.py",
+      "bytes": 7211,
+      "sha256": "10305c81dfb58ca996fb01b3eb81af7064a8a673ae3d01b58a7534a671d1b100"
+    },
+    {
+      "id": "vendor-python-docx-styles-style-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/styles/style.py",
+      "bytes": 8051,
+      "sha256": "0681974114b238398f237f1b00458f8135c43f0857c9561967d9d26314521cf3"
+    },
+    {
+      "id": "vendor-python-docx-styles-styles-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/styles/styles.py",
+      "bytes": 5608,
+      "sha256": "8eaebf1f3827dd7885f8da35d24c2abc31d3607a1b5f7f34f77f6c416aa4c062"
+    },
+    {
+      "id": "vendor-python-docx-table-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/table.py",
+      "bytes": 19477,
+      "sha256": "105c5b543dda11b2cea9d7ace5ca46b77c576cfcdb64b146d1297938f1d2ae16"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-comments-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-comments.xml",
+      "bytes": 734,
+      "sha256": "b23c2e04f586507f561e3c557876b52eea8e9b7a3e94d899030cd557491a8c8c"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-Content-Types-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/[Content_Types].xml",
+      "bytes": 1782,
+      "sha256": "888a7cd9d95d0998436a499759f30530350ce1acf84d3c07ef47ed6aba489e9e"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-rels-rels",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/_rels/.rels",
+      "bytes": 748,
+      "sha256": "f8bc20b7e1d59262abbdc48f9ffa6aca57468688bbd40dc627817732732526b3"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-customXml-rels-item1-xml-rels",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/customXml/_rels/item1.xml.rels",
+      "bytes": 300,
+      "sha256": "32fa6ddf5bdffdeec97e77d0805928f4d2411f23a3335d1ee0449b740ce1d84d"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-customXml-item1-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/customXml/item1.xml",
+      "bytes": 262,
+      "sha256": "a86086ffc5d8e83ebd6c71a55d1d2efaa31b137977f5f3a752366e1023612144"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-customXml-itemProps1-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/customXml/itemProps1.xml",
+      "bytes": 354,
+      "sha256": "c542307b13ec29a8b546217bb37936ab4822e044b265d2952985ec3d6afed24e"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-docProps-app-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/docProps/app.xml",
+      "bytes": 1132,
+      "sha256": "be664981c3141cddfc59362beb287ebf20d0773660e2dd6faac5968a5930a081"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-docProps-core-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/docProps/core.xml",
+      "bytes": 753,
+      "sha256": "10bfd20ea5d9c8ab0236a2f4e49f99cdb207aac6711e4780cf7a390b322a1d40"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-docProps-thumbnail-jpeg",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/docProps/thumbnail.jpeg",
+      "bytes": 8324,
+      "sha256": "96367138dc44ce09bf2c8f0f8e49348a1478d2c5c0af69bbc2bbc38b63cdcead"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-rels-document-xml-rels",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/_rels/document.xml.rels",
+      "bytes": 1253,
+      "sha256": "4f2b7b47d8a7d10d44e3bad6d03829ba2e755cc8b29a2d35a49eef79ed7b11d6"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-document-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/document.xml",
+      "bytes": 1594,
+      "sha256": "f5154b3c5dae749abb0e381e10ea02e19e137650065c4b1f11b059c6d75340bf"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-fontTable-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/fontTable.xml",
+      "bytes": 2811,
+      "sha256": "79385fb7f60247507ecaffc292e9ebd52ea0657b8634f629ba6fccc54011d6bb"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-numbering-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/numbering.xml",
+      "bytes": 6747,
+      "sha256": "ca605d64e9ba232fd8ff401d700669f7b5c4351865b1c16b91fd5a4aac9be249"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-settings-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/settings.xml",
+      "bytes": 2749,
+      "sha256": "31522d2d3c366aec5714c921ce556b4838ca7faa33fa795a66dc32575c710b27"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-styles-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/styles.xml",
+      "bytes": 438677,
+      "sha256": "09e350b95e121e7b63841485a6adacf2facd496c189297b2dba634bbb2898a88"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-stylesWithEffects-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/stylesWithEffects.xml",
+      "bytes": 438131,
+      "sha256": "463ae0928cf0d84775dbf8cf18d6c3029f6707c81bf590f6d6dd8757a5e93f15"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-theme-theme1-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/theme/theme1.xml",
+      "bytes": 10939,
+      "sha256": "e3a8ab7db9ca7afca56f5f2820a56e8b660016c647773555b060b0a02ac76941"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx-template-word-webSettings-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-docx-template/word/webSettings.xml",
+      "bytes": 438,
+      "sha256": "349d36de7434d09f86987ff671d8814964a0588c1e630c06e562cda7e75e9f95"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-footer-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-footer.xml",
+      "bytes": 1395,
+      "sha256": "57d1a47f62777f11d53698581d7d857f1b92747521d7fb40ac7bf56655070315"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-header-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-header.xml",
+      "bytes": 1395,
+      "sha256": "a0c1c9e66afa49dd4f664984404278966afb542c19885380be6252b0e28ae142"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-settings-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-settings.xml",
+      "bytes": 1640,
+      "sha256": "79738b945e28e1ea8338b7848b9aa3c13bf99a60e4dd5e4232c7900fbfdb0ae8"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-styles-xml",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default-styles.xml",
+      "bytes": 15823,
+      "sha256": "5a78ed3992ec0a73f885849a62131f47b256e22c43c5172bdde04f23c411c7de"
+    },
+    {
+      "id": "vendor-python-docx-templates-default-docx",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/templates/default.docx",
+      "bytes": 38116,
+      "sha256": "2094b5bddffe9cf973d61fe03388413804f034160718494a65db7e98da40d35d"
+    },
+    {
+      "id": "vendor-python-docx-text-init-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "vendor-python-docx-text-font-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/font.py",
+      "bytes": 13605,
+      "sha256": "c431e1e4a05c3c0cc3357b94e812f2f605c268ce43a275e8ef982d9a53d1808a"
+    },
+    {
+      "id": "vendor-python-docx-text-hyperlink-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/hyperlink.py",
+      "bytes": 5257,
+      "sha256": "1fb606087f398bb10370f41c6282e1e0c3b1ff0fb1352b9c0396c0808dc7b554"
+    },
+    {
+      "id": "vendor-python-docx-text-pagebreak-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/pagebreak.py",
+      "bytes": 4950,
+      "sha256": "b08d72315a2d901b67d6ee4327d2f4e05902d3542803073255276018f0242486"
+    },
+    {
+      "id": "vendor-python-docx-text-paragraph-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/paragraph.py",
+      "bytes": 6828,
+      "sha256": "37717adbf25141961aba6ba86895ca0839d14b0d832223b0cf230f57625dec62"
+    },
+    {
+      "id": "vendor-python-docx-text-parfmt-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/parfmt.py",
+      "bytes": 10339,
+      "sha256": "ef433be47168ef2769aa621d663915ef5d66bb2aec04676be1666c705dd85496"
+    },
+    {
+      "id": "vendor-python-docx-text-run-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/run.py",
+      "bytes": 10282,
+      "sha256": "caeafcc5ee50be34282da55827feac16e29c5740534e43090bb8fb7a15a04efe"
+    },
+    {
+      "id": "vendor-python-docx-text-tabstops-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/text/tabstops.py",
+      "bytes": 3896,
+      "sha256": "6c937df06596db67f84aa8347506f251c9ee3a7eb97c7b0d66e086b30234dff7"
+    },
+    {
+      "id": "vendor-python-docx-types-py",
+      "kind": "DOCX_GENERATOR",
+      "path": "vendor/python-docx/types.py",
+      "bytes": 848,
+      "sha256": "0609d79514beae83da345d696d05f864ed401ea2088c837ba8cc0071a0e78921"
+    },
+    {
+      "id": "vendor-react-LICENSE",
+      "kind": "LIBRARY",
+      "path": "vendor/react/LICENSE",
+      "bytes": 1088,
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    },
+    {
+      "id": "vendor-react-README-md",
+      "kind": "LIBRARY",
+      "path": "vendor/react/README.md",
+      "bytes": 1158,
+      "sha256": "faf7a5814bedadb9ecabcb8cf727a3477696bb0d3a5b57d5433110aa6094b85e"
+    },
+    {
+      "id": "vendor-react-cjs-react-compiler-runtime-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-compiler-runtime.development.js",
+      "bytes": 1090,
+      "sha256": "7ae8fa77a54c404572cba7065e14fe599a3d8cc0b68d34d649d8acc776e4e096"
+    },
+    {
+      "id": "vendor-react-cjs-react-compiler-runtime-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-compiler-runtime.production.js",
+      "bytes": 463,
+      "sha256": "f7d518f5c043cd008514b4fd8c665a9d2fa5686bd36c6e7d44d78187c0438700"
+    },
+    {
+      "id": "vendor-react-cjs-react-compiler-runtime-profiling-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-compiler-runtime.profiling.js",
+      "bytes": 462,
+      "sha256": "821fc2969277b5bc7814965e0ac07f815aafb3880d8bca31bcb53ce5d875edd3"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-dev-runtime-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-dev-runtime.development.js",
+      "bytes": 12420,
+      "sha256": "e2a2cafea5a317645d75aaad7ca10ac2ed07c178a162a7a675f17b38c6915dd8"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-dev-runtime-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-dev-runtime.production.js",
+      "bytes": 387,
+      "sha256": "ba9b367119971ed746925a600256d342eb4cc3f2389de013f61e36ff1f3594a5"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-dev-runtime-profiling-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-dev-runtime.profiling.js",
+      "bytes": 386,
+      "sha256": "c89fe850b7e66b6e1a10496321ea9d778a64512960d01dccf49ff0fd5d256b20"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-dev-runtime-react-server-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-dev-runtime.react-server.development.js",
+      "bytes": 14009,
+      "sha256": "cb9e0b05ed482d79a1389e562cef51cc3470cc1646cdee1d200a1414769fd0df"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-dev-runtime-react-server-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-dev-runtime.react-server.production.js",
+      "bytes": 1316,
+      "sha256": "c56f744270c8cd4d733575757eaf48de91edfa04d0f5e01ef5043bf9848263b3"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-runtime-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-runtime.development.js",
+      "bytes": 13032,
+      "sha256": "706e324b21fcd94fb728da71b374694d0727d0baee4126011cea583f54e09106"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-runtime-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-runtime.production.js",
+      "bytes": 976,
+      "sha256": "1e46f15002696985e80c61d47aaa30dabb03c954270a690f5f7dfbbacfa9002b"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-runtime-profiling-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-runtime.profiling.js",
+      "bytes": 975,
+      "sha256": "27b2fb3d04f9878687ab58717172592650e256de727e910366340be87e0f8352"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-runtime-react-server-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-runtime.react-server.development.js",
+      "bytes": 14005,
+      "sha256": "cde93bd719461c3a4c4bd5f68ed5a854525a79930f70071c893c6455deff54a7"
+    },
+    {
+      "id": "vendor-react-cjs-react-jsx-runtime-react-server-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react-jsx-runtime.react-server.production.js",
+      "bytes": 1312,
+      "sha256": "44bdd0dbbf51d5d49ac46ece12e919151c7f27b7f5b174790c4ca6aef0b6a1eb"
+    },
+    {
+      "id": "vendor-react-cjs-react-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react.development.js",
+      "bytes": 49165,
+      "sha256": "97bef56f30daa05320514ea220d7d03eb765635519ff2d5650c4887772aa5767"
+    },
+    {
+      "id": "vendor-react-cjs-react-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react.production.js",
+      "bytes": 18040,
+      "sha256": "6b28feb9dbe9781ab1e1b64dea7b29a7c70f03d2dc10eaa966363053d8a9b4e5"
+    },
+    {
+      "id": "vendor-react-cjs-react-react-server-development-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react.react-server.development.js",
+      "bytes": 31610,
+      "sha256": "fa524524548e8843f983aa83c561d85eae324bdcde54402b425f342242a75fa3"
+    },
+    {
+      "id": "vendor-react-cjs-react-react-server-production-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/cjs/react.react-server.production.js",
+      "bytes": 13809,
+      "sha256": "e4a5f60506155dae5b5b6d781a6d81c0b8c0cee4aa1e3206afb5058791e915c0"
+    },
+    {
+      "id": "vendor-react-compiler-runtime-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/compiler-runtime.js",
+      "bytes": 412,
+      "sha256": "5c00456a0180b7b6b2366348f7218b0ea2c3a85c7fefe24c18533ed54126f601"
+    },
+    {
+      "id": "vendor-react-index-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/index.js",
+      "bytes": 186,
+      "sha256": "60caffdecbdc5db3bc4ec4e83df9488345ccb271d07533b9210bf5750918d97e"
+    },
+    {
+      "id": "vendor-react-jsx-dev-runtime-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/jsx-dev-runtime.js",
+      "bytes": 218,
+      "sha256": "486589120a962721c8281b5acec2f6d49e60ce5f9d908cc814ddfe71c6163ace"
+    },
+    {
+      "id": "vendor-react-jsx-dev-runtime-react-server-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/jsx-dev-runtime.react-server.js",
+      "bytes": 244,
+      "sha256": "29cbe21640848ed3e8aebfdc47af7ff24eddcaea57b29f98958dc2c3e8fd279d"
+    },
+    {
+      "id": "vendor-react-jsx-runtime-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/jsx-runtime.js",
+      "bytes": 210,
+      "sha256": "b392951a77d0a2e6a6bd017e49d768481ae5b63c4109c6c31f622cf7b2433edc"
+    },
+    {
+      "id": "vendor-react-jsx-runtime-react-server-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/jsx-runtime.react-server.js",
+      "bytes": 236,
+      "sha256": "47346212fa0ec5c7f3a9ab36c658cdce7bb02d4f66f00aa5e11cadc0ee258853"
+    },
+    {
+      "id": "vendor-react-package-json",
+      "kind": "LIBRARY",
+      "path": "vendor/react/package.json",
+      "bytes": 1242,
+      "sha256": "6e003e4e9ed25afa7fdd55613f8aa877cefa9b359d9c13f81ee704030248e24e"
+    },
+    {
+      "id": "vendor-react-react-react-server-js",
+      "kind": "LIBRARY",
+      "path": "vendor/react/react.react-server.js",
+      "bytes": 212,
+      "sha256": "ced6f228807a193b8a0ec436304b96ca44492bae8899c3e84c2a88162843dc14"
+    },
+    {
+      "id": "vendor-tactical-symbols-NOTICE-txt",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/NOTICE.txt",
+      "bytes": 458,
+      "sha256": "b4c148c1ff865e9659f615964eeb659327dae287c55de953abeebb0c0a6e6f91"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-001-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-001/page-001.jpg",
+      "bytes": 172885,
+      "sha256": "c96e82fa32c4220ae4ea970fd999baf7721d94fc4a5061730f92008387c30625"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-002-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-002/page-001.jpg",
+      "bytes": 137716,
+      "sha256": "ceae7a41695a0a79c55488f732d0c2b0dadc58cba31866599a38bbc570a7e46a"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-002-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-002/page-002.jpg",
+      "bytes": 188098,
+      "sha256": "8c1a813b5d42b3ac553707dddbfaa37f9b0a75a718c2c5efdda48c7d094f93ff"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-002-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-002/page-003.jpg",
+      "bytes": 192754,
+      "sha256": "502f16d04e13496dab22b7e41fa27f07a1cca5444af5f67f00a6f34a2f4105fe"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-002-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-002/page-004.jpg",
+      "bytes": 131473,
+      "sha256": "52730c5c6cb5c7cfd3ddadd09200352fb6ebd4f2622c1ce23d1f663c3f5c8b5c"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-003-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-003/page-001.jpg",
+      "bytes": 169458,
+      "sha256": "b8cec1bea2b43ebc3603323e02e9511d9147fb788efaa95cacddddf38b778ce8"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-003-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-003/page-002.jpg",
+      "bytes": 153451,
+      "sha256": "a1258343c571258734ea296d9914541f40182eb854836112116b902630987f2c"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-003-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-003/page-003.jpg",
+      "bytes": 124194,
+      "sha256": "0b49a49f4ba983a0affa103f7a72bb4b41cdf19342f1146fed4c45ad93422dd5"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-003-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-003/page-004.jpg",
+      "bytes": 117105,
+      "sha256": "9987f3cbc306a71e817e88314286fb43140d202c0d3b606540ecd83f91888d34"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-003-page-005-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-003/page-005.jpg",
+      "bytes": 46887,
+      "sha256": "96d330802126af5ef7111611a54fc9d0dd0902958d38ce37008704bb15243bba"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-004-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-004/page-001.jpg",
+      "bytes": 171620,
+      "sha256": "ff2313ff38c2959a677d867e1dc7b1fc7fa35a411aad3aa830c2e2047016901b"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-001.jpg",
+      "bytes": 163632,
+      "sha256": "5e8fa2d8e4e1477e0efd4f553fe9f335434349a3f363fd58198337350b774233"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-002.jpg",
+      "bytes": 182839,
+      "sha256": "e95147b21ab3e1c0ad715d492400eedbb3adaad8c62cbe75a8096c649125b30d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-003.jpg",
+      "bytes": 182803,
+      "sha256": "4c9db1a86d3b4b0e5e432f34401e54f6df7f243d7d094a599c27f06e45daff6e"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-004.jpg",
+      "bytes": 105304,
+      "sha256": "8fa2d0e3e238e8a08bc7792535c804993ea28589ff88931507f852298fe5a1cd"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-005-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-005.jpg",
+      "bytes": 152967,
+      "sha256": "948ce507c1904dc06e6596a9ecb192973144eef986389d5819c3721c9b9dbcf9"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-005-page-006-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-005/page-006.jpg",
+      "bytes": 122015,
+      "sha256": "6dd8eca56039a26424d0728a3476292f68590b2c31f05761a0e3c9d2f1b6a0d3"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-006-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-006/page-001.jpg",
+      "bytes": 170535,
+      "sha256": "bf8aafb0f47f287c841145c07f11012c5a39ba0852776c1e2c7df68415c90833"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-006-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-006/page-002.jpg",
+      "bytes": 174709,
+      "sha256": "6bd4e013314be05a4de69f227b593bcfd3f3b3e40b7c369e63bc56fc8537bd77"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-006-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-006/page-003.jpg",
+      "bytes": 185230,
+      "sha256": "7293b22dd82fb5cfc6edf25c94db402932575ac8c4beb94b8165605cadd82303"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-006-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-006/page-004.jpg",
+      "bytes": 42186,
+      "sha256": "393092493011a95f4ba08cf3fbfdece235bddfa579a72174c940502030ac2c9f"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-007-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-007/page-001.jpg",
+      "bytes": 152971,
+      "sha256": "83e733e52a099e3a0879e8a8903e57a634c2f3960a2a7c3341fc0e49697a023a"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-007-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-007/page-002.jpg",
+      "bytes": 166071,
+      "sha256": "ff1843911c7f4fa064558a613fea9a1ed289f92bd7c9089862bdd78cf88c4ebf"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-008-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-008/page-001.jpg",
+      "bytes": 185910,
+      "sha256": "df88ee499b33918d3ad3974255fe83c9fc8efadb8c95b34a02040b7ce831b87d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-009-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-009/page-001.jpg",
+      "bytes": 182986,
+      "sha256": "4676fd1ef2f40078a88b88b7b9616f7f920b02d0bde5617a57ee08e5983380a6"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-009-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-009/page-002.jpg",
+      "bytes": 19335,
+      "sha256": "1d3f6a0a11c3b6e61943bbf20bfdff64d2cb7b8c472cc279a768ca14790a1479"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-010-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-010/page-001.jpg",
+      "bytes": 210923,
+      "sha256": "7a1f03df6e5fd86ab25331d69eb7839ba8371779c606f123b4c1aa6927c79cb5"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-010-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-010/page-002.jpg",
+      "bytes": 154073,
+      "sha256": "27de0f7739aed9277cd3421e8bf0620d6fe2fce00f876d786336e6085f1211d7"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-011-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-011/page-001.jpg",
+      "bytes": 236732,
+      "sha256": "3919faaab1677544b6d6fab3ba684e8ecff89a2e14a8bd852ee0e53ff9209e87"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-011-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-011/page-002.jpg",
+      "bytes": 196575,
+      "sha256": "d2a7192a6ac6ae22821cb68e08f41e57c385bbe90d68beb0141eb68b907210f4"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-012-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-012/page-001.jpg",
+      "bytes": 216129,
+      "sha256": "195940cb0766dd448a8f5cd2e76e745948fb5224272cba23201b1519bad1e494"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-012-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-012/page-002.jpg",
+      "bytes": 143131,
+      "sha256": "b0f269de90f0b138d3dab6f5e42fe3bc50803f9b3b9a42166f3c40126764bc5b"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-013-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-013/page-001.jpg",
+      "bytes": 213169,
+      "sha256": "31ac3c4a6a6564e78da3d3bc5d7f4ca0de1e462e05a84ac973bb4945ccbd2179"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-013-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-013/page-002.jpg",
+      "bytes": 190230,
+      "sha256": "b52fff3f9de39a444b8a8f8bdb4a79ee3f5f72677260ab874a86720478b78bfb"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-013-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-013/page-003.jpg",
+      "bytes": 19095,
+      "sha256": "8e5794df3ecba7b5f0aec63c79cd88ed29190ed651ebe9bd17666352a8fac537"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-014-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-014/page-001.jpg",
+      "bytes": 197170,
+      "sha256": "769ebd9d6c20a2bc1a57a1fd6db8df692e59a03a1183de7ca24336a074e7cb8d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-014-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-014/page-002.jpg",
+      "bytes": 109524,
+      "sha256": "3008d72250edc86db526f2e131cf78396913709c73cec8a9bd2fee5002a9a3ba"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-015-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-015/page-001.jpg",
+      "bytes": 237348,
+      "sha256": "d342b66f4b054293bbb14f8fd0a209306e26d24e89b98fa7ccd31bc7eaf97345"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-015-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-015/page-002.jpg",
+      "bytes": 208989,
+      "sha256": "ae5e74d9d85f6b85ae40158089c3a4744eb4f489e40188bb90a47517da918947"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-015-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-015/page-003.jpg",
+      "bytes": 231132,
+      "sha256": "7fc6a5ad4da5734994c99d6d0f29ba40131c2d7e6663f900acbe24cf56091db5"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-015-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-015/page-004.jpg",
+      "bytes": 215729,
+      "sha256": "e7c95c14ec8cc0b9c1ac31afc957088e79503497d82cd7911fb2495a8a5d314a"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-015-page-005-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-015/page-005.jpg",
+      "bytes": 142172,
+      "sha256": "df8dc0bbe3eb93874bec8dfe0f541aa849d4e82b3537956ee076868cfbb5dfa7"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-016-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-016/page-001.jpg",
+      "bytes": 237377,
+      "sha256": "ea4313ebadc836eae2825f2e53121ad5dd4fd445e0ed68bb601609a351e4b10f"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-016-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-016/page-002.jpg",
+      "bytes": 208094,
+      "sha256": "0617cba9649404056fb7e756759091b48b9cb8dbd0491350c42986cd7cece33d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-016-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-016/page-003.jpg",
+      "bytes": 230966,
+      "sha256": "366c3e6e5b0066aa5106ec1271ec3c0221e03f720315ff9ebe0a9a0652597aa7"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-016-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-016/page-004.jpg",
+      "bytes": 215583,
+      "sha256": "4d4ef7c8ebd3377aa98df3dafbdda9fcc14de58e4b941e82f038af2bc2911897"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-016-page-005-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-016/page-005.jpg",
+      "bytes": 142235,
+      "sha256": "69db6b565054bf061827f837bbd9d09a889c04a3a7cf2fe644dc2ebac0e1d6e6"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-017-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-017/page-001.jpg",
+      "bytes": 249665,
+      "sha256": "40d23431e92110315602e319f926f944b386a92e1bf2057d9f2424180c98a145"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-017-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-017/page-002.jpg",
+      "bytes": 220246,
+      "sha256": "8a075c610983caebf9cbc24d297e74d8a9daf19d8e3258ff7cb846aedf178fe6"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-017-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-017/page-003.jpg",
+      "bytes": 186246,
+      "sha256": "5e9ce1e53a284631ff320d079437c604de2d9d95e3e0106e206a0931d86d0f47"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-018-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-018/page-001.jpg",
+      "bytes": 45942,
+      "sha256": "87ba2ef14942830a95fda7c8540ef7a8998af12f76b1ec3b52f18fc3666928db"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-019-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-019/page-001.jpg",
+      "bytes": 128100,
+      "sha256": "c2274f4b520254d13b279dcc1c00c8e967f5471a3366b6f8d1ac63ab42ab4416"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-019-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-019/page-002.jpg",
+      "bytes": 30909,
+      "sha256": "dab0299b30c782d22759d51645b1dab412dfe0394e5a2f44e36b74f5db09a69e"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-020-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-020/page-001.jpg",
+      "bytes": 196503,
+      "sha256": "ac8e37cebcc6afb041f9bb79228066235d7822b9dee972edba73b8435e352aef"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-020-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-020/page-002.jpg",
+      "bytes": 167544,
+      "sha256": "ff3f9cc23f2df1b75e003e75662e600ffc5589dbf77fcbaefe396aa0c0aae49c"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-020-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-020/page-003.jpg",
+      "bytes": 70295,
+      "sha256": "5259bb5534ab64194ebf00ff93781ad9ccb4ba7139c3bf1aab072108dcd2e45e"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-021-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-021/page-001.jpg",
+      "bytes": 194830,
+      "sha256": "8f5170ceac734909d0f0d422ef40680c35900f22324a324d0d65a032209f96db"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-021-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-021/page-002.jpg",
+      "bytes": 226217,
+      "sha256": "7167563e878a598d9bea6c76d640bbd75e610b16ef3b8073737d66dcba45db52"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-021-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-021/page-003.jpg",
+      "bytes": 91055,
+      "sha256": "98c9923fdec32a45f1487e8c4b1fdba1c3fe48963d96cd73a29371a20dac761e"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-001.jpg",
+      "bytes": 196570,
+      "sha256": "cfbdd7106d78b8b3e54ac10c27c59bb91ba103c92ec44ea7a02374f496fb2cfc"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-002.jpg",
+      "bytes": 163260,
+      "sha256": "1ff9f4bb37f45bf458daeff30da04995bb5ab397406a69cc6905a4cb783eb061"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-003.jpg",
+      "bytes": 182640,
+      "sha256": "4f14742ffb084a4defd66d90152f5e6497a71affac672207de0713655a6c03ac"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-004-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-004.jpg",
+      "bytes": 156907,
+      "sha256": "db5317aa5c6fe25bca3d65de295367e803c4626df2785887a3541b1db8e9081d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-005-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-005.jpg",
+      "bytes": 159619,
+      "sha256": "612901665204b0913cc40e2c01957a807e8f367ca527fcd4880deb213b7973e4"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-006-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-006.jpg",
+      "bytes": 173427,
+      "sha256": "d16b245161e28272f0de2a93cb59d8626fa3dbdefc1c955c80b3d33b1f1d9e42"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-022-page-007-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-022/page-007.jpg",
+      "bytes": 145367,
+      "sha256": "80d8d03fd665a0178dbcaac1322ffb51bfd6e2b73a32017c9a88e4e042171fab"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-023-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-023/page-001.jpg",
+      "bytes": 151311,
+      "sha256": "9b5fa6e6505b7c0e2dc40da1f4303c670f3760c3c8a5ce043eaae1061f256ceb"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-024-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-024/page-001.jpg",
+      "bytes": 131223,
+      "sha256": "d39efe011ecfe9a88c424dbe9d6a65b4ed40d88497032f26374ce8be9eaab8b7"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-024-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-024/page-002.jpg",
+      "bytes": 150239,
+      "sha256": "bc59cb0940f7432c356151698d1b0ab3230b1654a55e49367f29d961556dabff"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-025-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-025/page-001.jpg",
+      "bytes": 116221,
+      "sha256": "b74190d818e2dfa10ba2bc398baad529ca37ff7061edcb77e04a235352f87790"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-025-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-025/page-002.jpg",
+      "bytes": 148688,
+      "sha256": "b5f2fb43c00039c09937f36d8884b270fd92f309828edc2d2b9c61fa3997f7e8"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-025-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-025/page-003.jpg",
+      "bytes": 205257,
+      "sha256": "8cd993fba4b4c88a5023ad435804e1660cead28358f1f158049dbd1178cad3b6"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-026-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-026/page-001.jpg",
+      "bytes": 175377,
+      "sha256": "bc9af0aec3ff2a1cc7b611ba2b3ba96b002b3767124f7f2b2e791d3be5ffa993"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-026-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-026/page-002.jpg",
+      "bytes": 167854,
+      "sha256": "00403d84c3d49c088a922f3d6c3df0899fc56f564fd4b1e14e579acb62505352"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-026-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-026/page-003.jpg",
+      "bytes": 83949,
+      "sha256": "790efbbd9dd30c9813defae3257f15a5a19bb3df70d92d054af4c9f475fc03dc"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-027-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-027/page-001.jpg",
+      "bytes": 175032,
+      "sha256": "85e5212870134978e60f1a58a1d7af79d21fa5e5a6553aa21580605df8574ab4"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-027-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-027/page-002.jpg",
+      "bytes": 191320,
+      "sha256": "ff21f77da3b82b6da86e0a55329b63e2e4f1e77a4bbc2815337ba4e27e1da5c4"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-027-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-027/page-003.jpg",
+      "bytes": 61247,
+      "sha256": "1b67e4cb916b9926ca7a1540328078eb2f9aeb82339c9cac2758b4c639baa65b"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-028-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-028/page-001.jpg",
+      "bytes": 171654,
+      "sha256": "b2a69ef70da651a274843c6de832b9504abd04a6aa6e366223536d296d62c3d4"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-028-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-028/page-002.jpg",
+      "bytes": 135938,
+      "sha256": "562ec0c12f18fe0454f428cdb2f496ed0024b5197c3e79ad44355f7f199a780d"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-029-page-001-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-029/page-001.jpg",
+      "bytes": 124035,
+      "sha256": "926330a89fefb6f7f5dbc69d7762afeb7b73c7205301aed42f728dd89c420902"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-029-page-002-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-029/page-002.jpg",
+      "bytes": 150079,
+      "sha256": "05185a5b1eef695e87aca67c72ebe065f0a00908776995dff3032cef14312828"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-fragments-doc-029-page-003-jpg",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/fragments/doc-029/page-003.jpg",
+      "bytes": 20470,
+      "sha256": "fd5ea67d86837a07a7cc5dfaadb28f3f46fdcc19038f45e7a49561dba85acd5f"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-sets-ru-modern-v1-json",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/sets/ru-modern-v1.json",
+      "bytes": 28374,
+      "sha256": "f28a960a926359534dd49f66163d017f05d1291242818f952c6481e15b0769aa"
+    },
+    {
+      "id": "vendor-tactical-symbols-data-source-registry-json",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/data/source-registry.json",
+      "bytes": 349537,
+      "sha256": "2c2f08bf0f87fc924a065a2f8d697c97c1ee2be56c8c6845137828966c7e860f"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-geometry-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/geometry.ts",
+      "bytes": 10102,
+      "sha256": "0e4ae77ba20fba8a5d6626c9f294605144594de1ee823c7bcef2e422096ba65a"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-index-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/index.ts",
+      "bytes": 1417,
+      "sha256": "222d444bc1a7c67bbb4f84021af820c4704ddf94e487a45f59ca28fe092ca19d"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-model-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/model.ts",
+      "bytes": 7703,
+      "sha256": "9c33633c645dd98125b8c8c013ae37dbdffd5bb705901d8b4d5dc11d20dcb82e"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-registry-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/registry.ts",
+      "bytes": 3956,
+      "sha256": "079f48442469955f7e50086892fac92596ee8b57eef936648d1452b55bbf6812"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-render-maplibre-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/render-maplibre.ts",
+      "bytes": 5888,
+      "sha256": "42ca5c2ecb4d74b71c55bcb7ac3373308fe6fc6cfb717d7f1953754214622ab6"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-render-svg-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/render-svg.ts",
+      "bytes": 8247,
+      "sha256": "250dfcecc2d70073c2bea29a3ea4af642ce76f941fb06a4cfc02bbb753970262"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-browser-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/source/browser.ts",
+      "bytes": 276,
+      "sha256": "6a17c7aef2de24800734425e6d1d03588a51e83eb7418e6e3c18b80f789207fb"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-import-archive-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/source/import-archive.ts",
+      "bytes": 11985,
+      "sha256": "e20125af554887a4f231f9f0823b9d09d5f48572f2d556bf5100708e585feb74"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-index-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/source/index.ts",
+      "bytes": 367,
+      "sha256": "7e2bcde47e3565f75f0ded7495c8192f89f2d33bcb34b7cc21af19ec66b95046"
+    },
+    {
+      "id": "vendor-tactical-symbols-src-source-registry-ts",
+      "kind": "SYMBOLS",
+      "path": "vendor/tactical-symbols/src/source/registry.ts",
+      "bytes": 3316,
+      "sha256": "94078a6bee3d0ec6fe2fbf02c79489afca77540a97fb208ca5668d37fcdd8ee4"
+    }
+  ],
+  "externalRequests": 0,
+  "processChecks": {
+    "localConfigurationOnly": true,
+    "externalFetchExecuted": false
+  },
+  "physicalIsolation": {
+    "status": "passed",
+    "reason": "Внешнее TCP-соединение запрещено ядром (EPERM)",
+    "probe": {
+      "local": {
+        "connected": true,
+        "code": null
+      },
+      "external": {
+        "connected": false,
+        "code": "EPERM",
+        "message": "connect EPERM 93.184.216.34:443 - Local (0.0.0.0:0)"
+      }
+    }
+  },
+  "limitations": [],
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

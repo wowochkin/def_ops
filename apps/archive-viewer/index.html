@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'"><title>Автономный архив КШВИ</title></head>
+<body><main><h1>Автономный архив КШВИ</h1><p>Исходные сервисы и сетевые ресурсы не требуются.</p>
+<label>Архивный пакет<input id="archive-file" type="file" accept="application/json"></label>
+<p id="archive-status" role="status"></p>
+<section id="viewer" hidden><p role="status">Истинное состояние — постоянная метка</p>
+<label>Позиция автономного реплея<input id="replay-position" type="range" min="0" step="1" value="0"></label>
+<div id="offline-clock"></div><p>SHA-256: <code id="offline-hash"></code></p><div id="offline-domains"></div></section>
+<p id="error" role="alert"></p></main><script type="module" src="/src/main.ts"></script></body></html>

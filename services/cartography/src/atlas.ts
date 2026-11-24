@@ -7,6 +7,7 @@ import { gzipSync } from 'node:zlib';
 import { GeoJSONVT } from '@maplibre/geojson-vt';
 import { fromGeojsonVt } from '@maplibre/vt-pbf';
 import { tileRange, tileCount, type BBox } from '@def-ops/core';
+import { clipRasterTile } from '@def-ops/raster-tiles';
 import { railwayFilter, railwaySources } from '../../../packages/core/src/railway-style';
 import { writeAtomic } from './tiles';
 import type { StyleSpecification, LayerSpecification, FilterSpecification } from '@maplibre/maplibre-gl-style-spec';
@@ -57,14 +58,16 @@ export class AtlasStore {
   if (![z,x,y].every(Number.isInteger)||z<0||z>22||x<0||y<0||x>=2**z||y>=2**z) throw Error('Недопустимый адрес тайла');
   const m=await this.get(tenant,id), db=new DatabaseSync(this.file(tenant,id),{readOnly:true});
   try {const r=db.prepare('select tile_data d from tiles where zoom_level=? and tile_column=? and tile_row=? limit 1').get(z,x,2**z-1-y) as {d:Uint8Array}|undefined;
-   return r?.d.length?{bytes:Buffer.from(r.d),format:m.format}:null;
+   if(!r?.d.length)return null;
+   if(m.format==='pbf')return {bytes:Buffer.from(r.d),format:m.format};
+   return clipRasterTile({bytes:Buffer.from(r.d),format:m.format,bounds:m.bounds,z,x,y});
   } finally {db.close();}
  }
  async remove(tenant:string,id:string) {await fs.rm(this.file(tenant,id),{force:true});await fs.rm(path.join(this.dir(tenant),`${id}.json`),{force:true});}
 }
 /** Универсальный локальный стиль: сохранён каждый source-layer, тип геометрии не предполагается по имени. */
 export function atlasStyle(m:AtlasMeta,prefix:string):StyleSpecification {
- const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,attribution:m.attribution};
+ const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,bounds:m.bounds,attribution:m.attribution};
  const layers:LayerSpecification[]=[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}];
  if(m.kind==='vector') {
   const color=(id:string)=>/water/i.test(id)?'#9ecad0':/building/i.test(id)?'#bdb4a4':/landcover|landuse|park|forest/i.test(id)?'#bdcbb0':/road|transport|rail/i.test(id)?'#b39872':'#9ca9a2';

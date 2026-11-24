@@ -1,0 +1,9 @@
+{
+  "confirmedEvents": 1,
+  "duplicateEventsAfterRetry": 0,
+  "confirmedEventsLost": 0,
+  "restartMs": 6.59008399999999,
+  "nodeRestoreMs": 2.594333000000006,
+  "verifiedBackupFiles": 5,
+  "isolatedRestore": 1
+}

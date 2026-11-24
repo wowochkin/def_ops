@@ -11,12 +11,13 @@
   "dependencies": {
     "@def-ops/core": "*",
     "@def-ops/db": "*",
+    "@def-ops/raster-tiles": "*",
     "@def-ops/service-kit": "*",
     "@maplibre/geojson-vt": "6.1.1",
     "@maplibre/vt-pbf": "4.3.2",
     "sharp": "^0.35.5",
     "tar-stream": "^3.1.7",
-    "undici": "7.29.1"
+    "undici": "7.30.2"
   },
   "devDependencies": {
     "@mapbox/vector-tile": "3.0.0",

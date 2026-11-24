@@ -1,0 +1,408 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "official": [
+    {
+      "eventId": "ae6c9fd9-6ead-4b70-b3fd-5608e93e7f6c",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "main-decision.create-0"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "official-decision",
+        "revision": 1,
+        "commandId": "main-decision.create-0",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "057f005531079f93f531c197d48b68662b6fbe05b2a3b3ebc369753d5c011e7e",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "fc96e103-b832-4eaa-97f9-22abaf6bb55f",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "document.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "main-document.create-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+        "sideId": "blue",
+        "causedBy": "official-doc",
+        "revision": 1,
+        "commandId": "main-document.create-1",
+        "commandType": "document.create"
+      },
+      "prevHash": "057f005531079f93f531c197d48b68662b6fbe05b2a3b3ebc369753d5c011e7e",
+      "hash": "4e5bfc1d0d04dda849139d34b69f8f795af1878d699a1cb612474f6e39cec0e5",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "f8c8efa6-ebaa-481b-ac31-79b15655bb7e",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "document.status.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "main-document.transition-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+        "sideId": "blue",
+        "causedBy": "official-doc",
+        "revision": 1,
+        "commandId": "main-document.transition-2",
+        "commandType": "document.transition"
+      },
+      "prevHash": "4e5bfc1d0d04dda849139d34b69f8f795af1878d699a1cb612474f6e39cec0e5",
+      "hash": "96ebb772b33eb7cd587f46e2cc83323f7b4e628109bdf48e7f8016123d0d44d2",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "03cda120-0a00-409a-812f-8a4c3d7fff03",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "document.approved.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "main-document.transition-3"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sha256": "f6008a9a0d6796ea5e0a4796042b279ceed677ce1a5d8006055ad302723d7e24",
+        "sideId": "blue",
+        "causedBy": "official-doc",
+        "revision": 1,
+        "commandId": "main-document.transition-3",
+        "commandType": "document.transition"
+      },
+      "prevHash": "96ebb772b33eb7cd587f46e2cc83323f7b4e628109bdf48e7f8016123d0d44d2",
+      "hash": "b1c0f31e02eaa69d8a19d1829a04e6440b384650c93a77aa55be0b787b9d52c2",
+      "hashVersion": 2
+    }
+  ],
+  "alternative": [
+    {
+      "eventId": "ea7cf64c-feaf-4b9e-b04d-5260b2a3ca30",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "alternative-1",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "alternative-1-decision.create-0"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "alternative-decision",
+        "revision": 1,
+        "commandId": "alternative-1-decision.create-0",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "4e222e3c8daead38383c8eeef70cf7fa0da8d08329c7a5d0398dcf701126dbec",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "f657d34d-d6d3-446e-92ab-3f7b63d494e1",
+      "organizationId": "org-ac10",
+      "instanceId": "ac10",
+      "branchId": "alternative-1",
+      "sequence": 2,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "alternative-1-calculation.create-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "alternative-calc",
+        "commandId": "alternative-1-calculation.create-1",
+        "inputHash": "3b23faf0f40b160965c92927d2c09de991a25486c3d3d27063cd72874c158027",
+        "randomKeys": [],
+        "calculation": {
+          "id": "alternative-calc",
+          "mode": "DETERMINISTIC",
+          "state": "CALCULATED",
+          "units": {},
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 10,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 20
+              },
+              "position": {
+                "remainingMeters": 100,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 20,
+                "supplied": 0,
+                "consumption": 10
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            }
+          },
+          "nodeId": "node-1",
+          "reason": "Альтернативная модель",
+          "result": {
+            "task": {
+              "id": "task",
+              "status": "IN_PROGRESS",
+              "progressPercent": 10
+            },
+            "state": {},
+            "position": {
+              "remainingMeters": 80,
+              "travelledMeters": 20
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 10,
+                "deficit": 0,
+                "consumed": 10,
+                "supplied": 0
+              }
+            },
+            "uncertainty": {},
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:00:00Z",
+          "createdBy": null,
+          "inputHash": "3b23faf0f40b160965c92927d2c09de991a25486c3d3d27063cd72874c158027",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v2",
+          "inputSnapshot": {
+            "revision": 2
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Новая модельная версия",
+              "applicability": "AC-10"
+            },
+            "purpose": "Альтернатива",
+            "version": 2,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Учебное допущение"
+            ]
+          },
+          "requiredInputs": [],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {},
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 10,
+              "deficit": 0,
+              "consumed": 10,
+              "supplied": 0
+            },
+            "actualAdvanceMeters": 20
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "4e222e3c8daead38383c8eeef70cf7fa0da8d08329c7a5d0398dcf701126dbec",
+      "hash": "538a5b7bd8a832f0f441c0e6f25a58c51980204d9b14bf913aff5bbcb7fa8f48",
+      "hashVersion": 2
+    }
+  ],
+  "adopted": {
+    "eventId": "eecaf382-cb04-4b49-9522-e05e48bce775",
+    "organizationId": "org-ac10",
+    "instanceId": "ac10",
+    "branchId": "main",
+    "sequence": 5,
+    "type": "branch.decision.adopted.v1",
+    "schemaVersion": 1,
+    "wallClockAt": "2026-11-23T20:14:57.827Z",
+    "operationalAt": {
+      "zone": "UTC",
+      "offset": "+00:00",
+      "originalAt": "2026-11-23T20:14:57.827Z",
+      "normalizedAt": "2026-11-23T20:14:57.827Z"
+    },
+    "actor": {
+      "id": "leader",
+      "kind": "HUMAN"
+    },
+    "causeIds": [
+      "adopt-alternative-1-ea7cf64c-feaf-4b9e-b04d-5260b2a3ca30"
+    ],
+    "versions": {},
+    "reducerVersion": 1,
+    "payload": {
+      "at": "2026-11-23T20:14:57.827Z",
+      "sideId": "blue",
+      "causedBy": "adopted-official",
+      "decision": {
+        "id": "adopted-official",
+        "goals": [],
+        "tasks": [
+          {
+            "id": "task-adopted-official",
+            "title": "Задача",
+            "assigneeId": "node-1"
+          }
+        ],
+        "intent": "Замысел adopted-official",
+        "sideId": "blue",
+        "status": "DRAFT",
+        "authorId": "leader",
+        "reserves": [],
+        "revision": 1,
+        "createdAt": "2030-01-01T01:00:00Z",
+        "deadlines": [],
+        "resources": [],
+        "supersedes": null,
+        "assumptions": [],
+        "coordination": [],
+        "statusHistory": [
+          {
+            "at": "2030-01-01T01:00:00Z",
+            "status": "DRAFT"
+          }
+        ],
+        "transitionConditions": []
+      },
+      "commandId": "adopt-alternative-1-ea7cf64c-feaf-4b9e-b04d-5260b2a3ca30",
+      "rationale": "Новое официальное решение руководителя",
+      "commandType": "branch.adopt",
+      "sourceEventId": "ea7cf64c-feaf-4b9e-b04d-5260b2a3ca30",
+      "sourceBranchId": "alternative-1"
+    },
+    "prevHash": "b1c0f31e02eaa69d8a19d1829a04e6440b384650c93a77aa55be0b787b9d52c2",
+    "hash": "41d6882f0b21f5e6432db86b2868b722520d9d2cd3355d11f51158a89445064a",
+    "hashVersion": 2
+  }
+}

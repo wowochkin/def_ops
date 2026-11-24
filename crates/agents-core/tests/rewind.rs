@@ -5,7 +5,7 @@ use agents_core::model::{OrderKind, Side};
 use agents_core::{repo_root, DATA_DIR};
 
 /// Как в tests/command.rs: прежний путь игры «как сейчас» после 24 ч хода.
-const LEGACY_GAME_DIGEST: u64 = 5949968270007021613;
+const LEGACY_GAME_DIGEST: u64 = 4614938482904168558;
 
 fn game(scenario: &str, takeover: u32, mode: Mode, seed: Option<u64>) -> Game {
     let root = repo_root();

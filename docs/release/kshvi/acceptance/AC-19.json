@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac19-autonomy.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n ✓ services/kshvi/tests/acceptance/ac19-autonomy.test.ts (1 test) 650ms\n   ✓ AC-19: два процесса воспроизводят наращивание, а настоящий CommandService не повторяет эффекты после скачка 649ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:55:29\n   Duration  1.27s (tests 54%, transform 38%, import 8%)\n\n",
+  "initialRevision": {
+    "id": "ac19-autonomy",
+    "revision": 1,
+    "sha256": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac19/journal.json",
+    "sha256": "f6b38b497d3e96b2be8733dae3b1c4ddf9a3095624707aa38a1b465cac180e7e",
+    "eventCount": 63
+  },
+  "hashes": {
+    "scenario": "83b384d43e879fde2c85220ab4a9bd360bbd8a6db063472d2a516c13d820f460",
+    "environment": "65744481cb6211f81abeed8f7cd1eae8c0816b00f845be207f14578207f9490f",
+    "journal": "f6b38b497d3e96b2be8733dae3b1c4ddf9a3095624707aa38a1b465cac180e7e"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac19/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "independentProcesses": 2,
+    "probabilisticEvents": 12,
+    "zeroIntensityEvents": 0,
+    "preservedPlannedReactive": 2,
+    "officialOperations": 62,
+    "repeatedOperations": 0,
+    "replayedIntervals": 2,
+    "maximumCascadeDepth": 1,
+    "sealedProfileChangesRejected": 1,
+    "durableEvents": 1
+  },
+  "limitations": [
+    "Два независимых Node-процесса используют настоящий CommandService и hash-chain; идемпотентность после создания нового экземпляра сервиса подтверждена в PostgreSQL. Полный физический сетевой стенд подтверждается отдельными AC-00 и AC-14."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac19/process-normal.json",
+    "docs/release/kshvi/evidence/ac19/process-reverse.json",
+    "docs/release/kshvi/evidence/ac19/journal.json",
+    "docs/release/kshvi/evidence/ac19/protocol.txt",
+    "docs/release/kshvi/evidence/ac19/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-19.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
+  "openErrors": []
+}

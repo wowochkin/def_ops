@@ -1,0 +1,3268 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "COMBAT",
+  "title": "Контакты и последствия боевых эпизодов",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-01-insufficient-contact-inputs",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Контакт с недостаточными расчётными входами",
+      "description": "Для эпизода отсутствуют обязательные входы, и расчёт получает REQUIRES_REVIEW вместо выдуманного исхода по одному соотношению сил.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как организовать рассмотрение контакта при недостатке обязательных данных?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CONTACT_REQUIRES_REVIEW_ON_MISSING_INPUTS."
+      },
+      "trainingAssumption": "Для учебного события «Контакт с недостаточными расчётными входами» механизм CONTACT_REQUIRES_REVIEW_ON_MISSING_INPUTS и границы параметра «Срок уточнения входов» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.contact.input_state",
+          "operator": "EQUALS",
+          "value": "INCOMPLETE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии INCOMPLETE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок уточнения входов",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-02-resource-deficit-episode"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CONTACT_REQUIRES_REVIEW_ON_MISSING_INPUTS",
+          "reason": "Для эпизода отсутствуют обязательные входы, и расчёт получает REQUIRES_REVIEW вместо выдуманного исхода по одному соотношению сил.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CONTACT_INPUT_OBSERVATION",
+          "sourceRequirement": "CONTACT_INPUT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CONTACT_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "COMPLETE_INPUTS_OR_AUTHORIZE_MANUAL_RESULT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.contact.input_state": "INCOMPLETE"
+        },
+        "unsuitableFacts": {
+          "combat.contact.input_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-02-resource-deficit-episode",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дефицит ресурса в агрегированном эпизоде",
+      "description": "Потребность эпизода превышает доступный остаток, поэтому создаются ограниченный расход и явный дефицит без отрицательного баланса.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как учесть дефицит ресурса в исходе эпизода без скрытого обрезания остатка?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: EPISODE_RESOURCE_DEFICIT_RECORDING."
+      },
+      "trainingAssumption": "Для учебного события «Дефицит ресурса в агрегированном эпизоде» механизм EPISODE_RESOURCE_DEFICIT_RECORDING и границы параметра «Учебная потребность эпизода» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.resource.balance_state",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Учебная потребность эпизода",
+          "unit": "unit",
+          "min": 1,
+          "max": 100,
+          "default": 20
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "consumeResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "EPISODE_RESOURCE_DEFICIT_RECORDING",
+          "reason": "Потребность эпизода превышает доступный остаток, поэтому создаются ограниченный расход и явный дефицит без отрицательного баланса.",
+          "quantityParameter": "amount",
+          "allowNegative": false
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RESOURCE_DEFICIT_OBSERVATION",
+          "sourceRequirement": "RESOURCE_DEFICIT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EPISODE_DEFICIT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "consumeResource",
+          "method": "ALLOCATE_OR_REDUCE_RESOURCE_REQUIREMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.resource.balance_state": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "combat.resource.balance_state": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-03-partial-task-result",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Частичное выполнение задачи после контакта",
+      "description": "Эпизод завершается до достижения всех условий, и задача получает частичный результат с сохранением затрат, времени и незавершённых действий.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как продолжить управление после частичного выполнения задачи?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CONTACT_PARTIAL_TASK_COMPLETION."
+      },
+      "trainingAssumption": "Для учебного события «Частичное выполнение задачи после контакта» механизм CONTACT_PARTIAL_TASK_COMPLETION и границы параметра «Срок пересмотра задачи» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.task.completion_state",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "remaining",
+          "name": "Срок пересмотра задачи",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-04-equipment-degradation"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CONTACT_PARTIAL_TASK_COMPLETION",
+          "reason": "Эпизод завершается до достижения всех условий, и задача получает частичный результат с сохранением затрат, времени и незавершённых действий.",
+          "durationParameter": "remaining"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PARTIAL_TASK_OBSERVATION",
+          "sourceRequirement": "PARTIAL_TASK_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PARTIAL_RESULT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "remaining",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "REPLAN_OR_COMPLETE_REMAINING_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.task.completion_state": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "combat.task.completion_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-04-equipment-degradation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Деградация техники в боевом эпизоде",
+      "description": "По итогам эпизода отдельная запись техники переходит в DEGRADED с причиной, не меняя одновременно остальные единицы и начальную ведомость.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как связать последствия эпизода с состоянием конкретной техники?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_EQUIPMENT_DEGRADATION_TRANSITION."
+      },
+      "trainingAssumption": "Для учебного события «Деградация техники в боевом эпизоде» механизм COMBAT_EQUIPMENT_DEGRADATION_TRANSITION и границы параметра «Срок технической оценки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.equipment.outcome_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "repair",
+          "name": "Срок технической оценки",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_EQUIPMENT_DEGRADATION_TRANSITION",
+          "reason": "По итогам эпизода отдельная запись техники переходит в DEGRADED с причиной, не меняя одновременно остальные единицы и начальную ведомость.",
+          "durationParameter": "repair"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "EQUIPMENT_OUTCOME_OBSERVATION",
+          "sourceRequirement": "EQUIPMENT_OUTCOME_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EQUIPMENT_STATE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "repair",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REQUEST_REPAIR_OR_EVACUATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.equipment.outcome_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "combat.equipment.outcome_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-05-scenario-damage-zone",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Формирование сценарной зоны повреждения",
+      "description": "Эпизод создаёт геометрию повреждения с временем, основанием и видимостью, влияющую только через утверждённые правила среды.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как учесть новую зону повреждения в последующих решениях?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_DAMAGE_ZONE_WITH_CAUSALITY."
+      },
+      "trainingAssumption": "Для учебного события «Формирование сценарной зоны повреждения» механизм COMBAT_DAMAGE_ZONE_WITH_CAUSALITY и границы параметра «Срок действия зоны» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.damage_zone.creation_state",
+          "operator": "EQUALS",
+          "value": "CREATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CREATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок действия зоны",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 6
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-06-visibility-effect-profile"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createScenarioZone",
+          "target": {
+            "domain": "zones",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_DAMAGE_ZONE_WITH_CAUSALITY",
+          "reason": "Эпизод создаёт геометрию повреждения с временем, основанием и видимостью, влияющую только через утверждённые правила среды.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DAMAGE_ZONE_OBSERVATION",
+          "sourceRequirement": "DAMAGE_ZONE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DAMAGE_ZONE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createScenarioZone",
+          "method": "REASSESS_OR_REMOVE_ZONE_BY_EVENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.damage_zone.creation_state": "CREATED"
+        },
+        "unsuitableFacts": {
+          "combat.damage_zone.creation_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-06-visibility-effect-profile",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Ограничение видимости по утверждённому профилю",
+      "description": "Сценарный фактор эпизода меняет новые наблюдения через отдельный WeatherEffectProfile, не создавая неподтверждённых боевых коэффициентов.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как отделить влияние видимости от непроверенного влияния на исход боя?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_VISIBILITY_PROFILE_LIMITATION."
+      },
+      "trainingAssumption": "Для учебного события «Ограничение видимости по утверждённому профилю» механизм COMBAT_VISIBILITY_PROFILE_LIMITATION и границы параметра «Срок ограничения видимости» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.visibility.profile_state",
+          "operator": "EQUALS",
+          "value": "LIMITING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии LIMITING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок ограничения видимости",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createObservation",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_VISIBILITY_PROFILE_LIMITATION",
+          "reason": "Сценарный фактор эпизода меняет новые наблюдения через отдельный WeatherEffectProfile, не создавая неподтверждённых боевых коэффициентов.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "VISIBILITY_EFFECT_OBSERVATION",
+          "sourceRequirement": "VISIBILITY_EFFECT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "VISIBILITY_PROFILE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createObservation",
+          "method": "RESTORE_VISIBILITY_PROFILE_BASELINE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.visibility.profile_state": "LIMITING"
+        },
+        "unsuitableFacts": {
+          "combat.visibility.profile_state": "CLEAR"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-07-flank-threat-morale",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Угроза фланга как ограниченный вход МПС",
+      "description": "Подтверждённая угроза фланга применяется один раз к виртуальному MoralePsychState и влияет на задачу только по версионному переходу.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как проследить влияние угрозы фланга без неограниченной отрицательной обратной связи?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: BOUNDED_FLANK_THREAT_MORALE_IMPACT."
+      },
+      "trainingAssumption": "Для учебного события «Угроза фланга как ограниченный вход МПС» механизм BOUNDED_FLANK_THREAT_MORALE_IMPACT и границы параметра «Вклад в учебную шкалу» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.flank_threat.confirmation_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "impact",
+          "name": "Вклад в учебную шкалу",
+          "unit": "point",
+          "min": 1,
+          "max": 10,
+          "default": 3
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-08-interruption-costs"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "BOUNDED_FLANK_THREAT_MORALE_IMPACT",
+          "reason": "Подтверждённая угроза фланга применяется один раз к виртуальному MoralePsychState и влияет на задачу только по версионному переходу.",
+          "quantityParameter": "impact"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FLANK_THREAT_OBSERVATION",
+          "sourceRequirement": "FLANK_THREAT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MORALE_IMPACT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "impact",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "STABILIZE_FLANK_AND_APPLY_RECOVERY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.flank_threat.confirmation_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "combat.flank_threat.confirmation_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-08-interruption-costs",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Прерывание эпизода с сохранением затрат",
+      "description": "Эпизод остановлен до завершения, и уже затраченные время и ресурсы остаются в журнале, а возобновление требует нового перехода.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как сохранить последствия прерывания без отмены уже произведённых затрат?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: INTERRUPTED_EPISODE_PRESERVES_COSTS."
+      },
+      "trainingAssumption": "Для учебного события «Прерывание эпизода с сохранением затрат» механизм INTERRUPTED_EPISODE_PRESERVES_COSTS и границы параметра «Затраченное до прерывания время» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.episode.execution_state",
+          "operator": "EQUALS",
+          "value": "INTERRUPTED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии INTERRUPTED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "spent",
+          "name": "Затраченное до прерывания время",
+          "unit": "min",
+          "min": 5,
+          "max": 360,
+          "default": 60
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "INTERRUPTED_EPISODE_PRESERVES_COSTS",
+          "reason": "Эпизод остановлен до завершения, и уже затраченные время и ресурсы остаются в журнале, а возобновление требует нового перехода.",
+          "durationParameter": "spent"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "INTERRUPTION_OBSERVATION",
+          "sourceRequirement": "INTERRUPTION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EPISODE_INTERRUPTION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "spent",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "AUTHORIZE_RESUMPTION_OR_TERMINATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.episode.execution_state": "INTERRUPTED"
+        },
+        "unsuitableFacts": {
+          "combat.episode.execution_state": "RUNNING"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-09-stop-without-score",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Прекращение эпизода без автоматической оценки",
+      "description": "По команде отбоя эпизод завершается отдельным событием, не изменяя цели и итоговую оценку обучаемого.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как зафиксировать прекращение контакта без объявления победителя?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_STOP_WITHOUT_ASSESSMENT_CHANGE."
+      },
+      "trainingAssumption": "Для учебного события «Прекращение эпизода без автоматической оценки» механизм COMBAT_STOP_WITHOUT_ASSESSMENT_CHANGE и границы параметра «Срок рассмотрения возобновления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.stop_order.receipt_state",
+          "operator": "EQUALS",
+          "value": "RECEIVED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии RECEIVED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения возобновления",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 20
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-10-manual-outcome-supersession"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_STOP_WITHOUT_ASSESSMENT_CHANGE",
+          "reason": "По команде отбоя эпизод завершается отдельным событием, не изменяя цели и итоговую оценку обучаемого.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "STOP_ORDER_OBSERVATION",
+          "sourceRequirement": "STOP_ORDER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EPISODE_STOP_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "AUTHORIZE_SAFE_RESUMPTION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.stop_order.receipt_state": "RECEIVED"
+        },
+        "unsuitableFacts": {
+          "combat.stop_order.receipt_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-10-manual-outcome-supersession",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Ручное решение вместо расчётного исхода",
+      "description": "Уполномоченное ручное решение создаёт связанный расчёт manual с основанием, сохраняя исходный результат для сравнения и не меняя оценку автоматически.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как документировать ручную замену расчётного исхода эпизода?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MANUAL_COMBAT_OUTCOME_SUPERSESSION."
+      },
+      "trainingAssumption": "Для учебного события «Ручное решение вместо расчётного исхода» механизм MANUAL_COMBAT_OUTCOME_SUPERSESSION и границы параметра «Срок утверждения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.calculation.review_state",
+          "operator": "EQUALS",
+          "value": "MANUAL_REQUIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MANUAL_REQUIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок утверждения",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MANUAL_COMBAT_OUTCOME_SUPERSESSION",
+          "reason": "Уполномоченное ручное решение создаёт связанный расчёт manual с основанием, сохраняя исходный результат для сравнения и не меняя оценку автоматически.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MANUAL_DECISION_OBSERVATION",
+          "sourceRequirement": "MANUAL_DECISION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "OUTCOME_SUPERSESSION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CONFIRM_OR_RETURN_MANUAL_OUTCOME",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.calculation.review_state": "MANUAL_REQUIRED"
+        },
+        "unsuitableFacts": {
+          "combat.calculation.review_state": "CALCULATED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-11-replay-key-conflict",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повтор эпизода с уже использованным ключом",
+      "description": "Повторная команда содержит прежний случайный ключ и не создаёт новый розыгрыш; расхождение содержимого направляется на рассмотрение.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как обеспечить воспроизводимость исхода при повторной команде?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_RANDOM_KEY_REPLAY_GUARD."
+      },
+      "trainingAssumption": "Для учебного события «Повтор эпизода с уже использованным ключом» механизм COMBAT_RANDOM_KEY_REPLAY_GUARD и границы параметра «Срок разбора повтора» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.random_key.reuse_state",
+          "operator": "EQUALS",
+          "value": "DUPLICATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DUPLICATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок разбора повтора",
+          "unit": "min",
+          "min": 1,
+          "max": 60,
+          "default": 10
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-12-unknown-readiness-block"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_RANDOM_KEY_REPLAY_GUARD",
+          "reason": "Повторная команда содержит прежний случайный ключ и не создаёт новый розыгрыш; расхождение содержимого направляется на рассмотрение.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RANDOM_KEY_REUSE_OBSERVATION",
+          "sourceRequirement": "RANDOM_KEY_REUSE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPLAY_KEY_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "RESOLVE_REPLAY_COMMAND_CONFLICT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.random_key.reuse_state": "DUPLICATED"
+        },
+        "unsuitableFacts": {
+          "combat.random_key.reuse_state": "NEW"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-12-unknown-readiness-block",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестная готовность перед эпизодом",
+      "description": "ReadinessState участника UNKNOWN, поэтому автоматический переход к применению результата блокируется вместо подстановки готовности.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как учесть неизвестную готовность силы перед боевым эпизодом?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNKNOWN_READINESS_BLOCKS_COMBAT_APPLICATION."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестная готовность перед эпизодом» механизм UNKNOWN_READINESS_BLOCKS_COMBAT_APPLICATION и границы параметра «Срок уточнения готовности» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.readiness.knowledge_state",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок уточнения готовности",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNKNOWN_READINESS_BLOCKS_COMBAT_APPLICATION",
+          "reason": "ReadinessState участника UNKNOWN, поэтому автоматический переход к применению результата блокируется вместо подстановки готовности.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "READINESS_UNCERTAINTY_OBSERVATION",
+          "sourceRequirement": "READINESS_UNCERTAINTY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "READINESS_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CONFIRM_ACTUAL_READINESS_OR_LIMIT_EPISODE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.readiness.knowledge_state": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "combat.readiness.knowledge_state": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-13-simultaneous-contact-order",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Одновременные контакты двух сторон",
+      "description": "Два эпизода претендуют на один расчётный момент, и единая очередь упорядочивает их по профилю, зависимостям и последовательности, а не сетевой задержке.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как воспроизводимо разрешить одновременные эпизоды сторон?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SIMULTANEOUS_CONTACT_DETERMINISTIC_ORDER."
+      },
+      "trainingAssumption": "Для учебного события «Одновременные контакты двух сторон» механизм SIMULTANEOUS_CONTACT_DETERMINISTIC_ORDER и границы параметра «Срок разрешения очереди» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.simultaneous.queue_state",
+          "operator": "EQUALS",
+          "value": "CONTESTED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONTESTED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок разрешения очереди",
+          "unit": "min",
+          "min": 1,
+          "max": 30,
+          "default": 5
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-14-uncertain-recon-outcome"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordScenarioCondition",
+          "target": {
+            "domain": "scenario",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SIMULTANEOUS_CONTACT_DETERMINISTIC_ORDER",
+          "reason": "Два эпизода претендуют на один расчётный момент, и единая очередь упорядочивает их по профилю, зависимостям и последовательности, а не сетевой задержке.",
+          "durationParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SIMULTANEOUS_CONTACT_OBSERVATION",
+          "sourceRequirement": "SIMULTANEOUS_CONTACT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "QUEUE_ORDER_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordScenarioCondition",
+          "method": "CONFIRM_RESULTING_SEQUENCE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.simultaneous.queue_state": "CONTESTED"
+        },
+        "unsuitableFacts": {
+          "combat.simultaneous.queue_state": "ORDERED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-14-uncertain-recon-outcome",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неопределённые сведения ограничивают точность исхода",
+      "description": "Расчёт использует наблюдения с неполными атрибутами, поэтому результат содержит качественную неопределённость и не выдаёт ложную точность.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как представить исход эпизода при неполных разведывательных данных?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNCERTAIN_RECON_LIMITS_OUTCOME_PRECISION."
+      },
+      "trainingAssumption": "Для учебного события «Неопределённые сведения ограничивают точность исхода» механизм UNCERTAIN_RECON_LIMITS_OUTCOME_PRECISION и границы параметра «Срок уточнения сведений» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.recon.uncertainty_state",
+          "operator": "EQUALS",
+          "value": "HIGH",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии HIGH; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок уточнения сведений",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordScenarioCondition",
+          "target": {
+            "domain": "scenario",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNCERTAIN_RECON_LIMITS_OUTCOME_PRECISION",
+          "reason": "Расчёт использует наблюдения с неполными атрибутами, поэтому результат содержит качественную неопределённость и не выдаёт ложную точность.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RECON_UNCERTAINTY_OBSERVATION",
+          "sourceRequirement": "RECON_UNCERTAINTY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "OUTCOME_UNCERTAINTY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordScenarioCondition",
+          "method": "CLARIFY_INPUTS_AND_RECALCULATE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.recon.uncertainty_state": "HIGH"
+        },
+        "unsuitableFacts": {
+          "combat.recon.uncertainty_state": "LOW"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-15-support-not-delivered",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неподтверждённая поддержка меняет исполнение",
+      "description": "Обещанная поддержка не получила подтверждение применения, и зависимая задача не считается обеспеченной, а её срок пересматривается по профилю.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как учесть отсутствие подтверждённой поддержки в ходе эпизода?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNCONFIRMED_SUPPORT_TASK_EFFECT."
+      },
+      "trainingAssumption": "Для учебного события «Неподтверждённая поддержка меняет исполнение» механизм UNCONFIRMED_SUPPORT_TASK_EFFECT и границы параметра «Задержка поддержки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.support.confirmation_state",
+          "operator": "EQUALS",
+          "value": "MISSING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISSING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка поддержки",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-16-withdrawal-route-block"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNCONFIRMED_SUPPORT_TASK_EFFECT",
+          "reason": "Обещанная поддержка не получила подтверждение применения, и зависимая задача не считается обеспеченной, а её срок пересматривается по профилю.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPORT_CONFIRMATION_OBSERVATION",
+          "sourceRequirement": "SUPPORT_CONFIRMATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SUPPORT_FAILURE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "CONFIRM_SUPPORT_OR_REVISE_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.support.confirmation_state": "MISSING"
+        },
+        "unsuitableFacts": {
+          "combat.support.confirmation_state": "CONFIRMED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-16-withdrawal-route-block",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недоступность маршрута выхода из контакта",
+      "description": "Маршрут прекращения эпизода закрыт, поэтому выход удерживается до выбора нового пути с сохранением текущего положения и состояния задачи.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как организовать выход из эпизода при закрытом маршруте?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: WITHDRAWAL_ROUTE_BLOCKED_HOLD."
+      },
+      "trainingAssumption": "Для учебного события «Недоступность маршрута выхода из контакта» механизм WITHDRAWAL_ROUTE_BLOCKED_HOLD и границы параметра «Задержка выхода» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "WITHDRAWAL_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.withdrawal.route_state",
+          "operator": "EQUALS",
+          "value": "BLOCKED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка выхода",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 90
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "holdFormation",
+          "target": {
+            "domain": "formation",
+            "ref": "scenario-target"
+          },
+          "mechanism": "WITHDRAWAL_ROUTE_BLOCKED_HOLD",
+          "reason": "Маршрут прекращения эпизода закрыт, поэтому выход удерживается до выбора нового пути с сохранением текущего положения и состояния задачи.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "WITHDRAWAL_ROUTE_OBSERVATION",
+          "sourceRequirement": "WITHDRAWAL_ROUTE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "WITHDRAWAL_HOLD_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "holdFormation",
+          "method": "OPEN_OR_AUTHORIZE_ALTERNATE_WITHDRAWAL_ROUTE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.withdrawal.route_state": "BLOCKED"
+        },
+        "unsuitableFacts": {
+          "combat.withdrawal.route_state": "OPEN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-17-combat-supply-deficit",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Срыв подвоза во время эпизода",
+      "description": "Поставка не подтверждена к расчётному моменту, и профиль задачи учитывает только фактический остаток и отдельный дефицит, не запас в пути как доступный.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как скорректировать эпизод при неподтверждённом подвозе?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMBAT_SUPPLY_NOT_DELIVERED_DEFICIT."
+      },
+      "trainingAssumption": "Для учебного события «Срыв подвоза во время эпизода» механизм COMBAT_SUPPLY_NOT_DELIVERED_DEFICIT и границы параметра «Дефицит учебных единиц» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.supply.delivery_state",
+          "operator": "EQUALS",
+          "value": "NOT_DELIVERED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии NOT_DELIVERED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "shortage",
+          "name": "Дефицит учебных единиц",
+          "unit": "unit",
+          "min": 1,
+          "max": 80,
+          "default": 15
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-18-post-contact-recovery"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordResourceDeficit",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMBAT_SUPPLY_NOT_DELIVERED_DEFICIT",
+          "reason": "Поставка не подтверждена к расчётному моменту, и профиль задачи учитывает только фактический остаток и отдельный дефицит, не запас в пути как доступный.",
+          "durationParameter": "shortage"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMBAT_SUPPLY_OBSERVATION",
+          "sourceRequirement": "COMBAT_SUPPLY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMBAT_SUPPLY_DEFICIT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "shortage",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordResourceDeficit",
+          "method": "EXPEDITE_OR_REPLAN_SUPPLY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.supply.delivery_state": "NOT_DELIVERED"
+        },
+        "unsuitableFacts": {
+          "combat.supply.delivery_state": "DELIVERED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-18-post-contact-recovery",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Восстановление после эпизода",
+      "description": "После прекращения интенсивных действий назначается восстановление, требующее времени и ресурсов, а не мгновенный возврат МПС и готовности.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как организовать восстановление силы после контакта?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: POST_CONTACT_TIME_BOUNDED_RECOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Восстановление после эпизода» механизм POST_CONTACT_TIME_BOUNDED_RECOVERY и границы параметра «Длительность восстановления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "RECOVERY_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.recovery.activity_state",
+          "operator": "EQUALS",
+          "value": "REQUIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REQUIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность восстановления",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 6
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleRest",
+          "target": {
+            "domain": "personnel",
+            "ref": "scenario-target"
+          },
+          "mechanism": "POST_CONTACT_TIME_BOUNDED_RECOVERY",
+          "reason": "После прекращения интенсивных действий назначается восстановление, требующее времени и ресурсов, а не мгновенный возврат МПС и готовности.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RECOVERY_ACTIVITY_OBSERVATION",
+          "sourceRequirement": "RECOVERY_ACTIVITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RECOVERY_PROGRESS_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleRest",
+          "method": "COMPLETE_RECOVERY_AND_CONFIRM_READINESS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.recovery.activity_state": "REQUIRED"
+        },
+        "unsuitableFacts": {
+          "combat.recovery.activity_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-19-destroyed-equipment-guard",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повреждение до состояния DESTROYED без повторного учёта",
+      "description": "Отдельная единица получает терминальное состояние по причинной ссылке, и повторное событие того же эпизода не списывает её второй раз.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как исключить двойной учёт уничтоженной техники при повторных последствиях?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DESTROYED_EQUIPMENT_IDEMPOTENT_TRANSITION."
+      },
+      "trainingAssumption": "Для учебного события «Повреждение до состояния DESTROYED без повторного учёта» механизм DESTROYED_EQUIPMENT_IDEMPOTENT_TRANSITION и границы параметра «Срок сверки состояния» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.equipment.terminal_state",
+          "operator": "EQUALS",
+          "value": "DESTROYED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DESTROYED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки состояния",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "combat-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "combat-20-incomplete-after-action"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DESTROYED_EQUIPMENT_IDEMPOTENT_TRANSITION",
+          "reason": "Отдельная единица получает терминальное состояние по причинной ссылке, и повторное событие того же эпизода не списывает её второй раз.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TERMINAL_EQUIPMENT_OBSERVATION",
+          "sourceRequirement": "TERMINAL_EQUIPMENT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "TERMINAL_STATE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REVIEW_ANY_CONFLICTING_RESTORATION_REQUEST",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.equipment.terminal_state": "DESTROYED"
+        },
+        "unsuitableFacts": {
+          "combat.equipment.terminal_state": "DAMAGED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "combat-20-incomplete-after-action",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неполные доказательства после эпизода",
+      "description": "После эпизода отсутствует часть наблюдений или подтверждений, поэтому материалы разбора явно помечаются неполными и не дополняются выдуманными фактами.",
+      "category": "COMBAT",
+      "educationalQuestion": "Как подготовить разбор эпизода при неполной доказательной цепочке?",
+      "source": {
+        "sourceId": "spec-simulation",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: AFTER_ACTION_EVIDENCE_GAP_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Неполные доказательства после эпизода» механизм AFTER_ACTION_EVIDENCE_GAP_REVIEW и границы параметра «Срок сбора доказательств» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "CONTACT_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "combat.after_action.evidence_state",
+          "operator": "EQUALS",
+          "value": "INCOMPLETE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии INCOMPLETE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сбора доказательств",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "combat-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "AFTER_ACTION_EVIDENCE_GAP_REVIEW",
+          "reason": "После эпизода отсутствует часть наблюдений или подтверждений, поэтому материалы разбора явно помечаются неполными и не дополняются выдуманными фактами.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "AFTER_ACTION_EVIDENCE_OBSERVATION",
+          "sourceRequirement": "AFTER_ACTION_EVIDENCE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EVIDENCE_GAP_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "COLLECT_OR_MARK_UNRESOLVED_EVIDENCE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "combat.after_action.evidence_state": "INCOMPLETE"
+        },
+        "unsuitableFacts": {
+          "combat.after_action.evidence_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

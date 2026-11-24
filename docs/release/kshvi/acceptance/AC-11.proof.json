@@ -1,0 +1,41 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "g2-ac11",
+    "revision": 1,
+    "sha256": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/g2-journal.json",
+    "sha256": "e322cb5290f234d1683f5e28d946c641ca86bf8bc0407819d626bad787ab720b",
+    "eventCount": 35
+  },
+  "hashes": {
+    "scenario": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee",
+    "environment": "188fc8bde22266a79943bc1a47be716c1269668af519555ea7acfa011172aa3b",
+    "journal": "e322cb5290f234d1683f5e28d946c641ca86bf8bc0407819d626bad787ab720b"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac11/protocol.txt",
+    "docs/release/kshvi/evidence/g2-infrastructure.json"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "independentSessions": 2,
+    "domainEvents": 35,
+    "resourceConsumptionEvents": 1,
+    "orderCancellationEvents": 2,
+    "verifiedInfrastructure": 3
+  },
+  "limitations": [
+    "Двусторонний цикл подтверждён серверными событиями; физический многоуровневый стенд с отдельными рабочими местами проверяется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac11/initial-scenario.json",
+    "docs/release/kshvi/evidence/g2-journal.json",
+    "docs/release/kshvi/evidence/g2-infrastructure.json",
+    "docs/release/kshvi/evidence/ac11/protocol.txt",
+    "docs/release/kshvi/evidence/ac11/metrics.json"
+  ]
+}

@@ -1,0 +1,3333 @@
+{
+  "schemaVersion": 1,
+  "sealedScenario": {
+    "schemaVersion": 1,
+    "id": "16bdd97c-5bcd-443a-8677-d1fa13dad176",
+    "revision": 2,
+    "state": "SEALED",
+    "scenario": {
+      "initialMap": {
+        "schemaVersion": 1,
+        "id": "map-ac22",
+        "revision": 11,
+        "state": "DRAFT",
+        "environment": {
+          "snapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bounds": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        "bounds": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "initialOperationalAt": "2030-01-01T06:00:00+03:00",
+        "timeZone": "Europe/Moscow",
+        "weatherFrameRef": "weather-ac22",
+        "terrainStateRef": "terrain-ac22",
+        "symbolSet": {
+          "id": "modern-signs",
+          "revision": 1,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "attribution": [
+          "OSM",
+          "Учебный атлас"
+        ],
+        "layers": [
+          {
+            "id": "BASEMAP",
+            "independent": true
+          },
+          {
+            "id": "TRUE_FORCES",
+            "independent": true
+          },
+          {
+            "id": "PERSONAL_SITUATION",
+            "independent": true
+          },
+          {
+            "id": "OBSERVATIONS",
+            "independent": true
+          },
+          {
+            "id": "EVENTS",
+            "independent": true
+          },
+          {
+            "id": "RESOURCES",
+            "independent": true
+          },
+          {
+            "id": "COMMUNICATIONS",
+            "independent": true
+          },
+          {
+            "id": "WEATHER",
+            "independent": true
+          },
+          {
+            "id": "CBRN",
+            "independent": true
+          },
+          {
+            "id": "SOCIO_ECONOMIC",
+            "independent": true
+          },
+          {
+            "id": "REFERENCE",
+            "independent": true
+          },
+          {
+            "id": "ACTUAL",
+            "independent": true
+          },
+          {
+            "id": "BRANCHES",
+            "independent": true
+          },
+          {
+            "id": "STAFF_COMMENTS",
+            "independent": true
+          }
+        ],
+        "markers": [
+          {
+            "id": "blue-force",
+            "revision": 1,
+            "kind": "FORCE",
+            "layerId": "TRUE_FORCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-blue-force",
+            "authorId": "author-ac22",
+            "eventId": "event-blue-force",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          },
+          {
+            "id": "secret-red",
+            "revision": 1,
+            "kind": "FORCE",
+            "layerId": "TRUE_FORCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.8,
+                0.8
+              ]
+            },
+            "sourceId": "source-secret-red",
+            "authorId": "author-ac22",
+            "eventId": "event-secret-red",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "red"
+              ],
+              "instanceIds": [
+                "red-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-red"
+            },
+            "sideId": "red",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "red",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          },
+          {
+            "id": "reported-red",
+            "revision": 1,
+            "kind": "FORCE",
+            "layerId": "OBSERVATIONS",
+            "truth": "PRIVATE",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.7,
+                0.7
+              ]
+            },
+            "sourceId": "source-reported-red",
+            "authorId": "author-ac22",
+            "eventId": "event-reported-red",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "ASSUMED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-red"
+            },
+            "sideId": "red",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "red",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          },
+          {
+            "id": "blue-command",
+            "revision": 1,
+            "kind": "COMMAND_POST",
+            "layerId": "TRUE_FORCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-blue-command",
+            "authorId": "author-ac22",
+            "eventId": "event-blue-command",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          },
+          {
+            "id": "blue-logistics",
+            "revision": 1,
+            "kind": "LOGISTICS",
+            "layerId": "RESOURCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-blue-logistics",
+            "authorId": "author-ac22",
+            "eventId": "event-blue-logistics",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          },
+          {
+            "id": "route-blue",
+            "revision": 1,
+            "kind": "ROUTE",
+            "layerId": "RESOURCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "LineString",
+              "coordinates": [
+                [
+                  0.2,
+                  0.2
+                ],
+                [
+                  0.4,
+                  0.4
+                ]
+              ]
+            },
+            "sourceId": "source-route-blue",
+            "authorId": "author-ac22",
+            "eventId": "event-route-blue",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "linkedMarkerIds": [
+                "blue-force"
+              ]
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            },
+            "loadTonnes": 30,
+            "crossingCapacityTonnes": 40,
+            "passable": true
+          },
+          {
+            "id": "crossing-blue",
+            "revision": 1,
+            "kind": "CROSSING",
+            "layerId": "RESOURCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-crossing-blue",
+            "authorId": "author-ac22",
+            "eventId": "event-crossing-blue",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            },
+            "crossingCapacityTonnes": 40
+          },
+          {
+            "id": "column-blue",
+            "revision": 1,
+            "kind": "COLUMN",
+            "layerId": "RESOURCES",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-column-blue",
+            "authorId": "author-ac22",
+            "eventId": "event-column-blue",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            },
+            "routeId": "route-blue"
+          },
+          {
+            "id": "obstacle-blue",
+            "revision": 1,
+            "kind": "OBSTACLE",
+            "layerId": "EVENTS",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                0.2,
+                0.2
+              ]
+            },
+            "sourceId": "source-obstacle-blue",
+            "authorId": "author-ac22",
+            "eventId": "event-obstacle-blue",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            },
+            "passable": true
+          },
+          {
+            "id": "area-blue",
+            "revision": 1,
+            "kind": "AREA",
+            "layerId": "REFERENCE",
+            "truth": "TRUTH",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    0.1,
+                    0.1
+                  ],
+                  [
+                    0.5,
+                    0.1
+                  ],
+                  [
+                    0.5,
+                    0.5
+                  ],
+                  [
+                    0.1,
+                    0.1
+                  ]
+                ]
+              ]
+            },
+            "sourceId": "source-area-blue",
+            "authorId": "author-ac22",
+            "eventId": "event-area-blue",
+            "validFrom": "2030-01-01T06:00:00+03:00",
+            "validUntil": "2030-01-02T06:00:00+03:00",
+            "state": "OBSERVED",
+            "confidence": 0.8,
+            "uncertainty": {
+              "radiusM": 20,
+              "note": "Исходное наблюдение"
+            },
+            "visibility": {
+              "sideIds": [
+                "blue"
+              ],
+              "instanceIds": [
+                "blue-hq"
+              ]
+            },
+            "links": {
+              "forceId": "force-blue"
+            },
+            "sideId": "blue",
+            "symbol": {
+              "id": "infantry",
+              "version": "v1",
+              "sideId": "blue",
+              "status": "APPROVED",
+              "sourceDocument": "signs.doc",
+              "sourcePage": 12
+            }
+          }
+        ],
+        "history": []
+      },
+      "environmentSnapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "rehearsalProfile": {
+        "communication": {
+          "route": {
+            "message": {
+              "id": "rehearsal-message",
+              "type": "ORDER",
+              "senderRole": "COMMANDER",
+              "fromInstanceId": "hq",
+              "recipientIds": [
+                "unit"
+              ],
+              "sizeBytes": 2000,
+              "priority": 5,
+              "domainKey": "order-rehearsal",
+              "createdAt": "2030-01-01T06:00:00Z"
+            },
+            "channels": [
+              {
+                "id": "main",
+                "version": 1,
+                "fromInstanceId": "hq",
+                "toInstanceId": "unit",
+                "nodeIds": [
+                  "node-main"
+                ],
+                "direction": "SIMPLEX",
+                "allowedMessageTypes": [
+                  "ORDER",
+                  "REPORT"
+                ],
+                "capacity": 1,
+                "bytesPerSecond": 1000,
+                "baseDelayMs": 1000,
+                "priorityPolicy": {
+                  "allowQueuedPreemption": true
+                },
+                "availability": "AVAILABLE",
+                "encrypted": true,
+                "reserveChannelIds": [
+                  "reserve"
+                ],
+                "validFrom": "2030-01-01T00:00:00Z",
+                "validUntil": "2030-01-02T00:00:00Z"
+              },
+              {
+                "id": "reserve",
+                "version": 1,
+                "fromInstanceId": "hq",
+                "toInstanceId": "unit",
+                "nodeIds": [
+                  "node-reserve"
+                ],
+                "direction": "SIMPLEX",
+                "allowedMessageTypes": [
+                  "ORDER",
+                  "REPORT"
+                ],
+                "capacity": 1,
+                "bytesPerSecond": 1000,
+                "baseDelayMs": 3000,
+                "priorityPolicy": {
+                  "allowQueuedPreemption": true
+                },
+                "availability": "AVAILABLE",
+                "encrypted": true,
+                "reserveChannelIds": [],
+                "validFrom": "2030-01-01T00:00:00Z",
+                "validUntil": "2030-01-02T00:00:00Z"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "node-main",
+                "status": "AVAILABLE"
+              },
+              {
+                "id": "node-reserve",
+                "status": "AVAILABLE"
+              }
+            ],
+            "at": "2030-01-01T06:00:00Z"
+          },
+          "failure": {
+            "id": "rehearsal-node-failure",
+            "type": "NODE_FAILURE",
+            "basis": "Репетиционный отказ узла",
+            "trainingQuestion": "Как сохранить управление?",
+            "workaround": "Перейти на резерв",
+            "scope": {
+              "nodeIds": [
+                "node-main"
+              ],
+              "channelIds": []
+            },
+            "at": "2030-01-01T06:00:00Z",
+            "expectedImpact": {
+              "documentIds": [
+                "rehearsal-order"
+              ],
+              "deadlineIds": [],
+              "branchIds": []
+            }
+          }
+        },
+        "branch": {
+          "official": {
+            "branchId": "official",
+            "organizationId": "org-1",
+            "ownerId": "leader-1",
+            "parentBranchId": null,
+            "kind": "OFFICIAL",
+            "snapshot": {
+              "snapshotId": "snapshot-2",
+              "branchId": "official",
+              "sequence": 2,
+              "operationalAt": "2026-11-21T06:02:00.000Z",
+              "wallClockAt": "2026-11-21T09:02:00.000Z",
+              "reducerVersion": 1,
+              "state": {
+                "domains": {
+                  "Map": {
+                    "value": 3,
+                    "items": []
+                  },
+                  "Weather": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Resources": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Tasks": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Documents": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Communications": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Decisions": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Assessments": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "MoralePsych": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Readiness": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Equipment": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "ReadinessActivities": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Formation": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "SupplyRequests": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "SupplyMovements": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "RepairEvacuation": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "TerrainVersions": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "SchedulerAttempts": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "AgentCycles": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "AgentInterceptions": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "Observations": {
+                    "value": 1,
+                    "items": []
+                  },
+                  "EventFeed": {
+                    "value": 1,
+                    "items": []
+                  }
+                },
+                "appliedEventIds": [
+                  "event-1",
+                  "event-2"
+                ],
+                "eventCauses": {
+                  "event-1": [],
+                  "event-2": [
+                    "event-1"
+                  ]
+                }
+              }
+            },
+            "state": {
+              "domains": {
+                "Map": {
+                  "value": 3,
+                  "items": []
+                },
+                "Weather": {
+                  "value": 1,
+                  "items": []
+                },
+                "Resources": {
+                  "value": 1,
+                  "items": []
+                },
+                "Tasks": {
+                  "value": 1,
+                  "items": []
+                },
+                "Documents": {
+                  "value": 1,
+                  "items": []
+                },
+                "Communications": {
+                  "value": 1,
+                  "items": []
+                },
+                "Decisions": {
+                  "value": 1,
+                  "items": []
+                },
+                "Assessments": {
+                  "value": 1,
+                  "items": []
+                },
+                "MoralePsych": {
+                  "value": 1,
+                  "items": []
+                },
+                "Readiness": {
+                  "value": 1,
+                  "items": []
+                },
+                "Equipment": {
+                  "value": 1,
+                  "items": []
+                },
+                "ReadinessActivities": {
+                  "value": 1,
+                  "items": []
+                },
+                "Formation": {
+                  "value": 1,
+                  "items": []
+                },
+                "SupplyRequests": {
+                  "value": 1,
+                  "items": []
+                },
+                "SupplyMovements": {
+                  "value": 1,
+                  "items": []
+                },
+                "RepairEvacuation": {
+                  "value": 1,
+                  "items": []
+                },
+                "TerrainVersions": {
+                  "value": 1,
+                  "items": []
+                },
+                "SchedulerAttempts": {
+                  "value": 1,
+                  "items": []
+                },
+                "AgentCycles": {
+                  "value": 1,
+                  "items": []
+                },
+                "AgentInterceptions": {
+                  "value": 1,
+                  "items": []
+                },
+                "Observations": {
+                  "value": 1,
+                  "items": []
+                },
+                "EventFeed": {
+                  "value": 1,
+                  "items": []
+                }
+              },
+              "appliedEventIds": [
+                "event-1",
+                "event-2"
+              ],
+              "eventCauses": {
+                "event-1": [],
+                "event-2": [
+                  "event-1"
+                ]
+              }
+            },
+            "events": [],
+            "documents": [
+              {
+                "id": "signed-order",
+                "signed": true,
+                "text": "Исходный приказ"
+              }
+            ],
+            "assessment": {
+              "grade": "Утверждено руководителем"
+            },
+            "versions": {
+              "model": {
+                "id": "model",
+                "revision": 1,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "environment": {
+                "id": "environment",
+                "revision": 1,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "reducerVersion": 1
+            },
+            "seed": "official-seed",
+            "rights": [
+              "OFFICIAL_READ"
+            ],
+            "assumptions": [],
+            "hash": "e9c44f9af1728086f675f58a6d3893533ee3b4dcc624e3e1a2029995fe51121b"
+          },
+          "decision": {
+            "eventId": "rehearsal-alternative",
+            "type": "decision",
+            "operationalAt": "2030-01-01T06:03:00Z",
+            "wallClockAt": "2030-01-01T06:03:00Z",
+            "payload": {
+              "text": "Репетиционная альтернатива"
+            },
+            "changes": [
+              {
+                "domain": "Resources",
+                "value": {
+                  "fuel": 10
+                }
+              }
+            ]
+          }
+        },
+        "visibility": {
+          "world": {
+            "forces": [
+              {
+                "id": "own-blue",
+                "side": "blue",
+                "position": [
+                  1,
+                  1
+                ]
+              },
+              {
+                "id": "secret-red",
+                "side": "red",
+                "position": [
+                  2,
+                  2
+                ]
+              }
+            ],
+            "inputs": [],
+            "reference": {
+              "secret": true
+            }
+          },
+          "actor": {
+            "side": "blue",
+            "role": "TRAINEE",
+            "operationalAt": "2030-01-01T06:00:00Z",
+            "scope": "own"
+          }
+        },
+        "documents": {
+          "revision": {
+            "id": "rehearsal-order:r1",
+            "documentId": "rehearsal-order",
+            "revision": 1,
+            "state": "ISSUED",
+            "requisites": {
+              "exerciseId": "exercise-rehearsal",
+              "scenarioRevisionId": "scenario-rehearsal",
+              "instanceId": "hq",
+              "authorId": "author",
+              "category": "OPERATIONAL",
+              "type": "COMBAT_ORDER",
+              "title": "Репетиционный приказ",
+              "number": "1",
+              "operationalAt": "2030-01-01T06:00:00+03:00",
+              "place": "КП",
+              "validFrom": "2030-01-01T00:00:00+03:00",
+              "validUntil": "2030-01-02T00:00:00+03:00",
+              "stageId": "stage-1",
+              "sideId": "blue",
+              "visibility": {
+                "sideIds": [
+                  "blue"
+                ],
+                "instanceIds": [],
+                "roles": []
+              },
+              "addressees": [
+                {
+                  "instanceId": "middle",
+                  "channelId": "main"
+                }
+              ],
+              "copies": [],
+              "sourceRole": "COMMANDER",
+              "deliveryChannelId": "main",
+              "basis": "Репетиционный замысел",
+              "executorId": "middle",
+              "deadlineAt": "2030-01-01T09:00:00+03:00",
+              "linkedEventIds": [],
+              "linkedDecisionIds": [],
+              "linkedTaskIds": [
+                "task-1"
+              ],
+              "templateVersion": "combat-order:v1"
+            },
+            "content": {
+              "body": "Выполнить репетиционную задачу",
+              "units": {
+                "distance": "m"
+              }
+            },
+            "map": {
+              "environmentSnapshotId": "env-rehearsal",
+              "legend": [
+                "cp:v1"
+              ],
+              "attribution": [
+                "Локальная топооснова"
+              ],
+              "visibility": {
+                "sideIds": [
+                  "blue"
+                ],
+                "instanceIds": [],
+                "roles": []
+              }
+            },
+            "attachments": [],
+            "approvalRouteId": "dual-rehearsal",
+            "sha256": "b44b0e5e30d2c7e76fbd56e2a48ca8c9729b07592946829c27c974d9cd4853b4",
+            "supersedes": null,
+            "supersedesRevision": null,
+            "supersedeReason": null,
+            "signatures": [
+              {
+                "userId": "designatedAuthority",
+                "role": "COMMANDER",
+                "signedAt": "2030-01-01T05:50:00+03:00",
+                "revision": 1,
+                "sha256": "b44b0e5e30d2c7e76fbd56e2a48ca8c9729b07592946829c27c974d9cd4853b4"
+              }
+            ],
+            "delivery": {
+              "state": "ISSUED",
+              "facts": []
+            }
+          },
+          "cascade": {
+            "originInstanceId": "hq",
+            "issuedAt": "2030-01-01T06:00:00+03:00",
+            "availableChannelIds": [
+              "main",
+              "reserve"
+            ],
+            "treeEdges": [
+              {
+                "from": "hq",
+                "to": "middle"
+              }
+            ],
+            "legs": [
+              {
+                "id": "leg-middle",
+                "from": "hq",
+                "to": "middle",
+                "channelId": "main",
+                "delayMinutes": 5,
+                "relayId": "hq-relay",
+                "processingDeadlineAt": "2030-01-01T06:20:00+03:00"
+              }
+            ]
+          },
+          "exportContext": {
+            "exerciseTitle": "Репетиция",
+            "exerciseRevision": 1,
+            "exportedAt": "2030-01-01T06:00:00Z"
+          }
+        },
+        "recovery": {
+          "event": {
+            "eventId": "00000000-0000-4000-8000-000000000001",
+            "organizationId": "org-rehearsal",
+            "instanceId": "instance-rehearsal",
+            "branchId": "branch-rehearsal",
+            "sequence": 1,
+            "type": "rehearsal.started.v1",
+            "schemaVersion": 1,
+            "wallClockAt": "2030-01-01T06:00:00.000Z",
+            "operationalAt": {
+              "normalizedAt": "2030-01-01T06:00:00.000Z",
+              "originalAt": "2030-01-01T06:00:00.000Z",
+              "zone": "UTC",
+              "offset": "+00:00"
+            },
+            "actor": {
+              "id": "system-rehearsal",
+              "kind": "SYSTEM"
+            },
+            "causeIds": [],
+            "versions": {},
+            "reducerVersion": 1,
+            "payload": {
+              "purpose": "domain rehearsal"
+            }
+          }
+        },
+        "scheduler": {
+          "templates": [
+            {
+              "schemaVersion": 1,
+              "templateId": "logistics.fuel-shortage",
+              "version": 1,
+              "title": "Снижение запаса топлива",
+              "description": "Учебное событие моделирует расход топлива и последующее восстановление запаса.",
+              "category": "logistics",
+              "learningQuestion": "Проверить действия инстанции при ограничении материально-технического обеспечения.",
+              "provenance": {
+                "type": "TRAINING_ASSUMPTION",
+                "statement": "Допускается сценарное изменение запаса в заданных пределах.",
+                "rationale": "Событие предназначено для проверки процедур доклада и восстановления обеспечения.",
+                "approvedBy": "Методист учения"
+              },
+              "applicability": {
+                "scales": [
+                  "tactical",
+                  "operational"
+                ],
+                "stageIds": [
+                  "stage-main"
+                ],
+                "sideIds": [
+                  "blue"
+                ],
+                "geography": {
+                  "areaIds": [
+                    "area-north"
+                  ],
+                  "boundingBox": {
+                    "minLatitude": 50,
+                    "maxLatitude": 51,
+                    "minLongitude": 30,
+                    "maxLongitude": 31
+                  },
+                  "requiresEnvironmentCoverage": true
+                },
+                "operationalWindows": [
+                  {
+                    "startMinute": 0,
+                    "endMinute": 525600
+                  }
+                ]
+              },
+              "preconditions": [],
+              "parameters": [
+                {
+                  "parameterId": "amount",
+                  "title": "Объём изменения запаса",
+                  "unit": "L",
+                  "range": {
+                    "min": 1,
+                    "max": 100
+                  },
+                  "defaultValue": 10
+                }
+              ],
+              "baseWeight": 0.5,
+              "severity": {
+                "level": "MODERATE",
+                "cost": 2
+              },
+              "limits": {
+                "cooldownSeconds": 0,
+                "maxOccurrences": 100,
+                "maxPerStage": 100,
+                "mutuallyExclusiveGroupIds": []
+              },
+              "cascade": {
+                "allowedTemplateIds": [],
+                "maxDepth": 2,
+                "maxEvents": 4
+              },
+              "effects": [
+                {
+                  "type": "resource.adjust",
+                  "resourceId": "fuel",
+                  "ownerSideId": "blue",
+                  "unit": "L",
+                  "operation": "CONSUME",
+                  "amount": {
+                    "parameterId": "amount"
+                  }
+                }
+              ],
+              "observations": [
+                {
+                  "observationId": "observation-fuel",
+                  "source": {
+                    "kind": "UNIT",
+                    "sourceId": "logistics-unit-blue",
+                    "sideId": "blue"
+                  },
+                  "recipientSideIds": [
+                    "blue"
+                  ],
+                  "channelId": "logistics-channel",
+                  "visibility": "PARTICIPANT",
+                  "delaySeconds": {
+                    "min": 0,
+                    "max": 60
+                  }
+                }
+              ],
+              "reports": [
+                {
+                  "reportId": "report-fuel",
+                  "basedOnObservationId": "observation-fuel",
+                  "recipientSideIds": [
+                    "blue"
+                  ],
+                  "channelId": "logistics-channel",
+                  "title": "Донесение об изменении запаса топлива"
+                }
+              ],
+              "compensations": [
+                {
+                  "type": "resource.restore",
+                  "effectIndex": 0,
+                  "resourceId": "fuel",
+                  "ownerSideId": "blue",
+                  "unit": "L",
+                  "amount": {
+                    "parameterId": "amount"
+                  },
+                  "maxDelaySeconds": 1800
+                }
+              ]
+            }
+          ],
+          "profile": {
+            "schemaVersion": 1,
+            "profileId": "autonomy-test",
+            "level": "HIGH",
+            "methodicalProfile": {
+              "profileId": "kshvi-autonomy-methodical",
+              "version": 1
+            },
+            "settings": {
+              "attemptsPerOperationalHour": 24,
+              "intervalMinutes": 60,
+              "maxEventsPerInterval": 12,
+              "maxEventsPerStage": 400,
+              "maxSeverityCost": 4,
+              "severityBudgetPerStage": 1000,
+              "maxCascadeDepth": 3,
+              "maxCascadeEvents": 8,
+              "manualApprovalShare": 0
+            },
+            "distribution": "POISSON",
+            "intensity": {
+              "categories": {},
+              "stages": {},
+              "sides": {},
+              "areas": {}
+            }
+          },
+          "seeds": [
+            "rehearsal-seed"
+          ],
+          "fromSecond": 0,
+          "toSecond": 3600,
+          "state": {
+            "stageId": "stage-main",
+            "scale": "tactical",
+            "operationalSecond": 0,
+            "facts": {
+              "resources.blue.fuel.status": "AVAILABLE"
+            },
+            "resources": [
+              {
+                "resourceId": "fuel",
+                "ownerSideId": "blue",
+                "unit": "L",
+                "onHand": 100000
+              }
+            ],
+            "availableObservationSourceIds": [
+              "logistics-unit-blue"
+            ],
+            "availableChannelIds": [
+              "logistics-channel",
+              "scenario-channel"
+            ],
+            "environmentCoverageAreaIds": [
+              "area-north"
+            ],
+            "occurrences": [],
+            "intervalEventCount": 0,
+            "stageEventCount": 0,
+            "stageSeverityCost": 0
+          },
+          "targets": [
+            {
+              "sideId": "blue",
+              "areaId": "area-north",
+              "latitude": 50.5,
+              "longitude": 30.5
+            }
+          ],
+          "branchId": "rehearsal-scheduler",
+          "snapshotHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "templateSetVersion": "rehearsal-catalog-v1"
+        },
+        "intermediary": {
+          "assignment": {
+            "assignmentId": "agent-rehearsal",
+            "exerciseId": "exercise-rehearsal",
+            "bindings": [
+              {
+                "instanceId": "higher",
+                "sectorIds": [
+                  "north"
+                ]
+              }
+            ],
+            "roles": [
+              "INTERMEDIARY"
+            ],
+            "projection": {
+              "projectionId": "projection-rehearsal",
+              "sideIds": [
+                "blue"
+              ],
+              "sectorIds": [
+                "north"
+              ]
+            },
+            "allowedActions": [
+              "issueDocument"
+            ],
+            "modernProfile": {
+              "profileId": "modern-rehearsal",
+              "version": "1.0.0",
+              "era": "modern",
+              "source": {
+                "kind": "ASSUMPTION",
+                "reference": "Репетиционный профиль"
+              },
+              "maxOptions": 3,
+              "riskLimit": 0.5,
+              "severityLimit": 3
+            },
+            "schedule": {
+              "everyMs": 1000,
+              "timeBudgetMs": 250
+            },
+            "escalation": {
+              "recipients": [
+                "leader"
+              ],
+              "requiredData": [
+                "activeOrder"
+              ]
+            }
+          },
+          "action": {
+            "kind": "issueDocument",
+            "instanceId": "higher",
+            "sectorId": "north",
+            "risk": 0.2,
+            "severity": 2
+          },
+          "foreignAction": {
+            "kind": "issueDocument",
+            "instanceId": "foreign",
+            "sectorId": "north",
+            "risk": 0.2,
+            "severity": 2
+          }
+        },
+        "morale": {
+          "projection": {
+            "kind": "INSTANCE_ASSESSMENT",
+            "forceId": "force-rehearsal",
+            "instanceId": "instance-1",
+            "at": "2030-01-01T06:30:00Z",
+            "assessedAt": "2030-01-01T06:00:00Z",
+            "stateEnteredAt": "2030-01-01T06:00:00Z",
+            "stale": false,
+            "components": {
+              "morale": {
+                "status": "KNOWN",
+                "value": 0.9,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              },
+              "cohesion": {
+                "status": "KNOWN",
+                "value": 0.9,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              },
+              "stress": {
+                "status": "KNOWN",
+                "value": 0.1,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              },
+              "fatigue": {
+                "status": "KNOWN",
+                "value": 0.2,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              },
+              "commandTrust": {
+                "status": "KNOWN",
+                "value": 0.9,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              },
+              "recoveryCapacity": {
+                "status": "KNOWN",
+                "value": 0.8,
+                "uncertainty": "EXACT_SCENARIO_VALUE",
+                "observedAt": "2030-01-01T06:00:00Z",
+                "source": {
+                  "kind": "EDUCATIONAL_ASSUMPTION",
+                  "reference": "Репетиционный профиль КШВИ",
+                  "assumptionId": "REHEARSAL-PROFILE-1",
+                  "approvedBy": "Методист КШВИ",
+                  "applicability": "Только моделируемые силы и изолированная репетиция"
+                }
+              }
+            }
+          },
+          "options": [
+            {
+              "optionId": "continue",
+              "action": "CONTINUE_TASK",
+              "baseUtility": 0.55,
+              "demand": "HIGH",
+              "risk": 0.8,
+              "ordered": true
+            },
+            {
+              "optionId": "consolidate",
+              "action": "CONSOLIDATE",
+              "baseUtility": 0.5,
+              "demand": "LOW",
+              "risk": 0.1,
+              "ordered": true
+            }
+          ],
+          "commander": {
+            "riskPropensity": 0.6,
+            "persistence": 0.8,
+            "lossTolerance": 0.5,
+            "obedience": 0.8,
+            "source": {
+              "kind": "EDUCATIONAL_ASSUMPTION",
+              "reference": "Репетиционный профиль КШВИ",
+              "assumptionId": "REHEARSAL-PROFILE-1",
+              "approvedBy": "Методист КШВИ",
+              "applicability": "Только моделируемые силы и изолированная репетиция"
+            }
+          },
+          "task": {
+            "readiness": 1,
+            "equipment": 1,
+            "resources": 1,
+            "fatigue": 0.2,
+            "randomKey": null,
+            "availableMinutes": 60,
+            "requiredTaskMinutes": 25,
+            "unrelatedResource": {
+              "resourceId": "fuel",
+              "amount": 37,
+              "unit": "tonne"
+            },
+            "morale": {
+              "status": "KNOWN",
+              "morale": 0.9,
+              "cohesion": 0.9,
+              "stress": 0.1,
+              "durationMinutes": 30
+            }
+          }
+        },
+        "supply": {
+          "position": {
+            "remainingMeters": 10000,
+            "travelledMeters": 2000
+          },
+          "edge": {
+            "speedKph": 20,
+            "closed": false,
+            "queueDelayMinutes": 5,
+            "reason": "Репетиционная поставка"
+          },
+          "ledger": [
+            {
+              "resourceId": "fuel",
+              "unit": "tonne",
+              "nodeId": "warehouse",
+              "at": "2030-01-01T06:00:00Z",
+              "actorId": "logistics",
+              "id": "opening",
+              "causeId": "opening",
+              "operation": "OPENING",
+              "quantity": 100
+            },
+            {
+              "resourceId": "fuel",
+              "unit": "tonne",
+              "nodeId": "warehouse",
+              "at": "2030-01-01T06:00:00Z",
+              "actorId": "logistics",
+              "id": "receipt",
+              "causeId": "receipt",
+              "operation": "RECEIPT",
+              "quantity": 20
+            }
+          ]
+        }
+      },
+      "kit": {
+        "items": [
+          {
+            "item": "ORGANIZATION_ORDER",
+            "present": true,
+            "documentId": "doc-1",
+            "revision": 1,
+            "sha256": "1998d2b19fe07d74550459b323afde5ee744e71b9b65fed2c244532bbcd9cd5b"
+          },
+          {
+            "item": "PREPARATION_CALENDAR",
+            "present": true,
+            "documentId": "doc-2",
+            "revision": 1,
+            "sha256": "b412f254de2a13223f257b3aa2b6cb54b236cacabc962c3853e2fe10f4876da3"
+          },
+          {
+            "item": "LEADERSHIP_SCHEME",
+            "present": true,
+            "documentId": "doc-3",
+            "revision": 1,
+            "sha256": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c"
+          },
+          {
+            "item": "CONCEPT",
+            "present": true,
+            "documentId": "doc-4",
+            "revision": 1,
+            "sha256": "3e87e9ada8c75f14d5f0dcb2d25a3fa580dd24d8e189fdcf7873f8d5a9ca3de4"
+          },
+          {
+            "item": "OPERATIONAL_ASSIGNMENTS",
+            "present": true,
+            "documentId": "doc-5",
+            "revision": 1,
+            "sha256": "80224c0562a1cc93794ba2e0905dd3aef841cd79284de72732e03645842b986e"
+          },
+          {
+            "item": "CONDUCT_CALENDAR",
+            "present": true,
+            "documentId": "doc-6",
+            "revision": 1,
+            "sha256": "12d18a344b8b33a847740a284485d3057a0d0077eb75332edf0227183b8ea8d3"
+          },
+          {
+            "item": "ESCALATION_PLAN",
+            "present": true,
+            "documentId": "doc-7",
+            "revision": 1,
+            "sha256": "dc0f5fb9cc7dc6413fc75d05f245220a3ee25bb679ad85a538fd40a2df2ce839"
+          },
+          {
+            "item": "MAP_SET",
+            "present": true,
+            "documentId": "doc-8",
+            "revision": 1,
+            "sha256": "1b39387f920294566121a537d1c22220fa039f53c7e147db41e82d43bfa3ce9d"
+          },
+          {
+            "item": "AGENT_PROFILES",
+            "present": true,
+            "documentId": "doc-9",
+            "revision": 1,
+            "sha256": "8c43ab6d95f449129e0cd4d54068a6f1631cd17cfcbb6dfb36e45c1b87c613ea"
+          },
+          {
+            "item": "PRIVATE_PLANS",
+            "present": true,
+            "documentId": "doc-10",
+            "revision": 1,
+            "sha256": "8bf4d469d7791e4ae7911ac4a498093f765d218292b74262c23dd6165f94884e"
+          },
+          {
+            "item": "ELECTRONIC_INTERMEDIARIES",
+            "present": true,
+            "documentId": "doc-11",
+            "revision": 1,
+            "sha256": "c4bda5e5f95e329425cc703c167dca1ad3c1968843598c4f5a11b0567a98277b"
+          },
+          {
+            "item": "COMMUNICATION_PLAN",
+            "present": true,
+            "documentId": "doc-12",
+            "revision": 1,
+            "sha256": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212"
+          },
+          {
+            "item": "EQUIPMENT_STATEMENT",
+            "present": true,
+            "documentId": "doc-13",
+            "revision": 1,
+            "sha256": "db17b8a70326e3f5e4699ddcc725bd1bdcc3e2c532c5067177b9210688957100"
+          },
+          {
+            "item": "LOGISTICS_PLAN",
+            "present": true,
+            "documentId": "doc-14",
+            "revision": 1,
+            "sha256": "d45a050cc8d485083e58d07633a7db87b4f72ae6665edb54a7f5e71c31a6bfce"
+          },
+          {
+            "item": "FORMATION_PLAN",
+            "present": true,
+            "documentId": "doc-15",
+            "revision": 1,
+            "sha256": "c5fff90d6c007622e089a48ffc22639ca5b4d22a730f48f777a8590b01749ed5"
+          },
+          {
+            "item": "READINESS_PLAN",
+            "present": true,
+            "documentId": "doc-16",
+            "revision": 1,
+            "sha256": "f8596c912afc33d471bd4cd10f27c59def8b3903803959a85a7d28df6637abc6"
+          },
+          {
+            "item": "ASSESSMENT_PLAN",
+            "present": true,
+            "documentId": "doc-17",
+            "revision": 1,
+            "sha256": "317b53931ebdf84e6b22ed38d695e9847cf8a17811718f9ccc07275045f6015a"
+          },
+          {
+            "item": "RESEARCH_PLAN",
+            "present": true,
+            "documentId": "doc-18",
+            "revision": 1,
+            "sha256": "43a50dd6c91dfff164d757d62756f64ab2339613277e0b1aee3c72431cd84a48"
+          },
+          {
+            "item": "ASSUMPTION_PASSPORT",
+            "present": true,
+            "documentId": "doc-19",
+            "revision": 1,
+            "sha256": "88d9ba560c99ef4c48c11c3b1ead11b89925a4ec2f11057db94ca9cf120d744b"
+          }
+        ],
+        "documents": [
+          {
+            "id": "doc-1",
+            "item": "ORGANIZATION_ORDER",
+            "revision": 1,
+            "content": {
+              "item": "ORGANIZATION_ORDER"
+            },
+            "dependsOn": [],
+            "sha256": "1998d2b19fe07d74550459b323afde5ee744e71b9b65fed2c244532bbcd9cd5b"
+          },
+          {
+            "id": "doc-2",
+            "item": "PREPARATION_CALENDAR",
+            "revision": 1,
+            "content": {
+              "item": "PREPARATION_CALENDAR"
+            },
+            "dependsOn": [],
+            "sha256": "b412f254de2a13223f257b3aa2b6cb54b236cacabc962c3853e2fe10f4876da3"
+          },
+          {
+            "id": "doc-3",
+            "item": "LEADERSHIP_SCHEME",
+            "revision": 1,
+            "content": {
+              "item": "LEADERSHIP_SCHEME"
+            },
+            "dependsOn": [],
+            "sha256": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c"
+          },
+          {
+            "id": "doc-4",
+            "item": "CONCEPT",
+            "revision": 1,
+            "content": {
+              "item": "CONCEPT"
+            },
+            "dependsOn": [],
+            "sha256": "3e87e9ada8c75f14d5f0dcb2d25a3fa580dd24d8e189fdcf7873f8d5a9ca3de4"
+          },
+          {
+            "id": "doc-5",
+            "item": "OPERATIONAL_ASSIGNMENTS",
+            "revision": 1,
+            "content": {
+              "item": "OPERATIONAL_ASSIGNMENTS"
+            },
+            "dependsOn": [],
+            "sha256": "80224c0562a1cc93794ba2e0905dd3aef841cd79284de72732e03645842b986e"
+          },
+          {
+            "id": "doc-6",
+            "item": "CONDUCT_CALENDAR",
+            "revision": 1,
+            "content": {
+              "item": "CONDUCT_CALENDAR"
+            },
+            "dependsOn": [],
+            "sha256": "12d18a344b8b33a847740a284485d3057a0d0077eb75332edf0227183b8ea8d3"
+          },
+          {
+            "id": "doc-7",
+            "item": "ESCALATION_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "ESCALATION_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "dc0f5fb9cc7dc6413fc75d05f245220a3ee25bb679ad85a538fd40a2df2ce839"
+          },
+          {
+            "id": "doc-8",
+            "item": "MAP_SET",
+            "revision": 1,
+            "content": {
+              "item": "MAP_SET"
+            },
+            "dependsOn": [],
+            "sha256": "1b39387f920294566121a537d1c22220fa039f53c7e147db41e82d43bfa3ce9d"
+          },
+          {
+            "id": "doc-9",
+            "item": "AGENT_PROFILES",
+            "revision": 1,
+            "content": {
+              "item": "AGENT_PROFILES"
+            },
+            "dependsOn": [],
+            "sha256": "8c43ab6d95f449129e0cd4d54068a6f1631cd17cfcbb6dfb36e45c1b87c613ea"
+          },
+          {
+            "id": "doc-10",
+            "item": "PRIVATE_PLANS",
+            "revision": 1,
+            "content": {
+              "item": "PRIVATE_PLANS"
+            },
+            "dependsOn": [],
+            "sha256": "8bf4d469d7791e4ae7911ac4a498093f765d218292b74262c23dd6165f94884e"
+          },
+          {
+            "id": "doc-11",
+            "item": "ELECTRONIC_INTERMEDIARIES",
+            "revision": 1,
+            "content": {
+              "item": "ELECTRONIC_INTERMEDIARIES"
+            },
+            "dependsOn": [],
+            "sha256": "c4bda5e5f95e329425cc703c167dca1ad3c1968843598c4f5a11b0567a98277b"
+          },
+          {
+            "id": "doc-12",
+            "item": "COMMUNICATION_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "COMMUNICATION_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212"
+          },
+          {
+            "id": "doc-13",
+            "item": "EQUIPMENT_STATEMENT",
+            "revision": 1,
+            "content": {
+              "item": "EQUIPMENT_STATEMENT"
+            },
+            "dependsOn": [],
+            "sha256": "db17b8a70326e3f5e4699ddcc725bd1bdcc3e2c532c5067177b9210688957100"
+          },
+          {
+            "id": "doc-14",
+            "item": "LOGISTICS_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "LOGISTICS_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "d45a050cc8d485083e58d07633a7db87b4f72ae6665edb54a7f5e71c31a6bfce"
+          },
+          {
+            "id": "doc-15",
+            "item": "FORMATION_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "FORMATION_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "c5fff90d6c007622e089a48ffc22639ca5b4d22a730f48f777a8590b01749ed5"
+          },
+          {
+            "id": "doc-16",
+            "item": "READINESS_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "READINESS_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "f8596c912afc33d471bd4cd10f27c59def8b3903803959a85a7d28df6637abc6"
+          },
+          {
+            "id": "doc-17",
+            "item": "ASSESSMENT_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "ASSESSMENT_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "317b53931ebdf84e6b22ed38d695e9847cf8a17811718f9ccc07275045f6015a"
+          },
+          {
+            "id": "doc-18",
+            "item": "RESEARCH_PLAN",
+            "revision": 1,
+            "content": {
+              "item": "RESEARCH_PLAN"
+            },
+            "dependsOn": [],
+            "sha256": "43a50dd6c91dfff164d757d62756f64ab2339613277e0b1aee3c72431cd84a48"
+          },
+          {
+            "id": "doc-19",
+            "item": "ASSUMPTION_PASSPORT",
+            "revision": 1,
+            "content": {
+              "item": "ASSUMPTION_PASSPORT"
+            },
+            "dependsOn": [],
+            "sha256": "88d9ba560c99ef4c48c11c3b1ead11b89925a4ec2f11057db94ca9cf120d744b"
+          }
+        ],
+        "usesLogistics": true,
+        "omissions": []
+      }
+    },
+    "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
+    "initialMap": {
+      "schemaVersion": 1,
+      "id": "map-ac22",
+      "revision": 11,
+      "state": "APPROVED",
+      "environment": {
+        "snapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "bounds": [
+          0,
+          0,
+          1,
+          1
+        ]
+      },
+      "bounds": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "initialOperationalAt": "2030-01-01T06:00:00+03:00",
+      "timeZone": "Europe/Moscow",
+      "weatherFrameRef": "weather-ac22",
+      "terrainStateRef": "terrain-ac22",
+      "symbolSet": {
+        "id": "modern-signs",
+        "revision": 1,
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "attribution": [
+        "OSM",
+        "Учебный атлас"
+      ],
+      "layers": [
+        {
+          "id": "BASEMAP",
+          "independent": true
+        },
+        {
+          "id": "TRUE_FORCES",
+          "independent": true
+        },
+        {
+          "id": "PERSONAL_SITUATION",
+          "independent": true
+        },
+        {
+          "id": "OBSERVATIONS",
+          "independent": true
+        },
+        {
+          "id": "EVENTS",
+          "independent": true
+        },
+        {
+          "id": "RESOURCES",
+          "independent": true
+        },
+        {
+          "id": "COMMUNICATIONS",
+          "independent": true
+        },
+        {
+          "id": "WEATHER",
+          "independent": true
+        },
+        {
+          "id": "CBRN",
+          "independent": true
+        },
+        {
+          "id": "SOCIO_ECONOMIC",
+          "independent": true
+        },
+        {
+          "id": "REFERENCE",
+          "independent": true
+        },
+        {
+          "id": "ACTUAL",
+          "independent": true
+        },
+        {
+          "id": "BRANCHES",
+          "independent": true
+        },
+        {
+          "id": "STAFF_COMMENTS",
+          "independent": true
+        }
+      ],
+      "markers": [
+        {
+          "id": "blue-force",
+          "revision": 1,
+          "kind": "FORCE",
+          "layerId": "TRUE_FORCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-blue-force",
+          "authorId": "author-ac22",
+          "eventId": "event-blue-force",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        },
+        {
+          "id": "secret-red",
+          "revision": 1,
+          "kind": "FORCE",
+          "layerId": "TRUE_FORCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.8,
+              0.8
+            ]
+          },
+          "sourceId": "source-secret-red",
+          "authorId": "author-ac22",
+          "eventId": "event-secret-red",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "red"
+            ],
+            "instanceIds": [
+              "red-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-red"
+          },
+          "sideId": "red",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "red",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        },
+        {
+          "id": "reported-red",
+          "revision": 1,
+          "kind": "FORCE",
+          "layerId": "OBSERVATIONS",
+          "truth": "PRIVATE",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.7,
+              0.7
+            ]
+          },
+          "sourceId": "source-reported-red",
+          "authorId": "author-ac22",
+          "eventId": "event-reported-red",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "ASSUMED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-red"
+          },
+          "sideId": "red",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "red",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        },
+        {
+          "id": "blue-command",
+          "revision": 1,
+          "kind": "COMMAND_POST",
+          "layerId": "TRUE_FORCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-blue-command",
+          "authorId": "author-ac22",
+          "eventId": "event-blue-command",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        },
+        {
+          "id": "blue-logistics",
+          "revision": 1,
+          "kind": "LOGISTICS",
+          "layerId": "RESOURCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-blue-logistics",
+          "authorId": "author-ac22",
+          "eventId": "event-blue-logistics",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        },
+        {
+          "id": "route-blue",
+          "revision": 1,
+          "kind": "ROUTE",
+          "layerId": "RESOURCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                0.2,
+                0.2
+              ],
+              [
+                0.4,
+                0.4
+              ]
+            ]
+          },
+          "sourceId": "source-route-blue",
+          "authorId": "author-ac22",
+          "eventId": "event-route-blue",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "linkedMarkerIds": [
+              "blue-force"
+            ]
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          },
+          "loadTonnes": 30,
+          "crossingCapacityTonnes": 40,
+          "passable": true
+        },
+        {
+          "id": "crossing-blue",
+          "revision": 1,
+          "kind": "CROSSING",
+          "layerId": "RESOURCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-crossing-blue",
+          "authorId": "author-ac22",
+          "eventId": "event-crossing-blue",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          },
+          "crossingCapacityTonnes": 40
+        },
+        {
+          "id": "column-blue",
+          "revision": 1,
+          "kind": "COLUMN",
+          "layerId": "RESOURCES",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-column-blue",
+          "authorId": "author-ac22",
+          "eventId": "event-column-blue",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          },
+          "routeId": "route-blue"
+        },
+        {
+          "id": "obstacle-blue",
+          "revision": 1,
+          "kind": "OBSTACLE",
+          "layerId": "EVENTS",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              0.2,
+              0.2
+            ]
+          },
+          "sourceId": "source-obstacle-blue",
+          "authorId": "author-ac22",
+          "eventId": "event-obstacle-blue",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          },
+          "passable": true
+        },
+        {
+          "id": "area-blue",
+          "revision": 1,
+          "kind": "AREA",
+          "layerId": "REFERENCE",
+          "truth": "TRUTH",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  0.1,
+                  0.1
+                ],
+                [
+                  0.5,
+                  0.1
+                ],
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.1,
+                  0.1
+                ]
+              ]
+            ]
+          },
+          "sourceId": "source-area-blue",
+          "authorId": "author-ac22",
+          "eventId": "event-area-blue",
+          "validFrom": "2030-01-01T06:00:00+03:00",
+          "validUntil": "2030-01-02T06:00:00+03:00",
+          "state": "OBSERVED",
+          "confidence": 0.8,
+          "uncertainty": {
+            "radiusM": 20,
+            "note": "Исходное наблюдение"
+          },
+          "visibility": {
+            "sideIds": [
+              "blue"
+            ],
+            "instanceIds": [
+              "blue-hq"
+            ]
+          },
+          "links": {
+            "forceId": "force-blue"
+          },
+          "sideId": "blue",
+          "symbol": {
+            "id": "infantry",
+            "version": "v1",
+            "sideId": "blue",
+            "status": "APPROVED",
+            "sourceDocument": "signs.doc",
+            "sourcePage": 12
+          }
+        }
+      ],
+      "history": [],
+      "sha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42"
+    },
+    "environmentSnapshot": {
+      "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "contentRef": "content/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json",
+      "autonomous": true
+    },
+    "hashes": {
+      "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "initialMap": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
+      "weather": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "elevation": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "symbols": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "agents": "8c43ab6d95f449129e0cd4d54068a6f1631cd17cfcbb6dfb36e45c1b87c613ea",
+      "eventLibrary": "dc0f5fb9cc7dc6413fc75d05f245220a3ee25bb679ad85a538fd40a2df2ce839",
+      "models": "88d9ba560c99ef4c48c11c3b1ead11b89925a4ec2f11057db94ca9cf120d744b",
+      "roles": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c",
+      "communications": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212",
+      "documents": "ec42a156f279d786816a1d116c222f6842cba947d1827c9df5443d683852bb6e",
+      "rehearsal": "4cf1a602926e8e297385adf2682274b5a48272b7498b3d5382b66059c3e8f052"
+    },
+    "confirmations": [
+      {
+        "id": "1ca653a6-0899-421d-827a-980ecff65652",
+        "area": "CONCEPT",
+        "userId": "responsible-ac22-0",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "524f78b1338e76620e515cffe69b75c224970eb82289a1216db472472b7913d7",
+        "dependsOn": []
+      },
+      {
+        "id": "02755a08-9797-4f5b-8a03-2c12e48f8325",
+        "area": "ENVIRONMENT_MAP",
+        "userId": "responsible-ac22-1",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "1d331716db138d102662547bf2a3e01d3cc2e5e648e5432a907c34506fff2e19",
+        "dependsOn": []
+      },
+      {
+        "id": "35a0b7ac-7361-4194-ab58-d4b1cf2adc3f",
+        "area": "COMMAND_INTERMEDIARIES",
+        "userId": "responsible-ac22-2",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "29f7bc522b08609a26e9db8a78e20fd14c6a6a8c0161180625b4c21ed86e7b8b",
+        "dependsOn": []
+      },
+      {
+        "id": "1a1383e3-7410-4b52-b623-fa249ee54ad3",
+        "area": "EQUIPMENT",
+        "userId": "responsible-ac22-3",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "ee56875304f4685021966d446ded42081fd3b59265e20d845d535a64160db87f",
+        "dependsOn": []
+      },
+      {
+        "id": "d1bfbf6e-f79e-4cf7-a50d-fee4114d7e1a",
+        "area": "MORALE_READINESS",
+        "userId": "responsible-ac22-4",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "490831856d1ae00532909df3a2c872f19d2049ad72324cad1800a9c0b4ef4e29",
+        "dependsOn": []
+      },
+      {
+        "id": "8fbc2eaa-ac13-4530-aa8b-c7a8fff4dde9",
+        "area": "LOGISTICS_FORMATION",
+        "userId": "responsible-ac22-5",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "b9646c76965364003da0f3c0cf48d06aa62648d7304f8ca3c811a82b7266503f",
+        "dependsOn": []
+      },
+      {
+        "id": "3baeedb7-b6e0-4329-b303-2fb5593e67c9",
+        "area": "AUTONOMY_AGENTS",
+        "userId": "responsible-ac22-6",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "8b6b12f5d97201f5800a822209bb7c582d575b1ac2f5d55749f29c87e2bff4a3",
+        "dependsOn": []
+      },
+      {
+        "id": "edb4758f-e21d-48c2-a042-0f5bedcbf6f8",
+        "area": "SYMBOL_LIBRARY",
+        "userId": "responsible-ac22-7",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "b192624ea6fab77a149e9984502dc2e8b9b75932de8147966710ee7ab490caa8",
+        "dependsOn": []
+      },
+      {
+        "id": "acfd0f09-1517-46c6-90e4-21b67a6a1686",
+        "area": "MODEL_PROFILE",
+        "userId": "responsible-ac22-8",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "f15669f72ff160b6c72edbc3c228ee1f488bc2cb26481d4b6bb4ea0a1d0d7035",
+        "dependsOn": []
+      },
+      {
+        "id": "8969f424-28cd-4f00-b81d-8df99600fcdd",
+        "area": "COMMUNICATIONS",
+        "userId": "responsible-ac22-9",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "025aed2c308739150a0a65d31d61039cccda6cb022761314823317161ec4da1e",
+        "dependsOn": []
+      },
+      {
+        "id": "52caa4c8-f322-4e8e-9450-a64c9241766a",
+        "area": "DOCUMENTS",
+        "userId": "responsible-ac22-10",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "76a183030928742c8d1eb43282c59423eb3df5e2f333d0c13eb960d7491cbfe7",
+        "dependsOn": []
+      },
+      {
+        "id": "ac348fc4-73f4-4f9a-80fe-ea7ed69d71ea",
+        "area": "ASSESSMENT",
+        "userId": "responsible-ac22-11",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "e9ea3d682194df9072ace0cc6fe7b0a381e18441492a7994164260918fb49f48",
+        "dependsOn": []
+      },
+      {
+        "id": "9e881662-8345-4b8c-ba27-342730a33f2f",
+        "area": "TECHNICAL_READINESS",
+        "userId": "responsible-ac22-12",
+        "role": "RESPONSIBLE",
+        "confirmedAt": "2030-01-01T03:00:00.000Z",
+        "subjectHash": "e7941ce682a8b2feff5dadb3633deac249e07fed3b4916499b0a85c584db3f81",
+        "dependsOn": []
+      }
+    ],
+    "rehearsal": {
+      "schemaVersion": 1,
+      "id": "rehearsal-16bdd97c-5bcd-443a-8677-d1fa13dad176",
+      "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
+      "full": true,
+      "isolated": true,
+      "status": "PASSED",
+      "eventLogId": "rehearsal-log-rehearsal-16bdd97c-5bcd-443a-8677-d1fa13dad176",
+      "officialEventLogId": "official-log-16bdd97c-5bcd-443a-8677-d1fa13dad176",
+      "checks": {
+        "RECIPIENTS": true,
+        "CHANNELS": true,
+        "QUEUE": true,
+        "BRANCHES": true,
+        "VISIBILITY": true,
+        "DOCUMENTS": true,
+        "RECOVERY": true,
+        "PRINT_FALLBACK": true,
+        "EVENT_STATISTICS": true,
+        "CASCADE_LIMITS": true,
+        "INTERMEDIARY_CYCLES": true,
+        "OPPONENT": true,
+        "MORALE_IMPACT": true,
+        "SUPPLY_ROUTES": true
+      }
+    },
+    "rehearsalSha256": "4cf1a602926e8e297385adf2682274b5a48272b7498b3d5382b66059c3e8f052",
+    "sealedAt": "2030-01-01T03:00:00Z"
+  },
+  "initialWorld": {
+    "schemaVersion": 1,
+    "scenarioId": "16bdd97c-5bcd-443a-8677-d1fa13dad176",
+    "scenarioRevision": 2,
+    "state": "SEALED",
+    "scenarioSha256": "9b81981fbcc062135ce099c01b660a729217747a5d332558fbab0184ddbf1a7d",
+    "initialMapSha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
+    "environmentSnapshotSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "initialMapLayers": [
+      {
+        "id": "BASEMAP",
+        "independent": true
+      },
+      {
+        "id": "TRUE_FORCES",
+        "independent": true
+      },
+      {
+        "id": "PERSONAL_SITUATION",
+        "independent": true
+      },
+      {
+        "id": "OBSERVATIONS",
+        "independent": true
+      },
+      {
+        "id": "EVENTS",
+        "independent": true
+      },
+      {
+        "id": "RESOURCES",
+        "independent": true
+      },
+      {
+        "id": "COMMUNICATIONS",
+        "independent": true
+      },
+      {
+        "id": "WEATHER",
+        "independent": true
+      },
+      {
+        "id": "CBRN",
+        "independent": true
+      },
+      {
+        "id": "SOCIO_ECONOMIC",
+        "independent": true
+      },
+      {
+        "id": "REFERENCE",
+        "independent": true
+      },
+      {
+        "id": "ACTUAL",
+        "independent": true
+      },
+      {
+        "id": "BRANCHES",
+        "independent": true
+      },
+      {
+        "id": "STAFF_COMMENTS",
+        "independent": true
+      }
+    ],
+    "events": []
+  },
+  "initialMap": {
+    "schemaVersion": 1,
+    "id": "map-ac22",
+    "revision": 11,
+    "state": "APPROVED",
+    "environment": {
+      "snapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "bounds": [
+        0,
+        0,
+        1,
+        1
+      ]
+    },
+    "bounds": [
+      0,
+      0,
+      1,
+      1
+    ],
+    "initialOperationalAt": "2030-01-01T06:00:00+03:00",
+    "timeZone": "Europe/Moscow",
+    "weatherFrameRef": "weather-ac22",
+    "terrainStateRef": "terrain-ac22",
+    "symbolSet": {
+      "id": "modern-signs",
+      "revision": 1,
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "attribution": [
+      "OSM",
+      "Учебный атлас"
+    ],
+    "layers": [
+      {
+        "id": "BASEMAP",
+        "independent": true
+      },
+      {
+        "id": "TRUE_FORCES",
+        "independent": true
+      },
+      {
+        "id": "PERSONAL_SITUATION",
+        "independent": true
+      },
+      {
+        "id": "OBSERVATIONS",
+        "independent": true
+      },
+      {
+        "id": "EVENTS",
+        "independent": true
+      },
+      {
+        "id": "RESOURCES",
+        "independent": true
+      },
+      {
+        "id": "COMMUNICATIONS",
+        "independent": true
+      },
+      {
+        "id": "WEATHER",
+        "independent": true
+      },
+      {
+        "id": "CBRN",
+        "independent": true
+      },
+      {
+        "id": "SOCIO_ECONOMIC",
+        "independent": true
+      },
+      {
+        "id": "REFERENCE",
+        "independent": true
+      },
+      {
+        "id": "ACTUAL",
+        "independent": true
+      },
+      {
+        "id": "BRANCHES",
+        "independent": true
+      },
+      {
+        "id": "STAFF_COMMENTS",
+        "independent": true
+      }
+    ],
+    "markers": [
+      {
+        "id": "blue-force",
+        "revision": 1,
+        "kind": "FORCE",
+        "layerId": "TRUE_FORCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-blue-force",
+        "authorId": "author-ac22",
+        "eventId": "event-blue-force",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      },
+      {
+        "id": "secret-red",
+        "revision": 1,
+        "kind": "FORCE",
+        "layerId": "TRUE_FORCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.8,
+            0.8
+          ]
+        },
+        "sourceId": "source-secret-red",
+        "authorId": "author-ac22",
+        "eventId": "event-secret-red",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "red"
+          ],
+          "instanceIds": [
+            "red-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-red"
+        },
+        "sideId": "red",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "red",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      },
+      {
+        "id": "reported-red",
+        "revision": 1,
+        "kind": "FORCE",
+        "layerId": "OBSERVATIONS",
+        "truth": "PRIVATE",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.7,
+            0.7
+          ]
+        },
+        "sourceId": "source-reported-red",
+        "authorId": "author-ac22",
+        "eventId": "event-reported-red",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "ASSUMED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-red"
+        },
+        "sideId": "red",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "red",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      },
+      {
+        "id": "blue-command",
+        "revision": 1,
+        "kind": "COMMAND_POST",
+        "layerId": "TRUE_FORCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-blue-command",
+        "authorId": "author-ac22",
+        "eventId": "event-blue-command",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      },
+      {
+        "id": "blue-logistics",
+        "revision": 1,
+        "kind": "LOGISTICS",
+        "layerId": "RESOURCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-blue-logistics",
+        "authorId": "author-ac22",
+        "eventId": "event-blue-logistics",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      },
+      {
+        "id": "route-blue",
+        "revision": 1,
+        "kind": "ROUTE",
+        "layerId": "RESOURCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              0.2,
+              0.2
+            ],
+            [
+              0.4,
+              0.4
+            ]
+          ]
+        },
+        "sourceId": "source-route-blue",
+        "authorId": "author-ac22",
+        "eventId": "event-route-blue",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "linkedMarkerIds": [
+            "blue-force"
+          ]
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        },
+        "loadTonnes": 30,
+        "crossingCapacityTonnes": 40,
+        "passable": true
+      },
+      {
+        "id": "crossing-blue",
+        "revision": 1,
+        "kind": "CROSSING",
+        "layerId": "RESOURCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-crossing-blue",
+        "authorId": "author-ac22",
+        "eventId": "event-crossing-blue",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        },
+        "crossingCapacityTonnes": 40
+      },
+      {
+        "id": "column-blue",
+        "revision": 1,
+        "kind": "COLUMN",
+        "layerId": "RESOURCES",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-column-blue",
+        "authorId": "author-ac22",
+        "eventId": "event-column-blue",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        },
+        "routeId": "route-blue"
+      },
+      {
+        "id": "obstacle-blue",
+        "revision": 1,
+        "kind": "OBSTACLE",
+        "layerId": "EVENTS",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            0.2,
+            0.2
+          ]
+        },
+        "sourceId": "source-obstacle-blue",
+        "authorId": "author-ac22",
+        "eventId": "event-obstacle-blue",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        },
+        "passable": true
+      },
+      {
+        "id": "area-blue",
+        "revision": 1,
+        "kind": "AREA",
+        "layerId": "REFERENCE",
+        "truth": "TRUTH",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                0.1,
+                0.1
+              ],
+              [
+                0.5,
+                0.1
+              ],
+              [
+                0.5,
+                0.5
+              ],
+              [
+                0.1,
+                0.1
+              ]
+            ]
+          ]
+        },
+        "sourceId": "source-area-blue",
+        "authorId": "author-ac22",
+        "eventId": "event-area-blue",
+        "validFrom": "2030-01-01T06:00:00+03:00",
+        "validUntil": "2030-01-02T06:00:00+03:00",
+        "state": "OBSERVED",
+        "confidence": 0.8,
+        "uncertainty": {
+          "radiusM": 20,
+          "note": "Исходное наблюдение"
+        },
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [
+            "blue-hq"
+          ]
+        },
+        "links": {
+          "forceId": "force-blue"
+        },
+        "sideId": "blue",
+        "symbol": {
+          "id": "infantry",
+          "version": "v1",
+          "sideId": "blue",
+          "status": "APPROVED",
+          "sourceDocument": "signs.doc",
+          "sourcePage": 12
+        }
+      }
+    ],
+    "history": [],
+    "sha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42"
+  },
+  "environmentSnapshot": {
+    "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "contentRef": "content/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.json",
+    "autonomous": true
+  },
+  "hashes": {
+    "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "initialMap": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
+    "weather": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "elevation": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "symbols": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "agents": "8c43ab6d95f449129e0cd4d54068a6f1631cd17cfcbb6dfb36e45c1b87c613ea",
+    "eventLibrary": "dc0f5fb9cc7dc6413fc75d05f245220a3ee25bb679ad85a538fd40a2df2ce839",
+    "models": "88d9ba560c99ef4c48c11c3b1ead11b89925a4ec2f11057db94ca9cf120d744b",
+    "roles": "0771aa2c309727dd703d5947f6b177f13380e477f88a676817a49a0e93d9636c",
+    "communications": "ea8aee39de02bfb4513667ba9679c43b1c485b7fb720b42e1fc6d1c75083a212",
+    "documents": "ec42a156f279d786816a1d116c222f6842cba947d1827c9df5443d683852bb6e",
+    "rehearsal": "4cf1a602926e8e297385adf2682274b5a48272b7498b3d5382b66059c3e8f052"
+  },
+  "sha256": "4bb8e747bad1f24776c7b187ae18cbf0e042fc34ee1b9e3220388601f9d53703"
+}

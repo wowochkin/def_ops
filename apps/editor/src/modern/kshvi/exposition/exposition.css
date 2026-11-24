@@ -1,0 +1,118 @@
+.exposition-browser-shell, .exposition-projector-shell {
+  min-height: 100vh;
+  background: #0b1110;
+  color: #edf4ed;
+  color-scheme: dark;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+.exposition-browser-shell *, .exposition-projector-shell *, .exposition-presenter *, .exposition-editor * { box-sizing: border-box; }
+.exposition-browser-shell button, .exposition-projector-shell button, .exposition-presenter button, .exposition-editor button,
+.exposition-browser-shell input, .exposition-projector-shell input, .exposition-presenter input, .exposition-editor input,
+.exposition-browser-shell textarea, .exposition-projector-shell textarea, .exposition-presenter textarea, .exposition-editor textarea,
+.exposition-browser-shell select, .exposition-projector-shell select, .exposition-presenter select, .exposition-editor select { font: inherit; }
+.exposition-browser-shell button, .exposition-projector-shell button, .exposition-presenter button, .exposition-editor button,
+.exposition-browser-shell input, .exposition-projector-shell input, .exposition-presenter input, .exposition-editor input,
+.exposition-browser-shell textarea, .exposition-projector-shell textarea, .exposition-presenter textarea, .exposition-editor textarea,
+.exposition-browser-shell select, .exposition-projector-shell select, .exposition-presenter select, .exposition-editor select { border: 1px solid #52665d; border-radius: 6px; }
+.exposition-browser-shell button, .exposition-projector-shell button, .exposition-presenter button, .exposition-editor button { background: #24362f; color: #f4faf5; padding: 10px 14px; cursor: pointer; }
+.exposition-browser-shell button:hover, .exposition-projector-shell button:hover, .exposition-presenter button:hover, .exposition-editor button:hover { background: #345044; }
+.exposition-browser-shell button:focus-visible, .exposition-projector-shell button:focus-visible, .exposition-presenter button:focus-visible, .exposition-editor button:focus-visible,
+.exposition-browser-shell input:focus-visible, .exposition-projector-shell input:focus-visible, .exposition-presenter input:focus-visible, .exposition-editor input:focus-visible,
+.exposition-browser-shell textarea:focus-visible, .exposition-projector-shell textarea:focus-visible, .exposition-presenter textarea:focus-visible, .exposition-editor textarea:focus-visible,
+.exposition-browser-shell select:focus-visible, .exposition-projector-shell select:focus-visible, .exposition-presenter select:focus-visible, .exposition-editor select:focus-visible { outline: 3px solid #e9bd67; outline-offset: 2px; }
+.exposition-browser-shell button:disabled, .exposition-projector-shell button:disabled, .exposition-presenter button:disabled, .exposition-editor button:disabled { opacity: .5; cursor: not-allowed; }
+.exposition-browser-shell input, .exposition-projector-shell input, .exposition-presenter input, .exposition-editor input,
+.exposition-browser-shell textarea, .exposition-projector-shell textarea, .exposition-presenter textarea, .exposition-editor textarea,
+.exposition-browser-shell select, .exposition-projector-shell select, .exposition-presenter select, .exposition-editor select { width: 100%; background: #111d19; color: #edf4ed; padding: 9px 10px; }
+.exposition-browser-shell textarea, .exposition-projector-shell textarea, .exposition-presenter textarea, .exposition-editor textarea { min-height: 74px; resize: vertical; }
+.exposition-browser-shell label, .exposition-projector-shell label, .exposition-presenter label, .exposition-editor label { display: grid; gap: 6px; color: #c9d8cf; font-size: 14px; }
+.exposition-browser-shell fieldset, .exposition-projector-shell fieldset, .exposition-presenter fieldset, .exposition-editor fieldset { border: 1px solid #40544a; border-radius: 8px; display: grid; gap: 10px; }
+.exposition-browser-shell h1, .exposition-browser-shell h2, .exposition-browser-shell h3, .exposition-browser-shell p,
+.exposition-projector-shell h1, .exposition-projector-shell h2, .exposition-projector-shell h3, .exposition-projector-shell p,
+.exposition-presenter h1, .exposition-presenter h2, .exposition-presenter h3, .exposition-presenter p,
+.exposition-editor h1, .exposition-editor h2, .exposition-editor h3, .exposition-editor p { margin-top: 0; }
+.exposition-browser-shell h1, .exposition-projector-shell h1, .exposition-presenter h1, .exposition-editor h1 { font-size: clamp(26px, 2.2vw, 42px); margin-bottom: 8px; letter-spacing: -.02em; }
+.exposition-browser-shell h2, .exposition-projector-shell h2, .exposition-presenter h2, .exposition-editor h2 { font-size: 18px; }
+
+.exposition-presenter, .exposition-editor { min-height: 100vh; background: #0b1110; color: #edf4ed; font-family: Inter, "Segoe UI", Arial, sans-serif; }
+.exposition-presenter { padding: 24px 28px; }
+.exposition-projector-shell { position: fixed; inset: 0; box-sizing: border-box; min-height: 0; padding: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.exposition-projector-shell .exposition-audience { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.exposition-projector-shell .exposition-map-header, .exposition-projector-shell .exposition-projector-footer { flex-shrink: 0; }
+.exposition-projector-shell .exposition-map-stage { flex: 1; height: auto; min-height: 0; }
+.exposition-presenter-header, .exposition-map-header, .exposition-editor > header, .exposition-browser-nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.exposition-presenter-header { margin-bottom: 20px; }
+.exposition-presenter-header p { color: #b6c8bc; margin-bottom: 0; }
+.exposition-badges { display: flex; align-items: center; gap: 12px; color: #bfd0c5; margin-bottom: 10px; }
+.exposition-badge { display: inline-flex; align-items: center; width: max-content; border: 1px solid #e4b85f; border-radius: 4px; color: #ffd786; padding: 4px 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.exposition-presenter-grid { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 20px; align-items: start; }
+.exposition-map-column { min-width: 0; }
+.exposition-presenter-controls { display: grid; gap: 12px; }
+.exposition-presenter-controls section, .exposition-editor-grid > section { background: #14201b; border: 1px solid #354a3e; border-radius: 10px; padding: 16px; }
+.exposition-presenter-controls section { display: grid; gap: 12px; }
+.exposition-presenter-controls p { margin-bottom: 0; color: #d4e0d8; overflow-wrap: anywhere; }
+.exposition-control-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.exposition-primary { background: #38654d; border-color: #5d9878; }
+.exposition-decision-card { border-left: 3px solid #e4b85f; padding: 4px 12px; background: #1c2821; }
+
+.exposition-audience { overflow: hidden; border: 1px solid #4a6154; border-radius: 12px; background: #101b17; }
+.exposition-map-header { min-height: 72px; padding: 12px 18px; background: #16251e; }
+.exposition-map-header > div { display: flex; align-items: center; gap: 14px; }
+.exposition-map-header h2 { margin: 0; font-size: 20px; }
+.exposition-map-header > span { color: #bfd0c5; font-size: 13px; text-align: right; }
+.exposition-map-stage { position: relative; height: 540px; overflow: hidden; background: #17231e; }
+.exposition-maplibre-wrap, .exposition-maplibre { position: absolute; inset: 0; width: 100%; height: 100%; }
+.exposition-map-stage .maplibregl-canvas { outline: none; }
+.exposition-map-error { position: absolute; right: 12px; bottom: 12px; max-width: 50%; padding: 8px; background: #401f1f; color: #ffe1d8; }
+.exposition-map-legend { position: absolute; top: 18px; left: 18px; width: min(360px, 42%); padding: 14px 16px; border: 1px solid #5a6f61; border-radius: 8px; background: rgba(11, 20, 16, .9); box-shadow: 0 10px 30px rgba(0, 0, 0, .22); }
+.exposition-map-legend p { margin-bottom: 8px; color: #d9e5dc; font-size: 14px; }
+.exposition-map-legend p:last-child { margin-bottom: 0; }
+.exposition-symbol-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.exposition-symbol-list span { border: 1px solid #7db9d2; background: #203e4d; color: #d8f2ff; border-radius: 4px; padding: 4px 8px; }
+.exposition-public-notes { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 10px; pointer-events: none; }
+.exposition-public-notes p { margin: 0; padding: 8px 12px; background: rgba(10, 18, 14, .9); border-left: 3px solid #e4b85f; color: #f4e8ca; }
+.exposition-projector-footer { padding: 8px 18px; color: #9fb4a6; background: #101914; font-size: 12px; }
+.exposition-browser-shell:has(.is-projector-preview) { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.exposition-browser-shell:has(.is-projector-preview) .exposition-browser-nav { flex-shrink: 0; }
+.exposition-presenter.is-projector-preview { flex: 1; height: auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.exposition-presenter.is-projector-preview .exposition-presenter-header { flex-shrink: 0; }
+.exposition-presenter.is-projector-preview .exposition-audience { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.exposition-presenter.is-projector-preview .exposition-map-header, .exposition-presenter.is-projector-preview .exposition-projector-footer { flex-shrink: 0; }
+.exposition-presenter.is-projector-preview .exposition-map-stage { flex: 1; height: auto; min-height: 0; }
+
+.exposition-timeline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 420px) auto; align-items: center; gap: 18px; margin-top: 14px; padding: 14px; background: #14201b; border: 1px solid #354a3e; border-radius: 10px; }
+.exposition-chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+.exposition-chapters button { display: flex; align-items: center; gap: 8px; }
+.exposition-chapters button span { color: #9fb4a6; font-variant-numeric: tabular-nums; }
+.exposition-chapters button.is-current { border-color: #e4b85f; background: #3d3926; color: #ffe4a5; }
+.exposition-timeline input { padding: 0; accent-color: #e4b85f; }
+.exposition-timeline output { white-space: nowrap; color: #c7d6cc; font-variant-numeric: tabular-nums; }
+
+.exposition-editor { padding: 28px; }
+.exposition-editor > header { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.exposition-editor > header h1, .exposition-editor > header p { margin-bottom: 0; }
+.exposition-editor-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.exposition-editor-grid > section { display: grid; align-content: start; gap: 14px; }
+.exposition-editor-row { display: grid; gap: 10px; border-top: 1px solid #354a3e; padding-top: 12px; }
+.exposition-check { display: flex; align-items: center; gap: 9px; }
+.exposition-check input { width: auto; }
+.exposition-browser-nav { padding: 10px 28px; background: #14201b; border-bottom: 1px solid #354a3e; }
+.exposition-browser-nav > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.exposition-browser-nav .exposition-seed { display: flex; align-items: center; gap: 6px; }
+.exposition-browser-nav .exposition-seed input { width: 88px; padding: 8px; }
+.exposition-error { margin: 12px 28px; padding: 12px; border: 1px solid #a95353; background: #401f1f; color: #ffe1d8; }
+.exposition-loading { margin: 28px; color: #d4e0d8; }
+
+@media (max-width: 1100px) {
+  .exposition-presenter-grid { grid-template-columns: 1fr; }
+  .exposition-editor-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .exposition-timeline { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .exposition-presenter, .exposition-editor { padding: 16px; }
+  .exposition-presenter-header, .exposition-map-header { align-items: flex-start; flex-direction: column; }
+  .exposition-editor-grid { grid-template-columns: 1fr; }
+  .exposition-map-stage { height: 500px; }
+  .exposition-map-legend { width: calc(100% - 36px); }
+}

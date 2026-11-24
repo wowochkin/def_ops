@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "commit": "334cb33d",
+  "runId": "4229f25b-bace-42fe-8e52-3fd3b1e4ed85",
+  "entries": [
+    {
+      "id": "C1",
+      "severity": "Critical",
+      "title": "G2 только через официальные типизированные команды",
+      "status": "fixed",
+      "tests": [
+        "services/kshvi/tests/official-commands.test.ts: типизированные команды, идемпотентность, calculation.apply, PostgreSQL",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts: 35 событий с commandId/commandType/causedBy",
+        "scripts/tests/kshvi-run-acceptance.test.mjs: DIRECT_EVENT_APPEND и неофициальное событие"
+      ]
+    },
+    {
+      "id": "C2",
+      "severity": "Critical",
+      "title": "Evidence из одного свежего запуска с реальной инфраструктурой",
+      "status": "fixed",
+      "tests": [
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts: PostgreSQL, MBTiles/cartography, HTTP gateway",
+        "scripts/tests/kshvi-run-acceptance.test.mjs: свежесть runId, commit, sessionIds и infrastructure"
+      ]
+    },
+    {
+      "id": "C3",
+      "severity": "Critical",
+      "title": "Рабочие места на реальных проекциях и callbacks без локального применения",
+      "status": "fixed",
+      "tests": [
+        "apps/editor/tests/kshvi-workspace-integration.test.tsx: deferred cancel/apply/audience",
+        "apps/editor/tests/kshvi-workspaces.spec.ts: проекции и команды через HTTP"
+      ]
+    },
+    {
+      "id": "C4",
+      "severity": "Critical",
+      "title": "Проекции решений по assignedNodeIds внутри стороны",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: scoped tasks/deadlines/coordination и 403 без назначения"
+      ]
+    },
+    {
+      "id": "I1",
+      "severity": "Important",
+      "title": "Все поля DecisionEditor и доменные переходы",
+      "status": "fixed",
+      "tests": [
+        "apps/editor/tests/kshvi-workspace-integration.test.tsx: все девять групп полей и только DRAFT→ACCEPTED"
+      ]
+    },
+    {
+      "id": "I2",
+      "severity": "Important",
+      "title": "reviewedParameters и пересчёт гибрида через HTTP",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: результат 4000 м, исходный 2500 м, effectiveInputHash",
+        "services/kshvi/tests/calculation-access.test.ts: HTTP APPROVED с reviewedParameters"
+      ]
+    },
+    {
+      "id": "I3",
+      "severity": "Important",
+      "title": "Монотонность движения и времени",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: rollback, рост остатка, нулевая длительность, обратное время"
+      ]
+    },
+    {
+      "id": "I4",
+      "severity": "Important",
+      "title": "Безопасное слияние наблюдений",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: разные trueForceId, conservative stale, противоречие в обоих порядках"
+      ]
+    },
+    {
+      "id": "I5",
+      "severity": "Important",
+      "title": "Права чтения расчётов и ролевая проекция",
+      "status": "fixed",
+      "tests": [
+        "services/kshvi/tests/calculation-access.test.ts: 403 без read, 404 по side/node, скрытые inputs/randomKeys, truth отдельно"
+      ]
+    },
+    {
+      "id": "I6",
+      "severity": "Important",
+      "title": "Новая роль только после завершения очистки",
+      "status": "fixed",
+      "tests": [
+        "apps/editor/tests/kshvi-workspace-integration.test.tsx: deferred Cache API и IndexedDB до enabled"
+      ]
+    },
+    {
+      "id": "I7",
+      "severity": "Important",
+      "title": "Объединённый AC-01–AC-30 и G2 runner",
+      "status": "fixed",
+      "tests": [
+        "scripts/tests/kshvi-run-acceptance.test.mjs: default generic+G2, --g2-only, --generic-only, generic-флаги"
+      ]
+    },
+    {
+      "id": "I8",
+      "severity": "Important",
+      "title": "Настоящие sessionId и причинная хронология",
+      "status": "fixed",
+      "tests": [
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts: два UUID из PgExerciseStore, решение 01:10 → приказ 01:20"
+      ]
+    },
+    {
+      "id": "I9",
+      "severity": "Important",
+      "title": "Replay stochastic по сохранённым randomKeys",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: replayCalculation без исходного ключа и отказ при tampered digest",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts: calculation.replay через официальную команду"
+      ]
+    },
+    {
+      "id": "I10",
+      "severity": "Important",
+      "title": "Глубокая санитизация наблюдений",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: source, вложенные атрибуты и массивы",
+        "services/kshvi/tests/e2e/conduct-cycle.test.ts: API/SSE/search/replay/agent"
+      ]
+    },
+    {
+      "id": "I11",
+      "severity": "Important",
+      "title": "Системная документация и общее подключение UI",
+      "status": "delegated_task52",
+      "tests": [
+        "npm run typecheck: KshviView и LegacyConductWorkspace совместимы без изменения запрещённых файлов",
+        "KshviView.tsx, services/kshvi/src/app.ts, docs/system.md и NF runner не изменены по прямому ограничению владельца"
+      ]
+    },
+    {
+      "id": "M1",
+      "severity": "Minor",
+      "title": "Выбор любого события и возврат live",
+      "status": "fixed",
+      "tests": [
+        "apps/editor/tests/kshvi-workspace-integration.test.tsx: event-2 и LIVE после возврата"
+      ]
+    },
+    {
+      "id": "M2",
+      "severity": "Minor",
+      "title": "Объяснение только по фактическим факторам",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: ручной расчёт имеет пустой factors"
+      ]
+    },
+    {
+      "id": "M3",
+      "severity": "Minor",
+      "title": "createdAt первой записи решения",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/review-regressions.test.ts: createdAt совпадает с statusHistory[0].at"
+      ]
+    },
+    {
+      "id": "M4",
+      "severity": "Minor",
+      "title": "Нет тавтологичной проверки stochastic outcome",
+      "status": "fixed",
+      "tests": [
+        "packages/kshvi/tests/calculations.test.ts: selectedOutcomeId входит в {delayed, planned}"
+      ]
+    },
+    {
+      "id": "M5",
+      "severity": "Minor",
+      "title": "Трассируемость evidence и точные идентификаторы",
+      "status": "fixed",
+      "tests": [
+        "scripts/tests/kshvi-run-acceptance.test.mjs: commit, runId, отсутствие диапазонов",
+        "docs/release/kshvi/g2-conduct.json: commit 334cb33d и runId 4229f25b-bace-42fe-8e52-3fd3b1e4ed85"
+      ]
+    }
+  ],
+  "verification": {
+    "profile": "TEST_DATABASE_URL=postgres://vladimirabramov@127.0.0.1:5432/postgres npx vitest run <16 профильных файлов>: 87 passed",
+    "acceptanceRunner": "node --test scripts/tests/kshvi-run-acceptance.test.mjs: 12 passed",
+    "playwright": "2 passed",
+    "typecheck": "passed",
+    "fullTest": "418 files passed, 4 skipped; 3528 tests passed, 48 skipped",
+    "build": "passed"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "status": "implemented",
+  "baseCommit": "2e99ba0af7589c1233233b1af0fd11f4616aed17",
+  "reviewedRange": {
+    "from": "ccf69ac4016743e7bb53bd94675bca3ff3ea054c",
+    "to": "4be48c1dbd7b826b6e60b046849e9b0b78e0461e"
+  },
+  "reviewLog": "docs/release/kshvi/original-findings.md",
+  "reviewLogSha256": "0b8b4831902e6ec34daa20813f5a16b84f1c4c93548e8fb038bb94d50c1320b4",
+  "reReviewLog": "docs/release/kshvi/rereview.md",
+  "reReviewLogSha256": "02903d61df329865e1dfdafac732da45fdbcd5f9fb21a10b3d0cdedea3210128",
+  "items": [
+    {
+      "id": "REREVIEW-CRITICAL-01",
+      "severity": "Critical",
+      "summary": "Recovery grant только для технических метаданных",
+      "tests": [
+        "services/kshvi/tests/accounts.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-CRITICAL-02",
+      "severity": "Critical",
+      "summary": "Backup graph и журнальная целостность snapshot restore",
+      "tests": [
+        "services/kshvi/tests/backup-graph-regression.test.ts",
+        "services/kshvi/tests/backup-regimen.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-01",
+      "severity": "Important",
+      "summary": "Настоящие actor/org операционного аудита",
+      "tests": [
+        "services/kshvi/tests/operations-audit.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-02",
+      "severity": "Important",
+      "summary": "Идемпотентный эффект в crash-window worker",
+      "tests": [
+        "services/kshvi/tests/worker-crash-window.test.ts",
+        "services/kshvi/tests/backup-regimen.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-03",
+      "severity": "Important",
+      "summary": "CPU measurement и явный BLOCKED протокол без NF-04",
+      "tests": [
+        "services/kshvi/tests/resource-budget.test.ts",
+        "services/kshvi/tests/cpu-control-protocol.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-IMPORTANT-04",
+      "severity": "Important",
+      "summary": "LINK_ONLY исходных документов и fragments",
+      "tests": [
+        "apps/editor/tests/kshvi-offline-assets.test.ts"
+      ]
+    },
+    {
+      "id": "REREVIEW-MINOR-01",
+      "severity": "Minor",
+      "summary": "Live duration только от OFFLINE/serverTime",
+      "tests": [
+        "apps/editor/tests/kshvi-async-states.test.tsx"
+      ]
+    },
+    {
+      "id": "REREVIEW-MINOR-02",
+      "severity": "Minor",
+      "summary": "Версионируемые журналы и фактические hashes",
+      "tests": [
+        "services/kshvi/tests/review-evidence.test.ts"
+      ]
+    }
+  ],
+  "limitations": [
+    "Физическая потеря узла, нагрузка 50 рабочих мест и стендовые RTO/RPO здесь не заявляются.",
+    "Поддерживаемый CPU-троттлинг отсутствует; NF-04 и AC-14 не подтверждаются протоколом BLOCKED.",
+    "Атомарность внешнего эффекта worker обеспечивается обязательным идемпотентным портом эффекта."
+  ]
+}

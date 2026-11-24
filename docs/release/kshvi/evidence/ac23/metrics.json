@@ -1,0 +1,11 @@
+{
+  "rejectedCapacityIssues": 2,
+  "allocatedQuantity": 50,
+  "sentQuantity": 40,
+  "deliveredQuantity": 40,
+  "inTransitAfterDelivery": 0,
+  "deficit": 5,
+  "ledgerEntries": 5,
+  "repairedEquipment": 1,
+  "partialFormation": 1
+}

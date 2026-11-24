@@ -1,0 +1,93 @@
+{
+  "initialRevision": {
+    "id": "official-archive-1",
+    "revision": 1,
+    "sha256": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0"
+  },
+  "scenario": {
+    "scenarioId": "demo-scenario",
+    "initialWorld": {
+      "scenarioId": "demo-scenario",
+      "state": {
+        "Time": {
+          "operationalAt": null,
+          "wallClockAt": null
+        },
+        "Forces": {},
+        "Equipment": {},
+        "Tasks": {},
+        "Resources": {
+          "fuel": {
+            "onHand": 100,
+            "consumed": 0,
+            "supplied": 0,
+            "deficit": 0
+          }
+        },
+        "Supply": {},
+        "Readiness": {},
+        "MoralePsych": {},
+        "Formation": {},
+        "Terrain": {},
+        "Weather": {},
+        "Observations": {},
+        "Communications": {},
+        "Documents": {},
+        "ScenarioState": {
+          "scenarioId": "demo-scenario",
+          "status": "DRAFT"
+        },
+        "EventScheduler": {
+          "cursor": 0
+        },
+        "AgentStates": {}
+      },
+      "appliedEventIds": [],
+      "eventCauses": {}
+    },
+    "catalog": {
+      "id": "modern-events",
+      "version": "catalog-1"
+    },
+    "systemSides": [
+      {
+        "sideId": "BLUE",
+        "agentId": "agent-blue",
+        "profileVersion": "modern-blue-1"
+      },
+      {
+        "sideId": "RED",
+        "agentId": "agent-red",
+        "profileVersion": "modern-red-1"
+      }
+    ],
+    "rules": {
+      "reducerVersion": 1,
+      "profileVersion": "full-simulation-1"
+    },
+    "events": [
+      {
+        "eventId": "demo-event-1",
+        "atMs": 1000,
+        "type": "resource.consumed.v1",
+        "payload": {
+          "resourceId": "fuel",
+          "amount": 10,
+          "supplied": 0
+        },
+        "checkpointId": "cp-1"
+      },
+      {
+        "eventId": "demo-event-2",
+        "atMs": 2000,
+        "type": "resource.consumed.v1",
+        "payload": {
+          "resourceId": "fuel",
+          "amount": 20,
+          "supplied": 5
+        },
+        "checkpointId": "cp-2"
+      }
+    ]
+  }
+}

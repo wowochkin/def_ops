@@ -1,0 +1,38 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "kshvi-fresh-install",
+    "revision": 1,
+    "sha256": "513e26c0e4a67d561f27a65af799661e1861e7f32c9e130c5e2a4aba90db80c5"
+  },
+  "journal": {
+    "path": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/summary.json",
+    "sha256": "0878e265a548af9ee8bcfdf35dcb5676b2113291aab6243344316363caf70853",
+    "eventCount": 29
+  },
+  "hashes": {
+    "scenario": "513e26c0e4a67d561f27a65af799661e1861e7f32c9e130c5e2a4aba90db80c5",
+    "environment": "7b72ab0fc76227f21232c54c11b1b786673375d3c063fca7f00c7c4e5610a8ca",
+    "journal": "0878e265a548af9ee8bcfdf35dcb5676b2113291aab6243344316363caf70853"
+  },
+  "protocols": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "freshInstalls": 1,
+    "offlineAcceptanceRuns": 1,
+    "passedScenarios": 29,
+    "packagesInstalled": 264,
+    "vulnerabilities": 0
+  },
+  "limitations": [],
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/summary.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/install-and-acceptance.log",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/protocol.txt",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/acceptance/AC-01.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/acceptance/AC-29.json"
+  ]
+}

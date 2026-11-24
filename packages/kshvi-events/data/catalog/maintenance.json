@@ -1,0 +1,3288 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "MAINTENANCE",
+  "title": "Техническая исправность, ремонт и эвакуация",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-01-inspection-degraded",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Осмотр выявляет деградацию",
+      "description": "Плановый осмотр переводит конкретную единицу из SERVICEABLE в DEGRADED с причиной и новой заявкой, не меняя номинальную ведомость.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как организовать восстановление после выявления деградации при осмотре?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: INSPECTION_DETECTED_DEGRADATION."
+      },
+      "trainingAssumption": "Для учебного события «Осмотр выявляет деградацию» механизм INSPECTION_DETECTED_DEGRADATION и границы параметра «Срок технической оценки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "EQUIPMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.inspection.result_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "inspection",
+          "name": "Срок технической оценки",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-02-movement-breakdown"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "INSPECTION_DETECTED_DEGRADATION",
+          "reason": "Плановый осмотр переводит конкретную единицу из SERVICEABLE в DEGRADED с причиной и новой заявкой, не меняя номинальную ведомость.",
+          "durationParameter": "inspection"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "INSPECTION_RESULT_OBSERVATION",
+          "sourceRequirement": "INSPECTION_RESULT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DEGRADATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "inspection",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "COMPLETE_REPAIR_AND_RETURN_SERVICEABLE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.inspection.result_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "maintenance.inspection.result_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-02-movement-breakdown",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отказ техники во время движения",
+      "description": "Единица прекращает участие в движении и получает отдельное состояние, а остаток маршрута и положение сохраняются для эвакуации.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как связать отказ на марше с движением, ремонтом и эвакуацией?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MOVEMENT_BREAKDOWN_POSITION_PRESERVED."
+      },
+      "trainingAssumption": "Для учебного события «Отказ техники во время движения» механизм MOVEMENT_BREAKDOWN_POSITION_PRESERVED и границы параметра «Задержка технической оценки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "MARCH_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.movement.failure_state",
+          "operator": "EQUALS",
+          "value": "FAILED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии FAILED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка технической оценки",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MOVEMENT_BREAKDOWN_POSITION_PRESERVED",
+          "reason": "Единица прекращает участие в движении и получает отдельное состояние, а остаток маршрута и положение сохраняются для эвакуации.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MOVEMENT_BREAKDOWN_OBSERVATION",
+          "sourceRequirement": "MOVEMENT_BREAKDOWN_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "BREAKDOWN_LOCATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "EVACUATE_OR_REPAIR_ON_SITE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.movement.failure_state": "FAILED"
+        },
+        "unsuitableFacts": {
+          "maintenance.movement.failure_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-03-missing-repair-part",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Запрос ремонта без нужной номенклатуры",
+      "description": "Ремонтный орган назначен, но обязательная часть отсутствует, поэтому работы не начинаются и потребность поступает в контур МТО.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как синхронизировать ремонтную заявку и снабжение запасными частями?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_BLOCKED_BY_MISSING_PART."
+      },
+      "trainingAssumption": "Для учебного события «Запрос ремонта без нужной номенклатуры» механизм REPAIR_BLOCKED_BY_MISSING_PART и границы параметра «Ожидание части» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.parts.availability_state",
+          "operator": "EQUALS",
+          "value": "MISSING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISSING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание части",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-04-repair-capacity-queue"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "requestRepair",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_BLOCKED_BY_MISSING_PART",
+          "reason": "Ремонтный орган назначен, но обязательная часть отсутствует, поэтому работы не начинаются и потребность поступает в контур МТО.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_PART_OBSERVATION",
+          "sourceRequirement": "REPAIR_PART_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPAIR_PART_REQUEST_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "requestRepair",
+          "method": "RECEIVE_PART_AND_START_REPAIR",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.parts.availability_state": "MISSING"
+        },
+        "unsuitableFacts": {
+          "maintenance.parts.availability_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-04-repair-capacity-queue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Очередь в ремонтном органе",
+      "description": "Все рабочие места заняты, и новая единица получает интервал ожидания, не считаясь одновременно находящейся в работе.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как распределить ремонтные мощности и сроки возврата в строй?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_FACILITY_CAPACITY_QUEUE."
+      },
+      "trainingAssumption": "Для учебного события «Очередь в ремонтном органе» механизм REPAIR_FACILITY_CAPACITY_QUEUE и границы параметра «Ожидание ремонта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.facility.capacity_state",
+          "operator": "EQUALS",
+          "value": "SATURATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии SATURATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание ремонта",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateRepairCapacity",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_FACILITY_CAPACITY_QUEUE",
+          "reason": "Все рабочие места заняты, и новая единица получает интервал ожидания, не считаясь одновременно находящейся в работе.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_QUEUE_OBSERVATION",
+          "sourceRequirement": "REPAIR_QUEUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPAIR_QUEUE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateRepairCapacity",
+          "method": "RELEASE_CAPACITY_AND_START_REPAIR",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.facility.capacity_state": "SATURATED"
+        },
+        "unsuitableFacts": {
+          "maintenance.facility.capacity_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-05-evacuation-route-blocked",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Маршрут эвакуации недоступен",
+      "description": "Повреждённая единица готова к перемещению, но маршрут закрыт, поэтому эвакуация удерживается и требует нового пути от фактической позиции.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как перестроить эвакуацию при закрытом маршруте?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: EVACUATION_ROUTE_BLOCKED_HOLD."
+      },
+      "trainingAssumption": "Для учебного события «Маршрут эвакуации недоступен» механизм EVACUATION_ROUTE_BLOCKED_HOLD и границы параметра «Задержка эвакуации» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "EVACUATION_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.evacuation.route_state",
+          "operator": "EQUALS",
+          "value": "BLOCKED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка эвакуации",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-06-evacuation-arrival"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleEvacuation",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "EVACUATION_ROUTE_BLOCKED_HOLD",
+          "reason": "Повреждённая единица готова к перемещению, но маршрут закрыт, поэтому эвакуация удерживается и требует нового пути от фактической позиции.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "EVACUATION_ROUTE_OBSERVATION",
+          "sourceRequirement": "EVACUATION_ROUTE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EVACUATION_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleEvacuation",
+          "method": "OPEN_OR_AUTHORIZE_ALTERNATE_EVACUATION_ROUTE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.evacuation.route_state": "BLOCKED"
+        },
+        "unsuitableFacts": {
+          "maintenance.evacuation.route_state": "OPEN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-06-evacuation-arrival",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Прибытие эвакуированной техники в ремонт",
+      "description": "Перемещение завершено подтверждением в пункте ремонта, и единица меняет только местоположение и состояние приёма, не становясь исправной автоматически.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как отличить завершение эвакуации от завершения ремонта?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: EVACUATION_ARRIVAL_REPAIR_INTAKE."
+      },
+      "trainingAssumption": "Для учебного события «Прибытие эвакуированной техники в ремонт» механизм EVACUATION_ARRIVAL_REPAIR_INTAKE и границы параметра «Срок приёма в ремонт» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.evacuation.arrival_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "intake",
+          "name": "Срок приёма в ремонт",
+          "unit": "min",
+          "min": 10,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleEvacuation",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "EVACUATION_ARRIVAL_REPAIR_INTAKE",
+          "reason": "Перемещение завершено подтверждением в пункте ремонта, и единица меняет только местоположение и состояние приёма, не становясь исправной автоматически.",
+          "durationParameter": "intake"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "EVACUATION_ARRIVAL_OBSERVATION",
+          "sourceRequirement": "EVACUATION_ARRIVAL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPAIR_INTAKE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "intake",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleEvacuation",
+          "method": "RETURN_TO_TRANSPORT_IF_INTAKE_REJECTED",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.evacuation.arrival_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "maintenance.evacuation.arrival_state": "IN_TRANSIT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-07-repair-complete",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Завершение ремонта и возврат в строй",
+      "description": "После подтверждённых работ и контроля единица переходит UNDER_REPAIR в SERVICEABLE с записью ресурсов, времени и проверяющего.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как подтвердить возврат техники в строй без двойного использования записи?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_CONFIRMED_SERVICEABLE_RETURN."
+      },
+      "trainingAssumption": "Для учебного события «Завершение ремонта и возврат в строй» механизм REPAIR_CONFIRMED_SERVICEABLE_RETURN и границы параметра «Срок контрольной проверки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.repair.completion_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "acceptance",
+          "name": "Срок контрольной проверки",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-08-repair-unsuccessful"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_CONFIRMED_SERVICEABLE_RETURN",
+          "reason": "После подтверждённых работ и контроля единица переходит UNDER_REPAIR в SERVICEABLE с записью ресурсов, времени и проверяющего.",
+          "durationParameter": "acceptance"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_COMPLETION_OBSERVATION",
+          "sourceRequirement": "REPAIR_COMPLETION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SERVICEABLE_RETURN_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "acceptance",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REOPEN_REPAIR_IF_ACCEPTANCE_FAILS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.repair.completion_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "maintenance.repair.completion_state": "IN_PROGRESS"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-08-repair-unsuccessful",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Ремонт завершён без восстановления",
+      "description": "Контрольная проверка не подтверждает исправность, и единица остаётся UNDER_REPAIR с новой оценкой работ вместо автоматического SERVICEABLE.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как действовать после неуспешного контроля ремонта?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FAILED_REPAIR_ACCEPTANCE_CONTINUES_STATE."
+      },
+      "trainingAssumption": "Для учебного события «Ремонт завершён без восстановления» механизм FAILED_REPAIR_ACCEPTANCE_CONTINUES_STATE и границы параметра «Дополнительный срок работ» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.repair.acceptance_state",
+          "operator": "EQUALS",
+          "value": "FAILED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии FAILED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "additional",
+          "name": "Дополнительный срок работ",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "requestRepair",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FAILED_REPAIR_ACCEPTANCE_CONTINUES_STATE",
+          "reason": "Контрольная проверка не подтверждает исправность, и единица остаётся UNDER_REPAIR с новой оценкой работ вместо автоматического SERVICEABLE.",
+          "durationParameter": "additional"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_ACCEPTANCE_OBSERVATION",
+          "sourceRequirement": "REPAIR_ACCEPTANCE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "UNSUCCESSFUL_REPAIR_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "additional",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "requestRepair",
+          "method": "ASSIGN_NEW_REPAIR_OR_EVACUATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.repair.acceptance_state": "FAILED"
+        },
+        "unsuitableFacts": {
+          "maintenance.repair.acceptance_state": "PASSED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-09-damaged-needs-evacuation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повреждение требует эвакуации",
+      "description": "Локальный ремонт не разрешён профилем состояния DAMAGED, поэтому создаётся заявка на эвакуацию, а единица не включается в исправный состав задачи.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как организовать эвакуацию повреждённой единицы без ложного локального восстановления?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DAMAGED_EQUIPMENT_REQUIRES_EVACUATION."
+      },
+      "trainingAssumption": "Для учебного события «Повреждение требует эвакуации» механизм DAMAGED_EQUIPMENT_REQUIRES_EVACUATION и границы параметра «Срок подготовки эвакуации» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "DAMAGED_EQUIPMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.equipment.damage_state",
+          "operator": "EQUALS",
+          "value": "DAMAGED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DAMAGED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "preparation",
+          "name": "Срок подготовки эвакуации",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-10-destroyed-transition-block"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleEvacuation",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DAMAGED_EQUIPMENT_REQUIRES_EVACUATION",
+          "reason": "Локальный ремонт не разрешён профилем состояния DAMAGED, поэтому создаётся заявка на эвакуацию, а единица не включается в исправный состав задачи.",
+          "durationParameter": "preparation"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DAMAGED_EQUIPMENT_OBSERVATION",
+          "sourceRequirement": "DAMAGED_EQUIPMENT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EVACUATION_REQUEST_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "preparation",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleEvacuation",
+          "method": "COMPLETE_EVACUATION_AND_REASSESS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.equipment.damage_state": "DAMAGED"
+        },
+        "unsuitableFacts": {
+          "maintenance.equipment.damage_state": "DEGRADED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-10-destroyed-transition-block",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Запрет возврата DESTROYED в ремонт без решения",
+      "description": "Терминальная запись не может обычным переходом стать SERVICEABLE, и конфликтующая заявка направляется на рассмотрение с сохранением причины.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как предотвратить неподтверждённое восстановление уничтоженной единицы?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DESTROYED_SERVICEABLE_TRANSITION_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Запрет возврата DESTROYED в ремонт без решения» механизм DESTROYED_SERVICEABLE_TRANSITION_REVIEW и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "EQUIPMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.destroyed.transition_request",
+          "operator": "EQUALS",
+          "value": "CONFLICTING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFLICTING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DESTROYED_SERVICEABLE_TRANSITION_REVIEW",
+          "reason": "Терминальная запись не может обычным переходом стать SERVICEABLE, и конфликтующая заявка направляется на рассмотрение с сохранением причины.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DESTROYED_TRANSITION_OBSERVATION",
+          "sourceRequirement": "DESTROYED_TRANSITION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "TERMINAL_STATE_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "REJECT_OR_AUTHORIZE_NEW_EQUIPMENT_RECORD",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.destroyed.transition_request": "CONFLICTING"
+        },
+        "unsuitableFacts": {
+          "maintenance.destroyed.transition_request": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-11-maintenance-restores-degraded",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Обслуживание снимает ограничение DEGRADED",
+      "description": "Подтверждённое обслуживание возвращает ограниченную единицу в SERVICEABLE по отдельному переходу с объёмом работ и контрольным результатом.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как отличить плановое обслуживание от полного ремонта при восстановлении?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MAINTENANCE_SERVICE_DEGRADED_RECOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Обслуживание снимает ограничение DEGRADED» механизм MAINTENANCE_SERVICE_DEGRADED_RECOVERY и границы параметра «Длительность обслуживания» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "MAINTENANCE_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.service.completion_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "service",
+          "name": "Длительность обслуживания",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-12-spare-part-consumption"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MAINTENANCE_SERVICE_DEGRADED_RECOVERY",
+          "reason": "Подтверждённое обслуживание возвращает ограниченную единицу в SERVICEABLE по отдельному переходу с объёмом работ и контрольным результатом.",
+          "durationParameter": "service"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MAINTENANCE_SERVICE_OBSERVATION",
+          "sourceRequirement": "MAINTENANCE_SERVICE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MAINTENANCE_COMPLETION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "service",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REOPEN_SERVICE_IF_INSPECTION_FAILS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.service.completion_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "maintenance.service.completion_state": "DUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-12-spare-part-consumption",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Списание запасной части в ремонте",
+      "description": "Подтверждённая работа расходует комплект через ресурсный журнал, а нехватка создаёт дефицит и не даёт отрицательного остатка.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как сверить расход запасных частей с конкретным ремонтным переходом?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_SPARE_PART_LEDGER_CONSUMPTION."
+      },
+      "trainingAssumption": "Для учебного события «Списание запасной части в ремонте» механизм REPAIR_SPARE_PART_LEDGER_CONSUMPTION и границы параметра «Количество комплектов» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.spare_parts.issue_state",
+          "operator": "EQUALS",
+          "value": "ISSUED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии ISSUED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Количество комплектов",
+          "unit": "unit",
+          "min": 1,
+          "max": 30,
+          "default": 2
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "consumeResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_SPARE_PART_LEDGER_CONSUMPTION",
+          "reason": "Подтверждённая работа расходует комплект через ресурсный журнал, а нехватка создаёт дефицит и не даёт отрицательного остатка.",
+          "quantityParameter": "amount",
+          "allowNegative": false
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SPARE_PART_ISSUE_OBSERVATION",
+          "sourceRequirement": "SPARE_PART_ISSUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SPARE_PART_BALANCE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "consumeResource",
+          "method": "RETURN_UNUSED_PART_BY_LEDGER_ENTRY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.spare_parts.issue_state": "ISSUED"
+        },
+        "unsuitableFacts": {
+          "maintenance.spare_parts.issue_state": "RESERVED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-13-duplicate-repair-request",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дубликат заявки на ремонт",
+      "description": "Повторная заявка имеет тот же идемпотентный ключ и связывается с уже существующей работой без второго резервирования мощности и частей.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как исключить двойное резервирование при повторной заявке на ремонт?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DUPLICATE_REPAIR_REQUEST_IDEMPOTENCY."
+      },
+      "trainingAssumption": "Для учебного события «Дубликат заявки на ремонт» механизм DUPLICATE_REPAIR_REQUEST_IDEMPOTENCY и границы параметра «Срок сверки заявки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.request.duplicate_state",
+          "operator": "EQUALS",
+          "value": "DUPLICATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DUPLICATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки заявки",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-14-equipment-double-allocation"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "requestRepair",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DUPLICATE_REPAIR_REQUEST_IDEMPOTENCY",
+          "reason": "Повторная заявка имеет тот же идемпотентный ключ и связывается с уже существующей работой без второго резервирования мощности и частей.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DUPLICATE_REPAIR_OBSERVATION",
+          "sourceRequirement": "DUPLICATE_REPAIR_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DUPLICATE_REPAIR_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "requestRepair",
+          "method": "LINK_OR_SPLIT_AFTER_CONTENT_REVIEW",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.request.duplicate_state": "DUPLICATED"
+        },
+        "unsuitableFacts": {
+          "maintenance.request.duplicate_state": "UNIQUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-14-equipment-double-allocation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Двойное распределение одной единицы",
+      "description": "Одна запись техники назначена двум несовместимым задачам, и распределение блокируется до освобождения или явного разделения записи.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как устранить двойное использование техники в задачах и ремонте?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: EQUIPMENT_DOUBLE_ALLOCATION_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Двойное распределение одной единицы» механизм EQUIPMENT_DOUBLE_ALLOCATION_REVIEW и границы параметра «Срок устранения конфликта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "EQUIPMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.equipment.allocation_state",
+          "operator": "EQUALS",
+          "value": "CONFLICTING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFLICTING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок устранения конфликта",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "EQUIPMENT_DOUBLE_ALLOCATION_REVIEW",
+          "reason": "Одна запись техники назначена двум несовместимым задачам, и распределение блокируется до освобождения или явного разделения записи.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DOUBLE_ALLOCATION_OBSERVATION",
+          "sourceRequirement": "DOUBLE_ALLOCATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ALLOCATION_CONFLICT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "REMOVE_CONFLICTING_EQUIPMENT_ASSIGNMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.equipment.allocation_state": "CONFLICTING"
+        },
+        "unsuitableFacts": {
+          "maintenance.equipment.allocation_state": "UNIQUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-15-crew-unavailable",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Нет расчёта для обслуживания",
+      "description": "Оборудование доступно, но назначенный виртуальный расчёт занят или отсутствует, поэтому работы получают задержку без диагностики реальных людей.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как согласовать технические работы с доступностью сценарного расчёта?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_CREW_AVAILABILITY_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Нет расчёта для обслуживания» механизм REPAIR_CREW_AVAILABILITY_DELAY и границы параметра «Задержка назначения расчёта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "MAINTENANCE_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.crew.availability_state",
+          "operator": "EQUALS",
+          "value": "UNAVAILABLE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии UNAVAILABLE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка назначения расчёта",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-16-repair-power-outage"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateRepairCapacity",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_CREW_AVAILABILITY_DELAY",
+          "reason": "Оборудование доступно, но назначенный виртуальный расчёт занят или отсутствует, поэтому работы получают задержку без диагностики реальных людей.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_CREW_OBSERVATION",
+          "sourceRequirement": "REPAIR_CREW_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CREW_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateRepairCapacity",
+          "method": "ASSIGN_CREW_AND_RESUME_MAINTENANCE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.crew.availability_state": "UNAVAILABLE"
+        },
+        "unsuitableFacts": {
+          "maintenance.crew.availability_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-16-repair-power-outage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отключение питания ремонтного объекта",
+      "description": "Инфраструктурное событие останавливает только зависящие от питания работы, сохраняя уже выполненные операции и состояние оборудования.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как пересмотреть ремонтный план при отключении питания объекта?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPAIR_FACILITY_POWER_DEPENDENCY_STOP."
+      },
+      "trainingAssumption": "Для учебного события «Отключение питания ремонтного объекта» механизм REPAIR_FACILITY_POWER_DEPENDENCY_STOP и границы параметра «Срок отключения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.facility.power_state",
+          "operator": "EQUALS",
+          "value": "OUTAGE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии OUTAGE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок отключения",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 6
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateInfrastructureState",
+          "target": {
+            "domain": "infrastructure",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPAIR_FACILITY_POWER_DEPENDENCY_STOP",
+          "reason": "Инфраструктурное событие останавливает только зависящие от питания работы, сохраняя уже выполненные операции и состояние оборудования.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_POWER_OBSERVATION",
+          "sourceRequirement": "REPAIR_POWER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "POWER_OUTAGE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateInfrastructureState",
+          "method": "RESTORE_POWER_AND_RESUME_REPAIR",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.facility.power_state": "OUTAGE"
+        },
+        "unsuitableFacts": {
+          "maintenance.facility.power_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-17-field-weather-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Погода задерживает полевой ремонт",
+      "description": "Утверждённый профиль среды приостанавливает работы на открытой площадке, не меняя само техническое состояние до подтверждённого результата.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как учесть погодную паузу в сроке полевого ремонта?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FIELD_REPAIR_WEATHER_WORK_PAUSE."
+      },
+      "trainingAssumption": "Для учебного события «Погода задерживает полевой ремонт» механизм FIELD_REPAIR_WEATHER_WORK_PAUSE и границы параметра «Задержка работ» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "FIELD_REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.field.weather_state",
+          "operator": "EQUALS",
+          "value": "LIMITING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии LIMITING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка работ",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 8
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-18-component-transfer-approval"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateRepairCapacity",
+          "target": {
+            "domain": "maintenance",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FIELD_REPAIR_WEATHER_WORK_PAUSE",
+          "reason": "Утверждённый профиль среды приостанавливает работы на открытой площадке, не меняя само техническое состояние до подтверждённого результата.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FIELD_WEATHER_OBSERVATION",
+          "sourceRequirement": "FIELD_WEATHER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FIELD_REPAIR_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateRepairCapacity",
+          "method": "END_WEATHER_LIMIT_AND_RESUME_WORK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.field.weather_state": "LIMITING"
+        },
+        "unsuitableFacts": {
+          "maintenance.field.weather_state": "SUITABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-18-component-transfer-approval",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Перераспределение компонента требует решения",
+      "description": "Заявка предлагает перенести компонент между сценарными единицами, но исполнение допускается только после утверждения и двух балансовых проводок.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как оформить перераспределение компонента без скрытого создания исправной единицы?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMPONENT_TRANSFER_DUAL_BALANCE_APPROVAL."
+      },
+      "trainingAssumption": "Для учебного события «Перераспределение компонента требует решения» механизм COMPONENT_TRANSFER_DUAL_BALANCE_APPROVAL и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.component.transfer_state",
+          "operator": "EQUALS",
+          "value": "PROPOSED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PROPOSED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения",
+          "unit": "h",
+          "min": 1,
+          "max": 12,
+          "default": 2
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMPONENT_TRANSFER_DUAL_BALANCE_APPROVAL",
+          "reason": "Заявка предлагает перенести компонент между сценарными единицами, но исполнение допускается только после утверждения и двух балансовых проводок.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMPONENT_TRANSFER_OBSERVATION",
+          "sourceRequirement": "COMPONENT_TRANSFER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMPONENT_TRANSFER_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CANCEL_OR_COMPLETE_BALANCED_TRANSFER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.component.transfer_state": "PROPOSED"
+        },
+        "unsuitableFacts": {
+          "maintenance.component.transfer_state": "UNASSIGNED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-19-unknown-equipment-state",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестное техническое состояние",
+      "description": "EquipmentHolding имеет UNKNOWN, поэтому единица не считается исправной и получает задачу осмотра до расчёта возможностей.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как исключить подстановку исправности при неизвестном состоянии техники?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNKNOWN_EQUIPMENT_REQUIRES_INSPECTION."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестное техническое состояние» механизм UNKNOWN_EQUIPMENT_REQUIRES_INSPECTION и границы параметра «Срок осмотра» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "EQUIPMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.equipment.knowledge_state",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "inspection",
+          "name": "Срок осмотра",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "maintenance-20-return-report-delay"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createObservation",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNKNOWN_EQUIPMENT_REQUIRES_INSPECTION",
+          "reason": "EquipmentHolding имеет UNKNOWN, поэтому единица не считается исправной и получает задачу осмотра до расчёта возможностей.",
+          "durationParameter": "inspection"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "UNKNOWN_EQUIPMENT_OBSERVATION",
+          "sourceRequirement": "UNKNOWN_EQUIPMENT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EQUIPMENT_INSPECTION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "inspection",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createObservation",
+          "method": "CONFIRM_STATE_OR_KEEP_UNAVAILABLE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.equipment.knowledge_state": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "maintenance.equipment.knowledge_state": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "maintenance-20-return-report-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Задержка доклада о возврате в строй",
+      "description": "Единица фактически восстановлена, но доклад ещё не доставлен, поэтому частная проекция сохраняет прежнюю оценку до получения подтверждения.",
+      "category": "MAINTENANCE",
+      "educationalQuestion": "Как различить фактический возврат в строй и известность этого факта инстанции?",
+      "source": {
+        "sourceId": "spec-equipment",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SERVICEABLE_RETURN_REPORT_LATENCY."
+      },
+      "trainingAssumption": "Для учебного события «Задержка доклада о возврате в строй» механизм SERVICEABLE_RETURN_REPORT_LATENCY и границы параметра «Задержка доклада» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "POINT",
+          "requiredFeatures": [
+            "REPAIR_SITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "maintenance.return_report.delivery_state",
+          "operator": "EQUALS",
+          "value": "DELAYED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DELAYED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка доклада",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "maintenance-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "reviseObservation",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SERVICEABLE_RETURN_REPORT_LATENCY",
+          "reason": "Единица фактически восстановлена, но доклад ещё не доставлен, поэтому частная проекция сохраняет прежнюю оценку до получения подтверждения.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RETURN_REPORT_OBSERVATION",
+          "sourceRequirement": "RETURN_REPORT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RETURN_CONFIRMATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "reviseObservation",
+          "method": "DELIVER_RETURN_REPORT_AND_UPDATE_PROJECTION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "maintenance.return_report.delivery_state": "DELAYED"
+        },
+        "unsuitableFacts": {
+          "maintenance.return_report.delivery_state": "DELIVERED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

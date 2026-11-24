@@ -1,0 +1,41 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "offline-ac12",
+    "revision": 1,
+    "sha256": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac12/offline-journal.json",
+    "sha256": "2f0dc444d76c7e20d21e0b34e84829eaee1339b0f8f6a891ee0d04fc287e8e00",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f",
+    "environment": "b1f8adac4a3b859dd78f9757fa4836749efca7e14018cf3d02fa91c9ddbd626f",
+    "journal": "2f0dc444d76c7e20d21e0b34e84829eaee1339b0f8f6a891ee0d04fc287e8e00"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac12/protocol.txt"
+  ],
+  "screenshots": [
+    "docs/release/kshvi/evidence/ac12/offline.png"
+  ],
+  "metrics": {
+    "networkRequestsOutsideFile": 0,
+    "firstSequence": 0,
+    "secondSequence": 1,
+    "hashChanged": 1
+  },
+  "limitations": [
+    "Автономность доказана на встроенной учебной реплей-фикстуре; человеческая оценка содержания разбора выполняется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac12/offline-journal.json",
+    "docs/release/kshvi/evidence/ac12/protocol.txt",
+    "docs/release/kshvi/evidence/ac12/metrics.json",
+    "docs/release/kshvi/evidence/ac12/offline.png",
+    "docs/release/kshvi/evidence/ac12/offline-viewer.html"
+  ]
+}

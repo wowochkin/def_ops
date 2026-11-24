@@ -1,0 +1,109 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "events": [
+    {
+      "eventId": "aff9de42-bf26-42ab-ae35-96685ad29871",
+      "organizationId": "org-ac02",
+      "instanceId": "ac02",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "environment.bound.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-11-23T21:04:29.443Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-11-23T21:04:29.443Z",
+        "normalizedAt": "2026-11-23T21:04:29.443Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "bind-environment"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-11-23T21:04:29.443Z",
+        "causedBy": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+        "commandId": "bind-environment",
+        "recipients": [
+          "blue",
+          "red"
+        ],
+        "snapshotId": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+        "supersedes": null,
+        "commandType": "environment.bind",
+        "manifestSha256": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92"
+      },
+      "prevHash": null,
+      "hash": "43d662b0bb88ed43bf41a09d12cf68e48522d236d0102d4f1f10fc183aea4e50",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "cfb18eaf-0b96-43f3-a4e9-ccb4b3f2317f",
+      "organizationId": "org-ac02",
+      "instanceId": "ac02",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "weather.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T01:00:00.000Z",
+        "normalizedAt": "2026-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "weather-front-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T01:00:00.000Z",
+        "reason": "Плановая вводная руководителя",
+        "authorId": "director",
+        "causedBy": "weather-front-1",
+        "changeId": "weather-front-1",
+        "scenario": {
+          "seed": 17,
+          "cloud": 40,
+          "start": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "humidity": 75,
+          "pressure": 1002,
+          "snowDepth": 0,
+          "windSpeed": 2,
+          "visibility": 7000,
+          "temperature": 10,
+          "variability": 0,
+          "soilMoisture": 0.3,
+          "durationHours": 2,
+          "precipitation": 1,
+          "windDirection": 180,
+          "soilTemperature": -1,
+          "transitionHours": 1
+        },
+        "commandId": "weather-front-1",
+        "recipients": [
+          "blue",
+          "red"
+        ],
+        "supersedes": "3ed0e63f155f4d4727f4b37e806ac2aeb6f7c1c9f52c0f46a80eb7345dd27d92",
+        "commandType": "weather.change",
+        "effectiveAt": "2026-01-01T01:00:00.000Z"
+      },
+      "prevHash": "43d662b0bb88ed43bf41a09d12cf68e48522d236d0102d4f1f10fc183aea4e50",
+      "hash": "da7f940158c9c72b2ac9d0115df85b3cb6e66548daa2cd2a8e8109da424bcb6d",
+      "hashVersion": 2
+    }
+  ]
+}

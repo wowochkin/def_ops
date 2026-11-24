@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "AC-00",
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "node scripts/kshvi-run-acceptance.mjs --generic-only --from 1 --to 29 --fresh-install --offline",
+  "path": "docs/release/kshvi/acceptance/AC-00.json",
+  "freshInstall": true,
+  "offline": true,
+  "metrics": {
+    "freshInstalls": 1,
+    "offlineAcceptanceRuns": 1,
+    "passedScenarios": 29,
+    "packagesInstalled": 264,
+    "vulnerabilities": 0
+  },
+  "limitations": [],
+  "openErrors": [],
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/summary.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/install-and-acceptance.log",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/protocol.txt",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/acceptance/AC-01.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/fresh-install/acceptance/AC-29.json"
+  ]
+}

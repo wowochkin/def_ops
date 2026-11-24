@@ -1,0 +1,39 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac10-branch",
+    "revision": 1,
+    "sha256": "b6be25295cb7aadda3bc496454a8d480a72598328c01546c382294a12b80d40b"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac10/journal.json",
+    "sha256": "75eb11d707fd71b83a19b9776af01a251d007d1fd3a6abf281abfab22c53a9d7",
+    "eventCount": 5
+  },
+  "hashes": {
+    "scenario": "b6be25295cb7aadda3bc496454a8d480a72598328c01546c382294a12b80d40b",
+    "environment": "1b34739a7109255cbfbad6b290ab60cfe04df21b0b704eb9171dec7015482a9f",
+    "journal": "75eb11d707fd71b83a19b9776af01a251d007d1fd3a6abf281abfab22c53a9d7"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac10/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "publicationRejected": 1,
+    "unauthorizedAdoptionRejected": 1,
+    "adoptedByLeader": 1,
+    "officialHistoryPreserved": 1
+  },
+  "limitations": [
+    "Сравнение доказывает изоляцию и различие версий, но не причинное превосходство модели; единый рейтинг не создаётся."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac10/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac10/journal.json",
+    "docs/release/kshvi/evidence/ac10/protocol.txt",
+    "docs/release/kshvi/evidence/ac10/metrics.json",
+    "docs/release/kshvi/evidence/ac10/environment.json"
+  ]
+}

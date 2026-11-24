@@ -14,6 +14,7 @@ import {RegionData,type PreparedWeather} from './RegionData';
 import {WeatherView,loadWeatherScenario} from './WeatherView';
 import {mapWeatherFields,weatherScale,type MapWeatherField,type WeatherOverlay} from './weather-layer';
 import {coversView,loadRegion} from './environment-region';
+import {openAtlasRegion,resolveOverview,type AtlasRegionSettings} from './atlas-region-state';
 import {weatherGrid,type WeatherRegion} from '../../../../packages/core/src/weather-grid';
 import {GeoJsonHelp} from './GeoJsonHelp';
 import {CopySource} from './CopySource';
@@ -56,6 +57,16 @@ export function AtlasView(){
  const [controlTab,setControlTab]=useState<'layers'|'maps'|'weather'|'data'>('layers'),[weather,setWeather]=useState<WeatherOverlay|null>(null),[showWeather,setShowWeather]=useState(true);
  const [sourcePlan,setPlan]=useState<{key?:string;files:{name:string;url:string;bytes?:number}[];missing:string[];bytes:number;note:string}|null>(null);
  const [packages,setPackages]=useState<AtlasMeta[]>([]),[jobs,setJobs]=useState<AtlasJob[]>([]),[sources,setSources]=useState<Source[]>([]),[selected,setSelected]=useState<string[]>([]),[disabled,setDisabled]=useState(new Set<string>()),[error,setError]=useState(''),[busy,setBusy]=useState(false),[runtime,setRuntime]=useState<{ok:boolean;error?:string}|null>(null);
+ const [regionStates,setRegionStates]=useState<Record<string,AtlasRegionSettings>>(()=>{
+  try{const value=JSON.parse(localStorage.getItem('def_ops.modern.atlas.regionStates')??'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}
+ });
+ useEffect(()=>{try{localStorage.setItem('def_ops.modern.atlas.regionStates',JSON.stringify(regionStates));}catch{/* настройки области остаются в текущем окне */}},[regionStates]);
+ function openRegion(group:Parameters<typeof openAtlasRegion>[1]){
+  const byRegion={...regionStates,[regionKey]:{selected,disabled:[...disabled],terrainId}};
+  const next=openAtlasRegion({regionKey,selected,disabled:[...disabled],terrainId,showOverview,byRegion},group);
+  setRegionStates(next.byRegion);setSelected([...next.selected]);setDisabled(new Set(next.disabled));setTerrainId(next.terrainId);setShowOverview(next.showOverview);
+  applyBounds([...group.bounds]);setControlTab('layers');
+ }
  const [kind,setKind]=useState<AtlasInput['kind']>('mbtiles'),[lo,setLo]=useState(8),[hi,setHi]=useState(13),[url,setUrl]=useState(''),[attribution,setAttribution]=useState('© OpenStreetMap contributors, ODbL'),[hash,setHash]=useState(''),[upload,setUpload]=useState(0);
  const groups=useMemo(()=>catalogRegions(packages,jobs),[packages,jobs]);
  // Опрос прогресса загрузки меняет jobs, но не состав областей на карте.
@@ -91,9 +102,29 @@ export function AtlasView(){
    setDisabled(old=>new Set([...old].filter(key=>!key.startsWith(id+'/'))));
    setTerrainId(old=>old===id?null:old);
  }
+ async function removeRegion(group:Parameters<typeof openAtlasRegion>[1]){
+  if(group.maps.some(map=>!map.sha256))throw Error('Не все наборы имеют подтверждённый SHA-256');
+  const items=group.maps.map(map=>({id:map.id,sha256:map.sha256!}));
+  const result=await environmentApi<{deleted:string[];unchanged:{id:string;reason:string}[]}>('/atlas/regions/delete',{method:'POST',body:JSON.stringify({items})});
+  const removed=new Set(result.deleted);
+  await refresh();
+  setSelected(old=>old.filter(id=>!removed.has(id)));
+  setDisabled(old=>new Set([...old].filter(key=>!removed.has(key.split('/')[0]))));
+  setTerrainId(old=>old&&removed.has(old)?null:old);
+  setRegionStates(old=>{
+   const current=old[group.key];
+   const next={...old};
+   if(!result.unchanged.length)delete next[group.key];
+   else if(current)next[group.key]={...current,selected:current.selected.filter(id=>!removed.has(id)),disabled:current.disabled.filter(key=>!removed.has(key.split('/')[0])),terrainId:current.terrainId&&removed.has(current.terrainId)?null:current.terrainId};
+   return next;
+  });
+  if(result.unchanged.length)setActionError({tab:'layers',scope:regionKey,message:`Не удалено: ${result.unchanged.map(item=>`${item.id} — ${item.reason}`).join('; ')}`});
+  else rename(group.key,'');
+ }
  function toggle(id:string){if(terrainId===id)setTerrainId(null);setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);}
  const active=useMemo(()=>selected.map(id=>packages.find(p=>p.id===id)).filter((p):p is AtlasMeta=>!!p),[selected,packages]);
- const overview=showOverview??!active.some(p=>(p.kind==='vector'||(p.kind==='raster'&&!isLandCover(p)))&&coversView(p.bounds,viewBounds??region.bounds));
+ const overview=resolveOverview({requested:showOverview});
+ const outsideLocalCoverage=!overview&&active.length>0&&!active.some(p=>(p.kind==='vector'||(p.kind==='raster'&&!isLandCover(p)))&&coversView(p.bounds,viewBounds??region.bounds));
  return <section className="env-view atlas-workbench" aria-label="Модуль картографии">
   <div className="atlas-bar"><h1>Карта и погода</h1><span className="atlas-current-region" title={name}>{name}</span><button onClick={()=>setPickerBounds(region.bounds)}>Выбрать область на карте</button></div>
   {pickerBounds&&<CoordinatePicker datasetLabels={datasetLabels} mode="bounds" value={pickerBounds} onChange={setPickerBounds} onClose={()=>setPickerBounds(null)} onConfirm={()=>{applyBounds(pickerBounds);setPickerBounds(null);}}/>}
@@ -115,10 +146,11 @@ export function AtlasView(){
    <div className="atlas-panel" hidden={controlTab!=='layers'}>
     <h2>На карте</h2>{controlTab==='layers'&&visibleActionError}
     <div className="env-actions"><button onClick={()=>setFraming({fill:true})}>Заполнить окно</button><button onClick={()=>setFraming({fill:false})}>Область целиком</button></div><label className="env-map-label"><input type="checkbox" checked={overview} onChange={e=>setShowOverview(e.target.checked)}/>Обзорная карта OSM · онлайн</label><label className="env-map-label"><input type="checkbox" checked={showWeather} onChange={e=>setShowWeather(e.target.checked)}/>Погодный слой{weather?` · ${weather.label}`:''}</label>{active.some(p=>p.kind==='raster')&&(overview||active.length>1||active.some(isLandCover))&&<label>Непрозрачность растровых наложений · {Math.round(rasterOpacity*100)}%<input type="range" min={0} max={100} value={Math.round(rasterOpacity*100)} onChange={e=>setRasterOpacity(Number(e.target.value)/100)}/></label>}
-   <AtlasCatalog names={names} rename={rename} groups={groups} selected={selected} disabled={disabled} terrainId={terrainId} toggle={toggle} show={applyBounds}
+   {outsideLocalCoverage&&<p className="env-note" role="status">Текущий вид выходит за локальное покрытие. Состав слоёв не меняется автоматически; при необходимости включите обзорную OSM вручную.</p>}
+   <AtlasCatalog names={names} rename={rename} groups={groups} selected={selected} disabled={disabled} terrainId={terrainId} toggle={toggle} show={openRegion}
     toggleLayer={key=>setDisabled(old=>{const next=new Set(old);if(!next.delete(key))next.add(key);return next;})}
     terrain={id=>{if(terrainId===id){setTerrainId(null);return;}setSelected(old=>old.includes(id)?old:[...old,id]);setTerrainId(id);}}
-    download={downloadLink} busy={busy} load={()=>setControlTab('maps')} remove={id=>void task(()=>removeMap(id))}/>
+    download={downloadLink} busy={busy} load={()=>setControlTab('maps')} remove={id=>void task(()=>removeMap(id))} removeRegion={group=>void task(()=>removeRegion(group))}/>
    <SeasonControls bounds={region.bounds} enabled={seasons} toggle={k=>setSeasons(old=>old.includes(k)?old.filter(x=>x!==k):[...old,k])}
     month={seasonMonth} choice={monthChoice} choose={setMonthChoice} values={transparency} change={change}/>
     <details><summary>Координаты области</summary><label>Рамка: запад, юг, восток, север<input value={draft} onChange={e=>{setDraft(e.target.value);setPlan(null);}} onBlur={()=>{if(draft!==regionKey)applyBounds(draft.split(',').map(v=>v.trim()?Number(v):NaN));}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/></label>{regionError&&<p role="alert">{regionError}</p>}</details>

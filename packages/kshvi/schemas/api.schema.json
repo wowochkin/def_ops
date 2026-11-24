@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://def-ops.local/schemas/kshvi/api.schema.json",
+  "title": "Фактические HTTP DTO КШВИ",
+  "definitions": {
+    "ExerciseSession": {
+      "type": "object",
+      "required": [
+        "id",
+        "exerciseId",
+        "scenarioRevisionId",
+        "revision",
+        "state",
+        "mode",
+        "authority",
+        "confirmedRevision",
+        "createdBy",
+        "createdAt"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "exerciseId": {
+          "type": "string"
+        },
+        "scenarioRevisionId": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "number"
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "PAUSED",
+            "COMPLETED",
+            "ABORTED",
+            "ARCHIVED"
+          ]
+        },
+        "mode": {
+          "const": "NETWORK"
+        },
+        "authority": {
+          "const": "SERVER"
+        },
+        "confirmedRevision": {
+          "type": "number"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      }
+    },
+    "SessionProjection": {
+      "type": "object",
+      "required": [
+        "perspective",
+        "session",
+        "domains",
+        "reference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "perspective": {
+          "enum": [
+            "PARTICIPANT",
+            "TRUTH"
+          ]
+        },
+        "session": {
+          "$ref": "#/definitions/ExerciseSession"
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "reference": {}
+      }
+    },
+    "ReplayFrame": {
+      "type": "object",
+      "required": [
+        "sequence",
+        "maxSequence",
+        "operationalAt",
+        "wallClockAt",
+        "perspective",
+        "source",
+        "stateHash",
+        "domains",
+        "events"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sequence": {
+          "type": "number"
+        },
+        "maxSequence": {
+          "type": "number"
+        },
+        "operationalAt": {
+          "type": "string"
+        },
+        "wallClockAt": {
+          "type": "string"
+        },
+        "perspective": {
+          "enum": [
+            "PARTICIPANT",
+            "TRUTH"
+          ]
+        },
+        "source": {
+          "enum": [
+            "TRUTH",
+            "RECORDED_PARTICIPANT_PROJECTION"
+          ]
+        },
+        "stateHash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "eventId",
+              "type",
+              "sequence"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "eventId": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "sequence": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ArchiveRecord": {
+      "type": "object",
+      "required": [
+        "archiveId",
+        "exerciseId",
+        "sessionId",
+        "manifestSha256",
+        "mode",
+        "missing"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "archiveId": {
+          "type": "string"
+        },
+        "exerciseId": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "manifestSha256": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "AUTONOMOUS",
+            "LIMITED_RESEARCH"
+          ]
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac15-weather-gaps.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:06:28.099Z\",\"service\":\"kshvi-ac15\",\"level\":\"info\",\"msg\":\"listening on :51210\"}\n{\"t\":\"2026-11-23T21:06:28.123Z\",\"service\":\"kshvi-ac15\",\"level\":\"info\",\"requestId\":\"7ba50958-bbc4-48d8-8591-f5dc02a50a0a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac15/commands\",\"status\":200,\"ms\":19}\n{\"t\":\"2026-11-23T21:06:28.130Z\",\"service\":\"kshvi-ac15\",\"level\":\"info\",\"requestId\":\"5cc0fae8-fd6d-4f9f-a5db-1e0f1f008adf\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac15/commands\",\"status\":200,\"ms\":3}\n ✓ services/kshvi/tests/acceptance/ac15-weather-gaps.test.ts (1 test) 146ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:25\n   Duration  2.29s (transform 69%, import 24%, tests 7%)\n\n",
+  "initialRevision": {
+    "id": "ac15-weather",
+    "revision": 1,
+    "sha256": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac15/journal.json",
+    "sha256": "03f8a3a9822af14790193fd02d7029bc14b3b3649a4255d94228ea3fc4327e10",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+    "environment": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+    "journal": "03f8a3a9822af14790193fd02d7029bc14b3b3649a4255d94228ea3fc4327e10"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac15/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "knownWeatherQueries": 1,
+    "noDataResponses": 1,
+    "calculatedWithKnownFactor": 1,
+    "requiresReview": 1,
+    "substitutedUnitFactors": 0
+  },
+  "limitations": [
+    "Проверен профиль движения с обязательным weatherFactor; остальные расчётные профили требуют собственных обязательных входов."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac15/journal.json",
+    "docs/release/kshvi/evidence/ac15/protocol.txt",
+    "docs/release/kshvi/evidence/ac15/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-15.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

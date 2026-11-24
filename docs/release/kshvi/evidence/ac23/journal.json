@@ -1,0 +1,715 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "invalidPlan": [
+    {
+      "code": "CROSSING_OVERLOAD",
+      "severity": "ERROR",
+      "message": "Колонна c1 превышает ёмкость переправы",
+      "refs": [
+        "road",
+        "c1"
+      ]
+    },
+    {
+      "code": "TRANSPORT_SHORTAGE",
+      "severity": "ERROR",
+      "message": "Одновременно требуется 3 единиц транспорта, доступно 2",
+      "refs": []
+    }
+  ],
+  "plan": {
+    "id": "ac23-plan",
+    "orderVersion": 1,
+    "orderIssuedAt": "2030-01-01T06:00:00.000Z",
+    "orderReceivedAt": "2030-01-01T06:00:00.000Z",
+    "echelons": [
+      {
+        "id": "e1",
+        "order": 1,
+        "forceIds": [
+          "f1"
+        ],
+        "areaId": "a1",
+        "readyAt": "2030-01-01T07:00:00.000Z",
+        "dependsOn": []
+      },
+      {
+        "id": "e2",
+        "order": 2,
+        "forceIds": [
+          "f2"
+        ],
+        "areaId": "a2",
+        "readyAt": "2030-01-01T08:00:00.000Z",
+        "dependsOn": []
+      }
+    ],
+    "reserves": [
+      {
+        "id": "reserve",
+        "forceIds": [
+          "f3"
+        ],
+        "areaId": "a3",
+        "readyAt": "2030-01-01T09:00:00.000Z",
+        "dependsOn": []
+      }
+    ],
+    "supportGroups": [],
+    "columns": [
+      {
+        "id": "c1",
+        "echelonId": "e1",
+        "forceIds": [
+          "f1"
+        ],
+        "routeId": "road",
+        "startAt": "2030-01-01T06:00:00.000Z",
+        "endAt": "2030-01-01T07:00:00.000Z",
+        "loadTonnes": 40,
+        "transportRequired": 3
+      },
+      {
+        "id": "c2",
+        "echelonId": "e2",
+        "forceIds": [
+          "f2"
+        ],
+        "routeId": "road",
+        "startAt": "2030-01-01T07:00:00.000Z",
+        "endAt": "2030-01-01T08:00:00.000Z",
+        "loadTonnes": 30,
+        "transportRequired": 1
+      }
+    ],
+    "areas": [
+      {
+        "id": "a1",
+        "kind": "AREA",
+        "capacityForces": 1
+      },
+      {
+        "id": "a2",
+        "kind": "AREA",
+        "capacityForces": 1
+      },
+      {
+        "id": "a3",
+        "kind": "AREA",
+        "capacityForces": 1
+      }
+    ],
+    "routes": [
+      {
+        "id": "road",
+        "status": "OPEN",
+        "capacityColumns": 1,
+        "crossingCapacityTonnes": 40,
+        "intersectsRouteIds": []
+      }
+    ],
+    "controlPosts": [
+      {
+        "id": "main",
+        "role": "MAIN",
+        "nodeId": "hq",
+        "available": true
+      },
+      {
+        "id": "alt",
+        "role": "ALTERNATE",
+        "nodeId": "hq-alt",
+        "available": true
+      }
+    ],
+    "logistics": {
+      "transportAvailable": 3,
+      "communicationsAvailable": true,
+      "requiredStocks": {
+        "fuel": 40
+      },
+      "availableStocks": {
+        "fuel": 100
+      }
+    }
+  },
+  "validation": {
+    "valid": true,
+    "requiresReview": false,
+    "issues": [],
+    "maxConcurrentColumns": 1,
+    "maxConcurrentTransport": 3
+  },
+  "allocation": {
+    "requests": [
+      {
+        "id": "low",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "requesterNodeId": "force-low",
+        "sourceNodeId": "warehouse",
+        "quantity": 40,
+        "totalWeightTonnes": 40,
+        "totalVolumeM3": 40,
+        "priority": 20,
+        "requiredBy": "2030-01-01T07:00:00.000Z",
+        "createdAt": "2030-01-01T06:00:00.000Z",
+        "taskIds": [
+          "task-low"
+        ],
+        "status": "ALLOCATED",
+        "allocatedQuantity": 40,
+        "deficit": 0,
+        "history": [
+          {
+            "previousPriority": 1,
+            "priority": 20,
+            "at": "2030-01-01T06:00:00.000Z",
+            "actorId": "chief-logistics",
+            "basis": "Приоритет первого эшелона"
+          }
+        ],
+        "orderId": "ac23-plan",
+        "allocationIds": [
+          "allocation:ac23-plan:low:truck-ac23"
+        ]
+      },
+      {
+        "id": "high",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "requesterNodeId": "force-high",
+        "sourceNodeId": "warehouse",
+        "quantity": 40,
+        "totalWeightTonnes": 40,
+        "totalVolumeM3": 40,
+        "priority": 10,
+        "requiredBy": "2030-01-01T07:00:00.000Z",
+        "createdAt": "2030-01-01T06:00:00.000Z",
+        "taskIds": [
+          "task-high"
+        ],
+        "status": "PARTIALLY_ALLOCATED",
+        "allocatedQuantity": 10,
+        "deficit": 30,
+        "history": [],
+        "orderId": "ac23-plan",
+        "allocationIds": [
+          "allocation:ac23-plan:high:truck-ac23"
+        ]
+      }
+    ],
+    "allocations": [
+      {
+        "id": "allocation:ac23-plan:low:truck-ac23",
+        "requestId": "low",
+        "transportId": "truck-ac23",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "quantity": 40,
+        "weightTonnes": 40,
+        "volumeM3": 40
+      },
+      {
+        "id": "allocation:ac23-plan:high:truck-ac23",
+        "requestId": "high",
+        "transportId": "truck-ac23",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "quantity": 10,
+        "weightTonnes": 10,
+        "volumeM3": 10
+      }
+    ],
+    "transports": [
+      {
+        "id": "truck-ac23",
+        "status": "SERVICEABLE",
+        "remainingCapacityQuantity": 10,
+        "remainingWeightTonnes": 10,
+        "remainingVolumeM3": 10
+      }
+    ],
+    "issues": [
+      {
+        "code": "RESOURCE_DEFICIT",
+        "requestId": "high",
+        "message": "Не удовлетворено 30 tonne; задачи: task-high"
+      }
+    ]
+  },
+  "supplyHistory": [
+    {
+      "status": "PREPARING",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 1000,
+        "travelledMeters": 0
+      },
+      "sent": 0,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "LOADING",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 1000,
+        "travelledMeters": 0
+      },
+      "sent": 0,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "LOADED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 1000,
+        "travelledMeters": 0
+      },
+      "sent": 0,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "IN_TRANSIT",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 1000,
+        "travelledMeters": 0
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "IN_TRANSIT",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 1000,
+        "travelledMeters": 0
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "IN_TRANSIT",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 600,
+        "travelledMeters": 400
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "DELAYED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 600,
+        "travelledMeters": 400
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "ARRIVED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "UNLOADING",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "UNLOADED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000
+      },
+      "sent": 40,
+      "delivered": 0,
+      "reports": []
+    },
+    {
+      "status": "DELIVERED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000
+      },
+      "sent": 40,
+      "delivered": 40,
+      "reports": []
+    },
+    {
+      "status": "DELIVERED",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000
+      },
+      "sent": 40,
+      "delivered": 40,
+      "reports": [
+        "supply-report-ac23"
+      ]
+    }
+  ],
+  "ledger": [
+    {
+      "id": "opening-ac23",
+      "causeId": "initial-ac23",
+      "operation": "OPENING",
+      "quantity": 100,
+      "resourceId": "fuel",
+      "unit": "tonne",
+      "nodeId": "warehouse",
+      "at": "2030-01-01T06:00:00.000Z",
+      "actorId": "logistics-ac23"
+    },
+    {
+      "id": "supply-ac23:reserve",
+      "operation": "RESERVE",
+      "resourceId": "fuel",
+      "unit": "tonne",
+      "quantity": 40,
+      "nodeId": "warehouse",
+      "supplyId": "supply-ac23",
+      "taskId": "low",
+      "at": "2030-01-01T06:00:00.000Z",
+      "causeId": "ac23-plan",
+      "actorId": "supply-movement"
+    },
+    {
+      "id": "supply-ac23:dispatch",
+      "operation": "DISPATCH",
+      "resourceId": "fuel",
+      "unit": "tonne",
+      "quantity": 40,
+      "nodeId": "warehouse",
+      "supplyId": "supply-ac23",
+      "taskId": "low",
+      "at": "2030-01-01T06:00:00.000Z",
+      "causeId": "ac23-plan",
+      "actorId": "supply-movement"
+    },
+    {
+      "id": "supply-ac23:deliver:40",
+      "operation": "DELIVER",
+      "resourceId": "fuel",
+      "unit": "tonne",
+      "quantity": 40,
+      "nodeId": "warehouse",
+      "destinationNodeId": "force-low",
+      "supplyId": "supply-ac23",
+      "taskId": "low",
+      "at": "2030-01-01T07:00:00.000Z",
+      "causeId": "ac23-plan",
+      "actorId": "supply-movement"
+    },
+    {
+      "id": "consume-ac23",
+      "causeId": "task-e1",
+      "taskId": "task-e1",
+      "operation": "CONSUME",
+      "quantity": 20,
+      "requestedQuantity": 25,
+      "resourceId": "fuel",
+      "unit": "tonne",
+      "nodeId": "force-low",
+      "at": "2030-01-01T07:00:00.000Z",
+      "actorId": "logistics-ac23"
+    }
+  ],
+  "repair": {
+    "requestedRepair": {
+      "request": {
+        "id": "repair-ac23",
+        "faultId": "fault-ac23",
+        "repairNodeId": "repair",
+        "requestedAt": "2030-01-01T06:00:00.000Z",
+        "actorId": "technician-ac23",
+        "requiredParts": [
+          {
+            "resourceId": "parts",
+            "unit": "item",
+            "required": 1,
+            "available": 1
+          }
+        ],
+        "repairDurationMinutes": 60,
+        "equipmentId": "vehicle-ac23",
+        "evacuationRequired": false,
+        "status": "READY_FOR_REPAIR",
+        "startedAt": null,
+        "completedAt": null,
+        "history": []
+      },
+      "equipment": {
+        "equipmentId": "vehicle-ac23",
+        "state": "DAMAGED",
+        "locationNodeId": "repair",
+        "activeTaskId": null,
+        "activeRepairId": "repair-ac23"
+      },
+      "ledgerEntries": [],
+      "issues": []
+    },
+    "startedRepair": {
+      "request": {
+        "id": "repair-ac23",
+        "faultId": "fault-ac23",
+        "repairNodeId": "repair",
+        "requestedAt": "2030-01-01T06:00:00.000Z",
+        "actorId": "technician-ac23",
+        "requiredParts": [
+          {
+            "resourceId": "parts",
+            "unit": "item",
+            "required": 1,
+            "available": 1
+          }
+        ],
+        "repairDurationMinutes": 60,
+        "equipmentId": "vehicle-ac23",
+        "evacuationRequired": false,
+        "status": "UNDER_REPAIR",
+        "startedAt": "2030-01-01T06:00:00.000Z",
+        "completedAt": null,
+        "history": [
+          {
+            "id": "repair-start-ac23",
+            "at": "2030-01-01T06:00:00.000Z",
+            "action": "START",
+            "details": "START"
+          }
+        ]
+      },
+      "equipment": {
+        "equipmentId": "vehicle-ac23",
+        "state": "UNDER_REPAIR",
+        "locationNodeId": "repair",
+        "activeTaskId": null,
+        "activeRepairId": "repair-ac23"
+      },
+      "ledgerEntries": [
+        {
+          "id": "repair-ac23:part:parts",
+          "operation": "CONSUME",
+          "resourceId": "parts",
+          "unit": "item",
+          "quantity": 1,
+          "requestedQuantity": 1,
+          "nodeId": "repair",
+          "taskId": "repair-ac23",
+          "at": "2030-01-01T06:00:00.000Z",
+          "causeId": "fault-ac23",
+          "actorId": "technician-ac23"
+        }
+      ],
+      "issues": []
+    },
+    "earlyRepair": {
+      "request": {
+        "id": "repair-ac23",
+        "faultId": "fault-ac23",
+        "repairNodeId": "repair",
+        "requestedAt": "2030-01-01T06:00:00.000Z",
+        "actorId": "technician-ac23",
+        "requiredParts": [
+          {
+            "resourceId": "parts",
+            "unit": "item",
+            "required": 1,
+            "available": 1
+          }
+        ],
+        "repairDurationMinutes": 60,
+        "equipmentId": "vehicle-ac23",
+        "evacuationRequired": false,
+        "status": "UNDER_REPAIR",
+        "startedAt": "2030-01-01T06:00:00.000Z",
+        "completedAt": null,
+        "history": [
+          {
+            "id": "repair-start-ac23",
+            "at": "2030-01-01T06:00:00.000Z",
+            "action": "START",
+            "details": "START"
+          },
+          {
+            "id": "repair-early-ac23",
+            "at": "2030-01-01T06:30:00.000Z",
+            "action": "COMPLETE",
+            "details": "Ремонт ещё не завершён; длительность и ресурсы сохранены"
+          }
+        ]
+      },
+      "equipment": {
+        "equipmentId": "vehicle-ac23",
+        "state": "UNDER_REPAIR",
+        "locationNodeId": "repair",
+        "activeTaskId": null,
+        "activeRepairId": "repair-ac23"
+      },
+      "ledgerEntries": [],
+      "issues": [
+        {
+          "code": "REPAIR_NOT_DUE",
+          "message": "Ремонт ещё не завершён; длительность и ресурсы сохранены"
+        }
+      ]
+    },
+    "restored": {
+      "request": {
+        "id": "repair-ac23",
+        "faultId": "fault-ac23",
+        "repairNodeId": "repair",
+        "requestedAt": "2030-01-01T06:00:00.000Z",
+        "actorId": "technician-ac23",
+        "requiredParts": [
+          {
+            "resourceId": "parts",
+            "unit": "item",
+            "required": 1,
+            "available": 1
+          }
+        ],
+        "repairDurationMinutes": 60,
+        "equipmentId": "vehicle-ac23",
+        "evacuationRequired": false,
+        "status": "RESTORED",
+        "startedAt": "2030-01-01T06:00:00.000Z",
+        "completedAt": "2030-01-01T07:00:00.000Z",
+        "history": [
+          {
+            "id": "repair-start-ac23",
+            "at": "2030-01-01T06:00:00.000Z",
+            "action": "START",
+            "details": "START"
+          },
+          {
+            "id": "repair-complete-ac23",
+            "at": "2030-01-01T07:00:00.000Z",
+            "action": "COMPLETE",
+            "details": "COMPLETE"
+          }
+        ]
+      },
+      "equipment": {
+        "equipmentId": "vehicle-ac23",
+        "state": "SERVICEABLE",
+        "locationNodeId": "repair",
+        "activeTaskId": null,
+        "activeRepairId": null
+      },
+      "ledgerEntries": [],
+      "issues": []
+    }
+  },
+  "stoppedTask": {
+    "id": "task-e1",
+    "elementId": "e1",
+    "orderId": "ac23-plan",
+    "receivedOrderIds": [
+      "ac23-plan"
+    ],
+    "stage": "SUSPENDED",
+    "route": {
+      "routeLengthMeters": 1000,
+      "remainingMeters": 600,
+      "travelledMeters": 400,
+      "delayMinutes": 0
+    },
+    "elapsedMinutes": 90,
+    "resources": [],
+    "reportIds": [],
+    "limitations": [
+      "EQUIPMENT_NOT_SERVICEABLE"
+    ],
+    "history": [
+      {
+        "id": "task-stopped-ac23",
+        "at": "2030-01-01T06:00:00.000Z",
+        "action": "ADVANCE",
+        "details": "Техника vehicle-ac23 находится в состоянии UNDER_REPAIR; положение сохранено"
+      }
+    ]
+  },
+  "movedTask": {
+    "id": "task-e1",
+    "elementId": "e1",
+    "orderId": "ac23-plan",
+    "receivedOrderIds": [
+      "ac23-plan"
+    ],
+    "stage": "EXECUTION",
+    "route": {
+      "routeLengthMeters": 1000,
+      "remainingMeters": 0,
+      "travelledMeters": 1000,
+      "delayMinutes": 0
+    },
+    "elapsedMinutes": 150,
+    "resources": [],
+    "reportIds": [],
+    "limitations": [
+      "EQUIPMENT_NOT_SERVICEABLE"
+    ],
+    "history": [
+      {
+        "id": "task-stopped-ac23",
+        "at": "2030-01-01T06:00:00.000Z",
+        "action": "ADVANCE",
+        "details": "Техника vehicle-ac23 находится в состоянии UNDER_REPAIR; положение сохранено"
+      },
+      {
+        "id": "task-moved-ac23",
+        "at": "2030-01-01T07:00:00.000Z",
+        "action": "ADVANCE",
+        "details": "ADVANCE"
+      }
+    ]
+  },
+  "formation": {
+    "planId": "ac23-plan",
+    "status": "PARTIAL",
+    "completedElementIds": [],
+    "pendingElementIds": [
+      "e1",
+      "e2",
+      "reserve"
+    ],
+    "positions": {
+      "e1": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 0,
+        "travelledMeters": 1000,
+        "delayMinutes": 0
+      }
+    },
+    "reportIds": [
+      "supply-report-ac23"
+    ]
+  }
+}

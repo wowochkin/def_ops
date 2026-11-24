@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { AppWorkspace, AppModeSwitch, type AppMode } from '../src/AppMode';
 
@@ -40,6 +40,14 @@ it('возвращается в историческое пространств�
   expect((screen.getByLabelText('Черновик карты') as HTMLInputElement).value).toBe('Несохранённая карта');
   expect(screen.getByTestId('history').dataset.active).toBe('true');
   expect(mounted).toHaveBeenCalledTimes(1);
+});
+
+it('не показывает неиспользуемую переигровку в верхней навигации', () => {
+  render(workspace());
+  fireEvent.click(screen.getByRole('button', { name: 'Современный режим' }));
+  const nav = screen.getByRole('navigation', { name: 'Разделы современного режима' });
+  expect(within(nav).queryByRole('button', { name: 'Переигровка' })).toBeNull();
+  expect(within(nav).getAllByRole('button')).toHaveLength(5);
 });
 
 it('при неизвестном режиме открывает исторический', () => {

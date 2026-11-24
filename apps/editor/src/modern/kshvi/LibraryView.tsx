@@ -1,0 +1,201 @@
+import { useId, useState, type FormEvent } from 'react';
+import { DateTimeField } from '../DateTimeField';
+import type {
+  CreateExerciseInput,
+  ExerciseFilters,
+  ExercisePurpose,
+  ExerciseScale,
+  ExerciseState,
+  ExerciseSummary,
+  ExerciseValidation,
+} from './kshvi-api';
+
+export type LibraryExercise = Pick<ExerciseSummary, 'id' | 'title' | 'revision' | 'state' | 'validation'>
+  & Partial<Omit<ExerciseSummary, 'id' | 'title' | 'revision' | 'state' | 'validation'>>;
+
+const stateLabels: Record<ExerciseState, string> = {
+  DRAFT: 'Черновик', IN_REVIEW: 'На проверке', APPROVED: 'Утверждено', SEALED: 'Зафиксировано',
+  CANCELLED: 'Отменено', ARCHIVED: 'В архиве',
+};
+const validationLabels: Record<ExerciseValidation, string> = {
+  NOT_RUN: 'Проверка не запускалась', OK: 'Ошибок не найдено', WARNING: 'Есть предупреждения', ERROR: 'Есть ошибки',
+};
+const scaleLabels: Record<ExerciseScale, string> = {
+  tactical: 'Тактический', operational: 'Оперативный', strategic: 'Стратегический', custom: 'Особый масштаб',
+};
+const purposeLabels: Record<ExercisePurpose, string> = {
+  planned: 'Плановое', special: 'Специальное', inspection: 'Проверка', research: 'Исследовательское',
+  exposition: 'Экспозиционное', custom: 'Другое назначение',
+};
+const dateFormat = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+
+type Props = {
+  items: readonly LibraryExercise[];
+  filters?: ExerciseFilters;
+  busy?: boolean;
+  loading?: boolean;
+  notice?: string;
+  error?: string;
+  archiveMode?: boolean;
+  onFiltersChange?: (filters: ExerciseFilters) => void;
+  onCreate?: (input: CreateExerciseInput) => Promise<void>;
+  onCopy?: (item: LibraryExercise) => void;
+  onCompare?: (item: LibraryExercise) => void;
+  onArchive?: (item: LibraryExercise) => void;
+  onOpenSession?: (item: LibraryExercise) => void;
+  onOpenWorkflow?: (item: LibraryExercise) => void;
+};
+
+export function LibraryView({
+  items, filters = {}, busy = false, loading = false, notice = '', error = '', archiveMode = false,
+  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession, onOpenWorkflow,
+}: Props) {
+  const uid = useId().replaceAll(':', '');
+  const [query, setQuery] = useState(filters.query ?? '');
+  const [state, setState] = useState(filters.state ?? '');
+  const [scale, setScale] = useState(filters.scale ?? '');
+  const [purpose, setPurpose] = useState(filters.purpose ?? '');
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [title, setTitle] = useState('');
+  const [newPurpose, setNewPurpose] = useState<ExercisePurpose>('planned');
+  const [newScale, setNewScale] = useState<ExerciseScale>('operational');
+  const [startsAt, setStartsAt] = useState('');
+  const [endsAt, setEndsAt] = useState('');
+
+  function submitFilters(event: FormEvent): void {
+    event.preventDefault();
+    onFiltersChange?.({
+      ...(query.trim() ? { query: query.trim() } : {}),
+      ...(state ? { state: state as ExerciseState } : {}),
+      ...(scale ? { scale: scale as ExerciseScale } : {}),
+      ...(purpose ? { purpose: purpose as ExercisePurpose } : {}),
+    });
+  }
+
+  async function submitCreate(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    if (!onCreate || saving) return;
+    setSaving(true);
+    setCreateError('');
+    try {
+      await onCreate({
+        title,
+        purpose: newPurpose,
+        scale: newScale,
+        startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+      });
+      setCreating(false);
+      setTitle('');
+      setStartsAt('');
+      setEndsAt('');
+    } catch (cause) {
+      setCreateError(cause instanceof Error ? cause.message : 'Не удалось создать учение');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <div className="kshvi-library">
+    <div className="kshvi-library-heading">
+      <div>
+        <h2>{archiveMode ? 'Архив учений' : 'Библиотека учений'}</h2>
+        <p>{archiveMode ? 'Зафиксированные проекты доступны для просмотра и повторного использования.' : 'Сценарии, редакции, проверки и последние подтверждённые сеансы.'}</p>
+      </div>
+      {onCreate && <button className="kshvi-primary" type="button" onClick={() => { setCreating(value => !value); setCreateError(''); }}>
+        {creating ? 'Отменить создание' : 'Создать учение'}
+      </button>}
+    </div>
+
+    {creating && onCreate && <form className="kshvi-create" onSubmit={submitCreate}>
+      <div className="kshvi-create-grid">
+        <label htmlFor={`${uid}-new-title`}>Название учения
+          <input id={`${uid}-new-title`} value={title} onChange={event => setTitle(event.target.value)} required maxLength={180} autoFocus />
+        </label>
+        <label htmlFor={`${uid}-new-purpose`}>Назначение учения
+          <select id={`${uid}-new-purpose`} value={newPurpose} onChange={event => setNewPurpose(event.target.value as ExercisePurpose)}>
+            {Object.entries(purposeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <label htmlFor={`${uid}-new-scale`}>Масштаб учения
+          <select id={`${uid}-new-scale`} value={newScale} onChange={event => setNewScale(event.target.value as ExerciseScale)}>
+            {Object.entries(scaleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <DateTimeField id={`${uid}-new-start`} label="Начало" value={startsAt} onChange={setStartsAt} />
+        <DateTimeField id={`${uid}-new-end`} label="Окончание" value={endsAt} onChange={setEndsAt} />
+      </div>
+      <p className="kshvi-form-note">Новый проект получит первую редакцию. Датами можно дополнить карточку позже; неизвестные сроки не подставляются автоматически.</p>
+      <button className="kshvi-primary" type="submit" disabled={saving || busy}>{saving ? 'Ждём подтверждение сервера…' : 'Сохранить на сервере'}</button>
+      {createError && <p role="alert" className="kshvi-error">{createError}</p>}
+    </form>}
+
+    <form className="kshvi-filters" onSubmit={submitFilters}>
+      <label htmlFor={`${uid}-query`}>Поиск
+        <input id={`${uid}-query`} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Название или ответственный" />
+      </label>
+      {!archiveMode && <label htmlFor={`${uid}-state`}>Состояние
+        <select id={`${uid}-state`} value={state} onChange={event => setState(event.target.value as ExerciseState | '')}>
+          <option value="">Все состояния</option>
+          {Object.entries(stateLabels).filter(([value]) => value !== 'ARCHIVED').map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </label>}
+      <label htmlFor={`${uid}-scale`}>Масштаб
+        <select id={`${uid}-scale`} value={scale} onChange={event => setScale(event.target.value as ExerciseScale | '')}>
+          <option value="">Любой масштаб</option>
+          {Object.entries(scaleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </label>
+      <label htmlFor={`${uid}-purpose`}>Назначение
+        <select id={`${uid}-purpose`} value={purpose} onChange={event => setPurpose(event.target.value as ExercisePurpose | '')}>
+          <option value="">Любое назначение</option>
+          {Object.entries(purposeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </label>
+      <button type="submit" disabled={busy}>Найти</button>
+    </form>
+
+    {notice && <p role="status" className="kshvi-notice">{notice}</p>}
+    {error && <p role="alert" className="kshvi-error">{error}</p>}
+    <p className="kshvi-count" aria-live="polite">{loading ? 'Загружаем подтверждённые данные…' : `Проектов: ${items.length}`}</p>
+
+    {!loading && items.length === 0 && <div className="kshvi-empty">
+      <h3>{archiveMode ? 'Архив пуст' : 'Учения не найдены'}</h3>
+      <p>{archiveMode ? 'Архивированные проекты появятся здесь без удаления редакций.' : 'Измените условия поиска или создайте новый проект на сервере.'}</p>
+    </div>}
+
+    <ul className="kshvi-exercise-list">
+      {items.map(item => <li key={item.id}>
+        <article className="kshvi-exercise-card">
+          <div className="kshvi-card-heading">
+            <div>
+              <p className="kshvi-card-kicker">{item.scale ? scaleLabels[item.scale] : 'Масштаб не указан'} · {item.purpose ? purposeLabels[item.purpose] : 'Назначение не указано'}</p>
+              <h3>{item.title}</h3>
+            </div>
+            <span className={`kshvi-state kshvi-state-${item.state.toLocaleLowerCase()}`}>{stateLabels[item.state]}</span>
+          </div>
+          <div className="kshvi-card-meta">
+            <span>Редакция {item.revision}</span>
+            <span className={`kshvi-validation kshvi-validation-${item.validation.toLocaleLowerCase()}`}>{validationLabels[item.validation]}</span>
+            <span>{item.readiness === undefined ? 'Готовность не оценена' : `Готовность ${item.readiness}%`}</span>
+          </div>
+          <dl className="kshvi-card-details">
+            <div><dt>Сроки</dt><dd>{item.startsAt || item.endsAt
+              ? `${item.startsAt ? dateFormat.format(new Date(item.startsAt)) : 'Начало не задано'} — ${item.endsAt ? dateFormat.format(new Date(item.endsAt)) : 'окончание не задано'}`
+              : 'Даты не заданы'}</dd></div>
+          </dl>
+          <p className="kshvi-owner-readable">{item.ownerId ? `Ответственный: ${item.ownerId}` : 'Ответственный не назначен'}</p>
+          <div className="kshvi-card-actions">
+            {onOpenWorkflow && <button type="button" disabled={busy} aria-label={`Рабочий цикл ${item.title}`} onClick={() => onOpenWorkflow(item)}>Рабочий цикл</button>}
+            {onCompare && <button type="button" disabled={busy} aria-label={`Сравнить редакции ${item.title}`} onClick={() => onCompare(item)}>Редакции</button>}
+            {onOpenSession && item.lastSessionId && <button type="button" disabled={busy} aria-label={`Перейти к последнему сеансу ${item.title}`} onClick={() => onOpenSession(item)}>Последний сеанс</button>}
+            {onCopy && <button type="button" disabled={busy} aria-label={`Копировать ${item.title}`} onClick={() => onCopy(item)}>Копировать</button>}
+            {onArchive && item.state !== 'ARCHIVED' && <button className="kshvi-danger" type="button" disabled={busy} aria-label={`Архивировать ${item.title}`} onClick={() => onArchive(item)}>Архивировать</button>}
+          </div>
+        </article>
+      </li>)}
+    </ul>
+  </div>;
+}

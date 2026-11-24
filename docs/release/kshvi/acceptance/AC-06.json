@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "717f2391-60ea-45ba-9fe6-f01cb856c116",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac06-communications.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty\n\n{\"t\":\"2026-11-23T20:53:35.429Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"msg\":\"listening on :58569\"}\n{\"t\":\"2026-11-23T20:53:35.450Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"cf55dd4f-4a91-4135-8e8f-d3ad5647d2f1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-23T20:53:35.456Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"7dcceca6-4112-404d-9076-76eca3859746\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.461Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"dfe894af-9a8f-475f-beb0-cc413dbafb27\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T20:53:35.464Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"10d50635-b4fd-4958-a2c5-f10a88e07023\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.467Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"f790328d-4e8c-4455-9084-b43af3b8578b\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.471Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"61ee1932-2808-4e1f-9aa0-8b7c3f31c845\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.474Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"f10fc2ad-bf98-4c81-9278-ba2271a864fb\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.478Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"b4b4d2c0-cc3a-449a-9f65-c63e4da45f88\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.481Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"ea0509ee-0d34-4083-834d-d4b1b846b348\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.484Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"545d845a-d122-4e27-9eaa-d68efc44af8a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.488Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"ea3f6c23-bc13-42d4-96d3-8a84dad23787\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.490Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"95f3edbd-50ca-42c0-afc7-797b336496b9\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.493Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"9e3b6617-9627-445f-8df1-e0540312e4bc\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.496Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"b09b1ca0-6dfc-4582-bb5c-79965332ffaf\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.499Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"c4b9cc29-ac88-4f6c-a4f7-8438f2ca96ba\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.502Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"b2c989aa-4be0-4788-b0ca-72dc71b3ded7\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.505Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"2aba1566-84b2-41dd-ad52-76b74cdff675\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T20:53:35.507Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"43634552-c826-4e23-929c-9067946e6efb\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T20:53:35.510Z\",\"service\":\"kshvi-ac06\",\"level\":\"info\",\"requestId\":\"f6dc6173-0b48-4d64-b88e-ea985eb2fae8\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac06/commands\",\"status\":200,\"ms\":3}\n ✓ services/kshvi/tests/acceptance/ac06-communications.test.ts (1 test) 194ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  23:53:33\n   Duration  2.09s (transform 66%, import 24%, tests 9%)\n\n",
+  "initialRevision": {
+    "id": "ac06-communications",
+    "revision": 1,
+    "sha256": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac06/journal.json",
+    "sha256": "7a0c17d79ed063854a2dab331a94b66204ef2778d310f3fd04f5587505672cfd",
+    "eventCount": 19
+  },
+  "hashes": {
+    "scenario": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420",
+    "environment": "1c8d8f17f5e666af1af0fb2fc15a8bfe97bf226d92709b1dbeb3f5516f4c9546",
+    "journal": "7a0c17d79ed063854a2dab331a94b66204ef2778d310f3fd04f5587505672cfd"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac06/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "attempts": 14,
+    "duplicateEffects": 0,
+    "reserveMessages": 1,
+    "missedReports": 1,
+    "paperDuplicatesReconciled": 1
+  },
+  "limitations": [
+    "Каналы моделируются локальными профилями; физическая потеря сетевого оборудования не входит в этот сценарий."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac06/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac06/journal.json",
+    "docs/release/kshvi/evidence/ac06/protocol.txt",
+    "docs/release/kshvi/evidence/ac06/metrics.json",
+    "docs/release/kshvi/evidence/ac06/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/acceptance/AC-06.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-fYZJty",
+  "openErrors": []
+}

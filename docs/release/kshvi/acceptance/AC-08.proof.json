@@ -1,0 +1,40 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac08-replay",
+    "revision": 1,
+    "sha256": "5117cdadc4fe94125435872b401555d8f77a4e59123c4e31531be1a0a56e2938"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac08/journal.json",
+    "sha256": "fdc814c0ce6de938728cb9a4d1a5f52b0c8bd473ef1362d793decfebada55911",
+    "eventCount": 3
+  },
+  "hashes": {
+    "scenario": "5117cdadc4fe94125435872b401555d8f77a4e59123c4e31531be1a0a56e2938",
+    "environment": "be6a086b08d245dc7a4b30c848e105485b7d34c73da22dd62d38816150e368e6",
+    "journal": "fdc814c0ce6de938728cb9a4d1a5f52b0c8bd473ef1362d793decfebada55911"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac08/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "stateHashMatches": 3,
+    "selectedOutcomeMatches": 3,
+    "idempotentReplays": 1,
+    "browserClients": 1,
+    "workerClients": 2
+  },
+  "limitations": [
+    "Chromium проверен в headless-режиме; Firefox отдельно не запускается в текущем окружении."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac08/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac08/journal.json",
+    "docs/release/kshvi/evidence/ac08/protocol.txt",
+    "docs/release/kshvi/evidence/ac08/metrics.json",
+    "docs/release/kshvi/evidence/ac08/environment.json"
+  ]
+}

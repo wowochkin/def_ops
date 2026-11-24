@@ -1,0 +1,47 @@
+{
+  "runId": "ac30-human-review",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "status": "blocked",
+  "initialRevision": {
+    "id": "TacticalSignsRussianForces",
+    "revision": 1,
+    "sha256": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac30/journal.json",
+    "sha256": "335113bf1d0e5054f699e4eb399e1fa95327cbd545e897ce3ff2a50695f5994a",
+    "eventCount": 83
+  },
+  "hashes": {
+    "scenario": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331",
+    "environment": "123731284d4fd3ed3c3963afe457f1cf3cdb34db500a38cdc33451ca2ddc6331",
+    "journal": "335113bf1d0e5054f699e4eb399e1fa95327cbd545e897ce3ff2a50695f5994a"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac30/protocol.txt"
+  ],
+  "screenshots": [
+    "docs/img/modern-symbols.jpg",
+    "docs/img/modern-symbols-documents.jpg"
+  ],
+  "metrics": {
+    "sourceDocuments": 29,
+    "sourceFonts": 2,
+    "derivedFragmentsChecked": 83,
+    "importedFragmentsAwaitingReview": 83,
+    "automaticallyApprovedSymbols": 0,
+    "humanMethodicalApprovals": 0
+  },
+  "limitations": [
+    "HUMAN_METHODICAL_APPROVAL_REQUIRED: руководитель и методист должны проверить содержание, объяснения, печатные формы и разбор.",
+    "SOURCE_FRAGMENTS_NOT_INDIVIDUALLY_APPROVED: исходные фрагменты имеют IMPORTED, покрытие PARTIAL; APPROVED автоматически не присваивается."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac30/journal.json",
+    "docs/release/kshvi/evidence/ac30/source-coverage.json",
+    "docs/release/kshvi/evidence/ac30/protocol.txt",
+    "docs/release/kshvi/evidence/ac30/metrics.json",
+    "docs/img/modern-symbols.jpg",
+    "docs/img/modern-symbols-documents.jpg"
+  ]
+}

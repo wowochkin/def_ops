@@ -1,6 +1,6 @@
 /** Отдельный исследовательский корпус современного режима. Не входы исторической или боевой модели. */
-import data from '../data/modern/corpus.json';
-import passportData from '../data/modern/passport-schema.json';
+import data from '../data/modern/corpus.json' with { type: 'json' };
+import passportData from '../data/modern/passport-schema.json' with { type: 'json' };
 import type { Entry } from './schema';
 
 type Evidence = { sources: string[] };

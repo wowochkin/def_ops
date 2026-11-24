@@ -1,0 +1,7 @@
+{
+  "stateHashMatches": 3,
+  "selectedOutcomeMatches": 3,
+  "idempotentReplays": 1,
+  "browserClients": 1,
+  "workerClients": 2
+}

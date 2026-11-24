@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-04",
+  "status": "blocked",
+  "checks": {
+    "heavyJobs": {
+      "attempted": 3751,
+      "completed": 3751,
+      "failed": 0,
+      "maxRunning": 2,
+      "results": [
+        {
+          "id": "heavy-1",
+          "status": "succeeded",
+          "result": {
+            "pid": 20847,
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "9644559dcd4d6385ee12261af7c413c15a33b58aa24e8e37d77960b3c769b4f8",
+            "checksum": 137198,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 37.105,
+              "systemMs": 8.746
+            }
+          }
+        },
+        {
+          "id": "heavy-4",
+          "status": "succeeded",
+          "result": {
+            "pid": 20849,
+            "kind": "REPLAY",
+            "rows": 500,
+            "sha256": "9644559dcd4d6385ee12261af7c413c15a33b58aa24e8e37d77960b3c769b4f8",
+            "checksum": 26690,
+            "orderingErrors": 4,
+            "cpuUsage": {
+              "userMs": 32.042,
+              "systemMs": 7.427
+            }
+          }
+        },
+        {
+          "id": "heavy-2",
+          "status": "succeeded",
+          "result": {
+            "pid": 20850,
+            "kind": "ARCHIVE",
+            "rows": 500,
+            "sha256": "9644559dcd4d6385ee12261af7c413c15a33b58aa24e8e37d77960b3c769b4f8",
+            "checksum": 137198,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 23.843,
+              "systemMs": 4.954
+            }
+          }
+        },
+        {
+          "id": "heavy-3",
+          "status": "succeeded",
+          "result": {
+            "pid": 20852,
+            "kind": "MASS_CALCULATION",
+            "rows": 500,
+            "sha256": "9644559dcd4d6385ee12261af7c413c15a33b58aa24e8e37d77960b3c769b4f8",
+            "checksum": 3705851604,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 41.461,
+              "systemMs": 4.893
+            }
+          }
+        },
+        {
+          "id": "heavy-5",
+          "status": "succeeded",
+          "result": {
+            "pid": 20853,
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "ab56a1b0aff1ff61c19c71bf43bdd99e8d0c23e77c855632acd7dc0b45b8c00f",
+            "checksum": 137241,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 23.727,
+              "systemMs": 4.715
+            }
+          }
+        },
+        {
+          "id": "heavy-6",
+          "status": "succeeded",
+          "result": {
+            "pid": 20854,
+            "kind": "REPLAY",
+            "rows": 500,
+            "sha256": "ab56a1b0aff1ff61c19c71bf43bdd99e8d0c23e77c855632acd7dc0b45b8c00f",
+            "checksum": 26813,
+            "orderingErrors": 4,
+            "cpuUsage": {
+              "userMs": 22.082,
+              "systemMs": 4.693
+            }
+          }
+        },
+        {
+          "id": "heavy-7",
+          "status": "succeeded",
+          "result": {
+            "pid": 20855,
+            "kind": "ARCHIVE",
+            "rows": 500,
+            "sha256": "ab56a1b0aff1ff61c19c71bf43bdd99e8d0c23e77c855632acd7dc0b45b8c00f",
+            "checksum": 137241,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 21.714,
+              "systemMs": 4.48
+            }
+          }
+        },
+        {
+          "id": "heavy-9",
+          "status": "succeeded",
+          "result": {
+            "pid": 20857,
+            "kind": "EXPORT",
+            "rows": 500,
+            "sha256": "7dba4fa27b9af8b4feebe7f87d59bee79b3e33fa739678ce443960de7da3d56c",
+            "checksum": 137253,
+            "orderingErrors": 0,
+            "cpuUsage": {
+              "userMs": 23.772,
+              "systemMs": 4.532
+            }
+          }
+        }
+      ],
+      "resultsTruncated": 3743
+    },
+    "deliveryP95Ms": 1.944208000000799,
+    "mapP95Ms": 1.268458999998984,
+    "measurementStatus": "passed"
+  },
+  "openErrors": [
+    "PHYSICAL_LAN_NOT_VERIFIED"
+  ],
+  "startedAt": "2026-11-23T21:25:51.588Z",
+  "finishedAt": "2026-11-23T21:27:54.364Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
+  "executionError": null,
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-04.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

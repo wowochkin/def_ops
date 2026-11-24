@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac08-replay.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:45.367Z\",\"service\":\"kshvi-ac08\",\"level\":\"info\",\"msg\":\"listening on :65411\"}\n{\"t\":\"2026-11-23T21:04:45.384Z\",\"service\":\"kshvi-ac08\",\"level\":\"info\",\"requestId\":\"150db38e-7bb4-4214-b945-85b803d48c90\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac08/commands\",\"status\":200,\"ms\":12}\n{\"t\":\"2026-11-23T21:04:45.391Z\",\"service\":\"kshvi-ac08\",\"level\":\"info\",\"requestId\":\"ac28403f-6be4-49e3-bb42-0a453e5fb16d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac08/commands\",\"status\":200,\"ms\":4}\n{\"t\":\"2026-11-23T21:04:45.395Z\",\"service\":\"kshvi-ac08\",\"level\":\"info\",\"requestId\":\"5454b6d1-597c-43d9-8bcd-a876ace3034e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac08/commands\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:45.396Z\",\"service\":\"kshvi-ac08\",\"level\":\"info\",\"requestId\":\"de34f010-28be-4e02-b16a-cca4ce427059\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/ac08/commands\",\"status\":200,\"ms\":0}\n ✓ services/kshvi/tests/acceptance/ac08-replay.test.ts (1 test) 726ms\n   ✓ AC-08: процессы и Chromium воспроизводят один архив без новых случайных исходов 725ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:43\n   Duration  2.80s (transform 50%, tests 26%, import 23%)\n\n",
+  "initialRevision": {
+    "id": "ac08-replay",
+    "revision": 1,
+    "sha256": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac08/journal.json",
+    "sha256": "5a398cfacafdbd7727758de99db019eab8e266f3d3081bc5d121ffc919ced9ec",
+    "eventCount": 3
+  },
+  "hashes": {
+    "scenario": "23169cbcb40939194265a1907d0becffb099482eb90bd9761cbac1360e3a35ac",
+    "environment": "0493a27c17a0bde42bbd2df9bd458dc74eeea7ef2be0a6080ac51adb743e55df",
+    "journal": "5a398cfacafdbd7727758de99db019eab8e266f3d3081bc5d121ffc919ced9ec"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac08/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "stateHashMatches": 3,
+    "selectedOutcomeMatches": 3,
+    "idempotentReplays": 1,
+    "browserClients": 1,
+    "workerClients": 2
+  },
+  "limitations": [
+    "Chromium проверен в headless-режиме; Firefox отдельно не запускается в текущем окружении."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac08/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac08/journal.json",
+    "docs/release/kshvi/evidence/ac08/protocol.txt",
+    "docs/release/kshvi/evidence/ac08/metrics.json",
+    "docs/release/kshvi/evidence/ac08/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-08.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

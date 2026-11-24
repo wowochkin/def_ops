@@ -1,0 +1,40 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac07-time",
+    "revision": 1,
+    "sha256": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac07/journal.json",
+    "sha256": "150449d035dece4e7865a190c28f6cb092143f99d6b82856350b1f62ea83cb12",
+    "eventCount": 12
+  },
+  "hashes": {
+    "scenario": "d6706b287d0c01d82913a91d4b635a5a749baee410bbb8787e7060a5b0028f8b",
+    "environment": "8ff8c43e5a58fe2515418479ea17f162aac4447649c6979c09fefdbc4a8b1cfc",
+    "journal": "150449d035dece4e7865a190c28f6cb092143f99d6b82856350b1f62ea83cb12"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac07/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "pausedCommandsRejected": 1,
+    "backwardJumpsRejected": 1,
+    "playbackRate": 4,
+    "jumpSnapshots": 1,
+    "manualOverrides": 1
+  },
+  "limitations": [
+    "Ускорение проверяется как версионный параметр и скачок; длительный прогон реального времени не входит в этот сценарий."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac07/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac07/journal.json",
+    "docs/release/kshvi/evidence/ac07/protocol.txt",
+    "docs/release/kshvi/evidence/ac07/metrics.json",
+    "docs/release/kshvi/evidence/ac07/environment.json"
+  ]
+}

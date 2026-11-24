@@ -1,0 +1,78 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "events": [
+    {
+      "eventId": "835d45d9-3438-4ded-bf86-e9a1fbfd584a",
+      "organizationId": "org-ac03",
+      "instanceId": "instance-main",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "private-blue-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "private-blue-1",
+        "revision": 1,
+        "commandId": "private-blue-1",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "fc7481e068b1aa42c9144b2a4ab986624b374505f124f1ac43b54e9cbb83f5e5",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "601f0f7a-ffe0-4e3b-9dd0-5947c3d6b1ee",
+      "organizationId": "org-ac03",
+      "instanceId": "instance-main",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:01:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:01:00.000Z",
+        "normalizedAt": "2030-01-01T01:01:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "private-blue-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:01:00Z",
+        "sideId": "blue",
+        "causedBy": "private-blue-2",
+        "revision": 1,
+        "commandId": "private-blue-2",
+        "commandType": "decision.create"
+      },
+      "prevHash": "fc7481e068b1aa42c9144b2a4ab986624b374505f124f1ac43b54e9cbb83f5e5",
+      "hash": "d69dceaf96dacd5e04f30545047be47fed22ebd5447c4d55ac5b1a6f613e0331",
+      "hashVersion": 2
+    }
+  ]
+}

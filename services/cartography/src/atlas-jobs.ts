@@ -38,6 +38,9 @@ export class AtlasJobs {
   worker.on('exit',code=>{if(job.state==='running'){job.state='error';job.error=`Обработчик завершился до результата (код ${code})`;save();}void saving.finally(()=>this.active.delete(id));});
   return job;
  }
+ async hasRunningForMap(tenant:string,mapId:string){
+  return (await this.list(tenant)).some(job=>job.state==='running'&&job.result?.id===mapId);
+ }
  async removeTileCache(tenant:string,mapId:string){
   for(const job of await this.list(tenant)){
    if(job.state==='done' && job.input.kind==='openfreemap' && job.result?.id===mapId && /^[a-f0-9-]{36}$/.test(job.id)){

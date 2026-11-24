@@ -1,0 +1,139 @@
+{
+  "initialRevision": {
+    "id": "ac04-documents",
+    "revision": 1,
+    "sha256": "b7dec32198e208b0d505d179b5d6ece39cd71050ee565fa899e8e12d2fe33ea2"
+  },
+  "scenario": {
+    "document": {
+      "id": "document-1:r1",
+      "documentId": "document-1",
+      "revision": 1,
+      "requisites": {
+        "exerciseId": "ac04",
+        "scenarioRevisionId": "scenario-r1",
+        "instanceId": "ac04",
+        "authorId": "author",
+        "category": "OPERATIONAL",
+        "type": "ORDER",
+        "title": "Распоряжение",
+        "number": "1",
+        "operationalAt": "2030-01-01T01:00:00+03:00",
+        "place": "Район",
+        "validFrom": "2030-01-01T00:00:00+03:00",
+        "validUntil": "2030-01-02T00:00:00+03:00",
+        "stageId": "stage",
+        "sideId": "blue",
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [],
+          "roles": []
+        },
+        "addressees": [
+          {
+            "instanceId": "node-1",
+            "channelId": "radio"
+          },
+          {
+            "instanceId": "node-2",
+            "channelId": "radio"
+          }
+        ],
+        "copies": [],
+        "sourceRole": "LEADER",
+        "deliveryChannelId": "radio",
+        "basis": "decision-1",
+        "executorId": "node-1",
+        "deadlineAt": "2030-01-01T02:00:00+03:00",
+        "linkedEventIds": [],
+        "linkedDecisionIds": [
+          "decision-1"
+        ],
+        "linkedTaskIds": [
+          "task"
+        ],
+        "templateVersion": "1"
+      },
+      "content": {
+        "body": "",
+        "units": {
+          "distance": "км"
+        }
+      },
+      "map": {
+        "environmentSnapshotId": "environment-1",
+        "legend": [
+          "Синие: свои"
+        ],
+        "attribution": [
+          "© Учебный источник"
+        ],
+        "visibility": {
+          "sideIds": [
+            "blue"
+          ],
+          "instanceIds": [],
+          "roles": []
+        }
+      },
+      "attachments": [],
+      "approvalRouteId": "dual-chain",
+      "supersedes": null,
+      "supersedesRevision": null,
+      "supersedeReason": null
+    },
+    "operations": {
+      "knownInstanceIds": [
+        "ac04",
+        "node-1",
+        "node-2"
+      ],
+      "availableChannelIds": [
+        "radio"
+      ],
+      "channels": [],
+      "nodes": [],
+      "approvalAssignments": {
+        "command": [
+          "command"
+        ],
+        "service": [
+          "service"
+        ],
+        "finalApproverId": "director"
+      },
+      "treeEdges": [
+        {
+          "from": "ac04",
+          "to": "node-1"
+        },
+        {
+          "from": "node-1",
+          "to": "node-2"
+        }
+      ],
+      "cascadeLegs": [
+        {
+          "id": "leg-1",
+          "from": "ac04",
+          "to": "node-1",
+          "channelId": "radio",
+          "delayMinutes": 0,
+          "relayId": "relay-1",
+          "processingDeadlineAt": "2030-01-01T02:00:00+03:00"
+        },
+        {
+          "id": "leg-2",
+          "from": "node-1",
+          "to": "node-2",
+          "channelId": "radio",
+          "delayMinutes": 30,
+          "relayId": "relay-2",
+          "processingDeadlineAt": "2030-01-01T02:00:00+03:00"
+        }
+      ]
+    }
+  }
+}

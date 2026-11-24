@@ -1,0 +1,18 @@
+### schema-api-and-evidence-contracts
+$ npx vitest run packages/kshvi/tests/contracts services/kshvi/tests/contracts/nf-quality.test.ts services/kshvi/tests/contracts/acceptance-scripts.test.ts
+status=passed exit=0
+
+ RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release
+
+ ✓ services/kshvi/tests/contracts/nf-quality.test.ts (2 tests) 12ms
+stdout | services/kshvi/tests/contracts/acceptance-scripts.test.ts > записывает fresh-install доказательства относительно execution cwd, а не исходного каталога
+AC-01: passed
+
+ ✓ services/kshvi/tests/contracts/acceptance-scripts.test.ts (3 tests) 28ms
+ ✓ packages/kshvi/tests/contracts/schema-purity.test.ts (2 tests) 14ms
+ ✓ packages/kshvi/tests/contracts/archive-migration.test.ts (2 tests) 9ms
+
+ Test Files  4 passed (4)
+      Tests  9 passed (9)
+   Start at  00:25:41
+   Duration  129ms (transform 53%, tests 29%, import 15%, worker 3%)

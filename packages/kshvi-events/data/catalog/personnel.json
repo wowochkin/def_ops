@@ -1,0 +1,3307 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "PERSONNEL",
+  "title": "Личный состав, укомплектование и МПС виртуальных сил",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-01-continuous-task-fatigue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Утомление после непрерывной задачи",
+      "description": "Длительная нагрузка применяет ограниченный вклад к виртуальному МПС и меняет обработку задачи только по утверждённому профилю.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как ограничить влияние утомления виртуальной силы без накопления бесконечного штрафа?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: BOUNDED_CONTINUOUS_TASK_FATIGUE."
+      },
+      "trainingAssumption": "Для учебного события «Утомление после непрерывной задачи» механизм BOUNDED_CONTINUOUS_TASK_FATIGUE и границы параметра «Длительность нагрузки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.continuous_task.load_state",
+          "operator": "EQUALS",
+          "value": "EXCESSIVE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии EXCESSIVE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность нагрузки",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 12
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-02-scheduled-rest-recovery"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "BOUNDED_CONTINUOUS_TASK_FATIGUE",
+          "reason": "Длительная нагрузка применяет ограниченный вклад к виртуальному МПС и меняет обработку задачи только по утверждённому профилю.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FATIGUE_STATE_OBSERVATION",
+          "sourceRequirement": "FATIGUE_STATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FATIGUE_IMPACT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "SCHEDULE_RECOVERY_AND_CLAMP_IMPACT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.continuous_task.load_state": "EXCESSIVE"
+        },
+        "unsuitableFacts": {
+          "personnel.continuous_task.load_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-02-scheduled-rest-recovery",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Запланированный отдых восстанавливает силу",
+      "description": "Отдых создаёт восстановление только после подтверждённого времени и условий, а не мгновенным изменением шкалы при назначении мероприятия.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как подтвердить восстановление после отдыха и возобновить задачу?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: TIME_REQUIRED_REST_RECOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Запланированный отдых восстанавливает силу» механизм TIME_REQUIRED_REST_RECOVERY и границы параметра «Длительность отдыха» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "REST_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.rest.completion_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность отдыха",
+          "unit": "h",
+          "min": 1,
+          "max": 16,
+          "default": 6
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleRest",
+          "target": {
+            "domain": "personnel",
+            "ref": "scenario-target"
+          },
+          "mechanism": "TIME_REQUIRED_REST_RECOVERY",
+          "reason": "Отдых создаёт восстановление только после подтверждённого времени и условий, а не мгновенным изменением шкалы при назначении мероприятия.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REST_COMPLETION_OBSERVATION",
+          "sourceRequirement": "REST_COMPLETION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REST_RECOVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleRest",
+          "method": "EXTEND_REST_IF_RECOVERY_NOT_CONFIRMED",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.rest.completion_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.rest.completion_state": "NOT_STARTED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-03-sleep-deficit-order-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недостаток сна задерживает обработку приказа",
+      "description": "Сценарный профиль виртуальной силы увеличивает время обработки приказа при заданном недостатке сна, не оценивая реальных участников.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как проследить влияние недостатка сна на срок начала исполнения?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SLEEP_DEFICIT_ORDER_PROCESSING_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Недостаток сна задерживает обработку приказа» механизм SLEEP_DEFICIT_ORDER_PROCESSING_DELAY и границы параметра «Дополнительная обработка» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.sleep.profile_state",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Дополнительная обработка",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-04-support-success-morale"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SLEEP_DEFICIT_ORDER_PROCESSING_DELAY",
+          "reason": "Сценарный профиль виртуальной силы увеличивает время обработки приказа при заданном недостатке сна, не оценивая реальных участников.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SLEEP_PROFILE_OBSERVATION",
+          "sourceRequirement": "SLEEP_PROFILE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ORDER_PROCESSING_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "RESTORE_SLEEP_AND_REASSESS_ORDER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.sleep.profile_state": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "personnel.sleep.profile_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-04-support-success-morale",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Подтверждённая поддержка укрепляет доверие",
+      "description": "Выполнение обещанной поддержки применяется один раз как положительный ограниченный вход МПС виртуальной силы и не изменяет оценку обучаемого.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как учесть подтверждённую поддержку в восстановлении МПС без двойного эффекта?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPORT_SUCCESS_TRUST_RECOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Подтверждённая поддержка укрепляет доверие» механизм SUPPORT_SUCCESS_TRUST_RECOVERY и границы параметра «Вклад в учебную шкалу» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.support.confirmation_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "impact",
+          "name": "Вклад в учебную шкалу",
+          "unit": "point",
+          "min": 1,
+          "max": 8,
+          "default": 2
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPORT_SUCCESS_TRUST_RECOVERY",
+          "reason": "Выполнение обещанной поддержки применяется один раз как положительный ограниченный вход МПС виртуальной силы и не изменяет оценку обучаемого.",
+          "quantityParameter": "impact"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPORT_SUCCESS_OBSERVATION",
+          "sourceRequirement": "SUPPORT_SUCCESS_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MORALE_RECOVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "impact",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "REVERSE_DUPLICATE_IMPACT_BY_COMPENSATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.support.confirmation_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.support.confirmation_state": "MISSING"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-05-supply-failure-uncertainty",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Срыв снабжения повышает напряжённость силы",
+      "description": "Подтверждённый дефицит снабжения становится отдельным сценарным входом МПС, не дублируя ресурсный штраф в нескольких коэффициентах.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как разделить влияние дефицита на ресурсы и на МПС виртуальной силы?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SUPPLY_FAILURE_SINGLE_MORALE_CHANNEL."
+      },
+      "trainingAssumption": "Для учебного события «Срыв снабжения повышает напряжённость силы» механизм SUPPLY_FAILURE_SINGLE_MORALE_CHANNEL и границы параметра «Вклад в учебную шкалу» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.supply.failure_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "impact",
+          "name": "Вклад в учебную шкалу",
+          "unit": "point",
+          "min": 1,
+          "max": 8,
+          "default": 3
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-06-communication-loss-stress"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SUPPLY_FAILURE_SINGLE_MORALE_CHANNEL",
+          "reason": "Подтверждённый дефицит снабжения становится отдельным сценарным входом МПС, не дублируя ресурсный штраф в нескольких коэффициентах.",
+          "quantityParameter": "impact"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "SUPPLY_FAILURE_MORALE_OBSERVATION",
+          "sourceRequirement": "SUPPLY_FAILURE_MORALE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SUPPLY_MORALE_IMPACT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "impact",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "RESTORE_SUPPLY_AND_APPLY_RECOVERY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.supply.failure_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.supply.failure_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-06-communication-loss-stress",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Потеря связи как сценарный стресс-фактор",
+      "description": "Длительная потеря управления применяет ограниченный переход напряжённости виртуальной силы и влияет на полноту донесений по профилю.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как отследить цепочку от потери связи до изменения донесений?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMMUNICATION_LOSS_BOUNDED_STRESS."
+      },
+      "trainingAssumption": "Для учебного события «Потеря связи как сценарный стресс-фактор» механизм COMMUNICATION_LOSS_BOUNDED_STRESS и границы параметра «Длительность изоляции управления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.communication.loss_duration",
+          "operator": "EQUALS",
+          "value": "PROLONGED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PROLONGED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность изоляции управления",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 6
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMMUNICATION_LOSS_BOUNDED_STRESS",
+          "reason": "Длительная потеря управления применяет ограниченный переход напряжённости виртуальной силы и влияет на полноту донесений по профилю.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMMUNICATION_STRESS_OBSERVATION",
+          "sourceRequirement": "COMMUNICATION_STRESS_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMMUNICATION_MORALE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "RESTORE_COMMUNICATION_AND_RECOVER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.communication.loss_duration": "PROLONGED"
+        },
+        "unsuitableFacts": {
+          "personnel.communication.loss_duration": "SHORT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-07-contradictory-rumors",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Противоречивые слухи в сценарной среде",
+      "description": "Несколько неподтверждённых сообщений создают отдельный информационный вход МПС, не раскрывая истину и не диагностируя реальных людей.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как отработать проверку противоречивых сведений и ограничить их влияние?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: RUMOR_CONTRADICTION_BOUNDED_MORALE_INPUT."
+      },
+      "trainingAssumption": "Для учебного события «Противоречивые слухи в сценарной среде» механизм RUMOR_CONTRADICTION_BOUNDED_MORALE_INPUT и границы параметра «Срок проверки сведений» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.rumor.information_state",
+          "operator": "EQUALS",
+          "value": "CONTRADICTORY",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONTRADICTORY; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки сведений",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-08-personnel-shortage-readiness"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordInformationState",
+          "target": {
+            "domain": "information",
+            "ref": "scenario-target"
+          },
+          "mechanism": "RUMOR_CONTRADICTION_BOUNDED_MORALE_INPUT",
+          "reason": "Несколько неподтверждённых сообщений создают отдельный информационный вход МПС, не раскрывая истину и не диагностируя реальных людей.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RUMOR_STATE_OBSERVATION",
+          "sourceRequirement": "RUMOR_STATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RUMOR_VERIFICATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordInformationState",
+          "method": "PUBLISH_VERIFIED_INFORMATION_AND_RECOVER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.rumor.information_state": "CONTRADICTORY"
+        },
+        "unsuitableFacts": {
+          "personnel.rumor.information_state": "CONSISTENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-08-personnel-shortage-readiness",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недокомплект ограничивает готовность",
+      "description": "Фактическая численность виртуальной силы ниже требуемой, и ReadinessState становится PARTIAL без одновременного скрытого изменения МПС.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как учесть недокомплект в готовности и доступных задачах?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PERSONNEL_SHORTAGE_PARTIAL_READINESS."
+      },
+      "trainingAssumption": "Для учебного события «Недокомплект ограничивает готовность» механизм PERSONNEL_SHORTAGE_PARTIAL_READINESS и границы параметра «Недостающий состав» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.staffing.readiness_state",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "shortage",
+          "name": "Недостающий состав",
+          "unit": "person",
+          "min": 1,
+          "max": 200,
+          "default": 20
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordReadinessActivity",
+          "target": {
+            "domain": "readiness",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PERSONNEL_SHORTAGE_PARTIAL_READINESS",
+          "reason": "Фактическая численность виртуальной силы ниже требуемой, и ReadinessState становится PARTIAL без одновременного скрытого изменения МПС.",
+          "durationParameter": "shortage"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "STAFFING_SHORTAGE_OBSERVATION",
+          "sourceRequirement": "STAFFING_SHORTAGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STAFFING_READINESS_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "shortage",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordReadinessActivity",
+          "method": "COMPLETE_STAFFING_OR_LIMIT_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.staffing.readiness_state": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "personnel.staffing.readiness_state": "READY"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-09-replacement-arrival",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Прибытие пополнения",
+      "description": "Виртуальное пополнение подтверждено в районе и изменяет фактический состав отдельным событием, а не отправкой со склада личного состава.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как принять пополнение и пересчитать готовность без двойного учёта?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: REPLACEMENT_CONFIRMED_PERSONNEL_INCREASE."
+      },
+      "trainingAssumption": "Для учебного события «Прибытие пополнения» механизм REPLACEMENT_CONFIRMED_PERSONNEL_INCREASE и границы параметра «Число виртуальных военнослужащих» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.replacement.arrival_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Число виртуальных военнослужащих",
+          "unit": "person",
+          "min": 1,
+          "max": 500,
+          "default": 80
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-10-cohesion-unknown"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordPersonnelChange",
+          "target": {
+            "domain": "personnel",
+            "ref": "scenario-target"
+          },
+          "mechanism": "REPLACEMENT_CONFIRMED_PERSONNEL_INCREASE",
+          "reason": "Виртуальное пополнение подтверждено в районе и изменяет фактический состав отдельным событием, а не отправкой со склада личного состава.",
+          "quantityParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPLACEMENT_ARRIVAL_OBSERVATION",
+          "sourceRequirement": "REPLACEMENT_ARRIVAL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PERSONNEL_INCREASE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordPersonnelChange",
+          "method": "REASSIGN_REPLACEMENT_BY_BALANCED_TRANSFER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.replacement.arrival_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.replacement.arrival_state": "IN_TRANSIT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-10-cohesion-unknown",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестная сплочённость после формирования",
+      "description": "После создания новой виртуальной силы компонент сплочённости остаётся UNKNOWN до заданного источника или допущения и не подменяется нормальным.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как начать задачу при неизвестной сплочённости вновь сформированной силы?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNKNOWN_COHESION_NO_NORMAL_DEFAULT."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестная сплочённость после формирования» механизм UNKNOWN_COHESION_NO_NORMAL_DEFAULT и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.cohesion.knowledge_state",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNKNOWN_COHESION_NO_NORMAL_DEFAULT",
+          "reason": "После создания новой виртуальной силы компонент сплочённости остаётся UNKNOWN до заданного источника или допущения и не подменяется нормальным.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COHESION_UNKNOWN_OBSERVATION",
+          "sourceRequirement": "COHESION_UNKNOWN_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COHESION_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "SET_SOURCE_OR_LIMIT_TASK_PROFILE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.cohesion.knowledge_state": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "personnel.cohesion.knowledge_state": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-11-command-change-transition",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Смена командования как ограниченный переход",
+      "description": "Смена виртуального командования создаёт отдельный вход МПС и временную обработку передачи дел без психологических выводов о реальных людях.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как сохранить непрерывность управления при смене виртуального командования?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMMAND_CHANGE_BOUNDED_TRANSITION."
+      },
+      "trainingAssumption": "Для учебного события «Смена командования как ограниченный переход» механизм COMMAND_CHANGE_BOUNDED_TRANSITION и границы параметра «Срок передачи дел» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "COMMAND_NODE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.command.transition_state",
+          "operator": "EQUALS",
+          "value": "IN_PROGRESS",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии IN_PROGRESS; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок передачи дел",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-12-task-success-single-impact"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMMAND_CHANGE_BOUNDED_TRANSITION",
+          "reason": "Смена виртуального командования создаёт отдельный вход МПС и временную обработку передачи дел без психологических выводов о реальных людях.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMMAND_CHANGE_OBSERVATION",
+          "sourceRequirement": "COMMAND_CHANGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "COMMAND_TRANSITION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "COMPLETE_HANDOVER_AND_STABILIZE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.command.transition_state": "IN_PROGRESS"
+        },
+        "unsuitableFacts": {
+          "personnel.command.transition_state": "STABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-12-task-success-single-impact",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Успешная задача применяется один раз",
+      "description": "Подтверждённое завершение задачи создаёт один ограниченный положительный вход МПС по идемпотентному ключу, не повторяясь при дубле доклада.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как исключить повторное положительное влияние одной успешной задачи?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: TASK_SUCCESS_IDEMPOTENT_MORALE_IMPACT."
+      },
+      "trainingAssumption": "Для учебного события «Успешная задача применяется один раз» механизм TASK_SUCCESS_IDEMPOTENT_MORALE_IMPACT и границы параметра «Вклад в учебную шкалу» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.task.success_confirmation",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "impact",
+          "name": "Вклад в учебную шкалу",
+          "unit": "point",
+          "min": 1,
+          "max": 8,
+          "default": 2
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "TASK_SUCCESS_IDEMPOTENT_MORALE_IMPACT",
+          "reason": "Подтверждённое завершение задачи создаёт один ограниченный положительный вход МПС по идемпотентному ключу, не повторяясь при дубле доклада.",
+          "quantityParameter": "impact"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TASK_SUCCESS_OBSERVATION",
+          "sourceRequirement": "TASK_SUCCESS_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "TASK_SUCCESS_MORALE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "impact",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "COMPENSATE_DUPLICATE_SUCCESS_IMPACT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.task.success_confirmation": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.task.success_confirmation": "UNCONFIRMED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-13-task-failure-recovery-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неуспех задачи требует отложенного восстановления",
+      "description": "После подтверждённого неуспеха применяется ограниченный переход МПС, а восстановление начинается только после отдельного мероприятия и времени.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как организовать повторную задачу после неуспеха без мгновенного восстановления?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: TASK_FAILURE_DELAYED_RECOVERY_REQUIREMENT."
+      },
+      "trainingAssumption": "Для учебного события «Неуспех задачи требует отложенного восстановления» механизм TASK_FAILURE_DELAYED_RECOVERY_REQUIREMENT и границы параметра «Задержка восстановления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.task.failure_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка восстановления",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 6
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-14-isolation-scenario"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "TASK_FAILURE_DELAYED_RECOVERY_REQUIREMENT",
+          "reason": "После подтверждённого неуспеха применяется ограниченный переход МПС, а восстановление начинается только после отдельного мероприятия и времени.",
+          "quantityParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TASK_FAILURE_OBSERVATION",
+          "sourceRequirement": "TASK_FAILURE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FAILURE_RECOVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "COMPLETE_RECOVERY_BEFORE_RETRY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.task.failure_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.task.failure_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-14-isolation-scenario",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Изоляция силы меняет условия восстановления",
+      "description": "Сценарная изоляция ограничивает поддержку и создаёт вход МПС, а снятие изоляции не отменяет прошлый вклад задним числом.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как учесть изоляцию и последующее восстановление связи с силой?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ISOLATION_LIMITED_RECOVERY_CHANNEL."
+      },
+      "trainingAssumption": "Для учебного события «Изоляция силы меняет условия восстановления» механизм ISOLATION_LIMITED_RECOVERY_CHANNEL и границы параметра «Длительность изоляции» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.isolation.scenario_state",
+          "operator": "EQUALS",
+          "value": "ACTIVE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии ACTIVE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность изоляции",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 12
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ISOLATION_LIMITED_RECOVERY_CHANNEL",
+          "reason": "Сценарная изоляция ограничивает поддержку и создаёт вход МПС, а снятие изоляции не отменяет прошлый вклад задним числом.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "ISOLATION_STATE_OBSERVATION",
+          "sourceRequirement": "ISOLATION_STATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ISOLATION_MORALE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "END_ISOLATION_AND_START_RECOVERY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.isolation.scenario_state": "ACTIVE"
+        },
+        "unsuitableFacts": {
+          "personnel.isolation.scenario_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-15-flank-threat-task-effect",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Угроза фланга меняет готовность к задаче",
+      "description": "Подтверждённая угроза создаёт ограниченный вход МПС и отдельный след влияния на начало задачи с разделением ресурсов и техники.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как доказать влияние МПС на начало задачи при угрозе фланга?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MORALE_FLANK_THREAT_TASK_EFFECT_TRACE."
+      },
+      "trainingAssumption": "Для учебного события «Угроза фланга меняет готовность к задаче» механизм MORALE_FLANK_THREAT_TASK_EFFECT_TRACE и границы параметра «Задержка начала задачи» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.flank.threat_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка начала задачи",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-16-operations-rest-requirement"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTask",
+          "target": {
+            "domain": "tasks",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MORALE_FLANK_THREAT_TASK_EFFECT_TRACE",
+          "reason": "Подтверждённая угроза создаёт ограниченный вход МПС и отдельный след влияния на начало задачи с разделением ресурсов и техники.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FLANK_TASK_OBSERVATION",
+          "sourceRequirement": "FLANK_TASK_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FLANK_TASK_EFFECT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTask",
+          "method": "STABILIZE_FLANK_AND_REASSESS_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.flank.threat_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.flank.threat_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-16-operations-rest-requirement",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Интенсивные действия требуют смены режима",
+      "description": "Последовательность задач достигает учебного предела, и профиль создаёт требование отдыха вместо автоматического выхода силы из управления.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как назначить восстановление после серии интенсивных задач?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: OPERATIONS_SERIES_REST_REQUIREMENT."
+      },
+      "trainingAssumption": "Для учебного события «Интенсивные действия требуют смены режима» механизм OPERATIONS_SERIES_REST_REQUIREMENT и границы параметра «Необходимый отдых» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.operations.rest_requirement",
+          "operator": "EQUALS",
+          "value": "REQUIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REQUIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "rest",
+          "name": "Необходимый отдых",
+          "unit": "h",
+          "min": 1,
+          "max": 16,
+          "default": 4
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "scheduleRest",
+          "target": {
+            "domain": "personnel",
+            "ref": "scenario-target"
+          },
+          "mechanism": "OPERATIONS_SERIES_REST_REQUIREMENT",
+          "reason": "Последовательность задач достигает учебного предела, и профиль создаёт требование отдыха вместо автоматического выхода силы из управления.",
+          "durationParameter": "rest"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "OPERATIONS_LOAD_OBSERVATION",
+          "sourceRequirement": "OPERATIONS_LOAD_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REST_REQUIREMENT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "rest",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "scheduleRest",
+          "method": "COMPLETE_REST_OR_AUTHORIZE_LIMITED_TASK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.operations.rest_requirement": "REQUIRED"
+        },
+        "unsuitableFacts": {
+          "personnel.operations.rest_requirement": "NOT_REQUIRED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-17-stale-personnel-report",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Устаревшее донесение о состоянии силы",
+      "description": "Частная оценка состава и МПС устарела, а истинное состояние не копируется в проекцию до нового донесения.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как принимать решение при устаревшем донесении о виртуальной силе?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PERSONNEL_PRIVATE_ASSESSMENT_STALENESS."
+      },
+      "trainingAssumption": "Для учебного события «Устаревшее донесение о состоянии силы» механизм PERSONNEL_PRIVATE_ASSESSMENT_STALENESS и границы параметра «Возраст донесения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.report.freshness_state",
+          "operator": "EQUALS",
+          "value": "STALE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии STALE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "age",
+          "name": "Возраст донесения",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-18-unknown-mps-block"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "markObservationStale",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PERSONNEL_PRIVATE_ASSESSMENT_STALENESS",
+          "reason": "Частная оценка состава и МПС устарела, а истинное состояние не копируется в проекцию до нового донесения.",
+          "durationParameter": "age"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PERSONNEL_REPORT_OBSERVATION",
+          "sourceRequirement": "PERSONNEL_REPORT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STALE_PERSONNEL_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "age",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "markObservationStale",
+          "method": "REQUEST_AND_DELIVER_CURRENT_REPORT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.report.freshness_state": "STALE"
+        },
+        "unsuitableFacts": {
+          "personnel.report.freshness_state": "CURRENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-18-unknown-mps-block",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестное МПС блокирует автоматический порог",
+      "description": "Обязательный компонент МПС отсутствует, поэтому переход задачи получает REQUIRES_REVIEW вместо подстановки среднего или нормального значения.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как продолжить расчёт задачи при неизвестном обязательном МПС?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNKNOWN_MPS_TASK_THRESHOLD_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестное МПС блокирует автоматический порог» механизм UNKNOWN_MPS_TASK_THRESHOLD_REVIEW и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.mps.knowledge_state",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNKNOWN_MPS_TASK_THRESHOLD_REVIEW",
+          "reason": "Обязательный компонент МПС отсутствует, поэтому переход задачи получает REQUIRES_REVIEW вместо подстановки среднего или нормального значения.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "UNKNOWN_MPS_OBSERVATION",
+          "sourceRequirement": "UNKNOWN_MPS_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MPS_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "PROVIDE_ASSUMPTION_OR_MANUAL_REVIEW",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.mps.knowledge_state": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "personnel.mps.knowledge_state": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-19-communication-restored-recovery",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Восстановление связи запускает обратный переход",
+      "description": "После подтверждённого восстановления управления применяется ограниченное восстановление МПС с обязательной длительностью и отдельным событием.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как оценить восстановление после возвращения устойчивой связи?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: COMMUNICATION_RESTORED_TIME_RECOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Восстановление связи запускает обратный переход» механизм COMMUNICATION_RESTORED_TIME_RECOVERY и границы параметра «Длительность восстановления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.communication.recovery_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность восстановления",
+          "unit": "h",
+          "min": 1,
+          "max": 16,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "personnel-20-loss-impact-duplicate"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "applyMoraleImpact",
+          "target": {
+            "domain": "morale",
+            "ref": "scenario-target"
+          },
+          "mechanism": "COMMUNICATION_RESTORED_TIME_RECOVERY",
+          "reason": "После подтверждённого восстановления управления применяется ограниченное восстановление МПС с обязательной длительностью и отдельным событием.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "COMMUNICATION_RECOVERY_OBSERVATION",
+          "sourceRequirement": "COMMUNICATION_RECOVERY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MORALE_RECOVERY_PROGRESS_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "applyMoraleImpact",
+          "method": "EXTEND_RECOVERY_IF_SUPPORT_UNSTABLE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.communication.recovery_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "personnel.communication.recovery_state": "LOST"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "personnel-20-loss-impact-duplicate",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повторный учёт одного события потерь блокируется",
+      "description": "Два доклада имеют один идентификатор исходного события, поэтому ресурсный и МПС-вклад применяются один раз, а дубль остаётся видимым.",
+      "category": "PERSONNEL",
+      "educationalQuestion": "Как защитить МПС и ресурсы от двойного учёта одного события?",
+      "source": {
+        "sourceId": "spec-morale",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: LOSS_EVENT_DOUBLE_IMPACT_GUARD."
+      },
+      "trainingAssumption": "Для учебного события «Повторный учёт одного события потерь блокируется» механизм LOSS_EVENT_DOUBLE_IMPACT_GUARD и границы параметра «Срок сверки дубликата» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "AREA",
+          "requiredFeatures": [
+            "FORCE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "personnel.loss_event.duplicate_state",
+          "operator": "EQUALS",
+          "value": "DUPLICATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DUPLICATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки дубликата",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "personnel-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "LOSS_EVENT_DOUBLE_IMPACT_GUARD",
+          "reason": "Два доклада имеют один идентификатор исходного события, поэтому ресурсный и МПС-вклад применяются один раз, а дубль остаётся видимым.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "LOSS_DUPLICATE_OBSERVATION",
+          "sourceRequirement": "LOSS_DUPLICATE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "LOSS_DUPLICATE_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "LINK_DUPLICATE_WITHOUT_NEW_IMPACT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "personnel.loss_event.duplicate_state": "DUPLICATED"
+        },
+        "unsuitableFacts": {
+          "personnel.loss_event.duplicate_state": "UNIQUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

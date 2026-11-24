@@ -1,0 +1,38 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac15-weather",
+    "revision": 1,
+    "sha256": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac15/journal.json",
+    "sha256": "03f8a3a9822af14790193fd02d7029bc14b3b3649a4255d94228ea3fc4327e10",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+    "environment": "f9426a9c48458afc495951b86e616e2c11c9462bceca9169c00e971b12654b3e",
+    "journal": "03f8a3a9822af14790193fd02d7029bc14b3b3649a4255d94228ea3fc4327e10"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac15/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "knownWeatherQueries": 1,
+    "noDataResponses": 1,
+    "calculatedWithKnownFactor": 1,
+    "requiresReview": 1,
+    "substitutedUnitFactors": 0
+  },
+  "limitations": [
+    "Проверен профиль движения с обязательным weatherFactor; остальные расчётные профили требуют собственных обязательных входов."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac15/journal.json",
+    "docs/release/kshvi/evidence/ac15/protocol.txt",
+    "docs/release/kshvi/evidence/ac15/metrics.json"
+  ]
+}

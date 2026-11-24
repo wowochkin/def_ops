@@ -1,0 +1,39 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac03-visibility",
+    "revision": 1,
+    "sha256": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac03/journal.json",
+    "sha256": "a35b3ac0cda1768c0cc36a0721d0397ce0a579c1670a31706704ae633bd47984",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80",
+    "environment": "f63bde2676f35705961d3f01a14677acd659f45b080049a7936dcf11389e140b",
+    "journal": "a35b3ac0cda1768c0cc36a0721d0397ce0a579c1670a31706704ae633bd47984"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac03/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "forbiddenResponses": 0,
+    "revokedSubscriptions": 1,
+    "hiddenSearchResults": 0,
+    "auditRecords": 19
+  },
+  "limitations": [
+    "Проверка выполнена на локальном серверном стенде; браузерная история и IndexedDB проверяются отдельно в AC-17."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac03/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac03/journal.json",
+    "docs/release/kshvi/evidence/ac03/protocol.txt",
+    "docs/release/kshvi/evidence/ac03/metrics.json",
+    "docs/release/kshvi/evidence/ac03/environment.json"
+  ]
+}

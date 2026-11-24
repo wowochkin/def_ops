@@ -1,0 +1,523 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "known": {
+    "state": {
+      "provenance": "synthetic",
+      "temperature": -2,
+      "humidity": 85,
+      "pressure": 1002,
+      "windSpeed": 2,
+      "windDirection": 180,
+      "gust": 2,
+      "cloud": 75,
+      "precipitation": 1,
+      "precipitationType": "snow",
+      "visibility": 15000,
+      "snowDepth": 0,
+      "soilTemperature": -2,
+      "soilMoisture": 0.25
+    },
+    "quality": {
+      "status": "OK",
+      "reason": "KNOWN",
+      "algorithm": "simulateWeather",
+      "operationalAt": "2026-01-01T01:00:00.000Z",
+      "missingFields": []
+    }
+  },
+  "missing": {
+    "state": null,
+    "quality": {
+      "status": "NO_DATA",
+      "reason": "OUTSIDE_INTERVAL",
+      "algorithm": "simulateWeather",
+      "operationalAt": "2026-01-01T04:00:00.000Z",
+      "missingFields": []
+    }
+  },
+  "calculated": {
+    "id": "calc-known",
+    "mode": "DETERMINISTIC",
+    "state": "CALCULATED",
+    "units": {
+      "fuel": "L"
+    },
+    "inputs": {
+      "episode": {
+        "task": {
+          "id": "task",
+          "status": "IN_PROGRESS",
+          "progressPercent": 0
+        },
+        "state": {},
+        "forces": {},
+        "effects": {
+          "stateChanges": {},
+          "taskProgressDelta": 10,
+          "uncertaintyChanges": {},
+          "positionAdvanceMeters": 100
+        },
+        "position": {
+          "remainingMeters": 1000,
+          "travelledMeters": 0
+        },
+        "resource": {
+          "id": "fuel",
+          "unit": "L",
+          "onHand": 20,
+          "supplied": 0,
+          "consumption": 10
+        },
+        "uncertainty": {},
+        "elapsedMinutes": 30
+      },
+      "weatherFactor": 0.8
+    },
+    "nodeId": "node-blue-1",
+    "reason": "Движение при погодном пробеле",
+    "result": {
+      "task": {
+        "id": "task",
+        "status": "IN_PROGRESS",
+        "progressPercent": 10
+      },
+      "state": {},
+      "position": {
+        "remainingMeters": 900,
+        "travelledMeters": 100
+      },
+      "resources": {
+        "fuel": {
+          "unit": "L",
+          "onHand": 10,
+          "deficit": 0,
+          "consumed": 10,
+          "supplied": 0
+        }
+      },
+      "uncertainty": {},
+      "elapsedMinutes": 30
+    },
+    "sideId": "blue",
+    "unknown": [],
+    "warnings": [],
+    "createdAt": "2026-01-01T01:00:00.000Z",
+    "createdBy": null,
+    "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+    "approvedBy": null,
+    "randomKeys": [],
+    "supersedes": null,
+    "modelVersion": "aggregate-v1",
+    "inputSnapshot": {
+      "revision": 1
+    },
+    "modelPassport": {
+      "source": {
+        "kind": "ASSUMPTION",
+        "note": "Учебная модель",
+        "applicability": "AC-15"
+      },
+      "purpose": "Движение с учётом погоды",
+      "version": 1,
+      "examples": [
+        {
+          "input": 1,
+          "expected": 1
+        }
+      ],
+      "approvedBy": "Методист",
+      "knownErrors": [],
+      "limitations": [
+        "Только учебный расчёт"
+      ]
+    },
+    "requiredInputs": [
+      "weatherFactor"
+    ],
+    "appliedEventIds": [],
+    "profileVersions": {},
+    "reviewParameters": [],
+    "stochasticOutcomes": [],
+    "intermediateResults": {
+      "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+      "potentialBySide": {},
+      "resourceTransition": {
+        "unit": "L",
+        "onHand": 10,
+        "deficit": 0,
+        "consumed": 10,
+        "supplied": 0
+      },
+      "actualAdvanceMeters": 100
+    }
+  },
+  "requiresReview": {
+    "id": "calc-missing",
+    "mode": "DETERMINISTIC",
+    "state": "REQUIRES_REVIEW",
+    "units": {
+      "fuel": "L"
+    },
+    "inputs": {
+      "episode": {
+        "task": {
+          "id": "task",
+          "status": "IN_PROGRESS",
+          "progressPercent": 0
+        },
+        "state": {},
+        "forces": {},
+        "effects": {
+          "stateChanges": {},
+          "taskProgressDelta": 10,
+          "uncertaintyChanges": {},
+          "positionAdvanceMeters": 100
+        },
+        "position": {
+          "remainingMeters": 1000,
+          "travelledMeters": 0
+        },
+        "resource": {
+          "id": "fuel",
+          "unit": "L",
+          "onHand": 20,
+          "supplied": 0,
+          "consumption": 10
+        },
+        "uncertainty": {},
+        "elapsedMinutes": 30
+      },
+      "weatherFactor": null
+    },
+    "nodeId": "node-blue-1",
+    "reason": "Движение при погодном пробеле",
+    "result": null,
+    "sideId": "blue",
+    "unknown": [
+      "weatherFactor"
+    ],
+    "warnings": [
+      "Обязательный вход weatherFactor неизвестен; расчёт требует рассмотрения"
+    ],
+    "createdAt": "2026-01-01T01:00:00.000Z",
+    "createdBy": null,
+    "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+    "approvedBy": null,
+    "randomKeys": [],
+    "supersedes": null,
+    "modelVersion": "aggregate-v1",
+    "inputSnapshot": {
+      "revision": 1
+    },
+    "modelPassport": {
+      "source": {
+        "kind": "ASSUMPTION",
+        "note": "Учебная модель",
+        "applicability": "AC-15"
+      },
+      "purpose": "Движение с учётом погоды",
+      "version": 1,
+      "examples": [
+        {
+          "input": 1,
+          "expected": 1
+        }
+      ],
+      "approvedBy": "Методист",
+      "knownErrors": [],
+      "limitations": [
+        "Только учебный расчёт"
+      ]
+    },
+    "requiredInputs": [
+      "weatherFactor"
+    ],
+    "appliedEventIds": [],
+    "profileVersions": {},
+    "reviewParameters": [],
+    "stochasticOutcomes": [],
+    "intermediateResults": {}
+  },
+  "events": [
+    {
+      "eventId": "7af80e16-d268-4ce4-9a62-0ed17cacdbff",
+      "organizationId": "org-ac15",
+      "instanceId": "ac15",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T01:00:00.000Z",
+        "normalizedAt": "2026-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-known"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T01:00:00.000Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "calc-known",
+        "commandId": "calc-known",
+        "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+        "randomKeys": [],
+        "calculation": {
+          "id": "calc-known",
+          "mode": "DETERMINISTIC",
+          "state": "CALCULATED",
+          "units": {
+            "fuel": "L"
+          },
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 10,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 100
+              },
+              "position": {
+                "remainingMeters": 1000,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 20,
+                "supplied": 0,
+                "consumption": 10
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            },
+            "weatherFactor": 0.8
+          },
+          "nodeId": "node-blue-1",
+          "reason": "Движение при погодном пробеле",
+          "result": {
+            "task": {
+              "id": "task",
+              "status": "IN_PROGRESS",
+              "progressPercent": 10
+            },
+            "state": {},
+            "position": {
+              "remainingMeters": 900,
+              "travelledMeters": 100
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 10,
+                "deficit": 0,
+                "consumed": 10,
+                "supplied": 0
+              }
+            },
+            "uncertainty": {},
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2026-01-01T01:00:00.000Z",
+          "createdBy": null,
+          "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "revision": 1
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебная модель",
+              "applicability": "AC-15"
+            },
+            "purpose": "Движение с учётом погоды",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Только учебный расчёт"
+            ]
+          },
+          "requiredInputs": [
+            "weatherFactor"
+          ],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {},
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 10,
+              "deficit": 0,
+              "consumed": 10,
+              "supplied": 0
+            },
+            "actualAdvanceMeters": 100
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": null,
+      "hash": "191cbb522c02a56d7c5bb155b5fce9164281be991b380d8438a8010cf3ca6226",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "6fad569e-a8e2-4ccb-9b04-6cf0a982fc8f",
+      "organizationId": "org-ac15",
+      "instanceId": "ac15",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2026-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2026-01-01T01:00:00.000Z",
+        "normalizedAt": "2026-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-missing"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2026-01-01T01:00:00.000Z",
+        "state": "REQUIRES_REVIEW",
+        "sideId": "blue",
+        "causedBy": "calc-missing",
+        "commandId": "calc-missing",
+        "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+        "randomKeys": [],
+        "calculation": {
+          "id": "calc-missing",
+          "mode": "DETERMINISTIC",
+          "state": "REQUIRES_REVIEW",
+          "units": {
+            "fuel": "L"
+          },
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task",
+                "status": "IN_PROGRESS",
+                "progressPercent": 0
+              },
+              "state": {},
+              "forces": {},
+              "effects": {
+                "stateChanges": {},
+                "taskProgressDelta": 10,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 100
+              },
+              "position": {
+                "remainingMeters": 1000,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 20,
+                "supplied": 0,
+                "consumption": 10
+              },
+              "uncertainty": {},
+              "elapsedMinutes": 30
+            },
+            "weatherFactor": null
+          },
+          "nodeId": "node-blue-1",
+          "reason": "Движение при погодном пробеле",
+          "result": null,
+          "sideId": "blue",
+          "unknown": [
+            "weatherFactor"
+          ],
+          "warnings": [
+            "Обязательный вход weatherFactor неизвестен; расчёт требует рассмотрения"
+          ],
+          "createdAt": "2026-01-01T01:00:00.000Z",
+          "createdBy": null,
+          "inputHash": "d8560b7658c792bdded69837b055e2ed54708be6123b7bb4cc9fadf261ea091f",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "revision": 1
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебная модель",
+              "applicability": "AC-15"
+            },
+            "purpose": "Движение с учётом погоды",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист",
+            "knownErrors": [],
+            "limitations": [
+              "Только учебный расчёт"
+            ]
+          },
+          "requiredInputs": [
+            "weatherFactor"
+          ],
+          "appliedEventIds": [],
+          "profileVersions": {},
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {}
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "191cbb522c02a56d7c5bb155b5fce9164281be991b380d8438a8010cf3ca6226",
+      "hash": "55730c930cf084357face46226ed6449929ac3a79a6c0df088ea218665305de0",
+      "hashVersion": 2
+    }
+  ]
+}

@@ -1,0 +1,2152 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "scenarioHash": "4d3ffe182f5b725aeb84bd1a185b5c525a008173df998cc9356788ed8ebe98ee",
+  "environmentHash": "e4bfafd7444e7d0aadbf5a4d0636425fa5a1cb3375b342a77312dee62fa16510",
+  "events": [
+    {
+      "eventId": "2bfdce45-215c-400a-9aab-fa5fce6e56e3",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-blue-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "decision-blue-1",
+        "revision": 1,
+        "commandId": "decision-blue-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "25f6077c7753fd2f1ece21eff9b1b732324cab65f630d7b3b901850a3544bc7a",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "2a169f6b-9367-4d5b-b18b-d07307fb7a61",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-red-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "red",
+        "causedBy": "decision-red-1",
+        "revision": 1,
+        "commandId": "decision-red-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": "25f6077c7753fd2f1ece21eff9b1b732324cab65f630d7b3b901850a3544bc7a",
+      "hash": "7306ec3cfe28ba4fda23e9b9601ca5db465cfe2cbfe23578e02ac72bdb64dd3a",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "735b8410-b372-4c91-a328-4283c8260854",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "decision.status.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:10:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:10:00.000Z",
+        "normalizedAt": "2030-01-01T01:10:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-blue-accept"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:10:00Z",
+        "sideId": "blue",
+        "status": "ACCEPTED",
+        "causedBy": "decision-blue-1",
+        "commandId": "decision-blue-accept",
+        "commandType": "decision.transition"
+      },
+      "prevHash": "7306ec3cfe28ba4fda23e9b9601ca5db465cfe2cbfe23578e02ac72bdb64dd3a",
+      "hash": "946d2d120011bb058f1a9a12d4f90ce0c4e7d179d7170aef0b51be0921bdd5a5",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "a2ad8fdf-3d71-4133-857e-1f29be3bdfca",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "decision.status.changed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:10:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:10:00.000Z",
+        "normalizedAt": "2030-01-01T01:10:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-red-accept"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:10:00Z",
+        "sideId": "red",
+        "status": "ACCEPTED",
+        "causedBy": "decision-red-1",
+        "commandId": "decision-red-accept",
+        "commandType": "decision.transition"
+      },
+      "prevHash": "946d2d120011bb058f1a9a12d4f90ce0c4e7d179d7170aef0b51be0921bdd5a5",
+      "hash": "f9fa4b27ead70da1bc88326a6fd9050b7cc3b94b1db58479c037ae6ac4b364ab",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "4abaaa26-e2e9-4ac0-bdfd-d59eceb1533a",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 5,
+      "type": "decision.revised.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:12:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:12:00.000Z",
+        "normalizedAt": "2030-01-01T01:12:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-blue-revise"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:12:00Z",
+        "sideId": "blue",
+        "causedBy": "decision-blue-2",
+        "revision": 2,
+        "commandId": "decision-blue-revise",
+        "supersedes": "decision-blue-1",
+        "commandType": "decision.revise"
+      },
+      "prevHash": "f9fa4b27ead70da1bc88326a6fd9050b7cc3b94b1db58479c037ae6ac4b364ab",
+      "hash": "a2abaa9d9a183f00374a14aac1f5185696b466386406aa831a046c5881ca3720",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "f1e5a403-f2a8-409c-8189-0ec149ace8ea",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 6,
+      "type": "order.issued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:20:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:20:00.000Z",
+        "normalizedAt": "2030-01-01T01:20:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-issue"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-1",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-blue-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "a2abaa9d9a183f00374a14aac1f5185696b466386406aa831a046c5881ca3720",
+      "hash": "c447fb992c18a37cb74b0a7b102c0c3362a5265ef5419fb4f4deb23fcb5f95bf",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "a87198f6-4866-4637-8b3f-72c198d99fea",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 7,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:25:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:25:00.000Z",
+        "normalizedAt": "2030-01-01T01:25:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-deliver"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:25:00Z",
+        "status": "DELIVERED",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-deliver",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "c447fb992c18a37cb74b0a7b102c0c3362a5265ef5419fb4f4deb23fcb5f95bf",
+      "hash": "d9e7515cc3cf7011872053720c52d89b22e745141dd475462d2b7185fdebfb1f",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "5e427e16-c049-4285-be5b-57b812b0d4b0",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 8,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:26:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:26:00.000Z",
+        "normalizedAt": "2030-01-01T01:26:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-process"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:26:00Z",
+        "status": "PROCESSING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-process",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "d9e7515cc3cf7011872053720c52d89b22e745141dd475462d2b7185fdebfb1f",
+      "hash": "6c3622e00ea963235c53b9c1e3688ea37b7e7f33c55872bad356c0ff01bc6c2e",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "78f8081e-5036-460b-82c3-e170f72b3bc2",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 9,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:27:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:27:00.000Z",
+        "normalizedAt": "2030-01-01T01:27:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-prepare"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:27:00Z",
+        "status": "PREPARING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": null,
+        "commandId": "order-blue-prepare",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "6c3622e00ea963235c53b9c1e3688ea37b7e7f33c55872bad356c0ff01bc6c2e",
+      "hash": "e2a2ac8ee86156c7d39b032578195c3904b0b59ae6a6090ba6e5c8bd72a3f744",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "5f4f5e62-0474-4e07-af2a-ff419063eaaf",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 10,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:30:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:30:00.000Z",
+        "normalizedAt": "2030-01-01T01:30:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-start"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 5000,
+          "travelledMeters": 0
+        },
+        "commandId": "order-blue-start",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "e2a2ac8ee86156c7d39b032578195c3904b0b59ae6a6090ba6e5c8bd72a3f744",
+      "hash": "7f087e45b174e0439c7e52018e4550ee917f24108f6303219a92a2f7b99dd71e",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "c785d12b-9ee2-40c1-822d-73eee6691f5a",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 11,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:40:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:40:00.000Z",
+        "normalizedAt": "2030-01-01T01:40:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-cost"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:40:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-blue-cost",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "7f087e45b174e0439c7e52018e4550ee917f24108f6303219a92a2f7b99dd71e",
+      "hash": "e33b032e41456b5ace20512cdd46df8cd4f6b9646ec12d20d3f5c9ec3c659baf",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "757f55e1-84c0-4a26-800e-380abc068a3d",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 12,
+      "type": "order.issued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:20:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:20:00.000Z",
+        "normalizedAt": "2030-01-01T01:20:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-before-issue"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-cancel-before",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-cancel-before-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "e33b032e41456b5ace20512cdd46df8cd4f6b9646ec12d20d3f5c9ec3c659baf",
+      "hash": "a10731384ef9f9f175802944d965b13734d9e88e30026ff6df3d78d7059d4da3",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "6664536b-0bf8-4cb0-935a-c75dede165d3",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 13,
+      "type": "order.cancelled.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:21:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:21:00.000Z",
+        "normalizedAt": "2030-01-01T01:21:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-before"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:21:00Z",
+        "status": "CANCELLED_BEFORE_RECEIPT",
+        "causedBy": "order-blue-cancel-before",
+        "position": null,
+        "commandId": "order-cancel-before",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.cancel"
+      },
+      "prevHash": "a10731384ef9f9f175802944d965b13734d9e88e30026ff6df3d78d7059d4da3",
+      "hash": "95ae28d7fb73a2cade4dcd2dff08cbf8948332b9abf07e5d35f054f911e7d021",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "1ea77722-fe27-438e-a870-1c9b668389e8",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 14,
+      "type": "order.issued.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:20:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:20:00.000Z",
+        "normalizedAt": "2030-01-01T01:20:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-issue"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:20:00Z",
+        "causedBy": "order-blue-cancel-after",
+        "issuedAt": "2030-01-01T01:20:00Z",
+        "commandId": "order-cancel-after-issue",
+        "decisionId": "decision-blue-1",
+        "commandType": "order.issue"
+      },
+      "prevHash": "95ae28d7fb73a2cade4dcd2dff08cbf8948332b9abf07e5d35f054f911e7d021",
+      "hash": "166b27280f0a6f7b9a465c64ff085cd7349550e0d3fb18ffa40c9b57540996d4",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "e9e69e2d-3508-4a34-bd73-c49dd4d7ab86",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 15,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:25:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:25:00.000Z",
+        "normalizedAt": "2030-01-01T01:25:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-deliver"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:25:00Z",
+        "status": "DELIVERED",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-deliver",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "166b27280f0a6f7b9a465c64ff085cd7349550e0d3fb18ffa40c9b57540996d4",
+      "hash": "ff8fe8cf4796b78a68864e2c70b2df44ea2b9c7f0a268ac7058ddc6eb55acf61",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "d0d05696-c580-4305-bf27-06dff7a705ff",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 16,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:26:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:26:00.000Z",
+        "normalizedAt": "2030-01-01T01:26:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-process"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:26:00Z",
+        "status": "PROCESSING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-process",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "ff8fe8cf4796b78a68864e2c70b2df44ea2b9c7f0a268ac7058ddc6eb55acf61",
+      "hash": "121add3b5ba279c14ea101346f10c8435994078a3053ba7b98633dbeb51a731e",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "a5e4de91-2ee7-4d63-ba8d-b90b3a209b0f",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 17,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:27:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:27:00.000Z",
+        "normalizedAt": "2030-01-01T01:27:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-prepare"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:27:00Z",
+        "status": "PREPARING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": null,
+        "commandId": "order-cancel-after-prepare",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "121add3b5ba279c14ea101346f10c8435994078a3053ba7b98633dbeb51a731e",
+      "hash": "ac9ec2b4f41d12fcd788463d65daf0c64ce14436e0a7331cd327c5402964419c",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "f60af56d-7534-47fe-997b-9c2f3ca348b0",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 18,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:30:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:30:00.000Z",
+        "normalizedAt": "2030-01-01T01:30:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-start"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 5000,
+          "travelledMeters": 0
+        },
+        "commandId": "order-cancel-after-start",
+        "actualCosts": {
+          "resources": {},
+          "timeMinutes": 0
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "ac9ec2b4f41d12fcd788463d65daf0c64ce14436e0a7331cd327c5402964419c",
+      "hash": "71402d12b66970e37c9a30704d1b031178b1f7b820be14c7d419c99e0ba3d86a",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "c61466ad-ac60-48d1-ae10-d694bd67cb76",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 19,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:40:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:40:00.000Z",
+        "normalizedAt": "2030-01-01T01:40:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after-cost"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:40:00Z",
+        "status": "EXECUTING",
+        "outcome": null,
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-cancel-after-cost",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "71402d12b66970e37c9a30704d1b031178b1f7b820be14c7d419c99e0ba3d86a",
+      "hash": "563b88c27274951f9f9ac55a9f7c608951d7af7896c81e1d32077f5741223e92",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "1329818c-0360-4ae9-af8a-01d3aaf2e723",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 20,
+      "type": "order.cancelled.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:41:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:41:00.000Z",
+        "normalizedAt": "2030-01-01T01:41:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-cancel-after"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:41:00Z",
+        "status": "CANCELLED_AFTER_RECEIPT",
+        "causedBy": "order-blue-cancel-after",
+        "position": {
+          "remainingMeters": 4000,
+          "travelledMeters": 1000
+        },
+        "commandId": "order-cancel-after",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.cancel"
+      },
+      "prevHash": "563b88c27274951f9f9ac55a9f7c608951d7af7896c81e1d32077f5741223e92",
+      "hash": "80f4a7c2b7d851c358602b75c082bdd23c2b0bfdb3c0048157c972f2dcec441c",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "b2f86c72-7df8-417e-99d1-6e9223d90c2b",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 21,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:30:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:30:00.000Z",
+        "normalizedAt": "2030-01-01T01:30:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-blue-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:30:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "calc-blue-1",
+        "commandId": "calc-blue-create",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [],
+        "calculation": {
+          "id": "calc-blue-1",
+          "mode": "DETERMINISTIC",
+          "state": "CALCULATED",
+          "units": {
+            "fuel": "L"
+          },
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task-blue-1",
+                "status": "IN_PROGRESS",
+                "progressPercent": 20
+              },
+              "state": {
+                "posture": "DEFENCE"
+              },
+              "forces": {
+                "red": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 3,
+                      "r": 0.5,
+                      "id": "main"
+                    }
+                  ]
+                },
+                "blue": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 10,
+                      "r": 0.8,
+                      "id": "main"
+                    }
+                  ]
+                }
+              },
+              "effects": {
+                "stateChanges": {
+                  "posture": "MOVING"
+                },
+                "taskProgressDelta": 50,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 2500
+              },
+              "position": {
+                "remainingMeters": 5000,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {
+                "enemyComposition": "UNKNOWN"
+              },
+              "elapsedMinutes": 30
+            },
+            "weatherFactor": 0.8
+          },
+          "nodeId": "node-blue-1",
+          "reason": "Исполнение order-blue-1",
+          "result": {
+            "task": {
+              "id": "task-blue-1",
+              "status": "PARTIALLY_COMPLETED",
+              "progressPercent": 70
+            },
+            "state": {
+              "posture": "MOVING"
+            },
+            "position": {
+              "remainingMeters": 2500,
+              "travelledMeters": 2500
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 0,
+                "deficit": 2,
+                "consumed": 12,
+                "supplied": 2
+              }
+            },
+            "uncertainty": {
+              "enemyComposition": "UNKNOWN"
+            },
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:30:00Z",
+          "createdBy": null,
+          "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "worldRevision": 7
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение G2",
+              "applicability": "Сквозной контур"
+            },
+            "purpose": "Официальный расчёт G2",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист G2",
+            "knownErrors": [],
+            "limitations": [
+              "Только учебный эпизод"
+            ]
+          },
+          "requiredInputs": [
+            "weatherFactor"
+          ],
+          "appliedEventIds": [],
+          "profileVersions": {
+            "episode": "g2-v1"
+          },
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {
+              "red": 1.5,
+              "blue": 8
+            },
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 0,
+              "deficit": 2,
+              "consumed": 12,
+              "supplied": 2
+            },
+            "actualAdvanceMeters": 2500
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "80f4a7c2b7d851c358602b75c082bdd23c2b0bfdb3c0048157c972f2dcec441c",
+      "hash": "fee77137ddba083c1e384bd721edd489acde20c22cdbe2cac25c1ddbae39591e",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "ae4e8955-8328-4e8b-ba88-e952cf5f11a1",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 22,
+      "type": "calculation.approved.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:31:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:31:00.000Z",
+        "normalizedAt": "2030-01-01T01:31:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-blue-approve"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:31:00Z",
+        "causedBy": "calc-blue-1",
+        "commandId": "calc-blue-approve",
+        "approvedBy": "leader-g2",
+        "commandType": "calculation.approve",
+        "recomputedFrom": null
+      },
+      "prevHash": "fee77137ddba083c1e384bd721edd489acde20c22cdbe2cac25c1ddbae39591e",
+      "hash": "b3144777b1c7dde9a84b1135f76fb1a33dab964eb42c4b7c4b85b4c0695b5153",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "af692062-9ba9-4a23-b791-c87796450ebf",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 23,
+      "type": "resource.consumed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:32:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:32:00.000Z",
+        "normalizedAt": "2030-01-01T01:32:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-blue-apply"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:32:00Z",
+        "amount": 14,
+        "causedBy": "calc-blue-1",
+        "supplied": 2,
+        "commandId": "calc-blue-apply",
+        "resourceId": "fuel",
+        "commandType": "calculation.apply",
+        "calculationId": "calc-blue-1"
+      },
+      "prevHash": "b3144777b1c7dde9a84b1135f76fb1a33dab964eb42c4b7c4b85b4c0695b5153",
+      "hash": "993341bd402acd718b7d2c068c1889f238b1fd7c9f2ea304a9e44d544a04267a",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "61aba3f9-21ce-48bf-8aa3-06ba8b0bc327",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 24,
+      "type": "calculation.manual.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:35:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:35:00.000Z",
+        "normalizedAt": "2030-01-01T01:35:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-blue-manual"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:35:00Z",
+        "causedBy": "manual-blue-1",
+        "commandId": "calc-blue-manual",
+        "supersedes": "calc-blue-1",
+        "commandType": "calculation.override",
+        "evaluationEffect": "UNCHANGED"
+      },
+      "prevHash": "993341bd402acd718b7d2c068c1889f238b1fd7c9f2ea304a9e44d544a04267a",
+      "hash": "1faacd960cc0e6c70ef264479313ba41568eac29d0bfd2b365e0ad1b09a110e6",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "22375b28-31e3-49b6-9f1e-bdfeb60c4b4d",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 25,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:33:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:33:00.000Z",
+        "normalizedAt": "2030-01-01T01:33:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-stochastic-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:33:00Z",
+        "state": "CALCULATED",
+        "sideId": "blue",
+        "causedBy": "calc-stochastic-1",
+        "commandId": "calc-stochastic-create",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [
+          {
+            "seed": "42n",
+            "value": 0.3585613524948438,
+            "digest": "5bcaad42932b78ac5b1dd4020eca2392cb30aebc4abd615c51d1021738735046",
+            "ordinal": 0,
+            "purpose": "g2-replay",
+            "branchId": "main",
+            "exerciseId": "g2",
+            "algorithmVersion": 1
+          }
+        ],
+        "calculation": {
+          "id": "calc-stochastic-1",
+          "mode": "STOCHASTIC",
+          "state": "CALCULATED",
+          "units": {
+            "fuel": "L"
+          },
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task-blue-1",
+                "status": "IN_PROGRESS",
+                "progressPercent": 20
+              },
+              "state": {
+                "posture": "DEFENCE"
+              },
+              "forces": {
+                "red": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 3,
+                      "r": 0.5,
+                      "id": "main"
+                    }
+                  ]
+                },
+                "blue": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 10,
+                      "r": 0.8,
+                      "id": "main"
+                    }
+                  ]
+                }
+              },
+              "effects": {
+                "stateChanges": {
+                  "posture": "MOVING"
+                },
+                "taskProgressDelta": 50,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 2500
+              },
+              "position": {
+                "remainingMeters": 5000,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {
+                "enemyComposition": "UNKNOWN"
+              },
+              "elapsedMinutes": 30
+            },
+            "weatherFactor": 0.8
+          },
+          "nodeId": "node-blue-1",
+          "reason": "Исполнение order-blue-1",
+          "result": {
+            "task": {
+              "id": "task-blue-1",
+              "status": "PARTIALLY_COMPLETED",
+              "progressPercent": 70
+            },
+            "state": {
+              "posture": "MOVING"
+            },
+            "position": {
+              "remainingMeters": 4900,
+              "travelledMeters": 100
+            },
+            "resources": {
+              "fuel": {
+                "unit": "L",
+                "onHand": 0,
+                "deficit": 2,
+                "consumed": 12,
+                "supplied": 2
+              }
+            },
+            "uncertainty": {
+              "enemyComposition": "UNKNOWN"
+            },
+            "elapsedMinutes": 30
+          },
+          "sideId": "blue",
+          "unknown": [],
+          "warnings": [],
+          "createdAt": "2030-01-01T01:33:00Z",
+          "createdBy": null,
+          "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+          "approvedBy": null,
+          "randomKeys": [
+            {
+              "seed": "42n",
+              "value": 0.3585613524948438,
+              "digest": "5bcaad42932b78ac5b1dd4020eca2392cb30aebc4abd615c51d1021738735046",
+              "ordinal": 0,
+              "purpose": "g2-replay",
+              "branchId": "main",
+              "exerciseId": "g2",
+              "algorithmVersion": 1
+            }
+          ],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "worldRevision": 7
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение G2",
+              "applicability": "Сквозной контур"
+            },
+            "purpose": "Официальный расчёт G2",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист G2",
+            "knownErrors": [],
+            "limitations": [
+              "Только учебный эпизод"
+            ]
+          },
+          "requiredInputs": [
+            "weatherFactor"
+          ],
+          "appliedEventIds": [],
+          "profileVersions": {
+            "episode": "g2-v1"
+          },
+          "reviewParameters": [],
+          "stochasticOutcomes": [
+            {
+              "id": "planned",
+              "weight": 1,
+              "effects": {
+                "stateChanges": {
+                  "posture": "MOVING"
+                },
+                "taskProgressDelta": 50,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 2500
+              }
+            },
+            {
+              "id": "delayed",
+              "weight": 1,
+              "effects": {
+                "stateChanges": {
+                  "posture": "MOVING"
+                },
+                "taskProgressDelta": 50,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 100
+              }
+            }
+          ],
+          "intermediateResults": {
+            "aggregation": "VERSIONED_COMPONENT_SUM_NOT_PROBABILITY",
+            "potentialBySide": {
+              "red": 1.5,
+              "blue": 8
+            },
+            "selectedOutcomeId": "delayed",
+            "resourceTransition": {
+              "unit": "L",
+              "onHand": 0,
+              "deficit": 2,
+              "consumed": 12,
+              "supplied": 2
+            },
+            "actualAdvanceMeters": 100
+          }
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "1faacd960cc0e6c70ef264479313ba41568eac29d0bfd2b365e0ad1b09a110e6",
+      "hash": "6a2a4e5e80bfa79ed027ebbb9aab4ebb4d3514c0e76e48b5a94f83318b2b436c",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "6d5f5149-3c2c-4aaa-9118-b24bc72110f0",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 26,
+      "type": "calculation.replayed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:34:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:34:00.000Z",
+        "normalizedAt": "2030-01-01T01:34:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-stochastic-replay"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:34:00Z",
+        "causedBy": "calc-stochastic-1",
+        "commandId": "calc-stochastic-replay",
+        "randomKeys": [
+          {
+            "seed": "42n",
+            "value": 0.3585613524948438,
+            "digest": "5bcaad42932b78ac5b1dd4020eca2392cb30aebc4abd615c51d1021738735046",
+            "ordinal": 0,
+            "purpose": "g2-replay",
+            "branchId": "main",
+            "exerciseId": "g2",
+            "algorithmVersion": 1
+          }
+        ],
+        "commandType": "calculation.replay",
+        "selectedOutcomeId": "delayed"
+      },
+      "prevHash": "6a2a4e5e80bfa79ed027ebbb9aab4ebb4d3514c0e76e48b5a94f83318b2b436c",
+      "hash": "b07f6f18834040a915e480662a1057cd5004f94913187ef4383221ff7e1a46c7",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "4d4f04af-cf35-4ab3-89b3-5ebbc8452fdb",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 27,
+      "type": "calculation.calculated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:36:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:36:00.000Z",
+        "normalizedAt": "2030-01-01T01:36:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "calc-weather-unknown"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:36:00Z",
+        "state": "REQUIRES_REVIEW",
+        "sideId": "blue",
+        "causedBy": "calc-weather-unknown",
+        "commandId": "calc-weather-unknown",
+        "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+        "randomKeys": [],
+        "calculation": {
+          "id": "calc-weather-unknown",
+          "mode": "DETERMINISTIC",
+          "state": "REQUIRES_REVIEW",
+          "units": {
+            "fuel": "L"
+          },
+          "inputs": {
+            "episode": {
+              "task": {
+                "id": "task-blue-1",
+                "status": "IN_PROGRESS",
+                "progressPercent": 20
+              },
+              "state": {
+                "posture": "DEFENCE"
+              },
+              "forces": {
+                "red": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 3,
+                      "r": 0.5,
+                      "id": "main"
+                    }
+                  ]
+                },
+                "blue": {
+                  "components": [
+                    {
+                      "a": 1,
+                      "q": 10,
+                      "r": 0.8,
+                      "id": "main"
+                    }
+                  ]
+                }
+              },
+              "effects": {
+                "stateChanges": {
+                  "posture": "MOVING"
+                },
+                "taskProgressDelta": 50,
+                "uncertaintyChanges": {},
+                "positionAdvanceMeters": 2500
+              },
+              "position": {
+                "remainingMeters": 5000,
+                "travelledMeters": 0
+              },
+              "resource": {
+                "id": "fuel",
+                "unit": "L",
+                "onHand": 10,
+                "supplied": 2,
+                "consumption": 14
+              },
+              "uncertainty": {
+                "enemyComposition": "UNKNOWN"
+              },
+              "elapsedMinutes": 30
+            },
+            "weatherFactor": null
+          },
+          "nodeId": "node-blue-1",
+          "reason": "Исполнение order-blue-1",
+          "result": null,
+          "sideId": "blue",
+          "unknown": [
+            "weatherFactor"
+          ],
+          "warnings": [
+            "Обязательный вход weatherFactor неизвестен; расчёт требует рассмотрения"
+          ],
+          "createdAt": "2030-01-01T01:36:00Z",
+          "createdBy": null,
+          "inputHash": "e881d8fed4f2e8bb7e5d787b01f19cd891cf481aec7e5bb4c9e6fd3833c95436",
+          "approvedBy": null,
+          "randomKeys": [],
+          "supersedes": null,
+          "modelVersion": "aggregate-v1",
+          "inputSnapshot": {
+            "worldRevision": 7
+          },
+          "modelPassport": {
+            "source": {
+              "kind": "ASSUMPTION",
+              "note": "Учебное допущение G2",
+              "applicability": "Сквозной контур"
+            },
+            "purpose": "Официальный расчёт G2",
+            "version": 1,
+            "examples": [
+              {
+                "input": 1,
+                "expected": 1
+              }
+            ],
+            "approvedBy": "Методист G2",
+            "knownErrors": [],
+            "limitations": [
+              "Только учебный эпизод"
+            ]
+          },
+          "requiredInputs": [
+            "weatherFactor"
+          ],
+          "appliedEventIds": [],
+          "profileVersions": {
+            "episode": "g2-v1"
+          },
+          "reviewParameters": [],
+          "stochasticOutcomes": [],
+          "intermediateResults": {}
+        },
+        "commandType": "calculation.create"
+      },
+      "prevHash": "b07f6f18834040a915e480662a1057cd5004f94913187ef4383221ff7e1a46c7",
+      "hash": "d0996f139af85b709f9f5f0e6e1c08432afb4f6df87e56077aa8723f6c91ec04",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "9462b29d-4e14-42aa-908d-56aeed786339",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 28,
+      "type": "order.advanced.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:00:00.000Z",
+        "normalizedAt": "2030-01-01T02:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "order-blue-report"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:00:00Z",
+        "status": "REPORTED",
+        "outcome": "PARTIALLY_COMPLETED",
+        "causedBy": "order-blue-1",
+        "position": {
+          "remainingMeters": 2500,
+          "travelledMeters": 2500
+        },
+        "commandId": "order-blue-report",
+        "actualCosts": {
+          "resources": {
+            "fuel": 2
+          },
+          "timeMinutes": 10
+        },
+        "commandType": "order.advance"
+      },
+      "prevHash": "d0996f139af85b709f9f5f0e6e1c08432afb4f6df87e56077aa8723f6c91ec04",
+      "hash": "7c5b80a2571a598c322c684e5497d5e1364a92e052004ba95e2e13cde09e19d7",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "1e5fbacd-be07-44ea-b277-0fbd883e4afc",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 29,
+      "type": "observation.reported.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "observation-g2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "causedBy": "observation-g2",
+        "commandId": "observation-g2",
+        "commandType": "observation.record",
+        "observation": {
+          "id": "observation-g2",
+          "source": {
+            "id": "sensor-g2",
+            "kind": "UAV",
+            "sideId": "blue",
+            "profileVersion": "sensor-v1"
+          },
+          "status": "CURRENT",
+          "observedAt": "2030-01-01T01:00:00.000Z",
+          "validUntil": "2030-01-01T01:10:00.000Z",
+          "deliveredAt": "2030-01-01T01:00:28.705Z",
+          "reliability": 0.8,
+          "completeness": 0.8,
+          "reportedGeometry": {
+            "lat": 55.699680246393676,
+            "lon": 37.59909014785418
+          },
+          "reportedAttributes": {
+            "type": "motorized"
+          },
+          "environmentSnapshotId": "e4bfafd7444e7d0aadbf5a4d0636425fa5a1cb3375b342a77312dee62fa16510",
+          "reportedAccuracyMeters": 100
+        }
+      },
+      "prevHash": "7c5b80a2571a598c322c684e5497d5e1364a92e052004ba95e2e13cde09e19d7",
+      "hash": "a0e38d9e1de237c4af4bf9c6eaf048a29afb47bc8bf478a1acf753f1ed546ae4",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "7abc44d7-81ea-4f3d-98db-02f44576158d",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 30,
+      "type": "time.jump.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:10:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:10:00.000Z",
+        "normalizedAt": "2030-01-01T02:10:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "jump-fb39ca55-92df-44a8-b7f5-b04f0253607f"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:10:00Z",
+        "status": "ACTIVE",
+        "reports": [
+          "boundary",
+          "stop",
+          "uncertainty",
+          "resume"
+        ],
+        "causedBy": "jump-fb39ca55-92df-44a8-b7f5-b04f0253607f",
+        "commandId": "jump-fb39ca55-92df-44a8-b7f5-b04f0253607f",
+        "commandType": "time.jump",
+        "playbackRate": 1,
+        "snapshotHash": "bfbaebfdf899ea3777ac685ced6a7c09befe79a5ae50c9147c9e7d06eee1cbfd"
+      },
+      "prevHash": "a0e38d9e1de237c4af4bf9c6eaf048a29afb47bc8bf478a1acf753f1ed546ae4",
+      "hash": "5035f64ed80e1bac5353196e3a13dd33cb3bc3d5f4bbdcc2b28c46cf3094f031",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "76b9eef4-f0da-4212-96a0-6b74eabbbd80",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 31,
+      "type": "stage.calculation.assigned.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:20:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:20:00.000Z",
+        "normalizedAt": "2030-01-01T02:20:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "stage-g2-assign"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:20:00Z",
+        "causedBy": "stage-2",
+        "commandId": "stage-g2-assign",
+        "commandType": "stage.assign",
+        "calculationProfileId": "manual-v1"
+      },
+      "prevHash": "5035f64ed80e1bac5353196e3a13dd33cb3bc3d5f4bbdcc2b28c46cf3094f031",
+      "hash": "ee400b7f649ba9e7775d9e9f663aa0d9ee0a2954642caffe0db40a85ab6bd243",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "739cd9c1-2b27-42ef-bfef-359213cb17cd",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 32,
+      "type": "playbook.command.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:21:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:21:00.000Z",
+        "normalizedAt": "2030-01-01T02:21:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "playbook-known"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:21:00Z",
+        "result": {
+          "kind": "COMMAND",
+          "ruleId": "contact",
+          "command": "report",
+          "playbookVersion": 1
+        },
+        "causedBy": "playbook-g2",
+        "commandId": "playbook-known",
+        "commandType": "playbook.evaluate"
+      },
+      "prevHash": "ee400b7f649ba9e7775d9e9f663aa0d9ee0a2954642caffe0db40a85ab6bd243",
+      "hash": "e1365b853ebab95a1bfca5c47761ce4b30e72de521b2997042e54f3ccf4683f4",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "7024d089-3ba1-46ea-82ac-015a77319244",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 33,
+      "type": "playbook.escalated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:22:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:22:00.000Z",
+        "normalizedAt": "2030-01-01T02:22:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "playbook-unknown"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:22:00Z",
+        "result": {
+          "kind": "ESCALATE",
+          "reason": "NO_RULE"
+        },
+        "causedBy": "playbook-g2",
+        "commandId": "playbook-unknown",
+        "commandType": "playbook.evaluate"
+      },
+      "prevHash": "e1365b853ebab95a1bfca5c47761ce4b30e72de521b2997042e54f3ccf4683f4",
+      "hash": "ffeb37050ddce870281894d35cb2480e1e74421d961403da8646fc24eaa425a4",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "00eca8c6-3657-40c2-ad84-1372e96d920a",
+      "organizationId": "org-g2",
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "branchId": "main",
+      "sequence": 34,
+      "type": "exercise.completed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T02:30:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T02:30:00.000Z",
+        "normalizedAt": "2030-01-01T02:30:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "exercise-g2-complete"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T02:30:00Z",
+        "status": "COMPLETED",
+        "causedBy": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "commandId": "exercise-g2-complete",
+        "commandType": "exercise.complete",
+        "snapshotHash": "bfbaebfdf899ea3777ac685ced6a7c09befe79a5ae50c9147c9e7d06eee1cbfd",
+        "outcomeAuthority": "EXERCISE_LEADER",
+        "unfinishedEventIds": [
+          "delivery-pending"
+        ]
+      },
+      "prevHash": "ffeb37050ddce870281894d35cb2480e1e74421d961403da8646fc24eaa425a4",
+      "hash": "f56d6aec40ca952575834f5a4f3d7c7f589aa85042ed96b7f2388deb8d6892e6",
+      "hashVersion": 2,
+      "sessionId": "53d56b93-19cb-44af-8442-d3a37dd9729b"
+    },
+    {
+      "eventId": "602f8f0f-482f-4ec6-b881-88c3bea6dc90",
+      "organizationId": "org-g2",
+      "instanceId": "7c8c2b85-f191-4221-b7cf-674d80f96ef7",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "decision.created.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "leader-g2",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "decision-second-create"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "sideId": "blue",
+        "causedBy": "decision-second-blue",
+        "revision": 1,
+        "commandId": "decision-second-create",
+        "commandType": "decision.create"
+      },
+      "prevHash": null,
+      "hash": "52234a41b66f91895d7d2ffd24b05610293dfc3a6f1041be55020e7316265abc",
+      "hashVersion": 2,
+      "sessionId": "7c8c2b85-f191-4221-b7cf-674d80f96ef7"
+    }
+  ],
+  "debrief": {
+    "scope": "GENERAL",
+    "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+    "trainingQuestions": [
+      "q18"
+    ],
+    "audience": "LEADER",
+    "allowedSideIds": [
+      "blue",
+      "red"
+    ],
+    "materials": [
+      {
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "id": "goals-18",
+        "section": "GOALS_STAGES",
+        "payload": {
+          "blue": [
+            "Учебная цель blue"
+          ],
+          "red": [
+            "Учебная цель red"
+          ]
+        }
+      },
+      {
+        "id": "unknown-INITIAL_SITUATION",
+        "section": "INITIAL_SITUATION",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела INITIAL_SITUATION"
+        }
+      },
+      {
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "id": "decisions-18",
+        "section": "KEY_DECISIONS",
+        "payload": {
+          "comparison": [
+            {
+              "decisionId": "decision-blue-2",
+              "consequences": [
+                "Дефицит fuel: 2 Л"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "unknown-PLAN_FACT_MAP",
+        "section": "PLAN_FACT_MAP",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела PLAN_FACT_MAP"
+        }
+      },
+      {
+        "id": "unknown-TIMELINE",
+        "section": "TIMELINE",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела TIMELINE"
+        }
+      },
+      {
+        "id": "unknown-DOCUMENTS",
+        "section": "DOCUMENTS",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела DOCUMENTS"
+        }
+      },
+      {
+        "id": "unknown-COMMUNICATIONS",
+        "section": "COMMUNICATIONS",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела COMMUNICATIONS"
+        }
+      },
+      {
+        "id": "unknown-RESOURCES",
+        "section": "RESOURCES",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела RESOURCES"
+        }
+      },
+      {
+        "id": "unknown-RESEARCH",
+        "section": "RESEARCH",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела RESEARCH"
+        }
+      },
+      {
+        "id": "unknown-METRICS",
+        "section": "METRICS",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела METRICS"
+        }
+      },
+      {
+        "id": "unknown-CONCLUSIONS",
+        "section": "CONCLUSIONS",
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "payload": {
+          "status": "UNKNOWN",
+          "reason": "Нет разрешённых данных раздела CONCLUSIONS"
+        }
+      }
+    ],
+    "reference": {
+      "kind": "LEADERSHIP_INTENT",
+      "notTheOnlyCorrectSolution": true,
+      "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+      "sideId": "blue",
+      "trainingQuestions": [
+        "q18"
+      ],
+      "audience": [
+        "LEADER"
+      ],
+      "content": {
+        "goals": [
+          "Учебная цель blue"
+        ]
+      }
+    },
+    "deviations": [
+      {
+        "instanceId": "53d56b93-19cb-44af-8442-d3a37dd9729b",
+        "sideId": "blue",
+        "trainingQuestions": [
+          "q18"
+        ],
+        "audience": [
+          "LEADER"
+        ],
+        "decisionId": "decision-blue-2",
+        "rationale": "Уточнённый замысел blue",
+        "consequences": [
+          "Дефицит fuel: 2 Л"
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,8 @@
 /** Просмотр отдельного исследовательского корпуса. Исторический индекс и его пользовательский слой не используются. */
 import { useMemo, useState } from 'react';
-import { modernCorpus as corpus, characteristicTitle, characteristicPrefix, passportCoverage, organizationSizeLabels, type ReferencePassport, type ModernOrganization, type ModernSource, type OrganizationKind } from '../../../../packages/knowledge/src/modern';
+import { modernCorpus as corpus, characteristicTitle, characteristicPrefix, passportCoverage, organizationSizeLabels, type ReferencePassport, type ModernOrganization, type ModernSource, type OrganizationKind, type ModernRepresentative } from '../../../../packages/knowledge/src/modern';
+import type { ModernImportSource } from '@def-ops/kshvi/browser';
+import { KnowledgeImportDialog } from './kshvi/preparation/KnowledgeImportDialog';
 import './modern-knowledge.css';
 
 const KIND: Record<OrganizationKind, string> = {
@@ -55,6 +57,8 @@ export function ModernKnowledgeView() {
   const [selected, setSelected] = useState('');
   const [allSources, setAllSources] = useState(false);
   const [equipmentClass, setEquipmentClass] = useState('all');
+  const [importSource, setImportSource] = useState<ModernImportSource | null>(null);
+  const [importTitle, setImportTitle] = useState('');
   const profile = corpus.countries.find(c => c.code === country)!;
   const nodes = useMemo(() => corpus.organizations.filter(n => n.country === country), [country]);
   const representatives = useMemo(() => corpus.representatives.filter(r => r.countryContext === country), [country]);
@@ -64,6 +68,16 @@ export function ModernKnowledgeView() {
   const matches = (...strings: string[]) => !q || strings.join(' ').toLocaleLowerCase('ru').includes(q);
   const visibleRepresentatives = representatives.filter(r => (equipmentClass === 'all' || r.objectClass === equipmentClass) && matches(r.title, r.summary, className(r.objectClass), ...(r.inventoryReferences?.map(i => i.designation) ?? [])));
   const equipmentGroups = corpus.objectClasses.map(c => ({ ...c, records: visibleRepresentatives.filter(r => r.objectClass === c.id) })).filter(c => c.records.length);
+  const openImport = async (record: ModernRepresentative) => {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(record)));
+    const sourceHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+    setImportTitle(record.title);
+    setImportSource({
+      sourceRecordId: record.id, sourceRevision: 1, sourceHash,
+      modelInputs: false, simulationValidated: false,
+      characteristics: record.passport.characteristics.map(fact => ({ field: fact.field, value: fact.value })),
+    });
+  };
   const countrySources = new Set([
     ...profile.sources, ...nodes.flatMap(n => n.sources), ...representatives.flatMap(r => r.sources), ...hierarchies.flatMap(h => h.sources),
   ]);
@@ -145,6 +159,7 @@ export function ModernKnowledgeView() {
                 <p>{r.summary}</p>
                 {r.catalogueOnly && <p className="mk-catalogue-note">Номенклатура из энциклопедического перечня. Характеристики и предварительная категория требуют проверки.</p>}
                 <Passport record={r} />
+                <button type="button" onClick={() => void openImport(r)}>Добавить в КШВИ</button>
                 {r.inventoryReferences?.length ? <details className="mk-inventory-references"><summary>В перечнях: {r.inventoryReferences.length}</summary>{r.inventoryReferences.map((ref, index) => <p key={index}><a href={sourceById.get(ref.source)?.url} target="_blank" rel="noreferrer">{ref.designation}</a> — {ref.section}{ref.catalogueStatus === 'prospective' ? ' · перспективная программа' : ''}</p>)}</details> : null}
                 <Sources ids={r.sources} />
               </details></article>)}
@@ -163,5 +178,6 @@ export function ModernKnowledgeView() {
         </div>
       </div>
     </div>
+    {importSource && <KnowledgeImportDialog source={importSource} title={importTitle} />}
   </section>;
 }

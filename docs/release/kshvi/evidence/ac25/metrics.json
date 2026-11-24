@@ -1,0 +1,10 @@
+{
+  "delegatedInstances": 3,
+  "completedCycles": 2,
+  "escalatedCycles": 1,
+  "systemEvents": 21,
+  "forbiddenEffects": 0,
+  "duplicateEffects": 0,
+  "humanOverrides": 1,
+  "replayHashMatches": 1
+}

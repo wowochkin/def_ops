@@ -1,0 +1,19 @@
+.modern-datetime { position: relative; display: grid; gap: 6px; min-width: 0; }
+.modern-datetime > label { color: #c8d8d3; }
+.modern-workspace .modern-datetime-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 42px; padding: 9px 12px; text-align: left; background: #102329; color: #edf4f0; border: 1px solid #526a70; }
+.modern-datetime-validity { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.modern-datetime-popover { position: absolute; top: calc(100% + 8px); left: 0; z-index: 120; width: 380px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow-y: auto; padding: 18px; border: 1px solid #607b7c; border-radius: 10px; background: #142a30; color: #edf4f0; box-shadow: 0 18px 50px #0009; }
+.modern-datetime-popover.modern-datetime-upward { top: auto; bottom: calc(100% + 8px); }
+.modern-datetime-month { display: grid; grid-template-columns: 38px minmax(105px, 1fr) 82px 38px; align-items: center; gap: 7px; margin-bottom: 16px; }
+.modern-datetime-month select { min-width: 0; min-height: 38px; margin: 0; padding: 5px; background: #102329; color: #edf4f0; border: 1px solid #526a70; }
+.modern-workspace .modern-datetime-month button { min-width: 38px; min-height: 38px; padding: 0; font-size: 20px; }
+.modern-datetime-weekdays, .modern-datetime-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.modern-datetime-weekdays { margin-bottom: 6px; color: #aac0bc; font-size: 12px; text-align: center; }
+.modern-datetime-days > span { min-height: 40px; }
+.modern-workspace .modern-datetime-days button { min-width: 0; min-height: 40px; padding: 0; border-color: transparent; background: transparent; color: #edf4f0; font-size: 15px; }
+.modern-workspace .modern-datetime-days button:hover:not(:disabled) { background: #294645; border-color: #718e88; }
+.modern-workspace .modern-datetime-days button[aria-pressed="true"] { background: #b4dcce; border-color: #b4dcce; color: #102a2b; font-weight: 700; }
+.modern-datetime-time { display: grid; grid-template-columns: auto minmax(120px, 1fr); align-items: center; gap: 14px; margin-top: 18px; color: #c8d8d3; }
+.modern-workspace .modern-datetime-time input { margin: 0; min-height: 44px; font-size: 16px; background: #102329; color: #edf4f0; }
+.modern-datetime-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+@media (max-width: 480px) { .modern-datetime-popover { width: 320px; padding: 14px; } .modern-datetime-month { grid-template-columns: 34px minmax(90px, 1fr) 74px 34px; gap: 4px; } }

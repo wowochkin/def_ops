@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { DateTimeField } from '../DateTimeField';
 import type { SavedSession } from './archive';
 import { choiceLabel, deliveryLines, sideName, stamp } from './journal-text';
 import { canJointReview, jointReview, type Decision, type LoggedEvent, type Session, type Side } from './session';
@@ -65,10 +66,8 @@ function Comparison({ left, right, onBack }: CompareProps) {
   const starts = [...new Set([...a.keys(), ...b.keys()])].filter(t => t <= at).sort();
   return <section className="replay-panel replay-compare">
     <button onClick={onBack}>К сеансам</button><h2>Сравнение прохождений</h2><p>{left.summary.title}</p>
-    <label>Момент сравнения (UTC)
-      <input type="datetime-local" step="any" min={start.slice(0, -1)} max={end.slice(0, -1)}
-        value={input} onChange={event => setInput(event.target.value)} />
-    </label>
+    <DateTimeField id="replay-comparison-time" label="Момент сравнения (UTC)" min={start.slice(0, -1)} max={end.slice(0, -1)}
+      value={input} onChange={setInput} required />
     {!valid ? <p role="status">Выберите момент с {stamp(start)} по {stamp(end)} UTC.</p>
       : <table><thead><tr><th scope="col">Начало периода</th>
         <AttemptHeading record={left} position="первое выбранное прохождение" />

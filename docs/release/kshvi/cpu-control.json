@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "BLOCKED",
+  "nf04Confirmed": false,
+  "measurement": "process.cpuUsage",
+  "cpuUnitsAdmissionOnly": true,
+  "reason": "Поддерживаемый контроллер измеримого CPU-троттлинга в текущей ОС не настроен; декларативные cpuUnits не считаются доказательством NF-04 или AC-14.",
+  "requiredForUnblock": [
+    "Контроллер CPU-лимита на поддерживаемой ОС с измеримым duty cycle.",
+    "Стендовый протокол фактического CPU, памяти и латентности интерактивных команд."
+  ]
+}

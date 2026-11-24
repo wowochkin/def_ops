@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-12",
+  "status": "blocked",
+  "startedAt": "2026-11-23T21:28:01.531Z",
+  "finishedAt": "2026-11-23T21:28:02.371Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "command": "npx vitest run services/kshvi/tests/recovery/recovery-time.test.ts services/kshvi/tests/recovery-drill.test.ts",
+  "tests": [
+    "services/kshvi/tests/recovery/recovery-time.test.ts",
+    "services/kshvi/tests/recovery-drill.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [
+    "Локальное восстановление процесса и файлов проверено; полная потеря физического узла и RTO на эталонном наборе не проверялись"
+  ],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/recovery/recovery-time.test.ts (1 test) 55ms\n ✓ services/kshvi/tests/recovery-drill.test.ts (1 test) 70ms\n\n Test Files  2 passed (2)\n      Tests  2 passed (2)\n   Start at  00:28:01\n   Duration  356ms (transform 63%, tests 21%, import 15%, worker 1%)\n\n\nЛокальное восстановление процесса и файлов проверено; полная потеря физического узла и RTO на эталонном наборе не проверялись",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-12.json"
+  ],
+  "openErrors": [
+    "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/recovery/recovery-time.test.ts (1 test) 55ms\n ✓ services/kshvi/tests/recovery-drill.test.ts (1 test) 70ms\n\n Test Files  2 passed (2)\n      Tests  2 passed (2)\n   Start at  00:28:01\n   Duration  356ms (transform 63%, tests 21%, import 15%, worker 1%)\n\n\nЛокальное восстановление процесса и файлов проверено; полная потеря физического узла и RTO на эталонном наборе не проверялись"
+  ]
+}

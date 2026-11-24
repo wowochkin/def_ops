@@ -1,0 +1,2248 @@
+{
+  "schemaVersion": "1.0.0",
+  "catalogId": "kshvi-autonomous-events",
+  "catalogVersion": "1.0.0",
+  "effectContractVersion": "kshvi-domain-effects-v1",
+  "reviewStatus": "APPROVED",
+  "sourcesFile": "sources.json",
+  "categories": [
+    {
+      "category": "CONTROL",
+      "file": "control.json",
+      "count": 20,
+      "sha256": "b81310ba0fcc5c0f1ee5da2f6d31d09cb81be85dcd671c5f9d4490c0037087ad"
+    },
+    {
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "count": 20,
+      "sha256": "1c0945a618c205b02308582ad484a8e4891ca5033e3fd8fc71d578791bcd9017"
+    },
+    {
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "count": 20,
+      "sha256": "396d9d20390c81d3d8533dfd0e8cdab8ec709aa43fec9db4a08996da3e7dc574"
+    },
+    {
+      "category": "COMBAT",
+      "file": "combat.json",
+      "count": 20,
+      "sha256": "33c45fa34268b872c09be13fae3d2a76f0f79d8554a4fca880f13accff778097"
+    },
+    {
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "count": 20,
+      "sha256": "50c5e4bc73270b1a4ec10213437e2cb35963a61a341769b166eacfd70f3af952"
+    },
+    {
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "count": 20,
+      "sha256": "69f0921c0b8708fe7219c545a7632110e6309803fb4aea5818e52711f7b5cc20"
+    },
+    {
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "count": 20,
+      "sha256": "8e9153ab477608203132c3cdb24533453b10e79a7333f2d1b7a57304bd536630"
+    },
+    {
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "count": 20,
+      "sha256": "6203009e85e68c842716ee4e355affe2bb5b0561962699b49ff5f5467110c99c"
+    },
+    {
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "count": 20,
+      "sha256": "69d3884914e5f10ef9b30223cc00bf90947d20ff0377abf5be08a254c1f4af7c"
+    },
+    {
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "count": 20,
+      "sha256": "bc2b7f52c7eeda492c52223c59ec3df101708a31b83f312a167748c318120ef3"
+    },
+    {
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "count": 20,
+      "sha256": "b649fbe467d270490600d6f29d06bc1a05ea977a594a2df5586da83b1cb33a86"
+    },
+    {
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "count": 20,
+      "sha256": "e8f6a7762904d7517188d8db024258337aab62ab8b517cd6d8d8e536ef19863e"
+    }
+  ],
+  "totals": {
+    "templates": 240,
+    "approvedDistinct": 240
+  },
+  "templates": [
+    {
+      "templateId": "combat-01-insufficient-contact-inputs",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "8fb81b6783e22d59dca155a7ff83001e8691e66a9a1b1364140c36c431c35614",
+      "mechanismHash": "16e52926f883242ee5b1e990de412e85cc420397ea6adabaf67f136f052321f0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-02-resource-deficit-episode",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "8d81b95632a182eb37f833eefcc4dd87502c0b2f995daf9e8bf035d0e7b72f3b",
+      "mechanismHash": "84a557710a9738c4adac0e9a524a94992d0fcdd234c443331478ac88165135ba",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-03-partial-task-result",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "96bd03ca842e2f0de2a2124c3068c074538df531f369f0238c72b4bd5f4a06ff",
+      "mechanismHash": "c03dd7088950e5c2f9564390470e0d55d6c8ad7b164da3838ebd2c500f55f95c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-04-equipment-degradation",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "de0ef2cffb6f0494494d50e3dc40572816c79c7b1422d50958ae4c1936a3f215",
+      "mechanismHash": "83717b89cfae7833a4814b3c37cf37481378f7339b2409ffff3b166de5af8fbb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-05-scenario-damage-zone",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "0365ebb6670051a7c6db70a9bfbc62e22ddfbf605720f9ce93e6f112074065f3",
+      "mechanismHash": "a49d770948b5dd9ac58c1f4ea9f5289e01ed1e57452538613ce74dc466514a7d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-06-visibility-effect-profile",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "b91defe37d2427e8784489f63b255522a054fbb51001d8cffc663a78fd283661",
+      "mechanismHash": "2ec6255c5c084a6223384e36e2f72209347467701df55de8d9c090a2924d2dbb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-07-flank-threat-morale",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "c48f19c60c254952a01b88f63faa4784a25ce513a02ef29c10171b4680291bbc",
+      "mechanismHash": "72a539e4d7de09cfa534dbd779b7bcd708cc4158c635894d6f2c4d5f82d98dc9",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-08-interruption-costs",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "b19e17252442a96a2dd111df7263cdb72d8aadccdbdb83ce92533c55b6c0aa29",
+      "mechanismHash": "9c9278f8ec838f7fbd68d7c2f00d4c6d454b05058d8d74400b73079d9ead1a76",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-09-stop-without-score",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "1abd8757007ba52baeef1eeface1ae46dd74c93fff8f4f656f1d803e29ed7ab3",
+      "mechanismHash": "5f8a7c16181010415198495449d68455f9108e24e8d5d9cb8823c8717deb39c7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-10-manual-outcome-supersession",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "9acc551108f18ff8764fd1b4df735d19d6a7db9933986e4519fad70404d8046c",
+      "mechanismHash": "5a2b5fbf9fe8976454e8511d5af88448194b5a616beec69af282463952a5bbf9",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-11-replay-key-conflict",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "eada51399ed56096ddfcd75fedf15b790d033be37f08857b33a0d47dba70f567",
+      "mechanismHash": "21ba1a7d6717c6a9d622d5d5c9be4e20f2f9b999ca83a03bb09786b2597a441f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-12-unknown-readiness-block",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "3f2822c0ce2bc9dde82558a765bfb2189ced5a91cde20bbf6d870e706eed851b",
+      "mechanismHash": "0dfd84301ccd748b5109fea380778b0c0311ce3d410d444bfab467c9c0f38165",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-13-simultaneous-contact-order",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "69f3738b0ef4091c2647c1c2b16bfaa2fb167db6d887e61de9e32aa0120da804",
+      "mechanismHash": "7c8ec0cbd894801c00e770f4305a323fae808f3feb60575585ff751812f0839e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-14-uncertain-recon-outcome",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "52a4564a1465bfde65584b09285cde749bab080464d80111f235f97faf44682c",
+      "mechanismHash": "7d172bd745857ac6d6dd913259f8c20826d82dec7c5deee1d4f59b12a2cadf9d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-15-support-not-delivered",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "92e77fd27d255ffd57fa71bb669b79cedab8b5963eef156d2162bbd49296df01",
+      "mechanismHash": "404c7270ddaf08c04a47bcc34602de7bec41245ee28c40c75d3eb737ee9784ff",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-16-withdrawal-route-block",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "d25d7a45ef5f9dc50be24671941c6504bf76e1cb93adae4333de08fce74ff541",
+      "mechanismHash": "ab9f62db33c8d79fc03d1a1f1dbc7423dd91efc9da6ffbd8d8607233c81cdbd7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-17-combat-supply-deficit",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "69321902602694f6a17ae0ad1fdc31ad34326e199f9f46d1aa2aef2cd779f7ac",
+      "mechanismHash": "5b7231ecf366a74bbae46412be0bb0a5bc94ca571c2af584b683f4e918c8ae04",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-18-post-contact-recovery",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "ed6b5ef71d32e642afd7c76a4679e2ad2b823c47950811159e33c1c91e60784e",
+      "mechanismHash": "a6d59be59bcc56b89c6e44a820815dca174c6dcc3c97e9934bfc7fd464c6bba7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-19-destroyed-equipment-guard",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "48ceebbbcf235d058c8ba6068ced495f094ea2ebfd215d2f0d928fe635a80f49",
+      "mechanismHash": "ac50463b0e8361e0db01781a2cb146d8765dbaba194fa52fdc613259619203d4",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "combat-20-incomplete-after-action",
+      "version": 1,
+      "category": "COMBAT",
+      "file": "combat.json",
+      "sha256": "b9bae10d63b8926c4a7ee1e37776b56d8b4bcf65fe01e6920e5435c2a178e998",
+      "mechanismHash": "4c5239b4501e6101cc2ad6e495c804f3c0df6aa076bfd2889d58bca0e64529cd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-01-channel-queue",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "8bd102d810348f13c5e037aed9b9f021e080610fc3d7391dbe6652c0bc765c82",
+      "mechanismHash": "7147f1b93a18d4702460bdb425994c117f014c557f07b877fb0d46d6cb7172dc",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-02-relay-outage",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "b263199e20c08d001bfaebb4a0893616c50d5c3a1d34c5c6e47581aa947f6c8f",
+      "mechanismHash": "eb0c37f59d62ef24f8178219dbc1e9cb2bd32d1de17739c98337831e9c35c198",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-03-duplicate-retry",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "5bef9f3522189a829767d4903ec7d5b5b225fc553ca731175ea85e5ef2f7b10b",
+      "mechanismHash": "4346afe5f56c209e7256312d26dd8a089be81af5cc08e60ef45e49729911502c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-04-partial-cascade",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "0331f8a1561620e47f5ed4fbcd3949b42755f79f4a7985d3679bb4a1d48ef644",
+      "mechanismHash": "60576ea2e069681dfad900b737da8ca8317e0b5d8b2e00465f5660d7451e0611",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-05-missed-report",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "46e6c56008e78e37979ae1f28c2fc86c59566a41013f9ea62a6950ae9710d5c7",
+      "mechanismHash": "0ecf4891bfabc3b11e795f05990a82648a3677e61719ca5ac6dff4e7312471c8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-06-approval-conflict",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "84985a8b0a1b6a22180507566e6f3aea33852d529c75d638774cbdaa78bbebff",
+      "mechanismHash": "37040aa5bf87590bb610fa183f452ca4630bb2233efc9752fa89793f192149cd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-07-superseded-order",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "b2a60192d5c80f0cc3914ff9963a0916477259e4dc32d92f152571082fe0197c",
+      "mechanismHash": "621280377277e1bf9d417c3170012a509b28069fe90f847397c5ccc4c071a322",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-08-reserve-capacity",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "face3d39456f3faba8797a7d7c8e8de8efd0575a034c83c1ab390f0d18f42786",
+      "mechanismHash": "21a665ede299b2b74c2f191a8d9b8d60bd9dc3985b7b77cd982036bce3745a10",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-09-cp-relocation",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "0684c5c283f3be30b768290c0cf9f639182ef7f2a57ed709badecf55e16b1175",
+      "mechanismHash": "05dab84063f102174cd3220683718cc6496c49b4ca100ce5f7197e90c45e1995",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-10-paper-conflict",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "8f8a4beeec5c3cc965ef65d62255cef087c9b65b82cb25d63eef63b78f8faa8d",
+      "mechanismHash": "0f0bd667794484134beea0edb7210e0b0a21b5b70a0fc9f05849bdd2d380f613",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-11-urgent-route-loss",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "00c2cac53d0f632a399f3b32e086bf387195c6cbcf0c30cc0b337856abf07a6e",
+      "mechanismHash": "fcea74a549ffce36c6445a05ab724f0246329e95dac1cb237b9459c00a75d8ca",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-12-expired-channel",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "06803230b2bd3443cfa75deec5d41cae296bf25b4606ea9b9c0256899467e9c9",
+      "mechanismHash": "9969764cea01a63135228fe2e4e804e3f4745ad8af881b3307b14037bd5af6fb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-13-unacknowledged-delivery",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "1f3cf8bdbcc6704349b9ca345af792f68c1ce4b46c05be679eedf765b02ab0d4",
+      "mechanismHash": "e5203f23aae93304bfc4f5fafe2e2433f88f9c0ad2a356e2dad5807f042f84ac",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-14-processing-backlog",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "0826d5e1bde550910c5b36526e24b6f7ac156d0ac37def2e7108c0c6f5982457",
+      "mechanismHash": "3f197eea963b489d25879b227975ea88a02244afc21b4b0e6ded296bbdce9074",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-15-stale-arrival",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "6fb3e534c941bd49005748d7ee9264fd22ec6f54a067e5dd3beb4db363a612cd",
+      "mechanismHash": "990fe56c4e1d28c49620ebfb8a9770141080a96c21fb7060793774bec5581af3",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-16-blocked-attachment",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "b1ba9f7dfca22ff2cb0d5eeba0ea00cff0caa36627774e474d894ca6a01d86ce",
+      "mechanismHash": "d5cb474eeecad28ad65b13acf90c746aba6f4390726bb561af33985cf5150a52",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-17-signal-version",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "6695ec99ebee6211d00c12deab81e5d953852836629eb70087fe068f4bf8a604",
+      "mechanismHash": "44ccc114d09e15f6320ca6763c109810543a057c9c14dc03cad077bedb78057d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-18-reserve-cp-delay",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "1b648a8f20744dbfc79de820f7d0baeb49b0780e136310595f47aa221599c7b0",
+      "mechanismHash": "b1b4802f5822e914703fdc4e7b69795a8b10fc06927937eedce6ece215825a8f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-19-functional-disagreement",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "345fd19ad7c944cb0b3badd0a755680d4f8d18384cd57dc78766f7370bdf6838",
+      "mechanismHash": "cde85b7ad68a563e3a50314be99b00e159796a0dfd7ee044070743a351d2323c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "control-20-domain-key-collision",
+      "version": 1,
+      "category": "CONTROL",
+      "file": "control.json",
+      "sha256": "a38b6e26471f114e05a68fec5afcfb1afb89cfce61f79b4728b89b9d63cc760c",
+      "mechanismHash": "d880042fafd9d19c1feca06946841ffca100084d7fcd9aacdf894fd9b8adc83d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-01-bridge-capacity-damage",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "136ccb69dd05db7006b74ae8b71dbf111740e2e894c71fcb174988c1f65c3bf2",
+      "mechanismHash": "1636b39561a0a30b599fe9187c4b0e049d7ddea4bfc89069190ee7c135833960",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-02-bridge-repair-partial",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "a70cdc91f7ef1dba75aa1d9b5e1539d70954729ca83097e6c285a8616b4d5986",
+      "mechanismHash": "8eced2877c448742ced3f7cd08f836f4035dd68bb6c534aad4080c2de7b616e7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-03-road-washout",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "9285ae63e1b1d8d147e776e95f61ac67bad1d9bd71e1821bc2353a6e31895eb9",
+      "mechanismHash": "8a45016321979b3054c21a0b1f45d10f716bd93cb5c5e384ef8c5617555b766f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-04-culvert-blockage",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "0860ed044df8c539c18e3489f027f31fd9b1aeb4767d51d1f79b11896318c8f3",
+      "mechanismHash": "442f995ad93241a9f63bfad92e105f1f4b4dee36294c2ff79d7396fbf7ef915c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-05-obstacle-zone",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "285ba2210d9ee72739f933e6f9857fd2cfdbc96c3db13ca47724421171947e14",
+      "mechanismHash": "73f2d880b1958acbec982c32a3f7a3cf79fc7eec13624c17d031000b789bb08b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-06-obstacle-corridor",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "44cf346cf20f1e78735af8a99906648258578b4d1631f8863b3a9beebd2065bf",
+      "mechanismHash": "f24986acb52a24d37196c85b5d5b645d7f5cc4ef4f7a9ca209882a86a2195bcb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-07-ferry-unavailable",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "f632c91cd9bfeb55f200d7e5792557f638dde3c76c0c6fd0a1f07da398d26ad6",
+      "mechanismHash": "fa94a93643afa5a8c875c4926487e5e9d3bd482f4d53ccf126f9bda71f50019c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-08-pontoon-queue",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "dfd47315caa63c2fe7becf482c6bccf9910039aee2015753d3fd63ef30a67b15",
+      "mechanismHash": "3665629ab1c6d61924899490c20950b6514fa0e6cfaefc7ce44f66ff81ccac4b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-09-ice-load-limit",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "7ed526da9fd6fff643bc129ae00b842ec9fb8d92b7db103198c96a0e8c08cfa0",
+      "mechanismHash": "1c4af6ddd947a819cd088fb07225afd512ace6775d19d1cd25708b0372948f69",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-10-ford-bottom-unknown",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "7d1e05ec0b985de2b710950f39ca2c14ff5ada240728a5509055d4d8153a77cc",
+      "mechanismHash": "0aa3aefbeb4b13c497c161a9c44bbea40755efad011bbf8ef213cc2ee99d6af6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-11-forest-windfall",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "e9886aa155cbb14fccd99df48c4d47773ad2504c2f238388183167cf5bb50ed0",
+      "mechanismHash": "837b3c10e36591215842984aef394ab5611cff346266a3257fbeb3dddd5a9044",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-12-forest-fire-zone",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "9bbc71aeb1ab16752bd9aa5e2b9678a2940601a74545004a04ee0915167468e2",
+      "mechanismHash": "1036b6f57664f913c771edb4e988dbab54486506dac09477b5e950f219ecbc28",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-13-wetland-bearing-loss",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "b0455db50f8ac5022fb5ab14f63d02edd558fa228fae5fa3cf9d33624e47f436",
+      "mechanismHash": "cecc7036231ba47e867992d8f7074a9d193cb09baac0e3b21f0a0428f2297de9",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-14-engineer-equipment-degraded",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "fd371cb26a54c0c8f7ab21be69a0e56232f443f8e11ea52f3cd48ecd85c993df",
+      "mechanismHash": "5f8e2afacbb3be51dbe2b3b473b69d5be51f5cb23391944418d922474394510f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-15-rubble-street-block",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "5199773dfc529f32ee67de91f20883de9a4a12e80c864710b3e70e0edfc2a477",
+      "mechanismHash": "8fe6c9933b3b9ae1b8d7b101d7c39eea51a71845ea264e03a48270898e637e22",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-16-temporary-road-complete",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "2320d3cbf362904259580f2b59695505494dd705f83e0f3deb0787bcc3dd53a6",
+      "mechanismHash": "204c6d8e30393862d04f1a014d6e7c8d6f116dbaaf2731500157e105bed37d20",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-17-crossing-dismantled",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "fe81357d9b7acdabb5b67b5c2b309ca89666ee45a8d1b4eff5052576baab03fe",
+      "mechanismHash": "c32ba047ae6a13a1f51c93251335330c6b5f4f593af425f17f9a41f9923780ee",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-18-bank-erosion",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "06a5de402789e061cc953fcffad4468abc89b131090b9bb52444da9324f598c6",
+      "mechanismHash": "c45bded591cc849a0b852459ce092263d11f86381865d1e93296257ff524e10e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-19-repair-material-deficit",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "c0d3bc53fc1b0f73c9dcac294ec537e6c9723cb4c9cf5b70c2bb47b04ddd67f2",
+      "mechanismHash": "ff7ada82e38787f658d3599ba54d0607c3d1f5fc93d1b8ea34ffd2f80994deb4",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "engineering-20-hazard-safety-zone",
+      "version": 1,
+      "category": "ENGINEERING",
+      "file": "engineering.json",
+      "sha256": "5b4cbab9228f64de75a467cac98bc98f58b3a2ab1e2987b107133b26a54c6bfa",
+      "mechanismHash": "aac7e17325abb4e3d925d590d2e6ea3824c0068cf643571406d323f6b37d9ba6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-01-rain-soil-saturation",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "9b7af319443bc52046ed4456ee5bd2da340a01e49e2ed29acb908a63bc62d133",
+      "mechanismHash": "7be0fe757bc05179952b22a38eae7910b339d7880636eb145c3bddeb2adccf50",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-02-snowmelt-floodplain",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "395309be8e110708e3bcbbba4b910c5b9804d7aa9832c9f271775cbd18b66f24",
+      "mechanismHash": "0ee23b10a62776ac8eeba9a5b397a60661ae442e01c7e0bc6612dc330691f89d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-03-river-level-rise",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "9a2d36cfd4377811efe72659cd8bf51383a0899cdd04b5e7bf556d78ee5e56a3",
+      "mechanismHash": "13677c0f0a958d6158af4c5c520330221a12f8559f9b3c6a258eabe34b33f08c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-04-flash-flood-road",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "67aade013497663e2b613969e765e4fa930658e544f1d59ddd647adf34e23fe6",
+      "mechanismHash": "c53967263d7a3709f6eeb2543adf2f34a9137d22ba8d361e9b26cec8cee80dd7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-05-wetland-freeze",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "675b76744655077a09c589650fdfa8bf5bb6a111743b68094da1224bd10bb3f6",
+      "mechanismHash": "803c9c3d9e121a9e43c40e6c185f64b7f59b757847e9b3f4cd2ddffca9bd8033",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-06-wetland-thaw",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "8f20645a1c7422abb6f65d38c9eb107d7d7c2a2c6ea301c65935520cf3172eeb",
+      "mechanismHash": "3779ada414f2bd859970292b40a8a3b7b310525bd60c6d4b59e750bbd9612edc",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-07-ice-drift-suspension",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "b865cf2fbc02eb9a29dbf42968984473f0e0260ac2edbe61857278508df9bf14",
+      "mechanismHash": "977e3dbdf6f992bc4ef33b444749dde67c5f66d66e9e0b14775b18e1905c0836",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-08-ice-formation-check",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "b50bbff228dfa683d501dd755b7966fe59987edfe54d75e0af23952dbf58023e",
+      "mechanismHash": "9d45d1900195e758bc1028617d709513d7989da574baaa54df71aae7ea7d4c07",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-09-fog-visibility",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "4f4fb5e451c53d6b1c1bb04a6c5643a2c9ccc352618126829f3f46e40637046d",
+      "mechanismHash": "0dc547626adcbf75bd68ad648b6917b59ece72ea11a135e90e7250962204710d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-10-snow-road-capacity",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "67d238d4c79f3682471cf542ed818efb1655219dd383755de849ea03f8624139",
+      "mechanismHash": "9306f2297453d5baf8ed4776416e95cc3a3af5f2d70ed7cf1c4d8017c814ad70",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-11-heat-water-demand",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "f8fd690c16287ef5e475a820ba03ed4c97fe9b6c0f681a0c9968f2ece4503c32",
+      "mechanismHash": "c94de7bdd751d39caecfb129c9cee61e855f2aa7b0773d1e5dd2d9ba7226395f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-12-wind-observation-limit",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "8cc6f2134b82754e19ab126b71c9985a5baba877e688da358fcecb9c9ddc89b1",
+      "mechanismHash": "8c6d253e68993f5e4ea47901d43754a64085c176d8558848f9aa65b80510a9e8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-13-thunderstorm-channel",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "a23c46f187bddaba454d26575ccd303d21daea8e0d0e39b5c4461b05e00bcf71",
+      "mechanismHash": "fc4c3c6ff2c15174b4f87887ec713e6252bd0ca2b5c36fbab0cf472d31f40909",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-14-drought-well-capacity",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "d1f8a59c33a0306fb3c48593afbd5834a0bf39c111f021ae800d314ff42dfee2",
+      "mechanismHash": "d82d79777a2d55fff21213f8081c16e7026b1adf25aa57280a0038caca975439",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-15-dry-forest-risk",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "8e5a6e33a0e1766066494bcb108368689c901a304e6dafcee4c0664e3669d38e",
+      "mechanismHash": "a3028bfe08e185838521e6739105d19794c0a65a70b2f1530325e892e55d30f5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-16-leaf-fall-visibility",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "74ff53159f1fd9e71f9e95bb7129b724124454499ad6ce0cc92abed2973e0a56",
+      "mechanismHash": "d2babfa7152195b38bbbee60709a8c0a27cb997f4992e98fbc3978d6f64d546f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-17-daylight-schedule",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "20fce6711fdac3d67e84e9e8b8c44fed4c6c5a40f96426dcdc9c987ff06eaa0e",
+      "mechanismHash": "3a30bed9e375f8acb14129915f6544c33ac72ea0eda17e50140a043858da7138",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-18-weather-data-gap",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "0a51280dc0ada1ea9a2d188c47dbf221aa4f62540b38814596e8660a31841b2e",
+      "mechanismHash": "e3dae8c1d001f0381df52a13d4f4eb573421b1535bcff4c1a58d767b1cf90f14",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-19-weather-version-change",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "5e1e4186622b33f071ac02295b9b058af4d23dd7151be459f8e40a601e1437d3",
+      "mechanismHash": "30cc5166c0a3dbda847d55dff94b0027822baa66f33cacee3154c7104527e5ba",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "environment-20-extreme-cold-equipment",
+      "version": 1,
+      "category": "ENVIRONMENT",
+      "file": "environment.json",
+      "sha256": "1e986cd21decf6edd5e2efbd612f5b8f38256cc72caff121dc9c0935d972a2af",
+      "mechanismHash": "69f98e805dfda8dad8a1298a1eb38fc27fb63323fc191162cdf7a6c89f52742d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-01-boundary-mismatch",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "f7ca5e10a7c7a1503ec92d5f316559ebc72aac3d96563ed6472cd24e01bdec44",
+      "mechanismHash": "43266fc501921ac33e6d87c0b3d1f6f5be12a72f2df81802b3242519986df4e2",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-02-coalition-schema-mismatch",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "8aa46e889155409d21ad479d5a463f9e18e6967a1bc6db8f72d24ebd16ddf5a4",
+      "mechanismHash": "fc94474a79353002b2c2fd6d5ecea895871169d6e0093033528a43b9616ca43b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-03-liaison-report-delay",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "f98df50ad96522ec2a88ddf4e8ac6b631a69cd522e2b00768ea3e6798545b6d2",
+      "mechanismHash": "99e589cc9c7a283a5c2b528944a13689aa26ef0674b04487197e56d32159c9a6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-04-symbol-version-mismatch",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "7c2c3034656527ebfae5989164c752bd1d93b454ded11c1a2daba4a7b78d54be",
+      "mechanismHash": "793e5b8dfd1f6bf795c26898f77c29ecd5f0df366d03286a180581abd9a525a8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-05-contradictory-information",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "71c638a3d9d44b59a7b749203bcc10cd65d0503854978d33581e3f3739aeef5c",
+      "mechanismHash": "e973e153988f237743cdb88626c16fb0fad234c8103c4d754ae4be2162ff00bc",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-06-unverified-scenario-message",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "dbada5af156b06524f44406704e20ef6bd9b3a0d349b88c698fb1001edca3f59",
+      "mechanismHash": "458b695b1e8b24c968670afd7c3383e6922b57dc6df397b14f5f5b3113591b97",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-07-shared-map-restriction",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "fda0b6e77477d7b40e78070f3dadd52f97d62d3dfde5d97639fbe3e586cc4754",
+      "mechanismHash": "f71faae3cb10685290f81e8d2506ccedf9b94068d9d0f4d0899c1bba42c7d003",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-08-joint-order-conflict",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "d0eb3aa47ef50e05565a863a4f39be4e713df8d479ae703554d2e580ac26bba5",
+      "mechanismHash": "29fdf2aed70d6133078e5dbe5c9a78e142a67b8ef70ee99648c9a7bef0e0fbb6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-09-interaction-channel-loss",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "aadec78226f41391a64be201ae48cbd8f91d06998e212b17f0c7ffaf9113a803",
+      "mechanismHash": "1f43960927a3cc5a30e4b127eddd23b4f4b8f87612d81aa11a7f1927d779215a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-10-crossing-deconfliction",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "2179e92a7a388cdf4c40aef00e323f1b4a41b6ac4153fbb48b8fd236b0b446c2",
+      "mechanismHash": "645c8d8e5e85ca9c0ab916a461776e741cca84181ac2890e1a6af945e635167d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-11-shared-area-condition",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "63ee4f055fcccf85c65fbcf763615db57628c5b4f5039c9464f8777a81e8ec5c",
+      "mechanismHash": "6c06a6c00cfa5b9f7afff4a1e5fa34b69fa8341a25ec7778051fbb3d697036a8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-12-engagement-constraint-update",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "aa9d1c5a6b60443af230e3da95e1dd64a26f67c8bfb7fdfbd2aa2daf3bdb92a3",
+      "mechanismHash": "e0f150004c073a005eec3aed58fcd78a429cb6aa7a88fb9ac105af97affcfab3",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-13-civil-access-condition",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "63bafc38626629f3a32846928fd3cde0cc320047087944e4f31efc4197c6d61a",
+      "mechanismHash": "a080291d7d59a6b5318dfd723d05dc5bdc1f9e331d31d91ae42e2c8de57fb452",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-14-timezone-document-conflict",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "08a78e20702fe301aa4ffa08549109006b2dcf7222a6b3585302ea1bf8ea6a83",
+      "mechanismHash": "f16b3f4f59a31eb505b3738dfa68bff2747bde718d2931cb6129808bcf75e213",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-15-resource-unit-conversion",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "ba0b63f2b3e722ccb7ed81cb25f4ccc5c029954603ee41dfd9351a1e2affa77f",
+      "mechanismHash": "8e6dc033d25ccefa9fb18a0e7e2be519f82488a285e5956c3f21aea1379a6e01",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-16-shared-observation-unknown",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "922a9a00ea23cd270bbd1323929084562b75c2aa1df6afbe4c963c958329d33a",
+      "mechanismHash": "2ef121ea1beb8985ca877ba5b2c397dc61c7e5f95eebde7cfd0c220b965fbb1b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-17-information-correction",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "2b6729603122e7dbd7f357b9fdd6be731b8724697c3c24380e62dad2990c343e",
+      "mechanismHash": "d073d74b1f3a3b9cc1efe9c2f1481351032cb77908573f42e6ad3640bcfd4391",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-18-manual-coordination-approval",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "ff8c531625ab7ea279a1ea3be6b3a5b86e15df60719573c4980544a805faec02",
+      "mechanismHash": "c1c26ec684057bc341fcac0fe65fbf78f2c5439fc0d9caa0d85aa5213c0faee5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-19-visibility-leak-block",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "6990d29a5f9d3bc5d821b0ac264297d66fcd1521d78c4e55157fa95e40fc7aa1",
+      "mechanismHash": "24687ec3f8a98a6b2d037f1be5b5d27758705ff0768f1ae4e42fe61aa89cb8bd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "interaction-20-special-condition-lifted",
+      "version": 1,
+      "category": "INTERACTION",
+      "file": "interaction.json",
+      "sha256": "76ff9ec53d2d8b56bc6c4a36b2f8422bde856394f8d20ba999df3f8082fee3f5",
+      "mechanismHash": "fbc4ae6195ed8758d09acba7706cfd4f4da8eb484c314a3c3f25d57bb5d261e7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-01-loading-queue",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "459bb2b8b3749364d7a8730be3b9f82d9edebb3c09f73a3011d34932dffde18e",
+      "mechanismHash": "4b1ca29c917319b492d153ec54b0116e58d54536419980d4feac8bf27cc31216",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-02-transport-capacity-split",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "3dbfb94511407d992a446ed633d59064b70cdbff20c60685f2ec315b725878d2",
+      "mechanismHash": "ac150988dbe17ea15f5927dea107b3b7dd5e598fc288e8e6846d40eb5c722671",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-03-transit-breakdown",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "e3a274d46fcd24071569daf1b5caf1d7b8186915e165b32c025ae06e296dc02d",
+      "mechanismHash": "9ed7bfc539ade6fbfcf3f454dc90643dfbebd1daf17513662307744c7a6272e1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-04-supply-route-closed",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "af0b707aa67ac26184566b1f81ffdaf8bf92a1f3d1216b2e39fd91c744927142",
+      "mechanismHash": "99a8eadc2f49da9ce701ebf5611233effb57e884e0a81cacfaf13b80e2f42008",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-05-partial-delivery",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "7b471482edbe4c0b7cf6aa92e9e6f13385929e557869df612f965d5de00d3b15",
+      "mechanismHash": "379b721cf11adb39125864fb6b659c81fa0e9296a866fd815e99b1ffb5ba3ddc",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-06-warehouse-capacity",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "66d5cd29997ce7bff90cbf9624445510bb02ec7f34ece3de7f051e560b8d31dd",
+      "mechanismHash": "632b5e47fa37f1c47b59269ee93189ffac0e6730b87cb5c061325f40f6164556",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-07-unit-mismatch",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "7127ee5117c298d4856b36e55178711244243af128ce8fc559049fd57be3db87",
+      "mechanismHash": "05eae765bebc1ecd9a2867e5e92b63bee4af22788fedcadc72ff0e588e3d7be0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-08-fuel-deficit",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "eb183559cdeca4ee80b03a9a80521c7f18e979e2a971412b54caeabc8f403c4c",
+      "mechanismHash": "761aefa4fe6f048c5bf6326214e3859e181876ee8fa0a916b5eea58f5c5f3f0e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-09-water-demand-increase",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "88ed8f616dd89c68a2439b8a2caa4c2cbfb2aabd127884c781c855e423a5bb74",
+      "mechanismHash": "90cb980e30801062c6be7bd320ec9917bce7325ca620bb5c9dca9f64a09cf58d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-10-unloading-queue",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "f64ccbb294fafb2f86ff6c82a1141cc454b54f6ffb3cecf8de686f2d5bda1226",
+      "mechanismHash": "35311379392cad67ed817044fd54a3f370a37a7849a054609cfd1eef85e0e23b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-11-confirmation-missing",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "41d7f219252957a09f6d7e47a9ce67f0ad33fd86432e5075cb48f759574aba0a",
+      "mechanismHash": "760517515ba6f95ea97db8d3c84065c017702e1f6c5e3cc7d432fab5129131c6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-12-cancel-before-loading",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "a02e8e047f53e911a41526fa2a45f3493efea1f78239bdf0fb072fd116ecc0d5",
+      "mechanismHash": "d9fa65f4a99799bc9d3e8cc04e19e700d596ba620fe445974b861db16c5a5ddb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-13-cancel-after-dispatch",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "f0b20fa9c699e7aa593d76ebb4f0ed837b3b3969ee7c51db463e107ce044612b",
+      "mechanismHash": "73ca0c820dbb126acb3688747cebce81007b3084fb1b215dbf7d537cb37dd9a6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-14-duplicate-receipt",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "15389b777cce5bf4dfa4e1407229a4e35f5dc4cd0cd5ef23e97f0519f156e296",
+      "mechanismHash": "52304fd3b6e3fcd42376a3d2605b675e51cd23ee9755b5ee4d27ebe25be022b1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-15-priority-reallocation",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "90e9daea7c371fdcfce8adad059413dd141b79ddc10074e5d20c917c9b745461",
+      "mechanismHash": "24cc9965827258bfb3477d7b6a500053293c0e1d3feeddb6cfbd979ad25473e3",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-16-reservation-expiry",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "19cbc45d56fd13d024dc7ea794a8dcf3a315dae37dc072dcd6c82f0a7eedf596",
+      "mechanismHash": "209b0a7bd3f84e06d16e17ed97ff11b8dbfa0c1e703bdd44fb53be73f5bb2164",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-17-supply-node-degraded",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "7f90b79b60519f6b6672d3d369de421886ca930680b7ba8ab620c750903083a2",
+      "mechanismHash": "3cbccf66728592c3fea6b9b3bddecdcac26e4a4c596e8b96cbbf80f8176230c5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-18-supply-node-restored",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "1dce6418d65db7c828657a8d4b70e68da0b66f7c58eb1336c79516cb70eb10f4",
+      "mechanismHash": "3807b2863dec2eb6db187062a0e531241c899e107ab0cde1c7b97cfb4c68d60a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-19-repair-parts-shortage",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "377725ce184df101a570711a1b82d50a68c7d06183dd6d7ff8cabf2d47261eea",
+      "mechanismHash": "d7ef81eaf7d162c74f235ca29e6da6e88cc2be80fc4f783981fd302e36890eee",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "logistics-20-stock-discrepancy",
+      "version": 1,
+      "category": "LOGISTICS",
+      "file": "logistics.json",
+      "sha256": "e4cfbfb730bb9e13bb1808ebd7185036311ed2cd99cf14b03e90a001b7573691",
+      "mechanismHash": "5125cb952f4d7453da6e5b66464b1dea002c84926b606eb1e50ebb0a115950ad",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-01-inspection-degraded",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "0b0f7c0b80dbeaf2ac0bd3cbafefa1f24c1d1e6d6be39b289611e4fdcf34558b",
+      "mechanismHash": "7a556b4180fd39fdfa63827a162afd3da017691fcf5ea5b3776bb7b55d7b71da",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-02-movement-breakdown",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "2d0b6c995a4e9a43f7f1c12a8e7454f52a5f4b9de9d252b7b7c89cf4e78e8569",
+      "mechanismHash": "ffcd23dac7bd4e10decf9531490aba5fb19bdd4f1fcadde421f7879c888e9ded",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-03-missing-repair-part",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "561a49ae745ffc533844cc23e413c785d230fa4ed0e6aa3af540d6eba5de7609",
+      "mechanismHash": "c74a9b9a98a56d02b2f8a8548df88c37b01d888d3d09f51d0ff1b0e5cce20d3b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-04-repair-capacity-queue",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "eb3df0ac3fdef527cd545bec5e33ab91a650793aeafd52897b7583cd5e8d2f6a",
+      "mechanismHash": "16d025cb9b3ff057afcdedba91c72a3f1c3f5c6770abd1730be29140c39fada3",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-05-evacuation-route-blocked",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "3f3b7b82a3bcdd059586f0bdd926f16dfd1de5e583c760aa61f0c27f13cd3385",
+      "mechanismHash": "e1840553cdc8c8a623e1e95f8b6a366958513e19350cb96c207546a723cdc4e0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-06-evacuation-arrival",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "969a2ea37d7d828de9673a0dd2793a7942492d668608f1c4c411b13433ceebe2",
+      "mechanismHash": "e85129fdc8fff73d572436ac23b1743f806d3506923f595ba84cd1ece9c79a1f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-07-repair-complete",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "02213f9a0e736b14c68c7901db880db8ee9ff1a29223e541d6fb98ffb04c8412",
+      "mechanismHash": "420d1ebbc730c590ad2ef139b6f34cefd7a8b22578ee784edd258bb69c75dccb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-08-repair-unsuccessful",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "c92df767bc9662a979527f1fd5c9b8740a481eefe7ea126abd2dcc652b4ac6d5",
+      "mechanismHash": "d5013821db6bff80bf4d1c92d4f4ec60de1dba97f89829b780ae7a80142dc071",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-09-damaged-needs-evacuation",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "a11458555b61e2057c94aede813456263d0a30c239c0251972170fcc09c54ff4",
+      "mechanismHash": "d49e3606e617ef3f9fdf823eb8ea751fff3aa8cd95301e49e65cde0087ee6478",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-10-destroyed-transition-block",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "f1452c312785e709f262adf6ec9e6d0fd30e422f1e44bbdb32a0661ad4a483d1",
+      "mechanismHash": "a3a16dc0402764c048731e6ae9d3511b8b9f7568da5364e682229f754322079e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-11-maintenance-restores-degraded",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "cf5ba5aab81da2c393cdc9f902a2b4046be4d0aeec88bee535820877de19a271",
+      "mechanismHash": "7b6da3a82aa8415cc6b199fea2edd6f88a2c437e3813cb7ebf4022b8c1887186",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-12-spare-part-consumption",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "0b68c03e42f65ec351cad75bf4acc26cd4092ca036cd20190a805c65e32b23f5",
+      "mechanismHash": "b1772dcf24efe2b7b627f55b4c929fdf244831c4aac58cc5b2e2519193c2e142",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-13-duplicate-repair-request",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "65375f9f99f552f7f5b918ace79d588860b2bf926d78a5d6052ef8b46eb94e3a",
+      "mechanismHash": "792738d21a8fa66659b6bbf31816fc49418f842d982a27dca16599f23959318b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-14-equipment-double-allocation",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "affc7f80e28adbd98686f5b5dae3d1d38c80497a0a95d8db45d867b9f1f3a5e1",
+      "mechanismHash": "b8205d347812615487078e843c587b748551516db6afba8a509aaf226eb5e6ee",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-15-crew-unavailable",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "95f010789fcc6082e449e69f4148efb0ee3248bc8c06e0e7eb074cea27942f84",
+      "mechanismHash": "8ea91fb93a42c7f73ea54697205fea928c492a518cf614d81dd3ff45efc793f5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-16-repair-power-outage",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "9856b2f4110f4860acbf4b52f63fa7e41bc80bde66917426716834b0d1856afc",
+      "mechanismHash": "8dfaef261f76b7b7aaf604c72825f47fdb00911e1ad8fec631232f0c818e14e1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-17-field-weather-delay",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "54c8012f9dd68399726641c6a781b61aa709595af4832cf0ac39fe11f53de42a",
+      "mechanismHash": "abc30ce3291af561c06bc3e11c98c8bf148221801b2d7ee447cb923b17f13321",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-18-component-transfer-approval",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "ebf0823a7fb32d837527014926933cd345db378af7a5ce4b96974bcfcb1049ba",
+      "mechanismHash": "e96d680cda9ccf0061e3734d0e299e5145d9291fe3740706cde79896b736aa35",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-19-unknown-equipment-state",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "ae0a9fb068740ab82f2878a53816bd6a3b47859b126e70d80097b11973fb5159",
+      "mechanismHash": "3d7684a78d3a8a9bb077b4ceee51ce602d3442564ab6299102fd75ebffe1c938",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maintenance-20-return-report-delay",
+      "version": 1,
+      "category": "MAINTENANCE",
+      "file": "maintenance.json",
+      "sha256": "3175d3e19d6c7951612bae51a1c2addd0e73dd46d6497817cca708972199dcf1",
+      "mechanismHash": "e323c71c4ad1d6321fc3b87ce1cb6009af33637fea581f9ead18a2ff1bf752a8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-01-route-capacity-queue",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "299e197acea4d31643d4646ed765df86ace4726fab2001eb3c2ad6ba57de3387",
+      "mechanismHash": "ab75c6d5929ef817b0c7c252b010c17bae1e049f92edb4ed15f5ab476bdf68c0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-02-column-interval-conflict",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "cb381089920652c9c2e96991ab7907b13e752e13f02683e98149627550cf25c4",
+      "mechanismHash": "63b7632d1288c59e796e2a8c175b59dcb2c82214b2f59a51f7878c23f6a961ad",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-03-late-order-start",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "e174ad4c1a41258b094eb23603b4e5f9019e0ad5d90036888e81b0b3e7582c7e",
+      "mechanismHash": "a5f024cd003dd23efc28798c6aac1237f424c6a2bc224453145bb1c63fa2ec3b",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-04-bridge-load-split",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "8db480325f768bc58f43ef748f8966e704ff0e67360965212c59ca52c986506d",
+      "mechanismHash": "affe017f9e20b6f359fbea9ac3080df63735468231a7db7910d1cfbbc1b49cc7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-05-reserve-route-closure",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "14f229537248b8ab9087f852f98a33bfdcaa09728565515962a556088f5b60b5",
+      "mechanismHash": "d308802665223b9daea221405ff742c6bf4a4ea53be692eee70bdd83f9be2e71",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-06-occupied-deployment-area",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "d2a2d3f6f19d007b99bc013fff518dcbe99a7e5d6b120a8a14057dd4d5e98f63",
+      "mechanismHash": "c2e1840e28cac426b9ed224961ae28f6721816f3d9322aee2f560c58f672ba92",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-07-partial-echelon-arrival",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "b28319f90c9a655f1240e926e050910af305ff78cf42488dff3f1bf00f823b83",
+      "mechanismHash": "1369808b4e4a1e544d7070a2d31875de24f1039706e21cb9db9e14cc66a6f2b7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-08-missing-night-profile",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "ca25676e4e362546fd9aeeae486cc81e9cfd7ed34db88ab0bf33735725762ccf",
+      "mechanismHash": "be4c991b637df481d156bdfd7fa158ba2105c09fd5f5a0d6c2372e415a9dec9e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-09-refuel-halt",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "8f9aff49bcf79d3c99f230137631fc923a05e3f34190076df2fc0b46e2cc93d9",
+      "mechanismHash": "cbb6a7fb551a3882360b233a025e985f593106f6e5b6ca9ae2478c0ca08d24cf",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-10-route-orientation-loss",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "e631efec3c5c1f3c842562f14018158f94b5051163ddd14c7ea19df9d426730a",
+      "mechanismHash": "13337132bfc662ad6796d92a88feaedd080b9fd326b3364028ddb2cce064b2c0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-11-crossing-window",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "e23e31df6f680ebb8957bc175bc350abef826f14dd839900e828f940beb48392",
+      "mechanismHash": "06b0be7e7df103a6c83e16bec53189768e2e07515d092267c2dfe831bbb1d858",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-12-formation-overlap",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "f512e70ab3a8a54f7a81b73ef8fe640d9907a357fb034b5118385e70919a4e0a",
+      "mechanismHash": "ef067ec8a56cbdcd6df27fcc136a965a3a906f9a2e1385e715b90ada39ffc476",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-13-rest-halt-progress",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "da3d62d3549a8e62b15e7f18b26188d3428bc9f75c3f3cc87b133d22e20cda3b",
+      "mechanismHash": "6a602c8b382694fe1f5dff3713307c801a4a05ee59fad7af2175ac66dd6d4242",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-14-weather-reroute",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "ed51f9979e54ff75f3ca1409f54e28c1d940b6a462fc7a1044ca9cfd0722e866",
+      "mechanismHash": "43470e8396ed02798a664fcc98e958f271d997974ed861e773c1cc9195fd6a8a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-15-breakdown-separation",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "50c92c3b96cd472b81fb040a5dc9cd118de745c52e0e1296cb32790287cebe79",
+      "mechanismHash": "b453c7076fdfbe8ee2291e1b2b33d7935fc47f899a824feb76008c6c3863f90e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-16-late-readiness-partial",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "72f78dc96eaaadeb01cae1669d4fd2bf8cfad385949f2cab8d5049a607aee7a4",
+      "mechanismHash": "3a946195398d2dc6faf4799b22049d940ac6602f6c551b9228214ea60f1d46d2",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-17-cp-move-dependency",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "e49c5a5e5ff78cb69facefde736ba49983e8114ee64bd31b4d98f92cfd441fac",
+      "mechanismHash": "bec5ade40d291f03e8ff8463c2448dbd2c18f280af810f71ed2054d89324b5dd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-18-intersection-conflict",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "32cb0d544f96db4ee5d8135166765944220c7914efeb421bf4d7aac781f62b67",
+      "mechanismHash": "02481ad96488e56282c72e45fe484b492d0b3f44752aa677da7dcfd767018b78",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-19-changed-task-progress",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "a295ab5ee2a98442f66623f583a8e21164117212ad095b5a5be579bfe46894e7",
+      "mechanismHash": "d4794abfa9d38dda0421288bf1bd6b72f408d0849e23da8e3b7125258be490b6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "maneuver-20-arrival-report-delay",
+      "version": 1,
+      "category": "MANEUVER",
+      "file": "maneuver.json",
+      "sha256": "3d74f6e1ef65c6db645ab9547ea4e0ef6ff8ec2560b64a05b2001555b9f948c9",
+      "mechanismHash": "61343f40d08e55b6142539ea5aebbb08ab79f55b918f6759a99bc84667312e1d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-01-evacuation-request",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "761a25801cb70898fa34eca1eadecb2d895f6126e3d8634e745688844bebfadf",
+      "mechanismHash": "9336631ac76676fdc1a6d14acb0d35544c19a0e8f20a3ddb0eb108347b265237",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-02-evacuation-transport-shortage",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "3f4079ce94dd6f44b6313de1974456a323d263f78c5775d0a36fa1d82cb6e101",
+      "mechanismHash": "73b15f0b8191cf5c64a161ac67ca01d8bcfbb8497e1db0a5559ac32559a406f1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-03-priority-queue-conflict",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "93694ae19804573c9a41b957040fb4ba42c5b8e0453ef1082c2a215e8fabe64b",
+      "mechanismHash": "4dec17e6a57cfec39bbcede3aec8cb6990826be061016f0f19d04a49374c18e8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-04-facility-capacity-full",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "9b665d3f36c54f6f8af6a782c1925bb053303cac74f153b9fde6eedd027eff5b",
+      "mechanismHash": "51e1b84052a792d72878fa03d5e783de83a1ca787b4d7c232d38ec3a4bdef8ce",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-05-evacuation-route-closed",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "028076fe848608bca0f7976712d23ac829fe3b57c8a051cdfaccd6e9c4b2f5f2",
+      "mechanismHash": "f95546d3d466f592e3087d7f1201080a5dcf25b9a030715f1e5ad074467185a0",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-06-pickup-delay",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "c4619418bc9bbdcd875e1d5dd6eaa0ecb6aa9c21e6a59ee109d8f9a23f25d0ab",
+      "mechanismHash": "17f85d15bc484fa9ab5b3508839ee4ade8bf4b2f03fde614831495c15a50a403",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-07-handover-missing",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "a9a5448c601be530a60da84e8a823df5da0533b29dabe7800edca209c3af7229",
+      "mechanismHash": "4056e361b15d8de00a8bec568d9723dd6e17c3894f723f1024df5a3fa6e58d97",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-08-medical-vehicle-degraded",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "c0e7541fad73b1436d80920cad377706c5838aca2ed6fea9d6353c8c2b096459",
+      "mechanismHash": "7f5a8498e819f12a3b9d1d7a5d503c4181515f26c059605258961c0ca88e3187",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-09-medical-supply-deficit",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "5d7905f0706ff737fb52875225b8aaa6639171315e9e11888e8487d226e772c7",
+      "mechanismHash": "405c2f793705ce60e3cf20b6d67fa1b1a8870bd80537cdd5d81f7d1ce80018cc",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-10-facility-restoration",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "fa474fa4e331492a52ac857af79a6da3b02e78dc51eadd3bed3f178f602ee0e4",
+      "mechanismHash": "16cde7ef03572af7faf630c7b64f1e8ba2472567f93bb16b6015877b98d22340",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-11-partial-evacuation-group",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "97975679028a50b737eb107b44f90b3f6cd55e0221883b9cccab926866542573",
+      "mechanismHash": "84741a3536b80a87c3e41f409f9b5c703f29fcbde7e9397c68e27c69a01111f1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-12-duplicate-medical-request",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "7f6924133a6ff1cdcbb3875b51412286f837491a26aa8d5a45412556ea3cd0f1",
+      "mechanismHash": "a5f3ccabae0e4d218f2fa22a829fc0b19d5ad5ef7adc0b2be8f6f1cbaa73f102",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-13-weather-transport-hold",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "c34f5a33891c3b2eef4e69f6a17f127023789b3f6a2f7e5c5c7d343dc6c471c4",
+      "mechanismHash": "e84122bebdba8c1683d84a44fce2f4a6ed97b7982d1f1d789516c2d46696f2de",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-14-collection-point-relocation",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "689d474d10bffc6f0eecdbe39399a9410b9fcda91e6543a15f34f50bb2d19dcc",
+      "mechanismHash": "32303ffd774929f08183614b2feca50d58dce1eae47ef795faa9aeec4ef8121f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-15-report-deadline-missed",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "a76d4244d27b86b6d06ce71b35e1bb5e5e13604c34d176106012e3c8c3d72392",
+      "mechanismHash": "26666a754fcf5558696bf3631956feaca7de91a7e2b9cebb125a4a5eef9bb9ff",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-16-return-readiness-process",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "98fdc0d2ca26d0b9af1279152a0a20a85becebfe9c053217e0ecd5e51b589ed6",
+      "mechanismHash": "14e7b5a639266626deb6612e238434eff21d8fcb8d1cc37c8d158342e08afbdf",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-17-stale-case-observation",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "3970eca7c41b10be33b0a6468c5b0873dd776e6df6ad318904dd6e2d826b8163",
+      "mechanismHash": "c1ca9f6f65aae5f71a7d24626341eb36533a8b55df50929c66582addb1fa1c9e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-18-shift-capacity-reduction",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "60640ed92633ad9c9ae74b18122f34f60091817dade86c9ea2c32a18576c5883",
+      "mechanismHash": "2326ea95120929e74ab5401218cb69dfc6849200c25d7052cb7214c71366d57d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-19-unknown-case-state",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "e640a2988071727d44d2b1f14c3bd53bb1c37ed0bcb6318c0fa58511a6bc7898",
+      "mechanismHash": "49a267feccc57c9386dc57f20016a617463502d7652e4f84a410a147cbdd7750",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "medical-20-cancel-before-pickup",
+      "version": 1,
+      "category": "MEDICAL",
+      "file": "medical.json",
+      "sha256": "5d805402f8dc252168ac5ecdd9f7f5d72119f225dbf52c2ddc5631d5c9e76296",
+      "mechanismHash": "575a5d38663e9c616df41e6e2412ab9271f37c46e83dd4a22918576739993f2e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-01-continuous-task-fatigue",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "ad446a5e5c12ca6c25bfc57526f5f3c10ce9d68fe559e00eaa67743789f3edcc",
+      "mechanismHash": "41a1e872a3001ccd02f094191965c7404ea625e536aea51daa79cdf05847bbf1",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-02-scheduled-rest-recovery",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "a7104798a20f624825fe841bb85e6972b699607f89d97f4e37ad8b840e1971c9",
+      "mechanismHash": "5b84cd0fef9ba076e4aa8bbd09a2b7555de4adfe3bdd3f31f672775c13867cb2",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-03-sleep-deficit-order-delay",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "bd0f819002cc07751e2385ca7e11d1a2cffc4d52ad7816fc4aa1728076dc4f9f",
+      "mechanismHash": "af15711782f8adcdd546867ab4eb33868147bc59ee67a940b622508d438ce2e2",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-04-support-success-morale",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "5bcb81971ca20fa0eb65713adbb01c6c1758ff704dd2f45d56efceb5b158e573",
+      "mechanismHash": "353684e9974b2c39f91dc6230922f556f540fefbfdc6cf0e10723b421484b4a7",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-05-supply-failure-uncertainty",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "60962ddcfc16bfdf085701b37468a70caa9d9ebbc9154e8e95052835a81ad82b",
+      "mechanismHash": "774da887742a8b99f8719bbd0ad4387fa6f28b66e95ed670d329e0a462d7467a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-06-communication-loss-stress",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "b7b5a8592674f0896a49112d9884c7e092e9dab4f68d7cc64b0b95140c9d9a08",
+      "mechanismHash": "33664f85f11e04db1cb1676fc0ad7379f49a1b3d5b130ce4203539b908a213ec",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-07-contradictory-rumors",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "c8e9625067a5146bfe9f9d45a8c04a1ab884b1216d80995fd57fe2834b8bed2b",
+      "mechanismHash": "3c5d10e221df3fac29489cc6c13959563f5fb8ccba70de23c250b9695ed08f5d",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-08-personnel-shortage-readiness",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "2d1f5276a43cf8290c3e23ac9769964ec102c3581b9cc05c5f5bd5fea50bdaf0",
+      "mechanismHash": "69f07f90692056788b732f8ac22275aee42e8cc7d9fc1e2e1890c34e2ade76bd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-09-replacement-arrival",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "6e713692c46eddd608c2621f97ace5fec7554fbad059cf52a030e2a7ba0da013",
+      "mechanismHash": "2b0a9998816e028dc7de01866f3613c14c952c8a6b0afeb7cefbfeeecee721b4",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-10-cohesion-unknown",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "bce04d3ddabfa099fdfcc34505bd28f5fe261b858a3fc46cffb133d060d472be",
+      "mechanismHash": "5211b458414cd549ed5bf56cff9328d8524396504c0a1f810fb78a231eb27397",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-11-command-change-transition",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "05db207d14ee9a09a7defd96616732a0285b3395efa6841dfa15f98e066252ad",
+      "mechanismHash": "a9580596cdc0fdb3f379124627da4263f12dcfb3e7930c065371d5724689bda6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-12-task-success-single-impact",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "74ed0da72a7b800c05b9b29c7d5798e4375a010ddd22beb6def7ef9398734dba",
+      "mechanismHash": "60a68952bb67003c845da5a9818d168d03fd45fb4e9eaa16244dc29e336b4783",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-13-task-failure-recovery-delay",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "c0e78337ed598985a046809d4d334bcd764f7c8754acab13d8240f5efee6ee7b",
+      "mechanismHash": "f5a7c1d4a47401b790c7a68aba03a81fef5aeb71ca451aeeadfdf4424a9ebbfa",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-14-isolation-scenario",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "4a62acc144fba48e8b915b280d5cee20aef9621115c316ca6e19b8377236d398",
+      "mechanismHash": "4752ce0745f1e6df7b23022584c049b78667e95ee962d29c882a99db6ee44981",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-15-flank-threat-task-effect",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "2fbcc0def0df6f058cf29d70ef091b99ce0f07ac568e9ed33c0ae6408c5c96d5",
+      "mechanismHash": "b2bafd519d0f774862d58630047d00908f9affa8f442c3d86444dc8c593829a3",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-16-operations-rest-requirement",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "ee8ea8d29a3e0b1d24eb14dbada00817e9ffda3ba26c735453b8f055438cf76f",
+      "mechanismHash": "108e153c26bfe011c99ac4abdd955dcbe95b7876ff643aa152c7b0dc35807b91",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-17-stale-personnel-report",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "62c6f8e28673e4454260e05a2400a3bf4c1757713c9f41184a9b9e9958177a8b",
+      "mechanismHash": "257600f3f3f97c081ae8f17d6dcf444b4f436407c0f584b37af59b1858644a7e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-18-unknown-mps-block",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "e0219ead7a8562b655e2ffbf6a434841244b6c21a11fc98c7ae5e714e13037cb",
+      "mechanismHash": "6a9a9f7f29e9a90c29b3492e9804ca9156a24453d9333e00673e2143bc032db5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-19-communication-restored-recovery",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "f971be1b93fb7e4642c4fbaf27846bf02a544eabf3eb334e39df924f0711ed1b",
+      "mechanismHash": "86ca92f74bb65e9e619cb917198a19bc39980d0e58daa58e047a17d35a395cdf",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "personnel-20-loss-impact-duplicate",
+      "version": 1,
+      "category": "PERSONNEL",
+      "file": "personnel.json",
+      "sha256": "99188147dab18b6e50aa53cd70bd6ade51faaf2798552c91b14ff244f3dfc90e",
+      "mechanismHash": "e2b514a801c858caa8bf9eee2ca1c18f607c4b21ee4325b8118a99ae78afb97e",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-01-stale-observation",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "0b05bbaffcabc2223b805aad8e0da7fa2a054b0939e9d947cb775e295b0ed313",
+      "mechanismHash": "8e95ce8e00a04d55363a95b32e22384a8cce0cc7be4dee8f73636854e105ee07",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-02-conflicting-geometry",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "6704d176b3daaa324b4676aecbfb6b027fb5aa64c8f8cf70afbc7251f51d6a2f",
+      "mechanismHash": "7de4db0e77a266f2da598f29b09b326fc5d7523d215b3c3ce3ac41fa1428ee7a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-03-classification-doubt",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "0fe7d5042117cfe09450be3130e16a3df3c3f64514d2fa096b6fddce5cdbe398",
+      "mechanismHash": "bceb54fc716c2246c69e6522367876ef8c462f79eec4ceb90841777b487f60ae",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-04-delivery-delay",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "c4e9b86877a6339b8dc76ccf9227212597690517f8e77cd103b1b66f2aeb0154",
+      "mechanismHash": "d46ebc720de49fa439bd4841b3f2953485017c0aa2880bdd37e95ad42b985463",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-05-weather-coverage-gap",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "2f18356da1dcbcad221cac82dcf39ee87f75d904048c9300d1ba5e06b8595e74",
+      "mechanismHash": "5fe89037ebe066fd488e5fbfb52c899d60c049eca2ae57dac169a939d3a346f9",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-06-source-lost",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "22ceeb71ce3eaa02a824186d28f3739221837bd4948f8e1d8229f04510ea5089",
+      "mechanismHash": "57bd798a019dc01431ead8ecf598c9fa3b18001f5867e8dbb993026b6e7562ba",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-07-low-confidence-review",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "31f2360271ddc6ea14eb0b4cd26bffbce082712c8e07f21933ffa5bf51c7cc77",
+      "mechanismHash": "d95925a55c6cb2b13b1909133d321aff438d3c2ae039fa5efde2c4ffdf271774",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-08-fusion-preserves-inputs",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "e3db7eedce283898c931b1b990858c9d28b98d4a790266de4f8d07f8777b35f1",
+      "mechanismHash": "ee81a83a848cd8788584332bec10f2c8bae18056d0624ecfc13852434150fc36",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-09-uncertainty-expansion",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "b3def4ce761840dd66a44dfee58f89585e4460cb09bc1231308a5155009f9488",
+      "mechanismHash": "8c8dab1e3bb9a745f72e0f58dd919b5330814e21a4943294b076430bff7d730c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-10-independent-correction",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "52e9797429c831fd7b785bfc815128d9ecbdcd302b4502a7fa780bba397ead7c",
+      "mechanismHash": "8850196fd99661e3fbe2760ec0fb7d4f74b0ad82b4e991cf2942895faa812ea8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-11-visibility-block",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "031696b11912615fc6134302b60c9478f8671f76d4dbc0ea88119032770efc37",
+      "mechanismHash": "e59768a267b1eeb4506cf42b0841b1888679484a8fbac0abef53c95086184ee9",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-12-route-closure",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "dc326ee4fd5a87ae0dffd705a6a882e04396ae71761a277e70352bf900582228",
+      "mechanismHash": "fcbb0b23161bfe5907f8df64133cb02010aca7519248e1ed3aa8972465615378",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-13-timeframe-mismatch",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "7289f0a5430af66032b539567104e57e8dd3f8baa77779700c65e4168b05a87a",
+      "mechanismHash": "23286e40c22d5f252322860a0784fa044fca03148d40e1dda9ec08a98cbc752f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-14-unknown-attributes",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "2da8c27917e26ee954c6fa702a34785d32a4f5b744b438bd6088c66a94f9f5ee",
+      "mechanismHash": "05e48648d396aac1a80c413eadf2928f188f41044477c10c0be075a386f80ebb",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-15-expiry-not-deletion",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "3c6bbcee6ec33040de1872b08f4ee37f3298c1c82592e488b6f7c802a049bc28",
+      "mechanismHash": "580f5307d483a17df5edc5144d4f3e1a9b5f014250efe71e8757e606d69ce87c",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-16-degraded-sensor-equipment",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "e9f063e5867f89d73b819b295b97f00be6e2fe8f4d39447be7f199b678a65e8d",
+      "mechanismHash": "f20b3c0c75e2ae1fb99e87a7b05e4b43e74d7439aed87422d50847d9143b0978",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-17-private-projection-conflict",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "aee2884313ac0266ba23c5c4b33776b328a3b9a7080e1ccecb699d63e58aae20",
+      "mechanismHash": "e5354d7864806c55db3f16452d7d7299887ff657fe0cb41641f3266bd4b72597",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-18-outside-area",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "7327d99dd9a0675ae211a80fb7690e6bb864c01ed0c21d4b560ecbbd99de972f",
+      "mechanismHash": "0273ad45b7f81c4619d0c7afa83409df01d19816bc95f0ab21c0fc3e567435dd",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-19-truth-id-protection",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "6698ed0112fab205b2472c37d0dcafd9e3eaab40b0b90e6900a8c79052ecbbd7",
+      "mechanismHash": "ef14b2275d37e20cf79b83cc8c4c622e8caa84f096bc41604c624dd48cdf1c25",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "reconnaissance-20-missing-source-metadata",
+      "version": 1,
+      "category": "RECONNAISSANCE",
+      "file": "reconnaissance.json",
+      "sha256": "1aa27124ca368c23052a4dc9496e4a5ceb01e58a9f9edddaac4f74cc058fc3b4",
+      "mechanismHash": "352e75d4ab2112b1a9403bb5394afd7e1fd3cd0526e579930bc76337bfe4c0b8",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-01-power-outage",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "9b2302f6eebba90da4c45be2176c9ce1f2c267f67fc1978a39f2d9abc267b014",
+      "mechanismHash": "66673cee7d8b3d166b8a9ccf6cc46b00d2c2ec533ab7934dad94463c5c5fe585",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-02-water-disruption",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "f9bb9ea7a7896233e8512e8b4510caa459a4b186f83fa9dfd83777205877fe83",
+      "mechanismHash": "872d97ef4b7f9a44b69cc1333ac2445de98ccd51425c5c5762568202714e9027",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-03-civilian-road-closure",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "71d85cb7ef3b2b0a31542dbf65d9473d027333a89455b3235753cdaed913a645",
+      "mechanismHash": "4ccaf2bd14c5d548766c80b883eb94d81862cc8c70e860bf73a7ab03bf59c112",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-04-bridge-civil-queue",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "ec0985f30bdea1843e26df131538386599d76968180c81311d463b890059c5ce",
+      "mechanismHash": "72d3397f66ab898671841e42912076aa36ffc17ff7ae90e3df54f3858cb66f4f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-05-rail-capacity-reduction",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "882ebdb3a790ec92a152cb9bb48458509c18c18714a45eed74344c0324cddad4",
+      "mechanismHash": "7485d50fb9f2d2abfec6c88a1454c412cd6979fb66dde736a52791dc1a88fc46",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-06-public-node-outage",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "d11d59f491d83c598104f80bc7e6a49c19a7278fcfe4aa8ce89f362c256c30b3",
+      "mechanismHash": "991f955eee26d8a2517ee84f9310e9b8a53258967a514d59c436266c2e0a7b9a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-07-civil-facility-capacity",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "9b068ddb203efada8d8c0c34bba30ef8f451a4212b05d335196e9f0d260894ed",
+      "mechanismHash": "713e06d748f4ff215f403be28b0e56ed07ef3737a87fb529c51f5f202eb082be",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-08-warehouse-fire-zone",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "67e9a9cb7a4d4abb81888e61e7483927f35e49d19d7013b4ea7ec6dd82dc3fc4",
+      "mechanismHash": "2a7eabef20f8b87e77e7d8c2c3f99d490b0ab04787de455a5ebdd81d8a915689",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-09-civilian-evacuation-movement",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "e8a7869a733b7f06e1b108793b55541bb6590f7b384ccdd9f2309a3b70684920",
+      "mechanismHash": "de685bcbef2a73f6a3ee7186691c969fa4684287599b6f0c4460648221f70d09",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-10-civilian-return",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "04ca61349cb1d56a55d3ff044b90fda5c997a7543295e561379cdb3396490d84",
+      "mechanismHash": "ffe8d95ee92162ce4b658f93a8f9bac2dc66bbd355d3a0986bd5c85047004a5f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-11-shelter-capacity-exceeded",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "854ad5842cc22c21ced84b206e1f01513c9258c1b37cc514522ffde53c8b01c5",
+      "mechanismHash": "df36acb3eed212eead80431fe5fac28b1588ef990a287b597587ffa0b0d1676f",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-12-fuel-station-unavailable",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "63b79ba1f73f2dc8f4b38489fba9701f310c878f5988a71740ab882ba9a61671",
+      "mechanismHash": "e933255e93af88448231139272b13ef6405991563bfcff415ea54b32a7569fa6",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-13-debris-street",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "f4d90b097a28e97b96f53afffeee90f33069af62f4ce25324a6fb232d6b7d5e3",
+      "mechanismHash": "6ee613fd703e56e3f89194ca7d5ca766f535f3df5ea17e5e36ff95a9c7be7404",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-14-utility-repair-complete",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "529200e38bf76c955e6ecaaad3ebbc74b5ba6dca75c4d9ac71486b8ca4f8fd2c",
+      "mechanismHash": "be2400b18e7a411435d93a025ffefe72f86f2eff54f4ffd5bc1e1862a0b0cd47",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-15-access-curfew",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "2deef1552dec0abd459589a1c11a81767a1cedbd33b51bbe39a9b5fd9a6cd820",
+      "mechanismHash": "7bf0a88979d6b8200234541fa79b9bd00639d7b292d8e1a4c2ccf658486ef155",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-16-civil-authority-conflict",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "b2fc0d22edfe7dbc62d32365eb185c3556b25f8439b2e73f0614ddd57825e228",
+      "mechanismHash": "e5030835afdd651f80341e4b2e20325441a399c18fe57d27622faf425b9bd253",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-17-stale-settlement-observation",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "045c9b54e9f6595edf581f2333cb62d5e0a3812bbce0edf845471b143635e4d4",
+      "mechanismHash": "5aca44eb9668db66aba50b71e572356a4b475fc4874146c682b4e9592f05c79a",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-18-unknown-infrastructure",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "e9cabf0ffaec51f978473358331285e56a1889b2dadf37b533264a2ed84226f8",
+      "mechanismHash": "2f9d48a49a688cbe7f2f52d01a7c165e8b401ef95c9f2dcfe9208996c72aa0a5",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-19-humanitarian-supply-request",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "983745154d7fc77198d1b0475925c7bcc1faa43f17d33ae770b8f123d1a00c6a",
+      "mechanismHash": "91f99e3b8cc65ee6a17d0b8934e15c07a2d53f8a3fb70bcbcd254029d3122704",
+      "reviewStatus": "APPROVED"
+    },
+    {
+      "templateId": "settlements-20-restoration-evidence-gap",
+      "version": 1,
+      "category": "SETTLEMENTS",
+      "file": "settlements.json",
+      "sha256": "d12c6026f342a36f4fcba2abde6945b61af1936d51ac71bd80138dcc95065e99",
+      "mechanismHash": "823562a7529889c25ca32a223deb0cd6d385d8f9be96c8d03c40f8a95d969eed",
+      "reviewStatus": "APPROVED"
+    }
+  ]
+}

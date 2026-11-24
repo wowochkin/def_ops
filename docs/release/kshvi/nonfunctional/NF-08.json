@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-08",
+  "status": "passed",
+  "startedAt": "2026-11-23T21:27:57.614Z",
+  "finishedAt": "2026-11-23T21:27:58.416Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "command": "npx vitest run services/kshvi/tests/security/log-redaction.test.ts",
+  "tests": [
+    "services/kshvi/tests/security/log-redaction.test.ts"
+  ],
+  "externalEvidence": null,
+  "limitations": [],
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release\n\n ✓ services/kshvi/tests/security/log-redaction.test.ts (2 tests) 3ms\n\n Test Files  1 passed (1)\n      Tests  2 passed (2)\n   Start at  00:27:58\n   Duration  262ms (transform 81%, import 17%, tests 1%, worker 1%)\n\n",
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-08.json"
+  ],
+  "openErrors": []
+}

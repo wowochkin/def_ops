@@ -1,0 +1,43 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "map-ac22",
+    "revision": 11,
+    "sha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac22/journal.json",
+    "sha256": "b9c07dded77ed306de20a63020f7022c2e9a15bec0390bf165c9681af470ceea",
+    "eventCount": 10
+  },
+  "hashes": {
+    "scenario": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42",
+    "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "journal": "b9c07dded77ed306de20a63020f7022c2e9a15bec0390bf165c9681af470ceea"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac22/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "importedMarkers": 10,
+    "validationErrorTypes": 5,
+    "blueProjectionMarkers": 9,
+    "redProjectionMarkers": 1,
+    "hiddenTruthMarkers": 1,
+    "serverApprovals": 1,
+    "sealedHashMatches": 1,
+    "archiveHashMatches": 1
+  },
+  "limitations": [
+    "Серверный контур проверен через HTTP и полный seal; физическая сверка печатной формы и проекторов выполняется на контрольном стенде."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac22/journal.json",
+    "docs/release/kshvi/evidence/ac22/approved-map.json",
+    "docs/release/kshvi/evidence/ac22/autonomous-archive.json",
+    "docs/release/kshvi/evidence/ac22/protocol.txt",
+    "docs/release/kshvi/evidence/ac22/metrics.json"
+  ]
+}

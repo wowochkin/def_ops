@@ -6,6 +6,7 @@ import { areaKey, automaticAreaName } from '../atlas-place-name';
 import { loadRegion } from '../environment-region';
 import { createPortal } from 'react-dom';
 import { CoordinatePicker } from '../CoordinatePicker';
+import { DateTimeField } from '../DateTimeField';
 import '../environment.css';
 import { readAuthorDraft, writeAuthorDraft, clearAuthorDraft, type AuthorDraft, type DraftSide, type DraftEvent, type AreaOption } from './author-draft';
 import { ReplayAreaMap } from './ReplayAreaMap';
@@ -186,18 +187,16 @@ function EventFields({ event, number, start, end, choices, onChange, onRemove }:
     <label>Текст события<textarea required rows={2} value={event.text}
       placeholder="Например, в редакцию поступила уточнённая справка" onChange={e => onChange({ ...event, text: e.target.value })} /></label>
     <div className="replay-fields">
-      <label>Время события (UTC)<input type="datetime-local" required min={start} max={end} value={event.at} onChange={e => onChange({ ...event, at: e.target.value })} /></label>
+      <DateTimeField id={`replay-event-${number}-at`} label="Время события (UTC)" required min={start} max={end} value={event.at} onChange={value => onChange({ ...event, at: value })} />
       <label>Кому показать<select value={event.audience} onChange={e => changeAudience(e.target.value as ScenarioEvent['audience'])}>
         <option value="both">Обоим участникам</option><option value="a">Участнику А</option><option value="b">Участнику Б</option>
         <option value="none">Только в совместном разборе</option></select></label>
       {sideIds.map(side => <label key={side}>Решение участника {sideName[side]}<select value={event.when?.[side] ?? ''}
         onChange={e => changeCondition(side, e.target.value)}><option value="">Любое решение</option>
         {choices.filter(c => c.label.trim()).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></label>)}
-      {sideIds.filter(side => event.audience === 'both' || event.audience === side).map(side =>
-        <label key={'report-' + side}>Время оповещения участника {sideName[side]} (UTC)
-          <input type="datetime-local" min={event.at} value={event.reportAt?.[side] ?? ''}
-            onChange={e => changeReportTime(side, e.target.value)} />
-          <small>Если оставить пустым, сообщение поступит в момент события.</small></label>)}
+      {sideIds.filter(side => event.audience === 'both' || event.audience === side).map(side => <div key={'report-' + side}>
+        <DateTimeField id={`replay-event-${number}-report-${side}`} label={`Время оповещения участника ${sideName[side]} (UTC)`} min={event.at} value={event.reportAt?.[side] ?? ''} onChange={value => changeReportTime(side, value)} />
+        <small>Если оставить пустым, сообщение поступит в момент события.</small></div>)}
     </div>
     {event.audience !== 'none' && <label>Заголовок оповещения (по желанию)<input value={event.announcement ?? ''} onChange={e => onChange({ ...event, announcement: e.target.value })} /></label>}
     <label><input type="checkbox" checked={event.ends ?? false} onChange={e => onChange({ ...event, ends: e.target.checked })} />
@@ -329,8 +328,8 @@ export function ScenarioForm({ onCreate, onSavingChange }: {
         <label>Название сценария<input required value={title} onChange={e => setTitle(e.target.value)} /></label>
         <label>Область атласа<select value={area.key} onChange={e => { const selected = areas.find(item => item.key === e.target.value); if (selected) setArea(selected); }}>
           {areas.map((area, i) => <option key={area.key} value={area.key}>{area.name}{i === 0 ? ' · текущая область' : i >= options.length ? ' · выбранная рамка' : ''}{areas.some(other => area.key !== other.key && area.name === other.name) ? ' · ' + area.bounds.join(', ') : ''}</option>)}</select></label>
-        <label>Начало (UTC)<input type="datetime-local" required value={start} onChange={e => setTimes({ start: e.target.value, end })} /></label>
-        <label>Окончание (UTC)<input type="datetime-local" required value={end} min={start} onChange={e => setTimes({ start, end: e.target.value })} /></label>
+        <DateTimeField id="replay-scenario-start" label="Начало (UTC)" required value={start} onChange={value => setTimes({ start: value, end })} />
+        <DateTimeField id="replay-scenario-end" label="Окончание (UTC)" required value={end} min={start} onChange={value => setTimes({ start, end: value })} />
         <label>Длительность периода<select value={periodHours} onChange={e => setPeriodHours(e.target.value === '12' ? 12 : 6)}>
           <option value={6}>6 часов</option><option value={12}>12 часов</option></select></label>
         <label>Совместный разбор<select value={disclosure} onChange={e => setDisclosure(e.target.value as Scenario['disclosure'])}>

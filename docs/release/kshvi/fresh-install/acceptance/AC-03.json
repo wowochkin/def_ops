@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac03-visibility.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:04:32.226Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"msg\":\"listening on :65267\"}\n{\"t\":\"2026-11-23T21:04:32.233Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"5f4a8278-6628-4309-961e-34c66aef8941\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/projection\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:32.236Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"2403687d-f0d9-4311-a77e-a681b68dc97e\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/projection\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.237Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"a0e2c5c2-1904-4bd2-a3fd-50626f9be909\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-other/projection\",\"status\":403,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.238Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"580002d0-c9e1-4b86-8e6d-6f31fd961d26\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/search\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.238Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"1a923362-11cf-4742-82bd-4952c3de8ae5\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/search\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.239Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"d437b0e3-1169-4c3f-8afc-74ed8d16a170\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/search\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.240Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"bdf16ff1-c781-41e1-8e9e-154ee0e2ccbf\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/documents/document-red/attachments/attachment-blue\",\"status\":403,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.240Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"cd3af588-e121-433b-90b1-c12e3c8cf305\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/documents/document-blue/attachments/attachment-blue\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.241Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"9ba74280-886a-44a4-a676-784eaac3916b\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/export\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.258Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"67537de9-bee8-4f93-8410-81eaea4a41c1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/instance-main/commands\",\"status\":200,\"ms\":15}\n{\"t\":\"2026-11-23T21:04:32.261Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"e60cf46f-a3d3-4745-b00d-c999c15897f2\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/instances/instance-main/commands\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:04:32.261Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"a4cd4fa5-9f0a-486e-90c6-1c0af8f718ad\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/events\",\"status\":200,\"ms\":20}\n{\"t\":\"2026-11-23T21:04:32.262Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"60df977e-52d8-43dd-a9d3-e0abb738a43d\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/instances/instance-main/events\",\"status\":401,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.265Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"f889effd-1952-4e61-af9a-0edc5577073a\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises\",\"status\":201,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.266Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"edfe252d-3843-4a22-90af-865077c50dc3\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/497d7e95-6491-4607-b6e0-6efa37e3dd74/transitions\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.266Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"f4c1d315-1cd7-4c7c-aed5-3d714d31da7e\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/497d7e95-6491-4607-b6e0-6efa37e3dd74/transitions\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:04:32.269Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"60fd1cef-cc5e-4336-af44-7a592d73ea4d\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/497d7e95-6491-4607-b6e0-6efa37e3dd74/seal\",\"status\":200,\"ms\":3}\n{\"t\":\"2026-11-23T21:04:32.271Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"b9a6e2dd-018d-4907-8548-9aeda5be9fab\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/exercises/497d7e95-6491-4607-b6e0-6efa37e3dd74/sessions\",\"status\":201,\"ms\":1}\n{\"t\":\"2026-11-23T21:04:32.272Z\",\"service\":\"kshvi-ac03\",\"level\":\"info\",\"requestId\":\"99f2578e-9fb3-4eba-9c1b-a1e6fe5e7f17\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/exercises/497d7e95-6491-4607-b6e0-6efa37e3dd74/sessions/bd3f52cc-5575-431f-ae26-087335761552/replay\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac03-visibility.test.ts (1 test) 389ms\n   ✓ AC-03: проекции, поиск, вложения, экспорт, реплей и отзыв роли не раскрывают скрытое 388ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:04:29\n   Duration  2.30s (transform 61%, import 22%, tests 17%)\n\n",
+  "initialRevision": {
+    "id": "ac03-visibility",
+    "revision": 1,
+    "sha256": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac03/journal.json",
+    "sha256": "9f0b69cd9c6a3b9eed7af13df181150c23dfa5f31f441880ad66aa4ab2791f9c",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "7d38e15041af0c00985a6b71325b9333745aeafeb9efe9c745ece490089e3f80",
+    "environment": "f63bde2676f35705961d3f01a14677acd659f45b080049a7936dcf11389e140b",
+    "journal": "9f0b69cd9c6a3b9eed7af13df181150c23dfa5f31f441880ad66aa4ab2791f9c"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac03/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "forbiddenResponses": 0,
+    "revokedSubscriptions": 1,
+    "hiddenSearchResults": 0,
+    "auditRecords": 19
+  },
+  "limitations": [
+    "Проверка выполнена на локальном серверном стенде; браузерная история и IndexedDB проверяются отдельно в AC-17."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac03/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac03/journal.json",
+    "docs/release/kshvi/evidence/ac03/protocol.txt",
+    "docs/release/kshvi/evidence/ac03/metrics.json",
+    "docs/release/kshvi/evidence/ac03/environment.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-03.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

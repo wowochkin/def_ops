@@ -35,7 +35,8 @@ export class Reply {
 }
 export const reply = (status: number, body: unknown, headers?: Record<string, string>) => new Reply(status, body, headers);
 
-interface Route { method: string; re: RegExp; keys: string[]; handler: Handler }
+interface Route { method: string; pattern: string; re: RegExp; keys: string[]; handler: Handler }
+export type RouteDescriptor = Readonly<{ method: string; pattern: string }>;
 
 export class Router {
   private routes: Route[] = [];
@@ -45,7 +46,7 @@ export class Router {
       keys.push(k);
       return '/([^/]+?)' + (ext ? '\\' + ext : '');
     }) + '/?$');
-    this.routes.push({ method, re, keys, handler });
+    this.routes.push({ method, pattern, re, keys, handler });
     return this;
   }
   get(p: string, h: Handler) { return this.add('GET', p, h); }
@@ -53,6 +54,13 @@ export class Router {
   put(p: string, h: Handler) { return this.add('PUT', p, h); }
   patch(p: string, h: Handler) { return this.add('PATCH', p, h); }
   delete(p: string, h: Handler) { return this.add('DELETE', p, h); }
+  /** Обвязывает уже зарегистрированные handlers, не меняя их маршруты и порядок. */
+  mapHandlers(wrapper: (handler: Handler, route: RouteDescriptor) => Handler): this {
+    for (const route of this.routes) {
+      route.handler = wrapper(route.handler, { method: route.method, pattern: route.pattern });
+    }
+    return this;
+  }
   match(method: string, path: string): { handler: Handler; params: Record<string, string> } | 'method' | null {
     let methodMismatch = false;
     for (const r of this.routes) {

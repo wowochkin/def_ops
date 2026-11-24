@@ -1,0 +1,42 @@
+[
+  {
+    "id": "AC-30-HUMAN-REVIEW",
+    "status": "open",
+    "severity": "blocker",
+    "area": "METHODICAL",
+    "reason": "Не выполнены человеческая методическая приёмка и пообъектное утверждение 83 исходных фрагментов знаков.",
+    "evidence": "docs/release/kshvi/acceptance/AC-30.json"
+  },
+  {
+    "id": "PHYSICAL-LAN",
+    "status": "open",
+    "severity": "blocker",
+    "area": "STAND",
+    "reason": "Нагрузка проверена на loopback, но не на физической закрытой LAN с отдельными рабочими местами.",
+    "evidence": "docs/release/kshvi/nonfunctional/NF-01.json"
+  },
+  {
+    "id": "LOCAL-NTP",
+    "status": "open",
+    "severity": "blocker",
+    "area": "STAND",
+    "reason": "Независимость от часов клиента подтверждена, но состояние локального NTP на эталонном стенде не проверено.",
+    "evidence": "docs/release/kshvi/nonfunctional/NF-05.json"
+  },
+  {
+    "id": "PHYSICAL-NODE-RECOVERY",
+    "status": "open",
+    "severity": "blocker",
+    "area": "RECOVERY",
+    "reason": "Локальное восстановление проверено, но полная потеря физического узла и RTO на эталонном наборе не проверялись.",
+    "evidence": "docs/release/kshvi/nonfunctional/NF-12.json"
+  },
+  {
+    "id": "FIREFOX-CROSS-BROWSER",
+    "status": "open",
+    "severity": "blocker",
+    "area": "CLIENT",
+    "reason": "Chromium прошёл проверку; Firefox не был запущен из-за отсутствия исполняемого файла, а установка не завершилась.",
+    "evidence": "docs/release/kshvi/nonfunctional/NF-17.json"
+  }
+]

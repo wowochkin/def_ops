@@ -1,0 +1,54 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac14-kshvi_ac14_a05fc10a483d490ba2ce92dc5af30f04",
+    "revision": 1,
+    "sha256": "10aa884f8e54cbb995b009c1d1dd4fd2e276bd2a4c6b3dd72faa3a2f8e011110"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac14/journal.json",
+    "sha256": "92befa4bd52297715fbb2f03860ad46b8139774b56ab40d984f553e19b0cdd6e",
+    "eventCount": 11225
+  },
+  "hashes": {
+    "scenario": "10aa884f8e54cbb995b009c1d1dd4fd2e276bd2a4c6b3dd72faa3a2f8e011110",
+    "environment": "be40aa02145f08dd79be7dbae7496fe38ba417ce0d80778352d60aefa63d9680",
+    "journal": "92befa4bd52297715fbb2f03860ad46b8139774b56ab40d984f553e19b0cdd6e"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac14/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "deliveryP95Ms": 157.29583300001104,
+    "mapP95Ms": 156.8969169999982,
+    "confirmed": 1225,
+    "connections": 50,
+    "activeParticipants": 25,
+    "duplicateEffects": 0,
+    "orderingErrors": 0,
+    "burstMs": 60000.849875,
+    "exportJobsSucceeded": 20
+  },
+  "limitations": [
+    "Физическая LAN 1 Гбит/с и локальный NTP не проверены; измерения относятся к loopback-стенду."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac14/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac14/journal.json",
+    "docs/release/kshvi/evidence/ac14/protocol.txt",
+    "docs/release/kshvi/evidence/ac14/metrics.json",
+    "docs/release/kshvi/evidence/ac14/environment.json",
+    "docs/release/kshvi/acceptance/AC-14.set-0-export.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-0-archive.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-1-export.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-1-archive.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-2-export.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-2-archive.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-3-export.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-3-archive.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-4-export.json.gz",
+    "docs/release/kshvi/acceptance/AC-14.set-4-archive.json.gz"
+  ]
+}

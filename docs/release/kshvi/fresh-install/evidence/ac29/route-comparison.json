@@ -1,0 +1,107 @@
+{
+  "opened": {
+    "status": "OPEN",
+    "graphVersion": 1,
+    "edgeIds": [
+      "direct"
+    ],
+    "remainingMeters": 8000,
+    "travelledMeters": 2000,
+    "elapsedMinutes": 20,
+    "costMinutes": 20,
+    "arrivalDelayMinutes": 0,
+    "effects": {
+      "route": "UNCHANGED",
+      "movement": "OPEN",
+      "supply": "PLANNED",
+      "evacuation": "PLANNED",
+      "reconnaissance": "REQUIRES_REVIEW",
+      "agentOption": "AVAILABLE"
+    },
+    "processResults": {},
+    "explanation": [
+      "Пересчёт от фактической точки: пройдено 2000 м, затрачено 20 мин"
+    ]
+  },
+  "rerouted": {
+    "status": "OPEN",
+    "graphVersion": 1,
+    "edgeIds": [
+      "detour-a",
+      "detour-b"
+    ],
+    "remainingMeters": 20000,
+    "travelledMeters": 2000,
+    "elapsedMinutes": 20,
+    "costMinutes": 200,
+    "arrivalDelayMinutes": 180,
+    "effects": {
+      "route": "REROUTED",
+      "movement": "DELAYED",
+      "supply": "DELAYED",
+      "evacuation": "DELAYED",
+      "reconnaissance": "DELAYED",
+      "agentOption": "DELAYED"
+    },
+    "processResults": {
+      "supply": {
+        "accepted": {
+          "purpose": "SUPPLY",
+          "status": "OPEN",
+          "edgeIds": [
+            "detour-a",
+            "detour-b"
+          ],
+          "delayMinutes": 180,
+          "operationalAt": "2030-01-01T04:00:00.000Z"
+        }
+      },
+      "evacuation": {
+        "accepted": {
+          "purpose": "SUPPLY",
+          "status": "OPEN",
+          "edgeIds": [
+            "detour-a",
+            "detour-b"
+          ],
+          "delayMinutes": 180,
+          "operationalAt": "2030-01-01T04:00:00.000Z"
+        }
+      },
+      "reconnaissance": {
+        "accepted": {
+          "purpose": "SUPPLY",
+          "status": "OPEN",
+          "edgeIds": [
+            "detour-a",
+            "detour-b"
+          ],
+          "delayMinutes": 180,
+          "operationalAt": "2030-01-01T04:00:00.000Z"
+        }
+      },
+      "agentOption": {
+        "accepted": {
+          "purpose": "SUPPLY",
+          "status": "OPEN",
+          "edgeIds": [
+            "detour-a",
+            "detour-b"
+          ],
+          "delayMinutes": 180,
+          "operationalAt": "2030-01-01T04:00:00.000Z"
+        }
+      }
+    },
+    "explanation": [
+      "Пересчёт от фактической точки: пройдено 2000 м, затрачено 20 мин",
+      "Скрытое разрушение пролёта"
+    ]
+  },
+  "processCalls": [
+    "supply",
+    "evacuation",
+    "reconnaissance",
+    "agentOption"
+  ]
+}

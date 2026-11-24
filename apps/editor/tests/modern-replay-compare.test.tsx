@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
+import { chooseDateTime } from './helpers/date-time';
 import { afterEach, expect, it } from 'vitest';
 import type { SavedSession } from '../src/modern/replay/archive';
 import { CompareSessions } from '../src/modern/replay/CompareSessions';
@@ -45,8 +46,7 @@ it('ограничивает ручной срез временем остано
   const earlier = play(createSession(config), 'stop', 'Решение в начале');
   const later = play(play(createSession(config), 'read', ''), null, 'Запись второго периода');
   render(<CompareSessions left={archive('base', earlier)} right={archive('again', later)} onBack={() => {}} />);
-  const input = screen.getByLabelText('Момент сравнения (UTC)');
-  const setTime = (value: string) => fireEvent.change(input, { target: { value: '2030-05-01T' + value } });
+  const setTime = (value: string) => chooseDateTime('Момент сравнения (UTC)', '2030-05-01T' + value);
   expect(screen.getByText('Запись второго периода')).toBeTruthy();
   setTime('00:30');
   expect(screen.queryByText(/Оглавление готово/)).toBeNull();

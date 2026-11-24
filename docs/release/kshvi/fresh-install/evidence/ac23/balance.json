@@ -1,0 +1,122 @@
+{
+  "projection": {
+    "status": "CALCULATED",
+    "accounts": {
+      "warehouse|fuel": {
+        "nodeId": "warehouse",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "onHand": 60,
+        "reserved": 0,
+        "inTransit": 0,
+        "consumed": 0,
+        "lost": 0,
+        "initial": 100,
+        "received": 0,
+        "adjustments": 0,
+        "deficit": 0,
+        "inTransitBySupply": {
+          "supply-ac23": 0
+        }
+      },
+      "force-low|fuel": {
+        "nodeId": "force-low",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "onHand": 20,
+        "reserved": 0,
+        "inTransit": 0,
+        "consumed": 20,
+        "lost": 0,
+        "initial": 0,
+        "received": 0,
+        "adjustments": 0,
+        "deficit": 5,
+        "inTransitBySupply": {}
+      }
+    },
+    "entries": [
+      {
+        "id": "opening-ac23",
+        "causeId": "initial-ac23",
+        "operation": "OPENING",
+        "quantity": 100,
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "nodeId": "warehouse",
+        "at": "2030-01-01T06:00:00.000Z",
+        "actorId": "logistics-ac23"
+      },
+      {
+        "id": "supply-ac23:reserve",
+        "operation": "RESERVE",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "quantity": 40,
+        "nodeId": "warehouse",
+        "supplyId": "supply-ac23",
+        "taskId": "low",
+        "at": "2030-01-01T06:00:00.000Z",
+        "causeId": "ac23-plan",
+        "actorId": "supply-movement"
+      },
+      {
+        "id": "supply-ac23:dispatch",
+        "operation": "DISPATCH",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "quantity": 40,
+        "nodeId": "warehouse",
+        "supplyId": "supply-ac23",
+        "taskId": "low",
+        "at": "2030-01-01T06:00:00.000Z",
+        "causeId": "ac23-plan",
+        "actorId": "supply-movement"
+      },
+      {
+        "id": "supply-ac23:deliver:40",
+        "operation": "DELIVER",
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "quantity": 40,
+        "nodeId": "warehouse",
+        "destinationNodeId": "force-low",
+        "supplyId": "supply-ac23",
+        "taskId": "low",
+        "at": "2030-01-01T07:00:00.000Z",
+        "causeId": "ac23-plan",
+        "actorId": "supply-movement"
+      },
+      {
+        "id": "consume-ac23",
+        "causeId": "task-e1",
+        "taskId": "task-e1",
+        "operation": "CONSUME",
+        "quantity": 20,
+        "requestedQuantity": 25,
+        "resourceId": "fuel",
+        "unit": "tonne",
+        "nodeId": "force-low",
+        "at": "2030-01-01T07:00:00.000Z",
+        "actorId": "logistics-ac23"
+      }
+    ],
+    "duplicateEntryIds": [],
+    "issues": []
+  },
+  "balance": {
+    "initial": 100,
+    "received": 0,
+    "onHand": 80,
+    "inTransit": 0,
+    "consumed": 20,
+    "lost": 0,
+    "adjustments": 0,
+    "deficit": 5,
+    "status": "BALANCED",
+    "expected": 100,
+    "actual": 100,
+    "balanced": true,
+    "unknown": []
+  }
+}

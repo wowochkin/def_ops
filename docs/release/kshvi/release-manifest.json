@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "status": "blocked",
+  "released": false,
+  "sourceCommit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "verification": {
+    "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+    "functionalPassed": 267,
+    "nfPassed": 14,
+    "acPassed": 29,
+    "expositionPassed": true,
+    "openLimitations": [
+      {
+        "id": "AC-30-HUMAN-REVIEW",
+        "status": "open",
+        "severity": "blocker",
+        "area": "METHODICAL",
+        "reason": "Не выполнены человеческая методическая приёмка и пообъектное утверждение 83 исходных фрагментов знаков.",
+        "evidence": "docs/release/kshvi/acceptance/AC-30.json"
+      },
+      {
+        "id": "PHYSICAL-LAN",
+        "status": "open",
+        "severity": "blocker",
+        "area": "STAND",
+        "reason": "Нагрузка проверена на loopback, но не на физической закрытой LAN с отдельными рабочими местами.",
+        "evidence": "docs/release/kshvi/nonfunctional/NF-01.json"
+      },
+      {
+        "id": "LOCAL-NTP",
+        "status": "open",
+        "severity": "blocker",
+        "area": "STAND",
+        "reason": "Независимость от часов клиента подтверждена, но состояние локального NTP на эталонном стенде не проверено.",
+        "evidence": "docs/release/kshvi/nonfunctional/NF-05.json"
+      },
+      {
+        "id": "PHYSICAL-NODE-RECOVERY",
+        "status": "open",
+        "severity": "blocker",
+        "area": "RECOVERY",
+        "reason": "Локальное восстановление проверено, но полная потеря физического узла и RTO на эталонном наборе не проверялись.",
+        "evidence": "docs/release/kshvi/nonfunctional/NF-12.json"
+      },
+      {
+        "id": "FIREFOX-CROSS-BROWSER",
+        "status": "open",
+        "severity": "blocker",
+        "area": "CLIENT",
+        "reason": "Chromium прошёл проверку; Firefox не был запущен из-за отсутствия исполняемого файла, а установка не завершилась.",
+        "evidence": "docs/release/kshvi/nonfunctional/NF-17.json"
+      }
+    ],
+    "fullChecksPassed": false,
+    "gaps": [
+      "NF_COUNT:14",
+      "AC_COUNT:29",
+      "OPEN_LIMITATION:AC-30-HUMAN-REVIEW",
+      "OPEN_LIMITATION:PHYSICAL-LAN",
+      "OPEN_LIMITATION:LOCAL-NTP",
+      "OPEN_LIMITATION:PHYSICAL-NODE-RECOVERY",
+      "OPEN_LIMITATION:FIREFOX-CROSS-BROWSER",
+      "FULL_CHECKS_FAILED"
+    ]
+  },
+  "artifacts": [
+    "docs/release/kshvi/final-evidence-index.json",
+    "docs/release/kshvi/requirements.json",
+    "docs/release/kshvi/limitations.json",
+    "docs/release/kshvi/acceptance-summary.md",
+    "docs/release/kshvi/test-pyramid.json"
+  ],
+  "evidenceSha256": "41865a37a84e1db1d3c3aa2a378ee861e188a127813c924b9b9cb633e7fd9367"
+}

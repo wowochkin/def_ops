@@ -1,0 +1,5 @@
+{
+  "connections": 25,
+  "transport": "HTTP+SSE",
+  "roleChangedBeforeReconnect": true
+}

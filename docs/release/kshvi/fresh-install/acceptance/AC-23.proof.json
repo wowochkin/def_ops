@@ -1,0 +1,43 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac23-plan",
+    "revision": 1,
+    "sha256": "8da806263c6f85559f7c531fd0fb9e2fc9ab49b0c1f441ed678d89458faf6549"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac23/journal.json",
+    "sha256": "678d03d755a918b258f413028835bd684e01f971a9f8170f500028a7c26c5db3",
+    "eventCount": 5
+  },
+  "hashes": {
+    "scenario": "8da806263c6f85559f7c531fd0fb9e2fc9ab49b0c1f441ed678d89458faf6549",
+    "environment": "969c26f76dcc4cb0b78518bef4c6ecea8b3b1ebd044576d7340c337cb93e6ae7",
+    "journal": "678d03d755a918b258f413028835bd684e01f971a9f8170f500028a7c26c5db3"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac23/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "rejectedCapacityIssues": 2,
+    "allocatedQuantity": 50,
+    "sentQuantity": 40,
+    "deliveredQuantity": 40,
+    "inTransitAfterDelivery": 0,
+    "deficit": 5,
+    "ledgerEntries": 5,
+    "repairedEquipment": 1,
+    "partialFormation": 1
+  },
+  "limitations": [
+    "Причинный доменный сценарий и реплей проводок подтверждены; распределённый запуск на отдельных рабочих местах входит в нагрузочный и fresh-install контур."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac23/journal.json",
+    "docs/release/kshvi/evidence/ac23/balance.json",
+    "docs/release/kshvi/evidence/ac23/protocol.txt",
+    "docs/release/kshvi/evidence/ac23/metrics.json"
+  ]
+}

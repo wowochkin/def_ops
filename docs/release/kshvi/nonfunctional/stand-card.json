@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-11-23T21:27:54.354Z",
+  "platform": "darwin 27.0.0 arm64",
+  "cpu": {
+    "model": "Apple M4 Max",
+    "logicalCores": 16,
+    "meetsMinimum": true
+  },
+  "memory": {
+    "bytes": 137438953472,
+    "gibibytes": 128,
+    "meetsMinimum": true
+  },
+  "network": {
+    "scope": "loopback",
+    "ratedBandwidthMbps": null,
+    "externalAccessDeniedBySandboxEvidence": true
+  },
+  "node": "v24.22.1",
+  "browsers": {
+    "chromium": {
+      "version": "153.0.8010.12",
+      "launched": true
+    },
+    "firefox": {
+      "version": null,
+      "launched": false,
+      "error": "browserType.launch: Executable doesn't exist at /Users/vladimirabramov/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    }
+  },
+  "limitations": [
+    "Соединения созданы на loopback одного узла, а не на отдельных рабочих местах LAN",
+    "Не все поддерживаемые браузеры запущены"
+  ]
+}

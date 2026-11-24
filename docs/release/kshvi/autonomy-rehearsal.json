@@ -1,0 +1,155 @@
+{
+  "reportVersion": 1,
+  "algorithmVersion": 1,
+  "catalogVersion": "kshvi-autonomous-events@1",
+  "methodicalProfile": {
+    "profileId": "kshvi-autonomy-methodical",
+    "version": 1
+  },
+  "runs": [
+    {
+      "seed": "rehearsal-alpha",
+      "profileLevel": "OFF",
+      "profileId": "boundary-high-zero",
+      "methodicalProfileVersion": 1,
+      "attemptCount": 0,
+      "eventCount": 0,
+      "emptyIntervals": 4,
+      "frequenciesByCategory": {},
+      "rejectionReasons": {},
+      "maxCascadeDepth": 0,
+      "maxCascadeEvents": 0,
+      "learningQuestions": [],
+      "overloadWarnings": [],
+      "controlHash": "e2869265de0330e0b3cae271396306e15045b4a7d84a79df2c9b8a3666258089"
+    },
+    {
+      "seed": "rehearsal-beta",
+      "profileLevel": "OFF",
+      "profileId": "boundary-high-zero",
+      "methodicalProfileVersion": 1,
+      "attemptCount": 0,
+      "eventCount": 0,
+      "emptyIntervals": 4,
+      "frequenciesByCategory": {},
+      "rejectionReasons": {},
+      "maxCascadeDepth": 0,
+      "maxCascadeEvents": 0,
+      "learningQuestions": [],
+      "overloadWarnings": [],
+      "controlHash": "e2869265de0330e0b3cae271396306e15045b4a7d84a79df2c9b8a3666258089"
+    },
+    {
+      "seed": "rehearsal-alpha",
+      "profileLevel": "HIGH",
+      "profileId": "boundary-high",
+      "methodicalProfileVersion": 1,
+      "attemptCount": 3379,
+      "eventCount": 12,
+      "emptyIntervals": 0,
+      "frequenciesByCategory": {
+        "control": 3,
+        "engineering": 1,
+        "environment": 3,
+        "interaction": 2,
+        "logistics": 3
+      },
+      "rejectionReasons": {
+        "STAGE_NOT_APPLICABLE": 11200,
+        "AREA_NOT_APPLICABLE": 65746,
+        "SEVERITY_LIMIT": 13516,
+        "MUTUALLY_EXCLUDED": 7692,
+        "MAX_OCCURRENCES": 1388,
+        "MAX_PER_STAGE": 1388,
+        "COOLDOWN": 1923,
+        "PRECONDITION_FAILED": 284,
+        "EVENT_INTERVAL_LIMIT": 33820
+      },
+      "maxCascadeDepth": 0,
+      "maxCascadeEvents": 0,
+      "learningQuestions": [
+        "Как изменить маршруты после насыщения грунта влагой?",
+        "Как использовать мост при частично завершённом восстановлении?",
+        "Как организовать резерв связи при грозовом сценарном воздействии?",
+        "Как отличить прибытие транспорта от поступления ресурса на склад?",
+        "Как перераспределить топливо и пересмотреть задачу при дефиците?",
+        "Как пересмотреть обеспечение водой при жаркой погоде?",
+        "Как перестроить маршруты сообщений после потери промежуточного узла?",
+        "Как перестроить обеспечение при деградации пункта снабжения?",
+        "Как распределить трафик при ограниченной ёмкости резервного канала?",
+        "Как согласовать линию разграничения без скрытого изменения решения соседа?",
+        "Как согласовать передачу ресурса при разных единицах учёта?",
+        "Как учитывать временной периметр канала при выдаче документов?"
+      ],
+      "overloadWarnings": [
+        {
+          "code": "ATTEMPT_OVERLOAD",
+          "intervalIndex": 0,
+          "message": "Число попыток 3379 заметно превышает лимит событий интервала 12."
+        },
+        {
+          "code": "EVENT_INTERVAL_LIMIT",
+          "intervalIndex": 0,
+          "message": "В интервале 0 сработало ограничение EVENT_INTERVAL_LIMIT; повторные попытки не выполнялись сверх заранее полученного числа."
+        }
+      ],
+      "controlHash": "d444c5e65a763c76d9fd4d4680dadeac0740ac71bc558b50dc92efb26bd785b4"
+    },
+    {
+      "seed": "rehearsal-beta",
+      "profileLevel": "HIGH",
+      "profileId": "boundary-high",
+      "methodicalProfileVersion": 1,
+      "attemptCount": 3487,
+      "eventCount": 12,
+      "emptyIntervals": 0,
+      "frequenciesByCategory": {
+        "control": 3,
+        "engineering": 1,
+        "environment": 3,
+        "interaction": 2,
+        "logistics": 3
+      },
+      "rejectionReasons": {
+        "STAGE_NOT_APPLICABLE": 11600,
+        "AREA_NOT_APPLICABLE": 67298,
+        "SEVERITY_LIMIT": 13948,
+        "MUTUALLY_EXCLUDED": 7776,
+        "MAX_OCCURRENCES": 1109,
+        "MAX_PER_STAGE": 1109,
+        "COOLDOWN": 1944,
+        "PRECONDITION_FAILED": 257,
+        "EVENT_INTERVAL_LIMIT": 34960
+      },
+      "maxCascadeDepth": 0,
+      "maxCascadeEvents": 0,
+      "learningQuestions": [
+        "Как изменить маршруты после насыщения грунта влагой?",
+        "Как изменить приоритет снабжения без создания дополнительного ресурса?",
+        "Как использовать мост при частично завершённом восстановлении?",
+        "Как организовать резерв связи при грозовом сценарном воздействии?",
+        "Как перераспределить топливо и пересмотреть задачу при дефиците?",
+        "Как пересмотреть обеспечение водой при жаркой погоде?",
+        "Как перестроить обеспечение при деградации пункта снабжения?",
+        "Как распределить трафик при ограниченной ёмкости резервного канала?",
+        "Как согласовать линию разграничения без скрытого изменения решения соседа?",
+        "Как согласовать передачу ресурса при разных единицах учёта?",
+        "Как сохранить доведение срочных донесений при перегрузке основного канала?",
+        "Как учитывать временной периметр канала при выдаче документов?"
+      ],
+      "overloadWarnings": [
+        {
+          "code": "ATTEMPT_OVERLOAD",
+          "intervalIndex": 0,
+          "message": "Число попыток 3487 заметно превышает лимит событий интервала 12."
+        },
+        {
+          "code": "EVENT_INTERVAL_LIMIT",
+          "intervalIndex": 0,
+          "message": "В интервале 0 сработало ограничение EVENT_INTERVAL_LIMIT; повторные попытки не выполнялись сверх заранее полученного числа."
+        }
+      ],
+      "controlHash": "078b14935e0b92b53d58d6ff1d7978e97a55939dbbd4f9faa6c00324c725f22e"
+    }
+  ]
+}

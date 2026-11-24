@@ -1,0 +1,39 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac13-admin",
+    "revision": 1,
+    "sha256": "7438704bb892190466090490510072cb4816c74df4aa0712b4cdb09e6bece9a6"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac13/journal.json",
+    "sha256": "e1f61a608afd573f91d1a7f31de25d51f830e762af568545f7ad95ff643a6790",
+    "eventCount": 6
+  },
+  "hashes": {
+    "scenario": "7438704bb892190466090490510072cb4816c74df4aa0712b4cdb09e6bece9a6",
+    "environment": "22d36a79195b37fdc098c156dfe395dc6f3a758167f3735d595c172a5250f301",
+    "journal": "e1f61a608afd573f91d1a7f31de25d51f830e762af568545f7ad95ff643a6790"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac13/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "technicalOverviewAllowed": 1,
+    "contentRejected": 1,
+    "backupVerified": 1,
+    "temporaryGrantUsed": 1,
+    "temporaryGrantRevoked": 1,
+    "expiredGrantRejected": 1
+  },
+  "limitations": [
+    "Проверка выполнена на локальном тенанте и официальном API; физическое разделение стендов проверяется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac13/journal.json",
+    "docs/release/kshvi/evidence/ac13/protocol.txt",
+    "docs/release/kshvi/evidence/ac13/metrics.json"
+  ]
+}

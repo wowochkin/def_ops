@@ -22,3 +22,4 @@ export * from './norm-facts';
 export * from './compile-rules';
 export * from './doctrine';
 export * from './role-reference';
+export * from './modern';

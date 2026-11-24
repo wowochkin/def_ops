@@ -1,0 +1,41 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac05-inputs",
+    "revision": 1,
+    "sha256": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac05/journal.json",
+    "sha256": "f743edec4db6bcdd14a42adf73014fa646d5dd633b6cd7181ef6ac503ddf3075",
+    "eventCount": 7
+  },
+  "hashes": {
+    "scenario": "708218636b68357b0f784d2fe33fdb98f45e87fb0ea6a5208552e56859395c0c",
+    "environment": "8054e1ecf1cfa669cbdb9fadde574559fef5544722875d61a922c2d6ad0f982b",
+    "journal": "f743edec4db6bcdd14a42adf73014fa646d5dd633b6cd7181ef6ac503ddf3075"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac05/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "planned": 1,
+    "reactive": 2,
+    "adaptive": 2,
+    "approvalRequests": 1,
+    "cyclesStopped": 1,
+    "unresolvedStopped": 1
+  },
+  "limitations": [
+    "Проверяется управляемый цикл вводных; долговременная нагрузка планировщика измеряется отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac05/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac05/journal.json",
+    "docs/release/kshvi/evidence/ac05/protocol.txt",
+    "docs/release/kshvi/evidence/ac05/metrics.json",
+    "docs/release/kshvi/evidence/ac05/environment.json"
+  ]
+}

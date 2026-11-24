@@ -1,0 +1,5 @@
+{
+  "transport": "HTTP+SSE",
+  "serverFiltering": true,
+  "auditRecords": 19
+}

@@ -1,0 +1,10 @@
+{
+  "terrainEvents": 37,
+  "repeatedTerrainEffects": 0,
+  "queuedColumns": 2,
+  "additionalRouteMinutes": 180,
+  "preservedTravelledMeters": 2000,
+  "hiddenChangesBeforeObservation": 1,
+  "unknownWeatherReviews": 1,
+  "domainProcessesCalled": 4
+}

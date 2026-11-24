@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "NF-05",
+  "status": "blocked",
+  "checks": {
+    "time": {
+      "clientClockIndependent": true,
+      "serverSamples": [
+        {
+          "clientTimeMs": 0,
+          "serverTimeMs": 1795469274045,
+          "operationalTimeMs": 1795469274045,
+          "source": "authoritative-server",
+          "processMonotonicMs": 122469.325416,
+          "serverStartedAt": 1795469153974
+        },
+        {
+          "clientTimeMs": 1795555674045,
+          "serverTimeMs": 1795469274045,
+          "operationalTimeMs": 1795469274045,
+          "source": "authoritative-server",
+          "processMonotonicMs": 122469.477708,
+          "serverStartedAt": 1795469153974
+        }
+      ]
+    },
+    "ntpStatus": "not-verified"
+  },
+  "openErrors": [
+    "LOCAL_NTP_NOT_VERIFIED"
+  ],
+  "startedAt": "2026-11-23T21:25:51.588Z",
+  "finishedAt": "2026-11-23T21:27:54.364Z",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "command": "node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60",
+  "executionError": null,
+  "artifacts": [
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/NF-05.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/load-distributions.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/stand-card.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/docs/release/kshvi/nonfunctional/offline.json"
+  ]
+}

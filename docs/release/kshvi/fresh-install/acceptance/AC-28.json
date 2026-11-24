@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac28-exposition.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n{\"t\":\"2026-11-23T21:07:02.258Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"msg\":\"listening on :51684\"}\n{\"t\":\"2026-11-23T21:07:02.267Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"2d8d04ef-9413-4d97-afc0-0434238077e4\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:07:02.273Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"f0a79405-05fd-4caa-9cb7-368979c714e7\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions\",\"status\":200,\"ms\":2}\n{\"t\":\"2026-11-23T21:07:02.274Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"939f5e46-241e-41bc-9e58-adcb72b99c32\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.276Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"334ec86c-868c-4fdf-a1c3-f906f2744e79\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:07:02.277Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"26124bb3-7b15-4ee4-aa4a-174e52deb168\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.278Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"60fbc9d6-0b98-4811-a481-bc52e4a9e844\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.279Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"f6631421-f0f1-4af9-a5cd-7938d13c7572\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.280Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"49931a30-ad59-4365-b63e-63a4a4dddd3f\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.281Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"a809fed0-362b-49db-93fb-6aa3b793d48b\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-auto/checkpoints/cp-1/continuations\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:07:02.282Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"57e97ae0-40d1-40a5-a8db-952d461b7acd\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/restarts\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.284Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"4fa0c14d-676f-4d76-8709-73d998a80782\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/restarts\",\"status\":200,\"ms\":1}\n{\"t\":\"2026-11-23T21:07:02.285Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"095d687b-a4ef-43ef-a0a9-4ebf685aa920\",\"tenant\":\"default\",\"method\":\"GET\",\"path\":\"/kshvi/expositions/active/projector\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.286Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"40d2f972-fc67-46d8-9c44-d53a04ea00ae\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.288Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"6fba043e-79c3-40fc-af31-947f9f316159\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/commands\",\"status\":200,\"ms\":0}\n{\"t\":\"2026-11-23T21:07:02.289Z\",\"service\":\"kshvi-ac28\",\"level\":\"info\",\"requestId\":\"a6056aad-4dbc-466b-bbca-1ec05be120a1\",\"tenant\":\"default\",\"method\":\"POST\",\"path\":\"/kshvi/expositions/ac28-continued/exports\",\"status\":200,\"ms\":1}\n ✓ services/kshvi/tests/acceptance/ac28-exposition.test.ts (1 test) 136ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:07:02\n   Duration  280ms (tests 61%, transform 29%, import 10%, worker 1%)\n\n",
+  "initialRevision": {
+    "id": "official-archive-1",
+    "revision": 1,
+    "sha256": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac28/journal.json",
+    "sha256": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "d3aa5ed9618a0518ee5ec65b16cba22cba47725ddca584d8adf76869310842a0",
+    "environment": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "journal": "2d66cf6ddc06221f2a59bb5e5c0109746e5b5a69b497724427859521785d74f4"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac28/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "randomOutcomesCreated": 4,
+    "agentRequests": 10,
+    "seekWorldMatches": 2,
+    "audienceForbiddenFields": 0,
+    "mapLayers": 4
+  },
+  "limitations": [
+    "Проверка выполнена на уровне двух HTTP-клиентов presenter/server/audience; визуальная проверка Playwright подключается отдельно."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac28/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac28/journal.json",
+    "docs/release/kshvi/evidence/ac28/protocol.txt",
+    "docs/release/kshvi/evidence/ac28/derived-archive.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-28.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

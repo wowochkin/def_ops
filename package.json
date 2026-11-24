@@ -10,11 +10,12 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w @def-ops/editor",
+    "dev": "npm run dev -w @def-ops/editor --",
     "dev:services": "node scripts/dev-services.mjs",
     "build": "npm run build -w @def-ops/editor",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:kshvi:release": "node scripts/kshvi-release-gate.mjs --require-complete",
     "test:voice": "npm run test -w @def-ops/voice",
     "start": "npm run build && STATIC_DIR=apps/editor/dist node scripts/dev-services.mjs",
     "docs:library": "tsx scripts/gen-library-doc.ts",
@@ -70,6 +71,7 @@
   "devDependencies": {
     "@testing-library/react": "16.3.3",
     "@types/node": "^22.0.0",
+    "ajv": "^8.20.0",
     "fake-indexeddb": "6.2.5",
     "happy-dom": "21.0.4",
     "playwright": "^1.63.0",

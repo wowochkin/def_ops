@@ -1,0 +1,3308 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "ENGINEERING",
+  "title": "Инженерные препятствия, разрушения и восстановление",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-01-bridge-capacity-damage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Повреждение моста со снижением ёмкости",
+      "description": "Мост остаётся доступным для ограниченного состава, но его грузоподъёмность и пропускная способность уменьшаются событием с причинной ссылкой.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как перестроить переправу после частичного повреждения моста?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: BRIDGE_DEGRADED_CAPACITY_TRANSITION."
+      },
+      "trainingAssumption": "Для учебного события «Повреждение моста со снижением ёмкости» механизм BRIDGE_DEGRADED_CAPACITY_TRANSITION и границы параметра «Доля доступной ёмкости» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "BRIDGE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.bridge.damage_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "capacity",
+          "name": "Доля доступной ёмкости",
+          "unit": "%",
+          "min": 10,
+          "max": 90,
+          "default": 45
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-02-bridge-repair-partial"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateCrossingState",
+          "target": {
+            "domain": "crossings",
+            "ref": "scenario-target"
+          },
+          "mechanism": "BRIDGE_DEGRADED_CAPACITY_TRANSITION",
+          "reason": "Мост остаётся доступным для ограниченного состава, но его грузоподъёмность и пропускная способность уменьшаются событием с причинной ссылкой.",
+          "durationParameter": "capacity"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "BRIDGE_DAMAGE_OBSERVATION",
+          "sourceRequirement": "BRIDGE_DAMAGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "BRIDGE_CAPACITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "capacity",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateCrossingState",
+          "method": "REPAIR_BRIDGE_AND_RESTORE_CAPACITY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.bridge.damage_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "engineering.bridge.damage_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-02-bridge-repair-partial",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Частичное восстановление моста",
+      "description": "Ремонт завершён только для одной полосы, поэтому мост открывается с ограниченной очередью и отдельным подтверждением оставшихся работ.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как использовать мост при частично завершённом восстановлении?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PARTIAL_BRIDGE_REPAIR_CAPACITY_RESTORE."
+      },
+      "trainingAssumption": "Для учебного события «Частичное восстановление моста» механизм PARTIAL_BRIDGE_REPAIR_CAPACITY_RESTORE и границы параметра «Срок оставшихся работ» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "BRIDGE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.bridge.repair_state",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "repair",
+          "name": "Срок оставшихся работ",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 12
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateCrossingState",
+          "target": {
+            "domain": "crossings",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PARTIAL_BRIDGE_REPAIR_CAPACITY_RESTORE",
+          "reason": "Ремонт завершён только для одной полосы, поэтому мост открывается с ограниченной очередью и отдельным подтверждением оставшихся работ.",
+          "durationParameter": "repair"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "BRIDGE_REPAIR_OBSERVATION",
+          "sourceRequirement": "BRIDGE_REPAIR_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PARTIAL_REOPENING_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "repair",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateCrossingState",
+          "method": "COMPLETE_REPAIR_OR_CLOSE_AGAIN",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.bridge.repair_state": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "engineering.bridge.repair_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-03-road-washout",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Размыв дорожного участка",
+      "description": "Дорожное ребро закрывается из-за размыва, и оставшиеся маршруты пересчитываются от фактических позиций без изменения прошлых событий.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как перераспределить движение после размыва дороги?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ROAD_WASHOUT_EDGE_CLOSURE."
+      },
+      "trainingAssumption": "Для учебного события «Размыв дорожного участка» механизм ROAD_WASHOUT_EDGE_CLOSURE и границы параметра «Срок восстановления участка» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "ROAD_SEGMENT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.road.washout_state",
+          "operator": "EQUALS",
+          "value": "CLOSED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CLOSED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "repair",
+          "name": "Срок восстановления участка",
+          "unit": "h",
+          "min": 2,
+          "max": 72,
+          "default": 18
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-04-culvert-blockage"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "closeRoute",
+          "target": {
+            "domain": "routes",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ROAD_WASHOUT_EDGE_CLOSURE",
+          "reason": "Дорожное ребро закрывается из-за размыва, и оставшиеся маршруты пересчитываются от фактических позиций без изменения прошлых событий.",
+          "durationParameter": "repair"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "ROAD_WASHOUT_OBSERVATION",
+          "sourceRequirement": "ROAD_WASHOUT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ROAD_CLOSURE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "repair",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "closeRoute",
+          "method": "REPAIR_ROAD_AND_REOPEN_EDGE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.road.washout_state": "CLOSED"
+        },
+        "unsuitableFacts": {
+          "engineering.road.washout_state": "PASSABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-04-culvert-blockage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Засорение водопропускного сооружения",
+      "description": "Затруднённый отвод воды повышает сценарный риск затопления соседнего участка, создавая причинную цепочку инженерного наблюдения и последующего состояния.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как выявить и устранить угрозу затопления из-за водопропускного сооружения?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: CULVERT_BLOCKAGE_HYDROLOGY_CAUSE."
+      },
+      "trainingAssumption": "Для учебного события «Засорение водопропускного сооружения» механизм CULVERT_BLOCKAGE_HYDROLOGY_CAUSE и границы параметра «Срок расчистки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "CULVERT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.culvert.drainage_state",
+          "operator": "EQUALS",
+          "value": "BLOCKED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "clearing",
+          "name": "Срок расчистки",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 6
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTerrainState",
+          "target": {
+            "domain": "terrain",
+            "ref": "scenario-target"
+          },
+          "mechanism": "CULVERT_BLOCKAGE_HYDROLOGY_CAUSE",
+          "reason": "Затруднённый отвод воды повышает сценарный риск затопления соседнего участка, создавая причинную цепочку инженерного наблюдения и последующего состояния.",
+          "durationParameter": "clearing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CULVERT_BLOCKAGE_OBSERVATION",
+          "sourceRequirement": "CULVERT_BLOCKAGE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DRAINAGE_RISK_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "clearing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTerrainState",
+          "method": "CLEAR_CULVERT_AND_REASSESS_HYDROLOGY",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.culvert.drainage_state": "BLOCKED"
+        },
+        "unsuitableFacts": {
+          "engineering.culvert.drainage_state": "CLEAR"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-05-obstacle-zone",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Обнаружение инженерного заграждения",
+      "description": "На маршруте выявлена сценарная зона заграждения с геометрией и источником наблюдения; проход закрыт до отдельного события разграждения.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как изменить маршрут и организацию работ после обнаружения заграждения?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ENGINEERING_OBSTACLE_ZONE_DISCOVERY."
+      },
+      "trainingAssumption": "Для учебного события «Обнаружение инженерного заграждения» механизм ENGINEERING_OBSTACLE_ZONE_DISCOVERY и границы параметра «Срок инженерной оценки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "OBSTACLE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.obstacle.discovery_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "survey",
+          "name": "Срок инженерной оценки",
+          "unit": "min",
+          "min": 15,
+          "max": 240,
+          "default": 60
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-06-obstacle-corridor"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createScenarioZone",
+          "target": {
+            "domain": "zones",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ENGINEERING_OBSTACLE_ZONE_DISCOVERY",
+          "reason": "На маршруте выявлена сценарная зона заграждения с геометрией и источником наблюдения; проход закрыт до отдельного события разграждения.",
+          "durationParameter": "survey"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "OBSTACLE_ZONE_OBSERVATION",
+          "sourceRequirement": "OBSTACLE_ZONE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "OBSTACLE_DISCOVERY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "survey",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createScenarioZone",
+          "method": "CLEAR_OBSTACLE_AND_CLOSE_ZONE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.obstacle.discovery_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "engineering.obstacle.discovery_state": "ABSENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-06-obstacle-corridor",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Открытие прохода в заграждении",
+      "description": "После завершения работ открывается ограниченный коридор, а вся исходная зона не исчезает; граф получает новое ребро с ограничениями движения.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как учесть частичное разграждение без удаления всей зоны препятствия?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: OBSTACLE_CORRIDOR_LIMITED_REOPENING."
+      },
+      "trainingAssumption": "Для учебного события «Открытие прохода в заграждении» механизм OBSTACLE_CORRIDOR_LIMITED_REOPENING и границы параметра «Количество машин за учебный интервал» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "OBSTACLE_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.obstacle.corridor_state",
+          "operator": "EQUALS",
+          "value": "OPEN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии OPEN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "capacity",
+          "name": "Количество машин за учебный интервал",
+          "unit": "vehicle",
+          "min": 1,
+          "max": 100,
+          "default": 20
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "restoreRoute",
+          "target": {
+            "domain": "routes",
+            "ref": "scenario-target"
+          },
+          "mechanism": "OBSTACLE_CORRIDOR_LIMITED_REOPENING",
+          "reason": "После завершения работ открывается ограниченный коридор, а вся исходная зона не исчезает; граф получает новое ребро с ограничениями движения.",
+          "durationParameter": "capacity"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CORRIDOR_OPENING_OBSERVATION",
+          "sourceRequirement": "CORRIDOR_OPENING_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CORRIDOR_CAPACITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "capacity",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "restoreRoute",
+          "method": "CLOSE_CORRIDOR_IF_CONDITION_CHANGES",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.obstacle.corridor_state": "OPEN"
+        },
+        "unsuitableFacts": {
+          "engineering.obstacle.corridor_state": "CLOSED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-07-ferry-unavailable",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недоступность паромного оборудования",
+      "description": "Паромная переправа не может принять новые колонны из-за состояния оборудования, а уже подтверждённые пересечения сохраняются в журнале.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как перераспределить переправу при отказе паромного оборудования?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FERRY_EQUIPMENT_CROSSING_SUSPENSION."
+      },
+      "trainingAssumption": "Для учебного события «Недоступность паромного оборудования» механизм FERRY_EQUIPMENT_CROSSING_SUSPENSION и границы параметра «Срок восстановления оборудования» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FERRY_CROSSING"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.ferry.equipment_state",
+          "operator": "EQUALS",
+          "value": "UNAVAILABLE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии UNAVAILABLE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "repair",
+          "name": "Срок восстановления оборудования",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 8
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-08-pontoon-queue"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateCrossingState",
+          "target": {
+            "domain": "crossings",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FERRY_EQUIPMENT_CROSSING_SUSPENSION",
+          "reason": "Паромная переправа не может принять новые колонны из-за состояния оборудования, а уже подтверждённые пересечения сохраняются в журнале.",
+          "durationParameter": "repair"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FERRY_EQUIPMENT_OBSERVATION",
+          "sourceRequirement": "FERRY_EQUIPMENT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FERRY_SUSPENSION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "repair",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateCrossingState",
+          "method": "REPAIR_FERRY_AND_RESUME_CROSSING",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.ferry.equipment_state": "UNAVAILABLE"
+        },
+        "unsuitableFacts": {
+          "engineering.ferry.equipment_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-08-pontoon-queue",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Очередь на понтонную переправу",
+      "description": "Понтонная переправа работает, но её ёмкость занята, поэтому новые колонны получают последовательные интервалы и расход ожидания.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как распределить колонны по ограниченной ёмкости понтонной переправы?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PONTOON_CROSSING_CAPACITY_QUEUE."
+      },
+      "trainingAssumption": "Для учебного события «Очередь на понтонную переправу» механизм PONTOON_CROSSING_CAPACITY_QUEUE и границы параметра «Ожидание переправы» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "PONTOON_CROSSING"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.pontoon.queue_state",
+          "operator": "EQUALS",
+          "value": "SATURATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии SATURATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание переправы",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 90
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "reserveCapacity",
+          "target": {
+            "domain": "capacity",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PONTOON_CROSSING_CAPACITY_QUEUE",
+          "reason": "Понтонная переправа работает, но её ёмкость занята, поэтому новые колонны получают последовательные интервалы и расход ожидания.",
+          "quantityParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PONTOON_QUEUE_OBSERVATION",
+          "sourceRequirement": "PONTOON_QUEUE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PONTOON_QUEUE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "reserveCapacity",
+          "method": "RELEASE_PONTOON_INTERVAL_AND_RESUME",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.pontoon.queue_state": "SATURATED"
+        },
+        "unsuitableFacts": {
+          "engineering.pontoon.queue_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-09-ice-load-limit",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Ограничение нагрузки ледовой переправы",
+      "description": "Ледовая переправа доступна только для назначенного класса нагрузки, и тяжёлые элементы получают отдельный маршрут или ожидание нового состояния льда.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как разделить движение по классам нагрузки на ледовой переправе?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ICE_CROSSING_LOAD_CLASS_RESTRICTION."
+      },
+      "trainingAssumption": "Для учебного события «Ограничение нагрузки ледовой переправы» механизм ICE_CROSSING_LOAD_CLASS_RESTRICTION и границы параметра «Срок проверки состояния льда» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "ICE_CROSSING"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.ice_crossing.load_state",
+          "operator": "EQUALS",
+          "value": "LIMITED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии LIMITED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки состояния льда",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-10-ford-bottom-unknown"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateCrossingState",
+          "target": {
+            "domain": "crossings",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ICE_CROSSING_LOAD_CLASS_RESTRICTION",
+          "reason": "Ледовая переправа доступна только для назначенного класса нагрузки, и тяжёлые элементы получают отдельный маршрут или ожидание нового состояния льда.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "ICE_LOAD_OBSERVATION",
+          "sourceRequirement": "ICE_LOAD_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ICE_CROSSING_LIMIT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateCrossingState",
+          "method": "RESTORE_LOAD_CLASS_OR_CLOSE_CROSSING",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.ice_crossing.load_state": "LIMITED"
+        },
+        "unsuitableFacts": {
+          "engineering.ice_crossing.load_state": "UNLIMITED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-10-ford-bottom-unknown",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестное состояние дна брода",
+      "description": "Обязательные характеристики дна отсутствуют, поэтому форсирование не рассчитывается автоматически и направляется на инженерную разведку или рассмотрение.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как исключить выдачу неизвестного брода за проходимый?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FORD_UNKNOWN_BOTTOM_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестное состояние дна брода» механизм FORD_UNKNOWN_BOTTOM_REVIEW и границы параметра «Срок инженерной разведки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FORD"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.ford.bottom_knowledge",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "survey",
+          "name": "Срок инженерной разведки",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 6
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FORD_UNKNOWN_BOTTOM_REVIEW",
+          "reason": "Обязательные характеристики дна отсутствуют, поэтому форсирование не рассчитывается автоматически и направляется на инженерную разведку или рассмотрение.",
+          "durationParameter": "survey"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FORD_CONDITION_OBSERVATION",
+          "sourceRequirement": "FORD_CONDITION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FORD_RECONNAISSANCE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "survey",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CONFIRM_FORD_CONDITION_OR_SELECT_CROSSING",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.ford.bottom_knowledge": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "engineering.ford.bottom_knowledge": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-11-forest-windfall",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Завал на лесном участке",
+      "description": "Лесной завал закрывает отдельный проезд для назначенных классов техники, не делая весь лес universally непроходимым.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как выбрать объезд или организовать расчистку лесного завала?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FOREST_WINDFALL_CLASS_SPECIFIC_CLOSURE."
+      },
+      "trainingAssumption": "Для учебного события «Завал на лесном участке» механизм FOREST_WINDFALL_CLASS_SPECIFIC_CLOSURE и границы параметра «Срок расчистки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FOREST_TRACK"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.forest.windfall_state",
+          "operator": "EQUALS",
+          "value": "BLOCKING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "clearing",
+          "name": "Срок расчистки",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 8
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-12-forest-fire-zone"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "closeRoute",
+          "target": {
+            "domain": "routes",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FOREST_WINDFALL_CLASS_SPECIFIC_CLOSURE",
+          "reason": "Лесной завал закрывает отдельный проезд для назначенных классов техники, не делая весь лес universally непроходимым.",
+          "durationParameter": "clearing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FOREST_WINDFALL_OBSERVATION",
+          "sourceRequirement": "FOREST_WINDFALL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "WINDFALL_CLEARANCE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "clearing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "closeRoute",
+          "method": "CLEAR_WINDFALL_AND_REOPEN_TRACK",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.forest.windfall_state": "BLOCKING"
+        },
+        "unsuitableFacts": {
+          "engineering.forest.windfall_state": "CLEAR"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-12-forest-fire-zone",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Лесной пожар изменяет доступность района",
+      "description": "Сценарная зона пожара получает геометрию и время, закрывая затронутые проезды и влияя на наблюдение только по отдельному профилю.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как учесть распространение пожара в маршрутах и наблюдении?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: FOREST_FIRE_DYNAMIC_AREA_CLOSURE."
+      },
+      "trainingAssumption": "Для учебного события «Лесной пожар изменяет доступность района» механизм FOREST_FIRE_DYNAMIC_AREA_CLOSURE и границы параметра «Срок активной зоны» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "FOREST_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.forest.fire_state",
+          "operator": "EQUALS",
+          "value": "ACTIVE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии ACTIVE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок активной зоны",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createScenarioZone",
+          "target": {
+            "domain": "zones",
+            "ref": "scenario-target"
+          },
+          "mechanism": "FOREST_FIRE_DYNAMIC_AREA_CLOSURE",
+          "reason": "Сценарная зона пожара получает геометрию и время, закрывая затронутые проезды и влияя на наблюдение только по отдельному профилю.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "FOREST_FIRE_OBSERVATION",
+          "sourceRequirement": "FOREST_FIRE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "FOREST_FIRE_ROUTE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createScenarioZone",
+          "method": "CONTAIN_FIRE_AND_REASSESS_AREA",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.forest.fire_state": "ACTIVE"
+        },
+        "unsuitableFacts": {
+          "engineering.forest.fire_state": "EXTINGUISHED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-13-wetland-bearing-loss",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Снижение несущей способности болота",
+      "description": "Увлажнение меняет проходимость конкретных классов движения, поэтому обходные участки и состояние UNKNOWN отображаются раздельно.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как пересчитать движение через болото по классам нагрузки?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: WETLAND_BEARING_CLASS_RECALCULATION."
+      },
+      "trainingAssumption": "Для учебного события «Снижение несущей способности болота» механизм WETLAND_BEARING_CLASS_RECALCULATION и границы параметра «Срок оценки обходов» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "WETLAND"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.wetland.bearing_state",
+          "operator": "EQUALS",
+          "value": "REDUCED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REDUCED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "survey",
+          "name": "Срок оценки обходов",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 8
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-14-engineer-equipment-degraded"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTerrainState",
+          "target": {
+            "domain": "terrain",
+            "ref": "scenario-target"
+          },
+          "mechanism": "WETLAND_BEARING_CLASS_RECALCULATION",
+          "reason": "Увлажнение меняет проходимость конкретных классов движения, поэтому обходные участки и состояние UNKNOWN отображаются раздельно.",
+          "durationParameter": "survey"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "WETLAND_BEARING_OBSERVATION",
+          "sourceRequirement": "WETLAND_BEARING_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "WETLAND_PASSABILITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "survey",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTerrainState",
+          "method": "RESTORE_OR_MARK_IMPASSABLE_WETLAND",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.wetland.bearing_state": "REDUCED"
+        },
+        "unsuitableFacts": {
+          "engineering.wetland.bearing_state": "STABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-14-engineer-equipment-degraded",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неисправность инженерной техники",
+      "description": "Деградация инженерной машины увеличивает срок работ и требует заявки на ремонт, не отменяя уже выполненную часть разграждения.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как сохранить темп инженерных работ при отказе техники?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ENGINEER_EQUIPMENT_WORK_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Неисправность инженерной техники» механизм ENGINEER_EQUIPMENT_WORK_DELAY и границы параметра «Дополнительный срок работ» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "ENGINEER_UNIT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.unit.equipment_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Дополнительный срок работ",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ENGINEER_EQUIPMENT_WORK_DELAY",
+          "reason": "Деградация инженерной машины увеличивает срок работ и требует заявки на ремонт, не отменяя уже выполненную часть разграждения.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "EQUIPMENT_DEGRADATION_OBSERVATION",
+          "sourceRequirement": "EQUIPMENT_DEGRADATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "ENGINEER_WORK_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REPAIR_OR_REPLACE_ENGINEER_EQUIPMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.unit.equipment_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "engineering.unit.equipment_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-15-rubble-street-block",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Завал улицы после разрушения",
+      "description": "Разрушенный объект образует завал на уличном ребре, требуя отдельного события расчистки и пересчёта городского маршрута.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как восстановить движение по улице после образования завала?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SETTLEMENT_RUBBLE_STREET_CLOSURE."
+      },
+      "trainingAssumption": "Для учебного события «Завал улицы после разрушения» механизм SETTLEMENT_RUBBLE_STREET_CLOSURE и границы параметра «Срок расчистки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "SETTLEMENT_STREET"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.settlement.rubble_state",
+          "operator": "EQUALS",
+          "value": "BLOCKING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BLOCKING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "clearing",
+          "name": "Срок расчистки",
+          "unit": "h",
+          "min": 2,
+          "max": 48,
+          "default": 12
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-16-temporary-road-complete"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "closeRoute",
+          "target": {
+            "domain": "routes",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SETTLEMENT_RUBBLE_STREET_CLOSURE",
+          "reason": "Разрушенный объект образует завал на уличном ребре, требуя отдельного события расчистки и пересчёта городского маршрута.",
+          "durationParameter": "clearing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "RUBBLE_STREET_OBSERVATION",
+          "sourceRequirement": "RUBBLE_STREET_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STREET_CLEARANCE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "clearing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "closeRoute",
+          "method": "CLEAR_RUBBLE_AND_REOPEN_STREET",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.settlement.rubble_state": "BLOCKING"
+        },
+        "unsuitableFacts": {
+          "engineering.settlement.rubble_state": "CLEAR"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-16-temporary-road-complete",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Завершение временной дороги",
+      "description": "Новое ребро появляется только после подтверждённого завершения работ и получает собственные класс нагрузки, ёмкость и источник.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как ввести временную дорогу в расчёт после подтверждения готовности?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: TEMPORARY_ROAD_CONFIRMED_GRAPH_ADDITION."
+      },
+      "trainingAssumption": "Для учебного события «Завершение временной дороги» механизм TEMPORARY_ROAD_CONFIRMED_GRAPH_ADDITION и границы параметра «Срок контрольного осмотра» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "TEMPORARY_ROAD"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.temporary_road.completion_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "inspection",
+          "name": "Срок контрольного осмотра",
+          "unit": "min",
+          "min": 10,
+          "max": 180,
+          "default": 45
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "restoreRoute",
+          "target": {
+            "domain": "routes",
+            "ref": "scenario-target"
+          },
+          "mechanism": "TEMPORARY_ROAD_CONFIRMED_GRAPH_ADDITION",
+          "reason": "Новое ребро появляется только после подтверждённого завершения работ и получает собственные класс нагрузки, ёмкость и источник.",
+          "durationParameter": "inspection"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "TEMPORARY_ROAD_OBSERVATION",
+          "sourceRequirement": "TEMPORARY_ROAD_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "TEMPORARY_ROAD_READY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "inspection",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "restoreRoute",
+          "method": "CLOSE_TEMPORARY_ROAD_ON_DAMAGE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.temporary_road.completion_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "engineering.temporary_road.completion_state": "IN_PROGRESS"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-17-crossing-dismantled",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Снятие временной переправы",
+      "description": "После завершения задачи временная переправа снимается событием, удаляя доступность из текущего графа, но не историю прежних пересечений.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как перестроить маршруты после снятия временной переправы?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: TEMPORARY_CROSSING_DISMANTLED_GRAPH_UPDATE."
+      },
+      "trainingAssumption": "Для учебного события «Снятие временной переправы» механизм TEMPORARY_CROSSING_DISMANTLED_GRAPH_UPDATE и границы параметра «Срок пересчёта маршрутов» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "TEMPORARY_CROSSING"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.crossing.dismantle_state",
+          "operator": "EQUALS",
+          "value": "COMPLETED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии COMPLETED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "rerouting",
+          "name": "Срок пересчёта маршрутов",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 20
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-18-bank-erosion"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateCrossingState",
+          "target": {
+            "domain": "crossings",
+            "ref": "scenario-target"
+          },
+          "mechanism": "TEMPORARY_CROSSING_DISMANTLED_GRAPH_UPDATE",
+          "reason": "После завершения задачи временная переправа снимается событием, удаляя доступность из текущего графа, но не историю прежних пересечений.",
+          "durationParameter": "rerouting"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "CROSSING_DISMANTLE_OBSERVATION",
+          "sourceRequirement": "CROSSING_DISMANTLE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CROSSING_REMOVAL_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "rerouting",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateCrossingState",
+          "method": "RESTORE_CROSSING_BY_NEW_ENGINEERING_EVENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.crossing.dismantle_state": "COMPLETED"
+        },
+        "unsuitableFacts": {
+          "engineering.crossing.dismantle_state": "NOT_STARTED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-18-bank-erosion",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Размыв берега и изменение подходов",
+      "description": "Эрозия меняет геометрию подходов к переправе и требует пересмотра допустимых маршрутов, не изменяя автоматически прочность моста без правила.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как учесть размыв берега без неподтверждённого вывода о состоянии моста?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: BANK_EROSION_APPROACH_GEOMETRY_CHANGE."
+      },
+      "trainingAssumption": "Для учебного события «Размыв берега и изменение подходов» механизм BANK_EROSION_APPROACH_GEOMETRY_CHANGE и границы параметра «Срок инженерного контроля» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "RIVER_BANK"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.bank.erosion_state",
+          "operator": "EQUALS",
+          "value": "ACTIVE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии ACTIVE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "survey",
+          "name": "Срок инженерного контроля",
+          "unit": "h",
+          "min": 1,
+          "max": 36,
+          "default": 8
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateTerrainState",
+          "target": {
+            "domain": "terrain",
+            "ref": "scenario-target"
+          },
+          "mechanism": "BANK_EROSION_APPROACH_GEOMETRY_CHANGE",
+          "reason": "Эрозия меняет геометрию подходов к переправе и требует пересмотра допустимых маршрутов, не изменяя автоматически прочность моста без правила.",
+          "durationParameter": "survey"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "BANK_EROSION_OBSERVATION",
+          "sourceRequirement": "BANK_EROSION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "CROSSING_APPROACH_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "survey",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateTerrainState",
+          "method": "REINFORCE_BANK_OR_RELOCATE_APPROACH",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.bank.erosion_state": "ACTIVE"
+        },
+        "unsuitableFacts": {
+          "engineering.bank.erosion_state": "STABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-19-repair-material-deficit",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дефицит материалов для восстановления",
+      "description": "Работы останавливаются на достигнутом состоянии, поскольку материалов недостаточно; создаются дефицит и частичный результат без отрицательного склада.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как пересмотреть восстановление при нехватке инженерных материалов?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ENGINEERING_REPAIR_MATERIAL_SHORTAGE."
+      },
+      "trainingAssumption": "Для учебного события «Дефицит материалов для восстановления» механизм ENGINEERING_REPAIR_MATERIAL_SHORTAGE и границы параметра «Потребность в материалах» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "ENGINEER_WORKSITE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.repair.material_balance",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Потребность в материалах",
+          "unit": "t",
+          "min": 1,
+          "max": 200,
+          "default": 20
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "engineering-20-hazard-safety-zone"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "consumeResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ENGINEERING_REPAIR_MATERIAL_SHORTAGE",
+          "reason": "Работы останавливаются на достигнутом состоянии, поскольку материалов недостаточно; создаются дефицит и частичный результат без отрицательного склада.",
+          "quantityParameter": "amount",
+          "allowNegative": false
+        }
+      ],
+      "observations": [
+        {
+          "kind": "REPAIR_MATERIAL_OBSERVATION",
+          "sourceRequirement": "REPAIR_MATERIAL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "REPAIR_SHORTAGE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "consumeResource",
+          "method": "SUPPLY_MATERIALS_OR_REDUCE_SCOPE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.repair.material_balance": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "engineering.repair.material_balance": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "engineering-20-hazard-safety-zone",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Специальная зона ограничения доступа",
+      "description": "Опасный сценарный участок получает ограничение доступа и маршрут объезда без описания реальных поражающих параметров или практических инструкций.",
+      "category": "ENGINEERING",
+      "educationalQuestion": "Как организовать безопасный учебный маршрут вокруг опасной зоны?",
+      "source": {
+        "sourceId": "spec-terrain",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: ENGINEERING_HAZARD_ACCESS_ZONE."
+      },
+      "trainingAssumption": "Для учебного события «Специальная зона ограничения доступа» механизм ENGINEERING_HAZARD_ACCESS_ZONE и границы параметра «Срок проверки ограничения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "READINESS",
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "HAZARD_AREA"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "engineering.hazard.safety_state",
+          "operator": "EQUALS",
+          "value": "RESTRICTED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии RESTRICTED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок проверки ограничения",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "engineering-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordSafetyConstraint",
+          "target": {
+            "domain": "safety",
+            "ref": "scenario-target"
+          },
+          "mechanism": "ENGINEERING_HAZARD_ACCESS_ZONE",
+          "reason": "Опасный сценарный участок получает ограничение доступа и маршрут объезда без описания реальных поражающих параметров или практических инструкций.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "HAZARD_ZONE_OBSERVATION",
+          "sourceRequirement": "HAZARD_ZONE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "SAFETY_CONSTRAINT_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordSafetyConstraint",
+          "method": "AUTHORIZE_CLEARANCE_AND_REMOVE_ZONE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "engineering.hazard.safety_state": "RESTRICTED"
+        },
+        "unsuitableFacts": {
+          "engineering.hazard.safety_state": "CLEARED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

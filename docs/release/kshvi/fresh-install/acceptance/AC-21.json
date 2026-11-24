@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "command": "npx vitest run services/kshvi/tests/acceptance/ac21-morale.test.ts",
+  "output": "\n RUN  v5.0.3 /Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1\n\n ✓ services/kshvi/tests/acceptance/ac21-morale.test.ts (1 test) 20ms\n\n Test Files  1 passed (1)\n      Tests  1 passed (1)\n   Start at  00:06:39\n   Duration  129ms (transform 55%, tests 28%, import 14%, worker 2%)\n\n",
+  "initialRevision": {
+    "id": "ac21-morale-threshold",
+    "revision": 1,
+    "sha256": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac21/journal.json",
+    "sha256": "805674547efaa0e51fafab91c9919899788a607823e2709fc758ace307fe6b05",
+    "eventCount": 4
+  },
+  "hashes": {
+    "scenario": "c6d9b17fee3c8bba874630294487466fa32da76c2e9371987fbeb8dfce920e68",
+    "environment": "b4fb6dea4b8ffe3fe452dedf2d103caba535fa14deb5ad3028abded5ad7a41e7",
+    "journal": "805674547efaa0e51fafab91c9919899788a607823e2709fc758ace307fe6b05"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac21/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "executedWithHighMorale": 1,
+    "interruptedWithLowMorale": 1,
+    "commanderChoiceChanges": 1,
+    "orderProcessingDifferenceMinutes": 34.425,
+    "recoveryResourceEntries": 1,
+    "duplicateRecoveryConsumptions": 0,
+    "unknownReviews": 1
+  },
+  "limitations": [
+    "Пороговый эпизод синтетический и использует только учебные допущения профиля МПС; коэффициенты не являются психологической диагностикой людей и требуют методической оценки AC-30."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac21/journal.json",
+    "docs/release/kshvi/evidence/ac21/protocol.txt",
+    "docs/release/kshvi/evidence/ac21/metrics.json",
+    "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1/docs/release/kshvi/acceptance/AC-21.json"
+  ],
+  "freshInstall": true,
+  "offline": true,
+  "cwd": "/Users/vladimirabramov/def_ops/.worktrees/kshvi-full-release/.tmp/kshvi-ac00-5m7rl1",
+  "openErrors": []
+}

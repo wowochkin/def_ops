@@ -1,0 +1,40 @@
+{
+  "runId": "9fdf21b1-f9b6-42ad-bce3-20f85a96d5bf",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac06-communications",
+    "revision": 1,
+    "sha256": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac06/journal.json",
+    "sha256": "744165361398a23f50976dcea085b2261b04e14f564c26e49e2c326286744a1d",
+    "eventCount": 19
+  },
+  "hashes": {
+    "scenario": "2fda6f4ca8d84373bdd2af413815237335a057ac09425f18b995dbe2db741420",
+    "environment": "1c8d8f17f5e666af1af0fb2fc15a8bfe97bf226d92709b1dbeb3f5516f4c9546",
+    "journal": "744165361398a23f50976dcea085b2261b04e14f564c26e49e2c326286744a1d"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac06/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "attempts": 14,
+    "duplicateEffects": 0,
+    "reserveMessages": 1,
+    "missedReports": 1,
+    "paperDuplicatesReconciled": 1
+  },
+  "limitations": [
+    "Каналы моделируются локальными профилями; физическая потеря сетевого оборудования не входит в этот сценарий."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac06/initial-scenario.json",
+    "docs/release/kshvi/evidence/ac06/journal.json",
+    "docs/release/kshvi/evidence/ac06/protocol.txt",
+    "docs/release/kshvi/evidence/ac06/metrics.json",
+    "docs/release/kshvi/evidence/ac06/environment.json"
+  ]
+}

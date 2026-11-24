@@ -1,0 +1,16 @@
+{
+  "capturedAt": "2026-11-23T21:06:24.563Z",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "cpu": "Apple M4 Max",
+    "logicalCpus": 16,
+    "memoryBytes": 137438953472
+  },
+  "database": {
+    "version": "PostgreSQL 14.20 (Homebrew) on aarch64-apple-darwin25.1.0, compiled by Apple clang version 17.0.0 (clang-1700.4.4.1), 64-bit",
+    "poolMaximum": 50
+  },
+  "network": "loopback TCP; внешняя сеть не используется",
+  "topology": "50 независимых SSE-клиентов и 25 активных HTTP-участников; официальный API КШВИ"
+}

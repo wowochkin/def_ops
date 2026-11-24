@@ -1,0 +1,12 @@
+{
+  "independentProcesses": 2,
+  "probabilisticEvents": 12,
+  "zeroIntensityEvents": 0,
+  "preservedPlannedReactive": 2,
+  "officialOperations": 62,
+  "repeatedOperations": 0,
+  "replayedIntervals": 2,
+  "maximumCascadeDepth": 1,
+  "sealedProfileChangesRejected": 1,
+  "durableEvents": 1
+}

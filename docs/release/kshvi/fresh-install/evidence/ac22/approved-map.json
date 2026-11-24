@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 1,
+  "id": "map-ac22",
+  "revision": 11,
+  "state": "APPROVED",
+  "environment": {
+    "snapshotId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bounds": [
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  "bounds": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "initialOperationalAt": "2030-01-01T06:00:00+03:00",
+  "timeZone": "Europe/Moscow",
+  "weatherFrameRef": "weather-ac22",
+  "terrainStateRef": "terrain-ac22",
+  "symbolSet": {
+    "id": "modern-signs",
+    "revision": 1,
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "attribution": [
+    "OSM",
+    "Учебный атлас"
+  ],
+  "layers": [
+    {
+      "id": "BASEMAP",
+      "independent": true
+    },
+    {
+      "id": "TRUE_FORCES",
+      "independent": true
+    },
+    {
+      "id": "PERSONAL_SITUATION",
+      "independent": true
+    },
+    {
+      "id": "OBSERVATIONS",
+      "independent": true
+    },
+    {
+      "id": "EVENTS",
+      "independent": true
+    },
+    {
+      "id": "RESOURCES",
+      "independent": true
+    },
+    {
+      "id": "COMMUNICATIONS",
+      "independent": true
+    },
+    {
+      "id": "WEATHER",
+      "independent": true
+    },
+    {
+      "id": "CBRN",
+      "independent": true
+    },
+    {
+      "id": "SOCIO_ECONOMIC",
+      "independent": true
+    },
+    {
+      "id": "REFERENCE",
+      "independent": true
+    },
+    {
+      "id": "ACTUAL",
+      "independent": true
+    },
+    {
+      "id": "BRANCHES",
+      "independent": true
+    },
+    {
+      "id": "STAFF_COMMENTS",
+      "independent": true
+    }
+  ],
+  "markers": [
+    {
+      "id": "blue-force",
+      "revision": 1,
+      "kind": "FORCE",
+      "layerId": "TRUE_FORCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-blue-force",
+      "authorId": "author-ac22",
+      "eventId": "event-blue-force",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    },
+    {
+      "id": "secret-red",
+      "revision": 1,
+      "kind": "FORCE",
+      "layerId": "TRUE_FORCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.8,
+          0.8
+        ]
+      },
+      "sourceId": "source-secret-red",
+      "authorId": "author-ac22",
+      "eventId": "event-secret-red",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "red"
+        ],
+        "instanceIds": [
+          "red-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-red"
+      },
+      "sideId": "red",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "red",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    },
+    {
+      "id": "reported-red",
+      "revision": 1,
+      "kind": "FORCE",
+      "layerId": "OBSERVATIONS",
+      "truth": "PRIVATE",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.7,
+          0.7
+        ]
+      },
+      "sourceId": "source-reported-red",
+      "authorId": "author-ac22",
+      "eventId": "event-reported-red",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "ASSUMED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-red"
+      },
+      "sideId": "red",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "red",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    },
+    {
+      "id": "blue-command",
+      "revision": 1,
+      "kind": "COMMAND_POST",
+      "layerId": "TRUE_FORCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-blue-command",
+      "authorId": "author-ac22",
+      "eventId": "event-blue-command",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    },
+    {
+      "id": "blue-logistics",
+      "revision": 1,
+      "kind": "LOGISTICS",
+      "layerId": "RESOURCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-blue-logistics",
+      "authorId": "author-ac22",
+      "eventId": "event-blue-logistics",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    },
+    {
+      "id": "route-blue",
+      "revision": 1,
+      "kind": "ROUTE",
+      "layerId": "RESOURCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            0.2,
+            0.2
+          ],
+          [
+            0.4,
+            0.4
+          ]
+        ]
+      },
+      "sourceId": "source-route-blue",
+      "authorId": "author-ac22",
+      "eventId": "event-route-blue",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "linkedMarkerIds": [
+          "blue-force"
+        ]
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      },
+      "loadTonnes": 30,
+      "crossingCapacityTonnes": 40,
+      "passable": true
+    },
+    {
+      "id": "crossing-blue",
+      "revision": 1,
+      "kind": "CROSSING",
+      "layerId": "RESOURCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-crossing-blue",
+      "authorId": "author-ac22",
+      "eventId": "event-crossing-blue",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      },
+      "crossingCapacityTonnes": 40
+    },
+    {
+      "id": "column-blue",
+      "revision": 1,
+      "kind": "COLUMN",
+      "layerId": "RESOURCES",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-column-blue",
+      "authorId": "author-ac22",
+      "eventId": "event-column-blue",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      },
+      "routeId": "route-blue"
+    },
+    {
+      "id": "obstacle-blue",
+      "revision": 1,
+      "kind": "OBSTACLE",
+      "layerId": "EVENTS",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2,
+          0.2
+        ]
+      },
+      "sourceId": "source-obstacle-blue",
+      "authorId": "author-ac22",
+      "eventId": "event-obstacle-blue",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      },
+      "passable": true
+    },
+    {
+      "id": "area-blue",
+      "revision": 1,
+      "kind": "AREA",
+      "layerId": "REFERENCE",
+      "truth": "TRUTH",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.1,
+              0.1
+            ],
+            [
+              0.5,
+              0.1
+            ],
+            [
+              0.5,
+              0.5
+            ],
+            [
+              0.1,
+              0.1
+            ]
+          ]
+        ]
+      },
+      "sourceId": "source-area-blue",
+      "authorId": "author-ac22",
+      "eventId": "event-area-blue",
+      "validFrom": "2030-01-01T06:00:00+03:00",
+      "validUntil": "2030-01-02T06:00:00+03:00",
+      "state": "OBSERVED",
+      "confidence": 0.8,
+      "uncertainty": {
+        "radiusM": 20,
+        "note": "Исходное наблюдение"
+      },
+      "visibility": {
+        "sideIds": [
+          "blue"
+        ],
+        "instanceIds": [
+          "blue-hq"
+        ]
+      },
+      "links": {
+        "forceId": "force-blue"
+      },
+      "sideId": "blue",
+      "symbol": {
+        "id": "infantry",
+        "version": "v1",
+        "sideId": "blue",
+        "status": "APPROVED",
+        "sourceDocument": "signs.doc",
+        "sourcePage": 12
+      }
+    }
+  ],
+  "history": [],
+  "sha256": "4c09b851c7adf3d26b763641dc3634cd4de3bff33a0c7efd2f71ab1d4d12ed42"
+}

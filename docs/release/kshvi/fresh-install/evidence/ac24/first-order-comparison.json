@@ -1,0 +1,277 @@
+{
+  "ready": {
+    "task": {
+      "id": "task-order-ready-ac24",
+      "elementId": "element-order-ready-ac24",
+      "orderId": "order-ready-ac24",
+      "receivedOrderIds": [
+        "order-ready-ac24"
+      ],
+      "stage": "EXECUTION",
+      "route": {
+        "routeLengthMeters": 1000,
+        "remainingMeters": 400,
+        "travelledMeters": 600,
+        "delayMinutes": 0
+      },
+      "elapsedMinutes": 60,
+      "resources": [],
+      "reportIds": [],
+      "limitations": [],
+      "history": [
+        {
+          "id": "advance-ready-ac24",
+          "at": "2030-01-01T08:00:00.000Z",
+          "action": "ADVANCE",
+          "details": "ADVANCE"
+        }
+      ]
+    },
+    "movement": {
+      "routeLengthMeters": 1000,
+      "remainingMeters": 400,
+      "travelledMeters": 600,
+      "delayMinutes": 0,
+      "status": "IN_PROGRESS",
+      "arrived": false,
+      "distanceMeters": 600,
+      "unknown": [],
+      "explanation": [
+        "Скорость 0.6 км/ч; местность 1; погода 1; состояние 1; интервал 1 ч"
+      ]
+    },
+    "issues": []
+  },
+  "partial": [
+    {
+      "subjectId": "force-signal",
+      "check": {
+        "allowed": true,
+        "status": "ALLOWED",
+        "missing": [
+          "SIGNAL_NOT_RECEIVED"
+        ],
+        "limitations": [
+          {
+            "code": "SIGNAL_NOT_RECEIVED",
+            "since": "2030-01-01T07:00:00.000Z",
+            "details": "Сигнал signal-signal не доведён через связь"
+          }
+        ],
+        "effects": {
+          "orderProcessingDelayMinutes": 20,
+          "capabilityFactor": 0.8,
+          "movementFactor": 0.7,
+          "resourceFactor": 1
+        },
+        "unknown": [],
+        "explanation": [
+          "SEALED фиксирует сценарий, но не завершает боевую готовность сил",
+          "Разрешение decision-ac24-0: План учения; ограничения сохранены",
+          "Переход разрешён как PARTIAL; последствия применяются к первому приказу"
+        ]
+      },
+      "moved": {
+        "task": {
+          "id": "task-order-ac24-0",
+          "elementId": "element-order-ac24-0",
+          "orderId": "order-ac24-0",
+          "receivedOrderIds": [
+            "order-ac24-0"
+          ],
+          "stage": "PARTIAL",
+          "route": {
+            "routeLengthMeters": 1000,
+            "remainingMeters": 720,
+            "travelledMeters": 280,
+            "delayMinutes": 20
+          },
+          "elapsedMinutes": 60,
+          "resources": [],
+          "reportIds": [],
+          "limitations": [],
+          "history": [
+            {
+              "id": "advance-ac24-0",
+              "at": "2030-01-01T08:00:00.000Z",
+              "action": "ADVANCE",
+              "details": "ADVANCE"
+            }
+          ]
+        },
+        "movement": {
+          "routeLengthMeters": 1000,
+          "remainingMeters": 720,
+          "travelledMeters": 280,
+          "delayMinutes": 20,
+          "status": "IN_PROGRESS",
+          "arrived": false,
+          "distanceMeters": 280,
+          "unknown": [],
+          "explanation": [
+            "Скорость 0.6 км/ч; местность 1; погода 1; состояние 0.7; интервал 1 ч",
+            "Добавлена задержка 20 мин"
+          ]
+        },
+        "issues": []
+      }
+    },
+    {
+      "subjectId": "force-personnel",
+      "check": {
+        "allowed": true,
+        "status": "ALLOWED",
+        "missing": [
+          "PERSONNEL_SHORTAGE",
+          "EQUIPMENT_UNSERVICEABLE"
+        ],
+        "limitations": [
+          {
+            "code": "PERSONNEL_SHORTAGE",
+            "since": "2030-01-01T06:00:00.000Z",
+            "details": "Недокомплект личного состава"
+          },
+          {
+            "code": "EQUIPMENT_UNSERVICEABLE",
+            "since": "2030-01-01T06:00:00.000Z",
+            "details": "Техника неисправна"
+          }
+        ],
+        "effects": {
+          "orderProcessingDelayMinutes": 5,
+          "capabilityFactor": 0.35,
+          "movementFactor": 0.54,
+          "resourceFactor": 1
+        },
+        "unknown": [],
+        "explanation": [
+          "SEALED фиксирует сценарий, но не завершает боевую готовность сил",
+          "Разрешение decision-ac24-1: План учения; ограничения сохранены",
+          "Переход разрешён как PARTIAL; последствия применяются к первому приказу"
+        ]
+      },
+      "moved": {
+        "task": {
+          "id": "task-order-ac24-1",
+          "elementId": "element-order-ac24-1",
+          "orderId": "order-ac24-1",
+          "receivedOrderIds": [
+            "order-ac24-1"
+          ],
+          "stage": "PARTIAL",
+          "route": {
+            "routeLengthMeters": 1000,
+            "remainingMeters": 703,
+            "travelledMeters": 297,
+            "delayMinutes": 5
+          },
+          "elapsedMinutes": 60,
+          "resources": [],
+          "reportIds": [],
+          "limitations": [],
+          "history": [
+            {
+              "id": "advance-ac24-1",
+              "at": "2030-01-01T08:00:00.000Z",
+              "action": "ADVANCE",
+              "details": "ADVANCE"
+            }
+          ]
+        },
+        "movement": {
+          "routeLengthMeters": 1000,
+          "remainingMeters": 703,
+          "travelledMeters": 297,
+          "delayMinutes": 5,
+          "status": "IN_PROGRESS",
+          "arrived": false,
+          "distanceMeters": 297,
+          "unknown": [],
+          "explanation": [
+            "Скорость 0.6 км/ч; местность 1; погода 1; состояние 0.54; интервал 1 ч",
+            "Добавлена задержка 5 мин"
+          ]
+        },
+        "issues": []
+      }
+    },
+    {
+      "subjectId": "force-supply",
+      "check": {
+        "allowed": true,
+        "status": "ALLOWED",
+        "missing": [
+          "SUPPLIES_NOT_REPLENISHED",
+          "AREA_NOT_OCCUPIED"
+        ],
+        "limitations": [
+          {
+            "code": "SUPPLIES_NOT_REPLENISHED",
+            "since": "2030-01-01T06:00:00.000Z",
+            "details": "Запасы не пополнены"
+          },
+          {
+            "code": "AREA_NOT_OCCUPIED",
+            "since": "2030-01-01T06:00:00.000Z",
+            "details": "Район не занят"
+          }
+        ],
+        "effects": {
+          "orderProcessingDelayMinutes": 0,
+          "capabilityFactor": 0.72,
+          "movementFactor": 0.4,
+          "resourceFactor": 0.4
+        },
+        "unknown": [],
+        "explanation": [
+          "SEALED фиксирует сценарий, но не завершает боевую готовность сил",
+          "Разрешение decision-ac24-2: План учения; ограничения сохранены",
+          "Переход разрешён как PARTIAL; последствия применяются к первому приказу"
+        ]
+      },
+      "moved": {
+        "task": {
+          "id": "task-order-ac24-2",
+          "elementId": "element-order-ac24-2",
+          "orderId": "order-ac24-2",
+          "receivedOrderIds": [
+            "order-ac24-2"
+          ],
+          "stage": "PARTIAL",
+          "route": {
+            "routeLengthMeters": 1000,
+            "remainingMeters": 760,
+            "travelledMeters": 240,
+            "delayMinutes": 0
+          },
+          "elapsedMinutes": 60,
+          "resources": [],
+          "reportIds": [],
+          "limitations": [],
+          "history": [
+            {
+              "id": "advance-ac24-2",
+              "at": "2030-01-01T08:00:00.000Z",
+              "action": "ADVANCE",
+              "details": "ADVANCE"
+            }
+          ]
+        },
+        "movement": {
+          "routeLengthMeters": 1000,
+          "remainingMeters": 760,
+          "travelledMeters": 240,
+          "delayMinutes": 0,
+          "status": "IN_PROGRESS",
+          "arrived": false,
+          "distanceMeters": 240,
+          "unknown": [],
+          "explanation": [
+            "Скорость 0.6 км/ч; местность 1; погода 1; состояние 0.4; интервал 1 ч"
+          ]
+        },
+        "issues": []
+      }
+    }
+  ]
+}

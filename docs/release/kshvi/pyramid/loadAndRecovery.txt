@@ -1,0 +1,63 @@
+### real-network-load
+$ node scripts/kshvi-load-test.mjs --connections 50 --active 25 --rate 5 --burst-rate 20 --burst-seconds 60 --output docs/release/kshvi/nonfunctional/load-distributions.json
+status=blocked exit=1
+{
+  "status": "blocked",
+  "thresholdIssues": [],
+  "executionError": null,
+  "deliveryP95Ms": 1.944208000000799,
+  "mapP95Ms": 1.268458999998984,
+  "commands": {
+    "attempted": 1500,
+    "confirmed": 1500,
+    "failed": 0,
+    "idempotentReplays": 25
+  },
+  "nf": [
+    {
+      "id": "NF-01",
+      "status": "blocked",
+      "openErrors": [
+        "PHYSICAL_LAN_NOT_VERIFIED"
+      ]
+    },
+    {
+      "id": "NF-02",
+      "status": "blocked",
+      "openErrors": [
+        "PHYSICAL_LAN_NOT_VERIFIED"
+      ]
+    },
+    {
+      "id": "NF-03",
+      "status": "blocked",
+      "openErrors": [
+        "PHYSICAL_LAN_NOT_VERIFIED"
+      ]
+    },
+    {
+      "id": "NF-04",
+      "status": "blocked",
+      "openErrors": [
+        "PHYSICAL_LAN_NOT_VERIFIED"
+      ]
+    },
+    {
+      "id": "NF-05",
+      "status": "blocked",
+      "openErrors": [
+        "LOCAL_NTP_NOT_VERIFIED"
+      ]
+    }
+  ]
+}
+
+### security-and-isolation
+$ node scripts/kshvi-security-acceptance.mjs --evidence docs/release/kshvi/nonfunctional
+status=passed exit=0
+NF-06–NF-10: passed
+
+### failure-and-recovery
+$ node scripts/kshvi-recovery-acceptance.mjs --evidence docs/release/kshvi/nonfunctional
+status=blocked exit=1
+NF-11–NF-15: blocked

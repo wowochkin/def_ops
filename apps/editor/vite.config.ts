@@ -77,6 +77,8 @@ export default defineConfig(async () => {
         gallery: resolve(__dirname, 'gallery.html'),
         compare: resolve(__dirname, 'compare.html'),
         library: resolve(__dirname, 'library.html'),
+        exposition: resolve(__dirname, 'src/modern/kshvi/exposition/index.html'),
+        expositionProjector: resolve(__dirname, 'src/modern/kshvi/exposition/projector.html'),
       },
     },
   },

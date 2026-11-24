@@ -1,0 +1,3288 @@
+{
+  "schemaVersion": "1.0.0",
+  "category": "MEDICAL",
+  "title": "Медицинское обеспечение и эвакуация как сценарные процессы",
+  "templates": [
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-01-evacuation-request",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Создание заявки на медицинскую эвакуацию",
+      "description": "Виртуальный случай получает сценарную заявку с местом, временем и приоритетом без диагноза или оценки реального человека.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как организовать учебную эвакуацию от заявки до подтверждённого результата?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: SCENARIO_EVACUATION_REQUEST_CREATION."
+      },
+      "trainingAssumption": "Для учебного события «Создание заявки на медицинскую эвакуацию» механизм SCENARIO_EVACUATION_REQUEST_CREATION и границы параметра «Срок обработки заявки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.case.request_state",
+          "operator": "EQUALS",
+          "value": "REQUIRED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REQUIRED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок обработки заявки",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 20
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-02-evacuation-transport-shortage"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createMedicalProcess",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "SCENARIO_EVACUATION_REQUEST_CREATION",
+          "reason": "Виртуальный случай получает сценарную заявку с местом, временем и приоритетом без диагноза или оценки реального человека.",
+          "durationParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_REQUEST_OBSERVATION",
+          "sourceRequirement": "MEDICAL_REQUEST_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_REQUEST_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createMedicalProcess",
+          "method": "CANCEL_REQUEST_BEFORE_PICKUP",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.case.request_state": "REQUIRED"
+        },
+        "unsuitableFacts": {
+          "medical.case.request_state": "CLOSED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-02-evacuation-transport-shortage",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Недоступность эвакуационного транспорта",
+      "description": "Все виртуальные транспортные средства заняты, и заявка получает очередь без мгновенного перемещения случая в медицинский пункт.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как распределить очередь эвакуации при нехватке транспорта?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_TRANSPORT_CAPACITY_QUEUE."
+      },
+      "trainingAssumption": "Для учебного события «Недоступность эвакуационного транспорта» механизм MEDICAL_TRANSPORT_CAPACITY_QUEUE и границы параметра «Ожидание транспорта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.transport.availability_state",
+          "operator": "EQUALS",
+          "value": "UNAVAILABLE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии UNAVAILABLE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание транспорта",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 60
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceMedicalEvacuation",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_TRANSPORT_CAPACITY_QUEUE",
+          "reason": "Все виртуальные транспортные средства заняты, и заявка получает очередь без мгновенного перемещения случая в медицинский пункт.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_TRANSPORT_OBSERVATION",
+          "sourceRequirement": "MEDICAL_TRANSPORT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "EVACUATION_QUEUE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceMedicalEvacuation",
+          "method": "ASSIGN_TRANSPORT_AND_START_EVACUATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.transport.availability_state": "UNAVAILABLE"
+        },
+        "unsuitableFacts": {
+          "medical.transport.availability_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-03-priority-queue-conflict",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Конфликт сценарных приоритетов эвакуации",
+      "description": "Две заявки имеют несовместимые приоритеты при одном транспорте, и решение о очерёдности требует утверждённого правила или рассмотрения.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как разрешить конкуренцию сценарных приоритетов без медицинской диагностики?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_SCENARIO_PRIORITY_CONFLICT_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Конфликт сценарных приоритетов эвакуации» механизм MEDICAL_SCENARIO_PRIORITY_CONFLICT_REVIEW и границы параметра «Срок рассмотрения очереди» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.priority.queue_state",
+          "operator": "EQUALS",
+          "value": "CONFLICTING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFLICTING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения очереди",
+          "unit": "min",
+          "min": 5,
+          "max": 90,
+          "default": 15
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-04-facility-capacity-full"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_SCENARIO_PRIORITY_CONFLICT_REVIEW",
+          "reason": "Две заявки имеют несовместимые приоритеты при одном транспорте, и решение о очерёдности требует утверждённого правила или рассмотрения.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_PRIORITY_OBSERVATION",
+          "sourceRequirement": "MEDICAL_PRIORITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_PRIORITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "AUTHORIZE_SCENARIO_QUEUE_ORDER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.priority.queue_state": "CONFLICTING"
+        },
+        "unsuitableFacts": {
+          "medical.priority.queue_state": "ORDERED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-04-facility-capacity-full",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Переполнение медицинского пункта",
+      "description": "Ёмкость виртуального объекта исчерпана, поэтому новое подтверждение приёма блокируется и требуется перенаправление или освобождение мест.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как перенаправить эвакуацию при исчерпании ёмкости пункта?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_FACILITY_CAPACITY_BLOCK."
+      },
+      "trainingAssumption": "Для учебного события «Переполнение медицинского пункта» механизм MEDICAL_FACILITY_CAPACITY_BLOCK и границы параметра «Недостающие места» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.facility.capacity_state",
+          "operator": "EQUALS",
+          "value": "FULL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии FULL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Недостающие места",
+          "unit": "case",
+          "min": 1,
+          "max": 50,
+          "default": 5
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-1"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateMedicalCapacity",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_FACILITY_CAPACITY_BLOCK",
+          "reason": "Ёмкость виртуального объекта исчерпана, поэтому новое подтверждение приёма блокируется и требуется перенаправление или освобождение мест.",
+          "quantityParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_CAPACITY_OBSERVATION",
+          "sourceRequirement": "MEDICAL_CAPACITY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_CAPACITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateMedicalCapacity",
+          "method": "FREE_CAPACITY_OR_REDIRECT_EVACUATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.facility.capacity_state": "FULL"
+        },
+        "unsuitableFacts": {
+          "medical.facility.capacity_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-05-evacuation-route-closed",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Закрытие маршрута медицинской эвакуации",
+      "description": "Дорожное событие закрывает назначенный путь, и виртуальная эвакуация пересчитывается от фактической позиции с сохранением затраченного времени.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как изменить маршрут эвакуации после закрытия дороги?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_EVACUATION_ROUTE_REROUTE_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Закрытие маршрута медицинской эвакуации» механизм MEDICAL_EVACUATION_ROUTE_REROUTE_DELAY и границы параметра «Задержка эвакуации» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.evacuation.route_state",
+          "operator": "EQUALS",
+          "value": "CLOSED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CLOSED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка эвакуации",
+          "unit": "min",
+          "min": 10,
+          "max": 360,
+          "default": 60
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-06-pickup-delay"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "delayMovement",
+          "target": {
+            "domain": "movement",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_EVACUATION_ROUTE_REROUTE_DELAY",
+          "reason": "Дорожное событие закрывает назначенный путь, и виртуальная эвакуация пересчитывается от фактической позиции с сохранением затраченного времени.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_ROUTE_OBSERVATION",
+          "sourceRequirement": "MEDICAL_ROUTE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_ROUTE_DELAY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "delayMovement",
+          "method": "OPEN_OR_CONFIRM_ALTERNATE_MEDICAL_ROUTE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.evacuation.route_state": "CLOSED"
+        },
+        "unsuitableFacts": {
+          "medical.evacuation.route_state": "OPEN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-06-pickup-delay",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Задержка прибытия к пункту сбора",
+      "description": "Транспорт ещё не достиг виртуального пункта сбора, поэтому начало перемещения случая не засчитывается до отдельного подтверждения.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как отличить назначение транспорта от фактического начала эвакуации?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_PICKUP_CONFIRMATION_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Задержка прибытия к пункту сбора» механизм MEDICAL_PICKUP_CONFIRMATION_DELAY и границы параметра «Задержка прибытия» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.pickup.arrival_state",
+          "operator": "EQUALS",
+          "value": "DELAYED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DELAYED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка прибытия",
+          "unit": "min",
+          "min": 5,
+          "max": 240,
+          "default": 45
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceMedicalEvacuation",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_PICKUP_CONFIRMATION_DELAY",
+          "reason": "Транспорт ещё не достиг виртуального пункта сбора, поэтому начало перемещения случая не засчитывается до отдельного подтверждения.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PICKUP_DELAY_OBSERVATION",
+          "sourceRequirement": "PICKUP_DELAY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PICKUP_STATUS_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceMedicalEvacuation",
+          "method": "CONFIRM_PICKUP_AND_START_MOVEMENT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.pickup.arrival_state": "DELAYED"
+        },
+        "unsuitableFacts": {
+          "medical.pickup.arrival_state": "CONFIRMED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-07-handover-missing",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отсутствие подтверждения передачи случая",
+      "description": "Транспорт прибыл в объект, но передача не подтверждена; состояние случая не становится завершённым и не создаёт повторную заявку автоматически.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как завершить эвакуацию при неподтверждённой передаче?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_HANDOVER_CONFIRMATION_PENDING."
+      },
+      "trainingAssumption": "Для учебного события «Отсутствие подтверждения передачи случая» механизм MEDICAL_HANDOVER_CONFIRMATION_PENDING и границы параметра «Ожидание подтверждения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.handover.confirmation_state",
+          "operator": "EQUALS",
+          "value": "MISSING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии MISSING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "wait",
+          "name": "Ожидание подтверждения",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 30
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-08-medical-vehicle-degraded"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceMedicalEvacuation",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_HANDOVER_CONFIRMATION_PENDING",
+          "reason": "Транспорт прибыл в объект, но передача не подтверждена; состояние случая не становится завершённым и не создаёт повторную заявку автоматически.",
+          "durationParameter": "wait"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "HANDOVER_OBSERVATION",
+          "sourceRequirement": "HANDOVER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "HANDOVER_PENDING_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "wait",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceMedicalEvacuation",
+          "method": "CONFIRM_OR_INVESTIGATE_HANDOVER",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.handover.confirmation_state": "MISSING"
+        },
+        "unsuitableFacts": {
+          "medical.handover.confirmation_state": "CONFIRMED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-08-medical-vehicle-degraded",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Деградация медицинского транспорта",
+      "description": "Виртуальное транспортное средство переходит в DEGRADED, а заявка сохраняет состояние и получает новый транспорт или задержку без телепортации.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как продолжить эвакуацию после технической деградации транспорта?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_VEHICLE_DEGRADATION_DELAY."
+      },
+      "trainingAssumption": "Для учебного события «Деградация медицинского транспорта» механизм MEDICAL_VEHICLE_DEGRADATION_DELAY и границы параметра «Задержка замены транспорта» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.vehicle.equipment_state",
+          "operator": "EQUALS",
+          "value": "DEGRADED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEGRADED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Задержка замены транспорта",
+          "unit": "min",
+          "min": 15,
+          "max": 360,
+          "default": 90
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-2"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "transitionEquipment",
+          "target": {
+            "domain": "equipment",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_VEHICLE_DEGRADATION_DELAY",
+          "reason": "Виртуальное транспортное средство переходит в DEGRADED, а заявка сохраняет состояние и получает новый транспорт или задержку без телепортации.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_VEHICLE_OBSERVATION",
+          "sourceRequirement": "MEDICAL_VEHICLE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_VEHICLE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "transitionEquipment",
+          "method": "REPAIR_OR_REPLACE_MEDICAL_VEHICLE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.vehicle.equipment_state": "DEGRADED"
+        },
+        "unsuitableFacts": {
+          "medical.vehicle.equipment_state": "SERVICEABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-09-medical-supply-deficit",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дефицит сценарного медицинского имущества",
+      "description": "Обработка виртуального случая требует номенклатуру, которой недостаточно; создаются заявка и дефицит без медицинских рекомендаций и отрицательного склада.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как восстановить сценарный процесс при дефиците медицинского имущества?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_SCENARIO_SUPPLY_DEFICIT."
+      },
+      "trainingAssumption": "Для учебного события «Дефицит сценарного медицинского имущества» механизм MEDICAL_SCENARIO_SUPPLY_DEFICIT и границы параметра «Учебные комплекты» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.supply.balance_state",
+          "operator": "EQUALS",
+          "value": "DEFICIT",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DEFICIT; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Учебные комплекты",
+          "unit": "unit",
+          "min": 1,
+          "max": 100,
+          "default": 10
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-10-facility-restoration"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "consumeResource",
+          "target": {
+            "domain": "resources",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_SCENARIO_SUPPLY_DEFICIT",
+          "reason": "Обработка виртуального случая требует номенклатуру, которой недостаточно; создаются заявка и дефицит без медицинских рекомендаций и отрицательного склада.",
+          "quantityParameter": "amount",
+          "allowNegative": false
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_SUPPLY_OBSERVATION",
+          "sourceRequirement": "MEDICAL_SUPPLY_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_SUPPLY_SHORTAGE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "consumeResource",
+          "method": "SUPPLY_OR_PAUSE_SCENARIO_PROCESS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.supply.balance_state": "DEFICIT"
+        },
+        "unsuitableFacts": {
+          "medical.supply.balance_state": "SUFFICIENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-10-facility-restoration",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Восстановление ёмкости медицинского пункта",
+      "description": "После подтверждённого освобождения мест объект снова принимает очередь, обрабатывая заявки последовательно без автоматического завершения всех случаев.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как возобновить приём после восстановления ёмкости медицинского пункта?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_FACILITY_CAPACITY_RESTORE_WITH_QUEUE."
+      },
+      "trainingAssumption": "Для учебного события «Восстановление ёмкости медицинского пункта» механизм MEDICAL_FACILITY_CAPACITY_RESTORE_WITH_QUEUE и границы параметра «Восстановленные места» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.facility.restoration_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "amount",
+          "name": "Восстановленные места",
+          "unit": "case",
+          "min": 1,
+          "max": 50,
+          "default": 8
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateMedicalCapacity",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_FACILITY_CAPACITY_RESTORE_WITH_QUEUE",
+          "reason": "После подтверждённого освобождения мест объект снова принимает очередь, обрабатывая заявки последовательно без автоматического завершения всех случаев.",
+          "quantityParameter": "amount"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_RESTORATION_OBSERVATION",
+          "sourceRequirement": "MEDICAL_RESTORATION_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_QUEUE_RESTART_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "amount",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateMedicalCapacity",
+          "method": "REPAUSE_IF_CAPACITY_EXCEEDED",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.facility.restoration_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "medical.facility.restoration_state": "FULL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-11-partial-evacuation-group",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Частичная эвакуация группы случаев",
+      "description": "Доступный транспорт принимает только часть виртуальной группы, и каждая оставшаяся заявка сохраняет самостоятельное состояние ожидания.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как контролировать частичную эвакуацию группы без потери остатка очереди?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: PARTIAL_MEDICAL_GROUP_EVACUATION."
+      },
+      "trainingAssumption": "Для учебного события «Частичная эвакуация группы случаев» механизм PARTIAL_MEDICAL_GROUP_EVACUATION и границы параметра «Оставшиеся виртуальные случаи» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.group.evacuation_state",
+          "operator": "EQUALS",
+          "value": "PARTIAL",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии PARTIAL; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "remaining",
+          "name": "Оставшиеся виртуальные случаи",
+          "unit": "case",
+          "min": 1,
+          "max": 40,
+          "default": 6
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-12-duplicate-medical-request"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceMedicalEvacuation",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "PARTIAL_MEDICAL_GROUP_EVACUATION",
+          "reason": "Доступный транспорт принимает только часть виртуальной группы, и каждая оставшаяся заявка сохраняет самостоятельное состояние ожидания.",
+          "durationParameter": "remaining"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "PARTIAL_GROUP_OBSERVATION",
+          "sourceRequirement": "PARTIAL_GROUP_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "PARTIAL_EVACUATION_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "remaining",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceMedicalEvacuation",
+          "method": "COMPLETE_REMAINING_GROUP_EVACUATION",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.group.evacuation_state": "PARTIAL"
+        },
+        "unsuitableFacts": {
+          "medical.group.evacuation_state": "COMPLETE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-12-duplicate-medical-request",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Дубликат заявки на эвакуацию",
+      "description": "Повторная заявка имеет общий ключ виртуального случая и связывается с исходной, не создавая второй транспортный расход или второй случай.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как исключить двойную эвакуацию одного виртуального случая?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: DUPLICATE_MEDICAL_REQUEST_IDEMPOTENCY."
+      },
+      "trainingAssumption": "Для учебного события «Дубликат заявки на эвакуацию» механизм DUPLICATE_MEDICAL_REQUEST_IDEMPOTENCY и границы параметра «Срок сверки заявки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.request.duplicate_state",
+          "operator": "EQUALS",
+          "value": "DUPLICATED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DUPLICATED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок сверки заявки",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-3"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createMedicalProcess",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "DUPLICATE_MEDICAL_REQUEST_IDEMPOTENCY",
+          "reason": "Повторная заявка имеет общий ключ виртуального случая и связывается с исходной, не создавая второй транспортный расход или второй случай.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "DUPLICATE_MEDICAL_OBSERVATION",
+          "sourceRequirement": "DUPLICATE_MEDICAL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "DUPLICATE_REQUEST_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createMedicalProcess",
+          "method": "LINK_DUPLICATE_WITHOUT_NEW_CASE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.request.duplicate_state": "DUPLICATED"
+        },
+        "unsuitableFacts": {
+          "medical.request.duplicate_state": "UNIQUE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-13-weather-transport-hold",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Погода приостанавливает сценарный транспорт",
+      "description": "Утверждённый профиль погоды закрывает конкретный способ перемещения, и заявка получает задержку или другой разрешённый способ без отмены потребности.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как пересмотреть эвакуацию при погодном ограничении транспорта?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_WEATHER_TRANSPORT_HOLD."
+      },
+      "trainingAssumption": "Для учебного события «Погода приостанавливает сценарный транспорт» механизм MEDICAL_WEATHER_TRANSPORT_HOLD и границы параметра «Срок приостановки» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_ROUTE"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.weather.transport_state",
+          "operator": "EQUALS",
+          "value": "SUSPENDED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии SUSPENDED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Срок приостановки",
+          "unit": "h",
+          "min": 1,
+          "max": 24,
+          "default": 4
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 105,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-14-collection-point-relocation"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "advanceMedicalEvacuation",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_WEATHER_TRANSPORT_HOLD",
+          "reason": "Утверждённый профиль погоды закрывает конкретный способ перемещения, и заявка получает задержку или другой разрешённый способ без отмены потребности.",
+          "durationParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_WEATHER_OBSERVATION",
+          "sourceRequirement": "MEDICAL_WEATHER_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_TRANSPORT_HOLD_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "advanceMedicalEvacuation",
+          "method": "END_WEATHER_HOLD_AND_RESUME",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.weather.transport_state": "SUSPENDED"
+        },
+        "unsuitableFacts": {
+          "medical.weather.transport_state": "AVAILABLE"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-14-collection-point-relocation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Перемещение пункта сбора",
+      "description": "Виртуальный пункт сбора меняет положение отдельным событием, и незавершённые эвакуации получают новый маршрут от фактической позиции.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как сохранить эвакуационные маршруты при перемещении пункта сбора?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_COLLECTION_POINT_RELOCATION."
+      },
+      "trainingAssumption": "Для учебного события «Перемещение пункта сбора» механизм MEDICAL_COLLECTION_POINT_RELOCATION и границы параметра «Длительность перемещения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.collection_point.mobility_state",
+          "operator": "EQUALS",
+          "value": "RELOCATING",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии RELOCATING; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "relocation",
+          "name": "Длительность перемещения",
+          "unit": "min",
+          "min": 20,
+          "max": 360,
+          "default": 90
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 120,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateInfrastructureState",
+          "target": {
+            "domain": "infrastructure",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_COLLECTION_POINT_RELOCATION",
+          "reason": "Виртуальный пункт сбора меняет положение отдельным событием, и незавершённые эвакуации получают новый маршрут от фактической позиции.",
+          "durationParameter": "relocation"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_POINT_MOVE_OBSERVATION",
+          "sourceRequirement": "MEDICAL_POINT_MOVE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_POINT_MOVE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "relocation",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateInfrastructureState",
+          "method": "DEPLOY_POINT_AND_CONFIRM_NEW_ROUTES",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.collection_point.mobility_state": "RELOCATING"
+        },
+        "unsuitableFacts": {
+          "medical.collection_point.mobility_state": "DEPLOYED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-15-report-deadline-missed",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Пропуск медицинского процессного донесения",
+      "description": "Срок донесения истёк, и создаются напоминание и наблюдаемый пробел данных без автоматического заполнения состояния виртуального случая.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как отличить отсутствие медицинского донесения от отсутствия события?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_PROCESS_REPORT_OVERDUE."
+      },
+      "trainingAssumption": "Для учебного события «Пропуск медицинского процессного донесения» механизм MEDICAL_PROCESS_REPORT_OVERDUE и границы параметра «Просрочка донесения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.report.submission_state",
+          "operator": "EQUALS",
+          "value": "OVERDUE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии OVERDUE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "delay",
+          "name": "Просрочка донесения",
+          "unit": "min",
+          "min": 5,
+          "max": 180,
+          "default": 30
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 135,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-16-return-readiness-process"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "markReportOverdue",
+          "target": {
+            "domain": "reports",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_PROCESS_REPORT_OVERDUE",
+          "reason": "Срок донесения истёк, и создаются напоминание и наблюдаемый пробел данных без автоматического заполнения состояния виртуального случая.",
+          "durationParameter": "delay"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_REPORT_OBSERVATION",
+          "sourceRequirement": "MEDICAL_REPORT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_REPORT_REMINDER",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "delay",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "markReportOverdue",
+          "method": "SUBMIT_ACTUAL_PROCESS_REPORT",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.report.submission_state": "OVERDUE"
+        },
+        "unsuitableFacts": {
+          "medical.report.submission_state": "SUBMITTED"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-16-return-readiness-process",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Сценарный возврат к готовности после процесса",
+      "description": "Виртуальная сила получает отдельное мероприятие восстановления готовности только после подтверждения сценарного результата, без медицинского заключения.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как связать сценарный медицинский процесс с последующей готовностью силы?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_SCENARIO_RETURN_READINESS_TRANSITION."
+      },
+      "trainingAssumption": "Для учебного события «Сценарный возврат к готовности после процесса» механизм MEDICAL_SCENARIO_RETURN_READINESS_TRANSITION и границы параметра «Срок восстановления» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.return.process_state",
+          "operator": "EQUALS",
+          "value": "CONFIRMED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии CONFIRMED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "recovery",
+          "name": "Срок восстановления",
+          "unit": "h",
+          "min": 1,
+          "max": 72,
+          "default": 12
+        }
+      ],
+      "weight": 8,
+      "severity": 1,
+      "limits": {
+        "maxSeverity": 1,
+        "cooldown": {
+          "value": 150,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-4"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "recordReadinessActivity",
+          "target": {
+            "domain": "readiness",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_SCENARIO_RETURN_READINESS_TRANSITION",
+          "reason": "Виртуальная сила получает отдельное мероприятие восстановления готовности только после подтверждения сценарного результата, без медицинского заключения.",
+          "durationParameter": "recovery"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_RETURN_OBSERVATION",
+          "sourceRequirement": "MEDICAL_RETURN_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "RETURN_READINESS_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "recovery",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "recordReadinessActivity",
+          "method": "REOPEN_RECOVERY_IF_CONDITION_CHANGES",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.return.process_state": "CONFIRMED"
+        },
+        "unsuitableFacts": {
+          "medical.return.process_state": "PENDING"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-17-stale-case-observation",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Устаревание сведений о виртуальном случае",
+      "description": "Донесение о процессе устарело, и новая проекция помечает данные STALE без диагностики или копирования истинного состояния.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как учитывать устаревшие сведения при назначении следующей эвакуации?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_CASE_OBSERVATION_STALENESS."
+      },
+      "trainingAssumption": "Для учебного события «Устаревание сведений о виртуальном случае» механизм MEDICAL_CASE_OBSERVATION_STALENESS и границы параметра «Возраст сведений» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.case.freshness_state",
+          "operator": "EQUALS",
+          "value": "STALE",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии STALE; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "age",
+          "name": "Возраст сведений",
+          "unit": "h",
+          "min": 1,
+          "max": 48,
+          "default": 8
+        }
+      ],
+      "weight": 11,
+      "severity": 4,
+      "limits": {
+        "maxSeverity": 4,
+        "cooldown": {
+          "value": 45,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-18-shift-capacity-reduction"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "markObservationStale",
+          "target": {
+            "domain": "observations",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_CASE_OBSERVATION_STALENESS",
+          "reason": "Донесение о процессе устарело, и новая проекция помечает данные STALE без диагностики или копирования истинного состояния.",
+          "durationParameter": "age"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "STALE_CASE_OBSERVATION",
+          "sourceRequirement": "STALE_CASE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "STALE_CASE_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "age",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "markObservationStale",
+          "method": "REQUEST_CURRENT_SCENARIO_STATUS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.case.freshness_state": "STALE"
+        },
+        "unsuitableFacts": {
+          "medical.case.freshness_state": "CURRENT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-18-shift-capacity-reduction",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Смена расчёта снижает пропускную способность",
+      "description": "Виртуальная смена обслуживания создаёт временное ограничение обработки заявок по сценарному профилю, не оценивая реальных сотрудников.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как перераспределить очередь при снижении пропускной способности смены?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_SHIFT_SCENARIO_THROUGHPUT_LIMIT."
+      },
+      "trainingAssumption": "Для учебного события «Смена расчёта снижает пропускную способность» механизм MEDICAL_SHIFT_SCENARIO_THROUGHPUT_LIMIT и границы параметра «Длительность ограничения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.shift.capacity_state",
+          "operator": "EQUALS",
+          "value": "REDUCED",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии REDUCED; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "duration",
+          "name": "Длительность ограничения",
+          "unit": "h",
+          "min": 1,
+          "max": 12,
+          "default": 2
+        }
+      ],
+      "weight": 14,
+      "severity": 2,
+      "limits": {
+        "maxSeverity": 2,
+        "cooldown": {
+          "value": 60,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "updateMedicalCapacity",
+          "target": {
+            "domain": "medical",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_SHIFT_SCENARIO_THROUGHPUT_LIMIT",
+          "reason": "Виртуальная смена обслуживания создаёт временное ограничение обработки заявок по сценарному профилю, не оценивая реальных сотрудников.",
+          "quantityParameter": "duration"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_SHIFT_OBSERVATION",
+          "sourceRequirement": "MEDICAL_SHIFT_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_SHIFT_CAPACITY_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "duration",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "updateMedicalCapacity",
+          "method": "COMPLETE_SHIFT_CHANGE_AND_RESTORE",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.shift.capacity_state": "REDUCED"
+        },
+        "unsuitableFacts": {
+          "medical.shift.capacity_state": "NORMAL"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-19-unknown-case-state",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Неизвестное состояние виртуального случая",
+      "description": "Обязательное сценарное состояние UNKNOWN, поэтому переход эвакуации требует рассмотрения вместо подстановки нормального или завершённого результата.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как продолжить процесс при неизвестном состоянии виртуального случая?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: UNKNOWN_MEDICAL_SCENARIO_STATE_REVIEW."
+      },
+      "trainingAssumption": "Для учебного события «Неизвестное состояние виртуального случая» механизм UNKNOWN_MEDICAL_SCENARIO_STATE_REVIEW и границы параметра «Срок рассмотрения» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_FACILITY"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.case.knowledge_state",
+          "operator": "EQUALS",
+          "value": "DECLARED_UNKNOWN",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии DECLARED_UNKNOWN; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "review",
+          "name": "Срок рассмотрения",
+          "unit": "min",
+          "min": 5,
+          "max": 120,
+          "default": 30
+        }
+      ],
+      "weight": 17,
+      "severity": 5,
+      "limits": {
+        "maxSeverity": 5,
+        "cooldown": {
+          "value": 75,
+          "unit": "min"
+        },
+        "maxOccurrences": 2,
+        "mutuallyExclusiveGroups": [
+          "medical-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [
+          "medical-20-cancel-before-pickup"
+        ],
+        "budget": {
+          "maxDepth": 1,
+          "maxEvents": 2
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "createApprovalRequest",
+          "target": {
+            "domain": "approvals",
+            "ref": "scenario-target"
+          },
+          "mechanism": "UNKNOWN_MEDICAL_SCENARIO_STATE_REVIEW",
+          "reason": "Обязательное сценарное состояние UNKNOWN, поэтому переход эвакуации требует рассмотрения вместо подстановки нормального или завершённого результата.",
+          "durationParameter": "review"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "UNKNOWN_CASE_OBSERVATION",
+          "sourceRequirement": "UNKNOWN_CASE_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "UNKNOWN_CASE_REVIEW_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "review",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "RESTORATION_CONFIRMED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "createApprovalRequest",
+          "method": "CONFIRM_STATE_OR_HOLD_PROCESS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.case.knowledge_state": "DECLARED_UNKNOWN"
+        },
+        "unsuitableFacts": {
+          "medical.case.knowledge_state": "KNOWN"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "templateId": "medical-20-cancel-before-pickup",
+      "version": 1,
+      "reviewStatus": "APPROVED",
+      "name": "Отмена заявки до начала эвакуации",
+      "description": "До подтверждённого выезда заявка отменяется с освобождением транспортного резерва, а виртуальный случай сохраняет прежнее состояние и причину отмены.",
+      "category": "MEDICAL",
+      "educationalQuestion": "Как отменить заявку до выезда без ложного завершения эвакуации?",
+      "source": {
+        "sourceId": "spec-medical-process",
+        "revision": 1,
+        "note": "Проектный контур полной имитации: MEDICAL_CANCEL_BEFORE_PICKUP_RESERVE_RELEASE."
+      },
+      "trainingAssumption": "Для учебного события «Отмена заявки до начала эвакуации» механизм MEDICAL_CANCEL_BEFORE_PICKUP_RESERVE_RELEASE и границы параметра «Срок освобождения резерва» являются сценарным допущением; они не описывают реальные установления.",
+      "applicability": {
+        "scales": [
+          "tactical",
+          "operational",
+          "strategic"
+        ],
+        "stages": [
+          "MANEUVER",
+          "CONTACT",
+          "SUSTAINMENT",
+          "RECOVERY"
+        ],
+        "sides": [
+          "FRIENDLY",
+          "OPPOSING",
+          "NEUTRAL"
+        ],
+        "allowedStates": [
+          "ACTIVE"
+        ],
+        "disallowedStates": [
+          "UNKNOWN",
+          "CANCELLED",
+          "COMPLETED"
+        ],
+        "geography": {
+          "geometry": "ROUTE",
+          "requiredFeatures": [
+            "MEDICAL_COLLECTION_POINT"
+          ],
+          "excludedFeatures": [
+            "OUTSIDE_SCENARIO_REGION"
+          ]
+        },
+        "time": {
+          "operationalOnly": true,
+          "withinStage": true,
+          "allowBackward": false,
+          "minLead": {
+            "value": 0,
+            "unit": "min"
+          }
+        }
+      },
+      "preconditions": [
+        {
+          "fact": "medical.cancellation.stage_state",
+          "operator": "EQUALS",
+          "value": "BEFORE_PICKUP",
+          "onUnknown": "REJECT",
+          "description": "Событие допустимо только при состоянии BEFORE_PICKUP; UNKNOWN отклоняется."
+        }
+      ],
+      "parameters": [
+        {
+          "id": "processing",
+          "name": "Срок освобождения резерва",
+          "unit": "min",
+          "min": 1,
+          "max": 45,
+          "default": 10
+        }
+      ],
+      "weight": 20,
+      "severity": 3,
+      "limits": {
+        "maxSeverity": 3,
+        "cooldown": {
+          "value": 90,
+          "unit": "min"
+        },
+        "maxOccurrences": 1,
+        "mutuallyExclusiveGroups": [
+          "medical-set-5"
+        ]
+      },
+      "cascade": {
+        "allowedFollowUpTemplateIds": [],
+        "budget": {
+          "maxDepth": 0,
+          "maxEvents": 1
+        },
+        "onExhausted": "REJECT_AND_REPORT"
+      },
+      "effects": [
+        {
+          "type": "releaseCapacity",
+          "target": {
+            "domain": "capacity",
+            "ref": "scenario-target"
+          },
+          "mechanism": "MEDICAL_CANCEL_BEFORE_PICKUP_RESERVE_RELEASE",
+          "reason": "До подтверждённого выезда заявка отменяется с освобождением транспортного резерва, а виртуальный случай сохраняет прежнее состояние и причину отмены.",
+          "quantityParameter": "processing"
+        }
+      ],
+      "observations": [
+        {
+          "kind": "MEDICAL_CANCEL_OBSERVATION",
+          "sourceRequirement": "MEDICAL_CANCEL_OBSERVATION_SOURCE_AVAILABLE",
+          "visibility": "AUTHORIZED_SIDE",
+          "geometryRef": "target"
+        }
+      ],
+      "reports": [
+        {
+          "kind": "MEDICAL_CANCEL_REPORT",
+          "channelRequirement": "ANY_AVAILABLE",
+          "deadlineParameter": "processing",
+          "requiredFields": [
+            "observedState",
+            "operationalAt",
+            "uncertainty"
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "trigger": "ADJUSTMENT_REQUIRED",
+          "type": "createCompensationRequest",
+          "targetEffectType": "releaseCapacity",
+          "method": "REOPEN_REQUEST_IF_NEED_RETURNS",
+          "approval": "REQUIRED"
+        }
+      ],
+      "expectedEvidence": [
+        "WORLD_EVENT",
+        "OBSERVATION",
+        "REPORT",
+        "EFFECT_JOURNAL",
+        "COMPENSATION_REQUEST"
+      ],
+      "rehearsal": {
+        "suitableFacts": {
+          "medical.cancellation.stage_state": "BEFORE_PICKUP"
+        },
+        "unsuitableFacts": {
+          "medical.cancellation.stage_state": "IN_TRANSIT"
+        },
+        "expectedRejectCode": "PRECONDITION_FAILED"
+      },
+      "review": {
+        "method": "AUTHOR_METHODICAL_REVIEW_WITH_INDEPENDENT_AUTOMATED_CHECK",
+        "sourceChecked": true,
+        "effectsChecked": true,
+        "rehearsalRequired": true
+      }
+    }
+  ]
+}

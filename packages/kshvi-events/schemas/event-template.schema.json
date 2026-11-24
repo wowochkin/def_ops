@@ -1,0 +1,400 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://def-ops.local/schemas/kshvi/event-template-v1.schema.json",
+  "title": "Версионный шаблон вероятностного события КШВИ",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "templateId",
+    "version",
+    "title",
+    "description",
+    "category",
+    "learningQuestion",
+    "provenance",
+    "applicability",
+    "preconditions",
+    "parameters",
+    "baseWeight",
+    "severity",
+    "limits",
+    "cascade",
+    "effects",
+    "observations",
+    "reports",
+    "compensations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "templateId": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "$ref": "#/$defs/nonEmptyString" },
+    "description": { "$ref": "#/$defs/nonEmptyString" },
+    "category": {
+      "enum": [
+        "control",
+        "reconnaissance",
+        "maneuver",
+        "combat",
+        "engineering",
+        "environment",
+        "logistics",
+        "maintenance",
+        "personnel",
+        "medical",
+        "settlements",
+        "interaction"
+      ]
+    },
+    "learningQuestion": { "$ref": "#/$defs/nonEmptyString" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scales", "stageIds", "sideIds", "geography", "operationalWindows"],
+      "properties": {
+        "scales": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["tactical", "operational", "strategic", "custom"] }
+        },
+        "stageIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "sideIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "allowedStates": { "type": "array", "items": { "type": "string" } },
+        "disallowedStates": { "type": "array", "items": { "type": "string" } },
+        "time": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operationalOnly", "withinStage", "allowBackward", "minLeadSeconds"],
+          "properties": {
+            "operationalOnly": { "type": "boolean" },
+            "withinStage": { "type": "boolean" },
+            "allowBackward": { "type": "boolean" },
+            "minLeadSeconds": { "type": "number", "minimum": 0 }
+          }
+        },
+        "geography": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["areaIds", "boundingBox", "requiresEnvironmentCoverage"],
+          "properties": {
+            "areaIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+            "boundingBox": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["minLatitude", "maxLatitude", "minLongitude", "maxLongitude"],
+              "properties": {
+                "minLatitude": { "type": "number", "minimum": -90, "maximum": 90 },
+                "maxLatitude": { "type": "number", "minimum": -90, "maximum": 90 },
+                "minLongitude": { "type": "number", "minimum": -180, "maximum": 180 },
+                "maxLongitude": { "type": "number", "minimum": -180, "maximum": 180 }
+              }
+            },
+            "requiresEnvironmentCoverage": { "const": true }
+          }
+        },
+        "operationalWindows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["startMinute", "endMinute"],
+            "properties": {
+              "startMinute": { "type": "number", "minimum": 0 },
+              "endMinute": { "type": "number", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/precondition" }
+    },
+    "parameters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/parameter" }
+    },
+    "baseWeight": { "type": "number", "minimum": 0 },
+    "severity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "cost"],
+      "properties": {
+        "level": { "enum": ["LOW", "MODERATE", "HIGH", "CRITICAL"] },
+        "cost": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cooldownSeconds", "maxOccurrences", "maxPerStage", "mutuallyExclusiveGroupIds"],
+      "properties": {
+        "cooldownSeconds": { "type": "number", "minimum": 0 },
+        "maxOccurrences": { "type": "integer", "minimum": 1 },
+        "maxPerStage": { "type": "integer", "minimum": 1 },
+        "mutuallyExclusiveGroupIds": { "type": "array", "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "cascade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedTemplateIds", "maxDepth", "maxEvents"],
+      "properties": {
+        "allowedTemplateIds": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "maxDepth": { "type": "integer", "minimum": 1 },
+        "maxEvents": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/effect" }
+    },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "reports": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/report" }
+    },
+    "compensations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/compensation" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+    "nonEmptyString": { "type": "string", "minLength": 1, "pattern": ".*\\S.*" },
+    "unit": { "enum": ["count", "kg", "L", "m", "s", "m_per_s", "deg", "ratio"] },
+    "amount": {
+      "oneOf": [
+        { "type": "number" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["parameterId"],
+          "properties": { "parameterId": { "$ref": "#/$defs/id" } }
+        }
+      ]
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    },
+    "provenance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "citation", "locator", "version", "approvedBy"],
+          "properties": {
+            "type": { "const": "SOURCE" },
+            "citation": { "$ref": "#/$defs/nonEmptyString" },
+            "locator": { "$ref": "#/$defs/nonEmptyString" },
+            "version": { "$ref": "#/$defs/nonEmptyString" },
+            "approvedBy": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "statement", "rationale", "approvedBy"],
+          "properties": {
+            "type": { "const": "TRAINING_ASSUMPTION" },
+            "statement": { "$ref": "#/$defs/nonEmptyString" },
+            "rationale": { "$ref": "#/$defs/nonEmptyString" },
+            "approvedBy": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      ]
+    },
+    "precondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "fact", "operator", "value", "required", "onUnknown"],
+      "properties": {
+        "type": { "const": "fact.comparison" },
+        "fact": { "$ref": "#/$defs/id" },
+        "operator": { "enum": ["EQ", "NE", "LT", "LE", "GT", "GE"] },
+        "value": { "type": ["string", "number", "boolean"] },
+        "required": { "type": "boolean" },
+        "onUnknown": { "const": "NOT_TRUE" }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parameterId", "title", "unit", "range"],
+      "properties": {
+        "parameterId": { "$ref": "#/$defs/id" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "unit": { "$ref": "#/$defs/unit" },
+        "range": { "$ref": "#/$defs/range" },
+        "defaultValue": { "type": "number" }
+      }
+    },
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "resourceId", "ownerSideId", "unit", "operation", "amount"],
+          "properties": {
+            "type": { "const": "resource.adjust" },
+            "resourceId": { "$ref": "#/$defs/id" },
+            "ownerSideId": { "$ref": "#/$defs/id" },
+            "unit": { "$ref": "#/$defs/unit" },
+            "operation": { "enum": ["CONSUME", "RESTORE"] },
+            "amount": { "$ref": "#/$defs/amount" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "resourceId", "fromSideId", "toSideId", "unit", "amount"],
+          "properties": {
+            "type": { "const": "resource.transfer" },
+            "resourceId": { "$ref": "#/$defs/id" },
+            "fromSideId": { "$ref": "#/$defs/id" },
+            "toSideId": { "$ref": "#/$defs/id" },
+            "unit": { "$ref": "#/$defs/unit" },
+            "amount": { "$ref": "#/$defs/amount" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "forceId", "status"],
+          "properties": {
+            "type": { "const": "force.state" },
+            "forceId": { "$ref": "#/$defs/id" },
+            "status": { "enum": ["READY", "DEGRADED", "UNAVAILABLE"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "equipmentId", "status"],
+          "properties": {
+            "type": { "const": "equipment.state" },
+            "equipmentId": { "$ref": "#/$defs/id" },
+            "status": { "enum": ["OPERATIONAL", "DAMAGED", "UNDER_REPAIR", "LOST"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "areaId", "status"],
+          "properties": {
+            "type": { "const": "terrain.state" },
+            "areaId": { "$ref": "#/$defs/id" },
+            "status": { "enum": ["OPEN", "RESTRICTED", "CLOSED"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "channelId", "status"],
+          "properties": {
+            "type": { "const": "communication.state" },
+            "channelId": { "$ref": "#/$defs/id" },
+            "status": { "enum": ["AVAILABLE", "DEGRADED", "UNAVAILABLE"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "operation", "target", "mechanism", "reason"],
+          "properties": {
+            "type": { "const": "catalog.effect" },
+            "operation": { "enum": ["advanceMedicalEvacuation", "advanceSupply", "applyCommunicationFailure", "applyMoraleImpact", "changeFormationState", "closeRoute", "consumeResource", "createApprovalRequest", "createCivilContextEvent", "createDocumentRevision", "createMedicalProcess", "createObservation", "createScenarioZone", "delayMovement", "delaySupply", "holdFormation", "markObservationStale", "markReportOverdue", "reconcileInformation", "recordCommandNodeState", "recordCoordination", "recordInformationState", "recordInteractionConstraint", "recordPersonnelChange", "recordReadinessActivity", "recordResourceDeficit", "recordSafetyConstraint", "recordScenarioCondition", "redirectSupply", "releaseCapacity", "requestRepair", "rerouteMessage", "rerouteMovement", "reserveCapacity", "restoreRoute", "reviseObservation", "scheduleEvacuation", "scheduleRest", "transferResource", "transitionEquipment", "updateCrossingState", "updateInfrastructureState", "updateMedicalCapacity", "updateRepairCapacity", "updateSupplyNode", "updateTask", "updateTerrainState", "updateWeather"] },
+            "target": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["domain", "ref"],
+              "properties": {
+                "domain": { "$ref": "#/$defs/nonEmptyString" },
+                "ref": { "$ref": "#/$defs/nonEmptyString" }
+              }
+            },
+            "mechanism": { "$ref": "#/$defs/nonEmptyString" },
+            "reason": { "$ref": "#/$defs/nonEmptyString" },
+            "parameters": { "type": "object" }
+          }
+        }
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observationId", "source", "recipientSideIds", "channelId", "visibility", "delaySeconds"],
+      "properties": {
+        "observationId": { "$ref": "#/$defs/id" },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "sourceId", "sideId"],
+          "properties": {
+            "kind": { "enum": ["UNIT", "SENSOR", "OBSERVER", "CONTROL"] },
+            "sourceId": { "$ref": "#/$defs/id" },
+            "sideId": { "$ref": "#/$defs/id" }
+          }
+        },
+        "recipientSideIds": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+        "channelId": { "$ref": "#/$defs/id" },
+        "visibility": { "enum": ["PARTICIPANT", "CONTROL"] },
+        "delaySeconds": { "$ref": "#/$defs/range" }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "basedOnObservationId", "recipientSideIds", "channelId", "title"],
+      "properties": {
+        "reportId": { "$ref": "#/$defs/id" },
+        "basedOnObservationId": { "$ref": "#/$defs/id" },
+        "recipientSideIds": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
+        "channelId": { "$ref": "#/$defs/id" },
+        "title": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "compensation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "effectIndex", "resourceId", "ownerSideId", "unit", "amount", "maxDelaySeconds"],
+          "properties": {
+            "type": { "const": "resource.restore" },
+            "effectIndex": { "type": "integer", "minimum": 0 },
+            "resourceId": { "$ref": "#/$defs/id" },
+            "ownerSideId": { "$ref": "#/$defs/id" },
+            "unit": { "$ref": "#/$defs/unit" },
+            "amount": { "$ref": "#/$defs/amount" },
+            "maxDelaySeconds": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "effectIndex", "instruction", "maxDelaySeconds"],
+          "properties": {
+            "type": { "const": "manual.review" },
+            "effectIndex": { "type": "integer", "minimum": 0 },
+            "instruction": { "$ref": "#/$defs/nonEmptyString" },
+            "maxDelaySeconds": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    }
+  }
+}

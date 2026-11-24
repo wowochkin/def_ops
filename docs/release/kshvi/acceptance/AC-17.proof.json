@@ -1,0 +1,37 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "initialRevision": {
+    "id": "ac17-handover",
+    "revision": 1,
+    "sha256": "160de3f8d91ee66cf2190f50a2ef6e3a69df5f7183d9fdb768f89f51210592d9"
+  },
+  "journal": {
+    "path": "docs/release/kshvi/evidence/ac17/journal.json",
+    "sha256": "9a8a3c8cf778c29f55b4ee5598b96901651b90fc34b971e7e46f58812f5f6f90",
+    "eventCount": 2
+  },
+  "hashes": {
+    "scenario": "160de3f8d91ee66cf2190f50a2ef6e3a69df5f7183d9fdb768f89f51210592d9",
+    "environment": "3960d807e4b425a62970de37a80c0555a81401f97227bd6da6194fbdc5d14572",
+    "journal": "9a8a3c8cf778c29f55b4ee5598b96901651b90fc34b971e7e46f58812f5f6f90"
+  },
+  "protocols": [
+    "docs/release/kshvi/evidence/ac17/protocol.txt"
+  ],
+  "screenshots": [],
+  "metrics": {
+    "privilegedStoragePrefixesCleared": 2,
+    "serverLogoutStatus": 204,
+    "unauthorizedAfterLogout": 1,
+    "unrelatedWeatherRegionPreserved": 1
+  },
+  "limitations": [
+    "Очистка IndexedDB проверена на совместимом mock; физическая диагностика кэшей устройства выполняется на целевом стенде."
+  ],
+  "artifacts": [
+    "docs/release/kshvi/evidence/ac17/journal.json",
+    "docs/release/kshvi/evidence/ac17/protocol.txt",
+    "docs/release/kshvi/evidence/ac17/metrics.json"
+  ]
+}

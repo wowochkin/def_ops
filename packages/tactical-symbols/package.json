@@ -1,0 +1,13 @@
+{
+  "name": "@def-ops/tactical-symbols",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Версионные параметрические векторные тактические знаки и реестр их источника.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./source": "./src/source/index.ts",
+    "./source/browser": "./src/source/browser.ts"
+  },
+  "types": "./src/index.ts"
+}

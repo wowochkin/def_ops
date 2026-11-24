@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { chooseDateTime } from './helpers/date-time';
 import type { Scenario } from '../src/modern/replay/session';
 import { ScenarioForm } from '../src/modern/replay/ScenarioForm';
 
@@ -45,8 +46,8 @@ it('связывает регион, отдельные комплекты чт�
   render(<ScenarioForm onCreate={onCreate} />);
   const option = await screen.findByRole('option', { name: 'Область сборника' });
   fireEvent.change(screen.getByLabelText('Область атласа'), { target: { value: (option as HTMLOptionElement).value } });
-  fireEvent.change(screen.getByLabelText('Начало (UTC)'), { target: { value: '2030-05-01T06:00' } });
-  fireEvent.change(screen.getByLabelText('Окончание (UTC)'), { target: { value: '2030-05-02T18:00' } });
+  chooseDateTime('Начало (UTC)', '2030-05-01T06:00');
+  chooseDateTime('Окончание (UTC)', '2030-05-02T18:00');
   fireEvent.change(screen.getByLabelText('Длительность периода'), { target: { value: '12' } });
   fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
   const a = within(screen.getByRole('group', { name: 'Участник А' }));
@@ -68,11 +69,11 @@ it('связывает регион, отдельные комплекты чт�
   fireEvent.click(screen.getByRole('button', { name: 'Продолжить' }));
   fireEvent.click(screen.getByRole('button', { name: 'Добавить событие' }));
   fireEvent.change(screen.getByLabelText('Текст события'), { target: { value: 'Уточнение принято' } });
-  fireEvent.change(screen.getByLabelText('Время события (UTC)'), { target: { value: '2030-05-01T11:30' } });
+  chooseDateTime('Время события (UTC)', '2030-05-01T11:30');
   fireEvent.change(screen.getByLabelText('Решение участника А'), { target: { value: 'c1' } });
-  fireEvent.change(screen.getByLabelText(/Время оповещения участника А/), { target: { value: '2030-05-01T11:45' } });
+  chooseDateTime(/Время оповещения участника А/, '2030-05-01T11:45');
   fireEvent.change(screen.getByLabelText('Кому показать'), { target: { value: 'b' } });
-  fireEvent.change(screen.getByLabelText(/Время оповещения участника Б/), { target: { value: '2030-05-01T12:00' } });
+  chooseDateTime(/Время оповещения участника Б/, '2030-05-01T12:00');
   fireEvent.click(screen.getByLabelText('Завершить сеанс при этом событии'));
   fireEvent.click(screen.getByRole('button', { name: 'Начать сеанс' }));
   expect(onCreate).toHaveBeenCalledOnce();

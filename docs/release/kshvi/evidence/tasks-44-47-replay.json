@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "Task 44–47; только новые модули replay/assessment/archive и профильные тесты",
+  "tasks": {
+    "44": {
+      "requirements": ["REPLAY-01", "REPLAY-02", "REPLAY-03", "REPLAY-04", "REPLAY-16", "ARCH-18", "NF-15", "AC-08", "AC-12"],
+      "red": "npx vitest run packages/kshvi/tests/replay.test.ts packages/kshvi/tests/replay-domains.test.ts services/kshvi/tests/replay-privacy.test.ts apps/editor/tests/kshvi-replay.test.tsx — 4 файла FAIL: отсутствуют модули реплея",
+      "green": "14 Vitest + 1 Playwright PASS",
+      "evidence": ["Ближайший снимок и сохранённые переходы без RNG/LLM/внешних вызовов", "22 синхронных домена", "Отдельный сохранённый payload участника", "Идентичный SHA-256 в отдельном процессе", "Несовместимое чтение без identityClaimed"]
+    },
+    "45": {
+      "requirements": ["REPLAY-05", "REPLAY-06", "REPLAY-12", "REPLAY-13", "AC-10", "AC-12"],
+      "red": "npx vitest run packages/kshvi/tests/branches.test.ts packages/kshvi/tests/research.test.ts packages/kshvi/tests/rerun.test.ts services/kshvi/tests/branch-isolation.test.ts apps/editor/tests/kshvi-branches.test.tsx — 5 файлов FAIL: отсутствуют модули",
+      "green": "12 Vitest PASS; дополнительный FAIL→PASS для собственного seed ветви",
+      "evidence": ["Официальные документы/оценка/хеш неизменны", "Версии модели и среды предшествуют последствиям", "Причинность ограничена дизайном", "Новый sessionId и назначения без единого рейтинга"]
+    },
+    "46": {
+      "requirements": ["REPLAY-07", "REPLAY-08", "REPLAY-09", "REPLAY-10", "REPLAY-11", "GEN-04", "NF-18", "AC-12"],
+      "red": "npx vitest run packages/kshvi/tests/metrics.test.ts packages/kshvi/tests/assessment.test.ts packages/kshvi/tests/debrief.test.ts services/kshvi/tests/assessment-publication.test.ts apps/editor/tests/kshvi-assessment.test.tsx — 5 файлов FAIL: отсутствуют модули",
+      "green": "15 Vitest PASS; PDF первоначально FAIL на кириллице, затем PASS после встраивания Roboto",
+      "evidence": ["Семь групп метрик и доказательные ссылки", "UNKNOWN при пропусках и нулевом знаменателе", "Итог только после подтверждения LEADER", "Общий разбор объединяет стороны, частный фильтрует инстанцию", "PDF.js и Mammoth извлекают русский текст, редакцию, единицы и атрибуцию"]
+    },
+    "47": {
+      "requirements": ["REPLAY-14", "REPLAY-15", "REPLAY-16", "REPLAY-17", "ARCH-19", "NF-04", "NF-18", "NF-21", "AC-12"],
+      "red": "Архивные наборы — 5 файлов FAIL; apps/archive-viewer/tests/viewer.test.ts — FAIL: отсутствуют модули",
+      "green": "17 Vitest + 1 Playwright PASS; дополнительный FAIL→PASS для семантически неполного журнала",
+      "evidence": ["63 компонента манифеста и SHA-256 файлов/манифеста", "Круговой импорт с идентичным контрольным хешем", "LIMITED_RESEARCH для неполного/лицензионного пакета и REJECTED для повреждения", "queued/running/succeeded/failed/cancelled, лимиты, отмена и идемпотентный повтор", "Offline Playwright без HTTP-запросов"]
+    }
+  },
+  "verification": {
+    "targeted": "21 файл тестов, 58 тестов PASS",
+    "full": "npm test — Test Files 336 passed | 2 skipped; Tests 3135 passed | 44 skipped",
+    "typecheck": "npm run typecheck — PASS",
+    "playwright": "kshvi-replay.spec.ts и apps/archive-viewer/tests/offline.spec.ts — PASS",
+    "build": "npm run build -w @def-ops/archive-viewer — PASS",
+    "npmInstall": "npm install — выполнен; побочное изменение package-lock.json отменено"
+  },
+  "limitations": [
+    "Изолированная автономность проверена Playwright с блокировкой всех сетевых запросов, а не на физически отдельной машине.",
+    "ArchiveJobManager хранит задания в памяти процесса; привязка к PostgreSQL и HTTP не изменялась из-за ограничения на новые файлы.",
+    "Новые рабочие места автономны и не подключены к общим индексам/навигации по явному ограничению задачи.",
+    "Это доказательство областей Task 44–47, а не заявление готовности полного релиза КШВИ."
+  ]
+}

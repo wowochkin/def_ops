@@ -1,0 +1,37 @@
+{
+  "workers": [
+    {
+      "stateHash": "e17cfea7ef6104e29fe78d40dbc614b91d0fbe4cbc06ca7f28b227e56900bc8b",
+      "compatibility": "REPRODUCIBLE",
+      "playbackSpeed": 1,
+      "selectedOutcomeIds": [
+        "expected"
+      ]
+    },
+    {
+      "stateHash": "e17cfea7ef6104e29fe78d40dbc614b91d0fbe4cbc06ca7f28b227e56900bc8b",
+      "compatibility": "REPRODUCIBLE",
+      "playbackSpeed": 4,
+      "selectedOutcomeIds": [
+        "expected"
+      ]
+    }
+  ],
+  "chromium": [
+    {
+      "stateHash": "e17cfea7ef6104e29fe78d40dbc614b91d0fbe4cbc06ca7f28b227e56900bc8b",
+      "compatibility": "REPRODUCIBLE",
+      "selectedOutcomeIds": [
+        "expected"
+      ]
+    },
+    {
+      "stateHash": "e17cfea7ef6104e29fe78d40dbc614b91d0fbe4cbc06ca7f28b227e56900bc8b",
+      "compatibility": "REPRODUCIBLE",
+      "selectedOutcomeIds": [
+        "expected"
+      ]
+    }
+  ],
+  "reducerVersion": 1
+}

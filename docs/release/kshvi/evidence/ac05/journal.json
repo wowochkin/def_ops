@@ -1,0 +1,442 @@
+{
+  "runId": "bf4cc21a-8642-4487-bb46-3d6b6b810fb1",
+  "commit": "11ab4de1f4cb188976ca9f5c508d601b95273f45",
+  "events": [
+    {
+      "eventId": "7132014c-a0cb-419b-b998-a0a4f423366a",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 1,
+      "type": "input.proposed.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.planned-0"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "planned-1",
+          "kind": "PLANNED",
+          "input": {
+            "id": "planned-1",
+            "actualAt": "2030-01-01T01:00:00Z",
+            "approval": {
+              "status": "REVIEW_REQUIRED"
+            },
+            "channelId": "radio",
+            "deviation": "EARLY",
+            "recipients": [
+              "blue"
+            ],
+            "sourceRole": "DIRECTOR",
+            "scheduledAt": "2030-01-01T02:00:00Z"
+          },
+          "status": "REVIEW_REQUIRED",
+          "causeIds": [],
+          "deviation": "EARLY"
+        },
+        "sideId": "blue",
+        "causedBy": "planned-1",
+        "commandId": "input.planned-0",
+        "recipients": [
+          "blue"
+        ],
+        "commandType": "input.planned"
+      },
+      "prevHash": null,
+      "hash": "887bf989f6e20b568e1d70c46eb52563da529b010eaeb7ecaef9aaf21c9a768a",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "f0e9f073-3555-4191-b4b3-8f15367887b0",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 2,
+      "type": "input.reactive.evaluated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.reactive-1"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "reactive-1",
+          "kind": "REACTIVE",
+          "input": {
+            "id": "reactive-1",
+            "causeId": "trainee-action-1",
+            "actualAt": "2030-01-01T01:00:00Z",
+            "channelId": "radio",
+            "condition": {
+              "left": "REPORT_RECEIVED",
+              "right": "REPORT_RECEIVED",
+              "operator": "EQ"
+            },
+            "recipients": [
+              "blue"
+            ],
+            "graphIssues": []
+          },
+          "status": "APPLIED",
+          "causeIds": [
+            "trainee-action-1"
+          ]
+        },
+        "sideId": "blue",
+        "causedBy": "reactive-1",
+        "commandId": "input.reactive-1",
+        "condition": "TRUE",
+        "recipients": [
+          "blue"
+        ],
+        "commandType": "input.reactive"
+      },
+      "prevHash": "887bf989f6e20b568e1d70c46eb52563da529b010eaeb7ecaef9aaf21c9a768a",
+      "hash": "9e9945ee475c8b5e90082c1fabfa39798dfa0e4836ff94bba80776181435dff7",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "9ba7695f-991d-4ca6-9b56-8058e6510968",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 3,
+      "type": "input.adaptive.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.adaptive-2"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "adaptive-inside",
+          "kind": "ADAPTIVE",
+          "input": {
+            "input": {
+              "id": "adaptive-inside",
+              "areaId": "area-A",
+              "effects": [
+                {
+                  "type": "DELAY",
+                  "amount": 5
+                }
+              ],
+              "stageId": "stage-1",
+              "actualAt": "2030-01-01T01:00:00Z",
+              "severity": 1,
+              "channelId": "radio",
+              "recipients": [
+                "blue"
+              ]
+            },
+            "status": "APPLIED"
+          },
+          "status": "APPLIED",
+          "causeIds": []
+        },
+        "sideId": "blue",
+        "causedBy": "adaptive-inside",
+        "commandId": "input.adaptive-2",
+        "recipients": [
+          "blue"
+        ],
+        "commandType": "input.adaptive"
+      },
+      "prevHash": "9e9945ee475c8b5e90082c1fabfa39798dfa0e4836ff94bba80776181435dff7",
+      "hash": "47c4d3f3ef0aa6ea7f09c2b851608be5f487bcc62cfabaca7f7703f7ff9924f7",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "154e0b62-a7e1-4477-82f2-b6509b510507",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 4,
+      "type": "input.approval.requested.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.adaptive-3"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "adaptive-outside",
+          "kind": "ADAPTIVE",
+          "input": {
+            "status": "APPROVAL_REQUIRED",
+            "request": {
+              "kind": "INPUT",
+              "input": {
+                "id": "adaptive-outside",
+                "areaId": "area-A",
+                "effects": [
+                  {
+                    "type": "DELAY",
+                    "amount": 50
+                  }
+                ],
+                "stageId": "stage-1",
+                "actualAt": "2030-01-01T01:00:00Z",
+                "severity": 9,
+                "channelId": "radio",
+                "recipients": [
+                  "blue"
+                ]
+              },
+              "reason": "OUTSIDE_DELEGATION"
+            }
+          },
+          "status": "APPROVAL_REQUIRED",
+          "causeIds": [],
+          "requestId": "request-adaptive-outside"
+        },
+        "sideId": "blue",
+        "causedBy": "adaptive-outside",
+        "commandId": "input.adaptive-3",
+        "recipients": [
+          "blue"
+        ],
+        "commandType": "input.adaptive"
+      },
+      "prevHash": "47c4d3f3ef0aa6ea7f09c2b851608be5f487bcc62cfabaca7f7703f7ff9924f7",
+      "hash": "6b809783d7b72036660a1146b0530f5d0a40cdc4d95311060668c7e7c293748f",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "fc9fb646-70f6-4f3f-87bb-b342524f703d",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 5,
+      "type": "input.adaptive.applied.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.approve-4"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "adaptive-outside",
+          "kind": "ADAPTIVE",
+          "input": {
+            "status": "APPROVAL_REQUIRED",
+            "request": {
+              "kind": "INPUT",
+              "input": {
+                "id": "adaptive-outside",
+                "areaId": "area-A",
+                "effects": [
+                  {
+                    "type": "DELAY",
+                    "amount": 50
+                  }
+                ],
+                "stageId": "stage-1",
+                "actualAt": "2030-01-01T01:00:00Z",
+                "severity": 9,
+                "channelId": "radio",
+                "recipients": [
+                  "blue"
+                ]
+              },
+              "reason": "OUTSIDE_DELEGATION"
+            }
+          },
+          "status": "APPLIED",
+          "causeIds": [],
+          "requestId": "request-adaptive-outside"
+        },
+        "sideId": "blue",
+        "request": {
+          "id": "request-adaptive-outside",
+          "reason": "OUTSIDE_DELEGATION",
+          "status": "APPROVED",
+          "inputId": "adaptive-outside"
+        },
+        "causedBy": "adaptive-outside",
+        "commandId": "input.approve-4",
+        "approvedBy": "director",
+        "commandType": "input.approve"
+      },
+      "prevHash": "6b809783d7b72036660a1146b0530f5d0a40cdc4d95311060668c7e7c293748f",
+      "hash": "d098ce44949424c18106e95da3a8e10db485cb8a289d3d097adc3f6ee6e12f7c",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "9e281701-12a0-4982-a04c-c4ba05c52a99",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 6,
+      "type": "trigger.validated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "trigger.validate-5"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "issues": [
+          {
+            "code": "TRIGGER_CYCLE",
+            "ruleId": "A"
+          }
+        ],
+        "status": "REQUIRES_REVIEW",
+        "ruleIds": [
+          "A",
+          "B"
+        ],
+        "causedBy": "A,B",
+        "commandId": "trigger.validate-5",
+        "commandType": "trigger.validate"
+      },
+      "prevHash": "d098ce44949424c18106e95da3a8e10db485cb8a289d3d097adc3f6ee6e12f7c",
+      "hash": "9e1738fe0e03610dedc91ae5a88514e1f451ac513c9646ba090e317ed133c393",
+      "hashVersion": 2
+    },
+    {
+      "eventId": "b5baea63-4d43-4cd3-96a9-a594129808eb",
+      "organizationId": "org-ac05",
+      "instanceId": "ac05",
+      "branchId": "main",
+      "sequence": 7,
+      "type": "input.reactive.evaluated.v1",
+      "schemaVersion": 1,
+      "wallClockAt": "2030-01-01T01:00:00.000Z",
+      "operationalAt": {
+        "zone": "UTC",
+        "offset": "+00:00",
+        "originalAt": "2030-01-01T01:00:00.000Z",
+        "normalizedAt": "2030-01-01T01:00:00.000Z"
+      },
+      "actor": {
+        "id": "director",
+        "kind": "HUMAN"
+      },
+      "causeIds": [
+        "input.reactive-6"
+      ],
+      "versions": {},
+      "reducerVersion": 1,
+      "payload": {
+        "at": "2030-01-01T01:00:00Z",
+        "record": {
+          "id": "reactive-unknown",
+          "kind": "REACTIVE",
+          "input": {
+            "id": "reactive-unknown",
+            "causeId": "unknown-condition",
+            "actualAt": "2030-01-01T01:00:00Z",
+            "channelId": "radio",
+            "condition": {
+              "left": {
+                "status": "UNKNOWN"
+              },
+              "right": true,
+              "operator": "EQ"
+            },
+            "recipients": [
+              "blue"
+            ],
+            "graphIssues": []
+          },
+          "status": "REQUIRES_REVIEW",
+          "causeIds": [
+            "unknown-condition"
+          ]
+        },
+        "sideId": "blue",
+        "causedBy": "reactive-unknown",
+        "commandId": "input.reactive-6",
+        "condition": "UNRESOLVED",
+        "recipients": [
+          "blue"
+        ],
+        "commandType": "input.reactive"
+      },
+      "prevHash": "9e1738fe0e03610dedc91ae5a88514e1f451ac513c9646ba090e317ed133c393",
+      "hash": "4cfbde01db4c05d68dbb16cff22b841397e87da490c711c763fe4c5ec6421114",
+      "hashVersion": 2
+    }
+  ]
+}

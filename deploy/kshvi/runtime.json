@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "network": {
+    "mode": "closed-lan",
+    "minWorkstations": 2,
+    "maxWorkstations": 50,
+    "externalAccess": false
+  },
+  "tls": {
+    "required": true,
+    "certificateFile": "/run/secrets/kshvi_tls_cert",
+    "privateKeyFile": "/run/secrets/kshvi_tls_key"
+  },
+  "time": {
+    "ntpConfig": "deploy/kshvi/ntp.conf",
+    "maxOffsetMs": 500,
+    "serverAuthoritative": true
+  },
+  "health": {
+    "path": "/health",
+    "readinessPath": "/ready"
+  },
+  "heavyJobs": {
+    "maxConcurrent": 2,
+    "maxQueue": 8,
+    "cpuUnitsPerJob": 2,
+    "memoryMbPerJob": 1024
+  },
+  "assets": {
+    "manifest": "packages/kshvi/assets/manifest.json",
+    "remoteResources": false
+  },
+  "updates": {
+    "activeSessionForbidden": true,
+    "emergencyProcedureRequired": true
+  }
+}
