@@ -11,6 +11,7 @@
   "dependencies": {
     "@def-ops/core": "*",
     "@def-ops/db": "*",
+    "@def-ops/raster-tiles": "*",
     "@def-ops/service-kit": "*",
     "@maplibre/geojson-vt": "6.1.1",
     "@maplibre/vt-pbf": "4.3.2",

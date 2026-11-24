@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import type { EnvironmentSnapshot } from '../../../../packages/kshvi/src/environment/provider';
 import type { EnvironmentSnapshotStore } from './snapshot-store';
+import { clipRasterTile } from '@def-ops/raster-tiles';
 
 /** Читатель зафиксированного MBTiles, не загрузчик исходных картографических данных. */
 export async function readSnapshotTile(
@@ -22,7 +23,9 @@ export async function readSnapshotTile(
   try {
     const row = database.prepare('select tile_data from tiles where zoom_level=? and tile_column=? and tile_row=? limit 1').get(z, x, 2 ** z - 1 - y) as { tile_data?: Uint8Array } | undefined;
     const bytes = row?.tile_data;
-    return bytes?.length ? { bytes: Buffer.from(bytes), format: atlas.meta.format } : null;
+    if (!bytes?.length) return null;
+    if (atlas.meta.format === 'pbf') return { bytes: Buffer.from(bytes), format: atlas.meta.format };
+    return clipRasterTile({ bytes: Buffer.from(bytes), format: atlas.meta.format, bounds: atlas.meta.bounds, z, x, y });
   } finally {
     database.close();
   }
