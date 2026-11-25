@@ -1,9 +1,19 @@
 import type { JsonValue } from '@def-ops/kshvi';
 import type { ParticipantContext } from '../auth/authorize';
-import type { ExerciseCard, ExerciseRevision } from './exercise-store';
+import type { ExerciseCard, ExercisePayloadAccess, ExerciseRevision } from './exercise-store';
 
 const TRUTH_ROLES = new Set(['DIRECTOR', 'LEADER']);
 const EDITOR_ROLES = new Set(['AUTHOR', 'APPROVER']);
+
+function hasTruthAccess(actor: ParticipantContext): boolean {
+  return actor.activeRole !== null && TRUTH_ROLES.has(actor.activeRole) && actor.authorities.includes('TRUTH_READ');
+}
+
+/** Область полной записи определяется той же политикой, что и чтение payload. */
+export function exercisePayloadAccess(actor: ParticipantContext): ExercisePayloadAccess {
+  const editor = actor.activeRole !== null && EDITOR_ROLES.has(actor.activeRole) && actor.authorities.includes('exercise:revise');
+  return hasTruthAccess(actor) || editor ? 'FULL' : 'PROJECTED';
+}
 
 type Assignment = Readonly<Record<string, JsonValue>>;
 
@@ -30,17 +40,16 @@ export function projectExercisePayload(payload: JsonValue, sideId: string | null
   return output;
 }
 
-export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContext): ExerciseCard {
-  const truth = actor.activeRole !== null && TRUTH_ROLES.has(actor.activeRole) && actor.authorities.includes('TRUTH_READ');
-  if (truth) return structuredClone(card);
-  const editor = actor.activeRole !== null && EDITOR_ROLES.has(actor.activeRole) && actor.authorities.includes('exercise:revise');
+export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContext): ExerciseCard & Readonly<{ payloadAccess: ExercisePayloadAccess }> {
+  const projected = { ...structuredClone(card), payloadAccess: exercisePayloadAccess(actor) };
+  if (hasTruthAccess(actor)) return projected;
   return {
-    ...structuredClone(card),
-    revisions: card.revisions.map((revision): ExerciseRevision => {
-      const { sealedArtifact: _sealedArtifact, ...serverRevision } = structuredClone(revision);
+    ...projected,
+    revisions: projected.revisions.map((revision): ExerciseRevision => {
+      const { sealedArtifact: _sealedArtifact, ...serverRevision } = revision;
       return {
         ...serverRevision,
-        payload: editor ? structuredClone(revision.payload) : projectExercisePayload(revision.payload, actor.sideId),
+        payload: projected.payloadAccess === 'FULL' ? revision.payload : projectExercisePayload(revision.payload, actor.sideId),
       };
     }),
   };

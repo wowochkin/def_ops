@@ -13,6 +13,7 @@ const draft: PreparationDraft = {
   updatedAt: at,
 };
 const initialCard: ExerciseCard = {
+  payloadAccess: 'FULL',
   id: 'exercise-1', title: 'Подготовка', purpose: 'planned', scale: 'operational', state: 'DRAFT',
   revision: 3, ownerId: 'author', startsAt: null, endsAt: null, readiness: 0, validation: 'NOT_RUN',
   createdAt: at, updatedAt: at, archivedAt: null, lastSessionId: null, sessions: [],
@@ -120,4 +121,38 @@ it('сохраняет правку, внесённую после отправ�
   expect(opened.result.current.confirmed).toEqual({ revision: 4, draft: { ...submitted, updatedAt: later } });
   await act(async () => { await opened.result.current.save(); });
   expect(opened.result.current.draft).toEqual({ ...latest, updatedAt: later });
+});
+
+function projectedCard(card: ExerciseCard, revision = card.revision) {
+  return { ...card, revision, payloadAccess: 'PROJECTED' as const };
+}
+
+it('при повторном открытии отличает скрытую подготовку от пустого доступного черновика', async () => {
+  const client = server();
+  const opened = renderHook(() => usePreparationDraft(client, projectedCard(initialCard)));
+  expect(opened.result.current.draft).toBeNull();
+  expect(opened.result.current.confirmed).toEqual({ revision: 3, draft: null });
+  act(() => opened.result.current.setDraft(draft));
+  expect(opened.result.current.draft).toBeNull();
+  await expect(opened.result.current.save(draft)).rejects.toMatchObject({ status: 403 });
+});
+
+it('не восстанавливает отправленный черновик по ответу с ограниченной проекцией', async () => {
+  const client = { savePreparation: async () => projectedCard(initialCard, 4) };
+  const opened = renderHook(() => usePreparationDraft(client, initialCard));
+  const working = { ...draft, environmentSnapshotId: 'snapshot-1' };
+  act(() => opened.result.current.setDraft(working));
+  await act(async () => { await opened.result.current.save(); });
+  expect(opened.result.current.confirmed).toEqual({ revision: 4, draft: null });
+  expect(opened.result.current.draft).toBeNull();
+});
+
+it('при смене роли сбрасывает правку скрытого черновика и восстанавливает только доступное серверное состояние', () => {
+  const client = server();
+  const opened = renderHook(({ card }) => usePreparationDraft(client, card), { initialProps: { card: initialCard } });
+  act(() => opened.result.current.setDraft({ ...draft, environmentSnapshotId: 'snapshot-1' }));
+  opened.rerender({ card: projectedCard(initialCard) });
+  expect(opened.result.current.draft).toBeNull();
+  opened.rerender({ card: initialCard });
+  expect(opened.result.current.draft).toEqual(draft);
 });

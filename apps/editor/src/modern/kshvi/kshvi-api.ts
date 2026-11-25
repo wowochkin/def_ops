@@ -56,6 +56,7 @@ export type ExerciseSession = Readonly<{
 }>;
 
 export type ExerciseCard = ExerciseSummary & Readonly<{
+  payloadAccess: 'FULL' | 'PROJECTED';
   revisions: readonly ExerciseRevision[];
   sessions: readonly ExerciseSession[];
 }>;

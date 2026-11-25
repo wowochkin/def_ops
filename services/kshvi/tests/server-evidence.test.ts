@@ -94,7 +94,7 @@ it('не запечатывает черновик по подтверждённ
     draft: {
       ...emptyPreparationDraft('2030-01-01T03:00:00Z'), environmentSnapshotId: SEAL_HASH_C, initialMap: newMap,
     } as unknown as JsonValue,
-  });
+  }, 'FULL');
   await approveExercise(store, director, card);
   const revision = card.revisions[1];
   await evidence.approveMap({ ...director, activeRole: 'APPROVER', authorities: ['initialMap.approve'] }, card.id, revision, oldMap);

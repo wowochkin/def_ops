@@ -24,9 +24,9 @@ const draft = {
 it('проверяет черновик до создания учения и до записи редакции', async () => {
   const store = new InMemoryExerciseStore();
   const invalid = { preparation: { ...draft, unknown: true } };
-  await expect(store.create(actor, { ...input, payload: invalid })).rejects.toMatchObject({ code: 'VALIDATION' });
+  await expect(store.create(actor, { ...input, payload: invalid }, 'FULL')).rejects.toMatchObject({ code: 'VALIDATION' });
   const created = await store.create(actor, input);
-  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: invalid }))
+  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: invalid }, 'FULL'))
     .rejects.toMatchObject({ code: 'VALIDATION' });
   expect((await store.get(actor.organizationId, created.id))?.revisions).toHaveLength(1);
 });
@@ -35,7 +35,7 @@ it('не принимает снимок, которого нет в настр�
   const store = new InMemoryExerciseStore();
   const created = await store.create(actor, input);
   const payload = { preparation: { ...draft, environmentSnapshotId: 'a'.repeat(64) } };
-  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload }))
+  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload }, 'FULL'))
     .rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/снимок/i) });
 });
 
@@ -66,11 +66,11 @@ it('сохраняет нанесённую карту только со све�
     const store = new InMemoryExerciseStore({ environment, now: () => now });
     const created = await store.create(actor, input);
     const mismatched = { ...initialMap, environment: { ...initialMap.environment, manifestSha256: 'b'.repeat(64) } };
-    await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(mismatched) }))
+    await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(mismatched) }, 'FULL'))
       .rejects.toMatchObject({ code: 'VALIDATION' });
-    await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(approveInitialMap(initialMap), 'APPROVED') }))
+    await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(approveInitialMap(initialMap), 'APPROVED') }, 'FULL'))
       .rejects.toMatchObject({ code: 'SERVER_ASSESSMENT_REQUIRED' });
-    const saved = await store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(initialMap) });
+    const saved = await store.createRevision(actor, created.id, { expectedRevision: 1, payload: payload(initialMap) }, 'FULL');
     expect(saved.revisions.at(-1)?.payload).toMatchObject({
       preparation: { initialMapStatus: 'MAPPED', environmentSnapshotId: snapshot.id, updatedAt: now.toISOString() },
     });
@@ -84,58 +84,143 @@ it('запрещает обычное сохранение подготовки 
   const store = new InMemoryExerciseStore({ evidence: serverExerciseEvidence() });
   const created = await store.create(actor, { ...input, payload: linkedExercisePayload() });
   await sealApprovedExercise(store, { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal'] }, created);
-  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: linkedExercisePayload({ preparation: draft }) }))
+  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: linkedExercisePayload({ preparation: draft }) }, 'FULL'))
     .rejects.toMatchObject({ code: 'FORBIDDEN' });
   expect((await store.get(actor.organizationId, created.id))?.state).toBe('SEALED');
 });
 
-it('сохраняет полное содержимое редакции даже при изменении с ограниченной проекции', async () => {
-  const store = new InMemoryExerciseStore();
-  const initialPayload = {
-    title: 'Подготовка', intent: 'Закрытый замысел', operationalAssignments: [{ id: 'assignment', sideId: 'side' }],
-  };
+const initialPayload = {
+  title: 'Подготовка', intent: 'Закрытый замысел', operationalAssignments: [{ id: 'assignment', sideId: 'side' }],
+};
+const populatedDraft = {
+  ...emptyPreparationDraft(draft.updatedAt),
+  logistics: {
+    id: 'logistics-baseline', actionPlanVersion: 1, linkedActionPlanVersion: 1, requests: [],
+    actionTasks: [], routes: [], reserves: { fuel: 8 }, reportingSchedule: [], approved: false,
+  },
+};
+
+async function preparationApi(store = new InMemoryExerciseStore()) {
   const created = await store.create(actor, { ...input, payload: initialPayload });
   const sessions = new SessionManager({ store: new InMemorySessionStore() });
   await sessions.createAccount({
     ...actor, username: 'author', password: 'secret123', roles: [
-      { id: 'director', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise'] },
+      { id: 'director', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:create'] },
+      { id: 'director-truth', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'TRUTH_READ'] },
+      { id: 'author', role: 'AUTHOR', sideId: null, authorities: ['exercise:read', 'exercise:revise'] },
+      { id: 'approver', role: 'APPROVER', sideId: null, authorities: ['exercise:read', 'exercise:revise'] },
       { id: 'reader', role: 'TRAINEE', sideId: null, authorities: ['exercise:read'] },
     ],
   });
   const login = await sessions.login('author', 'secret123');
-  await sessions.selectRole(login.token, 'director');
   const router = new Router();
   registerExerciseRoutes(router, { store, sessions });
   const service = createService({ name: 'kshvi-preparation-test', version: '0', port: 0, router });
   const port = await service.listen();
+  const baseUrl = `http://127.0.0.1:${port}/kshvi`;
+  const headers = { Authorization: `Bearer ${login.token}` };
+  const client = new ExerciseClient({ baseUrl, headers: () => headers, csrfToken: () => login.csrfToken });
+  return {
+    client, baseUrl, headers, created, csrfToken: login.csrfToken, close: service.close,
+    selectRole: (role: string) => sessions.selectRole(login.token, role),
+  };
+}
+
+it('даёт редакторам сохранять и заново открывать черновик, а участнику с ограниченной проекцией запрещает замену', async () => {
+  const api = await preparationApi();
+  const { client, created } = api;
   try {
-    const baseUrl = `http://127.0.0.1:${port}/kshvi`;
-    const headers = { Authorization: `Bearer ${login.token}` };
-    const client = new ExerciseClient({ baseUrl, headers: () => headers, csrfToken: () => login.csrfToken });
-    const projected = await client.getCard(created.id);
-    expect(projected.revisions[0].payload).toEqual({ title: 'Подготовка', operationalAssignments: [] });
-
-    const saved = await client.savePreparation(created.id, { expectedRevision: 1, draft: emptyPreparationDraft(draft.updatedAt) });
+    await api.selectRole('author');
+    const saved = await client.savePreparation(created.id, { expectedRevision: 1, draft: populatedDraft });
     expect(saved.revision).toBe(2);
-    expect(saved.revisions[1].payload).toEqual(projected.revisions[0].payload);
-    expect((await store.get(actor.organizationId, created.id))?.revisions[1].payload).toEqual({
-      ...initialPayload, preparation: { ...draft, updatedAt: saved.updatedAt },
-    });
 
+    await api.selectRole('director');
+    const projected = await client.getCard(created.id);
+    expect(projected.revisions[1].payload).toEqual({ title: 'Подготовка', operationalAssignments: [] });
     const attempt = { expectedRevision: 2, draft: emptyPreparationDraft(draft.updatedAt) };
-    const invalid = await fetch(`${baseUrl}/exercises/${created.id}/preparation`, {
-      method: 'POST', headers: { ...headers, 'X-CSRF-Token': login.csrfToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...attempt, payload: { intent: 'Подмена' } }),
+    await expect(client.savePreparation(created.id, attempt)).rejects.toMatchObject({ status: 403 });
+    expect(projected.payloadAccess).toBe('PROJECTED');
+
+    await api.selectRole('reader');
+    await expect(client.savePreparation(created.id, attempt)).rejects.toMatchObject({ status: 403 });
+
+    await api.selectRole('approver');
+    const reopened = await client.getCard(created.id);
+    expect(reopened).toMatchObject({ revision: 2, payloadAccess: 'FULL' });
+    expect(reopened.revisions[1].payload).toEqual({
+      ...initialPayload, preparation: { ...populatedDraft, updatedAt: saved.updatedAt },
+    });
+    const edited = await client.savePreparation(created.id, {
+      expectedRevision: 2, draft: { ...populatedDraft, updatedAt: reopened.updatedAt },
+    });
+    expect(edited).toMatchObject({ revision: 3, payloadAccess: 'FULL' });
+
+    await api.selectRole('director-truth');
+    const truthSaved = await client.savePreparation(created.id, { expectedRevision: 3, draft: populatedDraft });
+    expect(truthSaved).toMatchObject({ revision: 4, payloadAccess: 'FULL' });
+    const nextAttempt = { ...attempt, expectedRevision: 4 };
+    await expect(new ExerciseClient({ baseUrl: api.baseUrl, headers: () => api.headers }).savePreparation(created.id, nextAttempt))
+      .rejects.toMatchObject({ status: 403 });
+    const invalid = await fetch(`${api.baseUrl}/exercises/${created.id}/preparation`, {
+      method: 'POST', headers: { ...api.headers, 'X-CSRF-Token': api.csrfToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...nextAttempt, payload: { intent: 'Подмена' } }),
     });
     expect(invalid.status).toBe(422);
-    await expect(new ExerciseClient({ baseUrl, headers: () => headers }).savePreparation(created.id, attempt))
-      .rejects.toMatchObject({ status: 403 });
-    await sessions.selectRole(login.token, 'reader');
-    await expect(client.savePreparation(created.id, attempt)).rejects.toMatchObject({ status: 403 });
-    expect((await store.get(actor.organizationId, created.id))?.revision).toBe(2);
   } finally {
-    await service.close();
+    await api.close();
   }
+});
+
+it.each<{ action: string; prepared: boolean; payload: JsonValue }>([
+  { action: 'добавить', prepared: false, payload: { preparation: draft } },
+  { action: 'удалить', prepared: true, payload: { title: 'Карточка без черновика' } },
+  { action: 'заменить', prepared: true, payload: { preparation: draft } },
+])('ограниченная проекция не позволяет $action черновик через редакции', async ({ prepared, payload }) => {
+  const api = await preparationApi();
+  const { client, created } = api;
+  try {
+    const expectedRevision = prepared ? 2 : 1;
+    if (prepared) {
+      await api.selectRole('author');
+      await client.savePreparation(created.id, { expectedRevision: 1, draft: populatedDraft });
+    }
+    await api.selectRole('director');
+    const forged = { expectedRevision, payload, payloadAccess: 'FULL' };
+    await expect(client.createRevision(created.id, forged)).rejects.toMatchObject({ status: 403 });
+    const updated = await client.createRevision(created.id, { expectedRevision, title: 'Уточнённое название' });
+    expect(updated).toMatchObject({ revision: expectedRevision + 1, title: 'Уточнённое название' });
+
+    await api.selectRole('author');
+    const reopened = await client.getCard(created.id);
+    if (prepared) expect(reopened.revisions.at(-1)?.payload).toMatchObject({ ...initialPayload, preparation: { ...populatedDraft, updatedAt: expect.any(String) } });
+    else expect(reopened.revisions.at(-1)?.payload).toEqual(initialPayload);
+  } finally {
+    await api.close();
+  }
+});
+
+it('ограниченная проекция не позволяет загрузить черновик при создании учения', async () => {
+  const api = await preparationApi();
+  try {
+    await api.selectRole('director');
+    await expect(api.client.create({ ...input, payload: { preparation: draft } })).rejects.toMatchObject({ status: 403 });
+    await expect(api.client.create(input)).resolves.toMatchObject({ revision: 1, payloadAccess: 'PROJECTED' });
+  } finally {
+    await api.close();
+  }
+});
+
+it('запрещает запись подготовки серверному вызывающему коду без явной области доступа', async () => {
+  const store = new InMemoryExerciseStore();
+  await expect(store.create(actor, { ...input, payload: { preparation: draft } })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  const created = await store.create(actor, input);
+  await expect(store.savePreparation(actor, created.id, { expectedRevision: 1, draft })).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  await expect(store.createRevision(actor, created.id, { expectedRevision: 1, payload: { preparation: draft } }))
+    .rejects.toMatchObject({ code: 'FORBIDDEN' });
+  const saved = await store.savePreparation(actor, created.id, { expectedRevision: 1, draft }, 'FULL');
+  await expect(store.createRevision(actor, created.id, { expectedRevision: 2, payload: {} }))
+    .rejects.toMatchObject({ code: 'FORBIDDEN' });
+  expect((await store.get(actor.organizationId, created.id))?.revisions.at(-1)).toEqual(saved.revisions.at(-1));
 });
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
@@ -147,17 +232,19 @@ it.skipIf(!databaseUrl)('восстанавливает PostgreSQL-чернов�
     await store.init();
     const payload = { intent: 'Замысел', privateData: { field: 'Ограниченного доступа' } };
     const created = await store.create(actor, { ...input, payload });
-    const saved = await store.savePreparation(actor, created.id, { expectedRevision: 1, draft });
+    const saved = await store.savePreparation(actor, created.id, { expectedRevision: 1, draft }, 'FULL');
 
     const restarted = new PgExerciseStore({ pool, schema });
     const restored = await restarted.get(actor.organizationId, created.id);
     expect(restored).toMatchObject({ revision: 2 });
     expect(restored?.revisions.at(-1)?.payload).toEqual({ ...payload, preparation: { ...draft, updatedAt: saved.updatedAt } });
-    await expect(restarted.savePreparation(actor, created.id, { expectedRevision: 1, draft }))
+    await expect(restarted.savePreparation(actor, created.id, { expectedRevision: 1, draft }, 'FULL'))
       .rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+    await expect(restarted.createRevision(actor, created.id, { expectedRevision: 2, payload: {} }))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
     await expect(restarted.createRevision(actor, created.id, {
       expectedRevision: 2, payload: { preparation: { ...draft, schemaVersion: 2 } },
-    })).rejects.toMatchObject({ code: 'VALIDATION' });
+    }, 'FULL')).rejects.toMatchObject({ code: 'VALIDATION' });
     expect((await restarted.get(actor.organizationId, created.id))?.revisions).toHaveLength(2);
   } finally {
     await dropSchema(pool, schema);

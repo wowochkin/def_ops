@@ -13,7 +13,7 @@ import {
   type ExerciseStore,
   type SavePreparationInput,
 } from '../store/exercise-store';
-import { projectExerciseCard } from '../store/exercise-projection';
+import { exercisePayloadAccess, projectExerciseCard } from '../store/exercise-projection';
 import type { ExerciseConfirmationInput, ExerciseEvidenceService } from '../store/exercise-evidence-service';
 import type { InitialSituationMapModel } from '@def-ops/kshvi';
 import { KSHVI_ROUTE_PREFIX } from './router';
@@ -110,7 +110,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(base, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:create', true);
     const body = await ctx.json<CreateExerciseInput>();
-    return reply(201, projectExerciseCard(await store.create(actor, body), actor.participant));
+    return reply(201, projectExerciseCard(await store.create(actor, body, exercisePayloadAccess(actor.participant)), actor.participant));
   }));
 
   router.get(`${base}/:id`, handle(async ctx => {
@@ -142,7 +142,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
   router.post(`${base}/:id/revisions`, handle(async ctx => {
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<CreateRevisionInput>();
-    return reply(201, projectExerciseCard(await store.createRevision(actor, exerciseId(ctx), body), actor.participant));
+    return reply(201, projectExerciseCard(await store.createRevision(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant)), actor.participant));
   }));
 
   router.post(`${base}/:id/preparation`, handle(async ctx => {
@@ -150,7 +150,7 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const body = await ctx.json<SavePreparationInput>();
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new ExerciseStoreError('VALIDATION', 'Проверьте данные подготовки');
     closedBody(body, ['expectedRevision', 'draft']);
-    return reply(201, projectExerciseCard(await store.savePreparation(actor, exerciseId(ctx), body), actor.participant));
+    return reply(201, projectExerciseCard(await store.savePreparation(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant)), actor.participant));
   }));
 
   router.post(`${base}/:id/transitions`, handle(async ctx => {
