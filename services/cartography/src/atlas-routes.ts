@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import { Router, HttpError, reply, onShutdown } from '@def-ops/service-kit';
+import {atlasLandcover} from './atlas-landcover';
 import {atlasElevations} from './atlas-elevation';
 import {resolveSources} from './atlas-sources';
 import { AtlasStore, atlasStyle, validBounds, type ConvertOptions } from './atlas';
@@ -64,6 +65,7 @@ export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-o
   if(new Set(body.items.map(item=>item.id)).size!==body.items.length)throw new HttpError(422,'duplicate_region_maps','Повтор идентификатора набора в одной операции');
   return deleteAtlasRegion(store,jobs,c.tenant,body.items);
  });
+ r.post('/cartography/atlas/:id/landcover',async c=>atlasLandcover(store,c.tenant,c.params.id,(await c.json<{points:[number,number][]}>()).points));
  r.post('/cartography/atlas/:id/elevations',async c=>atlasElevations(store,c.tenant,c.params.id,(await c.json<{points:[number,number][]}>()).points));
  r.get('/cartography/atlas/:id/style',async c=>atlasStyle(await store.get(c.tenant,c.params.id),prefix(c)));
  r.get('/cartography/atlas/:id/export',async c=>{await store.get(c.tenant,c.params.id);const file=store.file(c.tenant,c.params.id),st=await fs.stat(file);c.res.writeHead(200,{'content-type':'application/octet-stream','content-length':String(st.size),'content-disposition':'attachment; filename="atlas.mbtiles"'});await pipeline(createReadStream(file),c.res);});

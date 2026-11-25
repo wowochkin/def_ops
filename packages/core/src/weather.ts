@@ -21,7 +21,7 @@ export interface WeatherScenario extends Partial<Record<SurfaceField,number>> {
   version: 1; temperatureMode?: 'climate'|'manual'; seed: number; start: string; temperature: number; humidity: number; pressure: number;
   windSpeed: number; windDirection: number; cloud: number; precipitation: number; variability: number; transitionHours: number; keyframes?: WeatherKeyframe[]; durationHours?: number;
 }
-export interface WeatherState extends WeatherValues { temperatureReferenceM?: number; provenance: 'observation' | 'reanalysis' | 'synthetic' | 'interpolated'; precipitationType?: 'none' | 'rain' | 'snow' | 'mixed' }
+export interface WeatherState extends WeatherValues { surfaceContext?: import('./weather-regional-context').RegionalContextStatus; temperatureReferenceM?: number; provenance: 'observation' | 'reanalysis' | 'synthetic' | 'interpolated'; precipitationType?: 'none' | 'rain' | 'snow' | 'mixed' }
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const mod = (x: number, n: number) => ((x % n) + n) % n;
 export function weatherTime(value: string): number {
@@ -124,9 +124,9 @@ export function precipitationFrame(s:WeatherScenario,time:string) {
   return (lon:number,lat:number)=>showerIntensity(intensity,s.variability,s.seed,lat,lon,hours,base.windSpeed,base.windDirection);
 }
 /** Прямой расчёт по времени: не требует предыдущих кадров и скрытого генераторного состояния. */
-export function simulateWeather(s: WeatherScenario, lat: number, lon: number, time: string): WeatherState {
+export function simulateWeather(s: WeatherScenario, lat: number, lon: number, time: string, context?:import('./weather-regional-context').RegionalSurfaceContext): WeatherState {
   validateWeatherScenario(s); point(lat, lon);
-  if(s.algorithmVersion===2)return simulateRegionalWeather(s,lat,lon,time);
+  if(s.algorithmVersion===2)return simulateRegionalWeather(s,lat,lon,time,context);
   const t = weatherTime(time), hours = (t - weatherTime(s.start)) / 3600000, elapsed = hours / s.transitionHours;
   const climate = s.temperatureMode === 'climate' ? climateAt(lat, lon, t) : undefined;
   const baseline=scenarioBaseline(s,hours,climate?.temperature??s.temperature);
