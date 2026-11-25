@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
-import type { EnvironmentSnapshot } from '../../../../../../packages/kshvi/src/environment/provider';
+import type { Bounds, EnvironmentSnapshot } from '../../../../../../packages/kshvi/src/environment/provider';
 import type { InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { getSymbol, symbolImageId, symbolImages } from '@def-ops/tactical-symbols';
+import type { KshviClient } from '../kshvi-api';
+import { loadEnvironmentStyles } from './snapshot-map-style';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 async function ensureSymbolImages(canvas: MapLibreMap, map: InitialSituationMap): Promise<void> {
@@ -34,53 +36,106 @@ export function snapshotStyleUrls<T>(value: T): T {
   return value;
 }
 
-export function InitialMapCanvas({ snapshot, map }: { snapshot: EnvironmentSnapshot; map: InitialSituationMap }) {
+export function InitialMapCanvas({ client, snapshot, map }: {
+  client: KshviClient; snapshot: EnvironmentSnapshot; map?: InitialSituationMap;
+}) {
+  const [style, setStyle] = useState<StyleSpecification | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    setStyle(null);
+    setError('');
+    void loadEnvironmentStyles(snapshot.atlases.map(atlas => atlas.meta), id => client.getEnvironmentSnapshotStyle(snapshot.id, id))
+      .then(value => { if (active) setStyle(snapshotStyleUrls(value)); })
+      .catch(cause => { if (active) setError(cause.message); });
+    return () => { active = false; };
+  }, [client, snapshot]);
+
+  return <>
+    {error && <p role="alert">Топографическая карта недоступна: {error}</p>}
+    {style && <EnvironmentMapPreview style={style} bounds={snapshot.region.bounds} map={map}
+      label="Карта исходной обстановки" />}
+  </>;
+}
+
+export type WeatherMapPoint = Readonly<{ lon: number; lat: number; value: number }>;
+
+export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label = 'Предпросмотр выбранных слоёв' }: {
+  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherPoints?: readonly WeatherMapPoint[]; label?: string;
+}) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapLibreMap | null>(null);
   const loaded = useRef(false);
+  const latest = useRef({ map, weatherPoints });
+  latest.current = { map, weatherPoints };
   const [error, setError] = useState('');
+
+  function fit(canvas: MapLibreMap) {
+    const [west, south, east, north] = bounds;
+    canvas.fitBounds([[west, south], [east, north]], { padding: 32, duration: 0 });
+  }
 
   useEffect(() => {
     let disposed = false;
-    let lib: typeof import('maplibre-gl');
-    const atlasId = snapshot.atlases[0]?.id;
-    if (!atlasId || !container.current) return;
     setError('');
-    void (async () => {
-      try {
-        const response = await fetch(`/api/kshvi/environment/snapshots/${snapshot.id}/atlas/${encodeURIComponent(atlasId)}/style`, { credentials: 'same-origin' });
-        if (!response.ok) throw new Error(`Стиль снимка недоступен (${response.status})`);
-        const style = snapshotStyleUrls(await response.json() as StyleSpecification);
-        lib = await import('maplibre-gl');
-        if (disposed || !container.current) return;
-        const canvas = new lib.Map({
-          container: container.current, style, attributionControl: { compact: true },
-          transformRequest: url => ({ url: url.startsWith('/kshvi/') ? `/api${url}` : url }),
-        });
-        instance.current = canvas;
-        canvas.addControl(new lib.NavigationControl(), 'top-right');
-        canvas.on('load', () => {
-          loaded.current = true;
-          const [west, south, east, north] = map.bounds;
-          canvas.fitBounds([[west, south], [east, north]], { padding: 32, duration: 0 });
-          void ensureSymbolImages(canvas, map).then(updateMarkers);
-        });
-        canvas.on('error', event => { if (!disposed) setError(event.error.message); });
-      } catch (cause) {
-        if (!disposed) setError(cause instanceof Error ? cause.message : 'Карта недоступна');
-      }
-    })();
+    void import('maplibre-gl').then(lib => {
+      if (disposed || !container.current) return;
+      const canvas = new lib.Map({ container: container.current, style, attributionControl: { compact: true }, locale: {
+        'NavigationControl.ZoomIn': 'Приблизить',
+        'NavigationControl.ZoomOut': 'Отдалить',
+        'NavigationControl.ResetBearing': 'Повернуть карту на север',
+      } });
+      instance.current = canvas;
+      canvas.addControl(new lib.NavigationControl(), 'top-right');
+      canvas.on('load', () => {
+        if (disposed) return;
+        loaded.current = true;
+        fit(canvas);
+        const [w, s, e, n] = bounds;
+        canvas.addSource('kshvi-region', { type: 'geojson', data: {
+          type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[w, s], [e, s], [e, n], [w, n], [w, s]] },
+        } });
+        canvas.addLayer({ id: 'kshvi-region', type: 'line', source: 'kshvi-region',
+          paint: { 'line-color': '#214760', 'line-width': 2, 'line-dasharray': [4, 2] } });
+        updateWeather();
+        const currentMap = latest.current.map;
+        if (currentMap) void ensureSymbolImages(canvas, currentMap).then(updateMarkers);
+      });
+      canvas.on('error', event => { if (!disposed) setError(event.error.message); });
+    }).catch(cause => { if (!disposed) setError(cause instanceof Error ? cause.message : 'Карта недоступна'); });
     return () => {
       disposed = true;
       loaded.current = false;
       instance.current?.remove();
       instance.current = null;
     };
-  }, [snapshot.id]);
+  }, [style, bounds]);
+
+  function updateWeather(): void {
+    const canvas = instance.current;
+    if (!canvas || !loaded.current) return;
+    const points = latest.current.weatherPoints ?? [];
+    const data: GeoJSON.FeatureCollection<GeoJSON.Point> = {
+      type: 'FeatureCollection', features: points.map(({ lon, lat, value }) => ({
+        type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { temperature: value },
+      })),
+    };
+    const previous = canvas.getSource('kshvi-weather') as GeoJSONSource | undefined;
+    if (previous) { previous.setData(data); return; }
+    if (!points.length) return;
+    canvas.addSource('kshvi-weather', { type: 'geojson', data });
+    canvas.addLayer({ id: 'kshvi-weather', type: 'circle', source: 'kshvi-weather', paint: {
+      'circle-color': ['interpolate', ['linear'], ['get', 'temperature'], -20, '#225ea8', 0, '#41b6c4', 20, '#fdae61', 40, '#d73027'],
+      'circle-radius': 8, 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffffff',
+    } });
+  }
+
+  useEffect(() => updateWeather(), [weatherPoints]);
 
   function updateMarkers(): void {
     const canvas = instance.current;
-    if (!canvas || !loaded.current) return;
+    const map = latest.current.map;
+    if (!canvas || !loaded.current || !map) return;
     const data = {
       type: 'FeatureCollection' as const,
       features: map.markers.filter(marker => marker.geometry).map(marker => {
@@ -140,12 +195,12 @@ export function InitialMapCanvas({ snapshot, map }: { snapshot: EnvironmentSnaps
 
   useEffect(() => {
     const canvas = instance.current;
-    if (canvas) void ensureSymbolImages(canvas, map).then(updateMarkers);
-    else updateMarkers();
-  }, [map.markers]);
+    if (canvas && map) void ensureSymbolImages(canvas, map).then(updateMarkers);
+  }, [map]);
 
-  return <section aria-label="Топографическая карта исходной обстановки">
-    <div ref={container} style={{ height: 480, minHeight: 320, borderRadius: 8, overflow: 'hidden' }} aria-label="Карта исходной обстановки" />
+  return <section className="kshvi-environment-map" aria-label={label}>
+    <div ref={container} className="kshvi-environment-map-canvas" />
+    <button className="kshvi-fit-region" type="button" onClick={() => { if (instance.current) fit(instance.current); }}>Область целиком</button>
     {error && <p role="alert">Топографическая карта недоступна: {error}</p>}
   </section>;
 }

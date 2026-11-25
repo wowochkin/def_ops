@@ -32,11 +32,13 @@ describe('автономность и покрытие снимка среды',
   let requests: string[];
   let store: EnvironmentSnapshotStore;
   let provider: CartographyEnvironmentProvider;
+  let namedSprites: boolean;
   const closers: Array<() => Promise<void>> = [];
 
   beforeEach(async () => {
     root = await mkdtemp(path.join(process.cwd(), '.environment-review-test-'));
     requests = [];
+    namedSprites = false;
     const fetcher: typeof fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
       const key = `${init?.method ?? 'GET'} ${url.pathname}`;
@@ -45,7 +47,8 @@ describe('автономность и покрытие снимка среды',
       if (key === 'GET /cartography/atlas/a1/style') return json({
         version: 8,
         glyphs: 'http://cartography.test/cartography/fonts/{fontstack}/{range}.pbf',
-        sprite: 'http://cartography.test/cartography/sprites/ohm',
+        sprite: namedSprites ? [{ id: 'marks', url: 'http://cartography.test/cartography/sprites/ohm' }]
+          : 'http://cartography.test/cartography/sprites/ohm',
         sources: { atlas: { type: 'vector', tiles: ['http://cartography.test/cartography/atlas/a1/tiles/{z}/{x}/{y}'] } },
         layers: [{ id: 'labels', type: 'symbol', layout: { 'text-font': ['Test Sans'] } }],
       });
@@ -86,6 +89,18 @@ describe('автономность и покрытие снимка среды',
     expect(style.glyphs).toBe(`/kshvi/environment/snapshots/${snapshot.id}/resources/glyphs/{fontstack}/{range}.pbf`);
     expect(style.sprite).toBe(`/kshvi/environment/snapshots/${snapshot.id}/resources/sprites/ohm`);
     expect(JSON.stringify(style)).not.toContain('cartography.test');
+  });
+
+  it('сохраняет именованный sprite и закрывает его на ресурсы снимка', async () => {
+    namedSprites = true;
+    const snapshot = await provider.snapshot(selection());
+    expect(snapshot.resources).toHaveLength(260);
+    const style = await provider.snapshotArtifact(snapshot, 'a1', 'style');
+    expect(style).toMatchObject({
+      sprite: [{ id: 'marks', url: `/kshvi/environment/snapshots/${snapshot.id}/resources/sprites/sprite-marks` }],
+    });
+    const image = await provider.snapshotResource(snapshot, 'sprites/sprite-marks.png');
+    expect(image).toEqual(Buffer.from([8]));
   });
 
   it('обнаруживает отсутствие и повреждение содержимого при загрузке', async () => {

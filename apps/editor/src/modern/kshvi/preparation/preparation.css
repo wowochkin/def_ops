@@ -172,20 +172,38 @@
 .preparation-launch dt { color: var(--prep-muted); font-size: 13px; }
 .preparation-launch dd { margin: 6px 0 0; font-size: 18px; font-weight: 600; }
 
-.kshvi-environment-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; max-width: 900px; }
-.kshvi-environment-form > p,
-.kshvi-environment-form > button,
-.kshvi-environment-form > details { grid-column: 1 / -1; }
-.kshvi-environment-form > p { margin: 0 0 4px; color: var(--prep-muted); }
-.kshvi-environment-form details > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
-.kshvi-environment-preparation > section[aria-label="Топографическая карта исходной обстановки"] { margin: 20px 0; }
-.kshvi-environment-preparation > p { overflow-wrap: anywhere; }
-.kshvi-environment-preparation code { padding: 0; background: transparent; color: var(--prep-muted); }
+.kshvi-environment-preparation > h2 { margin: 0 0 14px; font-size: 18px; }
+.kshvi-environment-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.kshvi-environment-columns { display: grid; grid-template-columns: minmax(290px, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.kshvi-environment-controls { display: grid; gap: 14px; }
+.kshvi-environment-controls fieldset { display: grid; gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--prep-border); border-radius: 8px; }
+.kshvi-environment-controls legend { padding: 0 6px; font-weight: 650; }
+.kshvi-environment-controls label { display: grid; gap: 4px; }
+.kshvi-environment-controls input:not([type="checkbox"]), .kshvi-environment-controls select { width: 100%; min-width: 0; }
+.kshvi-environment-bounds { color: var(--prep-muted); font-size: 12px; }
+.kshvi-atlas-options { padding: 0; margin: 0; list-style: none; max-height: 240px; overflow: auto; }
+.kshvi-atlas-options li { padding: 6px 0; }
+.kshvi-atlas-options li + li { border-top: 1px solid var(--prep-border); }
+.kshvi-atlas-options label { grid-template-columns: 16px minmax(0, 1fr); column-gap: 8px; cursor: pointer; }
+.kshvi-atlas-options input[type="checkbox"], .kshvi-weather-toggle input[type="checkbox"] { width: 16px; min-width: 16px; height: 16px; }
+.kshvi-atlas-options small { display: block; color: var(--prep-muted); margin: 3px 0; }
+.kshvi-environment-map { position: relative; }
+.kshvi-environment-map-canvas { height: clamp(245px, 32vh, 400px); border: 1px solid var(--prep-border); border-radius: 8px; overflow: hidden; }
+.modern-kshvi .maplibregl-ctrl-group button { min-height: 29px; padding: 0; background: #fff; border-color: #d5dfe2; border-radius: 0; }
+.modern-kshvi .maplibregl-ctrl-group button:hover { background: #e8f0f2; }
+.kshvi-fit-region { position: absolute; top: 10px; left: 10px; }
+.kshvi-weather-toggle { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.kshvi-weather-legend { display: flex; gap: 8px; align-items: center; margin: 8px 0; font-size: 12px; }
+.kshvi-weather-gradient { height: 8px; width: 150px; border-radius: 4px; background: linear-gradient(90deg, #225ea8, #41b6c4, #fdae61, #d73027); }
+.kshvi-weather-fields { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kshvi-environment-snapshot, .kshvi-environment-impact { padding: 12px; border: 1px solid var(--prep-border); border-radius: 8px; margin: 10px 0; }
+.kshvi-environment-preparation p { overflow-wrap: anywhere; }
+.kshvi-environment-preparation code { padding: 0; background: transparent; color: var(--prep-muted); overflow-wrap: anywhere; }
 
 @media (max-width: 1000px) {
   .preparation-step-heading { align-items: start; flex-direction: column; gap: 8px; }
   .preparation-step-heading > p { text-align: left; }
-  .kshvi-environment-form details > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
 }
 
 @media (max-width: 720px) {
@@ -198,8 +216,7 @@
   .preparation-footer { grid-template-columns: auto 1fr auto; gap: 6px; padding-inline: 6px; }
   .modern-kshvi .preparation-footer > button { min-width: 0; }
   .preparation-footer button { width: 100%; }
-  .kshvi-environment-form,
-  .kshvi-environment-form details > div,
+  .kshvi-environment-columns,
   .preparation-launch dl { grid-template-columns: 1fr; }
 }
 

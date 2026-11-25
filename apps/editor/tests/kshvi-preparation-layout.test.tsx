@@ -9,7 +9,7 @@ import { WORKSPACE_EXERCISE_KEY } from '../src/modern/kshvi/workspace-session';
 const now = '2030-01-01T10:00:00Z';
 const card: ExerciseCard = {
   id: 'e1', title: 'Учение', revision: 2, state: 'DRAFT', validation: 'NOT_RUN', payloadAccess: 'FULL',
-  purpose: 'planned', scale: 'operational', ownerId: 'leader', startsAt: null, endsAt: null, readiness: 0,
+  purpose: 'planned', scale: 'operational', ownerId: 'leader', startsAt: now, endsAt: null, readiness: 0,
   createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null, sessions: [],
   revisions: [{
     id: 'r2', exerciseId: 'e1', revision: 2, payload: { intent: 'Закрытый замысел', preparation: JSON.parse(JSON.stringify(emptyPreparationDraft(now))) },
@@ -139,7 +139,7 @@ it.each([401, 403, 404])('убирает ранее открытую карто�
 it('закрывает мастер после отказа чтения карточки при фиксации среды', async () => {
   let reads = 0;
   let snapshots = 0;
-  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4] };
+  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4], kind: 'vector', minzoom: 4, maxzoom: 14 };
   const client = new ExerciseClient({ fetch: async input => {
     const path = String(input);
     if (path.endsWith('/exercises')) return Response.json({ items: [card] });
@@ -149,6 +149,7 @@ it('закрывает мастер после отказа чтения кар�
         : Response.json({ error: { message: 'Карточка недоступна' } }, { status: 403 });
     }
     if (path.endsWith('/environment/atlases')) return Response.json([atlas]);
+    if (path.endsWith('/style')) return Response.json({ version: 8, sources: {}, layers: [] });
     if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
     if (path.endsWith('/environment/snapshots')) snapshots++;
     throw Error(`Неожиданный запрос ${path}`);
@@ -156,7 +157,9 @@ it('закрывает мастер после отказа чтения кар�
   render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
   await screen.findByRole('option', { name: 'Атлас' });
-  fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать среду и открыть карту' }));
+  const prepare = screen.getByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });
+  await waitFor(() => expect(prepare.disabled).toBe(false));
+  fireEvent.click(prepare);
 
   expect(await screen.findByRole('button', { name: 'Открыть библиотеку' })).toBeTruthy();
   expect(screen.getByRole('alert').textContent).toContain('Доступ к выбранному учению изменился');
@@ -225,7 +228,7 @@ it('отбрасывает задержанную полную карточку 
   let receiveEnvironment!: (response: Response) => void;
   const libraryResponse = new Promise<Response>(resolve => { receiveLibrary = resolve; });
   const environmentResponse = new Promise<Response>(resolve => { receiveEnvironment = resolve; });
-  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4] };
+  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4], kind: 'vector', minzoom: 4, maxzoom: 14 };
   const client = new ExerciseClient({ fetch: async input => {
     const path = String(input);
     if (path.endsWith('/exercises')) return Response.json({ items: [card] });
@@ -237,6 +240,7 @@ it('отбрасывает задержанную полную карточку 
       }
     }
     if (path.endsWith('/environment/atlases')) return Response.json([atlas]);
+    if (path.endsWith('/style')) return Response.json({ version: 8, sources: {}, layers: [] });
     if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
     throw Error(`Неожиданный запрос ${path}`);
   } });
@@ -249,7 +253,9 @@ it('отбрасывает задержанную полную карточку 
   await waitFor(() => expect(reads).toBe(2));
   fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
   await screen.findByRole('option', { name: 'Атлас' });
-  fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать среду и открыть карту' }));
+  const prepare = screen.getByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });
+  await waitFor(() => expect(prepare.disabled).toBe(false));
+  fireEvent.click(prepare);
   await waitFor(() => expect(reads).toBe(3));
 
   receiveEnvironment(Response.json({ error: { message: 'Карточка недоступна' } }, { status: 403 }));

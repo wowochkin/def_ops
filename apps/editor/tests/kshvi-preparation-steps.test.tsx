@@ -21,7 +21,7 @@ it('показывает один шаг и ведёт от среды до за
     revisions: [{ id: 'r1', exerciseId: 'e1', revision: 1, state: 'DRAFT', payload: {}, createdAt: at,
       createdBy: 'u1', supersedesId: null, sha256: 'a'.repeat(64) }],
   };
-  render(<ExercisePreparation client={client} card={card} userId="u1" role="DIRECTOR" initialStep="environment"
+  render(<ExercisePreparation client={client} card={card} role="DIRECTOR" initialStep="environment"
     canRevise canStart={false} onCard={vi.fn()} onAccessLost={vi.fn()} onStart={vi.fn()} />);
 
   expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();

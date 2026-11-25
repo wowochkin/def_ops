@@ -1,27 +1,15 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { validateWeatherScenario, type WeatherScenario } from '../../../../../../packages/core/src/weather';
-import type { AtlasMeta, EnvironmentSnapshot } from '../../../../../../packages/kshvi/src/environment/provider';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot, EnvironmentWeather } from '../../../../../../packages/kshvi/src/environment/provider';
 import { approveInitialMap, createInitialSituationMap, type ApprovedInitialMap, type InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { hashCanonical } from '../../../../../../packages/kshvi/src/scenario/initial-map-hash';
+import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import type { SymbolSet } from '../../../../../../packages/tactical-symbols/src/model';
-import { isExerciseAccessLost, type ExerciseCard, type JsonValue, type KshviClient, type KshviHttpError } from '../kshvi-api';
+import type { EnvironmentImpact } from '../../../../../../services/kshvi/src/store/environment-revision';
+import { isExerciseAccessLost, KshviHttpError, type ExerciseCard, type KshviClient } from '../kshvi-api';
 import { InitialMapStep, type InitialMapSymbolOption } from './InitialMapStep';
 import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
-import { DateTimeField } from '../../DateTimeField';
-
-const numericFields = [
-  ['temperature', 'Температура, °C'], ['humidity', 'Влажность, %'], ['pressure', 'Давление, hPa'],
-  ['windSpeed', 'Ветер, m/s'], ['windDirection', 'Направление ветра, °'], ['cloud', 'Облачность, %'], ['precipitation', 'Осадки, mm/h'],
-] as const;
-
-function initialScenario(): WeatherScenario {
-  return {
-    version: 1, temperatureMode: 'manual', seed: 42, start: `${new Date().toISOString().slice(0, 10)}T00:00:00Z`,
-    temperature: 15, humidity: 65, pressure: 1013, windSpeed: 4, windDirection: 270, cloud: 40,
-    precipitation: 0, variability: 1, transitionHours: 3, durationHours: 24,
-  };
-}
+import { EnvironmentSelectionEditor } from './EnvironmentSelectionEditor';
 
 function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
   return set.symbols.map(symbol => ({
@@ -31,148 +19,225 @@ function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
   }));
 }
 
-export function EnvironmentMapPreparation({ client, exerciseId, revision, authorId, truthRole, onRevision, onAccessLost, acceptsCardResponse }: {
+function makeInitialMap(exerciseId: string, revision: number, snapshot: EnvironmentSnapshot, weather: EnvironmentWeather,
+  symbols: SymbolSet, startsAt: string | null): InitialSituationMap | null {
+  const at = snapshot.operationalTime?.operationalAt ?? weather.scenario?.start ?? startsAt;
+  if (!at) return null;
+  return createInitialSituationMap({
+    id: `map-${exerciseId}`, revision,
+    environment: { snapshotId: snapshot.id, manifestSha256: snapshot.manifestSha256, bounds: snapshot.region.bounds },
+    initialOperationalAt: at, timeZone: snapshot.operationalTime?.timeZone ?? 'UTC',
+    weatherFrameRef: snapshot.weather.contentRef?.path ?? snapshot.weather.sourceId,
+    terrainStateRef: snapshot.atlases.find(atlas => atlas.elevations.contentRef)?.elevations.contentRef?.path ?? 'UNKNOWN: высотный кадр не зафиксирован',
+    symbolSet: { id: symbols.id, revision: 1, sha256: hashCanonical(symbols) },
+    attribution: [...snapshot.atlases.map(atlas => atlas.attribution), snapshot.weather.attribution],
+  });
+}
+
+type Props = {
   client: KshviClient;
-  exerciseId: string;
+  card: ExerciseCard;
+  draft: PreparationDraft;
   revision: number;
-  authorId: string;
+  legacySnapshotId?: string | null;
   truthRole: string;
+  canEdit: boolean;
+  locked: boolean;
+  savePreparation(draft: PreparationDraft): Promise<ExerciseCard>;
   onRevision(card: ExerciseCard): void;
-  onAccessLost?(cause: KshviHttpError): void;
+  onConflict(reason: string): void;
+  onAccessLost(cause: KshviHttpError): void;
+  onPendingChange(dirty: boolean, busy: boolean): void;
+  onMapChange(map: InitialSituationMap): void;
+  onCartography?(): void;
   acceptsCardResponse?(): boolean;
-}) {
-  const [atlases, setAtlases] = useState<readonly AtlasMeta[]>([]);
+};
+
+export function EnvironmentMapPreparation({
+  client, card, draft, revision, legacySnapshotId, truthRole, canEdit, locked, savePreparation, onRevision,
+  onAccessLost, onConflict, onPendingChange, onCartography, acceptsCardResponse, onMapChange,
+}: Props) {
+  const [atlases, setAtlases] = useState<readonly AtlasMeta[] | null>(null);
   const [symbols, setSymbols] = useState<SymbolSet | null>(null);
-  const [atlasId, setAtlasId] = useState('');
-  const [scenario, setScenario] = useState<WeatherScenario>(initialScenario);
-  const [snapshot, setSnapshot] = useState<EnvironmentSnapshot | null>(null);
-  const [map, setMap] = useState<InitialSituationMap | null>(null);
-  const [currentRevision, setCurrentRevision] = useState(revision);
+  const [snapshotRef, setSnapshotRef] = useState<{ snapshot: EnvironmentSnapshot; weather: EnvironmentWeather } | null>(null);
+  const [loadsError, setLoadsError] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapEdit, setMapEdit] = useState<InitialSituationMap | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [environmentLoading, setEnvironmentLoading] = useState(true);
+  const operation = useRef(false);
+  const alive = useRef(true);
+  const [candidate, setCandidate] = useState<EnvironmentSnapshot | null>(null);
+  const [impact, setImpact] = useState<EnvironmentImpact | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const snapshotId = draft.environmentSnapshotId ?? legacySnapshotId ?? null;
+  const current = snapshotRef?.snapshot.id === snapshotId ? snapshotRef : null;
+
+  useLayoutEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
+  useLayoutEffect(() => { onPendingChange(dirty, busy); }, [onPendingChange, dirty, busy]);
+  useLayoutEffect(() => () => onPendingChange(false, false), [onPendingChange]);
 
   useEffect(() => {
+    if (!canEdit) return;
     let active = true;
-    setEnvironmentLoading(true);
-    setError('');
-    void Promise.all([client.listEnvironmentAtlases(), client.symbolCatalog()]).then(([atlasList, catalog]) => {
-      if (!active) return;
-      setAtlases(atlasList);
-      setAtlasId(current => current || atlasList[0]?.id || '');
-      setSymbols(catalog.set);
-      setEnvironmentLoading(false);
-    }).catch(cause => {
-      if (active) { setError(cause instanceof Error ? cause.message : 'Не удалось загрузить среду'); setEnvironmentLoading(false); }
-    });
+    void client.listEnvironmentAtlases().then(value => { if (active) setAtlases(value); })
+      .catch(cause => { if (active) setLoadsError(cause.message); });
     return () => { active = false; };
-  }, [client]);
+  }, [client, canEdit]);
 
-  function patch<K extends keyof WeatherScenario>(key: K, value: WeatherScenario[K]): void {
-    setScenario(current => ({ ...current, [key]: value }));
+  useEffect(() => {
+    if (!mapOpen) return;
+    let active = true;
+    void client.symbolCatalog().then(value => { if (active) setSymbols(value.set); })
+      .catch(cause => { if (active) setLoadsError(cause.message); });
+    return () => { active = false; };
+  }, [client, mapOpen]);
+
+  useEffect(() => {
+    if (!snapshotId) return;
+    let active = true;
+    const loadWeather = (snapshot: EnvironmentSnapshot): Promise<EnvironmentWeather> =>
+      snapshot.weather.contentRef && !snapshot.weather.scenario && !snapshot.weather.dataset
+        ? client.getEnvironmentSnapshotWeather(snapshot.id) : Promise.resolve(snapshot.weather);
+    void client.getEnvironmentSnapshot(snapshotId).then(async snapshot => ({ snapshot, weather: await loadWeather(snapshot) }))
+      .then(value => { if (active) setSnapshotRef(value); })
+      .catch(cause => { if (active) setLoadsError(cause.message); });
+    return () => { active = false; };
+  }, [client, snapshotId]);
+
+  function onEdit() {
+    setDirty(true);
+    setCandidate(null);
+    setImpact(null);
+    setError('');
+    setNotice('');
   }
 
-  async function freeze(event: FormEvent): Promise<void> {
-    event.preventDefault();
-    const atlas = atlases.find(item => item.id === atlasId);
-    if (!atlas || !symbols || busy) return;
+  function canApply() { return alive.current && acceptsCardResponse?.() !== false; }
+
+  async function run(action: () => Promise<void>) {
+    if (operation.current || locked || !canEdit) return;
+    operation.current = true;
     setBusy(true);
     setError('');
     setNotice('');
-    try {
-      const weather = validateWeatherScenario(scenario);
-      const card = await client.getCard(exerciseId).catch(cause => {
-        if (isExerciseAccessLost(cause)) onAccessLost?.(cause);
-        throw cause;
-      });
-      if (acceptsCardResponse?.() === false) return;
-      if (card.payloadAccess !== 'FULL') {
-        onRevision(card);
-        return;
-      }
-      if (card.revision !== revision) {
-        onRevision(card);
-        throw new Error('Редакция изменилась. Проверьте актуальные данные и повторите выбор среды.');
-      }
-      const fixed = await client.createEnvironmentSnapshot({
-        region: { name: atlas.name, bounds: atlas.bounds },
-        atlases: [{ id: atlas.id, exportRights: 'ALLOWED', elevationPoints: [] }],
-        weather: { mode: 'scenario', scenario: weather },
-        elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 },
-      });
-      if (acceptsCardResponse?.() === false) return;
-      const source = card.revisions.find(item => item.revision === card.revision);
-      if (!source) throw new Error('Сервер не вернул текущую редакцию учения');
-      const payload = source.payload && typeof source.payload === 'object' && !Array.isArray(source.payload)
-        ? source.payload as Record<string, JsonValue> : {};
-      const revised = await client.createRevision(exerciseId, {
-        expectedRevision: card.revision,
-        payload: { ...payload, environmentSnapshotId: fixed.id },
-      });
-      if (acceptsCardResponse?.() === false) return;
-      const initialMap = createInitialSituationMap({
-        id: `map-${exerciseId}`, revision: revised.revision,
-        environment: { snapshotId: fixed.id, manifestSha256: fixed.manifestSha256, bounds: fixed.region.bounds },
-        initialOperationalAt: weather.start, timeZone: 'UTC',
-        weatherFrameRef: fixed.weather.contentRef?.path ?? fixed.weather.sourceId,
-        terrainStateRef: fixed.atlases.find(atlas => atlas.elevations.contentRef)?.elevations.contentRef?.path ?? 'UNKNOWN: высотный кадр не зафиксирован',
-        symbolSet: { id: symbols.id, revision: 1, sha256: hashCanonical(symbols) },
-        attribution: [...fixed.atlases.map(atlas => atlas.attribution), fixed.weather.attribution],
-      });
-      setSnapshot(fixed);
-      setMap(initialMap);
-      setCurrentRevision(revised.revision);
-      onRevision(revised);
-      setNotice('Снимок среды сохранён на сервере и связан с новой редакцией учения');
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Не удалось зафиксировать среду');
+    try { await action(); } catch (cause) {
+      if (!canApply()) return;
+      if (isExerciseAccessLost(cause)) onAccessLost(cause);
+      else if (cause instanceof KshviHttpError && cause.status === 409) onConflict(cause.message);
+      else setError(cause instanceof Error ? cause.message : 'Не удалось сохранить среду');
     } finally {
-      setBusy(false);
+      operation.current = false;
+      if (alive.current) setBusy(false);
     }
   }
 
-  async function approveOnServer(current: InitialSituationMap): Promise<ApprovedInitialMap> {
-    const result = await client.approveInitialMap(exerciseId, { expectedRevision: currentRevision, map: current });
-    const approved = approveInitialMap(current);
+  async function prepare(selection: EnvironmentSelection) {
+    await run(async () => {
+      setDirty(true);
+      setCandidate(null);
+      setImpact(null);
+      const latest = await client.getCard(card.id);
+      if (!canApply()) return;
+      if (latest.payloadAccess !== 'FULL') { onRevision(latest); return; }
+      if (latest.revision !== revision || latest.state !== card.state) {
+        throw new KshviHttpError(409, 'Редакция изменилась. Проверьте актуальные данные и повторите выбор среды.');
+      }
+      if (snapshotId || draft.initialMap || card.state === 'SEALED') {
+        const result = await client.environmentImpact(card.id, { expectedRevision: revision, bounds: selection.region.bounds });
+        if (!canApply()) return;
+        setImpact(result);
+        if (result.missingForceIds.length) return;
+      }
+      // Сервер проверяет наличие атласов, покрытие и погоду до привязки снимка к редакции.
+      const snapshot = await client.createEnvironmentSnapshot(selection).catch(cause => {
+        if (cause instanceof KshviHttpError && cause.status === 404) throw new Error(cause.message);
+        throw cause;
+      });
+      if (!canApply()) return;
+      if (snapshot.id === snapshotId) throw new Error('Этот снимок уже связан с текущей редакцией. Измените область, наборы или погоду.');
+      setCandidate(snapshot);
+    });
+  }
+
+  async function fix() {
+    if (!candidate) return;
+    await run(async () => {
+      const revised = snapshotId || draft.initialMap || card.state === 'SEALED'
+        ? await client.replaceEnvironment(card.id, { expectedRevision: revision, snapshotId: candidate.id })
+        : await savePreparation({ ...draft, environmentSnapshotId: candidate.id });
+      if (!canApply()) return;
+      onRevision(revised);
+      setCandidate(null);
+      setImpact(null);
+      setDirty(false);
+      setEditOpen(false);
+      setMapOpen(false);
+      setMapEdit(null);
+      setNotice('Снимок среды сохранён и связан с новой редакцией учения.');
+    });
+  }
+
+  async function approveOnServer(map: InitialSituationMap): Promise<ApprovedInitialMap> {
+    const result = await client.approveInitialMap(card.id, { expectedRevision: revision, map });
+    const approved = approveInitialMap(map);
     if (approved.sha256 !== result.sha256) throw new Error('Хеш карты клиента и сервера не совпадает');
     return approved;
   }
 
+  const sealedMap = card.revisions.find(item => item.revision === revision)?.sealedArtifact?.initialMap;
+  const savedMap = draft.initialMap ?? (sealedMap?.environment.snapshotId === snapshotId ? sealedMap : undefined);
+  const map = mapEdit?.environment.snapshotId === current?.snapshot.id ? mapEdit
+    : savedMap ?? (mapOpen && current && symbols ? makeInitialMap(card.id, revision, current.snapshot, current.weather, symbols, card.startsAt) : null);
+  const editing = (canEdit || dirty || busy) && (!snapshotId || editOpen);
   return <section className="kshvi-environment-preparation" aria-labelledby="environment-preparation-title">
     <h2 id="environment-preparation-title">Карта и погода исходной обстановки</h2>
-    {!map && <form className="kshvi-environment-form" onSubmit={freeze}>
-      <p>Выберите подготовленный атлас из соседнего раздела «Карта и погода». Снимок сохраняется на сервере отдельно от текущих настроек этого раздела.</p>
-      {environmentLoading && <p role="status">Загружаем доступные атласы…</p>}
-      {!environmentLoading && !atlases.length && !error && <p role="status">Подготовленных атласов нет. Сначала откройте «Карта и погода» и подготовьте район; затем вернитесь к этому учению.</p>}
-      <label htmlFor="kshvi-environment-atlas">Атлас района
-        <select id="kshvi-environment-atlas" value={atlasId} onChange={event => setAtlasId(event.target.value)} required>
-          <option value="" disabled>Выберите атлас</option>
-          {atlases.map(atlas => <option key={atlas.id} value={atlas.id}>{atlas.name}</option>)}
-        </select>
-      </label>
-      <DateTimeField id="kshvi-weather-start" label="Начало сценария, UTC" value={scenario.start.slice(0, 16)} onChange={value => { if (value) patch('start', `${value}:00Z`); }} required />
-      <label htmlFor="kshvi-weather-seed">Зерно погодного сценария
-        <input id="kshvi-weather-seed" type="number" value={scenario.seed} onChange={event => patch('seed', Number(event.target.value))} required />
-      </label>
-      <details>
-        <summary>Расширенные параметры погоды</summary>
-        <div>
-          {numericFields.map(([key, label]) => <label key={key}>{label}<input type="number" step="any" value={scenario[key]} onChange={event => patch(key, Number(event.target.value))} required /></label>)}
-          <label>Длительность, ч<input type="number" min={1} step="any" value={scenario.durationHours ?? 24} onChange={event => patch('durationHours', Number(event.target.value))} required /></label>
-          <label>Изменчивость (0–3)<input type="number" min={0} max={3} step="any" value={scenario.variability} onChange={event => patch('variability', Number(event.target.value))} required /></label>
-          <label>Переход, ч<input type="number" min={0.25} step="any" value={scenario.transitionHours} onChange={event => patch('transitionHours', Number(event.target.value))} required /></label>
-        </div>
-      </details>
-      <button className="kshvi-primary" type="submit" disabled={environmentLoading || !atlasId || !symbols || busy}>{busy ? 'Фиксируем среду на сервере…' : 'Зафиксировать среду и открыть карту'}</button>
-    </form>}
+    {snapshotId && !current && !loadsError && <p role="status">Загружаем сохранённый снимок…</p>}
+    {current && <section className="kshvi-environment-snapshot" aria-label="Сохранённый снимок среды">
+      <h3>{current.snapshot.region.name}</h3>
+      <p>Рамка WGS 84 · {current.snapshot.region.bounds.map(value => value.toFixed(4)).join(' · ')}</p>
+      <p>Идентификатор и SHA-256 манифеста <code title={current.snapshot.id}>{current.snapshot.manifestSha256}</code></p>
+      <ul aria-label="Наборы снимка">{current.snapshot.atlases.map(atlas => <li key={atlas.id}>
+        {atlas.meta.name} · z{atlas.meta.minzoom}–{atlas.meta.maxzoom} · {atlas.attribution}
+      </li>)}</ul>
+      <p>Погода · {current.weather.dataset?.name ?? current.weather.attribution}
+        {current.snapshot.operationalTime && <> · {new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short',
+          timeZone: current.snapshot.operationalTime.timeZone }).format(new Date(current.snapshot.operationalTime.operationalAt))}
+          {' · '}{current.snapshot.operationalTime.timeZone}</>}</p>
+      {!!current.snapshot.limitations.length && <ul>{current.snapshot.limitations.map(message => <li key={message}>{message}</li>)}</ul>}
+      <div className="kshvi-environment-actions">
+        {canEdit && !editOpen && <button type="button" disabled={locked} onClick={() => { setEditOpen(true); setMapOpen(false); }}>Сменить среду</button>}
+        {!mapOpen && <button type="button" disabled={busy || editOpen} onClick={() => setMapOpen(true)}>Открыть исходную обстановку</button>}
+        {editOpen && <button type="button" disabled={busy} onClick={() => {
+          setEditOpen(false); setDirty(false); setCandidate(null); setImpact(null); setError('');
+        }}>Отменить подбор</button>}
+      </div>
+    </section>}
+    {!current && snapshotId && loadsError && canEdit && !editOpen
+      && <button type="button" disabled={locked} onClick={() => setEditOpen(true)}>Выбрать замену снимку</button>}
+    {editing && atlases === null && !loadsError && <p role="status">Загружаем доступные наборы…</p>}
+    {editing && atlases && <EnvironmentSelectionEditor client={client} atlases={atlases}
+      current={current?.snapshot ?? null} currentWeather={current?.weather ?? null}
+      initialAt={savedMap?.initialOperationalAt ?? card.startsAt} initialTimeZone={savedMap?.timeZone}
+      busy={busy} locked={locked || !canEdit} impact={impact} candidate={candidate} onEdit={onEdit}
+      onPrepare={selection => void prepare(selection)} onFix={() => void fix()} onCartography={onCartography} />}
     {notice && <p role="status">{notice}</p>}
-    {error && <p role="alert" className="kshvi-error">{error}</p>}
-    {map && snapshot && symbols && <>
-      <p>Снимок: <code title={snapshot.id}>{snapshot.id.slice(0, 12)}…</code> · автор редакции: {authorId}</p>
-      {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков не утверждён методистом. Для официального нанесения нужны утверждённые знаки.</p>}
-      <InitialMapCanvas snapshot={snapshot} map={map} />
-      <InitialMapStep map={map} onChange={setMap} audiences={initialMapAudiences(map.markers)} availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
+    {(error || loadsError) && <p role="alert" className="kshvi-error">{error || loadsError}</p>}
+    {mapOpen && current && <>
+      <InitialMapCanvas client={client} snapshot={current.snapshot} map={map ?? undefined} />
+      {map && symbols && canEdit && card.state !== 'SEALED' && <>
+        {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков ещё не утверждён методистом.</p>}
+        <InitialMapStep map={map} onChange={next => {
+          setMapEdit(next);
+          if (next.state === 'DRAFT') onMapChange(next);
+        }} audiences={initialMapAudiences(map.markers)}
+          availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
+      </>}
     </>}
   </section>;
 }

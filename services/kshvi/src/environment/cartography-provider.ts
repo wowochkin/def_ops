@@ -1,6 +1,8 @@
 import { HttpError } from '@def-ops/service-kit';
-import { validateWeatherDataset, validateWeatherScenario, type WeatherDataset, type WeatherState } from '@def-ops/core';
+import { validateWeatherDataset, validateWeatherScenario, weatherDuration, type WeatherDataset, type WeatherState } from '@def-ops/core';
 import {
+  atlasCoversBounds,
+  validateEnvironmentTime,
   weatherAtOperational as resolveWeather,
   type AtlasMeta,
   type EnvironmentProvider,
@@ -25,7 +27,27 @@ export type CartographyEnvironmentOptions = Readonly<{
 }>;
 
 const jsonHeaders = { 'content-type': 'application/json' } as const;
+const spriteSuffixes = ['.json', '.png', '@2x.json', '@2x.png'] as const;
 const glyphRanges = Array.from({ length: 256 }, (_, index) => `${index * 256}-${index * 256 + 255}`);
+
+type NamedSprite = Readonly<{ id: string; url: string }>;
+
+function namedSprites(value: unknown): readonly NamedSprite[] {
+  if (!Array.isArray(value)) return [];
+  if (value.some(item => !item || typeof item.id !== 'string' || !/^[a-z0-9_-]+$/i.test(item.id)
+    || typeof item.url !== 'string' || !item.url.trim()) || new Set(value.map(item => item.id)).size !== value.length) {
+    throw new HttpError(422, 'environment_sprite_invalid', 'Проверьте идентификаторы и адреса именованных спрайтов');
+  }
+  return value as NamedSprite[];
+}
+
+function weatherAtSelection(selection: EnvironmentSelection): EnvironmentSelection['operationalTime'] {
+  if (!selection.operationalTime) return undefined;
+  try { return validateEnvironmentTime(selection.operationalTime); }
+  catch (cause) {
+    throw new HttpError(422, 'environment_time_invalid', cause instanceof Error ? cause.message : 'Проверьте оперативный момент');
+  }
+}
 
 function fontStacks(style: unknown): string[] {
   const fonts = new Set<string>();
@@ -77,6 +99,14 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
     return this.#json<AtlasMeta[]>('/atlas');
   }
 
+  atlasStyle(id: string): Promise<object> {
+    return this.#json(`/atlas/${encodeURIComponent(id)}/style`);
+  }
+
+  listWeatherDatasets(): Promise<object[]> {
+    return this.#json('/environment/weather');
+  }
+
   async getAtlas(id: string): Promise<AtlasMeta> {
     const atlas = (await this.listAtlases()).find(value => value.id === id);
     if (!atlas) throw new HttpError(404, 'atlas_not_found', 'Набор карты не найден');
@@ -85,7 +115,7 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
 
   async coverage(id: string, bounds: readonly [number, number, number, number]): Promise<Readonly<{ covered: boolean; reason: string | null }>> {
     const atlas = await this.getAtlas(id);
-    const covered = bounds[0] >= atlas.bounds[0] && bounds[1] >= atlas.bounds[1] && bounds[2] <= atlas.bounds[2] && bounds[3] <= atlas.bounds[3];
+    const covered = atlasCoversBounds(atlas.bounds, bounds);
     return { covered, reason: covered ? null : 'Выбранная область выходит за покрытие атласа' };
   }
 
@@ -119,11 +149,13 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
         await add(`glyphs/${stack}/${range}.pbf`, url);
       }
     }
-    if (typeof source.sprite === 'string') {
-      for (const suffix of ['.json', '.png', '@2x.json', '@2x.png']) {
-        const url = new URL(source.sprite, `${this.#baseUrl}/`);
+    const sprites = typeof source.sprite === 'string' ? [{ file: 'ohm', url: source.sprite }]
+      : namedSprites(source.sprite).map(sprite => ({ file: `sprite-${sprite.id}`, url: sprite.url }));
+    for (const sprite of sprites) {
+      for (const suffix of spriteSuffixes) {
+        const url = new URL(sprite.url, `${this.#baseUrl}/`);
         url.pathname = `${url.pathname}${suffix}`;
-        await add(`sprites/ohm${suffix}` as SnapshotResource['path'], url.href);
+        await add(`sprites/${sprite.file}${suffix}`, url.href);
       }
     }
     return { contents, resources };
@@ -144,7 +176,12 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
         for (const prefix of sourcePrefixes) result = result.split(prefix).join(target);
         return result;
       }
-      if (Array.isArray(value)) return value.map(child => rewrite(child, key));
+      if (Array.isArray(value)) {
+        if (key === 'sprite') return namedSprites(value).map(({ id }) => ({
+          id, url: `/kshvi/environment/snapshots/{snapshotId}/resources/sprites/sprite-${id}`,
+        }));
+        return value.map(child => rewrite(child, key));
+      }
       if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([childKey, child]) => [childKey, rewrite(child, childKey)]));
       return value;
     };
@@ -167,6 +204,10 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
 
   async #createSnapshot(selection: EnvironmentSelection): Promise<EnvironmentSnapshot> {
     if (!selection.atlases.length) throw new HttpError(422, 'environment_atlas_required', 'Выберите хотя бы один набор карты');
+    if (new Set(selection.atlases.map(atlas => atlas.id)).size !== selection.atlases.length) {
+      throw new HttpError(422, 'environment_duplicate_atlas', 'Один набор нельзя включить дважды');
+    }
+    const operationalTime = weatherAtSelection(selection);
     const contents: PreparedContent[] = [];
     const limitations: string[] = [];
     const atlases: SnapshotAtlas[] = [];
@@ -232,6 +273,30 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
       attribution = dataset.source.title;
       license = dataset.source.license;
     }
+    if (operationalTime) {
+      const at = Date.parse(operationalTime.operationalAt);
+      const scenario = selection.weather.mode === 'scenario' ? weatherDocument as Parameters<typeof validateWeatherScenario>[0] : null;
+      const dataset = selection.weather.mode === 'archive' ? weatherDocument as WeatherDataset : null;
+      const start = scenario?.start ?? dataset?.rows[0]?.time;
+      const end = scenario ? Date.parse(scenario.start) + weatherDuration(scenario) * 3600000 : Date.parse(dataset?.rows.at(-1)?.time ?? '');
+      if (!start || at < Date.parse(start) || at > end) {
+        throw new HttpError(422, 'environment_weather_interval', 'Оперативный момент выходит за интервал погодных данных');
+      }
+      if (dataset) {
+        const before = new Set<string>();
+        const after = new Set<string>();
+        for (const row of dataset.rows) {
+          if (!atlasCoversBounds(selection.region.bounds, [row.lon, row.lat, row.lon, row.lat])) continue;
+          const key = `${row.lon},${row.lat}`;
+          const stamp = Date.parse(row.time);
+          if (stamp <= at) before.add(key);
+          if (stamp >= at) after.add(key);
+        }
+        if (![...before].some(point => after.has(point))) {
+          throw new HttpError(422, 'environment_weather_coverage', 'Внутри выбранной области нет наблюдений на оперативный момент');
+        }
+      }
+    }
     const weather = prepareContent(canonicalJson(weatherDocument), '.json');
     contents.push(weather.content);
     const draft: SnapshotDraft = {
@@ -244,6 +309,7 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
         contentRef: weather.artifact.contentRef,
         sourceId, attribution, license,
       },
+      ...(operationalTime ? { operationalTime } : {}),
       elevation: selection.elevation,
       algorithmVersions: selection.algorithmVersions,
       autonomy: limitations.length ? 'INCOMPLETE' : 'COMPLETE',
@@ -256,13 +322,16 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
     return this.#store.load(id);
   }
 
-  async weatherAtOperational(snapshot: EnvironmentSnapshot, at: WeatherQuery): Promise<OperationalWeather> {
-    if (!snapshot.weather.contentRef) return resolveWeather({ ...snapshot.weather }, at);
+  async weatherSource(snapshot: EnvironmentSnapshot): Promise<EnvironmentSnapshot['weather']> {
+    if (!snapshot.weather.contentRef) return snapshot.weather;
     const document = await this.#store.readJson<unknown>(snapshot.weather.contentRef, snapshot.id);
-    const weather = snapshot.weather.mode === 'scenario'
+    return snapshot.weather.mode === 'scenario'
       ? { ...snapshot.weather, scenario: validateWeatherScenario(document as Parameters<typeof validateWeatherScenario>[0]) }
       : { ...snapshot.weather, dataset: validateWeatherDataset(document) };
-    return resolveWeather(weather, at);
+  }
+
+  async weatherAtOperational(snapshot: EnvironmentSnapshot, at: WeatherQuery): Promise<OperationalWeather> {
+    return resolveWeather(await this.weatherSource(snapshot), at);
   }
 
   async weatherAt(snapshot: EnvironmentSnapshot, at: WeatherQuery): Promise<WeatherState | null> {

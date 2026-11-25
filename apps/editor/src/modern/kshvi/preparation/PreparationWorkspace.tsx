@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useState, type ReactNode } from 'react';
+import { useCallback, useId, useLayoutEffect, useState, type ReactNode } from 'react';
 import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import { EnvironmentMapPreparation } from './EnvironmentMapPreparation';
 import { isExerciseAccessLost, KshviHttpError, type ExerciseCard, type KshviClient } from '../kshvi-api';
@@ -11,7 +11,6 @@ import './preparation.css';
 type ExercisePreparationProps = {
   card: ExerciseCard;
   client: KshviClient;
-  userId: string;
   role: string;
   initialStep: PreparationStep;
   canRevise: boolean;
@@ -22,22 +21,30 @@ type ExercisePreparationProps = {
   onPendingChange?(pending: boolean): void;
   navigationPrompt?(saving: boolean): ReactNode;
   onStart(): void;
+  onCartography?(): void;
 };
 
-export function ExercisePreparation({ card, client, userId, role, initialStep, canRevise, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart }: ExercisePreparationProps) {
+export function ExercisePreparation({ card, client, role, initialStep, canRevise, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
   const preparation = usePreparationDraft(client, card);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [conflict, setConflict] = useState<{ reason: string; refreshed: boolean } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [environmentStatus, setEnvironmentStatus] = useState({ dirty: false, busy: false });
+  const [environmentReset, setEnvironmentReset] = useState(0);
+  const markEnvironment = useCallback((dirty: boolean, busy: boolean) => {
+    setEnvironmentStatus(previous => previous.dirty === dirty && previous.busy === busy ? previous : { dirty, busy });
+  }, []);
   const canEdit = canRevise && ['DRAFT', 'IN_REVIEW', 'APPROVED'].includes(card.state) && preparation.draft !== null;
   const dirty = preparation.draft !== preparation.confirmed.draft || preparation.revision !== preparation.confirmed.revision;
 
-  const pending = dirty || saving || conflict !== null;
+  const environmentEditable = canRevise && (canEdit || card.state === 'SEALED');
+  const applying = saving || environmentStatus.busy;
+  const pending = dirty || applying || environmentStatus.dirty || conflict !== null;
   useLayoutEffect(() => {
     onPendingChange?.(pending);
-    return () => onPendingChange?.(false);
   }, [onPendingChange, pending]);
+  useLayoutEffect(() => () => onPendingChange?.(false), [onPendingChange]);
 
   async function refreshConflict(reason: string) {
     setError('');
@@ -56,11 +63,12 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
   }
 
   async function save() {
-    if (!canEdit || saving || !dirty || conflict) return;
+    if (!canEdit || applying || !dirty || conflict || environmentStatus.dirty) return;
     setError('');
     setSaving(true);
     try {
-      onCard(await preparation.save());
+      const savedCard = await preparation.save();
+      if (acceptsCardResponse?.() !== false) onCard(savedCard);
     } catch (cause) {
       if (cause instanceof KshviHttpError && cause.status === 409) {
         setConflict({ reason: cause.message, refreshed: false });
@@ -77,26 +85,33 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
 
   const payload = card.revisions.find(item => item.revision === card.revision)?.payload;
   const legacySnapshotId = card.payloadAccess === 'FULL' && payload && typeof payload === 'object'
-    && !Array.isArray(payload) && typeof payload.environmentSnapshotId === 'string' ? payload.environmentSnapshotId : null;
+    && !Array.isArray(payload) && !Object.hasOwn(payload, 'preparation') && typeof payload.environmentSnapshotId === 'string'
+    ? payload.environmentSnapshotId : null;
   return <PreparationWorkspace
     card={card}
     draft={preparation.draft}
     confirmedDraft={preparation.confirmed.draft}
     role={role}
     initialStep={initialStep}
-    saving={saving}
-    dirty={dirty}
-    onSave={canEdit && !conflict ? () => void save() : undefined}
+    saving={applying}
+    dirty={dirty || environmentStatus.dirty}
+    onSave={canEdit && !conflict && !environmentStatus.dirty ? () => void save() : undefined}
     onStartOfficial={canStart ? onStart : undefined}
     launchLocked={pending}
-    environment={canEdit && !preparation.draft?.environmentSnapshotId && !conflict && !saving && !dirty ? <>
-      <EnvironmentMapPreparation client={client} exerciseId={card.id} revision={card.revision} authorId={userId} truthRole={role} onRevision={onCard} onAccessLost={onAccessLost} acceptsCardResponse={acceptsCardResponse} />
-      {legacySnapshotId && <button type="button" onClick={() => {
-        preparation.setDraft(draft => draft.environmentSnapshotId ? draft : { ...draft, environmentSnapshotId: legacySnapshotId });
-      }}>Добавить сохранённый снимок в черновик</button>}
+    environment={preparation.draft && (!dirty || !legacySnapshotId) ? <>
+      <EnvironmentMapPreparation key={environmentReset} client={client} card={card} draft={preparation.draft}
+        revision={preparation.revision} legacySnapshotId={legacySnapshotId} truthRole={role} canEdit={environmentEditable}
+        locked={!!conflict || saving || dirty} savePreparation={preparation.save} onRevision={onCard} onAccessLost={onAccessLost}
+        onConflict={reason => { setConflict({ reason, refreshed: false }); void refreshConflict(reason); }}
+        onPendingChange={markEnvironment} acceptsCardResponse={acceptsCardResponse} onCartography={onCartography}
+        onMapChange={map => preparation.setDraft(draft => ({ ...draft, initialMap: map, initialMapStatus: 'DRAFT' }))} />
+      {canEdit && legacySnapshotId && !preparation.draft.environmentSnapshotId && !conflict && !applying && !environmentStatus.dirty
+        && <button type="button" onClick={() => {
+          preparation.setDraft(draft => draft.environmentSnapshotId ? draft : { ...draft, environmentSnapshotId: legacySnapshotId });
+        }}>Добавить сохранённый снимок в черновик</button>}
     </> : undefined}
     feedback={<>
-      {navigationPrompt?.(saving)}
+      {navigationPrompt?.(applying)}
       {error && <p role="alert" className="kshvi-error">{error}</p>}
       {conflict && preparation.draft && <section className="preparation-conflict" aria-label="Конфликт редакций">
         <p role="alert">{conflict.reason}</p>
@@ -104,13 +119,14 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
         {!conflict.refreshed && <button type="button" disabled={refreshing}
           onClick={() => void refreshConflict(conflict.reason)}>{refreshing ? 'Обновляем карточку…' : 'Обновить серверную редакцию'}</button>}
         {conflict.refreshed && preparation.confirmed.draft && <>
-          <details><summary>Сравнить черновик с редакцией {preparation.confirmed.revision}</summary>
+          {dirty && <details><summary>Сравнить черновик с редакцией {preparation.confirmed.revision}</summary>
             <div><h3>Ваш черновик</h3><pre>{JSON.stringify(preparation.draft, null, 2)}</pre></div>
             <div><h3>Серверная редакция</h3><pre>{JSON.stringify(preparation.confirmed.draft, null, 2)}</pre></div>
-          </details>
+          </details>}
           <button type="button" onClick={() => {
             if (preparation.confirmed.draft) preparation.resolveConflict(preparation.confirmed.draft);
             setConflict(null);
+            setEnvironmentReset(value => value + 1);
           }}>Принять серверную редакцию</button>
         </>}
       </section>}
@@ -161,13 +177,14 @@ export function PreparationWorkspace({
       <div className="preparation-step-heading"><h2>{current.label}</h2><p>{current.description}</p></div>
       {feedback}
       {!draft && card && <p className="preparation-empty">Полный черновик подготовки недоступен для этой роли.</p>}
-      {step === 'environment' && (environment ?? (draft && <section className="preparation-empty">
+      {environment && <div hidden={step !== 'environment'}>{environment}</div>}
+      {step === 'environment' && !environment && draft && <section className="preparation-empty">
         {draft.environmentSnapshotId ? <>
           {dirty
             ? <p>{onSave ? 'Снимок выбран. Сохраните черновик, чтобы связать его с редакцией.' : 'Выбранный снимок остаётся в локальной правке.'}</p>
             : <p>Снимок среды связан с черновиком. Проверьте состояние исходной карты перед запуском.</p>}
         </> : <p>Снимок среды отсутствует. Изменение среды доступно автору редактируемой редакции.</p>}
-      </section>))}
+      </section>}
       {step === 'forces' && draft && <section className="preparation-empty">
         <p>{draft.forces.length || draft.equipment.length || draft.formation || draft.logistics
           ? 'В редакции есть данные о силах и МТО. Редактирование этого шага пока недоступно.'

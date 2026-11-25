@@ -251,3 +251,55 @@ it.skipIf(!databaseUrl)('восстанавливает PostgreSQL-чернов�
     await pool.end();
   }
 });
+
+it('меняет среду отдельной командой и сохраняет подлинник запечатанной редакции', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-replace-environment-'));
+  try {
+    const environment = new EnvironmentSnapshotStore(directory);
+    const createSnapshot = (name: string, bounds: [number, number, number, number]) => environment.create({
+      schemaVersion: 1, region: { name, bounds }, atlases: [], resources: [],
+      weather: { mode: 'scenario', contentRef: null, sourceId: 'weather', attribution: 'Источник', license: 'Учебная' },
+      elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 },
+      autonomy: 'INCOMPLETE', limitations: [],
+    }, []);
+    const oldSnapshot = await createSnapshot('Исходная область', [0, 0, 1, 1]);
+    const newSnapshot = await createSnapshot('Новая область', [2, 2, 3, 3]);
+    const evidence = serverExerciseEvidence(value => {
+      const { sha256: _sha, ...map } = value.initialMap!;
+      const marker = { ...map.markers[0]!, kind: 'TASK' as const, layerId: 'EVENTS' as const, links: { taskId: 'task' } };
+      Object.assign(value, { initialMap: approveInitialMap({ ...map, state: 'DRAFT',
+        environment: { snapshotId: oldSnapshot.id, manifestSha256: oldSnapshot.manifestSha256, bounds: oldSnapshot.region.bounds },
+        markers: [marker] }) });
+    });
+    const store = new InMemoryExerciseStore({ environment, evidence });
+    const director = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal', 'exercise:revise'] };
+    const created = await store.create(director, { ...input, payload: linkedExercisePayload({ environmentSnapshotId: oldSnapshot.id }) });
+    const sealed = await sealApprovedExercise(store, director, created);
+    const change = { expectedRevision: sealed.revision, snapshotId: newSnapshot.id };
+    await expect(store.replaceEnvironment(director, sealed.id, change, 'PROJECTED')).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(store.environmentImpact(director, sealed.id, { expectedRevision: sealed.revision, bounds: newSnapshot.region.bounds }, 'FULL'))
+      .resolves.toMatchObject({
+        objects: expect.arrayContaining([{ id: 'force', kind: 'Объект исходной карты', outside: true }]),
+        confirmations: expect.arrayContaining([{ id: 'confirmation-ENVIRONMENT_MAP', area: 'ENVIRONMENT_MAP' }]),
+      });
+    const revised = await store.replaceEnvironment(director, sealed.id, change, 'FULL');
+    expect(revised).toMatchObject({ id: sealed.id, revision: sealed.revision + 1, state: 'DRAFT' });
+    expect(revised.revisions[0]).toEqual(sealed.revisions[0]);
+    expect(revised.revisions.at(-1)?.payload).toMatchObject({
+      preparation: { environmentSnapshotId: newSnapshot.id, initialMapStatus: 'DRAFT',
+        initialMap: { bounds: [2, 2, 3, 3], markers: [{ id: 'force', geometry: { type: 'Point', coordinates: [0.2, 0.2] } }] } },
+    });
+    expect(await environment.load(oldSnapshot.id)).toEqual(oldSnapshot);
+    const legacy = new InMemoryExerciseStore({ environment, evidence: serverExerciseEvidence() });
+    const legacyCard = await legacy.create(director, { ...input, payload: linkedExercisePayload({ environmentSnapshotId: oldSnapshot.id }) });
+    const legacySealed = await sealApprovedExercise(legacy, director, legacyCard);
+    await expect(legacy.environmentImpact(director, legacyCard.id, { expectedRevision: legacySealed.revision, bounds: newSnapshot.region.bounds }, 'FULL'))
+      .resolves.toMatchObject({ missingForceIds: ['force-1'] });
+    await expect(legacy.replaceEnvironment(director, legacyCard.id, { expectedRevision: legacySealed.revision, snapshotId: newSnapshot.id }, 'FULL'))
+      .rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringContaining('force-1') });
+    expect(await legacy.get(director.organizationId, legacyCard.id)).toEqual(legacySealed);
+    await expect(store.replaceEnvironment(director, sealed.id, change, 'FULL')).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

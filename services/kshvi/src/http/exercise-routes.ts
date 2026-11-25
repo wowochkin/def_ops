@@ -1,3 +1,4 @@
+import type { EnvironmentImpactInput, ReplaceEnvironmentInput } from '../store/environment-revision';
 import { HttpError, Router, reply, type Ctx, type Handler } from '@def-ops/service-kit';
 import { authorize, type ParticipantContext } from '../auth/authorize';
 import { assertCsrf, type SessionManager } from '../auth/sessions';
@@ -151,6 +152,20 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new ExerciseStoreError('VALIDATION', 'Проверьте данные подготовки');
     closedBody(body, ['expectedRevision', 'draft']);
     return reply(201, projectExerciseCard(await store.savePreparation(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant)), actor.participant));
+  }));
+
+  router.post(`${base}/:id/environment-impact`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise', true);
+    const body = await ctx.json<EnvironmentImpactInput>();
+    closedBody(body, ['expectedRevision', 'bounds']);
+    return store.environmentImpact(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant));
+  }));
+
+  router.post(`${base}/:id/environment-revisions`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise', true);
+    const body = await ctx.json<ReplaceEnvironmentInput>();
+    closedBody(body, ['expectedRevision', 'snapshotId']);
+    return reply(201, projectExerciseCard(await store.replaceEnvironment(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant)), actor.participant));
   }));
 
   router.post(`${base}/:id/transitions`, handle(async ctx => {

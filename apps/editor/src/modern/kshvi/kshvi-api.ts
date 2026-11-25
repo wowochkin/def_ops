@@ -1,6 +1,10 @@
+import type { StyleSpecification } from 'maplibre-gl';
+import type { WeatherDataset } from '../../../../../packages/core/src/weather';
+import type { EnvironmentImpact, EnvironmentImpactInput, ReplaceEnvironmentInput } from '../../../../../services/kshvi/src/store/environment-revision';
 import type { ExpositionSession } from '../../../../../packages/kshvi/src/exposition/exposition-session';
-import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot } from '../../../../../packages/kshvi/src/environment/provider';
+import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot, EnvironmentWeather } from '../../../../../packages/kshvi/src/environment/provider';
 import type { InitialSituationMap } from '../../../../../packages/kshvi/src/scenario/initial-map';
+import type { SealedScenario } from '../../../../../packages/kshvi/src/scenario/sealing';
 import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import type { SymbolSet } from '../../../../../packages/tactical-symbols/src/model';
 import type { AudienceProjectionView } from './exposition/AudienceProjector';
@@ -38,6 +42,7 @@ export type ExerciseRevision = Readonly<{
   payload: JsonValue;
   sha256: string;
   state: Exclude<ExerciseState, 'ARCHIVED'>;
+  sealedArtifact?: SealedScenario;
   createdBy: string;
   createdAt: string;
   supersedesId: string | null;
@@ -119,6 +124,10 @@ export type ArchiveRecord = Readonly<{ archiveId: string; manifestSha256: string
 export type ExpositionRecord = Readonly<{ purpose: 'EXPOSITION'; session: ExpositionSession; projection: AudienceProjectionView }>;
 export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>>;
 
+export type WeatherDatasetMeta = Readonly<Pick<WeatherDataset, 'id' | 'name' | 'source' | 'region'> & {
+  start: string; end: string; points: readonly string[];
+}>;
+
 export interface KshviClient {
   hasCsrfToken?():boolean;
   loginLocal?():Promise<LoginResult>;
@@ -134,6 +143,14 @@ export interface KshviClient {
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
   savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard>;
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]>;
+  getEnvironmentAtlasStyle(atlasId: string): Promise<StyleSpecification>;
+  getEnvironmentSnapshot(snapshotId: string): Promise<EnvironmentSnapshot>;
+  getEnvironmentSnapshotStyle(snapshotId: string, atlasId: string): Promise<StyleSpecification>;
+  getEnvironmentSnapshotWeather(snapshotId: string): Promise<EnvironmentWeather>;
+  listEnvironmentWeather(): Promise<WeatherDatasetMeta[]>;
+  getEnvironmentWeather(datasetId: string): Promise<WeatherDataset>;
+  environmentImpact(exerciseId: string, input: EnvironmentImpactInput): Promise<EnvironmentImpact>;
+  replaceEnvironment(exerciseId: string, input: ReplaceEnvironmentInput): Promise<ExerciseCard>;
   createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot>;
   symbolCatalog(): Promise<{ set: SymbolSet }>;
   approveInitialMap(exerciseId: string, input: { expectedRevision: number; map: InitialSituationMap }): Promise<{ sha256: string }>;
@@ -254,6 +271,28 @@ export class ExerciseClient implements KshviClient {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/preparation`, input);
   }
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]> { return this.request('GET', '/environment/atlases'); }
+  getEnvironmentAtlasStyle(atlasId: string): Promise<StyleSpecification> {
+    return this.request('GET', `/environment/atlases/${encodeURIComponent(atlasId)}/style`);
+  }
+  getEnvironmentSnapshot(snapshotId: string): Promise<EnvironmentSnapshot> {
+    return this.request('GET', `/environment/snapshots/${encodeURIComponent(snapshotId)}`);
+  }
+  getEnvironmentSnapshotStyle(snapshotId: string, atlasId: string): Promise<StyleSpecification> {
+    return this.request('GET', `/environment/snapshots/${encodeURIComponent(snapshotId)}/atlas/${encodeURIComponent(atlasId)}/style`);
+  }
+  getEnvironmentSnapshotWeather(snapshotId: string): Promise<EnvironmentWeather> {
+    return this.request('GET', `/environment/snapshots/${encodeURIComponent(snapshotId)}/weather-source`);
+  }
+  listEnvironmentWeather(): Promise<WeatherDatasetMeta[]> { return this.request('GET', '/environment/weather'); }
+  getEnvironmentWeather(datasetId: string): Promise<WeatherDataset> {
+    return this.request('GET', `/environment/weather/${encodeURIComponent(datasetId)}`);
+  }
+  environmentImpact(exerciseId: string, input: EnvironmentImpactInput): Promise<EnvironmentImpact> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/environment-impact`, input);
+  }
+  replaceEnvironment(exerciseId: string, input: ReplaceEnvironmentInput): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/environment-revisions`, input);
+  }
   createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot> {
     return this.request('POST', '/environment/snapshots', input);
   }

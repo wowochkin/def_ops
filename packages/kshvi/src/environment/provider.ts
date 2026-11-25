@@ -13,6 +13,24 @@ import {
 
 export type Bounds = readonly [number, number, number, number];
 
+export type EnvironmentTime = Readonly<{ operationalAt: string; timeZone: string }>;
+
+export function atlasCoversBounds(atlas: Bounds, region: Bounds): boolean {
+  return region[0] >= atlas[0] && region[1] >= atlas[1] && region[2] <= atlas[2] && region[3] <= atlas[3];
+}
+
+export function validateEnvironmentTime(value: EnvironmentTime): EnvironmentTime {
+  if (typeof value.operationalAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value.operationalAt)) {
+    throw new Error('Задайте оперативный момент с часовым поясом.');
+  }
+  weatherTime(value.operationalAt.replace(/(?:Z|[+-]\d{2}:\d{2})$/, 'Z'));
+  const operationalAt = new Date(value.operationalAt).toISOString();
+  if (typeof value.timeZone !== 'string' || !value.timeZone.trim()) throw new Error('Укажите часовой пояс отображения.');
+  try { new Intl.DateTimeFormat('ru-RU', { timeZone: value.timeZone }); }
+  catch { throw new Error('Неизвестный часовой пояс отображения.'); }
+  return { operationalAt, timeZone: value.timeZone };
+}
+
 export type AtlasMeta = Readonly<{
   id: string;
   name: string;
@@ -49,6 +67,7 @@ export type EnvironmentSelection = Readonly<{
     | { mode: 'scenario'; scenario: WeatherScenario }
     | { mode: 'archive'; datasetId: string }
   >;
+  operationalTime?: EnvironmentTime;
   elevation: Readonly<{ adjustmentM: number; algorithmVersion: number }>;
   algorithmVersions: Readonly<{ snapshot: number; weather: number }>;
 }>;
@@ -83,6 +102,7 @@ export type EnvironmentSnapshot = Readonly<{
   atlases: readonly SnapshotAtlas[];
   resources: readonly SnapshotResource[];
   weather: EnvironmentWeather;
+  operationalTime?: EnvironmentTime;
   elevation: EnvironmentSelection['elevation'];
   algorithmVersions: EnvironmentSelection['algorithmVersions'];
   autonomy: 'COMPLETE' | 'INCOMPLETE';

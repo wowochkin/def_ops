@@ -15,6 +15,10 @@ function coordinate(query: URLSearchParams, key: 'lon' | 'lat'): number {
 export function addEnvironmentRoutes(router: Router, provider: CartographyEnvironmentProvider, prefix = '/kshvi'): Router {
   const base = `${prefix}/environment`;
   router.get(`${base}/atlases`, () => provider.listAtlases());
+  router.get(`${base}/atlases/:id/style`, ctx => provider.atlasStyle(ctx.params.id));
+  router.get(`${base}/weather`, () => provider.listWeatherDatasets());
+  router.get(`${base}/weather/:id`, ctx => provider.weatherDataset(ctx.params.id));
+  router.get(`${base}/snapshots/:id/weather-source`, async ctx => provider.weatherSource(await provider.loadSnapshot(ctx.params.id)));
   router.post(`${base}/snapshots`, async ctx => provider.snapshot(await ctx.json<EnvironmentSelection>()));
   router.get(`${base}/snapshots/:id`, async ctx => {
     const snapshot = await provider.loadSnapshot(ctx.params.id);

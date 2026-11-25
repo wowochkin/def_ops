@@ -115,10 +115,12 @@ function LocalEditor() {
   </section>;
 }
 
-export function KshviView({ client: providedClient, authorities: providedAuthorities, role: providedRole }: {
+export function KshviView({ client: providedClient, authorities: providedAuthorities, role: providedRole, onOpenCartography, registerNavigationGuard }: {
   client?: KshviClient;
   authorities?: readonly string[];
   role?: string;
+  onOpenCartography?(): void;
+  registerNavigationGuard?(guard: ((action: () => void) => void) | null): void;
 }) {
   const fallbackClient = useMemo(() => new ExerciseClient(), []);
   const client = providedClient ?? fallbackClient;
@@ -133,11 +135,22 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const can = useCallback((authority: string) => authorities.includes(authority), [authorities]);
   const canAdmin = can('kshvi:admin');
   const [requestedTab, setRequestedTab] = useState<KshviSection | null>(null);
+  const [requestedExternal, setRequestedExternal] = useState<(() => void) | null>(null);
   const pendingPreparation = useRef(false);
   const markPendingPreparation = useCallback((pending: boolean) => {
     pendingPreparation.current = pending;
-    if (!pending) setRequestedTab(null);
+    if (!pending) {
+      setRequestedTab(null);
+      setRequestedExternal(null);
+    }
   }, []);
+  useLayoutEffect(() => {
+    registerNavigationGuard?.(action => {
+      if (pendingPreparation.current) setRequestedExternal(() => action);
+      else action();
+    });
+    return () => registerNavigationGuard?.(null);
+  }, [registerNavigationGuard]);
   const [activeTab, setActiveTab] = useState<KshviSection>(() => savedSection(providedAuthorities?.includes('kshvi:admin') ?? false));
   const [filters, setFilters] = useState<ExerciseFilters>({});
   const [items, setItems] = useState<readonly LibraryExercise[]>([]);
@@ -603,7 +616,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
     {activeTab === 'preparation' && (selectedExercise ? <ExercisePreparation
       key={`${selectedExercise.id}-${selectedExercise.payloadAccess}-${preparationStep}`}
-      card={selectedExercise} client={client} role={role} userId={serverUserId} initialStep={preparationStep}
+      card={selectedExercise} client={client} role={role} initialStep={preparationStep}
       canRevise={can('exercise:revise')}
       canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
       onCard={receiveCard}
@@ -614,11 +627,15 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
         setError('Доступ к выбранному учению изменился. Откройте его снова из библиотеки.');
       }}
       onPendingChange={markPendingPreparation}
-      navigationPrompt={saving => requestedTab && <section className="preparation-navigation-prompt" aria-label="Выход из подготовки">
+      onCartography={onOpenCartography}
+      navigationPrompt={saving => (requestedTab || requestedExternal) && <section className="preparation-navigation-prompt" aria-label="Выход из подготовки">
         <p>{saving ? 'Дождитесь ответа сервера о сохранении правки.' : 'Сервер ещё не сохранил правку. При выходе она будет удалена из этого окна.'}</p>
         <div>
-          <button type="button" autoFocus onClick={() => setRequestedTab(null)}>Остаться в подготовке</button>
-          <button type="button" disabled={saving} onClick={() => selectTab(requestedTab)}>Выйти без сохранения</button>
+          <button type="button" autoFocus onClick={() => { setRequestedTab(null); setRequestedExternal(null); }}>Остаться в подготовке</button>
+          <button type="button" disabled={saving} onClick={() => {
+            if (requestedExternal) { setRequestedExternal(null); requestedExternal(); }
+            else if (requestedTab) selectTab(requestedTab);
+          }}>Выйти без сохранения</button>
         </div>
       </section>}
       onStart={() => void startOfficialSession()}
