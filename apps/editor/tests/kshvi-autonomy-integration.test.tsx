@@ -19,7 +19,7 @@ const card: ExerciseCard = {
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(cleanup);
 
-it('показывает отсутствие серверного профиля в подготовке и сохраняет перехват в проведении', async () => {
+it('показывает отсутствие серверного профиля в подготовке и предлагает открыть библиотеку при отсутствии сеанса', async () => {
   const client = new ExerciseClient({ fetch: async input => {
     const url = String(input);
     if (url.endsWith('/exercises')) return Response.json({ items: [card] });
@@ -34,7 +34,8 @@ it('показывает отсутствие серверного профил�
   expect(screen.queryByLabelText('Интенсивность разведки')).toBeNull();
 
   fireEvent.click(screen.getByRole('button', { name: 'Проведение' }));
-  expect(screen.getByText('DELEGATED')).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'Перехватить управление' }));
-  expect(screen.getByText('Мир не откатывается; дальнейшие действия подписывает человек')).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Активный сеанс не выбран' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Перехватить управление' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть библиотеку' }));
+  expect(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' })).toBeTruthy();
 });

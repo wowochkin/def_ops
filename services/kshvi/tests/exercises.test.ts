@@ -380,6 +380,15 @@ describe('HTTP API библиотеки', () => {
       method: 'POST', body: JSON.stringify(sealBody),
     });
     expect(archivedSeal.response.status).toBe(409);
+    const hideEntry = { method: 'DELETE', body: JSON.stringify({ expectedRevision: 2, title: archived.body.title, reason: 'Повторная карточка' }) };
+    const route = `/${created.body.id}/archive-entry`;
+    expect((await call(route, hideEntry, outsider)).response.status).toBe(403);
+    expect((await call(route, { ...hideEntry, headers: { 'x-csrf-token': 'invalid' } })).response.status).toBe(403);
+    const hidden = await call(route, hideEntry);
+    expect(hidden.response.status).toBe(200);
+    expect(hidden.body).not.toHaveProperty('archiveHiddenReason');
+    expect((await call('?state=ARCHIVED')).body.items).toEqual([]);
+    expect((await call(`/${created.body.id}`)).body.revisions).toHaveLength(2);
   });
 });
 

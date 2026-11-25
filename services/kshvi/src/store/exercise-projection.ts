@@ -43,11 +43,12 @@ export function projectExercisePayload(payload: JsonValue, sideId: string | null
 export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContext): ExerciseCard & Readonly<{ payloadAccess: ExercisePayloadAccess }> {
   const fullPayload = exercisePayloadAccess(actor) === 'FULL';
   const readTruth = hasTruthAccess(actor);
-  const { revisions, ...summary } = card;
+  const { revisions, archiveHiddenAt, archiveHiddenBy, archiveHiddenReason, ...summary } = card;
   const current = revisions.find(revision => revision.revision === card.revision);
   const payloadAccess = fullPayload && (readTruth || !current?.truthOnlyPayload) ? 'FULL' : 'PROJECTED';
   return {
     ...structuredClone(summary), payloadAccess,
+    ...(archiveHiddenAt && actor.authorities.includes('kshvi:admin') ? { archiveHiddenAt, archiveHiddenBy, archiveHiddenReason } : {}),
     revisions: revisions.map((revision): ExerciseRevision => {
       const { sealedArtifact, truthOnlyPayload, payload, ...metadata } = revision;
       if (truthOnlyPayload && !readTruth) return { ...metadata, payload: {} };

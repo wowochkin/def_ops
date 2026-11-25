@@ -69,7 +69,11 @@ export type ExerciseSession = Readonly<{
   createdAt: string;
 }>;
 
+export type ArchiveHideInput = Readonly<{ expectedRevision: number; title: string; reason: string }>;
 export type ExerciseCard = ExerciseSummary & Readonly<{
+  archiveHiddenAt?: string;
+  archiveHiddenBy?: string;
+  archiveHiddenReason?: string;
   revisions: readonly ExerciseRevision[];
   sessions: readonly ExerciseSession[];
 }>;
@@ -155,6 +159,7 @@ export interface ExerciseStore {
   list(organizationId: string, filters: ExerciseFilters): Promise<readonly ExerciseSummary[]>;
   get(organizationId: string, exerciseId: string): Promise<ExerciseCard | null>;
   copy(actor: ExerciseActor, exerciseId: string, title?: string): Promise<ExerciseCard>;
+  hideArchiveEntry(actor: ExerciseActor, exerciseId: string, input: ArchiveHideInput): Promise<ExerciseCard>;
   archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput, access?: ExercisePayloadAccess): Promise<ExerciseCard>;
   savePreparation(actor: ExerciseActor, exerciseId: string, input: SavePreparationInput, access?: ExercisePayloadAccess): Promise<ExerciseCard>;
@@ -191,6 +196,10 @@ export const KSHVI_EXERCISE_MIGRATIONS: Migration[] = [{
   id: 8,
   name: 'exercise-truth-payload',
   sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/008-exercise-truth-payload.sql', import.meta.url), 'utf8')),
+}, {
+  id: 10,
+  name: 'archive-visibility',
+  sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/010-archive-visibility.sql', import.meta.url), 'utf8')),
 }];
 
 const purposes = new Set<ExercisePurpose>(['planned', 'special', 'inspection', 'research', 'exposition', 'custom']);
@@ -501,25 +510,40 @@ function validateTransition(input: TransitionSessionInput): void {
   if (typeof input.idempotencyKey !== 'string' || !input.idempotencyKey.trim()) fail('VALIDATION', 'Укажите идемпотентный ключ команды');
   if (!['PAUSE', 'RESUME', 'PRIVATE_STOP', 'GENERAL_STOP', 'JUMP', 'COMPLETE', 'ABORT'].includes(input.command)) fail('VALIDATION', 'Неизвестная команда сеанса');
 }
-function copyUuids(value: JsonValue, ids: Map<string, string>): JsonValue {
-  if (typeof value === 'string' && uuidPattern.test(value)) {
-    const replacement = ids.get(value) ?? randomUUID();
-    ids.set(value, replacement);
-    return replacement;
+// Ссылки на общие справочники и назначения действуют и в новой карточке.
+const sharedCopyFields = new Set([
+  'source', 'sourceId', 'sourceRecordId', 'snapshotId', 'environmentSnapshotId', 'symbol', 'symbolSet',
+  'equipmentType', 'typeSnapshot', 'authorId', 'userId', 'ownerId', 'instanceId', 'instanceIds', 'roleAssignmentId',
+  'sideId', 'sideIds', 'atlasId', 'atlasIds',
+]);
+
+function collectCopyIds(value: JsonValue, ids: Map<string, string>, key = ''): void {
+  if (sharedCopyFields.has(key)) return;
+  if (typeof value === 'string' && ['id', 'scenarioId', 'nodeId', 'unitId'].includes(key) && uuidPattern.test(value)) {
+    if (!ids.has(value)) ids.set(value, randomUUID());
+  } else if (Array.isArray(value)) {
+    for (const child of value) collectCopyIds(child, ids, key);
+  } else if (value && typeof value === 'object') {
+    for (const [field, child] of Object.entries(value)) collectCopyIds(child, ids, field);
   }
-  if (Array.isArray(value)) return value.map(item => copyUuids(item, ids));
+}
+
+function copyUuids(value: JsonValue, ids: Map<string, string>, key = ''): JsonValue {
+  if (sharedCopyFields.has(key)) return clone(value);
+  if (typeof value === 'string') return ids.get(value) ?? value;
+  if (Array.isArray(value)) return value.map(item => copyUuids(item, ids, key));
   if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, copyUuids(item, ids)]));
+    return Object.fromEntries(Object.entries(value).map(([field, item]) => [field, copyUuids(item, ids, field)]));
   }
   return value;
 }
 function summaryOf(card: ExerciseCard): ExerciseSummary {
-  const { revisions: _revisions, sessions: _sessions, ...summary } = card;
+  const { revisions: _revisions, sessions: _sessions, archiveHiddenAt: _at, archiveHiddenBy: _by, archiveHiddenReason: _reason, ...summary } = card;
   return clone(summary);
 }
 function matches(card: ExerciseCard, filters: ExerciseFilters): boolean {
   const query = filters.query?.trim().toLocaleLowerCase('ru');
-  return (!query || card.title.toLocaleLowerCase('ru').includes(query) || card.ownerId.toLocaleLowerCase('ru').includes(query))
+  return !card.archiveHiddenAt && (!query || card.title.toLocaleLowerCase('ru').includes(query) || card.ownerId.toLocaleLowerCase('ru').includes(query))
     && (!filters.state || card.state === filters.state)
     && (!filters.scale || card.scale === filters.scale)
     && (!filters.purpose || card.purpose === filters.purpose)
@@ -529,6 +553,16 @@ function matches(card: ExerciseCard, filters: ExerciseFilters): boolean {
 type MutableExercise = {
   -readonly [K in keyof ExerciseCard]: ExerciseCard[K] extends readonly unknown[] ? ExerciseCard[K] : ExerciseCard[K];
 };
+
+function archiveHideReason(card: ExerciseCard, input: ArchiveHideInput): string {
+  validateRevisionInput(input);
+  if (card.state !== 'ARCHIVED' || input.expectedRevision !== card.revision || input.title !== card.title)
+    fail('REVISION_CONFLICT', 'Обновите архив и введите точное название карточки');
+  if (typeof input.reason !== 'string' || !input.reason.trim()) fail('VALIDATION', 'Укажите основание удаления из архива');
+  const reason = input.reason.trim();
+  if (card.archiveHiddenAt && card.archiveHiddenReason !== reason) fail('REVISION_CONFLICT', 'Запись уже скрыта с другим основанием');
+  return reason;
+}
 
 function publicCard(record: ExerciseCard): ExerciseCard {
   return clone({
@@ -545,9 +579,15 @@ function copiedCard(source: ExerciseCard, actor: ExerciseActor, now: string, tit
   const ids = new Map<string, string>([[source.id, exerciseId]]);
   const revisionIds = new Map(source.revisions.map(revision => [revision.id, randomUUID()] as const));
   for (const [oldId, newId] of revisionIds) ids.set(oldId, newId);
+  for (const revision of source.revisions) collectCopyIds(revision.payload, ids);
   const revisions = source.revisions.map(revision => {
     const id = revisionIds.get(revision.id)!;
-    const payload = copyUuids(clone(revision.payload), ids);
+    let payload = copyUuids(revision.payload, ids);
+    const preparation = preparationOf(payload);
+    if (preparation && typeof preparation === 'object' && !Array.isArray(preparation) && preparation.initialMapStatus === 'APPROVED') {
+      const { sha256: _sha, ...map } = preparation.initialMap as Record<string, JsonValue>;
+      payload = mergePreparation(payload, { ...preparation, initialMapStatus: 'DRAFT', initialMap: { ...map, state: 'DRAFT' } });
+    }
     const { sealedArtifact: _sealedArtifact, ...revisionWithoutSeal } = clone(revision);
     return {
       ...revisionWithoutSeal,
@@ -650,6 +690,17 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const copy = copiedCard(source, actor, this.now().toISOString(), title);
     this.records.set(this.key(actor.organizationId, copy.id), copy);
     return publicCard(copy);
+  }
+
+  async hideArchiveEntry(actor: ExerciseActor, exerciseId: string, input: ArchiveHideInput): Promise<ExerciseCard> {
+    const card = this.required(actor.organizationId, exerciseId) as MutableExercise;
+    const reason = archiveHideReason(card, input);
+    if (!card.archiveHiddenAt) {
+      card.archiveHiddenAt = this.now().toISOString();
+      card.archiveHiddenBy = actor.userId;
+      card.archiveHiddenReason = reason;
+    }
+    return publicCard(card);
   }
 
   async archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
@@ -860,7 +911,7 @@ async function lockExercise(db: Queryable, schema: string, organizationId: strin
 }
 async function readCard(db: Queryable, schema: string, organizationId: string, exerciseId: string): Promise<ExerciseCard | null> {
   const exercise = await db.query(
-    `select ${exerciseColumns}, last_session_id, last_session_state
+    `select ${exerciseColumns}, archive_hidden_at, archive_hidden_by, archive_hidden_reason, last_session_id, last_session_state
      from ${schema}.exercises e ${joinLastSession(schema)} where organization_id=$1 and id=$2`,
     [organizationId, exerciseId],
   );
@@ -871,6 +922,8 @@ async function readCard(db: Queryable, schema: string, organizationId: string, e
   ]);
   return {
     ...mapSummary(exercise.rows[0]),
+    ...(exercise.rows[0].archive_hidden_at ? { archiveHiddenAt: instant(exercise.rows[0].archive_hidden_at),
+      archiveHiddenBy: exercise.rows[0].archive_hidden_by, archiveHiddenReason: exercise.rows[0].archive_hidden_reason } : {}),
     revisions: revisions.rows.map(mapRevision),
     sessions: sessions.rows.map(mapSession),
   };
@@ -932,7 +985,7 @@ export class PgExerciseStore implements ExerciseStore {
 
   async list(organizationId: string, filters: ExerciseFilters): Promise<readonly ExerciseSummary[]> {
     const values: unknown[] = [organizationId];
-    const where = ['e.organization_id=$1'];
+    const where = ['e.organization_id=$1', 'e.archive_hidden_at is null'];
     if (!filters.includeArchived && filters.state !== 'ARCHIVED') where.push(`e.state<>'ARCHIVED'`);
     if (filters.query?.trim()) {
       values.push(`%${filters.query.trim()}%`);
@@ -961,6 +1014,18 @@ export class PgExerciseStore implements ExerciseStore {
       const copy = copiedCard(source, actor, new Date().toISOString(), title);
       await insertCard(db, this.schema, actor.organizationId, copy);
       return copy;
+    });
+  }
+
+  async hideArchiveEntry(actor: ExerciseActor, exerciseId: string, input: ArchiveHideInput): Promise<ExerciseCard> {
+    return tx(this.pool, async db => {
+      await lockExercise(db, this.schema, actor.organizationId, exerciseId);
+      const card = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
+      const reason = archiveHideReason(card, input);
+      if (card.archiveHiddenAt) return card;
+      await db.query(`update ${this.schema}.exercises set archive_hidden_at=now(), archive_hidden_by=$3, archive_hidden_reason=$4 where organization_id=$1 and id=$2`,
+        [actor.organizationId, exerciseId, actor.userId, reason]);
+      return requiredCard(db, this.schema, actor.organizationId, exerciseId);
     });
   }
 

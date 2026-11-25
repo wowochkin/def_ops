@@ -140,6 +140,7 @@ export interface KshviClient {
   create(input: CreateExerciseInput): Promise<ExerciseCard>;
   copy(exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
+  hideArchiveEntry(exerciseId: string, input: { expectedRevision: number; title: string; reason: string }): Promise<ExerciseCard>;
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
   savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard>;
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]>;
@@ -262,6 +263,9 @@ export class ExerciseClient implements KshviClient {
   create(input: CreateExerciseInput): Promise<ExerciseCard> { return this.request('POST', '/exercises', input); }
   copy(exerciseId: string, title?: string): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/copies`, { title });
+  }
+  hideArchiveEntry(exerciseId: string, input: { expectedRevision: number; title: string; reason: string }): Promise<ExerciseCard> {
+    return this.request('DELETE', `/exercises/${encodeURIComponent(exerciseId)}/archive-entry`, input);
   }
   archive(exerciseId: string, expectedRevision: number): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/archive`, { expectedRevision });

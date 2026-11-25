@@ -34,6 +34,7 @@ type Props = {
   onCreate?: (input: CreateExerciseInput) => Promise<void>;
   onCopy?: (item: LibraryExercise) => void;
   onCompare?: (item: LibraryExercise) => void;
+  onHideArchive?: (item: LibraryExercise, title: string, reason: string) => void;
   onArchive?: (item: LibraryExercise) => void;
   onOpenSession?: (item: LibraryExercise) => void;
   onPrimaryAction?: (item: LibraryExercise, action: LibraryPrimaryAction) => void;
@@ -41,13 +42,14 @@ type Props = {
 
 export function LibraryView({
   items, filters = {}, busy = false, loading = false, notice = '', error = '', archiveMode = false,
-  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession, onPrimaryAction,
+  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onHideArchive, onOpenSession, onPrimaryAction,
 }: Props) {
   const uid = useId().replaceAll(':', '');
   const [query, setQuery] = useState(filters.query ?? '');
   const [state, setState] = useState(filters.state ?? '');
   const [scale, setScale] = useState(filters.scale ?? '');
   const [purpose, setPurpose] = useState(filters.purpose ?? '');
+  const [hide, setHide] = useState<{ id: string; revision: number; title: string; reason: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -189,7 +191,18 @@ export function LibraryView({
             {onOpenSession && item.lastSessionId && primary.id !== 'CONDUCT' && primary.id !== 'DEBRIEF' && <button type="button" disabled={busy} aria-label={`Перейти к последнему сеансу ${item.title}`} onClick={() => onOpenSession(item)}>Последний сеанс</button>}
             {onCopy && <button type="button" disabled={busy} aria-label={`${copyLabel} ${item.title}`} onClick={() => onCopy(item)}>{copyLabel}</button>}
             {onArchive && item.state !== 'ARCHIVED' && <button className="kshvi-danger" type="button" disabled={busy} aria-label={`Архивировать ${item.title}`} onClick={() => onArchive(item)}>Архивировать</button>}
+            {archiveMode && onHideArchive && <button type="button" disabled={busy} onClick={() => setHide({ id: item.id, revision: item.revision, title: '', reason: '' })}>Удалить из архива</button>}
           </div>
+          {onHideArchive && hide?.id === item.id && hide.revision === item.revision && <form aria-label="Удаление из архива" onSubmit={event => {
+            event.preventDefault();
+            if (!busy && hide.title === item.title && hide.reason.trim()) onHideArchive(item, hide.title, hide.reason.trim());
+          }}>
+            <p>Карточка исчезнет из списка. Сохранённые редакции останутся доступны по ссылке.</p>
+            <label>Повторите название<input required value={hide.title} onChange={event => setHide({ ...hide, title: event.target.value })} /></label>
+            <label>Основание удаления<textarea required value={hide.reason} onChange={event => setHide({ ...hide, reason: event.target.value })} /></label>
+            <button type="submit" disabled={busy || hide.title !== item.title || !hide.reason.trim()}>Подтвердить удаление</button>
+            <button type="button" disabled={busy} onClick={() => setHide(null)}>Отмена</button>
+          </form>}
         </article>
       </li>; })}
     </ul>

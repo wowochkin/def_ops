@@ -4,6 +4,7 @@ import { authorize, type ParticipantContext } from '../auth/authorize';
 import { assertCsrf, type SessionManager } from '../auth/sessions';
 import {
   ExerciseStoreError,
+  type ArchiveHideInput,
   type CreateExerciseInput,
   type CreateRevisionInput,
   type CreateSessionInput,
@@ -131,6 +132,14 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:archive', true);
     const body = await ctx.json<{ expectedRevision?: number }>() ?? {};
     return projectExerciseCard(await store.archive(actor, exerciseId(ctx), body.expectedRevision as number), actor.participant);
+  }));
+
+  router.delete(`${base}/:id/archive-entry`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:archive', true);
+    const input = await ctx.json<ArchiveHideInput>();
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new HttpError(422, 'validation', 'Проверьте данные запроса');
+    closedBody(input, ['expectedRevision', 'title', 'reason']);
+    return projectExerciseCard(await store.hideArchiveEntry(actor, exerciseId(ctx), input), actor.participant);
   }));
 
   router.get(`${base}/:id/revisions`, handle(async ctx => {

@@ -569,6 +569,13 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     onCopy={can('exercise:copy') ? item => void copyExercise(item) : undefined}
     onCompare={can('exercise:read') ? item => void compare(item) : undefined}
     onArchive={!archiveMode && can('exercise:archive') ? item => void perform(() => client.archive(item.id, item.revision), 'Учение архивировано на сервере') : undefined}
+    onHideArchive={archiveMode && can('exercise:archive') ? (item, title, reason) => void perform(async () => {
+      const accepts = trackCardResponse(item.id);
+      await client.hideArchiveEntry(item.id, { expectedRevision: item.revision, title, reason });
+      if (!accepts()) return;
+      if (selectedExercise?.id === item.id) clearSelection();
+      if (comparison?.id === item.id) setComparison(null);
+    }, 'Запись удалена из списка архива') : undefined}
     onOpenSession={can('exercise:read') ? item => void openLibraryItem(item, true) : undefined}
     onPrimaryAction={can('exercise:read') ? item => void openLibraryItem(item) : undefined}
   />;
@@ -657,7 +664,9 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
           <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
         </dl><p>Источник: сервер. Изменение браузера не считается совершившимся до подтверждения команды.</p></section>
         <ConductWorkspace role={role} canReadTruth={can('TRUTH_READ')} onExecute={executeCommand} onHandover={handleHandover} />
-      </> : <section><h2>Проведение</h2><p>Откройте проведение из карточки учения в библиотеке. Обзорные панели ниже не являются официальным миром.</p><ConductWorkspace /></section>}
+      </> : <section className="kshvi-empty"><h2>Активный сеанс не выбран</h2>
+        <p>Откройте карточку учения с действующим сеансом в библиотеке.</p>
+        <button type="button" onClick={() => selectTab('library')}>Открыть библиотеку</button></section>}
     </section>}
     {activeTab === 'replay' && (session && replayFrame ? <ReplayWorkspace
       initialFrame={replayFrame} maxSequence={replayFrame.maxSequence} canReadTruth={can('TRUTH_READ')}
