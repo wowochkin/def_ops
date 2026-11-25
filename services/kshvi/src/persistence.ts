@@ -36,7 +36,7 @@ export async function createKshviPersistence(env: PersistenceEnvironment, option
     if (sessionStore instanceof PgSessionStore) await sessionStore.init();
     const evidence = pool ? new PgExerciseEvidenceService({ pool, schema, environment }) : new InMemoryExerciseEvidenceService({ environment });
     if (evidence instanceof PgExerciseEvidenceService) await evidence.init();
-    const exerciseStore = pool ? new PgExerciseStore({ pool, schema, evidence }) : new InMemoryExerciseStore({ evidence });
+    const exerciseStore = pool ? new PgExerciseStore({ pool, schema, evidence, environment }) : new InMemoryExerciseStore({ evidence, environment });
     if (exerciseStore instanceof PgExerciseStore) await exerciseStore.init();
     return { pool, sessionStore, exerciseStore, evidence, eventStore, schema };
   } catch (error) {

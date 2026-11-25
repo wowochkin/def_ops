@@ -1,6 +1,7 @@
 import type { ExpositionSession } from '../../../../../packages/kshvi/src/exposition/exposition-session';
 import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot } from '../../../../../packages/kshvi/src/environment/provider';
 import type { InitialSituationMap } from '../../../../../packages/kshvi/src/scenario/initial-map';
+import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import type { SymbolSet } from '../../../../../packages/tactical-symbols/src/model';
 import type { AudienceProjectionView } from './exposition/AudienceProjector';
 import type { AdminOverviewService } from '../../../../../services/kshvi/src/admin/admin-overview-service';
@@ -86,6 +87,8 @@ export type CreateRevisionInput = Readonly<{
   payload?: JsonValue;
 }>;
 
+export type SavePreparationInput = Readonly<{ expectedRevision: number; draft: PreparationDraft }>;
+
 export type Participant = Readonly<{
   localMode?:boolean;
   userId: string;
@@ -127,6 +130,7 @@ export interface KshviClient {
   copy(exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
+  savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard>;
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]>;
   createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot>;
   symbolCatalog(): Promise<{ set: SymbolSet }>;
@@ -239,6 +243,19 @@ export class ExerciseClient implements KshviClient {
   }
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/revisions`, input);
+  }
+  async savePreparation(exerciseId: string, { expectedRevision, draft }: SavePreparationInput): Promise<ExerciseCard> {
+    const card = await this.getCard(exerciseId);
+    const revision = card.revisions.find(item => item.revision === card.revision);
+    if (!revision) throw new Error('Текущая редакция сценария не найдена');
+    const payload = revision.payload;
+    if (payload !== null && (typeof payload !== 'object' || Array.isArray(payload))) {
+      throw new Error('Содержимое редакции должно быть объектом для сохранения подготовки');
+    }
+    return this.createRevision(exerciseId, {
+      expectedRevision,
+      payload: { ...payload, preparation: draft as unknown as JsonValue },
+    });
   }
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]> { return this.request('GET', '/environment/atlases'); }
   createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot> {

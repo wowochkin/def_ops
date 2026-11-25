@@ -10,6 +10,7 @@ export * from './model/assumptions';
 export * from './model/norms';
 export * from './scenario/concept';
 export * from './scenario/scenario-kit';
+export * from './scenario/preparation-draft';
 export * from './scenario/stage-plan';
 export * from './forces/command-tree';
 export * from './forces/force';

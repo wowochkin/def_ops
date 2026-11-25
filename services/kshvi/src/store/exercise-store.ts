@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createPool, migrate, tx, type Client, type Migration, type Pool } from '@def-ops/db';
 import {
-  canonicalJson, READINESS_AREAS, REQUIRED_SCENARIO_ITEMS, sealScenario, transitionLifecycle, validateKit,
+  canonicalJson, READINESS_AREAS, REQUIRED_SCENARIO_ITEMS, sealScenario, transitionLifecycle, validateKit, validatePreparationDraft,
   type JsonValue, type ScenarioKit, type SealScenarioInput, type SealedScenario,
 } from '@def-ops/kshvi';
 import { validateScenario, type ScenarioValidationInput } from '../../../../packages/kshvi/src/scenario/validation';
+import type { ExerciseEnvironmentLoader } from './exercise-evidence-service';
 
 export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' | 'exposition' | 'custom';
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
@@ -97,7 +98,11 @@ export interface ExerciseEvidenceProvider {
   /** Внутренний серверный порт: HTTP-клиент не может подставить готовые доказательства. */
   forRevision(context: ExerciseEvidenceContext): Promise<ServerExerciseEvidence>;
 }
-export type ExerciseStoreOptions = Readonly<{ now?: () => Date; evidence?: ExerciseEvidenceProvider }>;
+export type ExerciseStoreOptions = Readonly<{
+  now?: () => Date;
+  evidence?: ExerciseEvidenceProvider;
+  environment?: ExerciseEnvironmentLoader;
+}>;
 export type ExerciseLifecycleInput = Readonly<{ expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }>;
 
 export type ExerciseFilters = Readonly<{
@@ -204,6 +209,42 @@ function validateRevisionInput(input: CreateRevisionInput): void {
   }
   checkDate(input.startsAt, 'начало');
   checkDate(input.endsAt, 'окончание');
+}
+function preparationOf(payload: JsonValue): JsonValue | undefined {
+  return payload && typeof payload === 'object' && !Array.isArray(payload) && Object.hasOwn(payload, 'preparation')
+    ? payload.preparation
+    : undefined;
+}
+function requireWritableRevision(card: ExerciseCard, expectedRevision: number, payload?: JsonValue): ExerciseRevision {
+  if (card.state === 'ARCHIVED') fail('ARCHIVED', 'Архивное учение нельзя изменить');
+  if (card.revision !== expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+  const previous = card.revisions.find(revision => revision.revision === card.revision)!;
+  if (card.state === 'SEALED' && (preparationOf(previous.payload) !== undefined || preparationOf(payload ?? null) !== undefined)) {
+    fail('FORBIDDEN', 'Черновик подготовки запечатанного учения нельзя сохранить');
+  }
+  return previous;
+}
+async function preparationPayload(payload: JsonValue, environment?: ExerciseEnvironmentLoader, updatedAt?: string): Promise<JsonValue> {
+  const preparation = preparationOf(payload);
+  if (preparation === undefined) return payload;
+  let draft: ReturnType<typeof validatePreparationDraft>;
+  try {
+    draft = validatePreparationDraft(preparation);
+  } catch (error) {
+    fail('VALIDATION', error instanceof Error ? error.message : 'Некорректный черновик подготовки');
+  }
+  if (draft.initialMapStatus === 'APPROVED') fail('SERVER_ASSESSMENT_REQUIRED', 'Исходная карта утверждается серверным действием');
+  if (draft.environmentSnapshotId !== null) {
+    const snapshot = await environment?.load(draft.environmentSnapshotId).catch(() => null);
+    if (!snapshot || snapshot.id !== draft.environmentSnapshotId) fail('VALIDATION', 'Не найден действительный снимок среды');
+    const map = draft.initialMap;
+    if (map && (map.environment.manifestSha256 !== snapshot.manifestSha256
+      || !map.environment.bounds.every((coordinate, index) => coordinate === snapshot.region.bounds[index]))) {
+      fail('VALIDATION', 'Хеш или границы исходной карты не совпадают со снимком среды');
+    }
+  }
+  if (updatedAt === undefined) return payload;
+  return { ...payload as Record<string, JsonValue>, preparation: { ...preparation as Record<string, JsonValue>, updatedAt } };
 }
 function validateSealActor(actor: ExerciseSealActor): void {
   if (!actor.organizationId || actor.activeRole !== 'DIRECTOR' || !actor.authorities.includes('scenario.seal')) {
@@ -429,9 +470,11 @@ export class InMemoryExerciseStore implements ExerciseStore {
   private readonly sessionCommands = new Map<string, { request: string; session: ExerciseSession; record: SessionCommandRecord }>();
   private readonly now: () => Date;
   private readonly evidence?: ExerciseEvidenceProvider;
+  private readonly environment?: ExerciseEnvironmentLoader;
   constructor(options: ExerciseStoreOptions = {}) {
     this.now = options.now ?? (() => new Date());
     this.evidence = options.evidence;
+    this.environment = options.environment;
   }
   private key(organizationId: string, exerciseId: string): string { return `${organizationId}/${exerciseId}`; }
   private required(organizationId: string, exerciseId: string): ExerciseCard {
@@ -444,7 +487,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     validateCreate(input);
     const now = this.now().toISOString();
     const exerciseId = randomUUID();
-    const payload = clone(input.payload ?? {});
+    const payload = await preparationPayload(clone(input.payload ?? {}), this.environment, now);
     const assessment = assessmentOf(payload);
     const record: ExerciseCard = {
       id: exerciseId,
@@ -508,14 +551,13 @@ export class InMemoryExerciseStore implements ExerciseStore {
   async createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
     validateRevisionInput(input);
     const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
-    if (record.state === 'ARCHIVED') fail('ARCHIVED', 'Архивное учение нельзя изменить');
-    if (record.revision !== input.expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+    const previous = requireWritableRevision(record, input.expectedRevision, input.payload);
     const startsAt = input.startsAt === undefined ? record.startsAt : input.startsAt;
     const endsAt = input.endsAt === undefined ? record.endsAt : input.endsAt;
     if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
     const now = this.now().toISOString();
-    const previous = record.revisions.find(revision => revision.revision === record.revision)!;
-    const payload = clone(input.payload ?? previous.payload);
+    const payload = await preparationPayload(clone(input.payload ?? previous.payload), this.environment, input.payload == null ? undefined : now);
+    requireWritableRevision(record, input.expectedRevision, payload);
     const assessment = assessmentOf(payload);
     const revision: ExerciseRevision = {
       id: randomUUID(), exerciseId, revision: record.revision + 1, payload, sha256: digest(payload), state: 'DRAFT',
@@ -706,10 +748,12 @@ export class PgExerciseStore implements ExerciseStore {
   readonly pool: Pool;
   readonly schema: string;
   private readonly evidence?: ExerciseEvidenceProvider;
-  constructor(options: { pool?: Pool; url?: string; schema?: string; evidence?: ExerciseEvidenceProvider } = {}) {
+  private readonly environment?: ExerciseEnvironmentLoader;
+  constructor(options: { pool?: Pool; url?: string; schema?: string; evidence?: ExerciseEvidenceProvider; environment?: ExerciseEnvironmentLoader } = {}) {
     this.pool = options.pool ?? createPool(options.url);
     this.schema = options.schema ?? 'kshvi';
     this.evidence = options.evidence;
+    this.environment = options.environment;
     if (!/^[a-z_][a-z0-9_]*$/.test(this.schema)) throw new Error('Недопустимое имя схемы КШВИ');
   }
   async init(): Promise<void> { await migrate(this.pool, this.schema, KSHVI_EXERCISE_MIGRATIONS); }
@@ -719,7 +763,7 @@ export class PgExerciseStore implements ExerciseStore {
     return tx(this.pool, async db => {
       const now = new Date().toISOString();
       const exerciseId = randomUUID();
-      const payload = clone(input.payload ?? {});
+      const payload = await preparationPayload(clone(input.payload ?? {}), this.environment, now);
       const assessment = assessmentOf(payload);
       const card: ExerciseCard = {
         id: exerciseId, title: input.title.trim(), purpose: input.purpose, scale: input.scale,
@@ -784,14 +828,12 @@ export class PgExerciseStore implements ExerciseStore {
     return tx(this.pool, async db => {
       await lockExercise(db, this.schema, actor.organizationId, exerciseId);
       const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
-      if (current.state === 'ARCHIVED') fail('ARCHIVED', 'Архивное учение нельзя изменить');
-      if (current.revision !== input.expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
+      const previous = requireWritableRevision(current, input.expectedRevision, input.payload);
       const startsAt = input.startsAt === undefined ? current.startsAt : input.startsAt;
       const endsAt = input.endsAt === undefined ? current.endsAt : input.endsAt;
       if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
-      const previous = current.revisions.find(revision => revision.revision === current.revision)!;
       const now = new Date().toISOString();
-      const payload = clone(input.payload ?? previous.payload);
+      const payload = await preparationPayload(clone(input.payload ?? previous.payload), this.environment, input.payload == null ? undefined : now);
       const assessment = assessmentOf(payload);
       const revision: ExerciseRevision = {
         id: randomUUID(), exerciseId, revision: current.revision + 1, payload, sha256: digest(payload),

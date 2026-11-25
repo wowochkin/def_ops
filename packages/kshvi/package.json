@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "description": "Версионная доменная модель и чистое ядро современных КШВИ.",
-  "exports": { ".": "./src/index.ts", "./browser": "./src/browser.ts" },
+  "exports": { ".": "./src/index.ts", "./browser": "./src/browser.ts", "./preparation-draft": "./src/scenario/preparation-draft.ts" },
   "types": "./src/index.ts"
 }
