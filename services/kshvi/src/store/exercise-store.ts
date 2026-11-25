@@ -121,10 +121,21 @@ export interface ExerciseEvidenceProvider {
   approvedMap?(revision: ExerciseRevision, db?: Client): Promise<ApprovedInitialMap | null>;
   hasEnvironmentEvidence?(revision: ExerciseRevision, db?: Client): Promise<boolean>;
 }
+export type ExerciseStoreSnapshot = Readonly<{
+  version: 1;
+  records: readonly (readonly [string, ExerciseCard])[];
+  sessionCommands: readonly (readonly [string, Readonly<{
+    request: string;
+    session: ExerciseSession;
+    record: SessionCommandRecord;
+  }>])[];
+}>;
 export type ExerciseStoreOptions = Readonly<{
   now?: () => Date;
   evidence?: ExerciseEvidenceProvider;
   environment?: ExerciseEnvironmentLoader;
+  snapshot?: ExerciseStoreSnapshot;
+  onSnapshot?(snapshot: ExerciseStoreSnapshot): void;
 }>;
 export type ExerciseLifecycleInput = Readonly<{ expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }>;
 
@@ -649,16 +660,27 @@ export class InMemoryExerciseStore implements ExerciseStore {
   private readonly now: () => Date;
   private readonly evidence?: ExerciseEvidenceProvider;
   private readonly environment?: ExerciseEnvironmentLoader;
+  private readonly onSnapshot?: ExerciseStoreOptions['onSnapshot'];
   constructor(options: ExerciseStoreOptions = {}) {
     this.now = options.now ?? (() => new Date());
     this.evidence = options.evidence;
     this.environment = options.environment;
+    this.onSnapshot = options.onSnapshot;
+    for (const [key, record] of options.snapshot?.records ?? []) this.records.set(key, clone(record));
+    for (const [key, command] of options.snapshot?.sessionCommands ?? []) this.sessionCommands.set(key, clone(command));
   }
   private key(organizationId: string, exerciseId: string): string { return `${organizationId}/${exerciseId}`; }
   private required(organizationId: string, exerciseId: string): ExerciseCard {
     const record = this.records.get(this.key(organizationId, exerciseId));
     if (!record) fail('NOT_FOUND', 'Учение не найдено');
     return record;
+  }
+  private changed(): void {
+    this.onSnapshot?.({
+      version: 1,
+      records: [...this.records.entries()].map(([key, record]) => [key, clone(record)] as const),
+      sessionCommands: [...this.sessionCommands.entries()].map(([key, command]) => [key, clone(command)] as const),
+    });
   }
 
   async create(actor: ExerciseActor, input: CreateExerciseInput, access?: ExercisePayloadAccess): Promise<ExerciseCard> {
@@ -691,6 +713,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
       sessions: [],
     };
     this.records.set(this.key(actor.organizationId, exerciseId), record);
+    this.changed();
     return publicCard(record);
   }
 
@@ -713,6 +736,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const source = publicCard(this.required(actor.organizationId, exerciseId));
     const copy = copiedCard(source, actor, this.now().toISOString(), title);
     this.records.set(this.key(actor.organizationId, copy.id), copy);
+    this.changed();
     return publicCard(copy);
   }
 
@@ -723,6 +747,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
       card.archiveHiddenAt = this.now().toISOString();
       card.archiveHiddenBy = actor.userId;
       card.archiveHiddenReason = reason;
+      this.changed();
     }
     return publicCard(card);
   }
@@ -735,6 +760,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.state = 'ARCHIVED';
     record.archivedAt = now;
     record.updatedAt = now;
+    this.changed();
     return publicCard(record);
   }
 
@@ -799,6 +825,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.revision = revision.revision;
     record.updatedAt = now;
     (record.revisions as ExerciseRevision[]).push(revision);
+    this.changed();
     return publicCard(record);
   }
 
@@ -809,6 +836,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.state = state;
     record.updatedAt = this.now().toISOString();
     revision.state = state;
+    this.changed();
     return publicCard(record);
   }
 
@@ -829,6 +857,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     record.updatedAt = now;
     revision.state = 'SEALED';
     revision.sealedArtifact = artifact;
+    this.changed();
     return publicCard(record);
   }
 
@@ -852,6 +881,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     (record.sessions as ExerciseSession[]).push(session);
     record.lastSessionId = session.id;
     record.updatedAt = session.createdAt;
+    this.changed();
     return clone(session);
   }
 
@@ -876,6 +906,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
       request, session: clone(session),
       record: { sessionId, command: input.command, idempotencyKey: input.idempotencyKey, confirmedRevision: session.confirmedRevision, state: session.state, createdAt: record.updatedAt },
     });
+    this.changed();
     return clone(session);
   }
 

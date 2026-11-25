@@ -2,6 +2,7 @@ import { createPool, type Pool } from '@def-ops/db';
 import { InMemorySessionStore, type SessionStore } from './auth/sessions';
 import { PgSessionStore } from './auth/pg-session-store';
 import { InMemoryExerciseStore, PgExerciseStore, type ExerciseStore } from './store/exercise-store';
+import { openFileExerciseStore } from './store/file-exercise-store';
 import { KshviEventStore } from './store/event-store';
 import {
   InMemoryExerciseEvidenceService, PgExerciseEvidenceService,
@@ -36,7 +37,9 @@ export async function createKshviPersistence(env: PersistenceEnvironment, option
     if (sessionStore instanceof PgSessionStore) await sessionStore.init();
     const evidence = pool ? new PgExerciseEvidenceService({ pool, schema, environment }) : new InMemoryExerciseEvidenceService({ environment });
     if (evidence instanceof PgExerciseEvidenceService) await evidence.init();
-    const exerciseStore = pool ? new PgExerciseStore({ pool, schema, evidence, environment }) : new InMemoryExerciseStore({ evidence, environment });
+    const exerciseStore = pool ? new PgExerciseStore({ pool, schema, evidence, environment })
+      : env.KSHVI_LIBRARY_FILE ? openFileExerciseStore({ file: env.KSHVI_LIBRARY_FILE, evidence, environment })
+        : new InMemoryExerciseStore({ evidence, environment });
     if (exerciseStore instanceof PgExerciseStore) await exerciseStore.init();
     return { pool, sessionStore, exerciseStore, evidence, eventStore, schema };
   } catch (error) {

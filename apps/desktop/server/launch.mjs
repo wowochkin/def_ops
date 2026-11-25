@@ -95,6 +95,7 @@ const services = [
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'kshvi', env: {
     KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default',
+    KSHVI_LIBRARY_FILE: join(data, 'kshvi', 'library.json'),
     KSHVI_SINGLE_MACHINE: '1',
     KSHVI_LOCAL_AUTOLOGIN: process.env.KSHVI_LOCAL_AUTOLOGIN ?? (dev ? '1' : '0'),
     KSHVI_LOCAL_USER_ID: process.env.KSHVI_LOCAL_USER_ID ?? (dev ? 'local-leader' : ''),
