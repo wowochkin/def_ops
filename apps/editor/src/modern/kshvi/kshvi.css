@@ -139,3 +139,5 @@
   .kshvi-create-grid label:first-child { grid-column: auto; }
   .kshvi-card-heading { flex-direction: column; }
 }
+
+.kshvi-local-mode{margin:0 0 6px;max-width:30rem;overflow-wrap:anywhere;color:#c4ded4;font-size:12px}

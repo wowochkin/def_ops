@@ -95,6 +95,11 @@ const services = [
     NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=3072`.trim() } },
   { name: 'kshvi', env: {
     KSHVI_SCHEMA: 'kshvi', KSHVI_ORGANIZATION_ID: 'default',
+    KSHVI_SINGLE_MACHINE: '1',
+    KSHVI_LOCAL_AUTOLOGIN: process.env.KSHVI_LOCAL_AUTOLOGIN ?? (dev ? '1' : '0'),
+    KSHVI_LOCAL_USER_ID: process.env.KSHVI_LOCAL_USER_ID ?? (dev ? 'local-leader' : ''),
+    KSHVI_LOCAL_ROLE_ID: process.env.KSHVI_LOCAL_ROLE_ID ?? (dev ? 'local-director-role' : ''),
+    KSHVI_LOCAL_ORIGINS: [url('gateway'),...(dev ? ['http://127.0.0.1:5173','http://localhost:5173'] : [])].join(','),
     DEFOPS_SYMBOLS_ROOT: existsSync(join(portable, 'vendor/tactical-symbols')) ? join(portable, 'vendor/tactical-symbols') : join(repo, 'packages/tactical-symbols'),
     CARTOGRAPHY_URL: `${url('cartography')}/cartography`, KSHVI_INTERNAL_URL: url('kshvi'),
     ...(dev ? { KSHVI_DEVELOPMENT_AUTH: '1' } : {}),

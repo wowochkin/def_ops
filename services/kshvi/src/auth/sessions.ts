@@ -110,11 +110,22 @@ export class SessionManager {
   async login(username: string, password: string): Promise<{ token: string; csrfToken: string; cookie: string; participant: ParticipantContext; roles: readonly Pick<RoleAssignment, 'id' | 'role' | 'sideId'>[] }> {
     const account = await this.store.findAccount(username);
     if (!account || account.state !== 'ACTIVE' || !(await verifyPassword(password, account.passwordHash))) unauthorized();
+    return this.issueSession(account);
+  }
+
+  async loginLocal(userId:string,roleId:string){
+    const account=await this.store.findAccountById(userId);
+    if(!account||account.state!=='ACTIVE')unauthorized();
+    if(!account.roles.some(role=>role.id===roleId))throw new HttpError(403,'forbidden','403: Действие недоступно');
+    return this.issueSession(account,roleId);
+  }
+
+  private async issueSession(account:AccountRecord,roleId:string|null=null){
     const token = randomBytes(32).toString('base64url');
     const csrfToken = randomBytes(32).toString('base64url');
     const session: StoredSession = {
       id: randomUUID(), userId: account.userId, tokenHash: digest(token), csrfHash: digest(csrfToken),
-      activeRoleId: null, expiresAt: new Date(this.now().getTime() + this.ttlMs), revokedAt: null,
+      activeRoleId: roleId, expiresAt: new Date(this.now().getTime() + this.ttlMs), revokedAt: null,
     };
     await this.store.saveSession(session);
     const participant = await this.authenticate(token);

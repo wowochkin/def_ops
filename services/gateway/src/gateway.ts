@@ -165,6 +165,11 @@ const MIME: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff': 'font/woff', '.woff2': 'font/woff2',
 };
 
+/** Клиентские forwarded-заголовки не превращают внешний запрос в локальный. */
+export function localKshviLoginAllowed(req:http.IncomingMessage,cfg:Pick<GatewayConfig,'localOnly'>):boolean{
+ return !!cfg.localOnly&&['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress??'');
+}
+
 export function createGateway(cfg: GatewayConfig) {
   const sendErr = (res: http.ServerResponse, status: number, code: string, message: string) => {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }).end(JSON.stringify({ error: { code, message } }));
@@ -174,6 +179,7 @@ export function createGateway(cfg: GatewayConfig) {
   const server = http.createServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url || '/', 'http://gw');
+    if(url.pathname.replace(/\/$/,'')==='/api/kshvi/auth/local'&&!localKshviLoginAllowed(req,cfg))return sendErr(res,404,'not_found','Маршрут не найден');
     if (guarded) {
       const why = localGuard(req, !!cfg.downloadsDev);
       if (why) {

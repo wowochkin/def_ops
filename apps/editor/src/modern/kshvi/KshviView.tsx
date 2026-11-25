@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
-  ExerciseClient,
+  ExerciseClient, KshviHttpError,
   type AdminOverview,
   type ArchiveRecord,
   type CreateExerciseInput,
@@ -15,7 +15,7 @@ import {
   type SessionCommand,
 } from './kshvi-api';
 import { LibraryView, type LibraryExercise } from './LibraryView';
-import { LoginPanel } from './LoginPanel';
+import { LoginPanel,roleNames } from './LoginPanel';
 import { readWorkspaceReference, WORKSPACE_EXERCISE_KEY, WORKSPACE_SESSION_KEY, writeWorkspaceReference } from './workspace-session';
 import { PreparationWorkspace } from './preparation/PreparationWorkspace';
 import { ConductWorkspace } from './conduct/ConductWorkspace';
@@ -120,6 +120,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const [serverAuthorities, setServerAuthorities] = useState<readonly string[]>(readAuthorities);
   const [serverRole, setServerRole] = useState(providedRole ?? 'TRAINEE');
   const [serverUserId, setServerUserId] = useState('UNKNOWN');
+  const [authChecking,setAuthChecking]=useState(!providedAuthorities);
+  const [localMode,setLocalMode]=useState(false);
   const [authenticated, setAuthenticated] = useState(Boolean(providedAuthorities));
   const authorities = providedAuthorities ?? serverAuthorities;
   const role = providedRole ?? serverRole;
@@ -165,15 +167,25 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   useEffect(() => {
     if (providedAuthorities) return;
     let current = true;
-    void client.me().then(participant => {
-      if (!current) return;
-      if (Array.isArray(participant.authorities)) setServerAuthorities(participant.authorities);
-      setServerUserId(participant.userId);
-      if (participant.activeRole) {
-        setServerRole(participant.activeRole);
-        setAuthenticated(true);
-      }
-    }).catch(() => { if (current) setAuthenticated(false); });
+    if(sessionStorage.getItem('def_ops.kshvi.handover')==='1'){setAuthenticated(false);setAuthChecking(false);return;}
+    setAuthChecking(true);
+    void (async()=>{
+      try{
+        let participant;
+        try{participant=await client.me();}
+        catch(error){
+          if(!(error instanceof KshviHttpError)||error.status!==401||sessionStorage.getItem('def_ops.kshvi.handover')==='1'||!client.loginLocal)throw error;
+          await client.loginLocal();
+          participant=await client.me();
+        }
+        if(participant.localMode&&client.loginLocal&&client.hasCsrfToken?.()===false){await client.loginLocal();participant=await client.me();}
+        if(!current)return;
+        if(Array.isArray(participant.authorities))setServerAuthorities(participant.authorities);
+        setServerUserId(participant.userId);setLocalMode(participant.localMode===true);
+        if(participant.activeRole){setServerRole(participant.activeRole);setAuthenticated(true);}else setAuthenticated(false);
+      }catch{if(current)setAuthenticated(false);}
+      finally{if(current)setAuthChecking(false);}
+    })();
     return () => { current = false; };
   }, [client, providedAuthorities]);
 
@@ -192,7 +204,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
 
   useEffect(() => {
     if (activeTab !== 'library' && activeTab !== 'archive') return;
-    if (!providedAuthorities && !authenticated) return;
+  if (!providedAuthorities && !authenticated) return;
     let current = true;
     setLoading(true);
     setError('');
@@ -348,7 +360,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       setExposition(null);
       setServerAuthorities([]);
       setServerRole('UNKNOWN');
-      setAuthenticated(false);
+      setAuthenticated(false);setLocalMode(false);
+      sessionStorage.setItem('def_ops.kshvi.handover','1');
       selectTab('library');
     }
   }
@@ -411,10 +424,13 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     onOpenWorkflow={!archiveMode && can('exercise:read') ? openWorkflow : undefined}
   />;
 
+  if(!providedAuthorities&&authChecking)return <section className="modern-kshvi" aria-label="Командно-штабные военные игры"><h1>КШВИ</h1><p role="status">Проверяем вход в систему…</p></section>;
+
   if (!providedAuthorities && !authenticated) return <section className="modern-kshvi" aria-label="Командно-штабные военные игры">
     <h1>КШВИ</h1>
     <LoginPanel client={client} onAuthenticated={participant => {
       if (!participant.activeRole) { setAuthenticated(false); return; }
+      sessionStorage.removeItem('def_ops.kshvi.handover');setLocalMode(participant.localMode===true);
       setServerAuthorities(participant.authorities);
       setServerUserId(participant.userId);
       setServerRole(participant.activeRole);
@@ -427,7 +443,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     <header className="kshvi-heading">
       <div><p className="kshvi-kicker">Современный режим · полный цикл</p><h1>КШВИ</h1>
         <p>Библиотека, подготовка, серверное проведение, реплей, разбор, архив и экспозиция.</p></div>
-      <div className="kshvi-authority"><span>Официальное состояние</span><strong>Подтверждает сервер</strong></div>
+      <div className="kshvi-authority">{localMode&&<p className="kshvi-local-mode">Локальный режим · {serverUserId} · {roleNames[role]??'Роль не выбрана'}</p>}<span>Официальное состояние</span><strong>Подтверждает сервер</strong></div>
     </header>
     <nav className="kshvi-tabs" aria-label="Разделы КШВИ">
       {sections.map(section => <button key={section.id} type="button" aria-current={activeTab === section.id ? 'page' : undefined} onClick={() => selectTab(section.id)}>{section.label}</button>)}

@@ -87,6 +87,7 @@ export type CreateRevisionInput = Readonly<{
 }>;
 
 export type Participant = Readonly<{
+  localMode?:boolean;
   userId: string;
   activeRole: string | null;
   organizationId: string;
@@ -114,6 +115,8 @@ export type ExpositionRecord = Readonly<{ purpose: 'EXPOSITION'; session: Exposi
 export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>>;
 
 export interface KshviClient {
+  hasCsrfToken?():boolean;
+  loginLocal?():Promise<LoginResult>;
   login(username: string, password: string): Promise<LoginResult>;
   selectRole(roleId: string): Promise<Participant>;
   logout(): Promise<void>;
@@ -153,6 +156,10 @@ export type ExerciseClientOptions = {
   headers?: () => Readonly<Record<string, string>>;
 };
 
+export class KshviHttpError extends Error{
+ constructor(readonly status:number,message:string){super(message);this.name='KshviHttpError';}
+}
+
 /** Клиент ждёт подтверждения каждой команды; локальный мир здесь не объявляется официальным. */
 export class ExerciseClient implements KshviClient {
   private readonly baseUrl: string;
@@ -184,7 +191,7 @@ export class ExerciseClient implements KshviClient {
     });
     const data = response.status === 204 ? null : await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(data?.error?.message ?? `Сервис КШВИ недоступен (${response.status}). Повторите действие после восстановления связи.`);
+      throw new KshviHttpError(response.status,data?.error?.message ?? `Сервис КШВИ недоступен (${response.status}). Повторите действие после восстановления связи.`);
     }
     return data as T;
   }
@@ -193,6 +200,13 @@ export class ExerciseClient implements KshviClient {
     const result = await this.request<LoginResult>('POST', '/auth/login', { username, password });
     this.sessionCsrfToken = result.csrfToken;
     try { globalThis.sessionStorage?.setItem(`def_ops.kshvi.csrf:${this.baseUrl}`, result.csrfToken); } catch { /* память текущей вкладки недоступна */ }
+    return result;
+  }
+  hasCsrfToken():boolean{return Boolean(this.sessionCsrfToken||this.csrfToken());}
+  async loginLocal():Promise<LoginResult>{
+    const result=await this.request<LoginResult>('POST','/auth/local',{});
+    this.sessionCsrfToken=result.csrfToken;
+    try{globalThis.sessionStorage?.setItem(`def_ops.kshvi.csrf:${this.baseUrl}`,result.csrfToken);}catch{/* память вкладки недоступна */}
     return result;
   }
   selectRole(roleId: string): Promise<Participant> { return this.request('POST', '/auth/role', { roleId }); }
