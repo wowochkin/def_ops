@@ -1,3 +1,4 @@
+import {regionalSurfaceState} from './weather-regional-surface';
 import {weatherTime,validateWeatherScenario,type WeatherScenario,type WeatherState,type ScenarioField} from './weather';
 import {sampleRegionalClimate} from './weather-climate-profile';
 import {regionalRainFrame} from './weather-regional-episodes';
@@ -46,4 +47,4 @@ export function regionalAtmosphere(s:WeatherScenario,lat:number,lon:number,time:
  const cloud=field('cloud',n.cloud,8*wave+(precipitation===null?0:Math.min(20,precipitation*2)),0,100);
  return {provenance:'synthetic',...(n.heightM===null?{}:{temperatureReferenceM:n.heightM}),temperature,pressure,windSpeed,windDirection:direction===null?null:wrap(direction),gust:windSpeed===null?null:windSpeed+Math.abs(wave)*2,humidity,cloud,precipitation,precipitationType:precipitation===null||temperature===null?undefined:precipitation<=.001?'none':temperature< -1?'snow':temperature>2?'rain':'mixed',soilTemperature:field('soilTemperature',n.soilTemperature),soilMoisture:field('soilMoisture',n.soilMoisture),snowDepth:s.snowDepth??null,visibility:s.visibility??null};
 }
-export function simulateRegionalWeather(s:WeatherScenario,lat:number,lon:number,time:string):WeatherState{return regionalAtmosphere(s,lat,lon,time);}
+export function simulateRegionalWeather(s:WeatherScenario,lat:number,lon:number,time:string):WeatherState{return {...regionalAtmosphere(s,lat,lon,time),...regionalSurfaceState(s,lat,lon,time)};}

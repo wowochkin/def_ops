@@ -1,3 +1,5 @@
+import {regionalAtmosphere} from '../../../../packages/core/src/weather-regional';
+import {weatherGrid} from '../../../../packages/core/src/weather-grid';
 import {weatherRenderRegion} from './weather-domain';
 import {surfacePreview} from './scenario-surface';
 import {useEffect,useMemo} from 'react';
@@ -22,7 +24,7 @@ export function WeatherField({scenario,region,time,dataset,onPoint,elevations,te
     // Значение в каждом пикселе сохраняет естественную границу сухого участка.
     return domain.renderRegions.flatMap(bounds=>weatherRasters(region,cells,field,precipitationFrame(scenario,time),bounds));
    }
-   const visible=simulateWeatherRegion(scenario,detail,time).cells;
+   const visible=scenario.algorithmVersion===2&&!['visibility','snowDepth','soilTemperature','soilMoisture'].includes(field)?weatherGrid(detail).map(([lon,lat])=>({lon,lat,state:regionalAtmosphere(scenario,lat,lon,time)})):simulateWeatherRegion(scenario,detail,time).cells;
    if(adjustView&&terrain&&mapElevation){
     for(const cell of visible){
      cell.state=weatherWithElevation(cell.state,mapElevation.heights.get(`${cell.lon},${cell.lat}`)??null,terrain);

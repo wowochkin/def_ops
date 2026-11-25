@@ -7,6 +7,7 @@ const unit=(v:number)=>Math.max(0,Math.min(1,v));
 // Условные состояния иллюстрации меняются по времени сценария.
 // Одна хронология для карты и карточки, включая произвольную перемотку.
 export function surfacePreview(s:WeatherScenario,time:string,field?:string){
+  if(s.algorithmVersion===2)return (state:WeatherState)=>state;
   const automatic=(key:Surface)=>(!field||key===field)&&s[key]===undefined&&!s.keyframes?.some(frame=>frame.values[key]!==undefined);
   const visibility=automatic('visibility'),moisture=automatic('soilMoisture'),snow=automatic('snowDepth');
   const hour=Math.max(0,(Date.parse(time)-Date.parse(s.start))/3600000);

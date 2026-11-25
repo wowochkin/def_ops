@@ -1,3 +1,4 @@
+import {regionalAtmosphere} from '../../../../packages/core/src/weather-regional';
 import {REGIONAL_CLIMATE_PROFILE} from '../../../../packages/core/src/weather-climate-profile';
 import {surfacePreview} from './scenario-surface';
 import {datasetName} from './atlas-place-name';
@@ -81,7 +82,7 @@ export function WeatherView({preparedWeather,onOverlay,embedded=false,catalog,sh
  const time=new Date(Date.parse(scenario.start)+hour*3600000).toISOString();
  const reading=useMemo(()=>{try{return {state:mode==='scenario'?surfacePreview(scenario,time)(simulateWeather(scenario,lat,lon,time)):dataset&&archiveTime?weatherAt(dataset,lat,lon,archiveTime):null,error:''};}catch(e){return {state:null,error:(e as Error).message};}},[mode,scenario,lat,lon,time,dataset,archiveTime]);
  const adjusted=useMemo(()=>reading.state&&terrain&&mode==='scenario'?weatherWithElevation(reading.state,elevations.get(`${lon},${lat}`)??null,terrain):reading.state,[reading.state,terrain,mode,elevations,lon,lat]);
- const chart=useMemo(()=>{if(mode!=='scenario'||reading.error)return[];return Array.from({length:25},(_,i)=>{const state=simulateWeather(scenario,lat,lon,new Date(Date.parse(scenario.start)+i*duration/24*3600000).toISOString());return (terrain?weatherWithElevation(state,elevations.get(`${lon},${lat}`)??null,terrain):state).temperature!;});},[scenario,lat,lon,mode,reading.error,duration,terrain,elevations]);
+ const chart=useMemo(()=>{if(mode!=='scenario'||reading.error)return[];return Array.from({length:25},(_,i)=>{const state=(scenario.algorithmVersion===2?regionalAtmosphere:simulateWeather)(scenario,lat,lon,new Date(Date.parse(scenario.start)+i*duration/24*3600000).toISOString());return (terrain?weatherWithElevation(state,elevations.get(`${lon},${lat}`)??null,terrain):state).temperature!;});},[scenario,lat,lon,mode,reading.error,duration,terrain,elevations]);
  function patch<K extends keyof WeatherScenario>(k:K,v:WeatherScenario[K]){
   setScenario(s=>({...s,[k]:v,...(k==='temperatureMode'&&v==='climate'?{manualFields:s.manualFields?.filter(f=>f!=='temperature')}:{})}));
   if(k==='durationHours'){setPlaying(false);setHour(h=>Math.min(h,Number(v)||h));}
