@@ -15,7 +15,7 @@ import type { InitialMapIssue } from '../../../../../../packages/kshvi/src/scena
 import { InitialMapLayers } from './InitialMapLayers';
 import { geometryText, markerGeometryKind, parseGeometryText } from './geometry-text';
 
-export type InitialMapAudience = Readonly<{ sideId: string; instanceId: string; role: string; label: string }>;
+export type InitialMapAudience = Readonly<{ sideId: string; instanceId: string; role: string; label: string; audienceId?: string }>;
 export type InitialMapSymbolOption = MapSymbolUse & Readonly<{
   nameRu?: string;
   purpose?: string;

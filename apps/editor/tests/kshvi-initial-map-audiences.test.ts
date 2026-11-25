@@ -1,29 +1,28 @@
 import { expect, it } from 'vitest';
 import { initialMapAudiences } from '../src/modern/kshvi/preparation/initial-map-audiences';
 
-it('AC-22: формирует проекции из фактической видимости отметок без фиктивных инстанций', () => {
+it('AC-22: формирует проекции из состава участников даже без отметок', () => {
   expect(initialMapAudiences([
-    { sideId: 'blue', visibility: { instanceIds: ['blue-hq'], sideIds: ['blue'] } },
-    { sideId: 'red', visibility: { instanceIds: ['red-hq'], sideIds: ['red'] } },
-    { sideId: 'blue', visibility: { instanceIds: ['blue-hq'], sideIds: ['blue'] } },
+    { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
+    { sideId: 'red', instanceId: 'red-hq', role: 'TRAINEE', label: 'Штаб red · red-hq' },
+    { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
   ])).toEqual([
     { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
     { sideId: 'red', instanceId: 'red-hq', role: 'TRAINEE', label: 'Штаб red · red-hq' },
   ]);
 });
 
-it('AC-22: различает сторону наблюдаемого противника и сторону штаба', () => {
+it('AC-22: не подставляет роль или название вместо назначения', () => {
   expect(initialMapAudiences([
-    { sideId: 'red', visibility: { sideIds: ['blue'], instanceIds: ['blue-hq'] } },
-    { sideId: 'blue', visibility: { sideIds: ['blue'], instanceIds: ['blue-hq'] } },
+    { sideId: 'blue', instanceId: 'blue-hq', role: 'OBSERVER', label: 'Наблюдатель учения' },
   ])).toEqual([
-    { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
+    { sideId: 'blue', instanceId: 'blue-hq', role: 'OBSERVER', label: 'Наблюдатель учения' },
   ]);
 });
 
 it('AC-22: не выбирает сторону при противоречивой привязке инстанции', () => {
   expect(() => initialMapAudiences([
-    { sideId: 'blue', visibility: { instanceIds: ['shared-hq'] } },
-    { sideId: 'red', visibility: { instanceIds: ['shared-hq'] } },
+    { sideId: 'blue', instanceId: 'shared-hq', role: 'TRAINEE', label: 'Первое назначение' },
+    { sideId: 'red', instanceId: 'shared-hq', role: 'TRAINEE', label: 'Противоречащее назначение' },
   ])).toThrow('AMBIGUOUS_INSTANCE_SIDE');
 });

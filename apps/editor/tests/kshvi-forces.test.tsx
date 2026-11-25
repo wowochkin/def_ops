@@ -9,7 +9,7 @@ it('показывает незакрытую роль активного сты
   expect(screen.getByText('На активном стыке a → b нужна роль розыгрыша')).toBeTruthy();
 });
 
-it('показывает самостоятельные вкладки состояния силы', () => {
+it('показывает четыре рабочие вкладки единой редакции сил и МТО', () => {
   render(<ForcesStep />);
-  for (const title of ['Оснащённость', 'МПС', 'Готовность', 'Построение', 'МТО']) expect(screen.getByRole('tab', { name: title })).toBeTruthy();
+  for (const title of ['Силы', 'Оснащение', 'Построение', 'Снабжение']) expect(screen.getByRole('tab', { name: title })).toBeTruthy();
 });

@@ -75,7 +75,7 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
   };
   const start = async () => {
     try {
-      if (!sealed) throw new Error('SEALED_REQUIRED');
+      if (!sealed) throw new Error('Сценарий ещё не зафиксирован');
       const result = await clientRef.current!.start(sealed.id, startCommand);
       setInstance(result);
       setError('');
@@ -87,7 +87,7 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
 
   return <section aria-labelledby="sealing-step-title">
     <h2 id="sealing-step-title">Проверка и фиксация сценария</h2>
-    <p>DRAFT → IN_REVIEW → APPROVED → SEALED → ACTIVE ↔ PAUSED → COMPLETED → ARCHIVED</p>
+    <p>Черновик → Проверка → Утверждение → Фиксация → Проведение ↔ Пауза → Завершение → Архив</p>
     <p>Областей проверено: {report.checkedAreas.length}</p>
     <p>Итог проверки: {report.status}</p>
     <button type="button" onClick={validate}>Проверить сценарий</button>
@@ -105,13 +105,13 @@ export function SealingStep({ report: initialReport, input, onValidate, onRehear
       </>}
     </section>
 
-    <button type="button" onClick={() => void seal()}>Зафиксировать SEALED</button>
+    <button type="button" onClick={() => void seal()}>Зафиксировать сценарий</button>
     {sealed && <section aria-label="Зафиксированная редакция">
       <p>Сценарий: {sealed.scenarioSha256}</p>
       <p>Карта: {sealed.hashes.initialMap}</p>
       <p>Среда: {sealed.hashes.environment}</p>
     </section>}
-    <button type="button" onClick={() => void start()}>Запустить сеанс</button>
+    <button type="button" onClick={() => void start()}>Запустить учение</button>
     {instance && <p>Сеанс: {instance.state}; журнал: {instance.eventLogId}</p>}
     {error && <p role="alert">{error}</p>}
   </section>;

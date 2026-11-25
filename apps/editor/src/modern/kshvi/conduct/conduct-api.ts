@@ -1,9 +1,10 @@
+import { readSessionCsrf } from '../session-csrf';
 import type { Audience, ConductClient, ConductProjection, DecisionEditorDraft, MassOperationResult } from './shared/types';
 import type { OrderPanelModel as DomainOrderPanelModel } from './OrdersPanel';
 
 type Context = { instanceId: string; sideId: string; role: string; operationalAt?: string };
 export class HttpConductClient implements ConductClient {
-  constructor(private readonly context: Context, private readonly csrfToken?: () => string) {}
+  constructor(private readonly context: Context, private readonly csrfToken: () => string = () => readSessionCsrf()) {}
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(path, {
       ...init,

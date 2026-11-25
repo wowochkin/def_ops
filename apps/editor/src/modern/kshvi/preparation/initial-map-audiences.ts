@@ -1,26 +1,19 @@
-import type { MapMarker } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import type { InitialMapAudience } from './InitialMapStep';
 
-/** Проекции выводятся только из реально нанесённых правил видимости, без демонстрационных штабов. */
+/** Состав участников существует независимо от наличия объектов на карте. */
 export function initialMapAudiences(
-  markers: readonly Readonly<Pick<MapMarker, 'sideId' | 'visibility'>>[],
+  participants: readonly InitialMapAudience[],
 ): readonly InitialMapAudience[] {
   const byInstance = new Map<string, InitialMapAudience>();
-  for (const marker of markers) {
-    const visibilitySides = [...new Set((marker.visibility.sideIds ?? []).map(side => side.trim()).filter(Boolean))];
-    if (visibilitySides.length > 1) throw new Error(`AMBIGUOUS_AUDIENCE_SIDE: ${marker.sideId}`);
-    // Для сообщения о противнике сторона аудитории берётся из разрешения видимости,
-    // а не из принадлежности самого наблюдаемого объекта.
-    const audienceSide = visibilitySides[0] ?? marker.sideId;
-    for (const instanceId of marker.visibility.instanceIds ?? []) {
-      const id = instanceId.trim();
-      if (!id) continue;
-      const existing = byInstance.get(id);
-      if (existing && existing.sideId !== audienceSide) throw new Error(`AMBIGUOUS_INSTANCE_SIDE: ${id}`);
-      if (!existing) byInstance.set(id, {
-        sideId: audienceSide, instanceId: id, role: 'TRAINEE', label: `Штаб ${audienceSide} · ${id}`,
-      });
+  const sides = new Map<string, string>();
+  for (const participant of participants) {
+    if (![participant.instanceId, participant.sideId, participant.role, participant.label].every(value => typeof value === 'string' && value.trim())) {
+      throw new Error('Состав участников содержит неполное назначение');
     }
+    if (sides.has(participant.instanceId) && sides.get(participant.instanceId) !== participant.sideId) throw new Error(`AMBIGUOUS_INSTANCE_SIDE: ${participant.instanceId}`);
+    sides.set(participant.instanceId, participant.sideId);
+    const key = participant.audienceId ?? JSON.stringify([participant.instanceId, participant.role]);
+    if (!byInstance.has(key)) byInstance.set(key, { ...participant });
   }
   return [...byInstance.values()].sort((left, right) => left.sideId.localeCompare(right.sideId) || left.instanceId.localeCompare(right.instanceId));
 }

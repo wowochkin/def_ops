@@ -1,6 +1,6 @@
 import type { JsonValue, Unknown } from '../model/types';
 
-export type ForceSource = { sourceId: string; reportedAt: string; accuracy?: number; completeness?: number };
+export type ForceSource = { sourceId: string; reportedAt: string; accuracy?: number; completeness?: number; sourceRevision?: number; sourceSha256?: string };
 export type ForceDetails = {
   identity: { sideId: string; nodeId: string; type: string; organizationalLevel: string; service: string; parentId: string | null };
   composition: { personnel: readonly JsonValue[]; units: readonly string[]; equipment: readonly JsonValue[] };

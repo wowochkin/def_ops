@@ -50,10 +50,11 @@ export function projectExerciseCard(card: ExerciseCard, actor: ParticipantContex
     ...structuredClone(summary), payloadAccess,
     ...(archiveHiddenAt && actor.authorities.includes('kshvi:admin') ? { archiveHiddenAt, archiveHiddenBy, archiveHiddenReason } : {}),
     revisions: revisions.map((revision): ExerciseRevision => {
-      const { sealedArtifact, truthOnlyPayload, payload, ...metadata } = revision;
+      const { sealedArtifact, truthOnlyPayload, payload, participantRoster, participantRosterSha256, ...metadata } = revision;
       if (truthOnlyPayload && !readTruth) return { ...metadata, payload: {} };
       return structuredClone({
         ...metadata,
+        ...(fullPayload && participantRoster ? { participantRoster, participantRosterSha256 } : {}),
         ...(readTruth && sealedArtifact ? { sealedArtifact } : {}),
         payload: fullPayload ? payload : projectExercisePayload(payload, actor.sideId),
       });

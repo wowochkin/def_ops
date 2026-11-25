@@ -1,4 +1,5 @@
 import type { ExerciseInstance, SealScenarioInput, SealedScenario, StartInstanceCommand } from '../../../../../../packages/kshvi/src/scenario/sealing';
+import { readSessionCsrf } from '../session-csrf';
 
 export interface SealingClient {
   seal(input: SealScenarioInput): Promise<SealedScenario>;
@@ -17,13 +18,15 @@ export function createFetchSealingClient(options: {
   fetchImpl?: typeof fetch;
 } = {}): SealingClient {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const baseUrl = (options.baseUrl ?? '').replace(/\/$/, '');
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
-  if (options.csrfToken) headers['x-csrf-token'] = options.csrfToken;
+  const baseUrl = (options.baseUrl ?? '/api').replace(/\/$/, '');
+  const headers = (): Record<string, string> => {
+    const token = options.csrfToken ?? readSessionCsrf(`${baseUrl}/kshvi`, true);
+    return { 'content-type': 'application/json', ...(token ? { 'x-csrf-token': token } : {}) };
+  };
   return {
     async seal(input) {
       const response = await fetchImpl(`${baseUrl}/kshvi/sealing`, {
-        method: 'POST', credentials: 'same-origin', headers, body: JSON.stringify(input),
+        method: 'POST', credentials: 'same-origin', headers: headers(), body: JSON.stringify(input),
       });
       return decode<SealedScenario>(response);
     },
@@ -31,7 +34,7 @@ export function createFetchSealingClient(options: {
       const response = await fetchImpl(`${baseUrl}/kshvi/sealing/${encodeURIComponent(sealedId)}/instances`, {
         method: 'POST',
         credentials: 'same-origin',
-        headers,
+        headers: headers(),
         body: JSON.stringify({ instanceId: command.instanceId, idempotencyKey: command.idempotencyKey, seed: command.seed }),
       });
       return decode<ExerciseInstance>(response);

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot, EnvironmentWeather } from '../../../../../../packages/kshvi/src/environment/provider';
 import { approveInitialMap, createInitialSituationMap, type ApprovedInitialMap, type InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { hashCanonical } from '../../../../../../packages/kshvi/src/scenario/initial-map-hash';
@@ -6,18 +6,11 @@ import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import type { SymbolSet } from '../../../../../../packages/tactical-symbols/src/model';
 import type { EnvironmentImpact } from '../../../../../../services/kshvi/src/store/environment-revision';
 import { isExerciseAccessLost, KshviHttpError, type ExerciseCard, type KshviClient } from '../kshvi-api';
-import { InitialMapStep, type InitialMapSymbolOption } from './InitialMapStep';
 import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
 import { EnvironmentSelectionEditor } from './EnvironmentSelectionEditor';
-
-function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
-  return set.symbols.map(symbol => ({
-    id: symbol.id, version: symbol.version, sideId: 'UNKNOWN', status: symbol.status,
-    sourceDocument: symbol.source.sourceDocument, sourcePage: symbol.source.page ?? 0,
-    nameRu: symbol.name, purpose: symbol.purpose, objectType: symbol.objectType, kind: symbol.kind,
-  }));
-}
+import { InitialMapEditor } from './InitialMapEditor';
+import { ParticipantRosterEditor } from './ParticipantRosterEditor';
 
 function makeInitialMap(exerciseId: string, revision: number, snapshot: EnvironmentSnapshot, weather: EnvironmentWeather,
   symbols: SymbolSet, startsAt: string | null): InitialSituationMap | null {
@@ -41,6 +34,9 @@ type Props = {
   revision: number;
   legacySnapshotId?: string | null;
   truthRole: string;
+  authorId?: string;
+  canReadTruth?: boolean;
+  canApproveMap?: boolean;
   canEdit: boolean;
   locked: boolean;
   savePreparation(draft: PreparationDraft): Promise<ExerciseCard>;
@@ -55,6 +51,7 @@ type Props = {
 
 export function EnvironmentMapPreparation({
   client, card, draft, revision, legacySnapshotId, truthRole, canEdit, locked, savePreparation, onRevision,
+  authorId = '', canReadTruth = false, canApproveMap = false,
   onAccessLost, onConflict, onPendingChange, onCartography, acceptsCardResponse, onMapChange,
 }: Props) {
   const [atlases, setAtlases] = useState<readonly AtlasMeta[] | null>(null);
@@ -72,6 +69,10 @@ export function EnvironmentMapPreparation({
   const [impact, setImpact] = useState<EnvironmentImpact | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [mapPending, setMapPending] = useState(false);
+  const [rosterPending, setRosterPending] = useState({ dirty: false, busy: false });
+  const markMapPending = useCallback((value: boolean) => setMapPending(value), []);
+  const markRosterPending = useCallback((dirty: boolean, busy: boolean) => setRosterPending(previous => previous.dirty === dirty && previous.busy === busy ? previous : { dirty, busy }), []);
   const snapshotId = draft.environmentSnapshotId ?? legacySnapshotId ?? null;
   const current = snapshotRef?.snapshot.id === snapshotId ? snapshotRef : null;
 
@@ -79,7 +80,7 @@ export function EnvironmentMapPreparation({
     alive.current = true;
     return () => { alive.current = false; };
   }, []);
-  useLayoutEffect(() => { onPendingChange(dirty, busy); }, [onPendingChange, dirty, busy]);
+  useLayoutEffect(() => { onPendingChange(dirty || mapPending || rosterPending.dirty, busy || rosterPending.busy); }, [onPendingChange, dirty, busy, mapPending, rosterPending]);
   useLayoutEffect(() => () => onPendingChange(false, false), [onPendingChange]);
 
   useEffect(() => {
@@ -120,8 +121,26 @@ export function EnvironmentMapPreparation({
 
   function canApply() { return alive.current && acceptsCardResponse?.() !== false; }
 
+  function commandError(cause: unknown) {
+    if (!canApply()) return;
+    if (isExerciseAccessLost(cause)) onAccessLost(cause);
+    else if (cause instanceof KshviHttpError && cause.status === 409) onConflict(cause.message);
+    else setError(cause instanceof Error ? cause.message : 'Команда не выполнена');
+  }
+
+  async function saveMap(map: InitialSituationMap) {
+    if (operation.current || !canEdit || card.state === 'SEALED' || rosterPending.busy || rosterPending.dirty) throw new Error('Сначала завершите текущую операцию подготовки');
+    operation.current = true; setBusy(true); setError('');
+    try {
+      const next = await savePreparation({ ...draft, initialMap: map, initialMapStatus: map.markers.some(marker => marker.geometry) ? 'MAPPED' : 'DRAFT' });
+      if (!canApply()) return;
+      onRevision(next); setMapEdit(null);
+    } catch (cause) { commandError(cause); throw cause; }
+    finally { operation.current = false; if (alive.current) setBusy(false); }
+  }
+
   async function run(action: () => Promise<void>) {
-    if (operation.current || locked || !canEdit) return;
+    if (operation.current || locked || !canEdit || rosterPending.busy || rosterPending.dirty || mapPending) return;
     operation.current = true;
     setBusy(true);
     setError('');
@@ -192,6 +211,10 @@ export function EnvironmentMapPreparation({
   }
 
   const sealedMap = card.revisions.find(item => item.revision === revision)?.sealedArtifact?.initialMap;
+  const roster = card.revisions.find(item => item.revision === revision)?.participantRoster ?? [];
+  const audiences = initialMapAudiences(roster.map(item => ({ ...item,
+    audienceId: JSON.stringify([item.userId, item.roleAssignmentId, item.instanceId]),
+  })));
   const savedMap = draft.initialMap ?? (sealedMap?.environment.snapshotId === snapshotId ? sealedMap : undefined);
   const map = mapEdit?.environment.snapshotId === current?.snapshot.id ? mapEdit
     : savedMap ?? (mapOpen && current && symbols ? makeInitialMap(card.id, revision, current.snapshot, current.weather, symbols, card.startsAt) : null);
@@ -230,15 +253,22 @@ export function EnvironmentMapPreparation({
     {notice && <p role="status">{notice}</p>}
     {(error || loadsError) && <p role="alert" className="kshvi-error">{error || loadsError}</p>}
     {mapOpen && current && <>
-      <InitialMapCanvas client={client} snapshot={current.snapshot} map={map ?? undefined} />
-      {map && symbols && canEdit && card.state !== 'SEALED' && <>
+      <h3>Карта исходной обстановки</h3>
+      <ParticipantRosterEditor client={client} exerciseId={card.id} revision={revision}
+        disabled={!canEdit || card.state === 'SEALED' || locked || dirty || busy || mapPending}
+        onRevision={onRevision} onError={commandError} onPendingChange={markRosterPending} acceptsCardResponse={acceptsCardResponse} />
+      {map && symbols ? <>
         {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков ещё не утверждён методистом.</p>}
-        <InitialMapStep map={map} onChange={next => {
+        <InitialMapEditor map={map} client={client} snapshot={current.snapshot} symbols={symbols.symbols} audiences={audiences}
+          truthAuthorized={canReadTruth} role={truthRole} authorId={authorId} endsAt={card.endsAt} forces={draft.forces}
+          canEdit={canEdit && card.state !== 'SEALED'} busy={busy || rosterPending.busy || rosterPending.dirty}
+          saved={!locked && ['MAPPED', 'APPROVED'].includes(draft.initialMapStatus)}
+          onPendingChange={markMapPending} onSave={saveMap} onApprove={canApproveMap ? approveOnServer : undefined}
+          onChange={next => {
           setMapEdit(next);
           if (next.state === 'DRAFT') onMapChange(next);
-        }} audiences={initialMapAudiences(map.markers)}
-          availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
-      </>}
+        }} />
+      </> : <InitialMapCanvas client={client} snapshot={current.snapshot} />}
     </>}
   </section>;
 }

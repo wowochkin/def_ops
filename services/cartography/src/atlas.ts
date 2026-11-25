@@ -7,17 +7,19 @@ import { gzipSync } from 'node:zlib';
 import { GeoJSONVT } from '@maplibre/geojson-vt';
 import { fromGeojsonVt } from '@maplibre/vt-pbf';
 import { tileRange, tileCount, type BBox } from '@def-ops/core';
+import { isAtlasLandCover } from '../../../packages/core/src/atlas-raster';
 import { clipRasterTile } from '@def-ops/raster-tiles';
 import { railwayFilter, railwaySources } from '../../../packages/core/src/railway-style';
 import { writeAtomic } from './tiles';
+import { countAtlasTiles, type AtlasTileCount } from './atlas-tile-inventory';
 import type { StyleSpecification, LayerSpecification, FilterSpecification } from '@maplibre/maplibre-gl-style-spec';
-export interface AtlasMeta { thematic?:boolean; id: string; name: string; format: 'pbf' | 'png' | 'jpg' | 'webp'; kind: 'vector' | 'raster' | 'terrain'; minzoom: number; maxzoom: number; bounds: BBox; attribution: string; layers: { id: string; fields?: Record<string,string> }[]; bytes: number; sha256?: string; importedAt?: string; source?: string }
+export interface AtlasMeta { tileInventory?:AtlasTileCount[]; thematic?:boolean; id: string; name: string; format: 'pbf' | 'png' | 'jpg' | 'webp'; kind: 'vector' | 'raster' | 'terrain'; minzoom: number; maxzoom: number; bounds: BBox; attribution: string; layers: { id: string; fields?: Record<string,string> }[]; bytes: number; sha256?: string; importedAt?: string; source?: string }
 export function validId(id: string) { if (!/^[a-z0-9-]{1,64}$/i.test(id)) throw Error('Недопустимый идентификатор набора'); return id; }
 export function validBounds(b: unknown): BBox {
  if (!Array.isArray(b) || b.length!==4 || !b.every(Number.isFinite) || Math.abs(b[0])>180 || Math.abs(b[2])>180 || Math.abs(b[1])>85.05112878 || Math.abs(b[3])>85.05112878 || b[1]>=b[3] || b[0]===b[2]) throw Error('Рамка: запад,юг,восток,север; широта Web Mercator до ±85.05112878°');
  return b as BBox;
 }
-export function inspectAtlas(file: string): AtlasMeta {
+export function inspectAtlas(file: string): AtlasMeta & {tileInventory: AtlasTileCount[]} {
  const db=new DatabaseSync(file,{readOnly:true});
  try {
   const check=db.prepare('pragma quick_check(1)').get() as Record<string,unknown>;
@@ -32,7 +34,8 @@ export function inspectAtlas(file: string): AtlasMeta {
   const bounds=validBounds((metadata.bounds??'-180,-85,180,85').split(',').map(Number));
   const layers: AtlasMeta['layers']=format==='pbf'?JSON.parse(metadata.json??'{}').vector_layers:[];
   if (!Array.isArray(layers)||layers.length>256||layers.some(l=>typeof l.id!=='string'||!l.id||l.id.length>200)||new Set(layers.map(l=>l.id)).size!==layers.length||format==='pbf'&&!layers.length) throw Error('Векторный MBTiles должен описывать уникальные vector_layers');
-  return {id:'',...(metadata.landcover_legend?{thematic:true}:{}),name:metadata.name||'Импорт карты',format:format as AtlasMeta['format'],kind:metadata.encoding==='mapbox'?'terrain':format==='pbf'?'vector':'raster',minzoom:lo,maxzoom:hi,bounds,attribution:metadata.attribution||'Источник и лицензия не указаны в пакете',layers:layers.map(l=>({id:l.id,...(l.fields?{fields:l.fields}:{})})),bytes:0};
+  const tileInventory=countAtlasTiles(db,{bounds,minzoom:lo,maxzoom:hi});
+  return {id:'',tileInventory,...(metadata.landcover_legend?{thematic:true}:{}),name:metadata.name||'Импорт карты',format:format as AtlasMeta['format'],kind:metadata.encoding==='mapbox'?'terrain':format==='pbf'?'vector':'raster',minzoom:lo,maxzoom:hi,bounds,attribution:metadata.attribution||'Источник и лицензия не указаны в пакете',layers:layers.map(l=>({id:l.id,...(l.fields?{fields:l.fields}:{})})),bytes:0};
  } finally {db.close();}
 }
 export class AtlasStore {
@@ -54,11 +57,19 @@ export class AtlasStore {
    await fs.rename(tmp,dest); await writeAtomic(path.join(this.dir(tenant),`${id}.json`),Buffer.from(JSON.stringify(meta))); return meta;
   } catch(e) {await fs.rm(tmp,{force:true});await fs.rm(dest,{force:true});throw e;}
  }
- async tile(tenant:string,id:string,z:number,x:number,y:number) {
+ async tile(tenant:string,id:string,z:number,x:number,y:number,coverage:'bounds'|'xyz'='bounds') {
   if (![z,x,y].every(Number.isInteger)||z<0||z>22||x<0||y<0||x>=2**z||y>=2**z) throw Error('Недопустимый адрес тайла');
   const m=await this.get(tenant,id), db=new DatabaseSync(this.file(tenant,id),{readOnly:true});
   try {const r=db.prepare('select tile_data d from tiles where zoom_level=? and tile_column=? and tile_row=? limit 1').get(z,x,2**z-1-y) as {d:Uint8Array}|undefined;
    if(!r?.d.length)return null;
+   if(coverage==='xyz'&&(m.kind==='terrain'||m.kind==='raster'&&isAtlasLandCover(m))){
+    const boxes:BBox[]=m.bounds[0]>m.bounds[2]?[[m.bounds[0],m.bounds[1],180,m.bounds[3]],[-180,m.bounds[1],m.bounds[2],m.bounds[3]]]:[m.bounds];
+    const included=boxes.some(box=>{
+     const r=tileRange(box,z);
+     return x>=r.x0 && x<=r.x1 && y>=r.y0 && y<=r.y1;
+    });
+    return included?{bytes:Buffer.from(r.d),format:m.format}:null;
+   }
    if(m.format==='pbf')return {bytes:Buffer.from(r.d),format:m.format};
    return clipRasterTile({bytes:Buffer.from(r.d),format:m.format,bounds:m.bounds,z,x,y});
   } finally {db.close();}
@@ -66,8 +77,9 @@ export class AtlasStore {
  async remove(tenant:string,id:string) {await fs.rm(this.file(tenant,id),{force:true});await fs.rm(path.join(this.dir(tenant),`${id}.json`),{force:true});}
 }
 /** Универсальный локальный стиль: сохранён каждый source-layer, тип геометрии не предполагается по имени. */
-export function atlasStyle(m:AtlasMeta,prefix:string):StyleSpecification {
- const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,bounds:m.bounds,attribution:m.attribution};
+export function atlasStyle(m:AtlasMeta,prefix:string,coverage:'bounds'|'xyz'='bounds'):StyleSpecification {
+ const fullTiles=coverage==='xyz'&&(m.kind==='terrain'||m.kind==='raster'&&isAtlasLandCover(m));
+ const tiles=`${prefix}/cartography/atlas/${m.id}/tiles/{z}/{x}/{y}`, base={tiles:[fullTiles?tiles+'?v=1&coverage=xyz':tiles],minzoom:m.minzoom,maxzoom:m.maxzoom,bounds:m.bounds,attribution:m.attribution};
  const layers:LayerSpecification[]=[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}];
  if(m.kind==='vector') {
   const color=(id:string)=>/water/i.test(id)?'#9ecad0':/building/i.test(id)?'#bdb4a4':/landcover|landuse|park|forest/i.test(id)?'#bdcbb0':/road|transport|rail/i.test(id)?'#b39872':'#9ca9a2';
@@ -94,8 +106,8 @@ export function atlasStyle(m:AtlasMeta,prefix:string):StyleSpecification {
   for(const [i,l] of m.layers.entries()) layers.push({id:`layer-${i}-label`,type:'symbol',source:'atlas','source-layer':l.id,minzoom:/place|label/i.test(l.id)?0:12,layout:{'text-field':['coalesce',['get','name:ru'],['get','name'],['get','name:en'],''],'text-font':['OpenHistorical'],'text-size':13,'text-max-width':9},paint:{'text-color':'#31423b','text-halo-color':'#faf8ee','text-halo-width':1.5}});
   return {version:8,glyphs:`${prefix}/cartography/fonts/{fontstack}/{range}.pbf`,sources:{atlas:{type:'vector',...base}},layers};
  }
- if(m.kind==='terrain') {layers.push({id:'terrain-shade',type:'hillshade',source:'atlas',paint:{'hillshade-exaggeration':.5}});return {version:8,sources:{atlas:{type:'raster-dem',...base,tileSize:256,encoding:'mapbox'}},layers};}
- layers.push({id:'raster',type:'raster',source:'atlas'}); return {version:8,sources:{atlas:{type:'raster',...base,tileSize:256}},layers};
+ if(m.kind==='terrain') {layers.push({id:'terrain-shade',type:'hillshade',source:'atlas',paint:{'hillshade-exaggeration':.5}});return {version:8,sources:{atlas:{type:'raster-dem',...base,tileSize:fullTiles?512:256,encoding:'mapbox'}},layers};}
+ layers.push({id:'raster',type:'raster',source:'atlas'}); return {version:8,sources:{atlas:{type:'raster',...base,tileSize:fullTiles?512:256}},layers};
 }
 export interface ConvertOptions {bounds:BBox;minzoom:number;maxzoom:number;name:string;attribution:string}
 export async function convertGeoJson(data:GeoJSON.FeatureCollection,file:string,o:ConvertOptions,progress:(done:number,total:number)=>void) {

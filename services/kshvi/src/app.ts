@@ -4,6 +4,8 @@ import { HttpError, Router, reply, type Ctx } from '@def-ops/service-kit';
 import { assertCsrf, clearSessionCookie, publicParticipant, SessionManager } from './auth/sessions';
 import { KSHVI_ROUTE_PREFIX } from './http/router';
 import { registerExerciseRoutes } from './http/exercise-routes';
+import { registerAutonomyRoutes } from './http/autonomy-routes';
+import { registerReadinessRoutes } from './http/readiness-routes';
 import { InMemoryExerciseStore, type ExerciseStore } from './store/exercise-store';
 import type { ExerciseEvidenceService } from './store/exercise-evidence-service';
 import { MemoryModernImportStore, registerForceRoutes } from './http/force-routes';
@@ -121,6 +123,8 @@ export function buildRouter({ localLogin=localLoginConfig(process.env), sessions
     };
   };
   registerExerciseRoutes(router, { store: exerciseStore, sessions, ...(evidence ? { evidence } : {}) });
+  registerAutonomyRoutes(router, { store: exerciseStore, sessions });
+  registerReadinessRoutes(router, { store: exerciseStore, sessions });
   registerForceRoutes(router, forceStore, sessions);
   registerSymbolRoutes(router);
   registerInstanceRoutes(router, instances, commands, participant, environmentProvider);

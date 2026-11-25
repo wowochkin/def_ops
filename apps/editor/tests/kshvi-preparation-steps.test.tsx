@@ -39,6 +39,6 @@ it('показывает один шаг и ведёт от среды до за
   expect(screen.getByRole('heading', { name: 'Готовность' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
   expect(screen.getByRole('heading', { name: 'Проверка перед запуском' })).toBeTruthy();
-  expect((screen.getByRole('button', { name: 'Запустить официальный сеанс' }) as HTMLButtonElement).disabled).toBe(true);
+  expect((screen.getByRole('button', { name: 'Отправить на проверку' }) as HTMLButtonElement).disabled).toBe(false);
   expect((screen.getByRole('button', { name: 'Назад' }) as HTMLButtonElement).disabled).toBe(false);
 });

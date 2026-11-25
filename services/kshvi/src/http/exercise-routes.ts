@@ -19,6 +19,7 @@ import { exercisePayloadAccess, projectExerciseCard } from '../store/exercise-pr
 import type { ExerciseConfirmationInput, ExerciseEvidenceService } from '../store/exercise-evidence-service';
 import type { InitialSituationMapModel } from '@def-ops/kshvi';
 import { KSHVI_ROUTE_PREFIX } from './router';
+import { participantCandidates, resolveParticipantRoster } from '../store/scenario-participants';
 
 const base = `${KSHVI_ROUTE_PREFIX}/exercises`;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -153,6 +154,32 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<CreateRevisionInput>();
     return reply(201, projectExerciseCard(await store.createRevision(actor, exerciseId(ctx), body, exercisePayloadAccess(actor.participant)), actor.participant));
+  }));
+
+  router.get(`${base}/:id/participant-roster`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise');
+    const card = await store.get(actor.organizationId, exerciseId(ctx));
+    if (!card) throw new HttpError(404, 'not_found', 'Учение не найдено');
+    if (projectExerciseCard(card, actor.participant).payloadAccess !== 'FULL') throw new HttpError(403, 'forbidden', 'Требуется доступ к полной редакции');
+    const revision = card.revisions.find(item => item.revision === card.revision)!;
+    const accounts = await sessions.listAccounts(actor.organizationId);
+    return { revision: card.revision, items: revision.participantRoster ?? [], candidates: participantCandidates(accounts, actor.organizationId) };
+  }));
+
+  router.post(`${base}/:id/participant-roster`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise', true);
+    const body = await ctx.json<{ expectedRevision: number; participants: unknown }>();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new HttpError(422, 'invalid_roster', 'Укажите состав участников');
+    closedBody(body, ['expectedRevision', 'participants']);
+    const card = await store.get(actor.organizationId, exerciseId(ctx));
+    if (!card) throw new HttpError(404, 'not_found', 'Учение не найдено');
+    const access = projectExerciseCard(card, actor.participant).payloadAccess;
+    if (access !== 'FULL') throw new HttpError(403, 'forbidden', 'Требуется доступ к полной редакции');
+    const accounts = await sessions.listAccounts(actor.organizationId);
+    let participants;
+    try { participants = resolveParticipantRoster(accounts, actor.organizationId, body.participants); }
+    catch (cause) { throw new HttpError(422, 'invalid_roster', cause instanceof Error ? cause.message : 'Проверьте назначения'); }
+    return reply(201, projectExerciseCard(await store.bindParticipants(actor, exerciseId(ctx), { expectedRevision: body.expectedRevision, participants }, access), actor.participant));
   }));
 
   router.post(`${base}/:id/preparation`, handle(async ctx => {

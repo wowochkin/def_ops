@@ -3,6 +3,7 @@ import type {Map as MapLibreMap, StyleSpecification} from 'maplibre-gl';
 import type {AtlasMeta} from '../../../../services/cartography/src/atlas';
 import type {WeatherRegion} from '../../../../packages/core/src/weather-grid';
 import {environmentApi, environmentHeaders} from './environment-api';
+import {demSurfaceProtocol, displayDemSource, loadDemSurface} from './atlas-dem-surface';
 import {areaCameraBounds} from './area-camera';
 import {filterOsmThemes} from './osm-themes';
 import {drawSeasons, type Season} from './seasonal-atlas';
@@ -11,9 +12,8 @@ import type {MapWeatherField, WeatherOverlay} from './weather-layer';
 import {coversView} from './environment-region';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-export function isLandCover(p:AtlasMeta){
- return !!p.thematic || /worldcover/i.test([p.name,p.source,p.attribution].join(' '));
-}
+import {isAtlasLandCover as isLandCover} from '../../../../packages/core/src/atlas-raster';
+export {isLandCover};
 type MapBounds = WeatherRegion['bounds'];
 interface AtlasMapProps {
  packages: readonly AtlasMeta[];
@@ -96,20 +96,29 @@ export function AtlasMap({packages, bounds, regions=emptyRegions, disabled=empty
   updateAppearance();
  }
  useEffect(()=>{drawWeather();},[weather]);
- useEffect(()=>{let disposed=false;void import('maplibre-gl').then(lib=>{if(disposed||!container.current)return;const m=new lib.Map({container:container.current,style:{version:8,sources:{},layers:[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}]},center:[13.4,52.5],zoom:7,...(minZoom === undefined ? {} : {minZoom}),attributionControl:{compact:true},transformRequest:url=>({url,headers:url.startsWith('/')||url.startsWith(location.origin)?environmentHeaders():{}})});m.addControl(new lib.NavigationControl(),'top-right');map.current=m;setReady(true);const publishBounds=()=>{
+ useEffect(()=>{let disposed=false;void import('maplibre-gl').then(lib=>{if(disposed||!container.current)return;lib.addProtocol(demSurfaceProtocol,loadDemSurface);const m=new lib.Map({container:container.current,
+  // Выше последнего уровня увеличиваем целый сохранённый тайл, как у растра.
+  zoomLevelsToOverscale:undefined,style:{version:8,sources:{},layers:[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}]},center:[13.4,52.5],zoom:7,...(minZoom === undefined ? {} : {minZoom}),attributionControl:{compact:true},transformRequest:url=>({url,headers:url.startsWith('/')||url.startsWith(location.origin)?environmentHeaders():{}})});m.addControl(new lib.NavigationControl(),'top-right');map.current=m;setReady(true);const publishBounds=()=>{
  if(!onViewBounds)return;
  const b=m.getBounds(), wrap=(v:number)=>((v+180)%360+360)%360-180;
  const world=b.getEast()-b.getWest()>=360;
  const box:WeatherRegion['bounds']=[world?-180:wrap(b.getWest()),Math.max(-85.0511,b.getSouth()),world?180:wrap(b.getEast()),Math.min(85.0511,b.getNorth())];
  if(box[1]<box[3]&&box[0]!==box[2])onViewBounds(box);
- };m.on('moveend',publishBounds);m.on('resize',publishBounds);m.on('load',publishBounds);m.on('error',e=>setError(e.error.message));m.on('style.load',()=>{styleReady.current=true;for(const id of rasterOverlays.current)if(m.getLayer(id))m.setPaintProperty(id,'raster-opacity',latestOpacity.current);drawWeather();});}).catch(e=>{if(!disposed){setError(e.message);onUnavailable?.();}});return()=>{disposed=true;map.current?.remove();map.current=null;};},[]);
+ };m.on('moveend',publishBounds);m.on('resize',publishBounds);m.on('load',publishBounds);m.on('error',e=>setError(e.error.message));m.on('style.load',()=>{styleReady.current=true;
+ for(const [id,style] of Object.entries(m.getStyle().sources)){
+  if((style.type==='raster-dem'||style.type==='raster')&&style.tiles?.some(url=>url.endsWith('&coverage=xyz'))){
+   const source=m.getSource<import('maplibre-gl').RasterTileSource>(id);
+   if(source)source.roundZoom=false;
+  }
+ }
+ for(const id of rasterOverlays.current)if(m.getLayer(id))m.setPaintProperty(id,'raster-opacity',latestOpacity.current);drawWeather();});}).catch(e=>{if(!disposed){setError(e.message);onUnavailable?.();}});return()=>{disposed=true;map.current?.remove();map.current=null;};},[]);
  useEffect(()=>{
   const m=map.current,box=container.current;
   if(!ready||!m||!box)return;
   const target=areaCameraBounds(bounds,box.clientWidth,box.clientHeight,framing.fill);
   if(target)m.fitBounds(target,{padding:framing.fill?0:32,duration:0,bearing:0,pitch:0});
  },[ready,bounds,framing]);
- useEffect(()=>{if(!ready||!map.current)return;let stale=false;setError('');void Promise.all(packages.map(p=>environmentApi<StyleSpecification>(`/atlas/${p.id}/style`))).then(styles=>{
+ useEffect(()=>{if(!ready||!map.current)return;let stale=false;setError('');void Promise.all(packages.map(p=>environmentApi<StyleSpecification>(`/atlas/${p.id}/style${p.kind==='terrain'||isLandCover(p)?'?coverage=xyz':''}`))).then(styles=>{
   if(stale||!map.current)return;const result:StyleSpecification={version:8,sources:{},glyphs:'/api/cartography/fonts/{fontstack}/{range}.pbf',layers:[{id:'background',type:'background',paint:{'background-color':'#ede8d8'}}]};
   if(weatherVisible)result.layers[0]={id:'background',type:'background',paint:{'background-color':'#253143'}};
   const rasterIds:string[]=[];
@@ -117,16 +126,22 @@ export function AtlasMap({packages, bounds, regions=emptyRegions, disabled=empty
   for(const [i,s]of styles.entries()){
    const p=packages[i];if(s.glyphs)result.glyphs=s.glyphs;
    for(const [name,source]of Object.entries(s.sources)){
-    result.sources[`${p.id}-${name}`]=source;
+    const displaySource=source.type==='raster-dem'?displayDemSource(source):source;
+    result.sources[`${p.id}-${name}`]=displaySource;
     if(p.id===terrainId&&source.type==='raster-dem'){
-     result.sources['atlas-3d-dem']={...source};
+     result.sources['atlas-3d-dem']={...displaySource};
      result.terrain={source:'atlas-3d-dem',exaggeration:1};
     }
    }
    for(const l of s.layers){if(l.type==='background')continue;const layer={...l,id:`${p.id}-${l.id}`} as typeof l & {source?:string};if('source'in l)layer.source=`${p.id}-${l.source}`;
     const index=/^layer-(\d+)/.exec(l.id)?.[1],key=index!==undefined?`${p.id}/${p.layers[Number(index)]?.id}`:`${p.id}/raster`;
     layer.layout={...layer.layout,visibility:disabled.has(key)?'none':'visible'};
+    // При смене масштаба родительский тайл выходит за границы подробной карты.
+    if(layer.type==='raster')layer.paint={...layer.paint,'raster-fade-duration':0};
     if(layer.type==='raster'&&(overview||p!==baseRaster)){layer.paint={...layer.paint,'raster-opacity':latestOpacity.current};rasterIds.push(layer.id);}
+    if(weatherVisible&&layer.type==='raster'&&isLandCover(p)){
+     layer.paint={...layer.paint,'raster-saturation':-.7};
+    }
     if(weatherVisible&&p.kind==='vector'){
      const water='source-layer' in layer&&/water/.test(String(layer['source-layer']));
      if(layer.type==='fill')layer.paint={...layer.paint,'fill-color':water?'#364c65':'#334153','fill-opacity':.68};
@@ -166,5 +181,5 @@ export function AtlasMap({packages, bounds, regions=emptyRegions, disabled=empty
   }
 
  }).catch(e=>{if(!stale){setError(e.message);onUnavailable?.();}});return()=>{stale=true;};},[packages,regions,disabled,ready,overview,weatherVisible,terrainId]);
- return <><div className="env-map" ref={container} aria-label="Автономная многослойная карта"/>{error&&<p className="env-note" role="status">Карта: {error}. Если не видны подписи, подготовьте локальные шрифты.</p>}</>;
+ return <><div className="env-map" style={weatherVisible?{backgroundColor:'#253143'}:undefined} ref={container} aria-label="Автономная многослойная карта"/>{error&&<p className="env-note" role="status">Карта: {error}. Если не видны подписи, подготовьте локальные шрифты.</p>}</>;
 }

@@ -4,6 +4,7 @@ import type {
   PresenterCommand,
 } from '../../../../../../packages/kshvi/src/exposition/browser-entry';
 import type { AudienceProjectionView } from './AudienceProjector';
+import { readSessionCsrf } from '../session-csrf';
 
 export interface ExpositionApi {
   start(input: Readonly<{ source: 'ARCHIVE' | 'AUTONOMOUS'; seed?: number; sessionId?: string; branchId?: string }>): Promise<ExpositionPresenterSession>;
@@ -19,7 +20,6 @@ export interface ExpositionApi {
 }
 
 type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-const CSRF_STORAGE_KEY = 'def_ops.kshvi.csrf';
 
 export class ExpositionClient implements ExpositionApi {
   private readonly baseUrl: string;
@@ -35,9 +35,7 @@ export class ExpositionClient implements ExpositionApi {
   }> = {}) {
     this.baseUrl = (options.baseUrl ?? '/api/kshvi').replace(/\/$/, '');
     this.fetcher = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
-    this.csrfToken = options.csrfToken ?? (() => {
-      try { return globalThis.sessionStorage?.getItem(CSRF_STORAGE_KEY) ?? ''; } catch { return ''; }
-    });
+    this.csrfToken = options.csrfToken ?? (() => readSessionCsrf(this.baseUrl, true));
     this.extraHeaders = options.headers ?? (() => ({}));
   }
 

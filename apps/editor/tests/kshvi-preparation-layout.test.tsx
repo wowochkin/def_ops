@@ -31,6 +31,21 @@ function clientFor(getCard: () => Promise<Response> = async () => Response.json(
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(cleanup);
 
+it('отличает старый сервер без области доступа от настоящего ограничения роли', async () => {
+  const legacy = JSON.parse(JSON.stringify(card));
+  delete legacy.payloadAccess;
+  render(<KshviView client={clientFor(async () => Response.json(legacy))} role="DIRECTOR"
+    authorities={['exercise:read', 'exercise:revise', 'TRUTH_READ']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  const nav = await screen.findByRole('navigation', { name: 'Этапы подготовки' });
+  for (const name of ['Среда', 'Силы и МТО', 'События', 'Готовность', 'Запуск']) {
+    fireEvent.click(within(nav).getByRole('button', { name }));
+    expect(screen.getByText(/Интерфейс и сервер КШВИ разных версий/)).toBeTruthy();
+    expect(screen.queryByText(/недоступен для этой роли/)).toBeNull();
+  }
+  expect(screen.queryByRole('button', { name: 'Сохранить черновик' })).toBeNull();
+});
+
 it('показывает пять этапов, отдельную нижнюю панель и проверку запуска без служебных кодов', async () => {
   render(<KshviView client={clientFor()} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
@@ -57,7 +72,7 @@ it('показывает пять этапов, отдельную нижнюю 
   fireEvent.click(within(nav).getByRole('button', { name: 'Запуск' }));
   expect(screen.getByText('Сценарий ещё не зафиксирован')).toBeTruthy();
   expect(screen.queryByText('Требуется SEALED')).toBeNull();
-  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Запустить официальный сеанс' }).disabled).toBe(true);
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Отправить на проверку' }).disabled).toBe(false);
 });
 
 it('не открывает закрытое содержимое из сохранённой ссылки или после смены роли', async () => {
@@ -361,7 +376,7 @@ it('запускает зафиксированную редакцию толь�
   fireEvent.click(screen.getByRole('button', { name: 'Запуск' }));
   expect(screen.getByText('Сценарий зафиксирован')).toBeTruthy();
 
-  const start = screen.getByRole<HTMLButtonElement>('button', { name: 'Запустить официальный сеанс' });
+  const start = screen.getByRole<HTMLButtonElement>('button', { name: 'Запустить учение' });
   expect(start.disabled).toBe(true);
   fireEvent.click(start);
   expect(started).toEqual([]);

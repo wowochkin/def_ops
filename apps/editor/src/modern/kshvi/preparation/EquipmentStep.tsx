@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { knownQuantity, unknownQuantity } from '@def-ops/kshvi/browser';
 import type {
   EquipmentEditorIssue,
@@ -43,10 +43,11 @@ function groupNumber(value: string, field: string): number | null {
   return parsed;
 }
 
-export function EquipmentStep({ initialRows, operations, onChange }: {
+export function EquipmentStep({ initialRows, operations, onChange, onSave }: {
   initialRows: readonly EquipmentEditorRow[];
   operations: EquipmentStepOperations;
   onChange?: (rows: readonly EquipmentEditorRow[]) => void;
+  onSave?: (rows: readonly EquipmentEditorRow[]) => void;
 }) {
   const [rows, setRows] = useState<readonly EquipmentEditorRow[]>(initialRows);
   const [tableText, setTableText] = useState('');
@@ -56,6 +57,7 @@ export function EquipmentStep({ initialRows, operations, onChange }: {
   const [preview, setPreview] = useState<EquipmentGroupPreview | null>(null);
   const [applied, setApplied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => setRows(initialRows), [initialRows]);
   const issues = operations.validateRows(rows);
 
   const updateRows = (next: readonly EquipmentEditorRow[]) => {
@@ -90,6 +92,15 @@ export function EquipmentStep({ initialRows, operations, onChange }: {
     setApplied(true);
   };
 
+  const updateQuantity = (id: string, field: 'actual' | 'SERVICEABLE', value: string) => {
+    const quantity = value === '' ? null : Number(value);
+    if (quantity !== null && (!Number.isSafeInteger(quantity) || quantity < 0)) return;
+    updateRows(rows.map(row => row.id === id ? {
+      ...row,
+      ...(field === 'actual' ? { actual: quantity } : { stateCounts: { ...row.stateCounts, SERVICEABLE: quantity ?? 0 } }),
+    } : row));
+  };
+
   const authorized = sumKnown(rows, row => row.authorized);
   const actual = sumKnown(rows, row => row.actual);
   const serviceable = sumKnown(rows, row => row.stateCounts.SERVICEABLE);
@@ -99,6 +110,7 @@ export function EquipmentStep({ initialRows, operations, onChange }: {
     <p>Штат: {quantity(authorized)}</p>
     <p>Факт: {quantity(actual)}</p>
     <p>Исправно: {quantity(serviceable)}</p>
+    {onSave && <button type="button" onClick={() => onSave(rows)}>Применить ведомость</button>}
 
     {error && <p role="alert">{error}</p>}
     {issues.length > 0 && <ul aria-label="Ошибки ведомости" role="alert">
@@ -113,8 +125,8 @@ export function EquipmentStep({ initialRows, operations, onChange }: {
         <td>{row.typeTitle}</td>
         <td>{row.accounting === 'AGGREGATE' ? 'Агрегированный учёт' : 'Поштучный учёт'}</td>
         <td>{quantity(row.authorized)}</td>
-        <td>{quantity(row.actual)}</td>
-        <td>{quantity(row.stateCounts.SERVICEABLE)}</td>
+        <td><input aria-label={`Факт ${row.id}`} type="number" min="0" value={row.actual ?? ''} onChange={event => updateQuantity(row.id, 'actual', event.target.value)} /></td>
+        <td><input aria-label={`Исправно ${row.id}`} type="number" min="0" value={row.stateCounts.SERVICEABLE ?? ''} onChange={event => updateQuantity(row.id, 'SERVICEABLE', event.target.value)} /></td>
         <td>{row.actual === null ? 'UNKNOWN' : `${row.distribution.reduce((sum, entry) => sum + entry.quantity, 0)} / ${row.actual}`}</td>
       </tr>)}</tbody>
     </table>

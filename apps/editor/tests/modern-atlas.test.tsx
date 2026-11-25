@@ -2,8 +2,8 @@
 import {it,expect,vi,afterEach} from 'vitest';
 import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';
 import {AtlasView} from '../src/modern/AtlasView';
-const mocks=vi.hoisted(()=>({setStyle:vi.fn()}));
-vi.mock('maplibre-gl',()=>({Map:class {setStyle=mocks.setStyle;addControl(){}on(){}remove(){}fitBounds(){}},NavigationControl:class{}}));
+const mocks=vi.hoisted(()=>({setStyle:vi.fn(),init:vi.fn()}));
+vi.mock('maplibre-gl',()=>({addProtocol:vi.fn(),Map:class {constructor(options:unknown){mocks.init(options);}setStyle=mocks.setStyle;addControl(){}on(){}remove(){}fitBounds(){}},NavigationControl:class{}}));
 afterEach(()=>{cleanup();localStorage.clear();vi.unstubAllGlobals();mocks.setStyle.mockClear();});
 it('опрос фонового задания не перезагружает стиль открытой карты',async()=>{
  const card={id:'test',name:'Тестовая карта',format:'pbf',kind:'vector',minzoom:0,maxzoom:14,bounds:[12,51,14,53],attribution:'test',layers:[{id:'roads'}],bytes:100,sha256:'abc'};
@@ -28,7 +28,7 @@ it('единая область применяется к погоде и к п�
  vi.stubGlobal('fetch',vi.fn(async(input:string,init?:RequestInit)=>{
   const path=String(input);
   if(path.endsWith('/resolve'))request=JSON.parse(String(init?.body)).bounds;
-  const data=path.endsWith('/atlas')?maps:path.endsWith('/osm/style')?{version:8,sources:{atlas:{type:'vector'}},layers:[{id:'layer-0-line',type:'line',source:'atlas'},{id:'layer-0-label',type:'symbol',source:'atlas'}]}:path.endsWith('/cover/style')?{version:8,sources:{atlas:{type:'raster'}},layers:[{id:'raster',type:'raster',source:'atlas'}]}:path.endsWith('/resolve')?{files:[],bytes:0,missing:[],note:''}:path.endsWith('/runtime')?{ok:true}:[];
+  const data=path.endsWith('/atlas')?maps:path.endsWith('/osm/style')?{version:8,sources:{atlas:{type:'vector'}},layers:[{id:'layer-0-line',type:'line',source:'atlas'},{id:'layer-0-label',type:'symbol',source:'atlas'}]}:path.endsWith('/cover/style?coverage=xyz')?{version:8,sources:{atlas:{type:'raster'}},layers:[{id:'raster',type:'raster',source:'atlas'}]}:path.endsWith('/resolve')?{files:[],bytes:0,missing:[],note:''}:path.endsWith('/runtime')?{ok:true}:[];
   return new Response(JSON.stringify(data));
  }));
  render(<AtlasView/>);
@@ -45,6 +45,9 @@ it('единая область применяется к погоде и к п�
  fireEvent.click(await screen.findByRole('checkbox',{name:'Вектор OSM'}));
  fireEvent.click(screen.getByRole('checkbox',{name:'WorldCover'}));
  await waitFor(()=>{const layers=mocks.setStyle.mock.calls.at(-1)?.[0]?.layers.map((l:{id:string})=>l.id);expect(layers).toEqual(['background','cover-raster','osm-layer-0-line','osm-layer-0-label']);});
+ const style=mocks.setStyle.mock.calls.at(-1)![0];
+ expect(style.layers.find((layer:{id:string})=>layer.id==='cover-raster').paint['raster-fade-duration']).toBe(0);
+ expect(mocks.init.mock.lastCall?.[0]).toHaveProperty('zoomLevelsToOverscale',undefined);
 });
 
 it('слои с одинаковым названием включаются независимо в разных областях',async()=>{

@@ -2,25 +2,28 @@ import { useEffect, useRef, useState } from 'react';
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import type { Bounds, EnvironmentSnapshot } from '../../../../../../packages/kshvi/src/environment/provider';
 import type { InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
-import { getSymbol, symbolImageId, symbolImages } from '@def-ops/tactical-symbols';
+import { getSymbol, renderSymbol } from '@def-ops/tactical-symbols';
 import type { KshviClient } from '../kshvi-api';
 import { loadEnvironmentStyles } from './snapshot-map-style';
+import { editedSymbol, markerImageId } from './initial-map-symbol';
+import type { MapEditorInteractions } from './InitialMapEditor';
+import { attachEditorInteractions, updateEditorOverlays } from './initial-map-canvas-interactions';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 async function ensureSymbolImages(canvas: MapLibreMap, map: InitialSituationMap): Promise<void> {
   if (typeof Image === 'undefined') return;
   const seen = new Set<string>();
   for (const marker of map.markers) {
-    if (seen.has(marker.symbol.id)) continue;
-    seen.add(marker.symbol.id);
+    const imageId = markerImageId(marker.symbol);
+    if (seen.has(imageId)) continue;
+    seen.add(imageId);
     try {
-      const symbol = getSymbol(marker.symbol.id);
-      const definition = symbolImages([symbol], { width: 80, height: 80 })[0]!;
-      if (canvas.hasImage(definition.id)) continue;
+      const symbol = editedSymbol(getSymbol(marker.symbol.id), marker.symbol);
+      if (canvas.hasImage(imageId)) continue;
       const image = new Image();
-      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(definition.svg)}`;
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSymbol(symbol, { width: 80, height: 80 }))}`;
       await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('SVG знака не загрузился')); });
-      if (!canvas.hasImage(definition.id)) canvas.addImage(definition.id, image);
+      if (!canvas.hasImage(imageId)) canvas.addImage(imageId, image);
     } catch {
       // Внешняя отметка без известного знака сохраняет резервное круговое обозначение.
     }
@@ -28,7 +31,7 @@ async function ensureSymbolImages(canvas: MapLibreMap, map: InitialSituationMap)
 }
 
 export function snapshotStyleUrls<T>(value: T): T {
-  if (typeof value === 'string') return (value.startsWith('/kshvi/') ? `/api${value}` : value) as T;
+  if (typeof value === 'string') return (value.startsWith('/kshvi/') || value.startsWith('/cartography/') ? `/api${value}` : value) as T;
   if (Array.isArray(value)) return value.map(item => snapshotStyleUrls(item)) as T;
   if (value && typeof value === 'object') {
     return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([key, child]) => [key, snapshotStyleUrls(child)])) as T;
@@ -36,8 +39,19 @@ export function snapshotStyleUrls<T>(value: T): T {
   return value;
 }
 
-export function InitialMapCanvas({ client, snapshot, map }: {
-  client: KshviClient; snapshot: EnvironmentSnapshot; map?: InitialSituationMap;
+export function annotationFont(style: StyleSpecification): string[] | null {
+  if (!style.glyphs) return null;
+  for (const layer of style.layers) {
+    if (layer.type !== 'symbol') continue;
+    const fonts = layer.layout?.['text-font'];
+    if (Array.isArray(fonts) && fonts.length && fonts.every(font => typeof font === 'string')
+      && !['get', 'literal', 'concat', 'to-string'].includes(fonts[0] as string)) return [fonts[0] as string];
+  }
+  return null;
+}
+
+export function InitialMapCanvas({ client, snapshot, map, interaction }: {
+  client: KshviClient; snapshot: EnvironmentSnapshot; map?: InitialSituationMap; interaction?: MapEditorInteractions;
 }) {
   const [style, setStyle] = useState<StyleSpecification | null>(null);
   const [error, setError] = useState('');
@@ -53,21 +67,21 @@ export function InitialMapCanvas({ client, snapshot, map }: {
 
   return <>
     {error && <p role="alert">Топографическая карта недоступна: {error}</p>}
-    {style && <EnvironmentMapPreview style={style} bounds={snapshot.region.bounds} map={map}
+    {style && <EnvironmentMapPreview style={style} bounds={snapshot.region.bounds} map={map} interaction={interaction}
       label="Карта исходной обстановки" />}
   </>;
 }
 
 export type WeatherMapPoint = Readonly<{ lon: number; lat: number; value: number }>;
 
-export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label = 'Предпросмотр выбранных слоёв' }: {
-  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherPoints?: readonly WeatherMapPoint[]; label?: string;
+export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, interaction, label = 'Предпросмотр выбранных слоёв' }: {
+  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherPoints?: readonly WeatherMapPoint[]; interaction?: MapEditorInteractions; label?: string;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapLibreMap | null>(null);
   const loaded = useRef(false);
-  const latest = useRef({ map, weatherPoints });
-  latest.current = { map, weatherPoints };
+  const latest = useRef({ map, weatherPoints, interaction });
+  latest.current = { map, weatherPoints, interaction };
   const [error, setError] = useState('');
 
   function fit(canvas: MapLibreMap) {
@@ -77,15 +91,17 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label
 
   useEffect(() => {
     let disposed = false;
+    let detach: (() => void) | undefined;
     setError('');
     void import('maplibre-gl').then(lib => {
       if (disposed || !container.current) return;
-      const canvas = new lib.Map({ container: container.current, style, attributionControl: { compact: true }, locale: {
+      const canvas = new lib.Map({ container: container.current, style: snapshotStyleUrls(style), attributionControl: { compact: true }, locale: {
         'NavigationControl.ZoomIn': 'Приблизить',
         'NavigationControl.ZoomOut': 'Отдалить',
         'NavigationControl.ResetBearing': 'Повернуть карту на север',
       } });
       instance.current = canvas;
+      if (latest.current.interaction) detach = attachEditorInteractions(canvas, () => latest.current.interaction, () => latest.current.map);
       canvas.addControl(new lib.NavigationControl(), 'top-right');
       canvas.on('load', () => {
         if (disposed) return;
@@ -99,17 +115,23 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label
           paint: { 'line-color': '#214760', 'line-width': 2, 'line-dasharray': [4, 2] } });
         updateWeather();
         const currentMap = latest.current.map;
-        if (currentMap) void ensureSymbolImages(canvas, currentMap).then(updateMarkers);
+        if (currentMap) void ensureSymbolImages(canvas, drawingSymbols(currentMap)).then(updateMarkers);
       });
       canvas.on('error', event => { if (!disposed) setError(event.error.message); });
     }).catch(cause => { if (!disposed) setError(cause instanceof Error ? cause.message : 'Карта недоступна'); });
     return () => {
       disposed = true;
       loaded.current = false;
+      detach?.();
       instance.current?.remove();
       instance.current = null;
     };
   }, [style, bounds]);
+
+  function drawingSymbols(value: InitialSituationMap): InitialSituationMap {
+    const pending = latest.current.interaction?.drawing;
+    return pending ? { ...value, markers: [...value.markers, pending.marker] } : value;
+  }
 
   function updateWeather(): void {
     const canvas = instance.current;
@@ -141,17 +163,17 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label
       features: map.markers.filter(marker => marker.geometry).map(marker => {
         let icon = '';
         try {
-          const id = symbolImageId(getSymbol(marker.symbol.id));
+          const id = markerImageId(marker.symbol);
           if (canvas.hasImage(id)) icon = id;
         } catch { /* резервный значок для неизвестного источника */ }
         return {
           type: 'Feature' as const, geometry: marker.geometry!,
-          properties: { id: marker.id, kind: marker.kind, sideId: marker.sideId, ...(icon ? { icon } : {}) },
+          properties: { id: marker.id, name: marker.name ?? marker.id, kind: marker.kind, sideId: marker.sideId, ...(icon ? { icon } : {}) },
         };
       }),
     } as unknown as GeoJSON.GeoJSON;
     const existing = canvas.getSource('kshvi-initial-markers') as GeoJSONSource | undefined;
-    if (existing) { existing.setData(data); return; }
+    if (existing) { existing.setData(data); updateEditorOverlays(canvas, map, latest.current.interaction); return; }
     canvas.addSource('kshvi-initial-markers', { type: 'geojson', data });
     const sideColor: ExpressionSpecification = ['match', ['get', 'sideId'], 'red', '#b42318', 'blue', '#175cd3', '#475467'];
     canvas.addLayer({
@@ -186,17 +208,19 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, label
       filter: ['all', ['==', ['geometry-type'], 'Polygon'], ['has', 'icon']],
       layout: { 'icon-image': ['get', 'icon'], 'icon-size': 0.8, 'icon-allow-overlap': true },
     });
-    canvas.addLayer({
+    const font = annotationFont(style);
+    if (font) canvas.addLayer({
       id: 'kshvi-initial-labels', type: 'symbol', source: 'kshvi-initial-markers',
-      layout: { 'text-field': ['get', 'id'], 'text-size': 12, 'text-offset': [0, 1.2] },
+      layout: { 'text-font': font!, 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.2] },
       paint: { 'text-color': '#101828', 'text-halo-color': '#ffffff', 'text-halo-width': 2 },
     });
+    updateEditorOverlays(canvas, map, latest.current.interaction);
   }
 
   useEffect(() => {
     const canvas = instance.current;
-    if (canvas && map) void ensureSymbolImages(canvas, map).then(updateMarkers);
-  }, [map]);
+    if (canvas && map) void ensureSymbolImages(canvas, drawingSymbols(map)).then(updateMarkers);
+  }, [map, interaction]);
 
   return <section className="kshvi-environment-map" aria-label={label}>
     <div ref={container} className="kshvi-environment-map-canvas" />

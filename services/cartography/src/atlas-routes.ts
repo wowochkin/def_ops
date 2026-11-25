@@ -26,7 +26,7 @@ function options(o:ConvertOptions) {
 export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-ops/service-kit').Ctx)=>string) {
  const store=new AtlasStore(path.join(tiles.root,'.atlas')),jobs=new AtlasJobs(path.join(tiles.root,'.atlas-jobs'),store.root);
  onShutdown(async () => jobs.stop());
- r.post('/cartography/atlas/resolve',async c=>{const b=await c.json<{kind:'osm'|'dem'|'landcover';bounds:import('@def-ops/core').BBox}>();return resolveSources(b.kind,b.bounds);});
+ r.post('/cartography/atlas/resolve',async c=>{const b=await c.json<{kind:'osm'|'dem'|'landcover';bounds:import('@def-ops/core').BBox;minzoom?:number}>();return resolveSources(b.kind,b.bounds,b.minzoom);});
  r.get('/cartography/atlas/sources',()=>sources);
  r.get('/cartography/atlas/jobs',c=>jobs.list(c.tenant));
  r.post('/cartography/atlas/jobs/:id/cancel',c=>jobs.cancel(c.tenant,c.params.id));
@@ -67,10 +67,10 @@ export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-o
  });
  r.post('/cartography/atlas/:id/landcover',async c=>atlasLandcover(store,c.tenant,c.params.id,(await c.json<{points:[number,number][]}>()).points));
  r.post('/cartography/atlas/:id/elevations',async c=>atlasElevations(store,c.tenant,c.params.id,(await c.json<{points:[number,number][]}>()).points));
- r.get('/cartography/atlas/:id/style',async c=>atlasStyle(await store.get(c.tenant,c.params.id),prefix(c)));
+ r.get('/cartography/atlas/:id/style',async c=>atlasStyle(await store.get(c.tenant,c.params.id),prefix(c),c.query.get('coverage')==='xyz'?'xyz':'bounds'));
  r.get('/cartography/atlas/:id/export',async c=>{await store.get(c.tenant,c.params.id);const file=store.file(c.tenant,c.params.id),st=await fs.stat(file);c.res.writeHead(200,{'content-type':'application/octet-stream','content-length':String(st.size),'content-disposition':'attachment; filename="atlas.mbtiles"'});await pipeline(createReadStream(file),c.res);});
  r.get('/cartography/atlas/:id/tiles/:z/:x/:y',async c=>{
-  const t=await store.tile(c.tenant,c.params.id,Number(c.params.z),Number(c.params.x),Number(c.params.y));if(!t)return reply(204,null);
+  const t=await store.tile(c.tenant,c.params.id,Number(c.params.z),Number(c.params.x),Number(c.params.y),c.query.get('coverage')==='xyz'?'xyz':'bounds');if(!t)return reply(204,null);
   const headers:Record<string,string>={'content-type':t.format==='pbf'?'application/vnd.mapbox-vector-tile':`image/${t.format==='jpg'?'jpeg':t.format}`,'cache-control':'private, max-age=86400'};
   if(t.format==='pbf'&&t.bytes[0]===0x1f&&t.bytes[1]===0x8b)headers['content-encoding']='gzip';return reply(200,t.bytes,headers);
  });

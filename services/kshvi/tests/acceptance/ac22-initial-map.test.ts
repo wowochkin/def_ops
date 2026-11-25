@@ -98,7 +98,10 @@ it('AC-22: карта исправляется, утверждается сер�
   });
   for (const item of imported.markers) map = addInitialMapMarker(map, item);
   expect(validateInitialMap(map).filter(issue => issue.severity === 'ERROR')).toEqual([]);
-  const audiences = initialMapAudiences(map.markers);
+  const audiences = initialMapAudiences([
+    { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
+    { sideId: 'red', instanceId: 'red-hq', role: 'TRAINEE', label: 'Штаб red · red-hq' },
+  ]);
   expect(audiences).toEqual(expect.arrayContaining([
     { sideId: 'blue', instanceId: 'blue-hq', role: 'TRAINEE', label: 'Штаб blue · blue-hq' },
     { sideId: 'red', instanceId: 'red-hq', role: 'TRAINEE', label: 'Штаб red · red-hq' },

@@ -66,6 +66,7 @@
     "expo:briefing": "tsx scripts/expo-briefing.ts",
     "portable:mac": "node --import tsx scripts/portable-build-mac.mjs",
     "portable:library": "node scripts/portable-release.mjs",
+    "atlas:coverage": "tsx scripts/atlas-coverage.ts",
     "gis:prepare": "node scripts/cartography-runtime.mjs prepare",
     "gis:windows-wheels": "node scripts/cartography-runtime.mjs windows-wheels"
   },

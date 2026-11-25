@@ -2,18 +2,9 @@
 import {validBounds} from './atlas';
 import {http,netMessage} from './net';
 import type {BBox} from '@def-ops/core';
-export interface SourceFile {name:string;url:string;bytes?:number}
+import {rasterSources, type SourceFile} from '../../../packages/core/src/atlas-raster';
+export {rasterSources, type SourceFile} from '../../../packages/core/src/atlas-raster';
 const split=(b:BBox):BBox[]=>b[0]>b[2]?[[b[0],b[1],180,b[3]],[-180,b[1],b[2],b[3]]]:[b];
-function lat(n:number){return `${n<0?'S':'N'}${String(Math.abs(n)).padStart(2,'0')}`;}
-function lon(n:number){return `${n<0?'W':'E'}${String(Math.abs(n)).padStart(3,'0')}`;}
-export function rasterSources(kind:'dem'|'landcover',bounds:BBox):SourceFile[]{
- validBounds(bounds);const files=new Map<string,SourceFile>(),step=kind==='dem'?1:3;
- for(const b of split(bounds))for(let y=Math.floor(b[1]/step)*step;y<b[3];y+=step)for(let x=Math.floor(b[0]/step)*step;x<b[2];x+=step){
-  const name=kind==='dem'?`Copernicus_DSM_COG_10_${lat(y)}_00_${lon(x)}_00_DEM`:`ESA_WorldCover_10m_2021_v200_${lat(y)}${lon(x)}_Map`;
-  files.set(name,{name,url:kind==='dem'?`https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/${name}/${name}.tif`:`https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/${name}.tif`});
-  if(files.size>64)throw Error('Область содержит более 64 листов. Разбейте её на части.');
- }return [...files.values()];
-}
 interface Extract {properties:{id:string;name:string;urls?:{pbf?:string}};geometry:{type:string;coordinates:number[][][]|number[][][][]}}
 function inside(p:number[],ring:number[][]){let yes=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])yes=!yes;}return yes;}
 function contains(poly:number[][][],b:BBox){
@@ -71,17 +62,17 @@ async function sourceRequest(url:string,method:string,signal:AbortSignal,depth=0
  }
 }
 let cached:{at:number;data:{features:Extract[]}}|undefined;
-export async function resolveSources(kind:'osm'|'dem'|'landcover',bounds:BBox){
+export async function resolveSources(kind:'osm'|'dem'|'landcover',bounds:BBox,minzoom=8){
  validBounds(bounds);const signal=AbortSignal.timeout(90000);let files:SourceFile[];
  if(kind==='osm'){
   if(!cached||Date.now()-cached.at>86400000){const r=await sourceRequest('https://download.geofabrik.de/index-v1.json','GET',signal);if(!r.ok)throw Error(`Индекс Geofabrik недоступен (${r.status})`);const data=await r.json() as {features:Extract[]};if(!Array.isArray(data.features))throw Error('Некорректный индекс источников');cached={at:Date.now(),data};}
   files=chooseExtracts(cached.data,bounds);
- }else if(kind==='dem'||kind==='landcover')files=rasterSources(kind,bounds);else throw Error('Автоподбор доступен для OSM, DEM и WorldCover');
+ }else if(kind==='dem'||kind==='landcover')files=rasterSources(kind,bounds,minzoom);else throw Error('Автоподбор доступен для OSM, DEM и WorldCover');
  const available:SourceFile[]=[],missing:string[]=[];
  for(let offset=0;offset<files.length;offset+=4)await Promise.all(files.slice(offset,offset+4).map(async f=>{
   const u=new URL(f.url);if(u.protocol!=='https:'||!['download.geofabrik.de','copernicus-dem-30m.s3.eu-central-1.amazonaws.com','esa-worldcover.s3.eu-central-1.amazonaws.com'].includes(u.hostname))throw Error('Каталог вернул непредусмотренный адрес');
   const r=await sourceRequest(u.href,'HEAD',signal);if(r.status===404){missing.push(f.name);return;}if(!r.ok)throw Error(`Файл источника недоступен (${r.status})`);available.push({...f,url:r.url||f.url,bytes:Number(r.headers.get('content-length'))||undefined});
  }));
  if(!available.length)throw Error('Источник не содержит данных для выбранной области');
- return {files:available,missing,bytes:available.reduce((n,f)=>n+(f.bytes??0),0),note:kind==='osm'?'Geofabrik отдаёт целую региональную выгрузку, которая может быть значительно больше выбранной области. В тайлы попадёт только выбранная область.':'Скачиваются исходные листы целиком; затем из них готовится выбранная область.'};
+ return {files:available,missing,bytes:available.reduce((n,f)=>n+(f.bytes??0),0),note:kind==='osm'?'Geofabrik отдаёт целую региональную выгрузку, которая может быть значительно больше выбранной области. В тайлы попадёт только выбранная область.':'Исходные листы подобраны по полным тайлам OSM, включая края области на обзорном масштабе.'};
 }

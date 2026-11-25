@@ -200,6 +200,61 @@
 .kshvi-environment-preparation p { overflow-wrap: anywhere; }
 .kshvi-environment-preparation code { padding: 0; background: transparent; color: var(--prep-muted); overflow-wrap: anywhere; }
 
+.initial-editor { min-width: 0; margin-top: 14px; border-top: 1px solid var(--prep-border); padding-top: 14px; }
+.initial-editor-toolbar, .initial-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0 12px; }
+.initial-editor-toolbar > label { min-width: 180px; flex: 1 1 220px; }
+.initial-editor-toolbar > span { flex-basis: 100%; color: var(--prep-muted); font-size: 13px; }
+.initial-editor-body { display: grid; grid-template-columns: minmax(160px, 200px) minmax(250px, 1fr) minmax(210px, 255px); gap: 12px; height: clamp(440px, 61dvh, 650px); min-width: 0; }
+.initial-editor-body > * { min-width: 0; min-height: 0; }
+.initial-editor-palette, .initial-editor-inspector { overflow: auto; overscroll-behavior: contain; padding: 0 7px 12px 0; }
+.initial-editor h3 { font-size: 16px; margin: 0 0 10px; }
+.initial-editor-palette > label { margin-bottom: 8px; }
+.initial-editor-palette > p { font-size: 12px; color: var(--prep-muted); }
+.initial-editor-symbols { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.initial-editor-symbols > button { display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 8px; align-items: center; padding: 7px; text-align: left; }
+.initial-editor-symbols img { grid-row: span 3; background: #fff; border-radius: 3px; object-fit: contain; }
+.initial-editor-symbols span { font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+.initial-editor-symbols small { color: var(--prep-muted); font-size: 11px; line-height: 1.25; }
+.initial-editor-symbols button[aria-pressed="true"] { outline: 2px solid var(--prep-accent); outline-offset: -2px; background: #25423d; }
+.initial-editor-center { display: grid; grid-template-rows: minmax(260px, 1fr) auto auto auto; gap: 6px; }
+.initial-editor-center > .kshvi-environment-map { min-height: 0; }
+.initial-editor-center .kshvi-environment-map-canvas { height: 100%; border-radius: 6px; }
+.initial-editor-center > section[aria-label="Объекты проекции"] { max-height: 100px; overflow: auto; }
+.initial-editor-center > section[aria-label="Объекты проекции"] > button { margin: 2px 4px 2px 0; padding: 6px 9px; min-height: 36px; }
+.initial-editor-center > section[aria-label="Объекты проекции"] > button[aria-pressed="true"] { outline: 2px solid var(--prep-accent); outline-offset: -2px; }
+.initial-editor-inspector > fieldset { display: grid; gap: 9px; margin: 0; padding: 10px; }
+.initial-editor-inspector fieldset fieldset { padding: 9px; margin: 0; }
+.initial-editor-inspector input:not([type="checkbox"]), .initial-editor-inspector select, .initial-editor-inspector textarea,
+.initial-editor-palette input, .initial-editor-palette select { width: 100%; min-width: 0; }
+.initial-editor label:has(input[type="checkbox"]), .initial-editor-roster label:has(input[type="checkbox"]) { display: flex; gap: 7px; align-items: center; margin-block: 6px; }
+.initial-editor input[type="checkbox"], .initial-editor-roster input[type="checkbox"] { width: 16px; min-width: 16px; height: 16px; padding: 0; }
+.initial-editor-inspector small { color: var(--prep-muted); font-size: 12px; }
+.initial-editor-body > div:last-child { overflow: auto; overscroll-behavior: contain; }
+.initial-editor-body > div:last-child > .initial-editor-inspector { overflow: visible; padding-right: 0; }
+.initial-editor-body > div:last-child > button { margin-block: 10px; width: 100%; }
+.initial-editor-selection-box { position: absolute; z-index: 3; pointer-events: none; border: 2px solid #225f88; background: rgb(34 95 136 / 12%); }
+.initial-editor > details { margin-top: 12px; }
+.initial-editor textarea { width: 100%; min-height: 90px; resize: vertical; }
+.initial-editor > section[aria-label="Легенда карты"] { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; }
+.initial-editor > section[aria-label="Легенда карты"] > h3 { flex-basis: 100%; margin-bottom: 0; }
+.initial-editor > section[aria-label="Легенда карты"] > span { display: inline-flex; align-items: center; gap: 8px; max-width: 260px; font-size: 13px; }
+.initial-editor > section[aria-label="Легенда карты"] img { background: #fff; border-radius: 3px; object-fit: contain; }
+.initial-editor-actions { border-top: 1px solid var(--prep-border); margin-top: 12px; }
+.initial-editor-roster { padding-block: 8px; }
+.initial-editor-roster > fieldset { max-height: 230px; overflow: auto; }
+.initial-editor-roster > button { margin-right: 6px; }
+
+@media (max-width: 1150px) {
+  .initial-editor-body { grid-template-columns: 160px minmax(230px, 1fr) 210px; }
+}
+@media (max-width: 920px) {
+  .initial-editor-body { height: auto; grid-template-columns: minmax(0, 1fr); }
+  .initial-editor-palette { max-height: 260px; }
+  .initial-editor-symbols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .initial-editor-center { min-height: 480px; }
+  .initial-editor-inspector { max-height: 420px; }
+}
+
 @media (max-width: 1000px) {
   .preparation-step-heading { align-items: start; flex-direction: column; gap: 8px; }
   .preparation-step-heading > p { text-align: left; }
@@ -222,4 +277,112 @@
 
 @media (prefers-reduced-motion: reduce) {
   .kshvi-preparation-workspace * { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* Рабочая карта изолирует светлые общие стили исторического редактора. */
+.modern-kshvi .initial-editor {
+  --panel: var(--prep-surface);
+  --line: var(--prep-border);
+  --text: var(--prep-text);
+  color: var(--prep-text);
+  background: var(--prep-bg);
+  color-scheme: dark;
+}
+.modern-kshvi .initial-editor-toolbar {
+  grid-column: auto;
+  background: var(--prep-surface);
+  color: var(--prep-text);
+  border: 1px solid var(--prep-border);
+  border-radius: 6px;
+  padding: 10px;
+  white-space: normal;
+  overflow: visible;
+}
+.modern-kshvi .initial-editor :is(aside, .initial-editor-properties, .initial-editor-object-actions) { background: var(--prep-surface); color: var(--prep-text); }
+.modern-kshvi .initial-editor :is(.initial-editor-palette, .initial-editor-properties) { padding: 10px; border: 1px solid var(--prep-border); border-radius: 6px; }
+.modern-kshvi .initial-editor h3 { font-size: 16px; margin-bottom: 10px; }
+.modern-kshvi .initial-editor label { display: grid; gap: 4px; font-size: 13px; }
+.modern-kshvi .initial-editor input, .modern-kshvi .initial-editor select { margin-top: 0; }
+.modern-kshvi .initial-editor-symbols > button { grid-template-columns: 64px minmax(0, 1fr); padding: 8px; min-height: 90px; }
+.modern-kshvi .initial-editor-symbols span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.modern-kshvi .initial-editor-symbols small { color: #b4c9c3; }
+.modern-kshvi .initial-editor-symbols button[aria-pressed="true"] { background: #25423d; outline: 2px solid var(--prep-accent); }
+.initial-editor-object-actions { position: sticky; top: -10px; z-index: 2; padding-block: 0 10px; }
+.initial-editor-object-actions > button { width: 100%; }
+.initial-editor-object-actions > p { font-size: 12px; margin-top: 8px; color: var(--prep-muted); }
+.initial-editor > .kshvi-error { margin-block: 8px; padding: 10px; }
+.modern-kshvi .initial-editor-expanded { position: fixed; inset: 0; z-index: 1500; margin: 0; padding: 12px; border: 0; display: flex; flex-direction: column; gap: 8px; }
+.initial-editor-expanded .initial-editor-toolbar { flex-shrink: 0; }
+.initial-editor-expanded .initial-editor-body { height: auto; flex: 1; min-height: 0; grid-template-columns: minmax(200px, 235px) minmax(320px, 1fr) minmax(260px, 300px); }
+.initial-editor-expanded > :is(details, footer, section[aria-label="Легенда карты"], p) { flex-shrink: 0; margin: 0; }
+.initial-editor-expanded > section[aria-label="Легенда карты"] { max-height: 52px; overflow: auto; }
+.initial-editor-expanded > section[aria-label="Легенда карты"]:has(> h3:only-child) { display: none; }
+.initial-editor-expanded .initial-editor-actions { padding: 8px 0 0; }
+.modern-kshvi.kshvi-in-preparation { max-width: none; padding: 12px 20px 20px; }
+.modern-kshvi.kshvi-in-preparation > .kshvi-heading { align-items: center; gap: 16px; margin-bottom: 10px; }
+.modern-kshvi.kshvi-in-preparation .kshvi-heading h1 { font-size: 23px; }
+.kshvi-in-preparation .kshvi-kicker { display: none; }
+.kshvi-in-preparation .kshvi-authority { min-width: 0; padding: 6px 12px; }
+.kshvi-in-preparation .kshvi-authority strong { display: none; }
+@media (max-width: 920px) {
+  .initial-editor-expanded { overflow: auto; }
+  .initial-editor-expanded .initial-editor-body { display: grid; grid-template-columns: 1fr; flex: none; }
+  .initial-editor-expanded .initial-editor-center { min-height: 400px; }
+}
+.initial-editor-center { grid-template-rows: minmax(260px, 1fr) auto auto; }
+.initial-editor-selection-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.initial-editor-expanded .initial-editor-center > section[aria-label="Объекты проекции"] { max-height: 72px; }
+.initial-editor-expanded > section[aria-label="Легенда карты"] { align-items: center; }
+.initial-editor-expanded > section[aria-label="Легенда карты"] > h3 { flex-basis: auto; margin: 0; }
+.initial-editor-expanded > section[aria-label="Легенда карты"] img { width: 36px; height: 30px; flex: none; }
+.initial-editor-expanded > section[aria-label="Легенда карты"] > span { font-size: 12px; max-width: 360px; }
+
+
+/* Единая редакция сил, оснащения, построения и снабжения. */
+.force-step-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 16px; }
+.force-step-tabs button[aria-selected="true"] { background: var(--prep-accent); color: #102c27; border-color: var(--prep-accent); }
+.forces-layout { display: grid; grid-template-columns: minmax(210px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.force-tree, .force-editor, .force-knowledge-import { padding: 14px; border: 1px solid var(--prep-border); border-radius: 8px; background: var(--prep-surface); }
+.force-tree-heading, .force-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.force-tree ul { padding-left: 18px; }
+.force-tree button[aria-pressed="true"] { outline: 2px solid var(--prep-accent); }
+.force-editor-grid, .supply-request-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.force-editor-grid input:not([type="checkbox"]), .force-editor-grid select,
+.supply-request-grid input, .supply-request-grid select { width: 100%; min-width: 0; }
+.force-knowledge-import { margin-top: 16px; }
+.morale-editor { margin-top: 16px; }
+.morale-row { display: grid; grid-template-columns: minmax(220px, 1fr) 70px minmax(180px, .8fr); gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--prep-border); }
+.morale-row small { color: var(--prep-muted); }
+.preparation-step-content table { width: 100%; border-collapse: collapse; margin-block: 12px 18px; }
+.preparation-step-content th, .preparation-step-content td { padding: 9px 10px; border: 1px solid var(--prep-border); text-align: left; vertical-align: top; }
+.preparation-step-content th { color: var(--prep-muted); background: var(--prep-surface); }
+.preparation-step-content td input { width: 100%; min-width: 72px; box-sizing: border-box; }
+.preparation-step-content td textarea { width: 100%; min-width: 180px; box-sizing: border-box; resize: vertical; }
+.readiness-report-fields { display: grid; gap: 7px; min-width: 240px; }
+.event-catalog-list { display: grid; gap: 8px; }
+.event-template-card summary { display: flex; justify-content: space-between; gap: 16px; }
+.event-template-card[data-availability="AVAILABLE"] { border-left: 4px solid #79ba91; }
+.event-template-card[data-availability="UNAVAILABLE"] { border-left: 4px solid #c98585; }
+.event-template-card[data-availability="UNKNOWN_DATA"] { border-left: 4px solid #c7b477; }
+.launch-area-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.launch-area-list article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px; border: 1px solid var(--prep-border); border-radius: 7px; background: var(--prep-surface); }
+.launch-area-list article button { grid-row: 1 / span 2; grid-column: 2; }
+.launch-area-list article span { color: var(--prep-muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .forces-layout, .force-editor-grid, .supply-request-grid, .launch-area-list { grid-template-columns: 1fr; }
+  .morale-row { grid-template-columns: 1fr; }
+  .force-step-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* Компактные рабочие сетки при окне 1440×900. */
+.autonomy-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+.autonomy-category-grid input[type="range"] { width: 100%; }
+.preparation-launch { max-width: 1100px; }
+.preparation-launch dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.launch-area-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 900px) {
+  .autonomy-category-grid, .preparation-launch dl, .launch-area-list { grid-template-columns: 1fr; }
 }

@@ -198,6 +198,8 @@ export type SupplyPlan = Readonly<{
   routes: readonly Readonly<{ routeId: string; requestIds: readonly string[]; status: 'OPEN' | 'CLOSED' | 'UNKNOWN' }>[];
   reserves: Readonly<Record<string, number | null>>;
   reportingSchedule: readonly Readonly<{ taskId: string; reportAt: string }>[];
+  transports?: readonly SupplyTransport[];
+  nodes?: readonly SupplyNode[];
   approved: boolean;
 }>;
 

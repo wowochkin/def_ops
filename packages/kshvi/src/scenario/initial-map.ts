@@ -30,6 +30,8 @@ export type MapSymbolUse = Readonly<{
   status: 'IMPORTED' | 'MAPPED' | 'VERIFIED' | 'APPROVED' | 'DEPRECATED';
   sourceDocument: string;
   sourcePage: number;
+  labels?: Readonly<Record<string, string>>;
+  inscriptionStyles?: Readonly<Record<string, Readonly<{ fontWeight?: '400' | '700'; fontStyle?: 'normal' | 'italic' }>>>;
 }>;
 export type MapMarkerLinks = Readonly<{
   forceId?: string;
@@ -39,6 +41,7 @@ export type MapMarkerLinks = Readonly<{
 }>;
 export type MapMarker = Readonly<{
   id: string;
+  name?: string;
   revision: number;
   kind: MapMarkerKind;
   layerId: MapLayerId;
@@ -58,6 +61,8 @@ export type MapMarker = Readonly<{
   symbol: MapSymbolUse;
   loadTonnes?: number;
   crossingCapacityTonnes?: number;
+  speedKph?: number;
+  crossingMinutes?: number;
   passable?: boolean;
   routeId?: string | null;
   offRoadJustification?: string;
@@ -158,18 +163,25 @@ export function createInitialSituationMap(input: Readonly<{
   });
 }
 
-export function addInitialMapMarker(map: InitialSituationMap, marker: MapMarker): InitialSituationMap {
+type MapEditingOptions = Readonly<{ draftSymbols?: boolean }>;
+
+function markerErrors(map: InitialSituationMap, marker: MapMarker, options: MapEditingOptions): readonly InitialMapIssue[] {
+  return validateInitialMap({ bounds: map.bounds, markers: [marker] }).filter(issue => issue.severity === 'ERROR'
+    && !(options.draftSymbols && ['MAPPED', 'VERIFIED'].includes(marker.symbol?.status) && issue.code === 'SYMBOL_NOT_APPROVED'));
+}
+
+export function addInitialMapMarker(map: InitialSituationMap, marker: MapMarker, options: MapEditingOptions = {}): InitialSituationMap {
   if (map.markers.some(item => item.id === marker.id)) throw new Error('DUPLICATE_OBJECT_ID');
-  const issues = validateInitialMap({ bounds: map.bounds, markers: [marker] }).filter(issue => issue.severity === 'ERROR');
+  const issues = markerErrors(map, marker, options);
   if (issues.length) throw new Error(issues.map(issue => issue.code).join(', '));
   return deepFreeze({ ...map, revision: map.revision + 1, state: 'DRAFT' as const, sha256: undefined, markers: [...map.markers, clone(marker)] });
 }
 
-export function updateInitialMapMarker(map: InitialSituationMap, markerId: string, patch: Partial<Omit<MapMarker, 'id' | 'revision'>>): InitialSituationMap {
+export function updateInitialMapMarker(map: InitialSituationMap, markerId: string, patch: Partial<Omit<MapMarker, 'id' | 'revision'>>, options: MapEditingOptions = {}): InitialSituationMap {
   const previous = map.markers.find(item => item.id === markerId);
   if (!previous) throw new Error('MAP_MARKER_NOT_FOUND');
   const next: MapMarker = { ...previous, ...clone(patch), id: previous.id, revision: previous.revision + 1 };
-  const issues = validateInitialMap({ bounds: map.bounds, markers: [next] }).filter(issue => issue.severity === 'ERROR');
+  const issues = markerErrors(map, next, options);
   if (issues.length) throw new Error(issues.map(issue => issue.code).join(', '));
   return deepFreeze({
     ...map,
@@ -188,7 +200,7 @@ function shiftGeometry(geometry: MapGeometry, delta: Readonly<{ lon: number; lat
   return { type: 'Polygon', coordinates: geometry.coordinates.map(ring => ring.map(point)) };
 }
 
-export function shiftInitialMapMarkers(map: InitialSituationMap, markerIds: readonly string[], delta: Readonly<{ lon: number; lat: number }>): InitialSituationMap {
+export function shiftInitialMapMarkers(map: InitialSituationMap, markerIds: readonly string[], delta: Readonly<{ lon: number; lat: number }>, options: MapEditingOptions = {}): InitialSituationMap {
   const selected = new Set(markerIds);
   if (!selected.size) throw new Error('GROUP_SHIFT_EMPTY');
   for (const id of selected) if (!map.markers.some(item => item.id === id)) throw new Error('MAP_MARKER_NOT_FOUND');
@@ -201,7 +213,7 @@ export function shiftInitialMapMarkers(map: InitialSituationMap, markerIds: read
   const shifted = map.markers.map(item => selected.has(item.id) && item.geometry
     ? { ...item, revision: item.revision + 1, geometry: shiftGeometry(item.geometry, delta) }
     : item);
-  const issues = validateInitialMap({ bounds: map.bounds, markers: shifted }).filter(issue => issue.severity === 'ERROR');
+  const issues = shifted.flatMap(marker => markerErrors(map, marker, options));
   if (issues.length) throw new Error(issues.map(issue => issue.code).join(', '));
   const previous = map.markers.filter(item => selected.has(item.id));
   return deepFreeze({ ...map, revision: map.revision + 1, state: 'DRAFT' as const, sha256: undefined, markers: shifted, history: [...map.history, ...previous] });
@@ -270,6 +282,8 @@ function importedMarker(feature: Readonly<Record<string, unknown>>): MapMarker {
     },
     ...(typeof properties.loadTonnes === 'number' ? { loadTonnes: properties.loadTonnes } : {}),
     ...(typeof properties.crossingCapacityTonnes === 'number' ? { crossingCapacityTonnes: properties.crossingCapacityTonnes } : {}),
+    ...(typeof properties.speedKph === 'number' ? { speedKph: properties.speedKph } : {}),
+    ...(typeof properties.crossingMinutes === 'number' ? { crossingMinutes: properties.crossingMinutes } : {}),
     ...(typeof properties.passable === 'boolean' ? { passable: properties.passable } : {}),
     ...(typeof properties.routeId === 'string' || properties.routeId === null ? { routeId: properties.routeId } : {}),
     ...(typeof properties.offRoadJustification === 'string' ? { offRoadJustification: properties.offRoadJustification } : {}),

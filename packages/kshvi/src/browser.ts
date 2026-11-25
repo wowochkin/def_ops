@@ -57,6 +57,8 @@ export {
   type SupplyTransport, type SupplyNode as SupplyNodeModel, type SupplyAllocation,
   type SupplyIssue, type SupplyPlan, type SupplyPlanIssue,
 } from './logistics/supply-request';
+export * from './logistics/delivery-plan';
+export * from './logistics/initial-map-routes';
 export * from './simulation/movement';
 export * from './documents/browser';
 export * from './communications/message';

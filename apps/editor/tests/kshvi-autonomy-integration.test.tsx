@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { KshviView } from '../src/modern/kshvi/KshviView';
 import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
+import { createAutonomyProfile } from '../../../packages/kshvi-events/src/profile/autonomy-profile';
 
 const now = '2030-01-01T10:00:00Z';
 const card: ExerciseCard = {
@@ -19,19 +20,23 @@ const card: ExerciseCard = {
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(cleanup);
 
-it('показывает отсутствие серверного профиля в подготовке и предлагает открыть библиотеку при отсутствии сеанса', async () => {
+it('показывает методический профиль по умолчанию и предлагает открыть библиотеку при отсутствии сеанса', async () => {
   const client = new ExerciseClient({ fetch: async input => {
     const url = String(input);
     if (url.endsWith('/exercises')) return Response.json({ items: [card] });
     if (url.endsWith('/exercises/e1')) return Response.json(card);
+    if (url.endsWith('/exercises/e1/autonomy/catalog')) return Response.json({
+      manifest: { schemaVersion: 1, catalogId: 'test-catalog', version: 1, templates: [] },
+      profile: createAutonomyProfile({ profileId: 'default-profile', level: 'MEDIUM' }), targets: [], items: [],
+    });
     throw new Error(`Неожиданный запрос ${url}`);
   } });
   render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'TRUTH_READ']} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
   fireEvent.click(await screen.findByRole('button', { name: 'События' }));
-  expect(screen.getByText(/Профиль событий ещё не задан/)).toBeTruthy();
-  expect(screen.queryByText('240 событий · 12 категорий · 48 операций')).toBeNull();
-  expect(screen.queryByLabelText('Интенсивность разведки')).toBeNull();
+  expect(await screen.findByRole('heading', { name: 'Автономное наращивание' })).toBeTruthy();
+  expect(screen.getByText('0 шаблонов · показано 0')).toBeTruthy();
+  expect(screen.getByLabelText('Интенсивность разведки')).toBeTruthy();
 
   fireEvent.click(screen.getByRole('button', { name: 'Проведение' }));
   expect(screen.getByRole('heading', { name: 'Активный сеанс не выбран' })).toBeTruthy();

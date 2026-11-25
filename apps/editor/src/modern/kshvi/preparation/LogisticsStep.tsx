@@ -1,3 +1,8 @@
+import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import type { RouteGraph } from '../../../../../../packages/kshvi/src/terrain/route-graph';
+import type { TerrainState } from '../../../../../../packages/kshvi/src/terrain/types';
+import { LogisticsEditor } from './LogisticsEditor';
+
 type LogisticsStepProps = Readonly<{
   requests: readonly Readonly<{
     id: string;
@@ -34,10 +39,14 @@ type LogisticsStepProps = Readonly<{
   }>[];
   onAdvanceSupply?: (movementId: string) => void;
   onRequestRepair?: (equipmentId: string) => void;
+  draft?: PreparationDraft;
+  onChange?(draft: PreparationDraft): void;
+  terrain?: Readonly<{ state: TerrainState; graph: RouteGraph }>;
 }>;
 
 /** Только браузерная проекция серверных данных, без собственного списания или подтверждения поступления. */
-export function LogisticsStep({ requests, movements, balances, repairs, onAdvanceSupply, onRequestRepair }: LogisticsStepProps) {
+export function LogisticsStep({ requests, movements, balances, repairs, onAdvanceSupply, onRequestRepair, draft, onChange, terrain }: LogisticsStepProps) {
+  if (draft) return <LogisticsEditor draft={draft} onChange={onChange ?? (() => {})} terrain={terrain} />;
   return <section aria-label="Материально-техническое обеспечение">
     <h2>Материально-техническое обеспечение</h2>
     <h3>Заявки и приоритеты</h3>

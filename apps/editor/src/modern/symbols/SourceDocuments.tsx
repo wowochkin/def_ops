@@ -3,7 +3,7 @@ import { symbolSet } from '@def-ops/tactical-symbols';
 import { sourceRegistry, type SourceTopic } from '@def-ops/tactical-symbols/source/browser';
 import { SourceImage } from './SourceImage';
 
-const topicLabels: Readonly<Record<SourceTopic, string>> = {
+export const topicLabels: Readonly<Record<SourceTopic, string>> = {
   COMMAND_POSTS: 'Пункты управления', BOUNDARY_LINES: 'Разграничительные линии', MOVEMENT: 'Движение и маршруты',
   GROUND_FORCES: 'Сухопутные силы', AIR_FORCES: 'Воздушные силы', NAVY: 'Военно-морские силы',
   STRATEGIC_MISSILE_FORCES: 'Ракетные войска стратегического назначения', RECONNAISSANCE: 'Разведка',

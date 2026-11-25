@@ -3,6 +3,7 @@ import type {WeatherScenario,WeatherDataset} from '../../../../packages/core/src
 import type {WeatherRegion} from '../../../../packages/core/src/weather-grid';
 import type {AtlasMeta} from '../../../../services/cartography/src/atlas';
 import type {AtlasJob} from '../../../../services/cartography/src/atlas-jobs';
+import {rasterSources} from '../../../../packages/core/src/atlas-raster';
 import {coversView} from './environment-region';
 import {environmentApi} from './environment-api';
 import {archivePlan,readRegionArchives,type ArchiveItem} from './region-archives';
@@ -10,7 +11,7 @@ import {selectAnalogue} from './weather-analogue';
 import {mapKinds,layerInfo,layerNames,layerForArea,regionZoom,type RegionLayer} from './region-layers';
 
 type Plan={files:{url:string;bytes?:number}[];missing:string[];bytes:number};
-type Row={text:string;available:boolean;map?:AtlasMeta;plan?:Plan;years?:ReturnType<typeof archivePlan>};
+type Row={text:string;available:boolean;map?:AtlasMeta;plan?:Plan;replace?:AtlasMeta;years?:ReturnType<typeof archivePlan>};
 export interface PreparedWeather {dataset:WeatherDataset;start:number;end:number}
 interface Props {
   region:WeatherRegion;name:string;scenario:WeatherScenario;runtime:boolean|null;
@@ -30,6 +31,7 @@ export function RegionData({region,name,scenario,runtime,catalogKey,removeMap,ac
   const active=useRef<AbortController|null>(null);
   const [customMaps,setCustomMaps]=useState<AtlasMeta[]>([]);
   const zoom=regionZoom(region.bounds);
+  const localZoom=useRef({minzoom:zoom.minzoom,maxzoom:zoom.maxzoom});
   const runtimeReady=runtime===true;
   const date=new Date(scenario.start),duration=scenario.durationHours??168;
   useEffect(()=>()=>active.current?.abort(),[]);
@@ -40,20 +42,33 @@ export function RegionData({region,name,scenario,runtime,catalogKey,removeMap,ac
     setRows({});setCustomMaps([]);
     void (async()=>{
       const [maps,jobs]=await Promise.all([environmentApi<AtlasMeta[]>('/atlas',{signal}),environmentApi<AtlasJob[]>('/atlas/jobs',{signal})]);
-      if(!signal.aborted)setCustomMaps(maps.filter(m=>coversView(m.bounds,region.bounds)&&!mapKinds.some(k=>layerForArea(k,region.bounds,[m],jobs))));
+      if(signal.aborted)return;
+      const base=layerForArea('openfreemap',region.bounds,maps,jobs);
+      const levels=base&&base.bounds.every((v,i)=>v===region.bounds[i])?base:zoom;
+      localZoom.current={minzoom:levels.minzoom,maxzoom:levels.maxzoom};
+      setCustomMaps(maps.filter(m=>coversView(m.bounds,region.bounds)&&!mapKinds.some(k=>layerForArea(k,region.bounds,[m],jobs))));
       await Promise.all(mapKinds.map(async k=>{
+        const map=layerForArea(k,region.bounds,maps,jobs);
         try{
-          const map=layerForArea(k,region.bounds,maps,jobs);
-          if(map){const partial=jobs.find(j=>j.result?.id===map.id)?.input.missingSheets;
+          const saved=jobs.find(j=>j.result?.id===map?.id&&j.state==='done')?.input;
+          // Старые автоматические загрузки могли взять листы только внутри рамки.
+          const raster=k==='dem'||k==='landcover';
+          const update=map&&raster&&saved?.kind===k&&saved.urls&&(
+            map.minzoom>levels.minzoom||map.maxzoom<levels.maxzoom||
+            rasterSources(k,region.bounds,levels.minzoom).filter(f=>!saved.urls!.includes(f.url)).length>(saved.missingSheets??0));
+          if(map&&(!update||!runtimeReady)){const partial=saved?.missingSheets;
             put(k,{available:true,map,text:partial?`На компьютере · отсутствуют листы: ${partial}`:'На компьютере'});return;}
           if(Math.abs(region.bounds[1])>85.05112878||Math.abs(region.bounds[3])>85.05112878)throw Error('Рамка выходит за пределы тайловой проекции (±85,05°).');
           if(k==='openfreemap'){put(k,{available:true,text:`OpenFreeMap · ${zoom.tiles} тайлов · z${zoom.minzoom}–${zoom.maxzoom}`});return;}
           if(!runtimeReady){put(k,{available:false,text:runtime===null?'Проверяем модуль ГИС…':'Для подготовки требуется модуль ГИС'});return;}
-          const plan=await environmentApi<Plan>('/atlas/resolve',{method:'POST',body:JSON.stringify({kind:k,bounds:region.bounds}),signal});
+          const plan=await environmentApi<Plan>('/atlas/resolve',{method:'POST',body:JSON.stringify({kind:k,bounds:region.bounds,minzoom:levels.minzoom}),signal});
           if(!plan.files.length)throw Error('Источник не содержит данных для этой области.');
           const size=plan.files.some(f=>!f.bytes)?'размер уточняется':`${(plan.bytes/1048576).toLocaleString('ru-RU',{maximumFractionDigits:1})} МБ`;
-          put(k,{available:true,plan,text:`${plan.files.length} файл(ов) · ${size}${plan.missing.length?' · отсутствуют листы: '+plan.missing.length:''}`});
-        }catch(e){fail(k,e);}
+          put(k,{available:true,plan,replace:map,text:`${map?'Дополнить покрытие по сетке OSM · ':''}${plan.files.length} файл(ов) · ${size}${plan.missing.length?' · отсутствуют листы: '+plan.missing.length:''}`});
+        }catch(e){
+          if(map)put(k,{available:true,map,text:`На компьютере · обновление покрытия недоступно: ${(e as Error).message}`});
+          else fail(k,e);
+        }
       }));
     })().catch(e=>mapKinds.forEach(k=>fail(k,e)));
     void environmentApi<ArchiveItem[]>('/environment/weather',{signal}).then(items=>{
@@ -83,12 +98,12 @@ export function RegionData({region,name,scenario,runtime,catalogKey,removeMap,ac
           note(k,'Архивный период открыт на карте');
         }else if(row.map&&!(k==='openfreemap'&&newBaseCopy)){activate(row.map);note(k,'Включён на карте');}
         else{
-          const options={bounds:region.bounds,name:`${name} · ${layerInfo[k].name}`,attribution:layerInfo[k].credit,minzoom:zoom.minzoom,maxzoom:zoom.maxzoom};
+          const options={bounds:region.bounds,name:`${name} · ${layerInfo[k].name}`,attribution:layerInfo[k].credit,...localZoom.current};
           let job:AtlasJob|undefined;
           while(!job){
             const existing=await environmentApi<AtlasJob[]>('/atlas/jobs',{signal});
             const running=existing.find(j=>j.state==='running');
-            if(running?.input.kind===k&&running.input.options.bounds.every((v,i)=>v===region.bounds[i]))job=running;
+            if(running?.input.kind===k&&running.input.options.minzoom===options.minzoom&&running.input.options.maxzoom===options.maxzoom&&(!row.plan||row.plan.files.every(f=>running.input.urls?.includes(f.url)))&&running.input.options.bounds.every((v,i)=>v===region.bounds[i]))job=running;
             else if(!running){
               try{job=await environmentApi<AtlasJob>('/atlas/download',{method:'POST',signal,body:JSON.stringify({kind:k,options,
                 ...(row.plan?{urls:row.plan.files.map(f=>f.url),missingSheets:row.plan.missing.length}:{})})});}
@@ -107,7 +122,7 @@ export function RegionData({region,name,scenario,runtime,catalogKey,removeMap,ac
           }
           if(job.state!=='done'||!job.result)throw Error(job.error||job.stage);
           signal.throwIfAborted();const map=job.result;
-          setRows(old=>({...old,[k]:{...row,map,text:'На компьютере'}}));activate(map,newBaseCopy?row.map?.id:undefined);note(k,job.stage==='Готово'?'Включён на карте':job.stage);
+          setRows(old=>({...old,[k]:{...row,map,text:'На компьютере'}}));activate(map,row.replace?.id??(newBaseCopy?row.map?.id:undefined));note(k,job.stage==='Готово'?'Включён на карте':job.stage);
         }
       }catch(e){note(k,(e as Error).message);}
     }

@@ -82,7 +82,7 @@ describe('SealingStep: проверка и персональные подтве
     expect(screen.getByText(`Областей проверено: ${VALIDATION_AREAS.length}`)).toBeTruthy();
     expect(screen.getByText('env-owner')).toBeTruthy();
     expect(screen.getByText('docs-owner')).toBeTruthy();
-    expect(screen.getByText('DRAFT → IN_REVIEW → APPROVED → SEALED → ACTIVE ↔ PAUSED → COMPLETED → ARCHIVED')).toBeTruthy();
+    expect(screen.getByText('Черновик → Проверка → Утверждение → Фиксация → Проведение ↔ Пауза → Завершение → Архив')).toBeTruthy();
   });
 
   it('показывает блокирующую ошибку и не вызывает подтверждение SEALED', () => {
@@ -91,7 +91,7 @@ describe('SealingStep: проверка и персональные подтве
     const report = { ...validReport(), status: 'ERROR' as const, issues: [{ code: 'MAP_INVALID', severity: 'ERROR' as const, area: 'INITIAL_MAP' as const, message: 'Ошибка карты', waivable: false }] };
     const onSealed = vi.fn();
     render(<SealingStep report={report} input={input} onValidate={vi.fn(() => report)} onRehearsal={vi.fn()} onSealed={onSealed} startCommand={startCommand} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать SEALED' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать сценарий' }));
     expect(screen.getByRole('alert').textContent).toContain('MAP_INVALID');
     expect(onSealed).not.toHaveBeenCalled();
   });
@@ -101,7 +101,7 @@ describe('SealingStep: проверка и персональные подтве
     input.confirmations = input.confirmations.filter(item => item.area !== 'DOCUMENTS');
     render(<SealingStep report={validReport()} input={input} onValidate={vi.fn(() => validReport())} onRehearsal={vi.fn()} startCommand={startCommand} />);
     expect(screen.getByText('Требуется подтверждение: DOCUMENTS')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать SEALED' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать сценарий' }));
     expect(screen.getByText(/CONFIRMATION_REQUIRED:DOCUMENTS/)).toBeTruthy();
   });
 });
@@ -124,12 +124,12 @@ describe('SealingStep: репетиция, SEALED и запуск', () => {
     const serverInstance = startInstance(serverSealed, startCommand, createInstanceRegistry());
     const client = { seal: vi.fn(async () => serverSealed), start: vi.fn(async () => serverInstance) };
     render(<SealingStep report={validReport()} input={validInput()} onValidate={vi.fn(() => validReport())} onRehearsal={vi.fn()} onSealed={onSealed} onStart={onStart} startCommand={startCommand} client={client} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать SEALED' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать сценарий' }));
     await waitFor(() => expect(client.seal).toHaveBeenCalledTimes(1));
     expect(onSealed).toHaveBeenCalledTimes(1);
     expect(await screen.findByText(/Сценарий: [0-9a-f]{64}/)).toBeTruthy();
     expect(screen.getByText(new RegExp(`Карта: ${validMap().sha256}`))).toBeTruthy();
-    const startButton = screen.getByRole('button', { name: 'Запустить сеанс' });
+    const startButton = screen.getByRole('button', { name: 'Запустить учение' });
     fireEvent.click(startButton);
     await waitFor(() => expect(client.start).toHaveBeenCalledTimes(1));
     fireEvent.click(startButton);
@@ -157,7 +157,7 @@ describe('SealingStep: единый результат валидации', () =
     const report = { ...validReport(), status: 'ERROR' as const, issues: [{ code: 'REPORT_ERROR', severity: 'ERROR' as const, area: 'MODEL' as const, message: 'Ошибка отчёта', waivable: false }] };
     const onSealed = vi.fn();
     render(<SealingStep report={report} input={input} onValidate={vi.fn(() => report)} onRehearsal={vi.fn()} onSealed={onSealed} startCommand={startCommand} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать SEALED' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать сценарий' }));
     expect(screen.getByRole('alert').textContent).toContain('REPORT_ERROR');
     expect(onSealed).not.toHaveBeenCalled();
   });

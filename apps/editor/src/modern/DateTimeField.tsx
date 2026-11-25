@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './datetime.css';
 
 const months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'] as const;
@@ -18,6 +19,8 @@ type Props = {
   required?: boolean;
   min?: string;
   max?: string;
+  floating?: boolean;
+  disabled?: boolean;
 };
 
 function parse(value: string): DateParts | null {
@@ -40,13 +43,14 @@ function cells(year: number, month: number): (number | null)[] {
   });
 }
 
-export function DateTimeField({ id, label, value, onChange, withTime = true, required = false, min, max }: Props) {
+export function DateTimeField({ id, label, value, onChange, withTime = true, required = false, min, max, floating = false, disabled = false }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const validity = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [upward, setUpward] = useState(false);
+  const [placement, setPlacement] = useState({ left: 16, top: 16 });
   const parts = parse(value);
   const now = new Date();
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
@@ -55,6 +59,7 @@ export function DateTimeField({ id, label, value, onChange, withTime = true, req
   function show(): void {
     const rect = trigger.current?.getBoundingClientRect();
     if (rect) {
+      setPlacement({ left: Math.max(16, Math.min(rect.left, window.innerWidth - 396)), top: Math.max(16, Math.min(rect.bottom + 8, window.innerHeight - 520)) });
       const below = window.innerHeight - rect.bottom;
       setUpward(below < 520 && rect.top > below);
     }
@@ -88,22 +93,31 @@ export function DateTimeField({ id, label, value, onChange, withTime = true, req
   useEffect(() => {
     if (!open) return;
     const outside = (event: MouseEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target)) close();
+      if (event.target instanceof Node && !root.current?.contains(event.target) && !panel.current?.contains(event.target)) close();
     };
     document.addEventListener('mousedown', outside);
     panel.current?.querySelector<HTMLButtonElement>('[data-day][aria-pressed="true"], [data-day]')?.focus();
     return () => document.removeEventListener('mousedown', outside);
   }, [open]);
 
+  useEffect(() => { if (disabled) setOpen(false); }, [disabled]);
+  useEffect(() => {
+    if (!open || !floating) return;
+    const moved = (event: Event) => { if (!(event.target instanceof Node) || !panel.current?.contains(event.target)) close(); };
+    window.addEventListener('resize', moved);
+    window.addEventListener('scroll', moved, true);
+    return () => { window.removeEventListener('resize', moved); window.removeEventListener('scroll', moved, true); };
+  }, [open, floating]);
+  const renderPanel = (content: React.ReactNode) => floating ? createPortal(<div className="modern-workspace modern-kshvi modern-datetime-floating">{content}</div>, document.body) : content;
   const text = parts ? `${pad(parts.day)}.${pad(parts.month + 1)}.${parts.year}${withTime ? ` · ${parts.time}` : ''}` : withTime ? 'Выбрать дату и время' : 'Выбрать дату';
   return <div className="modern-datetime" ref={root}>
     <label htmlFor={id}>{label}</label>
-    <button ref={trigger} id={id} className="modern-datetime-trigger" type="button" aria-haspopup="dialog" aria-expanded={open} aria-required={required || undefined} onClick={() => open ? close() : show()}>
+    <button disabled={disabled} ref={trigger} id={id} className="modern-datetime-trigger" type="button" aria-haspopup="dialog" aria-expanded={open} aria-required={required || undefined} onClick={() => open ? close() : show()}>
       <span>{text}</span><span aria-hidden="true">▾</span>
     </button>
-    <input ref={validity} className="modern-datetime-validity" value={value} required={required} tabIndex={-1} aria-hidden="true" pattern={withTime ? '\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}' : '\\d{4}-\\d{2}-\\d{2}'} onChange={() => {}} onInvalid={event => { event.preventDefault(); show(); }} />
-    {open && <div ref={panel} className={`modern-datetime-popover${upward ? ' modern-datetime-upward' : ''}`} role="dialog" aria-modal="false" aria-label={`${withTime ? 'Дата и время' : 'Дата'}: ${label}`} onKeyDown={event => {
-      if (event.key === 'Escape') { event.preventDefault(); close(true); }
+    <input disabled={disabled} ref={validity} className="modern-datetime-validity" value={value} required={required} tabIndex={-1} aria-hidden="true" pattern={withTime ? '\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}' : '\\d{4}-\\d{2}-\\d{2}'} onChange={() => {}} onInvalid={event => { event.preventDefault(); show(); }} />
+    {open && !disabled && renderPanel(<div ref={panel} style={floating ? { position: 'fixed', ...placement, bottom: 'auto', pointerEvents: 'auto' } : undefined} className={`modern-datetime-popover${upward && !floating ? ' modern-datetime-upward' : ''}`} role="dialog" aria-modal="false" aria-label={`${withTime ? 'Дата и время' : 'Дата'}: ${label}`} onKeyDown={event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(true); }
     }}>
       <div className="modern-datetime-month">
         <button type="button" aria-label="Предыдущий месяц" onClick={() => shiftMonth(-1)}>←</button>
@@ -127,6 +141,6 @@ export function DateTimeField({ id, label, value, onChange, withTime = true, req
         <button type="button" disabled={!parts} onClick={() => { onChange(''); close(true); }}>Очистить</button>
         <button className="kshvi-primary" type="button" disabled={!parts} onClick={() => close(true)}>Готово</button>
       </div>
-    </div>}
+    </div>)}
   </div>;
 }

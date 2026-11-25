@@ -15,6 +15,9 @@ it('произвольные векторные слои, XYZ/TMS, сохран�
   expect(inspectAtlas(file).layers.map(l=>l.id)).toEqual(['transportation','water','places']);
   const store = new AtlasStore(join(dir,'catalog'));
   const a = await store.importFile('t',file);
+  expect((await store.get('t',a.id)).tileInventory).toEqual([
+    {zoom:1, present:0, expected:1}, {zoom:2, present:0, expected:4},
+  ]);
   expect((await store.tile('t',a.id,1,1,1))?.bytes).toEqual(Buffer.from([1,2,3]));
   expect(await store.tile('t',a.id,1,1,0)).toBeNull();
   expect(await new AtlasStore(store.root).list('t')).toHaveLength(1);
@@ -93,4 +96,29 @@ it('прерванное задание можно повторить; заве�
 it('читает числовую высоту из Terrain-RGB, не из отмывки',async()=>{
  const sharp=(await import('sharp')).default;const {atlasElevations}=await import('../src/atlas-elevation');
  const dir=await mkdtemp(join(tmpdir(),'height-'));try{const input=join(dir,'h.mbtiles'),db=new DatabaseSync(input);db.exec('create table metadata(name text,value text);create table tiles(zoom_level integer,tile_column integer,tile_row integer,tile_data blob)');const insert=db.prepare('insert into metadata values(?,?)');for(const [k,v]of Object.entries({format:'png',encoding:'mapbox',minzoom:'0',maxzoom:'0'}))insert.run(k,v);const value=Math.round((123+10000)*10);const png=await sharp({create:{width:256,height:256,channels:4,background:{r:value>>16&255,g:value>>8&255,b:value&255,alpha:1}}}).png().toBuffer();db.prepare('insert into tiles values(0,0,0,?)').run(png);db.close();const store=new AtlasStore(join(dir,'store'));const meta=await store.importFile('t',input);expect((await atlasElevations(store,'t',meta.id,[[13,52]])).values[0].elevationM).toBeCloseTo(123,1);}finally{await rm(dir,{recursive:true,force:true});}
+});
+
+it.each(['terrain','legacy-worldcover'])('полный XYZ для карты %s сохраняет данные краевого тайла и исходную маску',async kind=>{
+ const sharp=(await import('sharp')).default;
+ const dir=await mkdtemp(join(tmpdir(),'atlas-xyz-'));
+ try{
+  const input=join(dir,'input.mbtiles');
+  const db=new DatabaseSync(input);
+  db.exec('create table metadata(name text,value text);create table tiles(zoom_level integer,tile_column integer,tile_row integer,tile_data blob)');
+  const meta={format:'png',bounds:'13.3,52.45,13.5,52.6',...(kind==='terrain'?{encoding:'mapbox'}:{attribution:'ESA WorldCover'})};
+  for(const [key,value] of Object.entries(meta))db.prepare('insert into metadata values(?,?)').run(key,value);
+  const pixels=Buffer.alloc(256*256*4,255);
+  pixels[3]=0;
+  const png=await sharp(pixels,{raw:{width:256,height:256,channels:4}}).png().toBuffer();
+  const insert=db.prepare('insert into tiles values(8,?,?,?)');
+  insert.run(137,255-83,png);insert.run(138,255-83,png);db.close();
+  const store=new AtlasStore(join(dir,'store')),map=await store.importFile('t',input);
+  expect(atlasStyle(map,'/api','xyz').sources.atlas).toMatchObject({tileSize:512,tiles:[`/api/cartography/atlas/${map.id}/tiles/{z}/{x}/{y}?v=1&coverage=xyz`]});
+  expect(atlasStyle(map,'/api').sources.atlas).toMatchObject({tileSize:256,tiles:[`/api/cartography/atlas/${map.id}/tiles/{z}/{x}/{y}`]});
+  expect((await store.tile('t',map.id,8,137,83,'xyz'))?.bytes).toEqual(png);
+  expect(await store.tile('t',map.id,8,138,83,'xyz')).toBeNull();
+  const clipped=await store.tile('t',map.id,8,137,83);
+  const alpha=await sharp(clipped!.bytes).ensureAlpha().extractChannel(3).raw().toBuffer();
+  expect(alpha[1]).toBe(0);
+ }finally{await rm(dir,{recursive:true,force:true});}
 });

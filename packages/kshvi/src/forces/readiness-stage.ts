@@ -212,7 +212,9 @@ export function advanceReadiness(stage: ReadinessStage, previous: ReadinessState
     status,
     actualStartedAt: previous.actualStartedAt ?? input.at,
     ...(status === 'READY' && completionTimes.length ? { actualCompletedAt: new Date(Math.max(...completionTimes)).toISOString() } : {}),
-    signalReceipt: signalReceivedAt ? { signalId: stage.signal.id, receivedAt: signalReceivedAt } : previous.signalReceipt,
+    ...(signalReceivedAt
+      ? { signalReceipt: { signalId: stage.signal.id, receivedAt: signalReceivedAt } }
+      : previous.signalReceipt ? { signalReceipt: previous.signalReceipt } : {}),
     completedActivityIds: stage.activities.filter(activity => completed.has(activity.id)).map(activity => activity.id),
     activityRecords: [...records.values()].sort((a, b) => a.activityId.localeCompare(b.activityId)),
     reports,

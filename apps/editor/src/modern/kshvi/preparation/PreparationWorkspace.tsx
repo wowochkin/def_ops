@@ -1,20 +1,27 @@
 import { useCallback, useId, useLayoutEffect, useState, type ReactNode } from 'react';
-import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import { emptyPreparationDraft, type PreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import { EnvironmentMapPreparation } from './EnvironmentMapPreparation';
 import { isExerciseAccessLost, KshviHttpError, type ExerciseCard, type KshviClient } from '../kshvi-api';
 import { stateLabel } from '../library-actions';
 import { PreparationStatus, preparationStepStates } from './PreparationStatus';
 import { preparationSteps, stepIndex, type PreparationStep } from './preparation-steps';
 import { usePreparationDraft } from './usePreparationDraft';
+import { ForcesStep } from './ForcesStep';
+import { EventsWorkspace } from './EventsWorkspace';
+import { ReadinessWorkspace } from './ReadinessWorkspace';
+import { LaunchChecklist } from './LaunchChecklist';
+import type { LaunchCommand } from './launch-labels';
 import './preparation.css';
 
 type ExercisePreparationProps = {
   card: ExerciseCard;
   client: KshviClient;
   role: string;
+  userId?: string;
   initialStep: PreparationStep;
   canRevise: boolean;
   canReadTruth?: boolean;
+  canApproveMap?: boolean;
   canStart: boolean;
   onCard(card: ExerciseCard): void;
   acceptsCardResponse?(): boolean;
@@ -25,7 +32,7 @@ type ExercisePreparationProps = {
   onCartography?(): void;
 };
 
-export function ExercisePreparation({ card, client, role, initialStep, canRevise, canReadTruth = false, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
+export function ExercisePreparation({ card, client, role, userId = '', initialStep, canRevise, canReadTruth = false, canApproveMap = false, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
   const preparation = usePreparationDraft(client, card);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -84,24 +91,48 @@ export function ExercisePreparation({ card, client, role, initialStep, canRevise
     }
   }
 
+  async function launchAction(command: LaunchCommand) {
+    if (command === 'START') { onStart(); return; }
+    setError(''); setSaving(true);
+    try {
+      const updated = command === 'SEAL'
+        ? await client.sealExercise(card.id, { expectedRevision: card.revision })
+        : await client.transitionExercise(card.id, { expectedRevision: card.revision, command });
+      if (acceptsCardResponse?.() === false) return;
+      onCard(updated);
+      const refreshed = await client.getCard(card.id);
+      if (acceptsCardResponse?.() !== false) onCard(refreshed);
+    } catch (cause) {
+      if (isExerciseAccessLost(cause)) onAccessLost(cause);
+      else setError(cause instanceof Error ? cause.message : 'Серверное действие не выполнено');
+    } finally { setSaving(false); }
+  }
+
   const payload = card.revisions.find(item => item.revision === card.revision)?.payload;
+  const incompatibleServer = card.payloadAccess !== 'FULL' && card.payloadAccess !== 'PROJECTED';
   const legacySnapshotId = card.payloadAccess === 'FULL' && payload && typeof payload === 'object'
     && !Array.isArray(payload) && !Object.hasOwn(payload, 'preparation') && typeof payload.environmentSnapshotId === 'string'
     ? payload.environmentSnapshotId : null;
   return <PreparationWorkspace
     card={card}
+    client={client}
     draft={preparation.draft}
     confirmedDraft={preparation.confirmed.draft}
+    onDraftChange={draft => preparation.setDraft(draft)}
     role={role}
+    userId={userId}
+    onCard={onCard}
     initialStep={initialStep}
     saving={applying}
     dirty={dirty || environmentStatus.dirty}
     onSave={canEdit && !conflict && !environmentStatus.dirty ? () => void save() : undefined}
     onStartOfficial={canStart ? onStart : undefined}
+    onLaunchAction={canRevise ? command => void launchAction(command) : undefined}
     launchLocked={pending}
     environment={preparation.draft && (!dirty || !legacySnapshotId) ? <>
       <EnvironmentMapPreparation key={environmentReset} client={client} card={card} draft={preparation.draft}
         revision={preparation.revision} legacySnapshotId={legacySnapshotId} truthRole={role} canEdit={environmentEditable}
+        authorId={userId === 'UNKNOWN' ? '' : userId} canReadTruth={canReadTruth} canApproveMap={canApproveMap}
         locked={!!conflict || saving || dirty} savePreparation={preparation.save} onRevision={onCard} onAccessLost={onAccessLost}
         onConflict={reason => { setConflict({ reason, refreshed: false }); void refreshConflict(reason); }}
         onPendingChange={markEnvironment} acceptsCardResponse={acceptsCardResponse} onCartography={onCartography}
@@ -113,6 +144,16 @@ export function ExercisePreparation({ card, client, role, initialStep, canRevise
     </> : undefined}
     feedback={<>
       {navigationPrompt?.(applying)}
+      {incompatibleServer && <button type="button" disabled={refreshing} onClick={async () => {
+        setRefreshing(true); setError('');
+        try {
+          const latest = await client.getCard(card.id);
+          if (acceptsCardResponse?.() !== false) onCard(latest);
+        } catch (cause) {
+          if (isExerciseAccessLost(cause)) onAccessLost(cause);
+          else setError('Не удалось повторить подключение к серверу КШВИ.');
+        } finally { setRefreshing(false); }
+      }}>{refreshing ? 'Проверяем подключение…' : 'Повторить подключение'}</button>}
       {error && <p role="alert" className="kshvi-error">{error}</p>}
       {conflict && preparation.draft && <section className="preparation-conflict" aria-label="Конфликт редакций">
         <p role="alert">{conflict.reason}</p>
@@ -137,9 +178,12 @@ export function ExercisePreparation({ card, client, role, initialStep, canRevise
 
 type WorkspaceProps = {
   card?: ExerciseCard;
+  client?: KshviClient;
   draft?: PreparationDraft | null;
   confirmedDraft?: PreparationDraft | null;
   role?: string;
+  userId?: string;
+  onCard?(card: ExerciseCard): void;
   initialStep?: PreparationStep;
   dirty?: boolean;
   saving?: boolean;
@@ -147,19 +191,21 @@ type WorkspaceProps = {
   feedback?: ReactNode;
   onSave?(): void;
   onStartOfficial?(): void;
+  onLaunchAction?(command: LaunchCommand): void;
+  onValidate?(): void;
   launchLocked?: boolean;
+  onDraftChange?(draft: PreparationDraft): void;
 };
 
 export function PreparationWorkspace({
-  card, draft = null, confirmedDraft = null, role = '', initialStep = 'environment',
-  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial, launchLocked = false,
+  card, client, draft = null, confirmedDraft = null, role = '', userId = '', onCard, initialStep = 'environment',
+  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial, onLaunchAction, onValidate, launchLocked = false, onDraftChange,
 }: WorkspaceProps) {
   const [step, setStep] = useState(initialStep);
   const contentId = useId();
   const index = stepIndex(step);
   const current = preparationSteps[index]!;
   const states = card ? preparationStepStates(card, confirmedDraft) : null;
-  const sealed = card?.state === 'SEALED';
 
   return <section className="kshvi-preparation-workspace">
     <div className="preparation-top">
@@ -177,7 +223,11 @@ export function PreparationWorkspace({
     <div id={contentId} className="preparation-step-content" tabIndex={0} role="region" aria-label={current.label}>
       <div className="preparation-step-heading"><h2>{current.label}</h2><p>{current.description}</p></div>
       {feedback}
-      {!draft && card && <p className="preparation-empty">Полный черновик подготовки недоступен для этой роли.</p>}
+      {!draft && card && <p className="preparation-empty" role="alert">
+        {card.payloadAccess === 'PROJECTED' ? 'Полный черновик подготовки недоступен для этой роли.'
+          : card.payloadAccess === 'FULL' ? 'Не удалось восстановить черновик текущей редакции. Повторно откройте учение из библиотеки.'
+            : 'Интерфейс и сервер КШВИ разных версий. Обновите серверные службы приложения и повторите подключение.'}
+      </p>}
       {environment && <div hidden={step !== 'environment'}>{environment}</div>}
       {step === 'environment' && !environment && draft && <section className="preparation-empty">
         {draft.environmentSnapshotId ? <>
@@ -186,32 +236,16 @@ export function PreparationWorkspace({
             : <p>Снимок среды связан с черновиком. Проверьте состояние исходной карты перед запуском.</p>}
         </> : <p>Снимок среды отсутствует. Изменение среды доступно автору редактируемой редакции.</p>}
       </section>}
-      {step === 'forces' && draft && <section className="preparation-empty">
-        <p>{draft.forces.length || draft.equipment.length || draft.formation || draft.logistics
-          ? 'В редакции есть данные о силах и МТО. Редактирование этого шага пока недоступно.'
-          : 'Сведения о силах и МТО отсутствуют. Пока можно заполнить среду или проверить условия запуска.'}</p>
-      </section>}
-      {step === 'events' && draft && <section className="preparation-empty">
-        <p>{draft.autonomy
-          ? 'В редакции сохранён профиль событий. Редактирование этого шага пока недоступно.'
-          : 'Профиль событий ещё не задан. Проверьте условия запуска на итоговом шаге.'}</p>
-      </section>}
-      {step === 'readiness' && draft && <section className="preparation-empty">
-        <p>{draft.readinessStage || draft.readinessStates.length
-          ? 'В редакции есть сведения о готовности. Редактирование этого шага пока недоступно.'
-          : 'Сведения о готовности отсутствуют. Посмотрите сводную проверку сценария на шаге «Запуск».'}</p>
-      </section>}
-      {step === 'launch' && card && <section className="preparation-launch">
-        <h3>Проверка перед запуском</h3>
-        <dl>
-          <div><dt>Сводная проверка сценария</dt><dd>{stateLabel(card.validation)}</dd></div>
-          <div><dt>Фиксация</dt><dd>{sealed ? 'Сценарий зафиксирован' : 'Сценарий ещё не зафиксирован'}</dd></div>
-        </dl>
-        {!sealed && <p>Для запуска нужна серверная фиксация текущей редакции. <button type="button" onClick={() => setStep('readiness')}>Открыть готовность</button></p>}
-        {card.state === 'APPROVED' && <p>Здесь доступна сводная проверка. Команда фиксации в этом экране пока недоступна.</p>}
-        {sealed && !onStartOfficial && <p>{card.lastSessionId ? 'Откройте существующий сеанс из библиотеки.' : 'Запуск доступен участнику с серверным полномочием проведения.'}</p>}
-        <button className="kshvi-primary" type="button" disabled={!sealed || !onStartOfficial || launchLocked} onClick={onStartOfficial}>Запустить официальный сеанс</button>
-      </section>}
+      {step === 'forces' && draft && <ForcesStep draft={draft} onChange={onDraftChange} onOpenMap={() => setStep('environment')} client={client} />}
+      {step === 'events' && draft && card && client && onCard
+        ? <EventsWorkspace card={card} draft={draft} client={client} onCard={onCard} />
+        : step === 'events' && <p className="preparation-empty">Для работы с событиями требуется серверное подключение.</p>}
+      {step === 'readiness' && draft && card && client && onCard
+        ? <ReadinessWorkspace card={card} draft={draft} client={client} actorId={userId} onCard={onCard} />
+        : step === 'readiness' && <p className="preparation-empty">Для работы с готовностью требуется серверное подключение.</p>}
+      {step === 'launch' && card
+        ? <LaunchChecklist card={card} draft={draft ?? emptyPreparationDraft(card.updatedAt)} onAction={onLaunchAction} onStart={onStartOfficial} onValidate={onValidate} onOpenStep={setStep} launchLocked={launchLocked} />
+        : step === 'launch' && <p className="preparation-empty">Не удалось восстановить условия запуска из текущей редакции.</p>}
     </div>
 
     <footer className="preparation-footer">

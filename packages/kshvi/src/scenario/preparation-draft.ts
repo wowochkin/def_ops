@@ -132,7 +132,7 @@ const force = object({
   supply: object({ stocks: array(checkJson), capacities: array(checkJson), consumptionNorms: array(checkJson), nodeIds: ids, routeIds: ids }),
   capabilities: object({ actions: ids, environmentLimits: array(string), reconnaissance: checkJson, communications: checkJson, interaction: checkJson }),
   uncertainty: object({ knownByNodeId: id, reportedAt: date, accuracy: nullable(fraction), completeness: nullable(fraction) }),
-  source: object({ sourceId: id, reportedAt: date, accuracy: optional(fraction), completeness: optional(fraction) }),
+  source: object({ sourceId: id, reportedAt: date, accuracy: optional(fraction), completeness: optional(fraction), sourceRevision: optional(positiveInt), sourceSha256: optional(hash) }),
 });
 
 function coordinates(length: number): Check {
@@ -166,16 +166,17 @@ const marker = object({
     LineString: object({ type: oneOf('LineString'), coordinates: array(position, 2) }),
     Polygon: object({ type: oneOf('Polygon'), coordinates: array(ring, 1) }),
   })),
-  sourceId: string, authorId: string, eventId: string, validFrom: date, validUntil: date, state: oneOf('OBSERVED', 'ASSUMED', 'PLANNED', 'UNKNOWN'),
+  name: optional(string), sourceId: string, authorId: string, eventId: string, validFrom: date, validUntil: date, state: oneOf('OBSERVED', 'ASSUMED', 'PLANNED', 'UNKNOWN'),
   confidence: nullable(fraction), uncertainty: object({ radiusM: nullable(nonnegative), note: string }),
   visibility: object({ sideIds: optional(ids), instanceIds: optional(ids), roles: optional(ids), staffOnly: optional(boolean) }),
   links: object({ forceId: optional(id), taskId: optional(id), documentId: optional(id), linkedMarkerIds: optional(ids) }),
   sideId: id,
   symbol: object({
     id, version: id, sideId: id, status: oneOf('IMPORTED', 'MAPPED', 'VERIFIED', 'APPROVED', 'DEPRECATED'),
-    sourceDocument: string, sourcePage: positiveInt,
+    sourceDocument: string, sourcePage: positiveInt, labels: optional(dictionary(string)),
+    inscriptionStyles: optional(dictionary(object({ fontWeight: optional(oneOf('400', '700')), fontStyle: optional(oneOf('normal', 'italic')) }))),
   }),
-  loadTonnes: optional(nonnegative), crossingCapacityTonnes: optional(nonnegative), passable: optional(boolean),
+  loadTonnes: optional(nonnegative), crossingCapacityTonnes: optional(nonnegative), speedKph: optional(nonnegative), crossingMinutes: optional(nonnegative), passable: optional(boolean),
   routeId: optional(nullable(id)), offRoadJustification: optional(string), geometryRequired: optional(boolean),
 });
 const initialMap = object({
@@ -254,6 +255,11 @@ const logistics = object({
   actionTasks: array(object({ taskId: id, resourceId: id, requiredQuantity: nonnegative, requiredBy: date })),
   routes: array(object({ routeId: id, requestIds: ids, status: routeStatus })),
   reserves: dictionary(nullable(nonnegative)), reportingSchedule: array(object({ taskId: id, reportAt: date })),
+  transports: optional(array(object({
+    id, status: oneOf('SERVICEABLE', 'DEGRADED', 'UNDER_REPAIR', 'DAMAGED', 'DESTROYED'),
+    remainingCapacityQuantity: nullable(nonnegative), remainingWeightTonnes: nullable(nonnegative), remainingVolumeM3: nullable(nonnegative),
+  }))),
+  nodes: optional(array(object({ id, remainingStorageCapacity: nullable(nonnegative), throughputQuantityPerHour: nullable(nonnegative), queuedQuantity: nonnegative }))),
 });
 
 const autonomy = object({

@@ -1,3 +1,6 @@
+import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import { FormationEditor } from './FormationEditor';
+
 type FormationStepProps = Readonly<{
   plan: Readonly<{
     id: string;
@@ -14,10 +17,13 @@ type FormationStepProps = Readonly<{
     positions: readonly Readonly<{ elementId: string; travelledMeters: number; remainingMeters: number }>[];
   }>;
   onValidate?: () => void;
+  draft?: PreparationDraft;
+  onChange?(draft: PreparationDraft): void;
 }>;
 
 /** Проекция показывает фактический остаток пути и не подменяет его назначенным районом. */
-export function FormationStep({ plan, issues, execution, onValidate }: FormationStepProps) {
+export function FormationStep({ plan, issues, execution, onValidate, draft, onChange }: FormationStepProps) {
+  if (draft) return <FormationEditor draft={draft} onChange={onChange ?? (() => {})} />;
   return <section aria-label="Оперативное построение">
     <h2>Оперативное построение</h2>
     <p>{plan.id}</p><p>Версия приказа: {plan.orderVersion}</p>

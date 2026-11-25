@@ -6,9 +6,19 @@ import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot, EnvironmentW
 import type { InitialSituationMap } from '../../../../../packages/kshvi/src/scenario/initial-map';
 import type { SealedScenario } from '../../../../../packages/kshvi/src/scenario/sealing';
 import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import type { ModernImportSource, ModernKnowledgeScenarioCopy, ScenarioValue } from '../../../../../packages/kshvi/src/forces/modern-import';
+import type { AutonomyProfile } from '../../../../../packages/kshvi-events/src/profile/autonomy-profile';
+import type { CatalogManifest } from '../../../../../packages/kshvi-events/src/catalog-manifest';
+import type { EventTemplate } from '../../../../../packages/kshvi-events/src/model/event-template';
+import type { RehearsalReport as AutonomyRehearsalReport } from '../../../../../packages/kshvi-events/src/rehearsal/rehearsal-report';
+import type { SchedulerTarget } from '../../../../../packages/kshvi-events/src/scheduler/candidate-trace';
+import type { ReadinessAdvanceInput, ReadinessStage } from '../../../../../packages/kshvi/src/forces/readiness-stage';
+import type { ReadinessAuthorization, ReadinessReport, ReadinessState } from '../../../../../packages/kshvi/src/forces/readiness';
 import type { SymbolSet } from '../../../../../packages/tactical-symbols/src/model';
 import type { AudienceProjectionView } from './exposition/AudienceProjector';
 import type { AdminOverviewService } from '../../../../../services/kshvi/src/admin/admin-overview-service';
+import type { ParticipantReference, ScenarioParticipant } from '../../../../../services/kshvi/src/store/scenario-participants';
+import { clearSessionCsrf, readSessionCsrf, saveSessionCsrf } from './session-csrf';
 
 export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' | 'exposition' | 'custom';
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
@@ -43,6 +53,8 @@ export type ExerciseRevision = Readonly<{
   sha256: string;
   state: Exclude<ExerciseState, 'ARCHIVED'>;
   sealedArtifact?: SealedScenario;
+  participantRoster?: readonly ScenarioParticipant[];
+  participantRosterSha256?: string;
   createdBy: string;
   createdAt: string;
   supersedesId: string | null;
@@ -127,6 +139,26 @@ export type AdminOverview = Awaited<ReturnType<AdminOverviewService['overview']>
 export type WeatherDatasetMeta = Readonly<Pick<WeatherDataset, 'id' | 'name' | 'source' | 'region'> & {
   start: string; end: string; points: readonly string[];
 }>;
+export type ParticipantRoster = Readonly<{ revision: number; items: readonly ScenarioParticipant[]; candidates: readonly ScenarioParticipant[] }>;
+export type ModernForceImportInput = Readonly<{ source: ModernImportSource; sideId: string; parentNodeId: string; scenarioValues: readonly ScenarioValue[] }>;
+export type AutonomyCatalogItem = Readonly<{ template: EventTemplate; availability: 'AVAILABLE' | 'UNAVAILABLE' | 'UNKNOWN_DATA'; reasons: readonly string[] }>;
+export type AutonomyCatalogResponse = Readonly<{ manifest: CatalogManifest; profile: AutonomyProfile; targets: readonly SchedulerTarget[]; items: readonly AutonomyCatalogItem[] }>;
+export type AutonomyRehearsalResponse = AutonomyRehearsalReport & Readonly<{ sha256: string }>;
+export type ReadinessAdvanceRequest = Readonly<{
+  expectedRevision: number;
+  at: string;
+  signalReport?: ReadinessReport;
+  completions?: ReadinessAdvanceInput['completions'];
+  criteria?: ReadinessAdvanceInput['criteria'];
+  failures?: ReadinessAdvanceInput['failures'];
+}>;
+export type ReadinessRehearsalResponse = Readonly<{
+  isolated: true;
+  readinessStates: readonly ReadinessState[];
+  formation: unknown;
+  logistics: unknown;
+  sha256: string;
+}>;
 
 export interface KshviClient {
   hasCsrfToken?():boolean;
@@ -142,7 +174,19 @@ export interface KshviClient {
   archive(exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   hideArchiveEntry(exerciseId: string, input: { expectedRevision: number; title: string; reason: string }): Promise<ExerciseCard>;
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
+  transitionExercise(exerciseId: string, input: { expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }): Promise<ExerciseCard>;
+  sealExercise(exerciseId: string, input: { expectedRevision: number }): Promise<ExerciseCard>;
   savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard>;
+  importModernForce(input: ModernForceImportInput): Promise<ModernKnowledgeScenarioCopy>;
+  getAutonomyCatalog(exerciseId: string): Promise<AutonomyCatalogResponse>;
+  saveAutonomyProfile(exerciseId: string, input: { expectedRevision: number; profile: AutonomyProfile }): Promise<ExerciseCard>;
+  rehearseAutonomy(exerciseId: string, input: { seeds: readonly string[]; fromSecond: number; toSecond: number }): Promise<AutonomyRehearsalResponse>;
+  saveReadinessStage(exerciseId: string, input: { expectedRevision: number; stage: ReadinessStage }): Promise<ExerciseCard>;
+  advanceReadiness(exerciseId: string, input: ReadinessAdvanceRequest): Promise<ExerciseCard>;
+  rehearseReadiness(exerciseId: string, input: Omit<ReadinessAdvanceRequest, 'expectedRevision'>): Promise<ReadinessRehearsalResponse>;
+  authorizePartialReadiness(exerciseId: string, input: { expectedRevision: number; decision: Omit<ReadinessAuthorization, 'actorRole' | 'authorities'> }): Promise<ExerciseCard>;
+  getParticipantRoster(exerciseId: string): Promise<ParticipantRoster>;
+  bindParticipants(exerciseId: string, input: { expectedRevision: number; participants: readonly ParticipantReference[] }): Promise<ExerciseCard>;
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]>;
   getEnvironmentAtlasStyle(atlasId: string): Promise<StyleSpecification>;
   getEnvironmentSnapshot(snapshotId: string): Promise<EnvironmentSnapshot>;
@@ -198,7 +242,7 @@ export class ExerciseClient implements KshviClient {
 
   constructor(options: ExerciseClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? '/api/kshvi').replace(/\/$/, '');
-    try { this.sessionCsrfToken = globalThis.sessionStorage?.getItem(`def_ops.kshvi.csrf:${this.baseUrl}`) ?? ''; } catch { this.sessionCsrfToken = ''; }
+    this.sessionCsrfToken = readSessionCsrf(this.baseUrl);
     this.fetcher = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
     this.csrfToken = options.csrfToken ?? (() => '');
     this.extraHeaders = options.headers ?? (() => ({}));
@@ -229,14 +273,14 @@ export class ExerciseClient implements KshviClient {
   async login(username: string, password: string): Promise<LoginResult> {
     const result = await this.request<LoginResult>('POST', '/auth/login', { username, password });
     this.sessionCsrfToken = result.csrfToken;
-    try { globalThis.sessionStorage?.setItem(`def_ops.kshvi.csrf:${this.baseUrl}`, result.csrfToken); } catch { /* память текущей вкладки недоступна */ }
+    saveSessionCsrf(this.baseUrl, result.csrfToken);
     return result;
   }
   hasCsrfToken():boolean{return Boolean(this.sessionCsrfToken||this.csrfToken());}
   async loginLocal():Promise<LoginResult>{
     const result=await this.request<LoginResult>('POST','/auth/local',{});
     this.sessionCsrfToken=result.csrfToken;
-    try{globalThis.sessionStorage?.setItem(`def_ops.kshvi.csrf:${this.baseUrl}`,result.csrfToken);}catch{/* память вкладки недоступна */}
+    saveSessionCsrf(this.baseUrl, result.csrfToken);
     return result;
   }
   selectRole(roleId: string): Promise<Participant> { return this.request('POST', '/auth/role', { roleId }); }
@@ -244,7 +288,7 @@ export class ExerciseClient implements KshviClient {
     try { await this.request('POST', '/auth/logout'); }
     finally {
       this.sessionCsrfToken = '';
-      try { globalThis.sessionStorage?.removeItem(`def_ops.kshvi.csrf:${this.baseUrl}`); } catch { /* память текущей вкладки недоступна */ }
+      clearSessionCsrf(this.baseUrl);
     }
   }
   me(): Promise<Participant> { return this.request('GET', '/auth/me'); }
@@ -260,6 +304,10 @@ export class ExerciseClient implements KshviClient {
     return result.items;
   }
   getCard(exerciseId: string): Promise<ExerciseCard> { return this.request('GET', `/exercises/${encodeURIComponent(exerciseId)}`); }
+  getParticipantRoster(exerciseId: string): Promise<ParticipantRoster> { return this.request('GET', `/exercises/${encodeURIComponent(exerciseId)}/participant-roster`); }
+  bindParticipants(exerciseId: string, input: { expectedRevision: number; participants: readonly ParticipantReference[] }): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/participant-roster`, input);
+  }
   create(input: CreateExerciseInput): Promise<ExerciseCard> { return this.request('POST', '/exercises', input); }
   copy(exerciseId: string, title?: string): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/copies`, { title });
@@ -273,8 +321,38 @@ export class ExerciseClient implements KshviClient {
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/revisions`, input);
   }
+  transitionExercise(exerciseId: string, input: { expectedRevision: number; command: 'SUBMIT' | 'APPROVE' }): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/transitions`, input);
+  }
+  sealExercise(exerciseId: string, input: { expectedRevision: number }): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/seal`, input);
+  }
   savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/preparation`, input);
+  }
+  importModernForce(input: ModernForceImportInput): Promise<ModernKnowledgeScenarioCopy> {
+    return this.request('POST', '/forces/import', input);
+  }
+  getAutonomyCatalog(exerciseId: string): Promise<AutonomyCatalogResponse> {
+    return this.request('GET', `/exercises/${encodeURIComponent(exerciseId)}/autonomy/catalog`);
+  }
+  saveAutonomyProfile(exerciseId: string, input: { expectedRevision: number; profile: AutonomyProfile }): Promise<ExerciseCard> {
+    return this.request('PUT', `/exercises/${encodeURIComponent(exerciseId)}/autonomy/profile`, input);
+  }
+  rehearseAutonomy(exerciseId: string, input: { seeds: readonly string[]; fromSecond: number; toSecond: number }): Promise<AutonomyRehearsalResponse> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/autonomy/rehearsal`, input);
+  }
+  saveReadinessStage(exerciseId: string, input: { expectedRevision: number; stage: ReadinessStage }): Promise<ExerciseCard> {
+    return this.request('PUT', `/exercises/${encodeURIComponent(exerciseId)}/readiness/stage`, input);
+  }
+  advanceReadiness(exerciseId: string, input: ReadinessAdvanceRequest): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/readiness/advance`, input);
+  }
+  rehearseReadiness(exerciseId: string, input: Omit<ReadinessAdvanceRequest, 'expectedRevision'>): Promise<ReadinessRehearsalResponse> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/readiness/rehearsal`, input);
+  }
+  authorizePartialReadiness(exerciseId: string, input: { expectedRevision: number; decision: Omit<ReadinessAuthorization, 'actorRole' | 'authorities'> }): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/readiness/partial-authorization`, input);
   }
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]> { return this.request('GET', '/environment/atlases'); }
   getEnvironmentAtlasStyle(atlasId: string): Promise<StyleSpecification> {

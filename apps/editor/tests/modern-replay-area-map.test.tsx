@@ -17,6 +17,7 @@ const map = vi.hoisted(() => ({
   remove: vi.fn(),
 }));
 vi.mock('maplibre-gl', () => ({
+  addProtocol: vi.fn(),
   Map: class {
     setStyle = map.setStyle;
     remove = map.remove;

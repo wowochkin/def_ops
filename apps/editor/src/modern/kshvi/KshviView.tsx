@@ -623,9 +623,10 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
     {activeTab === 'preparation' && (selectedExercise ? <ExercisePreparation
       key={`${selectedExercise.id}-${selectedExercise.payloadAccess}-${preparationStep}`}
-      card={selectedExercise} client={client} role={role} initialStep={preparationStep}
+      card={selectedExercise} client={client} role={role} userId={serverUserId} initialStep={preparationStep}
       canRevise={can('exercise:revise')}
       canReadTruth={(role === 'DIRECTOR' || role === 'LEADER') && can('TRUTH_READ')}
+      canApproveMap={(role === 'DIRECTOR' || role === 'LEADER') && can('TRUTH_READ') && can('initialMap.approve')}
       canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
       onCard={receiveCard}
       acceptsCardResponse={acceptsSelectedCard ?? undefined}
