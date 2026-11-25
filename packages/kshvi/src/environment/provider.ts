@@ -120,14 +120,34 @@ export type ArchiveWeatherCoverage = Readonly<{
 const weatherCoordinateEpsilon = 1e-7;
 const bucket = (value: number) => Math.floor(value / weatherCoordinateEpsilon);
 
+function longitudeSpan(west: number, east: number): number {
+  return east >= west ? east - west : 360 + east - west;
+}
+
+function longitudeOffset(longitude: number, west: number): number {
+  const difference = (longitude - west) % 360;
+  const offset = difference < 0 ? difference + 360 : difference;
+  return offset > 360 - weatherCoordinateEpsilon ? offset - 360 : offset;
+}
+
+function archiveExtentCovers(archive: Bounds, bounds: Bounds): boolean {
+  const width = longitudeSpan(archive[0], archive[2]);
+  const start = longitudeOffset(bounds[0], archive[0]);
+  return bounds[1] >= archive[1] && bounds[3] <= archive[3]
+    && (width === 360 || (start >= -weatherCoordinateEpsilon
+      && start + longitudeSpan(bounds[0], bounds[2]) <= width + weatherCoordinateEpsilon));
+}
+
 export function archiveWeatherCoverage(dataset: WeatherDataset, bounds: Bounds, operationalAt: string): ArchiveWeatherCoverage {
   const [west, south, east, north] = bounds;
-  const inside = (lon: number, lat: number): boolean => lat >= south - weatherCoordinateEpsilon && lat <= north + weatherCoordinateEpsilon
-    && lon >= west - weatherCoordinateEpsilon && lon <= east + weatherCoordinateEpsilon;
+  const width = longitudeSpan(west, east);
+  const inside = (offset: number, lat: number): boolean => lat >= south - weatherCoordinateEpsilon && lat <= north + weatherCoordinateEpsilon
+    && offset >= -weatherCoordinateEpsilon && offset <= width + weatherCoordinateEpsilon;
   const series = new Map<string, WeatherDataset['rows']>();
   for (const row of dataset.rows) {
-    if (!inside(row.lon, row.lat)) continue;
-    const key = `${row.lon},${row.lat}`;
+    const offset = longitudeOffset(row.lon, west);
+    if (!inside(offset, row.lat)) continue;
+    const key = `${offset},${row.lat}`;
     const rows = series.get(key);
     if (rows) rows.push(row);
     else series.set(key, [row]);
@@ -140,28 +160,32 @@ export function archiveWeatherCoverage(dataset: WeatherDataset, bounds: Bounds, 
     if (!state || !WEATHER_FIELDS.some(field => state[field] != null)) continue;
     const sample = { lon, lat, state };
     samples.push(sample);
-    const key = `${bucket(lon)},${bucket(lat)}`;
+    const key = `${bucket(longitudeOffset(lon, west))},${bucket(lat)}`;
     const matches = buckets.get(key);
     if (matches) matches.push(sample);
     else buckets.set(key, [sample]);
   }
   if (dataset.region) {
-    const expected = weatherGrid(dataset.region).filter(([lon, lat]) => inside(lon, lat));
-    const available = expected.filter(([lon, lat]) => {
-      const x = bucket(lon);
+    const expected = new Map<string, readonly [number, number]>();
+    for (const [lon, lat] of weatherGrid(dataset.region)) {
+      const offset = longitudeOffset(lon, west);
+      if (inside(offset, lat)) expected.set(`${offset},${lat}`, [offset, lat]);
+    }
+    const available = [...expected.values()].filter(([offset, lat]) => {
+      const x = bucket(offset);
       const y = bucket(lat);
       for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
           if (buckets.get(`${x + dx},${y + dy}`)?.some(sample =>
-            Math.abs(sample.lon - lon) < weatherCoordinateEpsilon && Math.abs(sample.lat - lat) < weatherCoordinateEpsilon)) return true;
+            Math.abs(longitudeOffset(sample.lon, west) - offset) < weatherCoordinateEpsilon && Math.abs(sample.lat - lat) < weatherCoordinateEpsilon)) return true;
         }
       }
       return false;
     }).length;
-    if (available < expected.length) {
-      return { samples, error: `На оперативный момент доступны ${available} из ${expected.length} заявленных погодных узлов внутри области.` };
+    if (available < expected.size) {
+      return { samples, error: `На оперативный момент доступны ${available} из ${expected.size} заявленных погодных узлов внутри области.` };
     }
-    if (expected.length && atlasCoversBounds(dataset.region.bounds, bounds)) return { samples };
+    if (expected.size && archiveExtentCovers(dataset.region.bounds, bounds)) return { samples };
   }
   if (!samples.length) return { samples, error: 'Внутри выбранной области нет наблюдений на оперативный момент.' };
   return { samples, warning: 'Погодный набор покрывает только часть области.' };

@@ -180,7 +180,7 @@ export type ExerciseClientOptions = {
 };
 
 export class KshviHttpError extends Error{
- constructor(readonly status:number,message:string){super(message);this.name='KshviHttpError';}
+ constructor(readonly status: number, message: string, readonly code?: string) { super(message); this.name = 'KshviHttpError'; }
 }
 
 /** Клиент ждёт подтверждения каждой команды; локальный мир здесь не объявляется официальным. */
@@ -218,7 +218,9 @@ export class ExerciseClient implements KshviClient {
     });
     const data = response.status === 204 ? null : await response.json().catch(() => null);
     if (!response.ok) {
-      throw new KshviHttpError(response.status,data?.error?.message ?? `Сервис КШВИ недоступен (${response.status}). Повторите действие после восстановления связи.`);
+      const code = typeof data?.error?.code === 'string' ? data.error.code : undefined;
+      throw new KshviHttpError(response.status,
+        data?.error?.message ?? `Сервис КШВИ недоступен (${response.status}). Повторите действие после восстановления связи.`, code);
     }
     return data as T;
   }

@@ -393,6 +393,36 @@ it('не раскрывает перенесённую закрытую карт
   }
 });
 
+it('возвращает отдельный код запрета смены среды при сохранённом FULL обычного черновика', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-environment-action-denial-'));
+  const environment = new EnvironmentSnapshotStore(directory);
+  const old = await testSnapshot(environment, 'Исходная область', [0, 0, 1, 1]);
+  const next = await testSnapshot(environment, 'Новая область', [2, 2, 3, 3]);
+  const evidence = new InMemoryExerciseEvidenceService({ environment });
+  const store = new InMemoryExerciseStore({ environment, evidence });
+  const secret = 'object-of-closed-approved-map';
+  const created = await store.create(director, { ...input, payload: { environmentSnapshotId: old.id } });
+  await evidence.approveMap(mapApprover, created.id, created.revisions[0]!, boundMap(old, secret, [0.25, 0.25]));
+  const api = await preparationApi(store);
+  try {
+    const { client } = api;
+    await api.selectRole('author');
+    const denied = { status: 403, code: 'environment_truth_required' };
+    for (const action of [
+      () => client.environmentImpact(created.id, { expectedRevision: created.revision, bounds: next.region.bounds }),
+      () => client.replaceEnvironment(created.id, { expectedRevision: created.revision, snapshotId: next.id }),
+    ]) {
+      await expect(action()).rejects.toMatchObject(denied);
+      const card = await client.getCard(created.id);
+      expect(card).toMatchObject({ payloadAccess: 'FULL', revision: created.revision });
+      expect(JSON.stringify(card)).not.toContain(secret);
+    }
+  } finally {
+    await api.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 it('проверяет legacy-видимость по реестру и не теряет неразрешённые экземпляры', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kshvi-unresolved-map-'));
   try {
@@ -434,7 +464,7 @@ it('использует утверждённую карту текущей ре
       .rejects.toMatchObject({ code: 'VALIDATION' });
     await evidence.approveMap(mapApprover, first.id, previous, boundMap(old, 'approved-marker', [0.75, 0.75]));
     await expect(store.environmentImpact(actor, first.id, { expectedRevision: first.revision, bounds: next.region.bounds }, 'FULL'))
-      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+      .rejects.toMatchObject({ code: 'ENVIRONMENT_TRUTH_REQUIRED' });
     await expect(store.environmentImpact(director, first.id, { expectedRevision: first.revision, bounds: next.region.bounds }, 'FULL'))
       .resolves.toMatchObject({ objects: [
         { id: 'map', kind: 'Исходная карта', outside: false },
@@ -475,7 +505,7 @@ it.skipIf(!databaseUrl)('читает реальную PostgreSQL-карту п�
     const apiCopy = await restarted.copy(director, first.id);
     expect(apiCopy.revisions.at(-1)?.payload).toMatchObject({ preparation: { initialMap: { markers: [{ id: 'postgres-approved' }] } } });
     await expect(restarted.environmentImpact(actor, apiCopy.id, { expectedRevision: apiCopy.revision, bounds: old.region.bounds }, 'FULL'))
-      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+      .rejects.toMatchObject({ code: 'ENVIRONMENT_TRUTH_REQUIRED' });
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

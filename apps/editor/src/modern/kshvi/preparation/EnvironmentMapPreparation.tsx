@@ -128,7 +128,8 @@ export function EnvironmentMapPreparation({
     setNotice('');
     try { await action(); } catch (cause) {
       if (!canApply()) return;
-      if (isExerciseAccessLost(cause)) onAccessLost(cause);
+      if (cause instanceof KshviHttpError && cause.status === 403 && cause.code === 'environment_truth_required') setError(cause.message);
+      else if (isExerciseAccessLost(cause)) onAccessLost(cause);
       else if (cause instanceof KshviHttpError && cause.status === 409) onConflict(cause.message);
       else setError(cause instanceof Error ? cause.message : 'Не удалось сохранить среду');
     } finally {

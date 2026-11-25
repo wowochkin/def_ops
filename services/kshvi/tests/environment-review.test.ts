@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { weatherGrid, type WeatherDataset, type WeatherScenario } from '@def-ops/core';
 import { CartographyEnvironmentProvider } from '../src/environment/cartography-provider';
 import { assertSnapshotComplete, EnvironmentSnapshotStore } from '../src/environment/snapshot-store';
+import { archiveWeatherCoverage, type Bounds } from '../../../packages/kshvi/src/environment/provider';
 import { addEnvironmentRoutes } from '../src/http/environment-routes';
 
 const scenario: WeatherScenario = {
@@ -33,6 +34,7 @@ describe('автономность и покрытие снимка среды',
   let store: EnvironmentSnapshotStore;
   let provider: CartographyEnvironmentProvider;
   let namedSprites: boolean;
+  let atlasBounds: Bounds;
   let archive: WeatherDataset | null;
   const closers: Array<() => Promise<void>> = [];
 
@@ -40,13 +42,14 @@ describe('автономность и покрытие снимка среды',
     root = await mkdtemp(path.join(process.cwd(), '.environment-review-test-'));
     requests = [];
     namedSprites = false;
+    atlasBounds = [36, 54, 38, 56];
     archive = null;
     const fetcher: typeof fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
       const key = `${init?.method ?? 'GET'} ${url.pathname}`;
       requests.push(key);
       if (key === 'GET /cartography/environment/weather/local-archive/export' && archive) return json(archive);
-      if (key === 'GET /cartography/atlas') return json([meta]);
+      if (key === 'GET /cartography/atlas') return json([{ ...meta, bounds: atlasBounds }]);
       if (key === 'GET /cartography/atlas/a1/style') return json({
         version: 8,
         glyphs: 'http://cartography.test/cartography/fonts/{fontstack}/{range}.pbf',
@@ -100,6 +103,38 @@ describe('автономность и покрытие снимка среды',
     });
     archive = dataset(region);
     await expect(provider.snapshot(archiveSelection())).resolves.toMatchObject({ autonomy: 'COMPLETE' });
+  });
+
+  it('считает отсутствующие узлы восточной границы +180° заявленными узлами архива', async () => {
+    const bounds: [number, number, number, number] = [170, 0, 180, 1];
+    atlasBounds = bounds;
+    archive = dataset({ bounds, cols: 2, rows: 2 });
+    archive.rows = archive.rows.filter(row => row.lon === 170);
+    const selection = { ...archiveSelection(), region: { name: 'У антимеридиана', bounds } };
+    await expect(provider.snapshot(selection)).rejects.toMatchObject({
+      status: 422, code: 'environment_weather_coverage', message: expect.stringMatching(/2 из 4/),
+    });
+  });
+
+  it('находит два узла на границе +180° для подрайона и интерполирует между эквивалентными долготами', async () => {
+    const bounds: [number, number, number, number] = [179, 0, 180, 1];
+    atlasBounds = [170, 0, 180, 1];
+    archive = dataset({ bounds: [170, 0, 180, 1], cols: 2, rows: 2 });
+    archive.rows = archive.rows.map(row => row.lon === -180 && row.time === interval[0] ? { ...row, lon: 180 } : row);
+    const selection = { ...archiveSelection(), region: { name: 'Восточная полоса', bounds } };
+    const snapshot = await provider.snapshot(selection);
+    expect(snapshot).toMatchObject({ autonomy: 'COMPLETE', limitations: [] });
+    const coverage = archiveWeatherCoverage(archive, bounds, selection.operationalTime.operationalAt);
+    expect(coverage).not.toHaveProperty('error');
+    expect(coverage).not.toHaveProperty('warning');
+    expect(coverage.samples.map(sample => ({ lat: sample.lat, temperature: sample.state.temperature })))
+      .toEqual([{ lat: 1, temperature: 12 }, { lat: 0, temperature: 12 }]);
+
+    const across = dataset({ bounds: [170, 0, -170, 1], cols: 3, rows: 2 });
+    const acrossCoverage = archiveWeatherCoverage(across, [175, 0, -175, 1], selection.operationalTime.operationalAt);
+    expect(acrossCoverage).not.toHaveProperty('error');
+    expect(acrossCoverage).not.toHaveProperty('warning');
+    expect(acrossCoverage.samples).toHaveLength(2);
   });
 
   it.each(['partial', 'no-passport'] as const)('помечает неполный пространственный архив (%s) в самом снимке', async kind => {

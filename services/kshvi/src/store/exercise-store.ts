@@ -170,7 +170,7 @@ export interface ExerciseStore {
 }
 
 export type ExerciseStoreErrorCode = 'NOT_FOUND' | 'REVISION_NOT_FOUND' | 'REVISION_CONFLICT' | 'ARCHIVED' | 'VALIDATION'
-  | 'SERVER_ASSESSMENT_REQUIRED' | 'SEALED_REQUIRED' | 'FORBIDDEN';
+  | 'SERVER_ASSESSMENT_REQUIRED' | 'SEALED_REQUIRED' | 'FORBIDDEN' | 'ENVIRONMENT_TRUTH_REQUIRED';
 export class ExerciseStoreError extends Error {
   constructor(readonly code: ExerciseStoreErrorCode, message: string) { super(message); }
 }
@@ -278,10 +278,9 @@ async function environmentSourceFor(actor: ExerciseActor, revision: ExerciseRevi
   evidence?: ExerciseEvidenceProvider, db?: Client) {
   const readTruth = hasTruthAccess(actor);
   if (!readTruth) {
-    if (revision.truthOnlyPayload || revision.state === 'SEALED' || revision.sealedArtifact) requireTruthAccess(actor);
-    const hasEvidence = await evidence?.hasEnvironmentEvidence?.(revision, db)
-      ?? Boolean(evidence?.approvedMap || evidence?.confirmations);
-    if (hasEvidence) requireTruthAccess(actor);
+    const hasClosedEvidence = revision.truthOnlyPayload || revision.state === 'SEALED' || revision.sealedArtifact
+      || (await evidence?.hasEnvironmentEvidence?.(revision, db) ?? Boolean(evidence?.approvedMap || evidence?.confirmations));
+    if (hasClosedEvidence) fail('ENVIRONMENT_TRUTH_REQUIRED', 'Для просмотра последствий и смены среды этой редакции нужен доступ к истинной обстановке');
   }
   const source = await environmentChangeSource(revision, readTruth ? evidence : undefined, db);
   if (source.approvedMap && source.map) {

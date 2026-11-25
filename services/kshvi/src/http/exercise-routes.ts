@@ -33,10 +33,10 @@ function tokenOf(ctx: Ctx): string {
 function translate(error: unknown): never {
   if (error instanceof ExerciseStoreError) {
     const status = error.code === 'VALIDATION' || error.code === 'SERVER_ASSESSMENT_REQUIRED' ? 422
-      : error.code === 'FORBIDDEN' ? 403
+      : error.code === 'FORBIDDEN' || error.code === 'ENVIRONMENT_TRUTH_REQUIRED' ? 403
         : error.code === 'REVISION_CONFLICT' || error.code === 'ARCHIVED' || error.code === 'SEALED_REQUIRED' ? 409
           : 404;
-    throw new HttpError(status, error.code.toLocaleLowerCase(), error.message);
+    throw new HttpError(status, error.code.toLowerCase(), error.message);
   }
   throw error;
 }
