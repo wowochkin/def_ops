@@ -74,7 +74,6 @@ async function smallArea(out:string) {
  const o=input.options;validBounds(o.bounds);
  const boxes:BBox[]=o.bounds[0]>o.bounds[2]?[[o.bounds[0],o.bounds[1],180,o.bounds[3]],[-180,o.bounds[1],o.bounds[2],o.bounds[3]]]:[o.bounds];
  const total=boxes.reduce((n,b)=>n+tileCount(b,o.minzoom,o.maxzoom),0);
- if(total>3000)throw Error('OpenFreeMap: не более 3000 тайлов и 50 МБ за выгрузку. Уменьшите область/масштабы либо импортируйте готовый архив.');
  const cache=path.join(d.work,'source-tiles.mbtiles'),db=new DatabaseSync(cache);let done=0;
  try {
   db.exec('create table if not exists metadata(name text primary key,value text);create table if not exists tiles(zoom_level integer,tile_column integer,tile_row integer,tile_data blob);create unique index if not exists tile_index on tiles(zoom_level,tile_column,tile_row)');
@@ -84,12 +83,11 @@ async function smallArea(out:string) {
   if(o.maxzoom>info.maxzoom)throw Error(`Максимальный масштаб источника: ${info.maxzoom}`);
   const meta={name:o.name,format:'pbf',bounds:o.bounds.join(','),minzoom:String(o.minzoom),maxzoom:String(o.maxzoom),attribution:'© OpenMapTiles © OpenStreetMap contributors; ODbL',json:JSON.stringify({vector_layers:info.vector_layers}),source_tilejson:JSON.stringify(info)};
   const putMeta=db.prepare('insert or replace into metadata values(?,?)');for(const [k,v]of Object.entries(meta))putMeta.run(k,v);
-  let bytes=Number((db.prepare('select coalesce(sum(length(tile_data)),0) n from tiles').get() as {n:number}).n);
   const cached=db.prepare('select 1 from tiles where zoom_level=? and tile_column=? and tile_row=?');
  const put=db.prepare('insert or replace into tiles values(?,?,?,?)');
   for(let z=o.minzoom;z<=o.maxzoom;z++)for(const b of boxes){const r=tileRange(b,z);for(let x=r.x0;x<=r.x1;x++)for(let y=r.y0;y<=r.y1;y++){
    abort.signal.throwIfAborted();if(cached.get(z,x,2**z-1-y)){progress('Тайлы OpenFreeMap · локальный кэш',++done,total);continue;}const url=info.tiles[0].replace('{z}',String(z)).replace('{x}',String(x)).replace('{y}',String(y));
-   const response=await request(url,{},true);if(response.status===404){put.run(z,x,2**z-1-y,Buffer.alloc(0));progress('Тайлы OpenFreeMap',++done,total);continue;}const tile=Buffer.from(await response.arrayBuffer());bytes+=tile.length;if(bytes>50*1024*1024)throw Error('Достигнут предел OpenFreeMap 50 МБ; возьмите меньшую область');
+   const response=await request(url,{},true);if(response.status===404){put.run(z,x,2**z-1-y,Buffer.alloc(0));progress('Тайлы OpenFreeMap',++done,total);continue;}const tile=Buffer.from(await response.arrayBuffer());
    if(tile.length)put.run(z,x,2**z-1-y,tile);progress('Тайлы OpenFreeMap',++done,total);
   }}
  } finally {db.close();}
