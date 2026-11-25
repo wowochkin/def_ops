@@ -1,5 +1,6 @@
+import { hasTruthAccess } from './exercise-projection';
 import { randomUUID } from 'node:crypto';
-import { migrate, tx, type Migration, type Pool } from '@def-ops/db';
+import { migrate, tx, type Client, type Migration, type Pool } from '@def-ops/db';
 import {
   approveInitialMap, hashCanonical, READINESS_AREAS, REHEARSAL_CHECKS, runRehearsal, validateKit,
   type ApprovedInitialMap, type RehearsalReport, type ScenarioItem, type ScenarioKit,
@@ -18,8 +19,9 @@ export type ExerciseConfirmationInput = Readonly<{ expectedRevision: number; are
 export interface ExerciseEvidenceService extends ExerciseEvidenceProvider {
   confirm(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, input: ExerciseConfirmationInput): Promise<void>;
   approveMap(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, map: InitialSituationMap): Promise<ApprovedInitialMap>;
-  confirmations(revision: ExerciseRevision): Promise<readonly import('@def-ops/kshvi').ReadinessConfirmation[]>;
-  approvedMap(revision: ExerciseRevision): Promise<ApprovedInitialMap | null>;
+  confirmations(revision: ExerciseRevision, db?: Client): Promise<readonly import('@def-ops/kshvi').ReadinessConfirmation[]>;
+  approvedMap(revision: ExerciseRevision, db?: Client): Promise<ApprovedInitialMap | null>;
+  hasEnvironmentEvidence(revision: ExerciseRevision, db?: Client): Promise<boolean>;
   rehearsalJournal(eventLogId: string): Promise<readonly RehearsalDomainEvent[]>;
 }
 
@@ -60,9 +62,10 @@ function inside(inner: readonly number[], outer: readonly number[]): boolean {
 }
 
 abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
-  protected abstract readConfirmations(revision: ExerciseRevision): Promise<readonly import('@def-ops/kshvi').ReadinessConfirmation[]>;
+  abstract hasEnvironmentEvidence(revision: ExerciseRevision, db?: Client): Promise<boolean>;
+  protected abstract readConfirmations(revision: ExerciseRevision, db?: Client): Promise<readonly import('@def-ops/kshvi').ReadinessConfirmation[]>;
   protected abstract writeConfirmation(organizationId: string, exerciseId: string, revision: ExerciseRevision, value: import('@def-ops/kshvi').ReadinessConfirmation): Promise<void>;
-  protected abstract readMap(revision: ExerciseRevision): Promise<ApprovedInitialMap | null>;
+  protected abstract readMap(revision: ExerciseRevision, db?: Client): Promise<ApprovedInitialMap | null>;
   protected abstract writeMap(organizationId: string, exerciseId: string, revision: ExerciseRevision, value: ApprovedInitialMap): Promise<void>;
   protected abstract readRehearsalEvents(eventLogId: string): Promise<readonly RehearsalDomainEvent[]>;
   protected abstract writeRehearsalEvents(eventLogId: string, events: readonly RehearsalDomainEvent[]): Promise<void>;
@@ -74,8 +77,8 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
     this.now = options.now ?? (() => new Date());
   }
 
-  confirmations(revision: ExerciseRevision) { return this.readConfirmations(revision); }
-  approvedMap(revision: ExerciseRevision) { return this.readMap(revision); }
+  confirmations(revision: ExerciseRevision, db?: Client) { return this.readConfirmations(revision, db); }
+  approvedMap(revision: ExerciseRevision, db?: Client) { return this.readMap(revision, db); }
   rehearsalJournal(eventLogId: string) { return this.readRehearsalEvents(eventLogId); }
 
   async confirm(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, input: ExerciseConfirmationInput): Promise<void> {
@@ -91,6 +94,7 @@ abstract class BaseExerciseEvidenceService implements ExerciseEvidenceService {
 
   async approveMap(actor: ExerciseSealActor, exerciseId: string, revision: ExerciseRevision, map: InitialSituationMap): Promise<ApprovedInitialMap> {
     requireAuthority(actor, 'initialMap.approve');
+    if (revision.truthOnlyPayload && !hasTruthAccess(actor)) throw new Error('Недостаточно полномочий для закрытой редакции');
     const approved = approveInitialMap(map);
     await this.writeMap(actor.organizationId, exerciseId, revision, approved);
     return approved;
@@ -199,6 +203,9 @@ export class InMemoryExerciseEvidenceService extends BaseExerciseEvidenceService
   private readonly confirmationRecords = new Map<string, import('@def-ops/kshvi').ReadinessConfirmation[]>();
   private readonly mapRecords = new Map<string, ApprovedInitialMap>();
   private readonly rehearsalRecords = new Map<string, RehearsalDomainEvent[]>();
+  async hasEnvironmentEvidence(revision: ExerciseRevision): Promise<boolean> {
+    return this.mapRecords.has(revision.id) || (this.confirmationRecords.get(revision.id)?.length ?? 0) > 0;
+  }
   protected async readConfirmations(revision: ExerciseRevision) { return structuredClone(this.confirmationRecords.get(revision.id) ?? []); }
   protected async writeConfirmation(_organizationId: string, _exerciseId: string, revision: ExerciseRevision, value: import('@def-ops/kshvi').ReadinessConfirmation) {
     const current = this.confirmationRecords.get(revision.id) ?? [];
@@ -230,8 +237,14 @@ export class PgExerciseEvidenceService extends BaseExerciseEvidenceService {
     if (!/^[a-z_][a-z0-9_]*$/.test(options.schema)) throw new Error('Недопустимое имя схемы КШВИ');
   }
   async init(): Promise<void> { await migrate(this.options.pool, this.options.schema, KSHVI_EVIDENCE_MIGRATIONS); }
-  protected async readConfirmations(revision: ExerciseRevision) {
-    const result = await this.options.pool.query(
+  async hasEnvironmentEvidence(revision: ExerciseRevision, db: Pick<Client, 'query'> = this.options.pool): Promise<boolean> {
+    const { schema } = this.options;
+    const result = await db.query(`select exists(select 1 from ${schema}.exercise_approved_maps where revision_id=$1)
+      or exists(select 1 from ${schema}.exercise_readiness_confirmations where revision_id=$1) as has_evidence`, [revision.id]);
+    return result.rows[0]?.has_evidence === true;
+  }
+  protected async readConfirmations(revision: ExerciseRevision, db: Pick<Client, 'query'> = this.options.pool) {
+    const result = await db.query(
       `select id, area, user_id, role, confirmed_at, subject_hash, depends_on from ${this.options.schema}.exercise_readiness_confirmations where revision_id=$1 order by area`,
       [revision.id],
     );
@@ -250,8 +263,8 @@ export class PgExerciseEvidenceService extends BaseExerciseEvidenceService {
       [organizationId, exerciseId, revision.id, value.area, value.id, value.userId, value.role, value.confirmedAt, value.subjectHash, JSON.stringify(value.dependsOn)],
     );
   }
-  protected async readMap(revision: ExerciseRevision) {
-    const result = await this.options.pool.query(
+  protected async readMap(revision: ExerciseRevision, db: Pick<Client, 'query'> = this.options.pool) {
+    const result = await db.query(
       `select map from ${this.options.schema}.exercise_approved_maps where revision_id=$1`,
       [revision.id],
     );

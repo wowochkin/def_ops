@@ -1,6 +1,7 @@
 import { HttpError } from '@def-ops/service-kit';
 import { validateWeatherDataset, validateWeatherScenario, weatherDuration, type WeatherDataset, type WeatherState } from '@def-ops/core';
 import {
+  archiveWeatherCoverage,
   atlasCoversBounds,
   validateEnvironmentTime,
   weatherAtOperational as resolveWeather,
@@ -283,18 +284,9 @@ export class CartographyEnvironmentProvider implements EnvironmentProvider {
         throw new HttpError(422, 'environment_weather_interval', 'Оперативный момент выходит за интервал погодных данных');
       }
       if (dataset) {
-        const before = new Set<string>();
-        const after = new Set<string>();
-        for (const row of dataset.rows) {
-          if (!atlasCoversBounds(selection.region.bounds, [row.lon, row.lat, row.lon, row.lat])) continue;
-          const key = `${row.lon},${row.lat}`;
-          const stamp = Date.parse(row.time);
-          if (stamp <= at) before.add(key);
-          if (stamp >= at) after.add(key);
-        }
-        if (![...before].some(point => after.has(point))) {
-          throw new HttpError(422, 'environment_weather_coverage', 'Внутри выбранной области нет наблюдений на оперативный момент');
-        }
+        const quality = archiveWeatherCoverage(dataset, selection.region.bounds, operationalTime.operationalAt);
+        if (quality.error) throw new HttpError(422, 'environment_weather_coverage', quality.error);
+        if (quality.warning) limitations.push(quality.warning);
       }
     }
     const weather = prepareContent(canonicalJson(weatherDocument), '.json');

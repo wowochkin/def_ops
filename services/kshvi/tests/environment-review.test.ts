@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createService } from '@def-ops/service-kit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { WeatherScenario } from '@def-ops/core';
+import { weatherGrid, type WeatherDataset, type WeatherScenario } from '@def-ops/core';
 import { CartographyEnvironmentProvider } from '../src/environment/cartography-provider';
-import { EnvironmentSnapshotStore } from '../src/environment/snapshot-store';
+import { assertSnapshotComplete, EnvironmentSnapshotStore } from '../src/environment/snapshot-store';
 import { addEnvironmentRoutes } from '../src/http/environment-routes';
 
 const scenario: WeatherScenario = {
@@ -33,16 +33,19 @@ describe('автономность и покрытие снимка среды',
   let store: EnvironmentSnapshotStore;
   let provider: CartographyEnvironmentProvider;
   let namedSprites: boolean;
+  let archive: WeatherDataset | null;
   const closers: Array<() => Promise<void>> = [];
 
   beforeEach(async () => {
     root = await mkdtemp(path.join(process.cwd(), '.environment-review-test-'));
     requests = [];
     namedSprites = false;
+    archive = null;
     const fetcher: typeof fetch = async (input, init) => {
       const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
       const key = `${init?.method ?? 'GET'} ${url.pathname}`;
       requests.push(key);
+      if (key === 'GET /cartography/environment/weather/local-archive/export' && archive) return json(archive);
       if (key === 'GET /cartography/atlas') return json([meta]);
       if (key === 'GET /cartography/atlas/a1/style') return json({
         version: 8,
@@ -76,6 +79,38 @@ describe('автономность и покрытие снимка среды',
     const outside = selection();
     outside.region.bounds = [30, 50, 31, 51];
     await expect(provider.snapshot(outside)).rejects.toMatchObject({ status: 422, code: 'environment_coverage_missing' });
+  });
+
+  const interval = ['2026-01-01T00:00:00Z', '2026-01-01T02:00:00Z'];
+  const archiveSelection = () => ({ ...selection(), weather: { mode: 'archive' as const, datasetId: 'local-archive' },
+    operationalTime: { timeZone: 'UTC', operationalAt: '2026-01-01T01:00:00Z' } });
+  function dataset(region: NonNullable<WeatherDataset['region']>, missingMiddle = false): WeatherDataset {
+    return { version: 1, id: 'local-archive', name: 'Архив', region,
+      source: { title: 'Наблюдения', kind: 'observation', license: 'Учебная', spatialResolution: '1°', temporalResolution: '2 часа' },
+      rows: weatherGrid(region).flatMap(([lon, lat], index) => (missingMiddle && index === 4 ? interval.slice(1) : interval)
+        .map(time => ({ lon, lat, time, temperature: 12 }))),
+    };
+  }
+
+  it('отклоняет архив без среднего узла на выбранный момент и допускает реальную интерполяцию по времени', async () => {
+    const region = { bounds: selection().region.bounds, cols: 3, rows: 3 };
+    archive = dataset(region, true);
+    await expect(provider.snapshot(archiveSelection())).rejects.toMatchObject({
+      status: 422, code: 'environment_weather_coverage', message: expect.stringMatching(/8 из 9/),
+    });
+    archive = dataset(region);
+    await expect(provider.snapshot(archiveSelection())).resolves.toMatchObject({ autonomy: 'COMPLETE' });
+  });
+
+  it.each(['partial', 'no-passport'] as const)('помечает неполный пространственный архив (%s) в самом снимке', async kind => {
+    const full = { bounds: selection().region.bounds, cols: 3, rows: 3 };
+    archive = dataset(kind === 'partial' ? { ...full, bounds: [36, 54, 37, 55] } : full);
+    if (kind === 'no-passport') delete archive.region;
+    const snapshot = await provider.snapshot(archiveSelection());
+    expect(snapshot).toMatchObject({
+      autonomy: 'INCOMPLETE', limitations: expect.arrayContaining([expect.stringMatching(/погод.*часть области/i)]),
+    });
+    expect(() => assertSnapshotComplete(snapshot)).toThrow(/не является автономным/);
   });
 
   it('сохраняет полные glyphs и sprite по SHA и переписывает их на снимок', async () => {

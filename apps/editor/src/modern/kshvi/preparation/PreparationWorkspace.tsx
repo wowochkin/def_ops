@@ -14,6 +14,7 @@ type ExercisePreparationProps = {
   role: string;
   initialStep: PreparationStep;
   canRevise: boolean;
+  canReadTruth?: boolean;
   canStart: boolean;
   onCard(card: ExerciseCard): void;
   acceptsCardResponse?(): boolean;
@@ -24,7 +25,7 @@ type ExercisePreparationProps = {
   onCartography?(): void;
 };
 
-export function ExercisePreparation({ card, client, role, initialStep, canRevise, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
+export function ExercisePreparation({ card, client, role, initialStep, canRevise, canReadTruth = false, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
   const preparation = usePreparationDraft(client, card);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +39,7 @@ export function ExercisePreparation({ card, client, role, initialStep, canRevise
   const canEdit = canRevise && ['DRAFT', 'IN_REVIEW', 'APPROVED'].includes(card.state) && preparation.draft !== null;
   const dirty = preparation.draft !== preparation.confirmed.draft || preparation.revision !== preparation.confirmed.revision;
 
-  const environmentEditable = canRevise && (canEdit || card.state === 'SEALED');
+  const environmentEditable = canRevise && (canEdit || (card.state === 'SEALED' && canReadTruth));
   const applying = saving || environmentStatus.busy;
   const pending = dirty || applying || environmentStatus.dirty || conflict !== null;
   useLayoutEffect(() => {

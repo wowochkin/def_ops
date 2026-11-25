@@ -10,6 +10,8 @@ import { ExerciseClient } from '../../../apps/editor/src/modern/kshvi/kshvi-api'
 import { InMemorySessionStore, SessionManager } from '../src/auth/sessions';
 import { EnvironmentSnapshotStore } from '../src/environment/snapshot-store';
 import { registerExerciseRoutes } from '../src/http/exercise-routes';
+import { InMemoryExerciseEvidenceService, PgExerciseEvidenceService } from '../src/store/exercise-evidence-service';
+import type { Bounds, EnvironmentSnapshot } from '../../../packages/kshvi/src/environment/provider';
 import { InMemoryExerciseStore, PgExerciseStore, type ExerciseActor } from '../src/store/exercise-store';
 import { linkedExercisePayload, sealApprovedExercise, serverExerciseEvidence } from './helpers/full-seal';
 
@@ -106,8 +108,9 @@ async function preparationApi(store = new InMemoryExerciseStore()) {
   await sessions.createAccount({
     ...actor, username: 'author', password: 'secret123', roles: [
       { id: 'director', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:create'] },
-      { id: 'director-truth', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'TRUTH_READ'] },
-      { id: 'author', role: 'AUTHOR', sideId: null, authorities: ['exercise:read', 'exercise:revise'] },
+      { id: 'director-truth', role: 'DIRECTOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:copy', 'TRUTH_READ'] },
+      { id: 'author', role: 'AUTHOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'exercise:copy'] },
+      { id: 'author-with-capability', role: 'AUTHOR', sideId: null, authorities: ['exercise:read', 'exercise:revise', 'TRUTH_READ'] },
       { id: 'approver', role: 'APPROVER', sideId: null, authorities: ['exercise:read', 'exercise:revise'] },
       { id: 'reader', role: 'TRAINEE', sideId: null, authorities: ['exercise:read'] },
     ],
@@ -252,6 +255,39 @@ it.skipIf(!databaseUrl)('восстанавливает PostgreSQL-чернов�
   }
 });
 
+function testSnapshot(environment: EnvironmentSnapshotStore, name: string, bounds: Bounds) {
+  return environment.create({
+    schemaVersion: 1, region: { name, bounds }, atlases: [], resources: [],
+    weather: { mode: 'scenario', contentRef: null, sourceId: 'weather', attribution: 'Источник', license: 'Учебная' },
+    elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 },
+    autonomy: 'INCOMPLETE', limitations: [],
+  }, []);
+}
+
+const director = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal', 'exercise:revise', 'TRUTH_READ'] };
+const mapApprover = { ...director, authorities: [...director.authorities, 'initialMap.approve', 'readiness.confirm', 'readiness.confirm:ENVIRONMENT_MAP'] };
+function boundMap(snapshot: EnvironmentSnapshot, id: string, coords: readonly [number, number], instanceIds?: string[]) {
+  const map = createInitialSituationMap({
+    id: 'map', revision: 1,
+    environment: { snapshotId: snapshot.id, manifestSha256: snapshot.manifestSha256, bounds: snapshot.region.bounds },
+    initialOperationalAt: draft.updatedAt, timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
+    symbolSet: { id: 'symbols', revision: 1, sha256: 'a'.repeat(64) }, attribution: ['Источник'],
+  });
+  return addInitialMapMarker(map, {
+    id, revision: 1, kind: 'TASK', layerId: 'EVENTS', truth: 'TRUTH', geometry: { type: 'Point', coordinates: coords },
+    sourceId: 'source', authorId: 'author', eventId: 'event', validFrom: draft.updatedAt, validUntil: '2030-01-02T06:00:00Z',
+    state: 'PLANNED', confidence: 1, uncertainty: { radiusM: 0, note: '' }, visibility: { staffOnly: true, ...(instanceIds ? { instanceIds } : {}) },
+    links: { taskId: 'task' }, sideId: 'side', symbol: { id: 'task', version: 'v1', sideId: 'side', status: 'APPROVED', sourceDocument: 'source', sourcePage: 1 },
+  });
+}
+
+function sealedEvidence(snapshot: EnvironmentSnapshot, map: ReturnType<typeof boundMap>) {
+  return serverExerciseEvidence(value => {
+    Object.assign(value, { initialMap: approveInitialMap(map), environmentSnapshot: { ...value.environmentSnapshot, manifestSha256: snapshot.manifestSha256 },
+      expectedEnvironmentSha256: snapshot.manifestSha256 });
+  });
+}
+
 it('меняет среду отдельной командой и сохраняет подлинник запечатанной редакции', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kshvi-replace-environment-'));
   try {
@@ -272,7 +308,6 @@ it('меняет среду отдельной командой и сохран�
         markers: [marker] }) });
     });
     const store = new InMemoryExerciseStore({ environment, evidence });
-    const director = { ...actor, activeRole: 'DIRECTOR', authorities: ['scenario.seal', 'exercise:revise'] };
     const created = await store.create(director, { ...input, payload: linkedExercisePayload({ environmentSnapshotId: oldSnapshot.id }) });
     const sealed = await sealApprovedExercise(store, director, created);
     const change = { expectedRevision: sealed.revision, snapshotId: newSnapshot.id };
@@ -290,7 +325,9 @@ it('меняет среду отдельной командой и сохран�
         initialMap: { bounds: [2, 2, 3, 3], markers: [{ id: 'force', geometry: { type: 'Point', coordinates: [0.2, 0.2] } }] } },
     });
     expect(await environment.load(oldSnapshot.id)).toEqual(oldSnapshot);
-    const legacy = new InMemoryExerciseStore({ environment, evidence: serverExerciseEvidence() });
+    const nestedLegacy = boundMap(oldSnapshot, 'force', [0.2, 0.2]);
+    const legacyMap = { ...nestedLegacy, markers: [{ ...nestedLegacy.markers[0]!, links: { forceId: 'force-1' } }] };
+    const legacy = new InMemoryExerciseStore({ environment, evidence: sealedEvidence(oldSnapshot, legacyMap) });
     const legacyCard = await legacy.create(director, { ...input, payload: linkedExercisePayload({ environmentSnapshotId: oldSnapshot.id }) });
     const legacySealed = await sealApprovedExercise(legacy, director, legacyCard);
     await expect(legacy.environmentImpact(director, legacyCard.id, { expectedRevision: legacySealed.revision, bounds: newSnapshot.region.bounds }, 'FULL'))
@@ -300,6 +337,148 @@ it('меняет среду отдельной командой и сохран�
     expect(await legacy.get(director.organizationId, legacyCard.id)).toEqual(legacySealed);
     await expect(store.replaceEnvironment(director, sealed.id, change, 'FULL')).rejects.toMatchObject({ code: 'REVISION_CONFLICT' });
   } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it('не раскрывает перенесённую закрытую карту через impact, GET, копирование и следующие редакции', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-closed-map-'));
+  const environment = new EnvironmentSnapshotStore(directory);
+  const old = await testSnapshot(environment, 'Исходная область', [0, 0, 1, 1]);
+  const next = await testSnapshot(environment, 'Новая область', [2, 2, 3, 3]);
+  const secret = 'object-of-sealed-map';
+  const store = new InMemoryExerciseStore({ environment, evidence: sealedEvidence(old, boundMap(old, secret, [0.25, 0.25])) });
+  const first = await store.create(director, { ...input, payload: linkedExercisePayload({ environmentSnapshotId: old.id }) });
+  const sealed = await sealApprovedExercise(store, director, first);
+  const api = await preparationApi(store);
+  const { client } = api;
+  try {
+    const choice = { expectedRevision: sealed.revision, snapshotId: next.id };
+    const impact = { expectedRevision: sealed.revision, bounds: next.region.bounds };
+    for (const role of ['author', 'approver', 'author-with-capability']) {
+      await api.selectRole(role);
+      expect(await client.getCard(sealed.id)).toMatchObject({ payloadAccess: 'FULL' });
+      await expect(client.environmentImpact(sealed.id, impact)).rejects.toMatchObject({ status: 403 });
+      await expect(client.replaceEnvironment(sealed.id, choice)).rejects.toMatchObject({ status: 403 });
+    }
+    await api.selectRole('director-truth');
+    expect(JSON.stringify(await client.environmentImpact(sealed.id, impact))).toContain(secret);
+    const revised = await client.replaceEnvironment(sealed.id, choice);
+    expect(JSON.stringify(revised.revisions.at(-1)?.payload)).toContain(secret);
+    await api.selectRole('author');
+    const read = await client.getCard(sealed.id);
+    expect(read.payloadAccess).toBe('PROJECTED');
+    expect(JSON.stringify(read)).not.toContain(secret);
+    await expect(client.savePreparation(sealed.id, { expectedRevision: revised.revision, draft: emptyPreparationDraft(draft.updatedAt) }))
+      .rejects.toMatchObject({ status: 403 });
+    await expect(client.createRevision(sealed.id, { expectedRevision: revised.revision, payload: {} })).rejects.toMatchObject({ status: 403 });
+    const copy = await client.copy(sealed.id);
+    expect(copy.payloadAccess).toBe('PROJECTED');
+    expect(JSON.stringify(copy)).not.toContain(secret);
+    expect(JSON.stringify(await client.getCard(copy.id))).not.toContain(secret);
+    await api.selectRole('director-truth');
+    const rewritten = await client.createRevision(sealed.id, {
+      expectedRevision: revised.revision, payload: { scenarioId: { encryptedSource: secret } },
+    });
+    expect(rewritten.revision).toBe(revised.revision + 1);
+    expect(JSON.stringify(await client.getCard(copy.id))).toContain(secret);
+    await api.selectRole('author');
+    const reopened = await client.getCard(sealed.id);
+    expect(reopened.payloadAccess).toBe('PROJECTED');
+    expect(reopened.revisions.at(-1)?.payload).toEqual({});
+    expect(JSON.stringify(reopened)).not.toContain(secret);
+  } finally {
+    await api.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it('проверяет legacy-видимость по реестру и не теряет неразрешённые экземпляры', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-unresolved-map-'));
+  try {
+    const environment = new EnvironmentSnapshotStore(directory);
+    const old = await testSnapshot(environment, 'Исходная область', [0, 0, 1, 1]);
+    const next = await testSnapshot(environment, 'Новая область', [2, 2, 3, 3]);
+    const instanceId = 'unresolved-legacy-instance';
+    const store = new InMemoryExerciseStore({ environment, evidence: sealedEvidence(old, boundMap(old, 'object', [0.25, 0.25], [instanceId])) });
+    const first = await store.create(director, { ...input, payload: linkedExercisePayload({
+      environmentSnapshotId: old.id, operationalAssignments: [{ nodeId: instanceId, sideId: 'side' }],
+    }) });
+    const sealed = await sealApprovedExercise(store, director, first);
+    await expect(store.environmentImpact(director, first.id, { expectedRevision: sealed.revision, bounds: next.region.bounds }, 'FULL'))
+      .resolves.toMatchObject({ missingInstanceIds: [instanceId] });
+    await expect(store.replaceEnvironment(director, first.id, { expectedRevision: sealed.revision, snapshotId: next.id }, 'FULL'))
+      .rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringContaining(instanceId) });
+    expect(await store.get(director.organizationId, first.id)).toEqual(sealed);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it('использует утверждённую карту текущей редакции и проверяет её ссылку на прежний снимок', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-approved-map-'));
+  try {
+    const environment = new EnvironmentSnapshotStore(directory);
+    const old = await testSnapshot(environment, 'Исходная область', [0, 0, 1, 1]);
+    const next = await testSnapshot(environment, 'Новая область', [0.5, 0.5, 1, 1]);
+    const evidence = new InMemoryExerciseEvidenceService({ environment });
+    const store = new InMemoryExerciseStore({ environment, evidence });
+    const first = await store.create(director, { ...input, payload: { preparation: JSON.parse(JSON.stringify({
+      ...draft, environmentSnapshotId: old.id, initialMap: boundMap(old, 'draft-marker', [0.2, 0.2]),
+    })) } }, 'FULL');
+    const previous = first.revisions[0]!;
+    const choice = { expectedRevision: first.revision, snapshotId: next.id };
+    await evidence.approveMap(mapApprover, first.id, previous, boundMap(next, 'wrong-snapshot-map', [0.75, 0.75]));
+    await expect(store.replaceEnvironment(director, first.id, choice, 'FULL')).rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/снимк/i) });
+    await expect(store.environmentImpact(director, first.id, { expectedRevision: first.revision, bounds: next.region.bounds }, 'FULL'))
+      .rejects.toMatchObject({ code: 'VALIDATION' });
+    await evidence.approveMap(mapApprover, first.id, previous, boundMap(old, 'approved-marker', [0.75, 0.75]));
+    await expect(store.environmentImpact(actor, first.id, { expectedRevision: first.revision, bounds: next.region.bounds }, 'FULL'))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(store.environmentImpact(director, first.id, { expectedRevision: first.revision, bounds: next.region.bounds }, 'FULL'))
+      .resolves.toMatchObject({ objects: [
+        { id: 'map', kind: 'Исходная карта', outside: false },
+        { id: 'approved-marker', kind: 'Объект исходной карты', outside: false },
+      ] });
+    const result = await store.replaceEnvironment(director, first.id, choice, 'FULL');
+    expect(result.revisions.at(-1)?.payload).toMatchObject({
+      preparation: { initialMap: { markers: [{ id: 'approved-marker', geometry: { coordinates: [0.75, 0.75] } }] } },
+    });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+it.skipIf(!databaseUrl)('читает реальную PostgreSQL-карту под блокировкой из пула с одним соединением', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kshvi-change-one-connection-'));
+  const pool = createPool(databaseUrl, 1);
+  pool.options.connectionTimeoutMillis = 600;
+  const schema = `test_env_one_${randomUUID().replaceAll('-', '')}`;
+  try {
+    const environment = new EnvironmentSnapshotStore(directory);
+    const old = await testSnapshot(environment, 'Исходная область', [0, 0, 1, 1]);
+    const next = await testSnapshot(environment, 'Новая область', [2, 2, 3, 3]);
+    const evidence = new PgExerciseEvidenceService({ pool, schema, environment });
+    const store = new PgExerciseStore({ pool, schema, evidence, environment });
+    await store.init();
+    await evidence.init();
+    const first = await store.create(director, { ...input, payload: { environmentSnapshotId: old.id } });
+    const before = first.revisions[0]!;
+    await evidence.approveMap(mapApprover, first.id, before, boundMap(old, 'postgres-approved', [0.25, 0.25]));
+    await evidence.confirm(mapApprover, first.id, before, { expectedRevision: first.revision, area: 'ENVIRONMENT_MAP' });
+    const card = await store.replaceEnvironment(director, first.id, { expectedRevision: first.revision, snapshotId: next.id }, 'FULL');
+    expect(card.revisions.at(-1)?.payload).toMatchObject({
+      preparation: { initialMap: { markers: [{ id: 'postgres-approved' }] } },
+    });
+    const restarted = new PgExerciseStore({ pool, schema, evidence, environment });
+    expect(await restarted.get(director.organizationId, first.id)).toEqual(card);
+    const apiCopy = await restarted.copy(director, first.id);
+    expect(apiCopy.revisions.at(-1)?.payload).toMatchObject({ preparation: { initialMap: { markers: [{ id: 'postgres-approved' }] } } });
+    await expect(restarted.environmentImpact(actor, apiCopy.id, { expectedRevision: apiCopy.revision, bounds: old.region.bounds }, 'FULL'))
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
+  } finally {
+    await dropSchema(pool, schema);
+    await pool.end();
     await rm(directory, { recursive: true, force: true });
   }
 });

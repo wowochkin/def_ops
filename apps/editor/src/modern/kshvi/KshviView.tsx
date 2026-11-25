@@ -618,6 +618,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       key={`${selectedExercise.id}-${selectedExercise.payloadAccess}-${preparationStep}`}
       card={selectedExercise} client={client} role={role} initialStep={preparationStep}
       canRevise={can('exercise:revise')}
+      canReadTruth={(role === 'DIRECTOR' || role === 'LEADER') && can('TRUTH_READ')}
       canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
       onCard={receiveCard}
       acceptsCardResponse={acceptsSelectedCard ?? undefined}

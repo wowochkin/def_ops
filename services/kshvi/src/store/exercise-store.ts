@@ -1,3 +1,5 @@
+import { atlasCoversBounds } from '../../../../packages/kshvi/src/environment/provider';
+import { hasTruthAccess } from './exercise-projection';
 import { createHash, randomUUID } from 'node:crypto';
 import { createPool, migrate, tx, type Client, type Migration, type Pool } from '@def-ops/db';
 import {
@@ -15,7 +17,9 @@ export type ExercisePurpose = 'planned' | 'special' | 'inspection' | 'research' 
 export type ExerciseScale = 'tactical' | 'operational' | 'strategic' | 'custom';
 export type ExerciseState = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'SEALED' | 'CANCELLED' | 'ARCHIVED';
 export type ExerciseValidation = 'NOT_RUN' | 'OK' | 'WARNING' | 'ERROR';
-export type ExerciseActor = Readonly<{ organizationId: string; userId: string }>;
+export type ExerciseActor = Readonly<{
+  organizationId: string; userId: string; activeRole?: string | null; authorities?: readonly string[];
+}>;
 export type ExerciseSealActor = ExerciseActor & Readonly<{ activeRole: string | null; authorities: readonly string[] }>;
 export type ExercisePayloadAccess = 'FULL' | 'PROJECTED';
 
@@ -46,6 +50,7 @@ export type ExerciseRevision = Readonly<{
   sha256: string;
   state: Exclude<ExerciseState, 'ARCHIVED'>;
   sealedArtifact?: SealedScenario;
+  truthOnlyPayload?: true;
   createdBy: string;
   createdAt: string;
   supersedesId: string | null;
@@ -105,8 +110,9 @@ export type ExerciseEvidenceContext = Readonly<{
 export interface ExerciseEvidenceProvider {
   /** Внутренний серверный порт: HTTP-клиент не может подставить готовые доказательства. */
   forRevision(context: ExerciseEvidenceContext): Promise<ServerExerciseEvidence>;
-  confirmations?(revision: ExerciseRevision): Promise<readonly ReadinessConfirmation[]>;
-  approvedMap?(revision: ExerciseRevision): Promise<ApprovedInitialMap | null>;
+  confirmations?(revision: ExerciseRevision, db?: Client): Promise<readonly ReadinessConfirmation[]>;
+  approvedMap?(revision: ExerciseRevision, db?: Client): Promise<ApprovedInitialMap | null>;
+  hasEnvironmentEvidence?(revision: ExerciseRevision, db?: Client): Promise<boolean>;
 }
 export type ExerciseStoreOptions = Readonly<{
   now?: () => Date;
@@ -181,6 +187,10 @@ export const KSHVI_EXERCISE_MIGRATIONS: Migration[] = [{
   id: 5,
   name: 'exercise-sealed-artifacts',
   sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/005-sealed-artifacts.sql', import.meta.url), 'utf8')),
+}, {
+  id: 8,
+  name: 'exercise-truth-payload',
+  sql: await import('node:fs').then(fs => fs.readFileSync(new URL('./migrations/008-exercise-truth-payload.sql', import.meta.url), 'utf8')),
 }];
 
 const purposes = new Set<ExercisePurpose>(['planned', 'special', 'inspection', 'research', 'exposition', 'custom']);
@@ -231,13 +241,18 @@ function preparationOf(payload: JsonValue | undefined): JsonValue | undefined {
 function requirePreparationAccess(access: ExercisePayloadAccess | undefined): void {
   if (access !== 'FULL') fail('FORBIDDEN', 'Изменение черновика требует доступа к полной редакции учения');
 }
+function requireTruthAccess(actor: ExerciseActor): void {
+  if (!hasTruthAccess(actor)) fail('FORBIDDEN', 'Для изменения закрытой редакции нужен доступ к истинной обстановке');
+}
+
 function requireWritableRevision(
-  card: ExerciseCard, expectedRevision: number, payload: JsonValue | undefined,
+  actor: ExerciseActor, card: ExerciseCard, expectedRevision: number, payload: JsonValue | undefined,
   access: ExercisePayloadAccess | undefined, operation?: PreparationOperation,
 ): ExerciseRevision {
   if (card.state === 'ARCHIVED') fail('ARCHIVED', 'Архивное учение нельзя изменить');
   if (card.revision !== expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
   const previous = card.revisions.find(revision => revision.revision === card.revision)!;
+  if (previous.truthOnlyPayload) requireTruthAccess(actor);
   const hasPreparation = preparationOf(previous.payload) !== undefined || preparationOf(payload) !== undefined;
   if (operation?.kind === 'replace-environment') {
     if (!['DRAFT', 'IN_REVIEW', 'APPROVED', 'SEALED'].includes(card.state)) fail('VALIDATION', 'Рабочую редакцию в этом состоянии создать нельзя');
@@ -259,32 +274,64 @@ type PreparationOperation =
   | Readonly<{ kind: 'save'; input: SavePreparationInput }>
   | Readonly<{ kind: 'replace-environment'; input: ReplaceEnvironmentInput }>;
 
-async function checkedEnvironmentImpact(card: ExerciseCard, input: EnvironmentImpactInput, evidence?: ExerciseEvidenceProvider): Promise<EnvironmentImpact> {
+async function environmentSourceFor(actor: ExerciseActor, revision: ExerciseRevision, environment?: ExerciseEnvironmentLoader,
+  evidence?: ExerciseEvidenceProvider, db?: Client) {
+  const readTruth = hasTruthAccess(actor);
+  if (!readTruth) {
+    if (revision.truthOnlyPayload || revision.state === 'SEALED' || revision.sealedArtifact) requireTruthAccess(actor);
+    const hasEvidence = await evidence?.hasEnvironmentEvidence?.(revision, db)
+      ?? Boolean(evidence?.approvedMap || evidence?.confirmations);
+    if (hasEvidence) requireTruthAccess(actor);
+  }
+  const source = await environmentChangeSource(revision, readTruth ? evidence : undefined, db);
+  if (source.approvedMap && source.map) {
+    const snapshotId = revisionEnvironmentId(revision);
+    const mapEnvironment = source.map.environment;
+    const snapshot = snapshotId && snapshotId === mapEnvironment.snapshotId ? await environment?.load(snapshotId).catch(() => null) : null;
+    if (!snapshot || snapshot.id !== snapshotId || snapshot.manifestSha256 !== mapEnvironment.manifestSha256
+      || !atlasCoversBounds(snapshot.region.bounds, mapEnvironment.bounds)) {
+      fail('VALIDATION', 'Утверждённая исходная карта не связана со снимком среды текущей редакции');
+    }
+  }
+  return source;
+}
+
+async function checkedEnvironmentImpact(actor: ExerciseActor, card: ExerciseCard, input: EnvironmentImpactInput,
+  environment?: ExerciseEnvironmentLoader, evidence?: ExerciseEvidenceProvider): Promise<EnvironmentImpact> {
   validateRevisionInput({ expectedRevision: input.expectedRevision });
   const revision = card.revisions.find(item => item.revision === input.expectedRevision);
   if (card.revision !== input.expectedRevision || !revision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
   try {
-    return inspectEnvironmentChange(await environmentChangeSource(revision, evidence), checkedEnvironmentBounds(input.bounds));
+    return inspectEnvironmentChange(await environmentSourceFor(actor, revision, environment, evidence), checkedEnvironmentBounds(input.bounds));
   } catch (error) {
+    if (error instanceof ExerciseStoreError) throw error;
     fail('VALIDATION', error instanceof Error ? error.message : 'Не удалось проверить смену среды');
   }
 }
 
-async function changedRevisionPayload(previous: ExerciseRevision, payload: JsonValue | undefined, operation: PreparationOperation | undefined,
-  environment: ExerciseEnvironmentLoader | undefined, evidence: ExerciseEvidenceProvider | undefined): Promise<JsonValue | undefined> {
-  if (!operation) return payload;
-  if (operation.kind === 'save') return mergePreparation(previous.payload, operation.input.draft);
+type RevisionChange = Readonly<{ payload?: JsonValue; truthOnlyPayload?: true }>;
+
+async function changedRevisionPayload(actor: ExerciseActor, previous: ExerciseRevision, payload: JsonValue | undefined,
+  operation: PreparationOperation | undefined, environment: ExerciseEnvironmentLoader | undefined, evidence: ExerciseEvidenceProvider | undefined,
+  db?: Client): Promise<RevisionChange> {
+  const { truthOnlyPayload } = previous;
+  if (!operation) return { payload, truthOnlyPayload };
+  if (operation.kind === 'save') return { payload: mergePreparation(previous.payload, operation.input.draft), truthOnlyPayload };
+  const source = await environmentSourceFor(actor, previous, environment, evidence, db);
   const { snapshotId } = operation.input;
   if (typeof snapshotId !== 'string' || !/^[a-f0-9]{64}$/.test(snapshotId)) fail('VALIDATION', 'Укажите действительный снимок среды');
   if (snapshotId === revisionEnvironmentId(previous)) fail('VALIDATION', 'Снимок среды уже связан с текущей редакцией');
   const snapshot = await environment?.load(snapshotId).catch(() => null);
   if (!snapshot || snapshot.id !== snapshotId) fail('VALIDATION', 'Не найден действительный снимок среды');
-  const source = await environmentChangeSource(previous, evidence);
-  const impact = inspectEnvironmentChange(source, snapshot.region.bounds);
-  if (impact.missingForceIds.length) fail('VALIDATION', `Для переноса исходной карты отсутствуют силы: ${impact.missingForceIds.join(', ')}`);
+  const { missingForceIds, missingInstanceIds } = inspectEnvironmentChange(source, snapshot.region.bounds);
+  const unresolved = [
+    ...(missingForceIds.length ? [`отсутствуют силы: ${missingForceIds.join(', ')}`] : []),
+    ...(missingInstanceIds.length ? [`не найдены экземпляры участников: ${missingInstanceIds.join(', ')}`] : []),
+  ];
+  if (unresolved.length) fail('VALIDATION', `Для переноса исходной карты ${unresolved.join('. ')}`);
   const merged = mergePreparation(previous.payload, bindEnvironmentToDraft(source.draft, snapshot, source.map) as unknown as JsonValue);
   const { environmentSnapshotId: _legacy, ...nested } = merged as Record<string, JsonValue>;
-  return nested;
+  return { payload: nested, truthOnlyPayload: truthOnlyPayload || (source.approvedMap ? true : undefined) };
 }
 
 async function preparationPayload(payload: JsonValue, environment?: ExerciseEnvironmentLoader, updatedAt?: string): Promise<JsonValue> {
@@ -634,21 +681,21 @@ export class InMemoryExerciseStore implements ExerciseStore {
     requirePreparationAccess(access);
     const card = await this.get(actor.organizationId, exerciseId);
     if (!card) fail('NOT_FOUND', 'Учение не найдено');
-    return checkedEnvironmentImpact(card, input, this.evidence);
+    return checkedEnvironmentImpact(actor, card, input, this.environment, this.evidence);
   }
 
   private async writeRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput, access?: ExercisePayloadAccess, operation?: PreparationOperation): Promise<ExerciseCard> {
     validateRevisionInput(input);
     const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
-    const previous = requireWritableRevision(record, input.expectedRevision, input.payload, access, operation);
+    const previous = requireWritableRevision(actor, record, input.expectedRevision, input.payload, access, operation);
     const previousState = record.state;
     const startsAt = input.startsAt === undefined ? record.startsAt : input.startsAt;
     const endsAt = input.endsAt === undefined ? record.endsAt : input.endsAt;
     if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
     const now = this.now().toISOString();
-    const changedPayload = await changedRevisionPayload(previous, input.payload, operation, this.environment, this.evidence);
+    const { payload: changedPayload, truthOnlyPayload } = await changedRevisionPayload(actor, previous, input.payload, operation, this.environment, this.evidence);
     const payload = await preparationPayload(clone(changedPayload ?? previous.payload), this.environment, changedPayload == null ? undefined : now);
-    requireWritableRevision(record, input.expectedRevision, input.payload, access, operation);
+    requireWritableRevision(actor, record, input.expectedRevision, input.payload, access, operation);
     if (operation?.kind === 'replace-environment' && record.state !== previousState) {
       fail('REVISION_CONFLICT', 'Состояние учения изменилось во время смены среды');
     }
@@ -656,6 +703,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
     const revision: ExerciseRevision = {
       id: randomUUID(), exerciseId, revision: record.revision + 1, payload, sha256: digest(payload), state: 'DRAFT',
       createdBy: actor.userId, createdAt: now, supersedesId: previous.id,
+      ...(truthOnlyPayload ? { truthOnlyPayload } : {}),
     };
     record.title = input.title?.trim() ?? record.title;
     record.purpose = input.purpose ?? record.purpose;
@@ -794,6 +842,7 @@ function mapRevision(row: ExerciseRow): ExerciseRevision {
     id: row.id, exerciseId: row.exercise_id, revision: Number(row.revision), payload: row.payload,
     sha256: row.sha256, state: row.state, createdBy: row.created_by, createdAt: instant(row.created_at),
     ...(row.sealed_artifact ? { sealedArtifact: row.sealed_artifact as SealedScenario } : {}),
+    ...(row.truth_payload ? { truthOnlyPayload: true } : {}),
     supersedesId: row.supersedes_id ?? null,
   };
 }
@@ -840,9 +889,9 @@ async function insertCard(db: Queryable, schema: string, organizationId: string,
   );
   for (const revision of card.revisions) {
     await db.query(
-      `insert into ${schema}.exercise_revisions (organization_id, id, exercise_id, revision, payload, sha256, state, created_by, created_at, supersedes_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [organizationId, revision.id, card.id, revision.revision, revision.payload, revision.sha256, revision.state, revision.createdBy, revision.createdAt, revision.supersedesId],
+      `insert into ${schema}.exercise_revisions (organization_id, id, exercise_id, revision, payload, sha256, state, created_by, created_at, supersedes_id, truth_payload)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [organizationId, revision.id, card.id, revision.revision, revision.payload, revision.sha256, revision.state, revision.createdBy, revision.createdAt, revision.supersedesId, revision.truthOnlyPayload === true],
     );
   }
 }
@@ -945,7 +994,7 @@ export class PgExerciseStore implements ExerciseStore {
     requirePreparationAccess(access);
     const card = await this.get(actor.organizationId, exerciseId);
     if (!card) fail('NOT_FOUND', 'Учение не найдено');
-    return checkedEnvironmentImpact(card, input, this.evidence);
+    return checkedEnvironmentImpact(actor, card, input, this.environment, this.evidence);
   }
 
   private async writeRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput, access?: ExercisePayloadAccess, operation?: PreparationOperation): Promise<ExerciseCard> {
@@ -953,22 +1002,23 @@ export class PgExerciseStore implements ExerciseStore {
     return tx(this.pool, async db => {
       await lockExercise(db, this.schema, actor.organizationId, exerciseId);
       const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
-      const previous = requireWritableRevision(current, input.expectedRevision, input.payload, access, operation);
+      const previous = requireWritableRevision(actor, current, input.expectedRevision, input.payload, access, operation);
       const startsAt = input.startsAt === undefined ? current.startsAt : input.startsAt;
       const endsAt = input.endsAt === undefined ? current.endsAt : input.endsAt;
       if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
       const now = new Date().toISOString();
-      const changedPayload = await changedRevisionPayload(previous, input.payload, operation, this.environment, this.evidence);
+      const { payload: changedPayload, truthOnlyPayload } = await changedRevisionPayload(actor, previous, input.payload, operation, this.environment, this.evidence, db);
       const payload = await preparationPayload(clone(changedPayload ?? previous.payload), this.environment, changedPayload == null ? undefined : now);
       const assessment = assessmentOf(payload);
       const revision: ExerciseRevision = {
         id: randomUUID(), exerciseId, revision: current.revision + 1, payload, sha256: digest(payload),
         state: 'DRAFT', createdBy: actor.userId, createdAt: now, supersedesId: previous.id,
+        ...(truthOnlyPayload ? { truthOnlyPayload } : {}),
       };
       await db.query(
-        `insert into ${this.schema}.exercise_revisions (organization_id, id, exercise_id, revision, payload, sha256, state, created_by, created_at, supersedes_id)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-        [actor.organizationId, revision.id, exerciseId, revision.revision, payload, revision.sha256, revision.state, revision.createdBy, now, previous.id],
+        `insert into ${this.schema}.exercise_revisions (organization_id, id, exercise_id, revision, payload, sha256, state, created_by, created_at, supersedes_id, truth_payload)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [actor.organizationId, revision.id, exerciseId, revision.revision, payload, revision.sha256, revision.state, revision.createdBy, now, previous.id, revision.truthOnlyPayload === true],
       );
       await db.query(
         `update ${this.schema}.exercises set title=$3, purpose=$4, scale=$5, starts_at=$6, ends_at=$7, state=$8,

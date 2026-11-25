@@ -133,7 +133,7 @@ it('показывает последствия смены SEALED до фикс�
     if (path.endsWith('/environment-impact')) return Response.json({
       objects: [{ kind: 'Объект исходной карты', id: 'saved-object', outside: true }],
       confirmations: [{ id: 'confirmation-id', area: 'ENVIRONMENT_MAP' }],
-      missingForceIds: [],
+      missingForceIds: [], missingInstanceIds: [],
     });
     if (path.endsWith('/environment/snapshots')) return Response.json({ ...snapshot, id: nextId, manifestSha256: nextId });
     if (path.endsWith('/environment-revisions')) {
@@ -143,7 +143,7 @@ it('показывает последствия смены SEALED до фикс�
     throw Error(`Неожиданный запрос ${path}`);
   } });
   render(<ExercisePreparation client={client} card={sealed} role="DIRECTOR" initialStep="environment"
-    canRevise canStart onCard={() => {}} onAccessLost={() => {}} onStart={() => {}} />);
+    canRevise canReadTruth canStart onCard={() => {}} onAccessLost={() => {}} onStart={() => {}} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Сменить среду' }));
   fireEvent.change(screen.getByLabelText('Зерно погодного сценария'), { target: { value: 73 } });
   const prepare = screen.getByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });

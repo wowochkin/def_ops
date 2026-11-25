@@ -5,6 +5,7 @@ import {
   validateWeatherScenario,
   weatherAt,
   weatherDuration,
+  weatherGrid,
   weatherTime,
   type WeatherDataset,
   type WeatherScenario,
@@ -108,6 +109,63 @@ export type EnvironmentSnapshot = Readonly<{
   autonomy: 'COMPLETE' | 'INCOMPLETE';
   limitations: readonly string[];
 }>;
+
+type WeatherSample = Readonly<{ lon: number; lat: number; state: WeatherState }>;
+export type ArchiveWeatherCoverage = Readonly<{
+  samples: readonly WeatherSample[];
+  error?: string;
+  warning?: string;
+}>;
+
+const weatherCoordinateEpsilon = 1e-7;
+const bucket = (value: number) => Math.floor(value / weatherCoordinateEpsilon);
+
+export function archiveWeatherCoverage(dataset: WeatherDataset, bounds: Bounds, operationalAt: string): ArchiveWeatherCoverage {
+  const [west, south, east, north] = bounds;
+  const inside = (lon: number, lat: number): boolean => lat >= south - weatherCoordinateEpsilon && lat <= north + weatherCoordinateEpsilon
+    && lon >= west - weatherCoordinateEpsilon && lon <= east + weatherCoordinateEpsilon;
+  const series = new Map<string, WeatherDataset['rows']>();
+  for (const row of dataset.rows) {
+    if (!inside(row.lon, row.lat)) continue;
+    const key = `${row.lon},${row.lat}`;
+    const rows = series.get(key);
+    if (rows) rows.push(row);
+    else series.set(key, [row]);
+  }
+  const samples: WeatherSample[] = [];
+  const buckets = new Map<string, WeatherSample[]>();
+  for (const rows of series.values()) {
+    const { lon, lat } = rows[0]!;
+    const state = weatherAt({ ...dataset, rows }, lat, lon, operationalAt);
+    if (!state || !WEATHER_FIELDS.some(field => state[field] != null)) continue;
+    const sample = { lon, lat, state };
+    samples.push(sample);
+    const key = `${bucket(lon)},${bucket(lat)}`;
+    const matches = buckets.get(key);
+    if (matches) matches.push(sample);
+    else buckets.set(key, [sample]);
+  }
+  if (dataset.region) {
+    const expected = weatherGrid(dataset.region).filter(([lon, lat]) => inside(lon, lat));
+    const available = expected.filter(([lon, lat]) => {
+      const x = bucket(lon);
+      const y = bucket(lat);
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (buckets.get(`${x + dx},${y + dy}`)?.some(sample =>
+            Math.abs(sample.lon - lon) < weatherCoordinateEpsilon && Math.abs(sample.lat - lat) < weatherCoordinateEpsilon)) return true;
+        }
+      }
+      return false;
+    }).length;
+    if (available < expected.length) {
+      return { samples, error: `На оперативный момент доступны ${available} из ${expected.length} заявленных погодных узлов внутри области.` };
+    }
+    if (expected.length && atlasCoversBounds(dataset.region.bounds, bounds)) return { samples };
+  }
+  if (!samples.length) return { samples, error: 'Внутри выбранной области нет наблюдений на оперативный момент.' };
+  return { samples, warning: 'Погодный набор покрывает только часть области.' };
+}
 
 export type WeatherQuery = Readonly<{
   lon: number;

@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { StyleSpecification } from 'maplibre-gl';
 import { REGIONAL_CLIMATE_PROFILE } from '../../../../../../packages/core/src/weather-climate-profile';
-import { simulateWeather, validateWeatherScenario, weatherAt, weatherDuration, type WeatherDataset, type WeatherScenario } from '../../../../../../packages/core/src/weather';
+import { simulateWeather, validateWeatherScenario, weatherDuration, type WeatherDataset, type WeatherScenario } from '../../../../../../packages/core/src/weather';
 import { weatherGrid } from '../../../../../../packages/core/src/weather-grid';
-import { atlasCoversBounds, validateEnvironmentTime, type AtlasMeta, type Bounds, type EnvironmentSelection,
+import { archiveWeatherCoverage, atlasCoversBounds, validateEnvironmentTime, type AtlasMeta, type Bounds, type EnvironmentSelection,
   type EnvironmentSnapshot, type EnvironmentTime, type EnvironmentWeather } from '../../../../../../packages/kshvi/src/environment/provider';
 import type { EnvironmentImpact } from '../../../../../../services/kshvi/src/store/environment-revision';
 import { DateTimeField } from '../../DateTimeField';
@@ -61,24 +61,12 @@ function weatherPreview(weather: EnvironmentSelection['weather'], dataset: Weath
   if (Date.parse(at) < Date.parse(dataset.rows[0]?.time ?? '') || Date.parse(at) > Date.parse(dataset.rows.at(-1)?.time ?? '')) {
     return { points: [], error: 'Оперативный момент выходит за интервал погодного набора.' };
   }
-  const local = new Map<string, WeatherDataset['rows']>();
-  for (const row of dataset.rows) {
-    if (!atlasCoversBounds(bounds, [row.lon, row.lat, row.lon, row.lat])) continue;
-    const key = `${row.lon},${row.lat}`;
-    const rows = local.get(key) ?? [];
-    if (!rows.length) local.set(key, rows);
-    rows.push(row);
-  }
-  const points = [...local.values()].flatMap(rows => {
-    const first = rows[0]!;
-    const value = weatherAt({ ...dataset, rows }, first.lat, first.lon, at)?.temperature;
-    return value == null ? [] : [{ lon: first.lon, lat: first.lat, value }];
-  });
-  if (!local.size || ![...local.values()].some(rows => Date.parse(rows[0]!.time) <= Date.parse(at) && Date.parse(rows.at(-1)!.time) >= Date.parse(at))) {
-    return { points: [], error: 'Внутри выбранной области нет наблюдений на оперативный момент.' };
-  }
-  const partial = !dataset.region || !atlasCoversBounds(dataset.region.bounds, bounds);
-  return { points, ...(partial ? { warning: 'Погодный набор покрывает только часть области. Показаны доступные точки.' } : {}) };
+  const coverage = archiveWeatherCoverage(dataset, bounds, at);
+  return {
+    points: coverage.samples.flatMap(({ lon, lat, state }) => state.temperature == null ? [] : [{ lon, lat, value: state.temperature }]),
+    error: coverage.error,
+    warning: coverage.warning,
+  };
 }
 
 type Props = {
@@ -302,6 +290,7 @@ export function EnvironmentSelectionEditor({
       </ul>}
       {!!impact.confirmations.length && <p>Устареют подтверждения: {impact.confirmations.map(item => confirmationNames[item.area]).join(', ')}.</p>}
       {!!impact.missingForceIds.length && <p role="alert">Для переноса исходной карты отсутствуют силы: {impact.missingForceIds.join(', ')}.</p>}
+      {!!impact.missingInstanceIds.length && <p role="alert">Для переноса исходной карты не найдены экземпляры участников: {impact.missingInstanceIds.join(', ')}.</p>}
     </section>}
     <div className="kshvi-environment-actions">
       <button type="button" disabled={locked || busy || !valid} onClick={() => {

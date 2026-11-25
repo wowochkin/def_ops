@@ -152,7 +152,7 @@ export function EnvironmentMapPreparation({
         const result = await client.environmentImpact(card.id, { expectedRevision: revision, bounds: selection.region.bounds });
         if (!canApply()) return;
         setImpact(result);
-        if (result.missingForceIds.length) return;
+        if (result.missingForceIds.length || result.missingInstanceIds.length) return;
       }
       // Сервер проверяет наличие атласов, покрытие и погоду до привязки снимка к редакции.
       const snapshot = await client.createEnvironmentSnapshot(selection).catch(cause => {

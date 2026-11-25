@@ -1,3 +1,4 @@
+import type { Client } from '@def-ops/db';
 import type { EnvironmentSnapshot, Bounds } from '../../../../packages/kshvi/src/environment/provider';
 import { emptyPreparationDraft, validatePreparationDraft, type PreparationDraft } from '../../../../packages/kshvi/src/scenario/preparation-draft';
 import type { InitialSituationMap, MapGeometry } from '../../../../packages/kshvi/src/scenario/initial-map';
@@ -10,6 +11,7 @@ export type EnvironmentImpact = Readonly<{
   objects: readonly Readonly<{ id: string; kind: string; outside: boolean }>[];
   confirmations: readonly Readonly<{ id: string; area: ReadinessArea }>[];
   missingForceIds: readonly string[];
+  missingInstanceIds: readonly string[];
 }>;
 
 export function revisionEnvironmentId(revision: ExerciseRevision): string | null {
@@ -26,17 +28,21 @@ export function checkedEnvironmentBounds(bounds: Bounds): Bounds {
   return bounds;
 }
 
-type ChangeSource = Readonly<{ draft: PreparationDraft; map: InitialSituationMap | null; confirmations: readonly ReadinessConfirmation[] }>;
+type ChangeSource = Readonly<{
+  draft: PreparationDraft;
+  map: InitialSituationMap | null;
+  confirmations: readonly ReadinessConfirmation[];
+  approvedMap: boolean;
+  legacyMap: boolean;
+}>;
 
-export async function environmentChangeSource(revision: ExerciseRevision, evidence?: ExerciseEvidenceProvider): Promise<ChangeSource> {
+export async function environmentChangeSource(revision: ExerciseRevision, evidence?: ExerciseEvidenceProvider, db?: Client): Promise<ChangeSource> {
   const payload = revision.payload;
   const preparation = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload.preparation : undefined;
   const draft = preparation === undefined ? emptyPreparationDraft(revision.createdAt) : validatePreparationDraft(preparation);
-  const [map, confirmations] = await Promise.all([
-    draft.initialMap ?? revision.sealedArtifact?.initialMap ?? evidence?.approvedMap?.(revision) ?? null,
-    revision.sealedArtifact?.confirmations ?? evidence?.confirmations?.(revision) ?? [],
-  ]);
-  return { draft, map, confirmations };
+  const approved = revision.sealedArtifact?.initialMap ?? await evidence?.approvedMap?.(revision, db) ?? null;
+  const confirmations = revision.sealedArtifact?.confirmations ?? await evidence?.confirmations?.(revision, db) ?? [];
+  return { draft, map: approved ?? draft.initialMap, confirmations, approvedMap: approved !== null, legacyMap: preparation === undefined };
 }
 
 function outside(geometry: MapGeometry, bounds: Bounds): boolean {
@@ -54,15 +60,18 @@ function forceOutside(value: unknown, bounds: Bounds): boolean {
   return outside(value as MapGeometry, bounds);
 }
 
-export function inspectEnvironmentChange({ draft, map, confirmations }: ChangeSource, bounds: Bounds): EnvironmentImpact {
+export function inspectEnvironmentChange({ draft, map, confirmations, legacyMap }: ChangeSource, bounds: Bounds): EnvironmentImpact {
   const objects: { id: string; kind: string; outside: boolean }[] = [];
   const forceIds = new Set(draft.forces.map(force => force.id));
   const missingForceIds = new Set<string>();
+  const missingInstanceIds = new Set<string>();
   if (map) {
     objects.push({ id: map.id, kind: 'Исходная карта', outside: false });
     for (const marker of map.markers) {
       objects.push({ id: marker.id, kind: 'Объект исходной карты', outside: marker.geometry ? outside(marker.geometry, bounds) : false });
       if (marker.links.forceId && !forceIds.has(marker.links.forceId)) missingForceIds.add(marker.links.forceId);
+      // У старых карт нет реестра экземпляров участников, привязанного к редакции.
+      if (legacyMap) for (const id of marker.visibility.instanceIds ?? []) missingInstanceIds.add(id);
     }
   }
   for (const force of draft.forces) {
@@ -76,7 +85,8 @@ export function inspectEnvironmentChange({ draft, map, confirmations }: ChangeSo
       && marker.geometry && (marker.id === id || marker.routeId === id) && outside(marker.geometry, bounds))) });
   }
   if (draft.autonomy) objects.push({ id: draft.autonomy.profileId, kind: 'Профиль событий', outside: false });
-  return { objects, confirmations: confirmations.map(({ id, area }) => ({ id, area })), missingForceIds: [...missingForceIds].sort() };
+  return { objects, confirmations: confirmations.map(({ id, area }) => ({ id, area })),
+    missingForceIds: [...missingForceIds].sort(), missingInstanceIds: [...missingInstanceIds].sort() };
 }
 
 export function bindEnvironmentToDraft(draft: PreparationDraft, snapshot: EnvironmentSnapshot, sourceMap = draft.initialMap): PreparationDraft {
