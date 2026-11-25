@@ -1,4 +1,5 @@
 import {weatherGrid, type WeatherRegion} from '../../../../packages/core/src/weather-grid';
+import {weatherRenderRegion} from './weather-domain';
 import type {WeatherField, WeatherState} from '../../../../packages/core/src/weather';
 
 export const mapWeatherFields = ['precipitation','temperature','windSpeed','pressure','cloud','humidity','visibility','snowDepth','soilTemperature','soilMoisture'] as const;
@@ -28,19 +29,24 @@ const key = (lon:number,lat:number) => [lon===180?-180:lon,lat].map(n=>n.toFixed
 const mercator = (deg:number) => Math.asinh(Math.tan(deg*Math.PI/180));
 
 // Interpolate only within a source grid square with four known observations.
-export function weatherRasters(region:WeatherRegion, cells:Cell[], field:MapWeatherField, sample?:(lon:number,lat:number)=>number):WeatherRaster[] {
-  if (!cells.length) return [];
+export function weatherRasters(region:WeatherRegion, cells:Cell[], field:MapWeatherField, sample?:(lon:number,lat:number)=>number, renderBounds?:WeatherRegion['bounds']|null):WeatherRaster[] {
+  if (!cells.length || renderBounds===null) return [];
   const byPosition = new Map(cells.map(c=>[key(c.lon,c.lat),c.state?.[field]]));
   const values = weatherGrid(region).map(([lon,lat])=>byPosition.get(key(lon,lat))??NaN);
   const {cols,rows,bounds:[west,south,east,north]} = region;
   const end = east<west?east+360:east;
-  const top = Math.min(85.05112878,north), bottom = Math.max(-85.05112878,south);
-  if (top<=bottom || end<=west || (!sample&&!values.some(Number.isFinite))) return [];
+  if (end<=west || (!sample&&!values.some(Number.isFinite))) return [];
   const stops = scales[field].map(([v,color])=>({v,rgb:[1,3,5].map(i=>parseInt(color.slice(i,i+2),16))}));
   const rasters:WeatherRaster[]=[];
-  const size=sample?256:128, mTop=mercator(top), mBottom=mercator(bottom);
-  for(let left=west;left<end;){
-    const right=Math.min(left+120,end,left<180?180:end);
+  const size=sample?256:128;
+  for(const [rw,rs,re,rn] of weatherRenderRegion(region,renderBounds??undefined).renderRegions){
+   const renderWest=rw+360*Math.ceil((west-rw)/360-1e-12);
+   const renderEnd=renderWest+(re<rw?re+360-rw:re-rw);
+   const top=Math.min(85.05112878,rn),bottom=Math.max(-85.05112878,rs);
+   if(top<=bottom)continue;
+   const mTop=mercator(top),mBottom=mercator(bottom);
+   for(let left=renderWest;left<renderEnd;){
+    const right=Math.min(left+120,renderEnd,left<180?180:renderEnd);
     const offset=left>=180?360:0;
     const pixels=new Uint8ClampedArray(size*size*4);
     for(let py=0;py<size;py++){
@@ -63,6 +69,7 @@ export function weatherRasters(region:WeatherRegion, cells:Cell[], field:MapWeat
     }
     rasters.push({size,pixels,coordinates:[[left-offset,top],[right-offset,top],[right-offset,bottom],[left-offset,bottom]]});
     left=right;
+   }
   }
   return rasters;
 }

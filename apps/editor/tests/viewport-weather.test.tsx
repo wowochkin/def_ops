@@ -9,14 +9,21 @@ import type {WeatherRegion} from '../../../packages/core/src/weather-grid';
 import type {WeatherOverlay} from '../src/modern/weather-layer';
 
 const scenario:WeatherScenario={version:1,seed:3,start:'2020-11-01T00:00:00Z',temperature:4,humidity:65,pressure:1013,windSpeed:1,windDirection:0,cloud:50,precipitation:0,variability:0,transitionHours:3};
-it.each(['pressure','temperature'] as const)('при включённой ЦМР %s покрывает окно, включая участки без высоты',async field=>{
+it.each(['pressure','temperature'] as const)('при включённой ЦМР %s остаётся внутри модельной области, включая участки без высоты',async field=>{
  const region:WeatherRegion={bounds:[10,49,11,50],cols:3,rows:3};
  const onOverlay=vi.fn<(layer:WeatherOverlay)=>void>();
- render(<WeatherField region={region} viewBounds={[9,48,12,51]} scenario={scenario} time={scenario.start} onOverlay={onOverlay} terrain={{referenceM:0,lapseKPerKm:6.5}} onPoint={()=>{}} setField={()=>{}} field={field}/>);
+ const {rerender}=render(<WeatherField region={region} viewBounds={[9,48,12,51]} scenario={scenario} time={scenario.start} onOverlay={onOverlay} terrain={{referenceM:0,lapseKPerKm:6.5}} onPoint={()=>{}} setField={()=>{}} field={field}/>);
  await waitFor(()=>expect(onOverlay).toHaveBeenCalled());
- const raster=onOverlay.mock.lastCall![0].rasters[0];
- expect(raster.coordinates).toEqual([[9,51],[12,51],[12,48],[9,48]]);
+ const original=onOverlay.mock.lastCall![0];
+ const raster=original.rasters[0];
+ expect(raster.coordinates).toEqual([[10,50],[11,50],[11,49],[10,49]]);
  expect(raster.pixels[3]).toBe(255);
+ rerender(<WeatherField region={region} viewBounds={[-180,-85,180,85]} scenario={scenario} time={scenario.start} onOverlay={onOverlay} terrain={{referenceM:0,lapseKPerKm:6.5}} onPoint={()=>{}} setField={()=>{}} field={field}/>);
+ await waitFor(()=>expect(onOverlay.mock.lastCall![0].rasters[0].coordinates).toEqual([[10,50],[11,50],[11,49],[10,49]]));
+ expect(onOverlay.mock.lastCall![0].rasters[0].pixels).toEqual(raster.pixels);
+ expect(onOverlay.mock.lastCall![0].data).toEqual(original.data);
+ rerender(<WeatherField region={region} viewBounds={[0,0,1,1]} scenario={scenario} time={scenario.start} onOverlay={onOverlay} onPoint={()=>{}} setField={()=>{}} field={field}/>);
+ await waitFor(()=>expect(onOverlay.mock.lastCall![0].rasters).toEqual([]));
 });
 
 it('годовой ход для выбранной области учитывает полушарие и переход через 180°',()=>{
