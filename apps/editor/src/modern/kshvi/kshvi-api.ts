@@ -167,6 +167,10 @@ export class KshviHttpError extends Error{
 }
 
 /** Клиент ждёт подтверждения каждой команды; локальный мир здесь не объявляется официальным. */
+export function isExerciseAccessLost(cause: unknown): cause is KshviHttpError {
+  return cause instanceof KshviHttpError && [401, 403, 404].includes(cause.status);
+}
+
 export class ExerciseClient implements KshviClient {
   private readonly baseUrl: string;
   private readonly fetcher: Fetcher;

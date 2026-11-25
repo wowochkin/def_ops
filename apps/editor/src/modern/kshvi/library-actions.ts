@@ -2,7 +2,7 @@ import type { ExerciseSession, ExerciseState, ExerciseSummary, ExerciseValidatio
 
 export const exerciseStates = ['DRAFT', 'IN_REVIEW', 'APPROVED', 'SEALED', 'CANCELLED', 'ARCHIVED'] as const;
 
-export type PreparationStepState = 'NOT_STARTED' | 'NEEDS_DATA' | 'HAS_ERRORS' | 'READY_FOR_REVIEW' | 'CONFIRMED' | 'UNAVAILABLE';
+export type PreparationStepState = 'NOT_STARTED' | 'DATA_PRESENT' | 'NEEDS_DATA' | 'HAS_ERRORS' | 'READY_FOR_REVIEW' | 'CONFIRMED' | 'UNAVAILABLE';
 const labels: Record<ExerciseState | ExerciseValidation | ExerciseSession['state'] | PreparationStepState, string> = {
   DRAFT: 'Черновик',
   IN_REVIEW: 'На проверке',
@@ -19,6 +19,7 @@ const labels: Record<ExerciseState | ExerciseValidation | ExerciseSession['state
   COMPLETED: 'Завершён',
   ABORTED: 'Прерван',
   NOT_STARTED: 'Не начат',
+  DATA_PRESENT: 'Данные сохранены',
   HAS_ERRORS: 'Есть ошибки',
   NEEDS_DATA: 'Требуются данные',
   READY_FOR_REVIEW: 'Готов к проверке',

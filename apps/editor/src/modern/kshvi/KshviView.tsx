@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
-  ExerciseClient, KshviHttpError,
+  ExerciseClient, isExerciseAccessLost, KshviHttpError,
   type AdminOverview,
   type ArchiveRecord,
   type CreateExerciseInput,
@@ -132,6 +132,12 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const role = providedRole ?? serverRole;
   const can = useCallback((authority: string) => authorities.includes(authority), [authorities]);
   const canAdmin = can('kshvi:admin');
+  const [requestedTab, setRequestedTab] = useState<KshviSection | null>(null);
+  const pendingPreparation = useRef(false);
+  const markPendingPreparation = useCallback((pending: boolean) => {
+    pendingPreparation.current = pending;
+    if (!pending) setRequestedTab(null);
+  }, []);
   const [activeTab, setActiveTab] = useState<KshviSection>(() => savedSection(providedAuthorities?.includes('kshvi:admin') ?? false));
   const [filters, setFilters] = useState<ExerciseFilters>({});
   const [items, setItems] = useState<readonly LibraryExercise[]>([]);
@@ -153,6 +159,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const [comparisonResponse, setComparison] = useState<Scoped<ExerciseCard> | null>(null);
   const comparison = comparisonResponse?.scope === scope ? comparisonResponse.value : null;
   const [exerciseId, setExerciseId] = useState(() => readWorkspaceReference<{ id: string }>(WORKSPACE_EXERCISE_KEY)?.id ?? null);
+  const activeExerciseId = useRef(exerciseId);
+  useLayoutEffect(() => { activeExerciseId.current = exerciseId; }, [exerciseId]);
   const [lastSessionId, setLastSessionId] = useState(() => readWorkspaceReference<{ id: string }>(WORKSPACE_SESSION_KEY)?.id ?? null);
   const [exerciseResponse, setExerciseResponse] = useState<Scoped<ExerciseCard> | null>(null);
   const selectedExercise = exerciseResponse?.scope === scope && exerciseResponse.value.id === exerciseId ? exerciseResponse.value : null;
@@ -181,7 +189,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     });
   }
 
-  function clearSelection(): void {
+  const clearSelection = useCallback(() => {
+    setRequestedTab(null);
     setExerciseId(null);
     setExerciseResponse(null);
     setLastSessionId(null);
@@ -190,7 +199,14 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     setDebrief(null);
     setArchiveRecord(null);
     setExposition(null);
-  }
+  }, []);
+
+  const invalidateExercise = useCallback((id: string, cause: KshviHttpError) => {
+    if (activeScope.current !== scope) return;
+    const sessionEnded = cause.status === 401;
+    setComparison(previous => previous?.scope === scope && (sessionEnded || previous.value.id === id) ? null : previous);
+    if (sessionEnded || activeExerciseId.current === id) clearSelection();
+  }, [clearSelection, scope]);
 
   useEffect(() => { writeWorkspaceReference(WORKSPACE_EXERCISE_KEY, exerciseId ? { id: exerciseId } : null); }, [exerciseId]);
   useEffect(() => { writeWorkspaceReference(WORKSPACE_SESSION_KEY, lastSessionId ? { id: lastSessionId } : null); }, [lastSessionId]);
@@ -200,17 +216,15 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     let current = true;
     void client.getCard(exerciseId).then(card => {
       if (current && activeScope.current === scope) setExerciseResponse({ scope, value: card });
-    }).catch(() => {
+    }).catch(cause => {
       if (current && activeScope.current === scope) {
-        setExerciseId(null);
-        setExerciseResponse(null);
-        setLastSessionId(null);
-        setSessionResponse(null);
+        if (isExerciseAccessLost(cause)) invalidateExercise(exerciseId, cause);
+        else clearSelection();
         setError('Не удалось подтвердить доступ к выбранному учению. Откройте его снова из библиотеки.');
       }
     });
     return () => { current = false; };
-  }, [authenticated, authChecking, can, client, exerciseId, scope, selectedExercise]);
+  }, [authenticated, authChecking, can, clearSelection, client, exerciseId, invalidateExercise, scope, selectedExercise]);
 
   useEffect(() => {
     if (!selectedExercise || !lastSessionId || session) return;
@@ -250,12 +264,18 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
 
   const selectTab = useCallback((next: KshviSection) => {
     if (next === 'admin' && !can('kshvi:admin')) return;
+    setRequestedTab(null);
     setActiveTab(next);
     setComparison(null);
     setNotice('');
     setError('');
     try { localStorage.setItem(SECTION_KEY, next); } catch { /* выбор остаётся в текущем окне */ }
   }, [can]);
+
+  function requestTab(next: KshviSection): void {
+    if (activeTab === 'preparation' && pendingPreparation.current && next !== 'preparation') setRequestedTab(next);
+    else selectTab(next);
+  }
 
   useEffect(() => {
     if (activeTab === 'admin' && !canAdmin) selectTab('library');
@@ -357,7 +377,10 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       const value = await client.getCard(item.id);
       if (activeScope.current === scope) setComparison({ scope, value });
     }
-    catch (cause) { setError(errorText(cause)); }
+    catch (cause) {
+      if (isExerciseAccessLost(cause)) invalidateExercise(item.id, cause);
+      if (activeScope.current === scope) setError(errorText(cause));
+    }
     finally { setBusy(false); }
   }
 
@@ -391,7 +414,10 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     setBusy(true);
     setError('');
     try {
-      const card = await client.getCard(item.id);
+      const card = await client.getCard(item.id).catch(cause => {
+        if (isExerciseAccessLost(cause)) invalidateExercise(item.id, cause);
+        throw cause;
+      });
       if (activeScope.current !== scope) return;
       const action = libraryPrimaryAction(card);
       if (lastSession || action.id === 'CONDUCT' || action.id === 'DEBRIEF') await openCardSession(card);
@@ -535,8 +561,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       <div className="kshvi-authority">{localMode&&<p className="kshvi-local-mode">Локальный режим · {serverUserId} · {roleNames[role]??'Роль не выбрана'}</p>}<span>Официальное состояние</span><strong>Подтверждает сервер</strong></div>
     </header>
     <nav className="kshvi-tabs" aria-label="Разделы КШВИ">
-      {sections.map(section => <button key={section.id} type="button" aria-current={activeTab === section.id ? 'page' : undefined} onClick={() => selectTab(section.id)}>{section.label}</button>)}
-      {canAdmin && <button type="button" aria-current={activeTab === 'admin' ? 'page' : undefined} onClick={() => selectTab('admin')}>Администрирование</button>}
+      {sections.map(section => <button key={section.id} type="button" aria-current={activeTab === section.id ? 'page' : undefined} onClick={() => requestTab(section.id)}>{section.label}</button>)}
+      {canAdmin && <button type="button" aria-current={activeTab === 'admin' ? 'page' : undefined} onClick={() => requestTab('admin')}>Администрирование</button>}
     </nav>
     {notice && activeTab !== 'library' && activeTab !== 'archive' && <p role="status" className="kshvi-notice">{notice}</p>}
     {error && activeTab !== 'library' && activeTab !== 'archive' && <p role="alert" className="kshvi-error">{error}</p>}
@@ -554,16 +580,24 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     </>}
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
     {activeTab === 'preparation' && (selectedExercise ? <ExercisePreparation
-      key={`${selectedExercise.id}-${preparationStep}`}
+      key={`${selectedExercise.id}-${selectedExercise.payloadAccess}-${preparationStep}`}
       card={selectedExercise} client={client} role={role} userId={serverUserId} initialStep={preparationStep}
       canRevise={can('exercise:revise')}
       canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
       onCard={receiveCard}
-      onAccessLost={() => {
+      onAccessLost={cause => {
         if (activeScope.current !== scope) return;
-        clearSelection();
+        invalidateExercise(selectedExercise.id, cause);
         setError('Доступ к выбранному учению изменился. Откройте его снова из библиотеки.');
       }}
+      onPendingChange={markPendingPreparation}
+      navigationPrompt={saving => requestedTab && <section className="preparation-navigation-prompt" aria-label="Выход из подготовки">
+        <p>{saving ? 'Дождитесь ответа сервера о сохранении правки.' : 'Сервер ещё не сохранил правку. При выходе она будет удалена из этого окна.'}</p>
+        <div>
+          <button type="button" autoFocus onClick={() => setRequestedTab(null)}>Остаться в подготовке</button>
+          <button type="button" disabled={saving} onClick={() => selectTab(requestedTab)}>Выйти без сохранения</button>
+        </div>
+      </section>}
       onStart={() => void startOfficialSession()}
     /> : exerciseId && can('exercise:read') ? <p role="status">Загружаем карточку учения с сервера…</p> : <>
       <section className="kshvi-empty">

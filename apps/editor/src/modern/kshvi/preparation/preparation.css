@@ -79,6 +79,15 @@
 .preparation-step-content { min-width: 0; min-height: 0; padding: 18px 24px 24px; overflow: auto; }
 .preparation-step-content .preparation-step-heading h2 { margin: 0; }
 .preparation-conflict pre { max-height: 210px; overflow: auto; }
+.preparation-navigation-prompt {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--prep-border);
+  border-radius: 7px;
+  background: var(--prep-surface);
+}
+.preparation-navigation-prompt > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
 .preparation-step-content > section + section { margin-top: 24px; }
 .preparation-step-content h2 { margin: 0 0 14px; font-size: 22px; line-height: 1.25; }
 .preparation-step-content h3 { margin: 18px 0 10px; font-size: 17px; }

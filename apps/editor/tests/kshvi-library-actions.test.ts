@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
-import type { ExerciseSummary } from '../src/modern/kshvi/kshvi-api';
+import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import type { ExerciseCard, ExerciseSummary } from '../src/modern/kshvi/kshvi-api';
+import { preparationStepStates } from '../src/modern/kshvi/preparation/PreparationStatus';
 import { libraryPrimaryAction, stateLabel } from '../src/modern/kshvi/library-actions';
 
 it('выбирает основное действие по серверной стадии учения и состоянию сеанса', () => {
@@ -18,4 +20,17 @@ it('даёт русские названия стадии, проверки и �
   expect(stateLabel('SEALED')).toBe('Зафиксировано');
   expect(stateLabel('NOT_RUN')).toBe('Проверка не запускалась');
   expect(stateLabel('COMPLETED')).toBe('Завершён');
+});
+
+it('показывает факт сохранения данных даже если сводная проверка не запускалась', () => {
+  const saved = {
+    environmentSnapshotId: 'snapshot', initialMapStatus: 'MAPPED',
+    forces: [{ id: 'force' }], equipment: [], formation: {}, logistics: {}, autonomy: {},
+    readinessStage: {}, readinessStates: [{}],
+  } as unknown as PreparationDraft;
+  const statuses = preparationStepStates({ state: 'DRAFT', validation: 'NOT_RUN' } as ExerciseCard, saved);
+  expect(Object.values(statuses)).toEqual([
+    'DATA_PRESENT', 'DATA_PRESENT', 'DATA_PRESENT', 'DATA_PRESENT', 'NEEDS_DATA',
+  ]);
+  expect(stateLabel('DATA_PRESENT')).toBe('Данные сохранены');
 });

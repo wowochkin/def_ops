@@ -117,3 +117,104 @@ it('сохраняет локальную правку при конфликте
   expect(screen.getByText('Сохранена редакция 3')).toBeTruthy();
   expect(screen.queryByText('Есть несохранённые изменения')).toBeNull();
 });
+
+it.each([401, 403, 404])('убирает ранее открытую карточку после ответа %i при повторном открытии из библиотеки', async status => {
+  let deny = false;
+  const client = clientFor(async () => deny ? Response.json({ error: { message: 'Карточка недоступна' } }, { status }) : Response.json(card));
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Библиотека' }));
+  deny = true;
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  await screen.findByText('Карточка недоступна');
+  fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
+
+  expect(screen.getByRole('button', { name: 'Открыть библиотеку' })).toBeTruthy();
+  expect(screen.queryByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeNull();
+  expect(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)).toBeNull();
+});
+
+it('закрывает мастер после отказа чтения карточки при фиксации среды', async () => {
+  let reads = 0;
+  let snapshots = 0;
+  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4] };
+  const client = new ExerciseClient({ fetch: async input => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [card] });
+    if (path.endsWith('/exercises/e1')) {
+      return ++reads === 1
+        ? Response.json(card)
+        : Response.json({ error: { message: 'Карточка недоступна' } }, { status: 403 });
+    }
+    if (path.endsWith('/environment/atlases')) return Response.json([atlas]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    if (path.endsWith('/environment/snapshots')) snapshots++;
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  await screen.findByRole('option', { name: 'Атлас' });
+  fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать среду и открыть карту' }));
+
+  expect(await screen.findByRole('button', { name: 'Открыть библиотеку' })).toBeTruthy();
+  expect(screen.getByRole('alert').textContent).toContain('Доступ к выбранному учению изменился');
+  expect(screen.queryByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeNull();
+  expect(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)).toBeNull();
+  expect(snapshots).toBe(0);
+});
+
+it('после временного сбоя обновляет архивную карточку с тем же номером и оставляет решение об уходе пользователю', async () => {
+  const previous = { ...card, revisions: [{ ...card.revisions[0]!, payload: { environmentSnapshotId: 'b'.repeat(64) } }] };
+  const archived = { ...previous, state: 'ARCHIVED', archivedAt: now };
+  let cardRequests = 0;
+  const client = new ExerciseClient({ fetch: async input => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [previous] });
+    if (path.endsWith('/exercises/e1')) {
+      switch (++cardRequests) {
+        case 1: return Response.json(previous);
+        case 2: return Response.json({ error: { message: 'Сервис временно недоступен' } }, { status: 503 });
+        default: return Response.json(archived);
+      }
+    }
+    if (path.endsWith('/environment/atlases')) return Response.json([]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    if (path.endsWith('/preparation')) return Response.json({ error: { message: 'Архивное учение нельзя изменить' } }, { status: 409 });
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Добавить сохранённый снимок в черновик' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить черновик' }));
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Обновить серверную редакцию' }));
+  const accept = await screen.findByRole('button', { name: 'Принять серверную редакцию' });
+  expect(screen.getByText(/Архивное учение нельзя изменить/)).toBeTruthy();
+  expect(screen.getByText('Выбранный снимок остаётся в локальной правке.')).toBeTruthy();
+  expect(screen.getByText(/Сравнить черновик с редакцией 2/)).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Библиотека' }));
+  expect(screen.queryByRole('heading', { name: 'Библиотека учений' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Остаться в подготовке' }));
+  expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Принять серверную редакцию' })).toBe(accept);
+  fireEvent.click(accept);
+  expect(screen.getByText('Сохранена редакция 2')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Сохранить черновик' })).toBeNull();
+});
+
+it('переходит в библиотеку только после явного отказа от несохранённой правки', async () => {
+  const previous = { ...card, revisions: [{ ...card.revisions[0]!, payload: { environmentSnapshotId: 'b'.repeat(64) } }] };
+  render(<KshviView client={clientFor(async () => Response.json(previous))} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Добавить сохранённый снимок в черновик' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Библиотека' }));
+  expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Выйти без сохранения' }));
+  expect(await screen.findByRole('heading', { name: 'Библиотека учений' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
+  expect(screen.getByText('Сохранена редакция 2')).toBeTruthy();
+  expect(screen.queryByText('Есть несохранённые изменения')).toBeNull();
+});

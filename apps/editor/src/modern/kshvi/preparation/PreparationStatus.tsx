@@ -12,14 +12,13 @@ export function preparationStepStates(
     : card.validation === 'ERROR' ? 'HAS_ERRORS'
     : card.state === 'APPROVED' && card.validation === 'OK' ? 'READY_FOR_REVIEW' : 'NEEDS_DATA';
   if (!draft) return { environment: 'UNAVAILABLE', forces: 'UNAVAILABLE', events: 'UNAVAILABLE', readiness: 'UNAVAILABLE', launch };
-  const environment = draft.initialMapStatus === 'APPROVED' ? 'CONFIRMED'
-    : draft.initialMapStatus === 'MAPPED' ? 'READY_FOR_REVIEW'
-    : draft.environmentSnapshotId ? 'NEEDS_DATA' : 'NOT_STARTED';
-  const forces = draft.forces.length && draft.formation && draft.logistics ? 'READY_FOR_REVIEW'
-    : draft.forces.length || draft.equipment.length || draft.formation || draft.logistics ? 'NEEDS_DATA' : 'NOT_STARTED';
-  const readiness = !draft.readinessStage && !draft.readinessStates.length ? 'NOT_STARTED'
-    : draft.readinessStage && draft.readinessStates.length ? 'READY_FOR_REVIEW' : 'NEEDS_DATA';
-  return { environment, forces, events: draft.autonomy ? 'READY_FOR_REVIEW' : 'NOT_STARTED', readiness, launch };
+  return {
+    environment: draft.environmentSnapshotId || draft.initialMap ? 'DATA_PRESENT' : 'NOT_STARTED',
+    forces: draft.forces.length || draft.equipment.length || draft.formation || draft.logistics ? 'DATA_PRESENT' : 'NOT_STARTED',
+    events: draft.autonomy ? 'DATA_PRESENT' : 'NOT_STARTED',
+    readiness: draft.readinessStage || draft.readinessStates.length ? 'DATA_PRESENT' : 'NOT_STARTED',
+    launch,
+  };
 }
 
 const timeFormat = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'UTC' });

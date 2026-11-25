@@ -4,7 +4,7 @@ import type { AtlasMeta, EnvironmentSnapshot } from '../../../../../../packages/
 import { approveInitialMap, createInitialSituationMap, type ApprovedInitialMap, type InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { hashCanonical } from '../../../../../../packages/kshvi/src/scenario/initial-map-hash';
 import type { SymbolSet } from '../../../../../../packages/tactical-symbols/src/model';
-import type { ExerciseCard, JsonValue, KshviClient } from '../kshvi-api';
+import { isExerciseAccessLost, type ExerciseCard, type JsonValue, type KshviClient, type KshviHttpError } from '../kshvi-api';
 import { InitialMapStep, type InitialMapSymbolOption } from './InitialMapStep';
 import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
@@ -31,13 +31,14 @@ function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
   }));
 }
 
-export function EnvironmentMapPreparation({ client, exerciseId, revision, authorId, truthRole, onRevision }: {
+export function EnvironmentMapPreparation({ client, exerciseId, revision, authorId, truthRole, onRevision, onAccessLost }: {
   client: KshviClient;
   exerciseId: string;
   revision: number;
   authorId: string;
   truthRole: string;
   onRevision(card: ExerciseCard): void;
+  onAccessLost?(cause: KshviHttpError): void;
 }) {
   const [atlases, setAtlases] = useState<readonly AtlasMeta[]>([]);
   const [symbols, setSymbols] = useState<SymbolSet | null>(null);
@@ -80,7 +81,10 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
     setNotice('');
     try {
       const weather = validateWeatherScenario(scenario);
-      const card = await client.getCard(exerciseId);
+      const card = await client.getCard(exerciseId).catch(cause => {
+        if (isExerciseAccessLost(cause)) onAccessLost?.(cause);
+        throw cause;
+      });
       if (card.payloadAccess !== 'FULL') {
         onRevision(card);
         return;
