@@ -56,6 +56,7 @@
     "theatre:height": "sh -c '.venv/bin/python packages/sim/tools/theatre/build_theatre.py packages/sim/data/theatres/src/$0.recipe.json --height-only packages/sim/data/theatres/$0.json'",
     "theatre:overlay": "node --no-warnings --experimental-strip-types packages/sim/tools/theatre/raster_overlay.ts",
     "sim:demo": "node scripts/sim-demo.mjs",
+    "weather:climate": "sh scripts/weather-climate-build.sh",
     "docs:system": "node scripts/gen-doc.mjs",
     "expo:prepare": "tsx scripts/expo-prepare.ts",
     "expo:voice-studio": "tsx scripts/expo-voice-studio.ts",
