@@ -194,6 +194,19 @@ export function EnvironmentSelectionEditor({
     <div className="kshvi-environment-actions">
       <button type="button" disabled={busy || locked} onClick={() => setFocusChoices(true)}>Выбрать подготовленную область</button>
       {onCartography && <button type="button" disabled={busy} onClick={onCartography}>Изменить область в «Карте и погоде»</button>}
+      <button type="button" disabled={locked || busy || !valid} onClick={() => {
+        if (!valid || !evaluated.weather || !evaluated.time) return;
+        onPrepare({
+          region: { name: area.name, bounds: area.bounds },
+          atlases: live.map(({ id }) => ({ id, exportRights: current?.atlases.find(atlas => atlas.id === id)?.exportRights ?? 'ALLOWED' })),
+          weather: evaluated.weather, operationalTime: evaluated.time,
+          elevation: current?.elevation ?? { adjustmentM: 0, algorithmVersion: 1 },
+          algorithmVersions: { snapshot: current?.algorithmVersions.snapshot ?? 1, weather: evaluated.weather.mode === 'scenario'
+            ? evaluated.weather.scenario.algorithmVersion ?? 1 : 1 },
+        });
+      }}>{busy && !candidate ? 'Проверяем данные на сервере…' : 'Сформировать новый снимок среды'}</button>
+      {candidate && <button type="button" className="kshvi-primary" disabled={locked || busy || !valid}
+        onClick={onFix}>{busy ? 'Сохраняем редакцию…' : 'Зафиксировать среду'}</button>}
     </div>
     <div className="kshvi-environment-columns">
       <div className="kshvi-environment-controls">
@@ -292,20 +305,5 @@ export function EnvironmentSelectionEditor({
       {!!impact.missingForceIds.length && <p role="alert">Для переноса исходной карты отсутствуют силы: {impact.missingForceIds.join(', ')}.</p>}
       {!!impact.missingInstanceIds.length && <p role="alert">Для переноса исходной карты не найдены экземпляры участников: {impact.missingInstanceIds.join(', ')}.</p>}
     </section>}
-    <div className="kshvi-environment-actions">
-      <button type="button" disabled={locked || busy || !valid} onClick={() => {
-        if (!valid || !evaluated.weather || !evaluated.time) return;
-        onPrepare({
-          region: { name: area.name, bounds: area.bounds },
-          atlases: live.map(({ id }) => ({ id, exportRights: current?.atlases.find(atlas => atlas.id === id)?.exportRights ?? 'ALLOWED' })),
-          weather: evaluated.weather, operationalTime: evaluated.time,
-          elevation: current?.elevation ?? { adjustmentM: 0, algorithmVersion: 1 },
-          algorithmVersions: { snapshot: current?.algorithmVersions.snapshot ?? 1, weather: evaluated.weather.mode === 'scenario'
-            ? evaluated.weather.scenario.algorithmVersion ?? 1 : 1 },
-        });
-      }}>{busy && !candidate ? 'Проверяем данные на сервере…' : 'Сформировать новый снимок среды'}</button>
-      {candidate && <button type="button" className="kshvi-primary" disabled={locked || busy || !valid}
-        onClick={onFix}>{busy ? 'Сохраняем редакцию…' : 'Зафиксировать среду'}</button>}
-    </div>
   </div>;
 }

@@ -60,6 +60,7 @@ it('отправляет все отмеченные наборы и связы�
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Рельеф региона' }));
   fireEvent.click(screen.getByRole('checkbox', { name: 'Покров региона' }));
   const prepare = await screen.findByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });
+  expect(prepare.parentElement).toBe(screen.getByRole('button', { name: 'Выбрать подготовленную область' }).parentElement);
   await waitFor(() => expect(prepare.disabled).toBe(false));
   fireEvent.click(prepare);
   fireEvent.click(await screen.findByRole('button', { name: 'Зафиксировать среду' }));
