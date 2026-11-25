@@ -36,3 +36,10 @@ it('не переносит видимый участок мировой мод�
  const raster=weatherRasters(world,cells,'temperature',undefined,[35,49,37,51]);
  expect(raster[0].coordinates).toEqual([[35,51],[37,51],[37,49],[35,49]]);
 });
+
+
+it('режим обзорной OSM использует всю видимую карту, а не рамку выбранной области',()=>{
+ expect(weatherRenderRegion(region,[10,48,12,51],true)).toMatchObject({modelBounds:[10,48,12,51],renderBounds:[10,48,12,51],renderRegions:[[10,48,12,51]]});
+ expect(weatherRenderRegion(region,undefined,true).modelBounds).toEqual([-180,-85.05112878,180,85.05112878]);
+ expect(weatherRenderRegion(region,[10,48,12,51],false).modelBounds).toEqual(region.bounds);
+});

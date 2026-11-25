@@ -1,8 +1,10 @@
 import type {WeatherRegion} from '../../../../packages/core/src/weather-grid';
 type Bounds=WeatherRegion['bounds'];
 const normalize=(lon:number)=>(lon+180)%360<0?(lon+180)%360+180:(lon+180)%360-180;
+const WORLD_BOUNDS:Bounds=[-180,-85.05112878,180,85.05112878];
 /** Камера ограничивает только отображение; координаты модели остаются неизменными. */
-export function weatherRenderRegion(region:WeatherRegion,view:Bounds|undefined){
+export function weatherRenderRegion(region:WeatherRegion,view:Bounds|undefined,fullViewport=false){
+ if(fullViewport){const bounds=view??WORLD_BOUNDS;return {modelBounds:bounds,renderBounds:bounds,renderRegions:[bounds]};}
  const modelBounds=region.bounds;
  if(!view)return {modelBounds,renderBounds:modelBounds,renderRegions:[modelBounds]};
  const [west,south,east,north]=modelBounds;
