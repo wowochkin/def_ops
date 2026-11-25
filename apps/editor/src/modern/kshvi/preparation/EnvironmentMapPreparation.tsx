@@ -31,7 +31,7 @@ function symbolOptions(set: SymbolSet): InitialMapSymbolOption[] {
   }));
 }
 
-export function EnvironmentMapPreparation({ client, exerciseId, revision, authorId, truthRole, onRevision, onAccessLost }: {
+export function EnvironmentMapPreparation({ client, exerciseId, revision, authorId, truthRole, onRevision, onAccessLost, acceptsCardResponse }: {
   client: KshviClient;
   exerciseId: string;
   revision: number;
@@ -39,6 +39,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
   truthRole: string;
   onRevision(card: ExerciseCard): void;
   onAccessLost?(cause: KshviHttpError): void;
+  acceptsCardResponse?(): boolean;
 }) {
   const [atlases, setAtlases] = useState<readonly AtlasMeta[]>([]);
   const [symbols, setSymbols] = useState<SymbolSet | null>(null);
@@ -85,6 +86,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
         if (isExerciseAccessLost(cause)) onAccessLost?.(cause);
         throw cause;
       });
+      if (acceptsCardResponse?.() === false) return;
       if (card.payloadAccess !== 'FULL') {
         onRevision(card);
         return;
@@ -99,6 +101,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
         weather: { mode: 'scenario', scenario: weather },
         elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 },
       });
+      if (acceptsCardResponse?.() === false) return;
       const source = card.revisions.find(item => item.revision === card.revision);
       if (!source) throw new Error('Сервер не вернул текущую редакцию учения');
       const payload = source.payload && typeof source.payload === 'object' && !Array.isArray(source.payload)
@@ -107,6 +110,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
         expectedRevision: card.revision,
         payload: { ...payload, environmentSnapshotId: fixed.id },
       });
+      if (acceptsCardResponse?.() === false) return;
       const initialMap = createInitialSituationMap({
         id: `map-${exerciseId}`, revision: revised.revision,
         environment: { snapshotId: fixed.id, manifestSha256: fixed.manifestSha256, bounds: fixed.region.bounds },

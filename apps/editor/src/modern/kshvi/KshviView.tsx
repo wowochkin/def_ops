@@ -152,6 +152,13 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     client, authenticated, authGeneration, role, serverUserId, JSON.stringify([...authorities].sort()),
   ]);
   const activeScope = useRef<WorkspaceScope | null>(scope);
+  const cardGenerations = useRef({ session: 0, exercises: new Map<string, number>() });
+  const trackCardResponse = useCallback((exerciseId: string) => {
+    const sessionGeneration = cardGenerations.current.session;
+    const exerciseGeneration = cardGenerations.current.exercises.get(exerciseId) ?? 0;
+    return () => activeScope.current === scope && cardGenerations.current.session === sessionGeneration
+      && (cardGenerations.current.exercises.get(exerciseId) ?? 0) === exerciseGeneration;
+  }, [scope]);
   useLayoutEffect(() => {
     activeScope.current = scope;
     return () => { activeScope.current = null; };
@@ -164,6 +171,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const [lastSessionId, setLastSessionId] = useState(() => readWorkspaceReference<{ id: string }>(WORKSPACE_SESSION_KEY)?.id ?? null);
   const [exerciseResponse, setExerciseResponse] = useState<Scoped<ExerciseCard> | null>(null);
   const selectedExercise = exerciseResponse?.scope === scope && exerciseResponse.value.id === exerciseId ? exerciseResponse.value : null;
+  const acceptsSelectedCard = selectedExercise ? trackCardResponse(selectedExercise.id) : null;
   const [sessionResponse, setSessionResponse] = useState<Scoped<ExerciseSession> | null>(null);
   const session = selectedExercise && sessionResponse?.scope === scope && sessionResponse.value.exerciseId === selectedExercise.id
     ? sessionResponse.value : null;
@@ -181,7 +189,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   }
 
   function receiveCard(card: ExerciseCard): void {
-    if (activeScope.current !== scope) return;
+    if (!acceptsSelectedCard?.()) return;
     setExerciseResponse(previous => {
       if (previous?.scope !== scope || previous.value.id !== card.id) return previous;
       if (previous.value.revision > card.revision && card.payloadAccess === 'FULL') return previous;
@@ -204,6 +212,13 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const invalidateExercise = useCallback((id: string, cause: KshviHttpError) => {
     if (activeScope.current !== scope) return;
     const sessionEnded = cause.status === 401;
+    const generations = cardGenerations.current;
+    if (sessionEnded) {
+      generations.session++;
+      generations.exercises.clear();
+    } else {
+      generations.exercises.set(id, (generations.exercises.get(id) ?? 0) + 1);
+    }
     setComparison(previous => previous?.scope === scope && (sessionEnded || previous.value.id === id) ? null : previous);
     if (sessionEnded || activeExerciseId.current === id) clearSelection();
   }, [clearSelection, scope]);
@@ -214,28 +229,30 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   useEffect(() => {
     if (!authenticated || authChecking || !exerciseId || selectedExercise || !can('exercise:read')) return;
     let current = true;
+    const accepts = trackCardResponse(exerciseId);
     void client.getCard(exerciseId).then(card => {
-      if (current && activeScope.current === scope) setExerciseResponse({ scope, value: card });
+      if (current && accepts()) setExerciseResponse({ scope, value: card });
     }).catch(cause => {
-      if (current && activeScope.current === scope) {
+      if (current && accepts()) {
         if (isExerciseAccessLost(cause)) invalidateExercise(exerciseId, cause);
         else clearSelection();
         setError('Не удалось подтвердить доступ к выбранному учению. Откройте его снова из библиотеки.');
       }
     });
     return () => { current = false; };
-  }, [authenticated, authChecking, can, clearSelection, client, exerciseId, invalidateExercise, scope, selectedExercise]);
+  }, [authenticated, authChecking, can, clearSelection, client, exerciseId, invalidateExercise, scope, selectedExercise, trackCardResponse]);
 
   useEffect(() => {
     if (!selectedExercise || !lastSessionId || session) return;
     let current = true;
+    const accepts = trackCardResponse(selectedExercise.id);
     void client.getSession(selectedExercise.id, lastSessionId).then(value => {
-      if (current && activeScope.current === scope) setSessionResponse({ scope, value });
+      if (current && accepts()) setSessionResponse({ scope, value });
     }).catch(() => {
-      if (current && activeScope.current === scope) setLastSessionId(null);
+      if (current && accepts()) setLastSessionId(null);
     });
     return () => { current = false; };
-  }, [client, lastSessionId, scope, selectedExercise, session]);
+  }, [client, lastSessionId, scope, selectedExercise, session, trackCardResponse]);
 
   useEffect(() => {
     if (providedAuthorities) return;
@@ -373,19 +390,20 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   async function compare(item: LibraryExercise): Promise<void> {
     setBusy(true);
     setError('');
+    const accepts = trackCardResponse(item.id);
     try {
       const value = await client.getCard(item.id);
-      if (activeScope.current === scope) setComparison({ scope, value });
-    }
-    catch (cause) {
+      if (accepts()) setComparison({ scope, value });
+    } catch (cause) {
+      if (!accepts()) return;
       if (isExerciseAccessLost(cause)) invalidateExercise(item.id, cause);
-      if (activeScope.current === scope) setError(errorText(cause));
+      setError(errorText(cause));
     }
     finally { setBusy(false); }
   }
 
   function selectExercise(card: ExerciseCard, next: KshviSection, step: PreparationStep = 'environment', confirmedSession: ExerciseSession | null = null): void {
-    if (activeScope.current !== scope) return;
+    if (activeScope.current !== scope || pendingPreparation.current) return;
     setExerciseId(card.id);
     setExerciseResponse({ scope, value: card });
     setSession(confirmedSession);
@@ -399,9 +417,10 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     selectTab(next);
   }
 
-  async function openCardSession(card: ExerciseCard): Promise<void> {
+  async function openCardSession(card: ExerciseCard, accepts: () => boolean): Promise<void> {
     if (!card.lastSessionId) throw new Error('У учения пока нет серверного сеанса.');
     const confirmed = await client.getSession(card.id, card.lastSessionId);
+    if (!accepts()) return;
     if (confirmed.state === 'COMPLETED') selectExercise(card, 'review', 'launch', confirmed);
     else if (confirmed.state === 'ACTIVE' || confirmed.state === 'PAUSED') selectExercise(card, 'conduct', 'launch', confirmed);
     else {
@@ -413,30 +432,32 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   async function openLibraryItem(item: LibraryExercise, lastSession = false): Promise<void> {
     setBusy(true);
     setError('');
+    const accepts = trackCardResponse(item.id);
+    let card: ExerciseCard | undefined;
     try {
-      const card = await client.getCard(item.id).catch(cause => {
-        if (isExerciseAccessLost(cause)) invalidateExercise(item.id, cause);
-        throw cause;
-      });
-      if (activeScope.current !== scope) return;
+      card = await client.getCard(item.id);
+      if (!accepts()) return;
       const action = libraryPrimaryAction(card);
-      if (lastSession || action.id === 'CONDUCT' || action.id === 'DEBRIEF') await openCardSession(card);
+      if (lastSession || action.id === 'CONDUCT' || action.id === 'DEBRIEF') await openCardSession(card, accepts);
       else if (action.id === 'ARCHIVE') selectExercise(card, 'archive');
       else selectExercise(card, 'preparation', action.id === 'START' || card.state === 'APPROVED' ? 'launch' : 'environment');
     } catch (cause) {
-      if (activeScope.current === scope) setError(errorText(cause));
+      if (!accepts()) return;
+      if (!card && isExerciseAccessLost(cause)) invalidateExercise(item.id, cause);
+      setError(errorText(cause));
     } finally { setBusy(false); }
   }
 
   async function copyExercise(item: LibraryExercise): Promise<void> {
+    const accepts = trackCardResponse(item.id);
     await perform(async () => {
       const copy = await client.copy(item.id);
-      if (item.state === 'ARCHIVED') selectExercise(copy, 'preparation');
+      if (item.state === 'ARCHIVED' && accepts()) selectExercise(copy, 'preparation');
     }, 'Копия создана и подтверждена сервером');
   }
 
   async function startOfficialSession(): Promise<void> {
-    if (!selectedExercise || !can('exercise:conduct') || busy) return;
+    if (!selectedExercise || !acceptsSelectedCard?.() || !can('exercise:conduct') || busy || pendingPreparation.current) return;
     if (selectedExercise.state !== 'SEALED') {
       setError('Запуск доступен после серверной фиксации сценария.');
       return;
@@ -445,10 +466,11 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     setError('');
     try {
       if (selectedExercise.lastSessionId) {
-        await openCardSession(selectedExercise);
+        await openCardSession(selectedExercise, acceptsSelectedCard);
         return;
       }
       const started = await client.createSession(selectedExercise.id, { revision: selectedExercise.revision });
+      if (!acceptsSelectedCard()) return;
       selectExercise({ ...selectedExercise, lastSessionId: started.id, lastSessionState: started.state }, 'conduct', 'launch', started);
     } catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
@@ -494,7 +516,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     try {
       const archive = await client.createArchive(selectedExercise.id, session.id);
       const card = await client.archive(selectedExercise.id, selectedExercise.revision);
-      if (activeScope.current !== scope) return;
+      if (!acceptsSelectedCard?.()) return;
       setArchiveRecord(archive);
       receiveCard(card);
       setReload(value => value + 1);
@@ -585,8 +607,9 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       canRevise={can('exercise:revise')}
       canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
       onCard={receiveCard}
+      acceptsCardResponse={acceptsSelectedCard ?? undefined}
       onAccessLost={cause => {
-        if (activeScope.current !== scope) return;
+        if (!acceptsSelectedCard?.()) return;
         invalidateExercise(selectedExercise.id, cause);
         setError('Доступ к выбранному учению изменился. Откройте его снова из библиотеки.');
       }}

@@ -17,13 +17,14 @@ type ExercisePreparationProps = {
   canRevise: boolean;
   canStart: boolean;
   onCard(card: ExerciseCard): void;
+  acceptsCardResponse?(): boolean;
   onAccessLost(cause: KshviHttpError): void;
   onPendingChange?(pending: boolean): void;
   navigationPrompt?(saving: boolean): ReactNode;
   onStart(): void;
 };
 
-export function ExercisePreparation({ card, client, userId, role, initialStep, canRevise, canStart, onCard, onAccessLost, onPendingChange, navigationPrompt, onStart }: ExercisePreparationProps) {
+export function ExercisePreparation({ card, client, userId, role, initialStep, canRevise, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart }: ExercisePreparationProps) {
   const preparation = usePreparationDraft(client, card);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +33,7 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
   const canEdit = canRevise && ['DRAFT', 'IN_REVIEW', 'APPROVED'].includes(card.state) && preparation.draft !== null;
   const dirty = preparation.draft !== preparation.confirmed.draft || preparation.revision !== preparation.confirmed.revision;
 
-  const pending = Boolean(preparation.draft && (dirty || saving || conflict));
+  const pending = dirty || saving || conflict !== null;
   useLayoutEffect(() => {
     onPendingChange?.(pending);
     return () => onPendingChange?.(false);
@@ -43,6 +44,7 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
     setRefreshing(true);
     try {
       const latest = await client.getCard(card.id);
+      if (acceptsCardResponse?.() === false) return;
       onCard(latest);
       setConflict({ reason, refreshed: true });
     } catch (cause) {
@@ -86,8 +88,9 @@ export function ExercisePreparation({ card, client, userId, role, initialStep, c
     dirty={dirty}
     onSave={canEdit && !conflict ? () => void save() : undefined}
     onStartOfficial={canStart ? onStart : undefined}
+    launchLocked={pending}
     environment={canEdit && !preparation.draft?.environmentSnapshotId && !conflict && !saving && !dirty ? <>
-      <EnvironmentMapPreparation client={client} exerciseId={card.id} revision={card.revision} authorId={userId} truthRole={role} onRevision={onCard} onAccessLost={onAccessLost} />
+      <EnvironmentMapPreparation client={client} exerciseId={card.id} revision={card.revision} authorId={userId} truthRole={role} onRevision={onCard} onAccessLost={onAccessLost} acceptsCardResponse={acceptsCardResponse} />
       {legacySnapshotId && <button type="button" onClick={() => {
         preparation.setDraft(draft => draft.environmentSnapshotId ? draft : { ...draft, environmentSnapshotId: legacySnapshotId });
       }}>Добавить сохранённый снимок в черновик</button>}
@@ -127,11 +130,12 @@ type WorkspaceProps = {
   feedback?: ReactNode;
   onSave?(): void;
   onStartOfficial?(): void;
+  launchLocked?: boolean;
 };
 
 export function PreparationWorkspace({
   card, draft = null, confirmedDraft = null, role = '', initialStep = 'environment',
-  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial,
+  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial, launchLocked = false,
 }: WorkspaceProps) {
   const [step, setStep] = useState(initialStep);
   const contentId = useId();
@@ -188,7 +192,7 @@ export function PreparationWorkspace({
         {!sealed && <p>Для запуска нужна серверная фиксация текущей редакции. <button type="button" onClick={() => setStep('readiness')}>Открыть готовность</button></p>}
         {card.state === 'APPROVED' && <p>Здесь доступна сводная проверка. Команда фиксации в этом экране пока недоступна.</p>}
         {sealed && !onStartOfficial && <p>{card.lastSessionId ? 'Откройте существующий сеанс из библиотеки.' : 'Запуск доступен участнику с серверным полномочием проведения.'}</p>}
-        <button className="kshvi-primary" type="button" disabled={!sealed || !onStartOfficial} onClick={onStartOfficial}>Запустить официальный сеанс</button>
+        <button className="kshvi-primary" type="button" disabled={!sealed || !onStartOfficial || launchLocked} onClick={onStartOfficial}>Запустить официальный сеанс</button>
       </section>}
     </div>
 

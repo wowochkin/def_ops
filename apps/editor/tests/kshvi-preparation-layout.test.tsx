@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { emptyPreparationDraft } from '@def-ops/kshvi/preparation-draft';
 import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
@@ -217,4 +217,99 @@ it('переходит в библиотеку только после явно�
   fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
   expect(screen.getByText('Сохранена редакция 2')).toBeTruthy();
   expect(screen.queryByText('Есть несохранённые изменения')).toBeNull();
+});
+
+it('отбрасывает задержанную полную карточку из библиотеки после отказа форме среды', async () => {
+  let reads = 0;
+  let receiveLibrary!: (response: Response) => void;
+  let receiveEnvironment!: (response: Response) => void;
+  const libraryResponse = new Promise<Response>(resolve => { receiveLibrary = resolve; });
+  const environmentResponse = new Promise<Response>(resolve => { receiveEnvironment = resolve; });
+  const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4] };
+  const client = new ExerciseClient({ fetch: async input => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [card] });
+    if (path.endsWith('/exercises/e1')) {
+      switch (++reads) {
+        case 2: return libraryResponse;
+        case 3: return environmentResponse;
+        default: return Response.json(card);
+      }
+    }
+    if (path.endsWith('/environment/atlases')) return Response.json([atlas]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  await screen.findByRole('option', { name: 'Атлас' });
+  fireEvent.click(screen.getByRole('button', { name: 'Библиотека' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  await waitFor(() => expect(reads).toBe(2));
+  fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
+  await screen.findByRole('option', { name: 'Атлас' });
+  fireEvent.click(screen.getByRole('button', { name: 'Зафиксировать среду и открыть карту' }));
+  await waitFor(() => expect(reads).toBe(3));
+
+  receiveEnvironment(Response.json({ error: { message: 'Карточка недоступна' } }, { status: 403 }));
+  expect(await screen.findByRole('button', { name: 'Открыть библиотеку' })).toBeTruthy();
+  await act(async () => { receiveLibrary(Response.json({ ...card, title: 'Устаревшая полная карточка' })); });
+
+  expect(screen.queryByRole('heading', { name: 'Устаревшая полная карточка' })).toBeNull();
+  expect(screen.queryByRole('navigation', { name: 'Этапы подготовки' })).toBeNull();
+  expect(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Открыть библиотеку' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();
+  expect(reads).toBe(4);
+});
+
+it('запускает зафиксированную редакцию только после явного разрешения конфликта сохранения', async () => {
+  const previous = { ...card, revisions: [{ ...card.revisions[0]!, payload: { environmentSnapshotId: 'b'.repeat(64) } }] };
+  const sealed: ExerciseCard = {
+    ...previous, revision: 3, state: 'SEALED', validation: 'OK',
+    revisions: [...previous.revisions, { ...previous.revisions[0]!, id: 'r3', revision: 3, state: 'SEALED' }],
+  };
+  let conflict = false;
+  const started: unknown[] = [];
+  const client = new ExerciseClient({ fetch: async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [previous] });
+    if (path.endsWith('/exercises/e1')) return Response.json(conflict ? sealed : previous);
+    if (path.endsWith('/environment/atlases')) return Response.json([]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    if (path.endsWith('/preparation')) {
+      conflict = true;
+      return Response.json({ error: { message: 'Данные изменились, обновите редакцию' } }, { status: 409 });
+    }
+    if (path.endsWith('/sessions') && init?.method === 'POST') {
+      started.push(JSON.parse(String(init.body)));
+      return Response.json({
+        id: 's1', exerciseId: 'e1', scenarioRevisionId: 'r3', revision: 3, state: 'ACTIVE', authority: 'SERVER',
+        mode: 'NETWORK', confirmedRevision: 0, createdBy: 'leader', createdAt: now,
+      }, { status: 201 });
+    }
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise', 'exercise:conduct']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Добавить сохранённый снимок в черновик' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить черновик' }));
+  await screen.findByRole('button', { name: 'Принять серверную редакцию' });
+  fireEvent.click(screen.getByRole('button', { name: 'Запуск' }));
+  expect(screen.getByText('Сценарий зафиксирован')).toBeTruthy();
+
+  const start = screen.getByRole<HTMLButtonElement>('button', { name: 'Запустить официальный сеанс' });
+  expect(start.disabled).toBe(true);
+  fireEvent.click(start);
+  expect(started).toEqual([]);
+  expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Принять серверную редакцию' }));
+  expect(start.disabled).toBe(false);
+  fireEvent.click(start);
+  expect(await screen.findByRole('heading', { name: 'Сеанс s1' })).toBeTruthy();
+  expect(started).toEqual([{ revision: 3 }]);
 });
