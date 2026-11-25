@@ -65,3 +65,43 @@ describe('версия черновика подготовки', () => {
     expect(validatePreparationDraft(value)).toEqual(value);
   });
 });
+
+describe('ссылки состояния готовности', () => {
+  const stage = {
+    id: 'stage-1', title: 'Готовность', startsAt: at, dueAt: at,
+    signal: { id: 'signal-1', sentAt: at, senderNodeId: 'node-1' },
+    activities: [{
+      id: 'activity-1', kind: 'SIGNAL', title: 'Сигнал', responsibleNodeId: 'node-1', startAt: at, dueAt: at,
+      durationMinutes: 0, dependsOn: [], requiresSignal: false, preconditions: [], resources: [], reportRequired: false,
+      criterion: { id: 'criterion-1', description: '' },
+    }],
+    completionCriterionIds: ['criterion-1'], adverseOutcomes: ['FAILED'],
+  };
+  const state = {
+    subjectKind: 'FORCE', subjectId: 'force-1', initialLevel: null, requiredLevel: null, status: 'IN_PROGRESS',
+    completedActivityIds: ['activity-1'], signalReceipt: { signalId: 'signal-1', receivedAt: at },
+    activityRecords: [{ activityId: 'activity-1', status: 'COMPLETED', startedAt: at, completedAt: at, reportId: null }],
+    reports: [], criterionResults: {}, limitations: [], authorizations: [], history: [],
+  };
+
+  it.each([
+    { completedActivityIds: ['orphan'] },
+    { activityRecords: [{ ...state.activityRecords[0], activityId: 'orphan' }] },
+    { signalReceipt: { signalId: 'orphan', receivedAt: at } },
+  ])('отклоняет активную ссылку на данные вне этапа %#', patch => {
+    expect(() => validatePreparationDraft({
+      ...draft, forces: [force], readinessStage: stage, readinessStates: [{ ...state, ...patch }],
+    })).toThrow(/orphan/);
+  });
+
+  it('отклоняет активное выполнение при отсутствии этапа', () => {
+    expect(() => validatePreparationDraft({ ...draft, forces: [force], readinessStates: [state] })).toThrow(/этап/);
+  });
+
+  it('сохраняет подтверждённые ссылки этапа и историю с идентификаторами прежнего этапа', () => {
+    const history = [{ id: 'old-event', at, kind: 'ACTIVITY_COMPLETED', causeId: 'prior-activity', details: 'Предыдущий этап' }];
+    const reports = [{ id: 'report', activityId: 'prior-activity', authorId: 'author', submittedAt: at, text: 'Предыдущий этап' }];
+    const value = { ...draft, forces: [force], readinessStage: stage, readinessStates: [{ ...state, history, reports }] };
+    expect(validatePreparationDraft(value)).toEqual(value);
+  });
+});

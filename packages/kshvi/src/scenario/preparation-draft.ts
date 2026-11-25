@@ -395,8 +395,8 @@ function checkReferences(draft: PreparationDraft): void {
       for (const id of route.requestIds) requireReference(id, requestIds, 'маршрута на заявку МТО');
     }
   }
+  const activityIds = uniqueIds(readinessStage?.activities ?? [], 'мероприятия готовности');
   if (readinessStage) {
-    const activityIds = uniqueIds(readinessStage.activities, 'мероприятия готовности');
     for (const item of readinessStage.activities) {
       for (const id of item.dependsOn) requireReference(id, activityIds, 'на мероприятие готовности');
     }
@@ -407,6 +407,12 @@ function checkReferences(draft: PreparationDraft): void {
   ]);
   for (const item of draft.readinessStates) {
     requireReference(item.subjectId, item.subjectKind === 'FORCE' ? forceIds : postIds, 'состояния готовности');
+    // Текущие записи влияют на продвижение этапа. Доклады и журнал сохраняют историю прежних этапов.
+    for (const id of item.completedActivityIds) requireReference(id, activityIds, 'на завершённое мероприятие этапа');
+    for (const entry of item.activityRecords) requireReference(entry.activityId, activityIds, 'на мероприятие в записях этапа');
+    if (item.signalReceipt && item.signalReceipt.signalId !== readinessStage?.signal.id) {
+      throw new Error(`Не найден сигнал текущего этапа: ${item.signalReceipt.signalId}`);
+    }
   }
 }
 

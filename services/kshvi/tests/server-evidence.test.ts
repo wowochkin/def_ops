@@ -1,11 +1,11 @@
 import { createPool, dropSchema } from '@def-ops/db';
-import { READINESS_AREAS, REHEARSAL_CHECKS, type InitialSituationMapModel, type JsonValue } from '@def-ops/kshvi';
+import { emptyPreparationDraft, READINESS_AREAS, REHEARSAL_CHECKS, type InitialSituationMapModel, type JsonValue } from '@def-ops/kshvi';
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import type { EnvironmentSnapshot } from '../../../packages/kshvi/src/environment/provider';
 import { InMemoryExerciseEvidenceService, PgExerciseEvidenceService } from '../src/store/exercise-evidence-service';
 import { InMemoryExerciseStore, PgExerciseStore, type ExerciseSealActor } from '../src/store/exercise-store';
-import { approveExercise, linkedExercisePayload, SEAL_HASH_A, SEAL_HASH_B, validExerciseSealInput } from './helpers/full-seal';
+import { approveExercise, linkedExercisePayload, SEAL_HASH_A, SEAL_HASH_B, SEAL_HASH_C, validExerciseSealInput } from './helpers/full-seal';
 import { rehearsalProfile } from './helpers/rehearsal-profile';
 
 const director: ExerciseSealActor = { organizationId: 'org-evidence', userId: 'director', activeRole: 'DIRECTOR', authorities: ['scenario.seal'] };
@@ -72,6 +72,43 @@ it('не позволяет подтвердить чужую область б�
     { ...director, activeRole: 'RESPONSIBLE', authorities: ['readiness.confirm', 'readiness.confirm:DOCUMENTS'] },
     created.id, created.revisions[0], { expectedRevision: 1, area: 'ENVIRONMENT_MAP' },
   )).rejects.toThrow('полномоч');
+});
+
+it('не запечатывает черновик по подтверждённой карте прежнего корневого снимка', async () => {
+  const environmentForRevision = {
+    load: (id: string) => id === SEAL_HASH_C
+      ? Promise.resolve({ ...environment, id, manifestSha256: id })
+      : environmentLoader.load(id),
+  };
+  const evidence = new InMemoryExerciseEvidenceService({ environment: environmentForRevision });
+  const store = new InMemoryExerciseStore({ evidence, environment: environmentForRevision });
+  const created = await store.create(director, {
+    title: 'Смена снимка', purpose: 'planned', scale: 'operational',
+    payload: linkedExercisePayload({ environmentSnapshotId: SEAL_HASH_A, rehearsalProfile: rehearsalProfile() as unknown as JsonValue }),
+  });
+  const { sha256: _hash, ...map } = validExerciseSealInput(created).initialMap!;
+  const oldMap = { ...map, state: 'DRAFT', environment: { ...map.environment, snapshotId: SEAL_HASH_A } } as const;
+  const newMap = { ...oldMap, environment: { ...oldMap.environment, snapshotId: SEAL_HASH_C, manifestSha256: SEAL_HASH_C }, markers: [] };
+  const card = await store.savePreparation(director, created.id, {
+    expectedRevision: 1,
+    draft: {
+      ...emptyPreparationDraft('2030-01-01T03:00:00Z'), environmentSnapshotId: SEAL_HASH_C, initialMap: newMap,
+    } as unknown as JsonValue,
+  });
+  await approveExercise(store, director, card);
+  const revision = card.revisions[1];
+  await evidence.approveMap({ ...director, activeRole: 'APPROVER', authorities: ['initialMap.approve'] }, card.id, revision, oldMap);
+  for (const area of READINESS_AREAS) {
+    const responsible = { ...director, activeRole: 'RESPONSIBLE', authorities: ['readiness.confirm', `readiness.confirm:${area}`] };
+    await evidence.confirm(responsible, card.id, revision, { expectedRevision: 2, area });
+  }
+  await expect(evidence.forRevision({ actor: director, exerciseId: card.id, revision })).resolves.toMatchObject({
+    environmentSnapshot: { manifestSha256: SEAL_HASH_A }, rehearsal: { status: 'PASSED' },
+  });
+
+  await expect(store.seal(director, card.id, { expectedRevision: 2 }))
+    .rejects.toMatchObject({ code: 'VALIDATION', message: expect.stringMatching(/черновик.*запечат/i) });
+  expect((await store.get(director.organizationId, card.id))?.state).toBe('APPROVED');
 });
 
 const databaseIntegration = process.env.TEST_DATABASE_URL ? it : it.skip;

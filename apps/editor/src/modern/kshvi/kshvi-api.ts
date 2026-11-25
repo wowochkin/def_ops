@@ -244,18 +244,8 @@ export class ExerciseClient implements KshviClient {
   createRevision(exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
     return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/revisions`, input);
   }
-  async savePreparation(exerciseId: string, { expectedRevision, draft }: SavePreparationInput): Promise<ExerciseCard> {
-    const card = await this.getCard(exerciseId);
-    const revision = card.revisions.find(item => item.revision === card.revision);
-    if (!revision) throw new Error('Текущая редакция сценария не найдена');
-    const payload = revision.payload;
-    if (payload !== null && (typeof payload !== 'object' || Array.isArray(payload))) {
-      throw new Error('Содержимое редакции должно быть объектом для сохранения подготовки');
-    }
-    return this.createRevision(exerciseId, {
-      expectedRevision,
-      payload: { ...payload, preparation: draft as unknown as JsonValue },
-    });
+  savePreparation(exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard> {
+    return this.request('POST', `/exercises/${encodeURIComponent(exerciseId)}/preparation`, input);
   }
   listEnvironmentAtlases(): Promise<readonly AtlasMeta[]> { return this.request('GET', '/environment/atlases'); }
   createEnvironmentSnapshot(input: EnvironmentSelection): Promise<EnvironmentSnapshot> {

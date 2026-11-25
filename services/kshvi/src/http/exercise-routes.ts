@@ -11,6 +11,7 @@ import {
   type ExerciseLifecycleInput,
   type ExerciseSealInput,
   type ExerciseStore,
+  type SavePreparationInput,
 } from '../store/exercise-store';
 import { projectExerciseCard } from '../store/exercise-projection';
 import type { ExerciseConfirmationInput, ExerciseEvidenceService } from '../store/exercise-evidence-service';
@@ -142,6 +143,14 @@ export function registerExerciseRoutes(router: Router, options: { store: Exercis
     const actor = await participant(ctx, 'exercise:revise', true);
     const body = await ctx.json<CreateRevisionInput>();
     return reply(201, projectExerciseCard(await store.createRevision(actor, exerciseId(ctx), body), actor.participant));
+  }));
+
+  router.post(`${base}/:id/preparation`, handle(async ctx => {
+    const actor = await participant(ctx, 'exercise:revise', true);
+    const body = await ctx.json<SavePreparationInput>();
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new ExerciseStoreError('VALIDATION', 'Проверьте данные подготовки');
+    closedBody(body, ['expectedRevision', 'draft']);
+    return reply(201, projectExerciseCard(await store.savePreparation(actor, exerciseId(ctx), body), actor.participant));
   }));
 
   router.post(`${base}/:id/transitions`, handle(async ctx => {

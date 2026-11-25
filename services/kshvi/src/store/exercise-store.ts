@@ -85,6 +85,8 @@ export type CreateRevisionInput = Readonly<{
   payload?: JsonValue;
 }>;
 
+export type SavePreparationInput = Readonly<{ expectedRevision: number; draft: JsonValue }>;
+
 export type ServerExerciseEvidence = Omit<SealScenarioInput,
   'id' | 'revision' | 'state' | 'scenario' | 'issues' | 'requiredConfirmations' | 'sealedAt'
 > & Readonly<{ validation: ScenarioValidationInput }>;
@@ -141,6 +143,7 @@ export interface ExerciseStore {
   copy(actor: ExerciseActor, exerciseId: string, title?: string): Promise<ExerciseCard>;
   archive(actor: ExerciseActor, exerciseId: string, expectedRevision: number): Promise<ExerciseCard>;
   createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard>;
+  savePreparation(actor: ExerciseActor, exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard>;
   transition(actor: ExerciseSealActor, exerciseId: string, input: ExerciseLifecycleInput): Promise<ExerciseCard>;
   seal(actor: ExerciseSealActor, exerciseId: string, input: ExerciseSealInput): Promise<ExerciseCard>;
   createSession(actor: ExerciseActor, exerciseId: string, input: CreateSessionInput): Promise<ExerciseSession>;
@@ -215,14 +218,21 @@ function preparationOf(payload: JsonValue): JsonValue | undefined {
     ? payload.preparation
     : undefined;
 }
-function requireWritableRevision(card: ExerciseCard, expectedRevision: number, payload?: JsonValue): ExerciseRevision {
+function requireWritableRevision(card: ExerciseCard, expectedRevision: number, payload?: JsonValue, savingPreparation = false): ExerciseRevision {
   if (card.state === 'ARCHIVED') fail('ARCHIVED', 'Архивное учение нельзя изменить');
   if (card.revision !== expectedRevision) fail('REVISION_CONFLICT', 'Данные изменились, обновите редакцию');
   const previous = card.revisions.find(revision => revision.revision === card.revision)!;
-  if (card.state === 'SEALED' && (preparationOf(previous.payload) !== undefined || preparationOf(payload ?? null) !== undefined)) {
+  if (card.state === 'SEALED' && (savingPreparation || preparationOf(previous.payload) !== undefined || preparationOf(payload ?? null) !== undefined)) {
     fail('FORBIDDEN', 'Черновик подготовки запечатанного учения нельзя сохранить');
   }
   return previous;
+}
+function mergePreparation(payload: JsonValue, draft: JsonValue): JsonValue {
+  if (draft === undefined) fail('VALIDATION', 'Укажите черновик подготовки');
+  if (payload !== null && (typeof payload !== 'object' || Array.isArray(payload))) {
+    fail('VALIDATION', 'Содержимое редакции должно быть объектом для сохранения подготовки');
+  }
+  return { ...payload, preparation: draft };
 }
 async function preparationPayload(payload: JsonValue, environment?: ExerciseEnvironmentLoader, updatedAt?: string): Promise<JsonValue> {
   const preparation = preparationOf(payload);
@@ -278,6 +288,9 @@ async function sealedArtifactFor(
 ): Promise<SealedScenario> {
   if (record.state !== 'APPROVED' || revision.state !== 'APPROVED') {
     fail('SEALED_REQUIRED', 'APPROVED_REQUIRED: запечатать можно только утверждённую текущую редакцию');
+  }
+  if (preparationOf(revision.payload) !== undefined) {
+    fail('VALIDATION', 'Редакцию с черновиком подготовки пока нельзя запечатать: серверная проверка этой схемы недоступна');
   }
   try {
     if (!evidence) throw new Error('SERVER_EVIDENCE_REQUIRED: не настроен внутренний источник доказательств готовности');
@@ -548,15 +561,24 @@ export class InMemoryExerciseStore implements ExerciseStore {
     return publicCard(record);
   }
 
-  async createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
+  createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
+    return this.writeRevision(actor, exerciseId, input);
+  }
+
+  savePreparation(actor: ExerciseActor, exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard> {
+    return this.writeRevision(actor, exerciseId, { expectedRevision: input.expectedRevision }, input);
+  }
+
+  private async writeRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput, preparation?: SavePreparationInput): Promise<ExerciseCard> {
     validateRevisionInput(input);
     const record = this.required(actor.organizationId, exerciseId) as MutableExercise;
-    const previous = requireWritableRevision(record, input.expectedRevision, input.payload);
+    const previous = requireWritableRevision(record, input.expectedRevision, input.payload, preparation !== undefined);
     const startsAt = input.startsAt === undefined ? record.startsAt : input.startsAt;
     const endsAt = input.endsAt === undefined ? record.endsAt : input.endsAt;
     if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
     const now = this.now().toISOString();
-    const payload = await preparationPayload(clone(input.payload ?? previous.payload), this.environment, input.payload == null ? undefined : now);
+    const changedPayload = preparation ? mergePreparation(previous.payload, preparation.draft) : input.payload;
+    const payload = await preparationPayload(clone(changedPayload ?? previous.payload), this.environment, changedPayload == null ? undefined : now);
     requireWritableRevision(record, input.expectedRevision, payload);
     const assessment = assessmentOf(payload);
     const revision: ExerciseRevision = {
@@ -823,17 +845,26 @@ export class PgExerciseStore implements ExerciseStore {
     });
   }
 
-  async createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
+  createRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput): Promise<ExerciseCard> {
+    return this.writeRevision(actor, exerciseId, input);
+  }
+
+  savePreparation(actor: ExerciseActor, exerciseId: string, input: SavePreparationInput): Promise<ExerciseCard> {
+    return this.writeRevision(actor, exerciseId, { expectedRevision: input.expectedRevision }, input);
+  }
+
+  private async writeRevision(actor: ExerciseActor, exerciseId: string, input: CreateRevisionInput, preparation?: SavePreparationInput): Promise<ExerciseCard> {
     validateRevisionInput(input);
     return tx(this.pool, async db => {
       await lockExercise(db, this.schema, actor.organizationId, exerciseId);
       const current = await requiredCard(db, this.schema, actor.organizationId, exerciseId);
-      const previous = requireWritableRevision(current, input.expectedRevision, input.payload);
+      const previous = requireWritableRevision(current, input.expectedRevision, input.payload, preparation !== undefined);
       const startsAt = input.startsAt === undefined ? current.startsAt : input.startsAt;
       const endsAt = input.endsAt === undefined ? current.endsAt : input.endsAt;
       if (startsAt && endsAt && Date.parse(endsAt) <= Date.parse(startsAt)) fail('VALIDATION', 'Окончание должно следовать за началом');
       const now = new Date().toISOString();
-      const payload = await preparationPayload(clone(input.payload ?? previous.payload), this.environment, input.payload == null ? undefined : now);
+      const changedPayload = preparation ? mergePreparation(previous.payload, preparation.draft) : input.payload;
+      const payload = await preparationPayload(clone(changedPayload ?? previous.payload), this.environment, changedPayload == null ? undefined : now);
       const assessment = assessmentOf(payload);
       const revision: ExerciseRevision = {
         id: randomUUID(), exerciseId, revision: current.revision + 1, payload, sha256: digest(payload),
