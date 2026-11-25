@@ -29,6 +29,7 @@ export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-o
  r.post('/cartography/atlas/resolve',async c=>{const b=await c.json<{kind:'osm'|'dem'|'landcover';bounds:import('@def-ops/core').BBox;minzoom?:number}>();return resolveSources(b.kind,b.bounds,b.minzoom);});
  r.get('/cartography/atlas/sources',()=>sources);
  r.get('/cartography/atlas/jobs',c=>jobs.list(c.tenant));
+ r.delete('/cartography/atlas/jobs',c=>jobs.pruneFinished(c.tenant));
  r.post('/cartography/atlas/jobs/:id/cancel',c=>jobs.cancel(c.tenant,c.params.id));
  r.post('/cartography/atlas/jobs/:id/resume',async c=>{const job=(await jobs.list(c.tenant)).find(j=>j.id===c.params.id);if(!job||job.state==='running'||job.state==='done')throw new HttpError(422,'invalid','Задание нельзя продолжить');return jobs.start(c.tenant,job.input,job.id);});
  r.get('/cartography/atlas/runtime',async()=>{
@@ -74,6 +75,11 @@ export function addAtlasRoutes(r:Router,tiles:TileStore,prefix:(c:import('@def-o
   const headers:Record<string,string>={'content-type':t.format==='pbf'?'application/vnd.mapbox-vector-tile':`image/${t.format==='jpg'?'jpeg':t.format}`,'cache-control':'private, max-age=86400'};
   if(t.format==='pbf'&&t.bytes[0]===0x1f&&t.bytes[1]===0x8b)headers['content-encoding']='gzip';return reply(200,t.bytes,headers);
  });
- r.delete('/cartography/atlas/:id',async c=>{await jobs.removeTileCache(c.tenant,c.params.id);await store.remove(c.tenant,c.params.id);return {ok:true};});
+ r.delete('/cartography/atlas/:id',async c=>{
+  const current=await store.get(c.tenant,c.params.id);
+  const related=await jobs.pruneForMap(c.tenant,c.params.id,current.bounds);
+  if(related.running)throw new HttpError(422,'atlas_preparation_running','Сначала дождитесь завершения или отмените подготовку набора');
+  await jobs.removeTileCache(c.tenant,c.params.id);await store.remove(c.tenant,c.params.id);return {ok:true};
+ });
  return jobs;
 }

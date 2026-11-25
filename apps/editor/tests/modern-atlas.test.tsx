@@ -104,3 +104,35 @@ it('при смене местности подставляет новое им�
  fireEvent.click(screen.getByRole('button',{name:'Вернуть автоназвание'}));
  expect(await screen.findByRole('checkbox',{name:'Берлин'})).toBeTruthy();
 });
+
+
+it('сбрасывает удалённую активную область в режим текущего вида карты', async()=>{
+ const card={id:'test',name:'Днепр',format:'pbf',kind:'vector',minzoom:0,maxzoom:14,bounds:[13.3,52.45,13.5,52.6],attribution:'test',layers:[],bytes:100,sha256:'a'.repeat(64)};
+ let deleted=false;
+ vi.stubGlobal('fetch',vi.fn(async(input:string|URL|Request)=>{
+  const path=String(input);
+  if(path.endsWith('/regions/delete')){deleted=true;return new Response(JSON.stringify({deleted:['test'],unchanged:[]}));}
+  const data=path.endsWith('/atlas')?deleted?[]:[card]:path.endsWith('/sources')?[]:path.endsWith('/runtime')?{ok:true}:path.endsWith('/jobs')?[]:path.endsWith('/environment/weather')?[]:path.endsWith('/style')?{version:8,sources:{atlas:{type:'vector'}},layers:[]}:null;
+  return new Response(JSON.stringify(data),{status:200});
+ }));
+ render(<AtlasView/>);
+ await screen.findByRole('button',{name:'Удалить область'});
+ fireEvent.click(screen.getByRole('button',{name:'Удалить область'}));
+ fireEvent.click(screen.getByRole('button',{name:'Подтвердить удаление области'}));
+ await waitFor(()=>expect(document.querySelector('.atlas-current-region')?.textContent).toBe('Текущий вид карты'));
+});
+
+it('очищает завершённые задания загрузки по действию пользователя',async()=>{
+ const calls:string[]=[];
+ vi.stubGlobal('fetch',vi.fn(async(input:string|URL|Request,init?:RequestInit)=>{
+  const path=String(input);calls.push(`${init?.method??'GET'} ${path}`);
+  if(path.endsWith('/atlas/jobs')&&init?.method==='DELETE')return new Response(JSON.stringify({deletedJobs:['job-1']}));
+  const data=path.endsWith('/atlas')?[]:path.endsWith('/sources')?[]:path.endsWith('/runtime')?{ok:true}:path.endsWith('/jobs')?[{id:'job-1',state:'done',stage:'Готово',done:1,total:1,input:{options:{name:'Старая область'}}}]:path.endsWith('/environment/weather')?[]:null;
+  return new Response(JSON.stringify(data),{status:200});
+ }));
+ render(<AtlasView/>);
+ fireEvent.click(screen.getByRole('button',{name:'Загрузка'}));
+ await screen.findByText('Задания загрузки (1)');
+ fireEvent.click(await screen.findByRole('button',{name:'Очистить завершённые'}));
+ await waitFor(()=>expect(calls).toContain('DELETE /api/cartography/atlas/jobs'));
+});

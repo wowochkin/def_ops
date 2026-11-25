@@ -13,7 +13,8 @@ export async function deleteAtlasRegion(store: AtlasStore, jobs: AtlasJobs, tena
     const current = await store.get(tenant, item.id).catch(() => null);
     if (!current) continue;
     if (current.sha256 !== item.sha256) { unchanged.push({ id: item.id, reason: 'Содержимое изменилось' }); continue; }
-    if (await jobs.hasRunningForMap(tenant, item.id)) { unchanged.push({ id: item.id, reason: 'Идёт подготовка набора' }); continue; }
+    const relatedJobs = await jobs.pruneForMap(tenant, item.id, current.bounds);
+    if (relatedJobs.running) { unchanged.push({ id: item.id, reason: 'Идёт подготовка набора' }); continue; }
     await jobs.removeTileCache(tenant, item.id);
     await store.remove(tenant, item.id);
     deleted.push(item.id);

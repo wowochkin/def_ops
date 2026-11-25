@@ -39,3 +39,17 @@ it('обзорная подложка учитывает границы лока
  expect(coversView([-180,-85,180,85],[179,-2,-174,8])).toBe(true);
  expect(coversView([10,49,11,50],[9,48,12,51])).toBe(false);
 });
+
+
+it('не дублирует узлы погоды при покрытии всей карты мира', async()=>{
+ const errors=vi.spyOn(console,'error').mockImplementation(()=>{});
+ const onOverlay=vi.fn<(layer:WeatherOverlay)=>void>();
+ render(<WeatherField region={{bounds:[-180,-85.05112878,180,85.05112878],cols:5,rows:5}} scenario={scenario} time={scenario.start} onOverlay={onOverlay} onPoint={()=>{}} setField={()=>{}} field="temperature"/>);
+ await waitFor(()=>expect(onOverlay).toHaveBeenCalled());
+ const rasters=onOverlay.mock.lastCall![0].rasters;
+ expect(rasters.length).toBeGreaterThan(0);
+ expect(rasters[0]!.coordinates[0][0]).toBe(-180);
+ expect(rasters.at(-1)!.coordinates[1][0]).toBe(180);
+ expect(errors.mock.calls.flat().join('\n')).not.toContain('same key');
+ errors.mockRestore();
+});

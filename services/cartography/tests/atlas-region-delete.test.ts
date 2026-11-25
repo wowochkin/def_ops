@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { AtlasStore } from '../src/atlas';
@@ -37,6 +38,52 @@ it('контролирует SHA-256, изоляцию tenant и безопас�
     expect(deleted).toEqual({ deleted: [map.id], unchanged: [] });
     expect(await store.list('tenant')).toEqual([]);
     expect(await deleteAtlasRegion(store, jobs, 'tenant', [{ id: map.id, sha256: map.sha256! }])).toEqual({ deleted: [], unchanged: [] });
+  } finally {
+    jobs.stop();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+async function completedJob(root: string, map: Awaited<ReturnType<typeof fixture>>['map'], id = '11111111-1111-4111-8111-111111111111') {
+  const directory = join(root, 'jobs', createHash('sha256').update('tenant').digest('hex'));
+  await mkdir(directory, { recursive: true });
+  const job = {
+    id, state: 'done', stage: 'Готово', done: 1, total: 1, result: map,
+    input: { kind: 'mbtiles', options: { bounds: map.bounds, name: map.name, attribution: map.attribution, minzoom: map.minzoom, maxzoom: map.maxzoom } },
+  };
+  await writeFile(join(directory, `${id}.json`), JSON.stringify(job));
+  return job;
+}
+
+it('удаляет завершённые задания удалённой области, но не активную загрузку другой области', async () => {
+  const { root, store, jobs, map } = await fixture();
+  try {
+    const finished = await completedJob(root, map);
+    const active = await jobs.start('tenant', { kind: 'geojson', file: join(root, 'missing.geojson'), options: {
+      bounds: [0, 0, 1, 1], name: 'Другая область', attribution: 'test', minzoom: 0, maxzoom: 1,
+    } });
+    expect(await deleteAtlasRegion(store, jobs, 'tenant', [{ id: map.id, sha256: map.sha256! }])).toEqual({ deleted: [map.id], unchanged: [] });
+    const remaining = await jobs.list('tenant');
+    expect(remaining.map(job => job.id).join(',')).not.toContain(finished.id);
+    expect(remaining.some(job => job.id === active.id && job.state === 'running')).toBe(true);
+  } finally {
+    jobs.stop();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it('очищает журнал только завершённых заданий', async () => {
+  const { root, jobs, map } = await fixture();
+  try {
+    const finished = await completedJob(root, map);
+    const active = await jobs.start('tenant', { kind: 'geojson', file: join(root, 'missing.geojson'), options: {
+      bounds: [0, 0, 1, 1], name: 'Другая область', attribution: 'test', minzoom: 0, maxzoom: 1,
+    } });
+    expect(await jobs.pruneFinished('tenant')).toEqual({ deletedJobs: [finished.id] });
+    const remaining = await jobs.list('tenant');
+    expect(remaining.map(job => job.id).join(',')).not.toContain(finished.id);
+    expect(remaining.some(job => job.id === active.id && job.state === 'running')).toBe(true);
   } finally {
     jobs.stop();
     await rm(root, { recursive: true, force: true });

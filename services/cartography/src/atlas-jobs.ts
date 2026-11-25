@@ -48,6 +48,29 @@ export class AtlasJobs {
    }
   }
  }
+ async pruneForMap(tenant:string,mapId:string,bounds:readonly number[]) {
+  const sameBounds=(left:readonly number[])=>left.length===bounds.length&&left.every((value,index)=>value===bounds[index]);
+  const jobs=(await this.list(tenant)).filter(job=>job.result?.id===mapId||sameBounds(job.input.options.bounds));
+  if(jobs.some(job=>job.state==='running'))return {deletedJobs:[],running:true};
+  const deletedJobs:string[]=[];
+  for(const job of jobs){
+   if(!/^[a-f0-9-]{36}$/.test(job.id))continue;
+   deletedJobs.push(job.id);
+   await fs.rm(path.join(this.dir(tenant),`${job.id}.json`),{force:true});
+   await fs.rm(path.join(this.dir(tenant),job.id),{recursive:true,force:true});
+  }
+  return {deletedJobs,running:false};
+ }
+ async pruneFinished(tenant:string) {
+  const deletedJobs:string[]=[];
+  for(const job of await this.list(tenant)){
+   if(job.state==='running'||!/^[a-f0-9-]{36}$/.test(job.id))continue;
+   deletedJobs.push(job.id);
+   await fs.rm(path.join(this.dir(tenant),`${job.id}.json`),{force:true});
+   await fs.rm(path.join(this.dir(tenant),job.id),{recursive:true,force:true});
+  }
+  return {deletedJobs};
+ }
  async cancel(t:string,id:string) {const a=this.active.get(id);if(!a||a.tenant!==t)throw Error('Активное задание не найдено');a.job.state='cancelled';a.job.stage='Отменено';a.worker.postMessage('cancel');const timer=setTimeout(()=>void a.worker.terminate(),1500);timer.unref();await this.save(t,a.job);return a.job;}
  stop() {for(const a of this.active.values()) {a.worker.postMessage('cancel');setTimeout(()=>void a.worker.terminate(),1500).unref();}}
 }

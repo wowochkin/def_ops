@@ -20,6 +20,7 @@ import {GeoJsonHelp} from './GeoJsonHelp';
 import {CopySource} from './CopySource';
 import {CoordinatePicker} from './CoordinatePicker';
 type Source={id:string;name:string;url:string;license:string;detail:string};
+const WORLD_BOUNDS:WeatherRegion['bounds']=[-180,-85.05112878,180,85.05112878];
 function downloadLink(id:string){const u=new URL(`${ENV_API}/atlas/${id}/export`,location.origin);const key=localStorage.getItem('def_ops.apiKey');if(key)u.searchParams.set('api_key',key);return u.href;}
 export function AtlasView(){
  const [pickerBounds,setPickerBounds]=useState<number[]|null>(null);
@@ -30,6 +31,7 @@ export function AtlasView(){
    setOfferStarted(true);setPacketScenario(loadWeatherScenario());setControlTab('data');
  }
  const [region,setRegion]=useState(loadRegion);
+ const [customRegion,setCustomRegion]=useState(true);
  const [draft,setDraft]=useState(()=>region.bounds.join(','));
  const [regionError,setRegionError]=useState('');
  const [rasterOpacity,setRasterOpacity]=useState(.4);
@@ -37,17 +39,21 @@ export function AtlasView(){
  const [showOverview,setShowOverview]=useState<boolean|null>(null);
  const {names,rename}=useAreaNames();
  const nameKey=areaKey(region.bounds), automaticName=automaticAreaName(region.bounds);
- const name=names[nameKey]||automaticName;
+ const name=customRegion?names[nameKey]||automaticName:'Текущий вид карты';
  const regionKey=region.bounds.join(',');
  useEffect(()=>{setDraft(regionKey);setRegionError('');setPlan(null);},[regionKey]);
  function applyBounds(values:number[]){
   try{
    const next={...region,bounds:values as WeatherRegion['bounds']};weatherGrid(next);
-   setRegion(next);setRegionError('');setPlan(null);setPreparedWeather(null);offerData();
+   setCustomRegion(true);setRegion(next);setRegionError('');setPlan(null);setPreparedWeather(null);offerData();
   }catch{setRegionError('Укажите четыре координаты области в порядке запад, юг, восток, север.');}
  }
 
  const [viewBounds,setViewBounds]=useState<WeatherRegion['bounds']>();
+ useEffect(()=>{
+  if(customRegion||!viewBounds)return;
+  setRegion(previous=>previous.bounds.every((value,index)=>value===viewBounds[index])?previous:{...previous,bounds:viewBounds});
+ },[customRegion,viewBounds]);
  const [timelineHost,setTimelineHost]=useState<HTMLDivElement|null>(null);
  const [mapField,setMapField]=useState<MapWeatherField>('precipitation');
  const scale=weatherScale(mapField);
@@ -111,6 +117,11 @@ export function AtlasView(){
   setSelected(old=>old.filter(id=>!removed.has(id)));
   setDisabled(old=>new Set([...old].filter(key=>!removed.has(key.split('/')[0]))));
   setTerrainId(old=>old&&removed.has(old)?null:old);
+  if(group.key===areaKey(region.bounds)&&removed.size){
+   setCustomRegion(false);
+   setRegion(previous=>({...previous,bounds:viewBounds??WORLD_BOUNDS}));
+   setWeather(null);setPreparedWeather(null);setPlan(null);setPickerBounds(null);setShowOverview(null);setFraming({fill:true});setShowWeather(true);
+  }
   setRegionStates(old=>{
    const current=old[group.key];
    const next={...old};
@@ -159,14 +170,14 @@ export function AtlasView(){
    <div className="atlas-panel weather-sidebar" hidden={controlTab!=='weather'}>
     <WeatherView preparedWeather={preparedWeather} datasetLabels={datasetLabels} timelineHost={showWeather?timelineHost:null} viewBounds={viewBounds} mapField={mapField} onMapField={setMapField} embedded sharedRegion={region} onRegionChange={setRegion} catalog={packages} onOverlay={setWeather}/>
    </div>
-   <div className="atlas-panel" hidden={controlTab!=='maps'}>{controlTab==='maps'&&visibleActionError}{!!jobs.length&&<details className="env-jobs" open={jobs.some(j=>j.state==='running')}><summary>Задания загрузки ({jobs.length})</summary>{jobs.slice().reverse().map(j=><article className="env-job" key={j.id}><strong>{datasetName(j.input.options.name,j.input.options.bounds,j.input.options.bounds&&names[areaKey(j.input.options.bounds)])}</strong><p>{j.stage}</p>{j.state==='running'&&<progress max={j.total||undefined} value={j.total?j.done:undefined}/>}<p>{j.state==='done'?'Готово':j.state==='error'?'Ошибка':j.state==='cancelled'?'Отменено':j.total?Math.round(j.done/j.total*100)+'%':'Выполняется'}{j.error&&` · ${j.error}`}</p><div className="env-actions">{j.state==='running'?<button onClick={()=>void task(async()=>{await environmentApi(`/atlas/jobs/${j.id}/cancel`,{method:'POST'});await refresh();})}>Отменить</button>:j.state!=='done'?<button disabled={busy} onClick={()=>void task(async()=>{await environmentApi(`/atlas/jobs/${j.id}/resume`,{method:'POST'});await refresh();})}>Продолжить</button>:j.result&&packages.some(m=>m.id===j.result?.id)&&<button onClick={()=>{setSelected(s=>s.includes(j.result!.id)?s:[...s,j.result!.id]);setControlTab('layers');}}>Показать карту</button>}</div></article>)}</details>}<section className="env-panel"><h2>Подготовить карту</h2><label>Формат источника<select value={kind} onChange={e=>{const next=e.target.value as AtlasInput['kind'];setKind(next);setPlan(null);if(next==='geojson')setAttribution('');else if(next==='dem')setAttribution('© Copernicus DEM (DLR / Airbus); Copernicus DEM licence');else if(next==='landcover')setAttribution('© ESA WorldCover consortium 2021; modified Copernicus Sentinel data; CC BY 4.0');else if(next==='osm'||next==='openfreemap')setAttribution('© OpenStreetMap contributors; ODbL');}}><option value="mbtiles">Готовые MBTiles</option><option value="openfreemap">Скачать район OpenFreeMap</option><option value="geojson">Векторные объекты GeoJSON</option><option value="osm">Исходные OSM PBF / XML</option><option value="dem">GeoTIFF высот · Copernicus DEM</option><option value="landcover">GeoTIFF покрова · WorldCover</option></select></label>
+   <div className="atlas-panel" hidden={controlTab!=='maps'}>{controlTab==='maps'&&visibleActionError}{!!jobs.length&&<details className="env-jobs" open><summary>Задания загрузки ({jobs.length})</summary><button type="button" disabled={!jobs.some(j=>j.state!=='running')} onClick={()=>void task(async()=>{await environmentApi('/atlas/jobs',{method:'DELETE'});await refresh();})}>Очистить завершённые</button>{jobs.slice().reverse().map(j=><article className="env-job" key={j.id}><strong>{datasetName(j.input.options.name,j.input.options.bounds,j.input.options.bounds&&names[areaKey(j.input.options.bounds)])}</strong><p>{j.stage}</p>{j.state==='running'&&<progress max={j.total||undefined} value={j.total?j.done:undefined}/>}<p>{j.state==='done'?'Готово':j.state==='error'?'Ошибка':j.state==='cancelled'?'Отменено':j.total?Math.round(j.done/j.total*100)+'%':'Выполняется'}{j.error&&` · ${j.error}`}</p><div className="env-actions">{j.state==='running'?<button onClick={()=>void task(async()=>{await environmentApi(`/atlas/jobs/${j.id}/cancel`,{method:'POST'});await refresh();})}>Отменить</button>:j.state!=='done'?<button disabled={busy} onClick={()=>void task(async()=>{await environmentApi(`/atlas/jobs/${j.id}/resume`,{method:'POST'});await refresh();})}>Продолжить</button>:j.result&&packages.some(m=>m.id===j.result?.id)&&<button onClick={()=>{setSelected(s=>s.includes(j.result!.id)?s:[...s,j.result!.id]);setControlTab('layers');}}>Показать карту</button>}</div></article>)}</details>}<section className="env-panel"><h2>Подготовить карту</h2><label>Формат источника<select value={kind} onChange={e=>{const next=e.target.value as AtlasInput['kind'];setKind(next);setPlan(null);if(next==='geojson')setAttribution('');else if(next==='dem')setAttribution('© Copernicus DEM (DLR / Airbus); Copernicus DEM licence');else if(next==='landcover')setAttribution('© ESA WorldCover consortium 2021; modified Copernicus Sentinel data; CC BY 4.0');else if(next==='osm'||next==='openfreemap')setAttribution('© OpenStreetMap contributors; ODbL');}}><option value="mbtiles">Готовые MBTiles</option><option value="openfreemap">Скачать район OpenFreeMap</option><option value="geojson">Векторные объекты GeoJSON</option><option value="osm">Исходные OSM PBF / XML</option><option value="dem">GeoTIFF высот · Copernicus DEM</option><option value="landcover">GeoTIFF покрова · WorldCover</option></select></label>
    {kind==='geojson'&&<GeoJsonHelp bounds={region.bounds}/>}
    <details><summary>Название, масштаб и лицензия</summary><AreaNameEditor key={nameKey} value={names[nameKey]} automatic={automaticName} save={v=>rename(nameKey,v)}/><div className="env-input-grid"><label>Масштаб от<input type="number" min={0} max={16} value={lo} onChange={e=>setLo(Number(e.target.value))}/></label><label>Масштаб до<input type="number" min={lo} max={16} value={hi} onChange={e=>setHi(Number(e.target.value))}/></label></div><label>Источник и лицензия<input value={attribution} onChange={e=>setAttribution(e.target.value)}/></label></details>
    {['osm','dem','landcover'].includes(kind)&&<section className="env-auto-source"><h3>Автоматически по области</h3><button disabled={busy} onClick={()=>void task(async()=>{const result=await environmentApi<Omit<NonNullable<typeof sourcePlan>,'key'>>('/atlas/resolve',{method:'POST',body:JSON.stringify({kind,bounds:options().bounds,minzoom:lo})});setPlan({...result,key:planKey});})}>{busy?'Подбираем…':'Подобрать исходные файлы'}</button>{plan&&<><p className="env-note">{plan.note}</p><p>Файлов: {plan.files.length} · {(plan.bytes/1048576).toFixed(1)} МБ{plan.files.some(f=>!f.bytes)?' (размер части файлов неизвестен)':''}</p>{!!plan.missing.length&&<p className="env-note">У источника нет {plan.missing.length} листов; на этих участках будут пропуски.</p>}<details><summary>Файлы источника</summary>{plan.files.map(f=><p key={f.url}><a href={f.url} target="_blank" rel="noreferrer" className="env-source-link">{f.name}</a><CopySource url={f.url} name={f.name}/></p>)}</details><button disabled={busy} onClick={()=>void task(async()=>{await environmentApi('/atlas/download',{method:'POST',body:JSON.stringify({kind,urls:plan.files.map(f=>f.url),options:options()})});await refresh();})}>Скачать выбранные файлы и подготовить</button></>}</section>}
    {kind==='openfreemap'?<><p className="env-note">До 3000 тайлов и 50 МБ за выгрузку. Массовое скачивание публичного сервера OSM не используется.</p><button disabled={busy} onClick={()=>void task(async()=>{await environmentApi('/atlas/download',{method:'POST',body:JSON.stringify({kind,options:options()})});await refresh();})}>Скачать район</button></>:<><label className="env-file-button">Выбрать исходный файл<input type="file" disabled={busy} accept={kind==='mbtiles'?'.mbtiles':kind==='geojson'?'.json,.geojson':kind==='osm'?'.pbf,.osm':'.tif,.tiff'} onChange={e=>{const file=e.target.files?.[0];if(file)void task(async()=>{setUpload(0);await importFile(file);setUpload(0);await refresh();});e.target.value='';}}/></label>{busy&&upload>0&&<p>Передача файла: {upload}%</p>}<details><summary>Скачать исходный файл по адресу</summary><label>HTTPS-адрес источника<input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://download.geofabrik.de/…osm.pbf"/></label><label>SHA-256 (если опубликован)<input value={hash} onChange={e=>setHash(e.target.value)}/></label><button disabled={busy||!url} onClick={()=>void task(async()=>{await environmentApi('/atlas/download',{method:'POST',body:JSON.stringify({kind,url,options:options(),...(hash?{expectedSha256:hash}:{})})});await refresh();})}>Скачать и подготовить</button><p className="env-note">Разрешены официальные серверы Geofabrik, OpenFreeMap и S3-наборы DEM / WorldCover. Остальные источники можно загрузить файлом.</p></details></>}
    <p className="env-note">{runtime?runtime.ok?'GIS-runtime готов: преобразование OSM, высот и покрова доступно.':`MBTiles и GeoJSON доступны. Для исходных OSM/GeoTIFF нужен GIS-runtime. ${runtime.error??''}`:'Проверяем GIS-runtime…'}</p>
   </section><details className="env-panel"><summary>Источники и лицензии</summary>{sources.map(s=><article key={s.id} className="env-catalog-card"><a className="env-source-link" href={s.url} target="_blank" rel="noreferrer">{s.name} ↗</a><p>{s.detail}</p><p>{s.license}</p><CopySource url={s.url} name={s.name}/></article>)}<p className="env-note">Наборы разных лет и разрешений сохраняются отдельно. Присутствие объекта на карте не подтверждает его текущее состояние.</p></details><details><summary>Шрифты карты</summary><button disabled={busy} onClick={()=>void task(async()=>{await environmentApi('/atlas/fonts',{method:'POST'});})}>Подготовить локальные шрифты</button></details></div>
-  </aside><div className="atlas-viewport"><AtlasMap framing={framing} regions={regions} transparency={transparency} seasons={seasons} seasonMonth={seasonMonth} terrainId={terrainId} onViewBounds={setViewBounds} rasterOpacity={rasterOpacity} bounds={region.bounds} overview={overview} packages={active} disabled={disabled} weather={showWeather?weather:null}/>
+  </aside><div className="atlas-viewport"><AtlasMap framing={framing} regions={regions} transparency={transparency} seasons={seasons} seasonMonth={seasonMonth} terrainId={terrainId} onViewBounds={setViewBounds} rasterOpacity={rasterOpacity} bounds={customRegion?region.bounds:WORLD_BOUNDS} overview={overview} packages={active} disabled={disabled} weather={showWeather?weather:null}/>
    {showWeather&&<div className="weather-map-tools" role="group" aria-label="Погода на карте">{mapWeatherFields.map(f=><button key={f} aria-pressed={mapField===f} onClick={()=>setMapField(f)}>{f==='snowDepth'?'Глубина снега':weatherFieldLabels[f].split(',')[0]}</button>)}</div>}
    <div className="weather-map-footer">
    <div className="weather-film-host" ref={setTimelineHost}/>
