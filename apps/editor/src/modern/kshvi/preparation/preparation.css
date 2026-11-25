@@ -1,8 +1,8 @@
 .modern-kshvi.kshvi-in-preparation { padding-block: 14px 24px; }
-.kshvi-in-preparation > .kshvi-heading { margin-bottom: 12px; }
+.modern-kshvi.kshvi-in-preparation > .kshvi-heading { display: none; }
 .kshvi-in-preparation .kshvi-heading h1 { font-size: 38px; }
 .kshvi-in-preparation .kshvi-overview { display: none; }
-.kshvi-in-preparation .kshvi-tabs { margin-bottom: 16px; }
+.kshvi-in-preparation .kshvi-tabs { margin-bottom: 8px; }
 
 .kshvi-preparation-workspace {
   --prep-bg: #0e1d1e;
@@ -13,7 +13,7 @@
   --prep-accent: #a8d8c9;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  height: clamp(420px, calc(100dvh - 325px), 780px);
+  height: clamp(540px, calc(100dvh - 260px), 960px);
   overflow: hidden;
   border: 1px solid var(--prep-border);
   border-radius: 12px;
@@ -27,7 +27,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px 20px;
-  padding: 14px 24px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--prep-border);
 }
 .preparation-status h2 { margin-bottom: 4px; }
@@ -48,8 +48,8 @@
   justify-content: center;
   flex-direction: column;
   gap: 3px;
-  min-height: 56px;
-  padding: 10px 12px;
+  min-height: 44px;
+  padding: 6px 10px;
   border: 0;
   border-right: 1px solid var(--prep-border);
   background: transparent;
@@ -172,8 +172,8 @@
 .preparation-launch dt { color: var(--prep-muted); font-size: 13px; }
 .preparation-launch dd { margin: 6px 0 0; font-size: 18px; font-weight: 600; }
 
-.kshvi-environment-preparation > h2 { margin: 0 0 14px; font-size: 18px; }
-.kshvi-environment-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.kshvi-environment-preparation > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.kshvi-environment-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
 .kshvi-environment-columns { display: grid; grid-template-columns: minmax(290px, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
 .kshvi-environment-controls { display: grid; gap: 14px; }
 .kshvi-environment-controls fieldset { display: grid; gap: 8px; min-width: 0; padding: 12px; border: 1px solid var(--prep-border); border-radius: 8px; }
@@ -181,19 +181,21 @@
 .kshvi-environment-controls label { display: grid; gap: 4px; }
 .kshvi-environment-controls input:not([type="checkbox"]), .kshvi-environment-controls select { width: 100%; min-width: 0; }
 .kshvi-environment-bounds { color: var(--prep-muted); font-size: 12px; }
-.kshvi-atlas-options { padding: 0; margin: 0; list-style: none; max-height: 240px; overflow: auto; }
+.kshvi-atlas-options { padding: 0; margin: 0; list-style: none; max-height: 120px; overflow: auto; }
 .kshvi-atlas-options li { padding: 6px 0; }
 .kshvi-atlas-options li + li { border-top: 1px solid var(--prep-border); }
 .kshvi-atlas-options label { grid-template-columns: 16px minmax(0, 1fr); column-gap: 8px; cursor: pointer; }
-.kshvi-atlas-options input[type="checkbox"], .kshvi-weather-toggle input[type="checkbox"] { width: 16px; min-width: 16px; height: 16px; }
+.kshvi-atlas-options input[type="checkbox"], .kshvi-weather-toggle input[type="checkbox"] { width: 16px; min-width: 16px; height: 16px; min-height: 16px; }
 .kshvi-atlas-options small { display: block; color: var(--prep-muted); margin: 3px 0; }
 .kshvi-environment-map { position: relative; }
-.kshvi-environment-map-canvas { height: clamp(245px, 32vh, 400px); border: 1px solid var(--prep-border); border-radius: 8px; overflow: hidden; }
+.kshvi-environment-map-canvas { height: clamp(320px, 36dvh, 560px); border: 1px solid var(--prep-border); border-radius: 8px; overflow: hidden; }
+.kshvi-environment-weather-settings > summary { font-size: 14px; line-height: 1.5; }
 .modern-kshvi .maplibregl-ctrl-group button { min-height: 29px; padding: 0; background: #fff; border-color: #d5dfe2; border-radius: 0; }
 .modern-kshvi .maplibregl-ctrl-group button:hover { background: #e8f0f2; }
 .kshvi-fit-region { position: absolute; top: 10px; left: 10px; }
-.kshvi-weather-toggle { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-.kshvi-weather-legend { display: flex; gap: 8px; align-items: center; margin: 8px 0; font-size: 12px; }
+.kshvi-weather-display { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 8px; }
+.preparation-step-content .kshvi-weather-toggle { display: flex; gap: 8px; align-items: center; }
+.kshvi-weather-legend { display: flex; gap: 8px; align-items: center; font-size: 12px; }
 .kshvi-weather-gradient { height: 8px; width: 150px; border-radius: 4px; background: linear-gradient(90deg, #225ea8, #41b6c4, #fdae61, #d73027); }
 .kshvi-weather-fields { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .kshvi-environment-snapshot, .kshvi-environment-impact { padding: 12px; border: 1px solid var(--prep-border); border-radius: 8px; margin: 10px 0; }

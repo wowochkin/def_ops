@@ -221,7 +221,7 @@ export function PreparationWorkspace({
     </div>
 
     <div id={contentId} className="preparation-step-content" tabIndex={0} role="region" aria-label={current.label}>
-      <div className="preparation-step-heading"><h2>{current.label}</h2><p>{current.description}</p></div>
+      {step !== 'environment' && <div className="preparation-step-heading"><h2>{current.label}</h2><p>{current.description}</p></div>}
       {feedback}
       {!draft && card && <p className="preparation-empty" role="alert">
         {card.payloadAccess === 'PROJECTED' ? 'Полный черновик подготовки недоступен для этой роли.'

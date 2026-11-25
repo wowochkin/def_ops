@@ -1,12 +1,13 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { StyleSpecification } from 'maplibre-gl';
 import { afterEach, expect, it } from 'vitest';
 import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
 import { ExercisePreparation } from '../src/modern/kshvi/preparation/PreparationWorkspace';
 import { emptyPreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import { REGIONAL_CLIMATE_PROFILE } from '../../../packages/core/src/weather-climate-profile';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); localStorage.clear(); });
 
 const now = '2030-01-01T10:00:00Z';
 const atlas = {
@@ -35,6 +36,15 @@ const initial: ExerciseCard = {
 };
 
 it('отправляет все отмеченные наборы и связывает снимок с вложенным черновиком', async () => {
+  localStorage.setItem('def_ops.modern.weather.region', JSON.stringify({ bounds: atlas.bounds, cols: 3, rows: 3 }));
+  localStorage.setItem('def_ops.modern.weather.scenario', JSON.stringify({
+    version: 1, algorithmVersion: 2, climateProfileId: REGIONAL_CLIMATE_PROFILE.id, climateProfileSha256: REGIONAL_CLIMATE_PROFILE.sha256,
+    seed: 73, start: '2032-03-04T05:06:00Z', temperatureMode: 'climate', manualFields: [], temperature: 15, humidity: 65,
+    pressure: 1013, windSpeed: 4, windDirection: 270, cloud: 40, precipitation: 0, variability: 1, transitionHours: 3, durationHours: 24,
+  }));
+  localStorage.setItem('def_ops.modern.atlas.regionStates', JSON.stringify({
+    [atlas.bounds.map(value => value.toFixed(6)).join(',')]: { selected: ['base', 'terrain', 'cover'], disabled: [], terrainId: 'terrain' },
+  }));
   const calls: { path: string; body: unknown }[] = [];
   let current = initial;
   const client = new ExerciseClient({ fetch: async (input, init) => {
@@ -57,10 +67,13 @@ it('отправляет все отмеченные наборы и связы�
   } });
   render(<ExercisePreparation client={client} card={initial} role="AUTHOR" initialStep="environment"
     canRevise canStart={false} onCard={() => {}} onAccessLost={() => {}} onStart={() => {}} />);
-  fireEvent.click(await screen.findByRole('checkbox', { name: 'Рельеф региона' }));
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Покров региона' }));
+  const areaSelect = await screen.findByLabelText<HTMLSelectElement>('Подготовленная область');
+  expect(within(areaSelect).getAllByRole('option')).toHaveLength(1);
+  expect(screen.getByLabelText<HTMLInputElement>('Зерно погодного сценария').value).toBe('73');
+  expect(document.querySelector<HTMLInputElement>('#kshvi-weather-start + input')?.value).toBe('2032-03-04T05:06');
+  expect(screen.queryByRole('button', { name: 'Выбрать подготовленную область' })).toBeNull();
   const prepare = await screen.findByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });
-  expect(prepare.parentElement).toBe(screen.getByRole('button', { name: 'Выбрать подготовленную область' }).parentElement);
+  expect(prepare.compareDocumentPosition(areaSelect) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   await waitFor(() => expect(prepare.disabled).toBe(false));
   fireEvent.click(prepare);
   fireEvent.click(await screen.findByRole('button', { name: 'Зафиксировать среду' }));

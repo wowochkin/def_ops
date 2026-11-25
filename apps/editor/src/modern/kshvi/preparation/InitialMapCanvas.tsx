@@ -8,6 +8,7 @@ import { loadEnvironmentStyles } from './snapshot-map-style';
 import { editedSymbol, markerImageId } from './initial-map-symbol';
 import type { MapEditorInteractions } from './InitialMapEditor';
 import { attachEditorInteractions, updateEditorOverlays } from './initial-map-canvas-interactions';
+import type { WeatherRaster } from '../../weather-layer';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 async function ensureSymbolImages(canvas: MapLibreMap, map: InitialSituationMap): Promise<void> {
@@ -74,14 +75,14 @@ export function InitialMapCanvas({ client, snapshot, map, interaction }: {
 
 export type WeatherMapPoint = Readonly<{ lon: number; lat: number; value: number }>;
 
-export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, interaction, label = 'Предпросмотр выбранных слоёв' }: {
-  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherPoints?: readonly WeatherMapPoint[]; interaction?: MapEditorInteractions; label?: string;
+export function EnvironmentMapPreview({ style, bounds, map, weatherRasters, interaction, label = 'Предпросмотр выбранных слоёв' }: {
+  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherRasters?: readonly WeatherRaster[]; interaction?: MapEditorInteractions; label?: string;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapLibreMap | null>(null);
   const loaded = useRef(false);
-  const latest = useRef({ map, weatherPoints, interaction });
-  latest.current = { map, weatherPoints, interaction };
+  const latest = useRef({ map, weatherRasters, interaction });
+  latest.current = { map, weatherRasters, interaction };
   const [error, setError] = useState('');
 
   function fit(canvas: MapLibreMap) {
@@ -136,23 +137,31 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherPoints, inter
   function updateWeather(): void {
     const canvas = instance.current;
     if (!canvas || !loaded.current) return;
-    const points = latest.current.weatherPoints ?? [];
-    const data: GeoJSON.FeatureCollection<GeoJSON.Point> = {
-      type: 'FeatureCollection', features: points.map(({ lon, lat, value }) => ({
-        type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { temperature: value },
-      })),
-    };
-    const previous = canvas.getSource('kshvi-weather') as GeoJSONSource | undefined;
-    if (previous) { previous.setData(data); return; }
-    if (!points.length) return;
-    canvas.addSource('kshvi-weather', { type: 'geojson', data });
-    canvas.addLayer({ id: 'kshvi-weather', type: 'circle', source: 'kshvi-weather', paint: {
-      'circle-color': ['interpolate', ['linear'], ['get', 'temperature'], -20, '#225ea8', 0, '#41b6c4', 20, '#fdae61', 40, '#d73027'],
-      'circle-radius': 8, 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffffff',
-    } });
+    const rasters = latest.current.weatherRasters ?? [];
+    for (const [index, raster] of rasters.entries()) {
+      const id = `kshvi-weather-${index}`;
+      const existing = canvas.getSource(id) as import('maplibre-gl').ImageSource | undefined;
+      if (existing) {
+        existing.updateImage({ image: new ImageData(raster.pixels, raster.size, raster.size), coordinates: raster.coordinates });
+        continue;
+      }
+      canvas.addSource(id, { type: 'image', coordinates: raster.coordinates });
+      (canvas.getSource(id) as import('maplibre-gl').ImageSource).updateImage({
+        image: new ImageData(raster.pixels, raster.size, raster.size), coordinates: raster.coordinates,
+      });
+      const before = canvas.getStyle().layers.find(layer => layer.id.startsWith('kshvi-initial-'))?.id;
+      canvas.addLayer({ id, type: 'raster', source: id,
+        paint: { 'raster-opacity': 0.68, 'raster-fade-duration': 0 } }, before);
+    }
+    for (let index = rasters.length; canvas.getSource(`kshvi-weather-${index}`); index += 1) {
+      canvas.removeLayer(`kshvi-weather-${index}`);
+      canvas.removeSource(`kshvi-weather-${index}`);
+    }
+    if (canvas.getLayer('kshvi-weather')) canvas.removeLayer('kshvi-weather');
+    if (canvas.getSource('kshvi-weather')) canvas.removeSource('kshvi-weather');
   }
 
-  useEffect(() => updateWeather(), [weatherPoints]);
+  useEffect(() => updateWeather(), [weatherRasters]);
 
   function updateMarkers(): void {
     const canvas = instance.current;
