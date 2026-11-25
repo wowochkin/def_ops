@@ -11,6 +11,7 @@ it('хранит нормы с проверяемым происхождение
   expect(data.source.sha256).toMatch(/^[a-f0-9]{64}$/);
   expect(data.source.url).toMatch(/^https:\/\//);
   expect(data.source.units).toBeTruthy();expect(data.units).toBeTruthy();
+  expect(data.validRange).toHaveLength(2);
   expect(data.values.every(v=>v===null||Number.isFinite(v))).toBe(true);
  }
  expect(REGIONAL_CLIMATE_PROFILE.sha256).toBe(createHash('sha256').update(readFileSync(new URL('../src/climate/regional-v2.json',import.meta.url))).digest('hex'));

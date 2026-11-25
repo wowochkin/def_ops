@@ -1,4 +1,6 @@
 /** Автономная сценарная погода и архивы. Единицы: °C, %, hPa, m/s, градусы, mm/h, m. */
+import {simulateRegionalWeather,regionalPrecipitationFrame} from './weather-regional';
+import {REGIONAL_CLIMATE_PROFILE} from './weather-climate-profile';
 import {episodeIntensity,rainEpisode,validateRainSchedule,type RainSchedule} from './weather-episodes';
 import {showerIntensity} from './weather-showers';
 import {climateAt} from './weather-climate';
@@ -14,6 +16,7 @@ export type SurfaceField=typeof surfaceFields[number];
 export type ScenarioField = SurfaceField|'temperature'|'humidity'|'pressure'|'windSpeed'|'windDirection'|'cloud'|'precipitation';
 export interface WeatherKeyframe { hour:number; values:Partial<Record<ScenarioField,number>> }
 export interface WeatherScenario extends Partial<Record<SurfaceField,number>> {
+  algorithmVersion?:1|2; climateProfileId?:string; climateProfileSha256?:string; manualFields?:readonly ScenarioField[];
   rain?:RainSchedule;
   version: 1; temperatureMode?: 'climate'|'manual'; seed: number; start: string; temperature: number; humidity: number; pressure: number;
   windSpeed: number; windDirection: number; cloud: number; precipitation: number; variability: number; transitionHours: number; keyframes?: WeatherKeyframe[]; durationHours?: number;
@@ -70,6 +73,9 @@ export function weatherAt(d: WeatherDataset, lat: number, lon: number, time: str
 export function weatherDuration(s:WeatherScenario):number { const duration=s.durationHours??168; if(!Number.isFinite(duration)||duration<=0||!Number.isFinite(Date.parse(s.start)+duration*3600000)||Date.parse(s.start)+duration*3600000>Date.parse('9999-12-31T23:59:59Z'))throw Error('Задайте положительную длительность в пределах календаря до 9999 года'); return duration; }
 export function validateWeatherScenario(s: WeatherScenario): WeatherScenario {
   if (s.version !== 1 || !Number.isSafeInteger(s.seed)) throw Error('Неверная версия сценария или зерно'); weatherTime(s.start);
+  if(s.algorithmVersion!==undefined&&s.algorithmVersion!==1&&s.algorithmVersion!==2)throw Error('Неизвестная версия алгоритма погоды');
+  if(s.algorithmVersion===2&&(s.climateProfileId!==REGIONAL_CLIMATE_PROFILE.id||s.climateProfileSha256!==REGIONAL_CLIMATE_PROFILE.sha256))throw Error('Неизвестный или изменённый климатический профиль');
+  if(s.manualFields!==undefined&&(!Array.isArray(s.manualFields)||s.manualFields.some(f=>!['temperature','humidity','pressure','windSpeed','windDirection','cloud','precipitation',...surfaceFields].includes(f))))throw Error('Неизвестное ручное поле погоды');
   if(s.temperatureMode !== undefined && s.temperatureMode !== 'manual' && s.temperatureMode !== 'climate') throw Error('Неизвестный режим температуры');
   for (const f of ['temperature', 'humidity', 'pressure', 'windSpeed', 'windDirection', 'cloud', 'precipitation'] as const) {
     if (!Number.isFinite(s[f]) || s[f] < LIMITS[f][0] || s[f] > LIMITS[f][1]) throw Error(`Недопустимый параметр ${f}`);
@@ -111,6 +117,7 @@ function scenarioBaseline(s:WeatherScenario,hours:number,temperature:number) {
 /** Один момент для всего растрового кадра, тот же расчёт, что и у контрольной точки. */
 export function precipitationFrame(s:WeatherScenario,time:string) {
   validateWeatherScenario(s);
+  if(s.algorithmVersion===2){const frame=regionalPrecipitationFrame(s,time);return (lon:number,lat:number)=>frame(lon,lat)??NaN;}
   const hours=(weatherTime(time)-weatherTime(s.start))/3600000;
   const base=scenarioBaseline(s,hours,s.temperature);
   const intensity=Math.max(base.precipitation,episodeIntensity(rainEpisode(s,hours),hours));
@@ -119,6 +126,7 @@ export function precipitationFrame(s:WeatherScenario,time:string) {
 /** Прямой расчёт по времени: не требует предыдущих кадров и скрытого генераторного состояния. */
 export function simulateWeather(s: WeatherScenario, lat: number, lon: number, time: string): WeatherState {
   validateWeatherScenario(s); point(lat, lon);
+  if(s.algorithmVersion===2)return simulateRegionalWeather(s,lat,lon,time);
   const t = weatherTime(time), hours = (t - weatherTime(s.start)) / 3600000, elapsed = hours / s.transitionHours;
   const climate = s.temperatureMode === 'climate' ? climateAt(lat, lon, t) : undefined;
   const baseline=scenarioBaseline(s,hours,climate?.temperature??s.temperature);

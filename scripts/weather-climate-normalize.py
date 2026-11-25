@@ -7,6 +7,8 @@ from pathlib import Path
 import h5py
 import numpy as np
 
+RANGES = {'temperature': [-100,70], 'pressure': [100,1100], 'precipitation': [0,2000], 'specificHumidity': [0,1], 'windU': [-150,150], 'windV': [-150,150], 'soilTemperature': [-100,100], 'soilMoisture': [0,1], 'cloud': [0,100]}
+
 BASE = 'https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis.derived/surface_gauss'
 FIELDS = {
  'temperature': ('air.2m', 'air', '°C', -273.15, 1),
@@ -51,7 +53,7 @@ def main():
             original_units = dataset[variable].attrs['units']
             if isinstance(original_units, bytes): original_units=original_units.decode()
         url = ('https://psl.noaa.gov/thredds/fileServer/Datasets/ncep.reanalysis/Monthlies/other_gauss/' if cloud else BASE+'/')+filename
-        result['fields'][field]={'units':units, 'values':[float(v) if np.isfinite(v) else None for v in values.flatten()], 'source':{'url':url, 'sha256':hashlib.sha256(file.read_bytes()).hexdigest(), 'period':'1981–2010' if cloud else '1991–2020','variable':variable,'units':str(original_units)}, 'conversion':{'factor':factor,'offset':offset}}
+        result['fields'][field]={'units':units, 'validRange':RANGES[field], 'values':[float(v) if np.isfinite(v) else None for v in values.flatten()], 'source':{'url':url, 'sha256':hashlib.sha256(file.read_bytes()).hexdigest(), 'period':'1981–2010' if cloud else '1991–2020','variable':variable,'units':str(original_units)}, 'conversion':{'factor':factor,'offset':offset}}
     payload=json.dumps(result,ensure_ascii=False,separators=(',',':'),allow_nan=False)+'\n'
     digest=hashlib.sha256(payload.encode()).hexdigest()
     target.write_text(payload)
