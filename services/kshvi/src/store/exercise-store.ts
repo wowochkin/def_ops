@@ -278,7 +278,8 @@ async function environmentSourceFor(actor: ExerciseActor, revision: ExerciseRevi
   evidence?: ExerciseEvidenceProvider, db?: Client) {
   const readTruth = hasTruthAccess(actor);
   if (!readTruth) {
-    const hasClosedEvidence = revision.truthOnlyPayload || revision.state === 'SEALED' || revision.sealedArtifact
+    if (revision.truthOnlyPayload) requireTruthAccess(actor);
+    const hasClosedEvidence = revision.state === 'SEALED' || revision.sealedArtifact
       || (await evidence?.hasEnvironmentEvidence?.(revision, db) ?? Boolean(evidence?.approvedMap || evidence?.confirmations));
     if (hasClosedEvidence) fail('ENVIRONMENT_TRUTH_REQUIRED', 'Для просмотра последствий и смены среды этой редакции нужен доступ к истинной обстановке');
   }

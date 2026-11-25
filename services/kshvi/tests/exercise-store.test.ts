@@ -364,8 +364,12 @@ it('не раскрывает перенесённую закрытую карт
     await api.selectRole('director-truth');
     expect(JSON.stringify(await client.environmentImpact(sealed.id, impact))).toContain(secret);
     const revised = await client.replaceEnvironment(sealed.id, choice);
-    expect(JSON.stringify(revised.revisions.at(-1)?.payload)).toContain(secret);
+    const preflight = await client.getCard(sealed.id);
+    expect(preflight).toMatchObject({ payloadAccess: 'FULL', revision: revised.revision });
+    expect(JSON.stringify(preflight.revisions.at(-1)?.payload)).toContain(secret);
     await api.selectRole('author');
+    await expect(client.environmentImpact(sealed.id, { expectedRevision: revised.revision, bounds: old.region.bounds }))
+      .rejects.toMatchObject({ status: 403, code: 'forbidden' });
     const read = await client.getCard(sealed.id);
     expect(read.payloadAccess).toBe('PROJECTED');
     expect(JSON.stringify(read)).not.toContain(secret);
@@ -505,7 +509,7 @@ it.skipIf(!databaseUrl)('читает реальную PostgreSQL-карту п�
     const apiCopy = await restarted.copy(director, first.id);
     expect(apiCopy.revisions.at(-1)?.payload).toMatchObject({ preparation: { initialMap: { markers: [{ id: 'postgres-approved' }] } } });
     await expect(restarted.environmentImpact(actor, apiCopy.id, { expectedRevision: apiCopy.revision, bounds: old.region.bounds }, 'FULL'))
-      .rejects.toMatchObject({ code: 'ENVIRONMENT_TRUTH_REQUIRED' });
+      .rejects.toMatchObject({ code: 'FORBIDDEN' });
   } finally {
     await dropSchema(pool, schema);
     await pool.end();

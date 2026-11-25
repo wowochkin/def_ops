@@ -168,7 +168,11 @@ it.each([401, 403, 404])('закрывает мастер после отказ�
   expect(snapshots).toBe(0);
 });
 
-it.each(['environment-impact', 'environment-revisions'])('сохраняет FULL-карточку после предметного отказа %s', async deniedCommand => {
+it.each([
+  { name: 'сохраняет FULL после предметного отказа impact', deniedCommand: 'environment-impact', code: 'environment_truth_required', retain: true },
+  { name: 'сохраняет FULL после предметного отказа фиксации', deniedCommand: 'environment-revisions', code: 'environment_truth_required', retain: true },
+  { name: 'убирает прежний FULL при отзыве доступа между чтением карточки и impact', deniedCommand: 'environment-impact', code: 'forbidden', retain: false },
+])('$name', async ({ deniedCommand, code, retain }) => {
   const atlas = { id: 'atlas', name: 'Атлас', bounds: [1, 2, 3, 4], kind: 'vector', minzoom: 4, maxzoom: 14 };
   const snapshotId = 'b'.repeat(64);
   const candidateId = 'c'.repeat(64);
@@ -179,21 +183,24 @@ it.each(['environment-impact', 'environment-revisions'])('сохраняет FUL
     intent: 'Закрытый замысел', preparation: { ...emptyPreparationDraft(now), environmentSnapshotId: snapshotId },
   } }] };
   const message = 'Для просмотра последствий и смены среды этой редакции нужен доступ к истинной обстановке';
+  let reads = 0;
   const client = new ExerciseClient({ fetch: async input => {
     const path = String(input);
     if (path.endsWith('/exercises')) return Response.json({ items: [selected] });
-    if (path.endsWith('/exercises/e1')) return Response.json(selected);
+    if (path.endsWith('/exercises/e1')) {
+      reads++;
+      return Response.json(selected);
+    }
     if (path.endsWith(`/${snapshotId}`)) return Response.json(snapshot);
     if (path.endsWith('/environment/atlases')) return Response.json([atlas]);
     if (path.endsWith('/style')) return Response.json({ version: 8, sources: {}, layers: [] });
-    if (path.endsWith(`/${deniedCommand}`)) return Response.json({
-      error: { code: 'environment_truth_required', message },
-    }, { status: 403 });
+    if (path.endsWith(`/${deniedCommand}`)) return Response.json({ error: { code, message } }, { status: 403 });
     if (path.endsWith('/environment-impact')) return Response.json({ objects: [], confirmations: [], missingForceIds: [], missingInstanceIds: [] });
     if (path.endsWith('/environment/snapshots')) return Response.json({ ...snapshot, id: candidateId, manifestSha256: candidateId });
     throw Error(`Неожиданный запрос ${path}`);
   } });
-  render(<KshviView client={client} role="AUTHOR" authorities={['exercise:read', 'exercise:revise']} />);
+  const authorities = ['exercise:read', 'exercise:revise', ...(retain ? [] : ['TRUTH_READ'])];
+  render(<KshviView client={client} role={retain ? 'AUTHOR' : 'DIRECTOR'} authorities={authorities} />);
   fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Сменить среду' }));
   const prepare = await screen.findByRole<HTMLButtonElement>('button', { name: 'Сформировать новый снимок среды' });
@@ -201,10 +208,18 @@ it.each(['environment-impact', 'environment-revisions'])('сохраняет FUL
   fireEvent.click(prepare);
   if (deniedCommand === 'environment-revisions') fireEvent.click(await screen.findByRole('button', { name: 'Зафиксировать среду' }));
 
-  expect(await screen.findByText(message)).toBeTruthy();
-  expect(screen.getByRole('navigation', { name: 'Этапы подготовки' })).toBeTruthy();
-  expect(screen.getByText(snapshotId)).toBeTruthy();
-  expect(JSON.parse(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)!)).toEqual({ id: 'e1' });
+  if (retain) {
+    expect(await screen.findByText(message)).toBeTruthy();
+    expect(screen.getByRole('navigation', { name: 'Этапы подготовки' })).toBeTruthy();
+    expect(screen.getByText(snapshotId)).toBeTruthy();
+    expect(JSON.parse(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)!)).toEqual({ id: 'e1' });
+  } else {
+    expect(await screen.findByText('Доступ к выбранному учению изменился. Откройте его снова из библиотеки.')).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Этапы подготовки' })).toBeNull();
+    expect(screen.queryByText(snapshotId)).toBeNull();
+    expect(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)).toBeNull();
+  }
+  expect(reads).toBe(2);
 });
 
 it('после временного сбоя обновляет архивную карточку с тем же номером и оставляет решение об уходе пользователю', async () => {

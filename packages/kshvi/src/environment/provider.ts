@@ -124,8 +124,12 @@ function longitudeSpan(west: number, east: number): number {
   return east >= west ? east - west : 360 + east - west;
 }
 
+function canonicalLongitude(longitude: number): number {
+  return longitude === 180 ? -180 : longitude;
+}
+
 function longitudeOffset(longitude: number, west: number): number {
-  const difference = (longitude - west) % 360;
+  const difference = (canonicalLongitude(longitude) - canonicalLongitude(west)) % 360;
   const offset = difference < 0 ? difference + 360 : difference;
   return offset > 360 - weatherCoordinateEpsilon ? offset - 360 : offset;
 }

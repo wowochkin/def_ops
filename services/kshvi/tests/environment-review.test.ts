@@ -116,11 +116,14 @@ describe('автономность и покрытие снимка среды',
     });
   });
 
-  it('находит два узла на границе +180° для подрайона и интерполирует между эквивалентными долготами', async () => {
-    const bounds: [number, number, number, number] = [179, 0, 180, 1];
+  it.each([179, 179.9])('находит два узла на +180° от западной границы %s° и интерполирует между эквивалентными долготами', async west => {
+    const bounds: [number, number, number, number] = [west, 0, 180, 1];
     atlasBounds = [170, 0, 180, 1];
     archive = dataset({ bounds: [170, 0, 180, 1], cols: 2, rows: 2 });
-    archive.rows = archive.rows.map(row => row.lon === -180 && row.time === interval[0] ? { ...row, lon: 180 } : row);
+    archive.rows = archive.rows.map(row => {
+      if (row.lon !== -180) return row;
+      return row.time === interval[0] ? { ...row, lon: 180, temperature: 10 } : { ...row, temperature: 14 };
+    });
     const selection = { ...archiveSelection(), region: { name: 'Восточная полоса', bounds } };
     const snapshot = await provider.snapshot(selection);
     expect(snapshot).toMatchObject({ autonomy: 'COMPLETE', limitations: [] });
