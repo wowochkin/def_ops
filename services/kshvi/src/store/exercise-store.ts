@@ -31,6 +31,7 @@ export type ExerciseSummary = Readonly<{
   updatedAt: string;
   archivedAt: string | null;
   lastSessionId: string | null;
+  lastSessionState?: ExerciseSession['state'] | null;
 }>;
 
 export type ExerciseRevision = Readonly<{
@@ -443,6 +444,7 @@ function publicCard(record: ExerciseCard): ExerciseCard {
   return clone({
     ...record,
     lastSessionId: record.sessions.at(-1)?.id ?? null,
+    lastSessionState: record.sessions.at(-1)?.state ?? null,
     revisions: [...record.revisions].sort((a, b) => a.revision - b.revision),
     sessions: [...record.sessions],
   });
@@ -481,7 +483,7 @@ function copiedCard(source: ExerciseCard, actor: ExerciseActor, now: string, tit
     createdAt: now,
     updatedAt: now,
     archivedAt: null,
-    lastSessionId: null,
+    lastSessionId: null, lastSessionState: null,
     revisions,
     sessions: [],
   };
@@ -527,7 +529,7 @@ export class InMemoryExerciseStore implements ExerciseStore {
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
-      lastSessionId: null,
+      lastSessionId: null, lastSessionState: null,
       revisions: [{
         id: randomUUID(), exerciseId, revision: 1, payload, sha256: digest(payload), state: 'DRAFT',
         createdBy: actor.userId, createdAt: now, supersedesId: null,
@@ -709,6 +711,14 @@ type ExerciseRow = Record<string, any>;
 
 const exerciseColumns = `id, title, purpose, scale, state, revision, owner_id, starts_at, ends_at,
   readiness, validation, created_at, updated_at, archived_at`;
+function joinLastSession(schema: string): string {
+  return `left join lateral (
+    select s.id as last_session_id, s.state as last_session_state from ${schema}.exercise_sessions s
+    where s.organization_id=e.organization_id and s.exercise_id=e.id
+    order by s.created_at desc, s.id desc limit 1
+  ) last_session on true`;
+}
+
 function mapSummary(row: ExerciseRow): ExerciseSummary {
   return {
     id: row.id, title: row.title, purpose: row.purpose, scale: row.scale, state: row.state,
@@ -717,6 +727,7 @@ function mapSummary(row: ExerciseRow): ExerciseSummary {
     readiness: Number(row.readiness), validation: row.validation,
     createdAt: instant(row.created_at), updatedAt: instant(row.updated_at),
     archivedAt: row.archived_at ? instant(row.archived_at) : null, lastSessionId: row.last_session_id ?? null,
+    lastSessionState: row.last_session_state ?? null,
   };
 }
 function mapRevision(row: ExerciseRow): ExerciseRevision {
@@ -741,8 +752,8 @@ async function lockExercise(db: Queryable, schema: string, organizationId: strin
 }
 async function readCard(db: Queryable, schema: string, organizationId: string, exerciseId: string): Promise<ExerciseCard | null> {
   const exercise = await db.query(
-    `select ${exerciseColumns}, (select id from ${schema}.exercise_sessions s where s.organization_id=e.organization_id and s.exercise_id=e.id order by created_at desc, id desc limit 1) last_session_id
-     from ${schema}.exercises e where organization_id=$1 and id=$2`,
+    `select ${exerciseColumns}, last_session_id, last_session_state
+     from ${schema}.exercises e ${joinLastSession(schema)} where organization_id=$1 and id=$2`,
     [organizationId, exerciseId],
   );
   if (!exercise.rows[0]) return null;
@@ -802,7 +813,7 @@ export class PgExerciseStore implements ExerciseStore {
       const card: ExerciseCard = {
         id: exerciseId, title: input.title.trim(), purpose: input.purpose, scale: input.scale,
         state: 'DRAFT', revision: 1, ownerId: actor.userId, startsAt: input.startsAt ?? null, endsAt: input.endsAt ?? null,
-        readiness: assessment.readiness, validation: assessment.validation, createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null,
+        readiness: assessment.readiness, validation: assessment.validation, createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null, lastSessionState: null,
         revisions: [{ id: randomUUID(), exerciseId, revision: 1, payload, sha256: digest(payload), state: 'DRAFT', createdBy: actor.userId, createdAt: now, supersedesId: null }],
         sessions: [],
       };
@@ -823,8 +834,8 @@ export class PgExerciseStore implements ExerciseStore {
     if (filters.scale) { values.push(filters.scale); where.push(`e.scale=$${values.length}`); }
     if (filters.purpose) { values.push(filters.purpose); where.push(`e.purpose=$${values.length}`); }
     const result = await this.pool.query(
-      `select ${exerciseColumns}, (select id from ${this.schema}.exercise_sessions s where s.organization_id=e.organization_id and s.exercise_id=e.id order by created_at desc, id desc limit 1) last_session_id
-       from ${this.schema}.exercises e where ${where.join(' and ')} order by e.updated_at desc, e.id`,
+      `select ${exerciseColumns}, last_session_id, last_session_state
+       from ${this.schema}.exercises e ${joinLastSession(this.schema)} where ${where.join(' and ')} order by e.updated_at desc, e.id`,
       values,
     );
     return result.rows.map(mapSummary);

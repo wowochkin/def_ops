@@ -11,5 +11,6 @@ test('кнопки навигации мастера закреплены по �
   expect(workspace).not.toBeNull(); expect(back).not.toBeNull(); expect(next).not.toBeNull();
   expect(back!.x).toBeLessThan(workspace!.x + 40);
   expect(next!.x + next!.width).toBeGreaterThan(workspace!.x + workspace!.width - 40);
-  await page.screenshot({ path: 'docs/img/modern-kshvi-forces.jpg', type: 'jpeg', quality: 90, animations: 'disabled' });
+  expect(back!.width).toBe(next!.width);
+  expect(back!.height).toBe(next!.height);
 });

@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import type { KshviClient, LoginResult, Participant } from './kshvi-api';
 
 export const roleNames: Record<string, string> = {
+  AUTHOR: 'Автор', APPROVER: 'Утверждающий',
   PLAYGROUP: 'Группа розыгрыша', ANALYST: 'Аналитик', PROJECTOR: 'Проектор',
   DIRECTOR: 'Руководитель учения', LEADER: 'Командир', TRAINEE: 'Обучаемый',
   INTERMEDIARY: 'Посредник', TECH_ADMIN: 'Технический администратор', OBSERVER: 'Наблюдатель',

@@ -80,13 +80,21 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
     setNotice('');
     try {
       const weather = validateWeatherScenario(scenario);
+      const card = await client.getCard(exerciseId);
+      if (card.payloadAccess !== 'FULL') {
+        onRevision(card);
+        return;
+      }
+      if (card.revision !== revision) {
+        onRevision(card);
+        throw new Error('Редакция изменилась. Проверьте актуальные данные и повторите выбор среды.');
+      }
       const fixed = await client.createEnvironmentSnapshot({
         region: { name: atlas.name, bounds: atlas.bounds },
         atlases: [{ id: atlas.id, exportRights: 'ALLOWED', elevationPoints: [] }],
         weather: { mode: 'scenario', scenario: weather },
         elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 },
       });
-      const card = await client.getCard(exerciseId);
       const source = card.revisions.find(item => item.revision === card.revision);
       if (!source) throw new Error('Сервер не вернул текущую редакцию учения');
       const payload = source.payload && typeof source.payload === 'object' && !Array.isArray(source.payload)
@@ -129,14 +137,16 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
       <p>Выберите подготовленный атлас из соседнего раздела «Карта и погода». Снимок сохраняется на сервере отдельно от текущих настроек этого раздела.</p>
       {environmentLoading && <p role="status">Загружаем доступные атласы…</p>}
       {!environmentLoading && !atlases.length && !error && <p role="status">Подготовленных атласов нет. Сначала откройте «Карта и погода» и подготовьте район; затем вернитесь к этому учению.</p>}
-      <label htmlFor="kshvi-environment-atlas">Атлас района</label>
-      <select id="kshvi-environment-atlas" value={atlasId} onChange={event => setAtlasId(event.target.value)} required>
-        <option value="" disabled>Выберите атлас</option>
-        {atlases.map(atlas => <option key={atlas.id} value={atlas.id}>{atlas.name}</option>)}
-      </select>
+      <label htmlFor="kshvi-environment-atlas">Атлас района
+        <select id="kshvi-environment-atlas" value={atlasId} onChange={event => setAtlasId(event.target.value)} required>
+          <option value="" disabled>Выберите атлас</option>
+          {atlases.map(atlas => <option key={atlas.id} value={atlas.id}>{atlas.name}</option>)}
+        </select>
+      </label>
       <DateTimeField id="kshvi-weather-start" label="Начало сценария, UTC" value={scenario.start.slice(0, 16)} onChange={value => { if (value) patch('start', `${value}:00Z`); }} required />
-      <label htmlFor="kshvi-weather-seed">Зерно погодного сценария</label>
-      <input id="kshvi-weather-seed" type="number" value={scenario.seed} onChange={event => patch('seed', Number(event.target.value))} required />
+      <label htmlFor="kshvi-weather-seed">Зерно погодного сценария
+        <input id="kshvi-weather-seed" type="number" value={scenario.seed} onChange={event => patch('seed', Number(event.target.value))} required />
+      </label>
       <details>
         <summary>Расширенные параметры погоды</summary>
         <div>
@@ -152,7 +162,7 @@ export function EnvironmentMapPreparation({ client, exerciseId, revision, author
     {error && <p role="alert" className="kshvi-error">{error}</p>}
     {map && snapshot && symbols && <>
       <p>Снимок: <code title={snapshot.id}>{snapshot.id.slice(0, 12)}…</code> · автор редакции: {authorId}</p>
-      {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков не утверждён методистом. Доступные для официального нанесения знаки: только APPROVED.</p>}
+      {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков не утверждён методистом. Для официального нанесения нужны утверждённые знаки.</p>}
       <InitialMapCanvas snapshot={snapshot} map={map} />
       <InitialMapStep map={map} onChange={setMap} audiences={initialMapAudiences(map.markers)} availableSymbols={symbolOptions(symbols)} truthRole={truthRole} onApprove={approveOnServer} />
     </>}

@@ -1,0 +1,119 @@
+// @vitest-environment happy-dom
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it } from 'vitest';
+import { emptyPreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
+import { KshviView } from '../src/modern/kshvi/KshviView';
+import { WORKSPACE_EXERCISE_KEY } from '../src/modern/kshvi/workspace-session';
+
+const now = '2030-01-01T10:00:00Z';
+const card: ExerciseCard = {
+  id: 'e1', title: 'Учение', revision: 2, state: 'DRAFT', validation: 'NOT_RUN', payloadAccess: 'FULL',
+  purpose: 'planned', scale: 'operational', ownerId: 'leader', startsAt: null, endsAt: null, readiness: 0,
+  createdAt: now, updatedAt: now, archivedAt: null, lastSessionId: null, sessions: [],
+  revisions: [{
+    id: 'r2', exerciseId: 'e1', revision: 2, payload: { intent: 'Закрытый замысел', preparation: JSON.parse(JSON.stringify(emptyPreparationDraft(now))) },
+    sha256: 'a'.repeat(64), state: 'DRAFT', createdBy: 'leader', createdAt: now, supersedesId: null,
+  }],
+};
+
+function clientFor(getCard: () => Promise<Response> = async () => Response.json(card)) {
+  return new ExerciseClient({ fetch: async input => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [card] });
+    if (path.endsWith('/exercises/e1')) return getCard();
+    if (path.endsWith('/environment/atlases')) return Response.json([]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+}
+
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
+afterEach(cleanup);
+
+it('показывает пять этапов, отдельную нижнюю панель и проверку запуска без служебных кодов', async () => {
+  render(<KshviView client={clientFor()} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+
+  const nav = await screen.findByRole('navigation', { name: 'Этапы подготовки' });
+  expect(within(nav).getAllByRole('button').map(item => item.getAttribute('aria-label')))
+    .toEqual(['Среда', 'Силы и МТО', 'События', 'Готовность', 'Запуск']);
+  expect(screen.getByText(/Редакция 2 · Черновик · Руководитель учения/)).toBeTruthy();
+  expect(screen.getByText(/Сохранена редакция 2/)).toBeTruthy();
+
+  const back = screen.getByRole<HTMLButtonElement>('button', { name: 'Назад' });
+  const next = screen.getByRole<HTMLButtonElement>('button', { name: 'Далее' });
+  expect(back.disabled).toBe(true);
+  const content = document.getElementById(next.getAttribute('aria-controls')!);
+  expect(content?.classList.contains('preparation-step-content')).toBe(true);
+  expect(back.parentElement).toBe(next.parentElement);
+  expect(content?.nextElementSibling).toBe(next.parentElement);
+  fireEvent.click(next);
+  expect(within(nav).getByRole('button', { name: 'Силы и МТО' }).getAttribute('aria-current')).toBe('step');
+  expect(back.disabled).toBe(false);
+  fireEvent.click(back);
+  expect(within(nav).getByRole('button', { name: 'Среда' }).getAttribute('aria-current')).toBe('step');
+
+  fireEvent.click(within(nav).getByRole('button', { name: 'Запуск' }));
+  expect(screen.getByText('Сценарий ещё не зафиксирован')).toBeTruthy();
+  expect(screen.queryByText('Требуется SEALED')).toBeNull();
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Запустить официальный сеанс' }).disabled).toBe(true);
+});
+
+it('не открывает закрытое содержимое из сохранённой ссылки или после смены роли', async () => {
+  let receive!: (response: Response) => void;
+  const nextCard = () => new Promise<Response>(resolve => { receive = resolve; });
+  localStorage.setItem('def_ops.kshvi.section', 'preparation');
+  sessionStorage.setItem(WORKSPACE_EXERCISE_KEY, JSON.stringify(card));
+  const client = clientFor(nextCard);
+  const view = render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  expect(screen.queryByRole('navigation', { name: 'Этапы подготовки' })).toBeNull();
+  expect(JSON.parse(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)!)).toEqual({ id: 'e1' });
+  receive(Response.json(card));
+  expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();
+
+  view.rerender(<KshviView client={client} role="TRAINEE" authorities={['exercise:read']} />);
+  expect(screen.queryByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeNull();
+  receive(Response.json({ ...card, payloadAccess: 'PROJECTED', revisions: [] }));
+  expect(await screen.findByText('Полный черновик подготовки недоступен для этой роли.')).toBeTruthy();
+  expect(screen.queryByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeNull();
+  expect(JSON.parse(sessionStorage.getItem(WORKSPACE_EXERCISE_KEY)!)).toEqual({ id: 'e1' });
+});
+
+it('сохраняет локальную правку при конфликте до явного выбора серверной редакции', async () => {
+  const snapshotId = 'b'.repeat(64);
+  const previous = { ...card, revisions: [{ ...card.revisions[0]!, payload: { environmentSnapshotId: snapshotId } }] };
+  const latest = {
+    ...card, revision: 3,
+    revisions: [...previous.revisions, {
+      ...card.revisions[0]!, id: 'r3', revision: 3, payload: { intent: 'Замысел после правки' },
+    }],
+  };
+  const sent: unknown[] = [];
+  const client = new ExerciseClient({ fetch: async (input, init) => {
+    const path = String(input);
+    if (path.endsWith('/exercises')) return Response.json({ items: [previous] });
+    if (path.endsWith('/exercises/e1')) return Response.json(sent.length ? latest : previous);
+    if (path.endsWith('/environment/atlases')) return Response.json([]);
+    if (path.endsWith('/symbols/catalog')) return Response.json({ set: { symbols: [] } });
+    if (path.endsWith('/preparation')) {
+      sent.push(JSON.parse(String(init?.body)));
+      return Response.json({ error: { message: 'Данные изменились, обновите редакцию' } }, { status: 409 });
+    }
+    throw Error(`Неожиданный запрос ${path}`);
+  } });
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'exercise:revise']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Добавить сохранённый снимок в черновик' }));
+  expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Среда' }).getAttribute('aria-description')).toBe('Не начат');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить черновик' }));
+  const accept = await screen.findByRole('button', { name: 'Принять серверную редакцию' });
+  expect(screen.getByText(/Сравнить черновик с редакцией 3/)).toBeTruthy();
+  expect(screen.getByText('Есть несохранённые изменения')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Сохранить черновик' })).toBeNull();
+  expect(sent).toEqual([expect.objectContaining({ expectedRevision: 2, draft: expect.objectContaining({ environmentSnapshotId: snapshotId }) })]);
+  fireEvent.click(accept);
+  expect(screen.getByText('Сохранена редакция 3')).toBeTruthy();
+  expect(screen.queryByText('Есть несохранённые изменения')).toBeNull();
+});

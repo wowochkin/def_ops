@@ -32,7 +32,7 @@ try {
   const exerciseTitle = `Учение для визуальной приёмки ${Date.now()}`;
   await page.getByLabel('Название учения').fill(exerciseTitle);
   await page.getByRole('button', { name: 'Сохранить на сервере', exact: true }).click();
-  await page.getByRole('button', { name: `Рабочий цикл ${exerciseTitle}`, exact: true }).click();
+  await page.getByRole('button', { name: `Продолжить подготовку ${exerciseTitle}`, exact: true }).click();
   await page.getByRole('heading', { name: 'Карта и погода исходной обстановки' }).waitFor();
   await page.getByLabel('Атлас района').locator('option').nth(1).waitFor({ state: 'attached' });
   await shot('modern-kshvi-preparation');

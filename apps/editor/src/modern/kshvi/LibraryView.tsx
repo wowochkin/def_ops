@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
+import { exerciseStates, libraryPrimaryAction, stateLabel, type LibraryPrimaryAction } from './library-actions';
 import { DateTimeField } from '../DateTimeField';
 import type {
   CreateExerciseInput,
@@ -7,19 +8,11 @@ import type {
   ExerciseScale,
   ExerciseState,
   ExerciseSummary,
-  ExerciseValidation,
 } from './kshvi-api';
 
 export type LibraryExercise = Pick<ExerciseSummary, 'id' | 'title' | 'revision' | 'state' | 'validation'>
   & Partial<Omit<ExerciseSummary, 'id' | 'title' | 'revision' | 'state' | 'validation'>>;
 
-const stateLabels: Record<ExerciseState, string> = {
-  DRAFT: 'Черновик', IN_REVIEW: 'На проверке', APPROVED: 'Утверждено', SEALED: 'Зафиксировано',
-  CANCELLED: 'Отменено', ARCHIVED: 'В архиве',
-};
-const validationLabels: Record<ExerciseValidation, string> = {
-  NOT_RUN: 'Проверка не запускалась', OK: 'Ошибок не найдено', WARNING: 'Есть предупреждения', ERROR: 'Есть ошибки',
-};
 const scaleLabels: Record<ExerciseScale, string> = {
   tactical: 'Тактический', operational: 'Оперативный', strategic: 'Стратегический', custom: 'Особый масштаб',
 };
@@ -43,12 +36,12 @@ type Props = {
   onCompare?: (item: LibraryExercise) => void;
   onArchive?: (item: LibraryExercise) => void;
   onOpenSession?: (item: LibraryExercise) => void;
-  onOpenWorkflow?: (item: LibraryExercise) => void;
+  onPrimaryAction?: (item: LibraryExercise, action: LibraryPrimaryAction) => void;
 };
 
 export function LibraryView({
   items, filters = {}, busy = false, loading = false, notice = '', error = '', archiveMode = false,
-  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession, onOpenWorkflow,
+  onFiltersChange, onCreate, onCopy, onCompare, onArchive, onOpenSession, onPrimaryAction,
 }: Props) {
   const uid = useId().replaceAll(':', '');
   const [query, setQuery] = useState(filters.query ?? '');
@@ -139,7 +132,7 @@ export function LibraryView({
       {!archiveMode && <label htmlFor={`${uid}-state`}>Состояние
         <select id={`${uid}-state`} value={state} onChange={event => setState(event.target.value as ExerciseState | '')}>
           <option value="">Все состояния</option>
-          {Object.entries(stateLabels).filter(([value]) => value !== 'ARCHIVED').map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          {exerciseStates.filter(value => value !== 'ARCHIVED').map(value => <option key={value} value={value}>{stateLabel(value)}</option>)}
         </select>
       </label>}
       <label htmlFor={`${uid}-scale`}>Масштаб
@@ -167,19 +160,22 @@ export function LibraryView({
     </div>}
 
     <ul className="kshvi-exercise-list">
-      {items.map(item => <li key={item.id}>
+      {items.map(item => {
+        const primary = libraryPrimaryAction(item);
+        const copyLabel = item.state === 'ARCHIVED' ? 'Создать рабочую копию' : 'Копировать';
+        return <li key={item.id}>
         <article className="kshvi-exercise-card">
           <div className="kshvi-card-heading">
             <div>
               <p className="kshvi-card-kicker">{item.scale ? scaleLabels[item.scale] : 'Масштаб не указан'} · {item.purpose ? purposeLabels[item.purpose] : 'Назначение не указано'}</p>
               <h3>{item.title}</h3>
             </div>
-            <span className={`kshvi-state kshvi-state-${item.state.toLocaleLowerCase()}`}>{stateLabels[item.state]}</span>
+            <span className={`kshvi-state kshvi-state-${item.state.toLocaleLowerCase()}`}>{stateLabel(item.state)}</span>
           </div>
           <div className="kshvi-card-meta">
             <span>Редакция {item.revision}</span>
-            <span className={`kshvi-validation kshvi-validation-${item.validation.toLocaleLowerCase()}`}>{validationLabels[item.validation]}</span>
-            <span>{item.readiness === undefined ? 'Готовность не оценена' : `Готовность ${item.readiness}%`}</span>
+            <span className={`kshvi-validation kshvi-validation-${item.validation.toLocaleLowerCase()}`}>{stateLabel(item.validation)}</span>
+            <span>{item.readiness === undefined || item.validation === 'NOT_RUN' ? 'Готовность не оценена' : `Готовность ${item.readiness}%`}</span>
           </div>
           <dl className="kshvi-card-details">
             <div><dt>Сроки</dt><dd>{item.startsAt || item.endsAt
@@ -188,14 +184,14 @@ export function LibraryView({
           </dl>
           <p className="kshvi-owner-readable">{item.ownerId ? `Ответственный: ${item.ownerId}` : 'Ответственный не назначен'}</p>
           <div className="kshvi-card-actions">
-            {onOpenWorkflow && <button type="button" disabled={busy} aria-label={`Рабочий цикл ${item.title}`} onClick={() => onOpenWorkflow(item)}>Рабочий цикл</button>}
+            {onPrimaryAction && <button className="kshvi-primary" type="button" disabled={busy} aria-label={`${primary.label} ${item.title}`} onClick={() => onPrimaryAction(item, primary)}>{primary.label}</button>}
             {onCompare && <button type="button" disabled={busy} aria-label={`Сравнить редакции ${item.title}`} onClick={() => onCompare(item)}>Редакции</button>}
-            {onOpenSession && item.lastSessionId && <button type="button" disabled={busy} aria-label={`Перейти к последнему сеансу ${item.title}`} onClick={() => onOpenSession(item)}>Последний сеанс</button>}
-            {onCopy && <button type="button" disabled={busy} aria-label={`Копировать ${item.title}`} onClick={() => onCopy(item)}>Копировать</button>}
+            {onOpenSession && item.lastSessionId && primary.id !== 'CONDUCT' && primary.id !== 'DEBRIEF' && <button type="button" disabled={busy} aria-label={`Перейти к последнему сеансу ${item.title}`} onClick={() => onOpenSession(item)}>Последний сеанс</button>}
+            {onCopy && <button type="button" disabled={busy} aria-label={`${copyLabel} ${item.title}`} onClick={() => onCopy(item)}>{copyLabel}</button>}
             {onArchive && item.state !== 'ARCHIVED' && <button className="kshvi-danger" type="button" disabled={busy} aria-label={`Архивировать ${item.title}`} onClick={() => onArchive(item)}>Архивировать</button>}
           </div>
         </article>
-      </li>)}
+      </li>; })}
     </ul>
   </div>;
 }

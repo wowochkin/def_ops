@@ -38,6 +38,7 @@ async function mockApi(page: Page): Promise<void> {
     const fulfill = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     if (path === '/auth/me') return fulfill({ userId: 'leader-1', activeRole: 'LEADER', organizationId: 'org-1', authorities: ['exercise:read', 'exercise:create', 'exercise:conduct', 'exercise:archive', 'TRUTH_READ', 'archive.export', 'kshvi:admin'] });
     if (path === '/exercises') return fulfill({ items: archived ? [] : [exercise] });
+    if (path === '/exercises/e1') return fulfill({ ...exercise, payloadAccess: 'PROJECTED', revisions: [], sessions: [] });
     if (path === '/exercises/e1/sessions' && method === 'POST') return fulfill(session, 201);
     if (path === '/exercises/e1/sessions/s1/commands') {
       const body = request.postDataJSON() as { command: string };
@@ -47,7 +48,7 @@ async function mockApi(page: Page): Promise<void> {
     if (path === '/exercises/e1/sessions/s1/replay') return fulfill({ sequence: 3, operationalAt: '2030-01-01T03:00:00Z', wallClockAt: '2030-01-01T09:00:00Z', perspective: 'PARTICIPANT', source: 'RECORDED_PARTICIPANT_PROJECTION', stateHash: 'a'.repeat(64), domains: { Map: { sequence: 3 }, Weather: { sequence: 3 } }, events: [{ eventId: 'event-3', type: 'time.change', sequence: 3 }], maxSequence: 3 });
     if (path === '/exercises/e1/sessions/s1/debrief') return fulfill({ scope: 'GENERAL', revision: 2, audience: ['GENERAL'], referenceIntent: 'Замысел руководства' });
     if (path === '/archives' && method === 'POST') return fulfill({ archiveId: 'archive-s1', manifestSha256: 'b'.repeat(64), mode: 'AUTONOMOUS', missing: [] }, 201);
-    if (path === '/exercises/e1/archive') { archived = true; return fulfill({ ...exercise, state: 'ARCHIVED' }); }
+    if (path === '/exercises/e1/archive') { archived = true; return fulfill({ ...exercise, payloadAccess: 'PROJECTED', revisions: [], sessions: [], state: 'ARCHIVED' }); }
     if (path === '/expositions/archive-s1') return fulfill({ purpose: 'EXPOSITION', session: expositionSession, projection: expositionProjection });
     if (path === '/admin/overview') return fulfill({ accounts: [], assignments: [], events: [], versions: [], datasets: [], retention: { activeDays: 30, archiveDays: 365, backupDays: 90, auditDays: 730, allowedMedia: ['encrypted-local-disk'], responsibleUserIds: ['security-1'] }, snapshot: { health: 'HEALTHY', readiness: { ready: true, reasons: [] }, generatedAt: '2030-01-01T10:00:00Z', services: { kshvi: 'UP', database: 'UP', environment: 'UP' }, connections: { active: 1, idle: 0, disconnected: 0, total: 1 }, queues: { events: 0, jobs: 0, heavyJobs: 0 }, latencyMs: { commandP95: 1, sseP95: 1, mapP95: 1 }, storage: { freeBytes: 1024, journalBytes: 128 }, backups: { status: 'VALID', lastVerifiedAt: '2030-01-01T09:00:00Z' }, clock: { serverTime: '2030-01-01T10:00:00Z', ntpSynchronized: true, offsetMs: 0 }, versions: { kshvi: '1' }, errors: [], alerts: [] } });
     return fulfill({ error: { message: `Неизвестный маршрут ${method} ${path}` } }, 404);
@@ -78,8 +79,8 @@ test('единый маршрут КШВИ, соседние карта/пого
   const mapRegion = await page.evaluate(() => localStorage.getItem('def_ops.modern.weather.region'));
   expect(mapRegion).not.toBeNull();
   await page.getByRole('button', { name: 'КШВИ', exact: true }).click();
-  await page.getByRole('button', { name: 'Рабочий цикл Сквозное учение' }).click();
-  await expect(page.getByRole('heading', { name: 'Подготовка официального сеанса' })).toBeVisible();
+  await page.getByRole('button', { name: 'Запустить учение Сквозное учение' }).click();
+  await expect(page.getByRole('heading', { name: 'Проверка перед запуском' })).toBeVisible();
   await page.getByRole('button', { name: 'Запустить официальный сеанс' }).click();
   await expect(page.getByRole('heading', { name: 'Руководитель учения' })).toBeVisible();
   for (const [command, confirmation] of [['Пауза', 'Подтвердить: Пауза'], ['Продолжить', 'Подтвердить: Продолжить'], ['Завершение', 'Подтвердить: Завершение']]) {

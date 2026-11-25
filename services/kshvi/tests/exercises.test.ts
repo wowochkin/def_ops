@@ -181,7 +181,9 @@ describe('библиотека учений', () => {
     });
     expect(session).not.toHaveProperty('optimisticWorld');
     expect(JSON.stringify(session)).not.toContain('"fuel":999');
-    expect((await store.get(actor.organizationId, exercise.id))?.lastSessionId).toBe(session.id);
+    expect(await store.get(actor.organizationId, exercise.id)).toMatchObject({ lastSessionId: session.id, lastSessionState: 'ACTIVE' });
+    await store.transitionSession(actor, exercise.id, session.id, { command: 'COMPLETE', expectedRevision: 0, idempotencyKey: 'library-complete' });
+    expect(await store.list(actor.organizationId, {})).toEqual([expect.objectContaining({ lastSessionId: session.id, lastSessionState: 'COMPLETED' })]);
     await expect(store.getSession(actor.organizationId, exercise.id, session.id)).resolves.toMatchObject({ id: session.id });
     await expect(store.getSession('org2', exercise.id, session.id)).resolves.toBeNull();
     await expect(store.listSessions('org2', exercise.id)).resolves.toEqual([]);
@@ -403,6 +405,9 @@ databaseIntegration('PostgreSQL сохраняет редакции, копии 
     expect(sealed.revisions[0].state).toBe('SEALED');
     const session = await store.createSession(actor, created.id, { revision: 1 });
     await expect(store.getSession('org2', created.id, session.id)).resolves.toBeNull();
+    expect(await store.list(actor.organizationId, {})).toContainEqual(expect.objectContaining({
+      id: created.id, lastSessionId: session.id, lastSessionState: 'ACTIVE',
+    }));
     const revised = await store.createRevision(actor, created.id, { expectedRevision: 1, payload: { intent: 'Проверка PostgreSQL' } });
     expect(revised.revisions).toHaveLength(2);
     expect(revised.revisions[0].state).toBe('SEALED');

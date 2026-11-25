@@ -1,24 +1,38 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { KshviView } from '../src/modern/kshvi/KshviView';
+import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
 
-beforeEach(() => {
-  localStorage.clear();
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+const now = '2030-01-01T10:00:00Z';
+const card: ExerciseCard = {
+  id: 'e1', title: 'Учение', purpose: 'planned', scale: 'operational', ownerId: 'leader',
+  revision: 1, state: 'DRAFT', validation: 'NOT_RUN', readiness: 0, payloadAccess: 'FULL',
+  createdAt: now, updatedAt: now, startsAt: null, endsAt: null, archivedAt: null, lastSessionId: null,
+  sessions: [],
+  revisions: [{
+    id: 'r1', exerciseId: 'e1', revision: 1, state: 'DRAFT', payload: {}, sha256: 'a'.repeat(64),
+    createdAt: now, createdBy: 'leader', supersedesId: null,
+  }],
+};
+
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
+afterEach(cleanup);
+
+it('показывает отсутствие серверного профиля в подготовке и сохраняет перехват в проведении', async () => {
+  const client = new ExerciseClient({ fetch: async input => {
     const url = String(input);
-    if (url.includes('/auth/me')) return new Response(JSON.stringify({ userId: 'u1', organizationId: 'org1', activeRole: 'TRAINEE', authorities: ['exercise:read'] }), { status: 200 });
-    return new Response(JSON.stringify({ items: [] }), { status: 200 });
-  }));
-});
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+    if (url.endsWith('/exercises')) return Response.json({ items: [card] });
+    if (url.endsWith('/exercises/e1')) return Response.json(card);
+    throw new Error(`Неожиданный запрос ${url}`);
+  } });
+  render(<KshviView client={client} role="DIRECTOR" authorities={['exercise:read', 'TRUTH_READ']} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Продолжить подготовку Учение' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'События' }));
+  expect(screen.getByText(/Профиль событий ещё не задан/)).toBeTruthy();
+  expect(screen.queryByText('240 событий · 12 категорий · 48 операций')).toBeNull();
+  expect(screen.queryByLabelText('Интенсивность разведки')).toBeNull();
 
-it('показывает профиль автономии в подготовке и перехват в проведении', () => {
-  render(<KshviView authorities={['exercise:read']} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Подготовка' }));
-  expect(screen.getByText('240 событий · 12 категорий · 48 операций')).toBeTruthy();
-  fireEvent.change(screen.getByLabelText('Интенсивность разведки'), { target: { value: '0' } });
-  expect(screen.getByText('Вероятностные события разведки отключены; плановые и реактивные сохранены')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Проведение' }));
   expect(screen.getByText('DELEGATED')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Перехватить управление' }));

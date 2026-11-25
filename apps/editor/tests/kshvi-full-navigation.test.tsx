@@ -18,7 +18,7 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 it('ведёт выбранное учение через подготовку, серверные состояния, реплей, разбор, архив, показ и администрирование', async () => {
@@ -29,6 +29,7 @@ it('ведёт выбранное учение через подготовку, 
     const method = init?.method ?? 'GET';
     if (url.includes('/auth/me')) return json({ userId: 'leader-1', activeRole: 'LEADER', organizationId: 'org-1', authorities: [] });
     if (url.endsWith('/exercises') || url.includes('/exercises?')) return json({ items: archived ? [] : [exercise] });
+    if (url.endsWith('/exercises/e1')) return json({ ...exercise, payloadAccess: 'PROJECTED', revisions: [], sessions: [] });
     if (url.endsWith('/exercises/e1/sessions') && method === 'POST') return json(session, 201);
     if (url.endsWith('/sessions/s1/commands')) {
       const command = JSON.parse(String(init?.body)).command as string;
@@ -42,7 +43,7 @@ it('ведёт выбранное учение через подготовку, 
     });
     if (url.endsWith('/sessions/s1/debrief?scope=GENERAL')) return json({ scope: 'GENERAL', revision: 2, audience: ['GENERAL'], referenceIntent: 'Замысел руководства' });
     if (url.endsWith('/archives') && method === 'POST') return json({ archiveId: 'archive-s1', manifestSha256: 'b'.repeat(64), mode: 'AUTONOMOUS', missing: [] }, 201);
-    if (url.endsWith('/exercises/e1/archive')) { archived = true; return json({ ...exercise, state: 'ARCHIVED', archivedAt: '2030-01-01T10:00:00Z' }); }
+    if (url.endsWith('/exercises/e1/archive')) { archived = true; return json({ ...exercise, payloadAccess: 'PROJECTED', revisions: [], sessions: [], state: 'ARCHIVED', archivedAt: '2030-01-01T10:00:00Z' }); }
     if (url.endsWith('/expositions/archive-s1')) return json({ demo: false });
     if (url.endsWith('/admin/overview')) return json({ accounts: [], assignments: [], events: [], versions: [], datasets: [], retention: { activeDays: 30, archiveDays: 365, backupDays: 90, auditDays: 730, allowedMedia: ['encrypted-local-disk'], responsibleUserIds: ['security-1'] }, snapshot: { health: 'HEALTHY', readiness: { ready: true, reasons: [] }, generatedAt: '2030-01-01T10:00:00Z', services: { kshvi: 'UP', database: 'UP', environment: 'UP' }, connections: { active: 1, idle: 0, disconnected: 0, total: 1 }, queues: { events: 0, jobs: 0, heavyJobs: 0 }, latencyMs: { commandP95: 1, sseP95: 1, mapP95: 1 }, storage: { freeBytes: 1024, journalBytes: 128 }, backups: { status: 'VALID', lastVerifiedAt: '2030-01-01T09:00:00Z' }, clock: { serverTime: '2030-01-01T10:00:00Z', ntpSynchronized: true, offsetMs: 0 }, versions: { kshvi: '1' }, errors: [], alerts: [] } });
     throw new Error(`Неожиданный запрос ${method} ${url}`);
@@ -50,9 +51,8 @@ it('ведёт выбранное учение через подготовку, 
   const client = new ExerciseClient({ fetch: fetcher, csrfToken: () => 'csrf' });
   render(<KshviView client={client} role="LEADER" authorities={['exercise:read', 'exercise:conduct', 'exercise:archive', 'TRUTH_READ', 'archive.export', 'kshvi:admin']} />);
 
-  fireEvent.click(await screen.findByRole('button', { name: 'Рабочий цикл Сквозное учение' }));
-  expect(await screen.findByRole('heading', { name: 'Подготовка официального сеанса' })).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: /Запуск/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Запустить учение Сквозное учение' }));
+  expect(await screen.findByRole('heading', { name: 'Проверка перед запуском' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Запустить официальный сеанс' }));
   expect(await screen.findByRole('heading', { name: 'Руководитель учения' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Пауза' }));

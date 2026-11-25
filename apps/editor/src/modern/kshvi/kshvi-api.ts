@@ -28,6 +28,7 @@ export type ExerciseSummary = Readonly<{
   updatedAt: string;
   archivedAt: string | null;
   lastSessionId: string | null;
+  lastSessionState?: ExerciseSession['state'] | null;
 }>;
 
 export type ExerciseRevision = Readonly<{

@@ -17,6 +17,8 @@ async function openModern(page: import('playwright/test').Page): Promise<void> {
   await page.getByRole('button', { name: 'Создать учение', exact: true }).waitFor();
 }
 
+test.use({ viewport: { width: 1440, height: 900 } });
+
 test('мастер ведёт от среды до запуска, а справочник открывает исходную страницу', async ({ page }) => {
   test.setTimeout(60_000);
   await openModern(page);
@@ -24,16 +26,32 @@ test('мастер ведёт от среды до запуска, а справ
   await page.getByRole('button', { name: 'Создать учение', exact: true }).click();
   await page.getByLabel('Название учения').fill(title);
   await page.getByRole('button', { name: 'Сохранить на сервере', exact: true }).click();
-  await page.getByRole('button', { name: `Рабочий цикл ${title}`, exact: true }).click();
+  await page.getByRole('button', { name: `Продолжить подготовку ${title}`, exact: true }).click();
   await page.getByLabel('Атлас района').locator('option').nth(1).waitFor({ state: 'attached' });
-  await expect(page.getByRole('heading', { name: 'Материально-техническое обеспечение' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Силы и МТО' })).toHaveCount(0);
+  await page.getByText('Расширенные параметры погоды', { exact: true }).click();
+  const lastField = page.getByLabel('Переход, ч');
+  await lastField.scrollIntoViewIfNeeded();
+  const geometry = await lastField.evaluate(field => {
+    const content = field.closest('.preparation-step-content')!;
+    const footer = content.nextElementSibling!;
+    return {
+      fieldHeight: field.getBoundingClientRect().height,
+      fieldBottom: field.getBoundingClientRect().bottom,
+      footerTop: footer.getBoundingClientRect().top,
+      overflow: content.scrollHeight > content.clientHeight,
+    };
+  });
+  expect(geometry.fieldHeight).toBeGreaterThan(0);
+  expect(geometry.overflow).toBe(true);
+  expect(geometry.fieldBottom).toBeLessThanOrEqual(geometry.footerTop);
 
   await page.getByRole('button', { name: 'Далее', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Материально-техническое обеспечение' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Силы и МТО' })).toBeVisible();
   await page.getByRole('button', { name: 'Далее', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Библиотека событий' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'События' })).toBeVisible();
   await page.getByRole('button', { name: 'Далее', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Этап обеспечения боевой готовности' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Готовность' })).toBeVisible();
   await page.getByRole('button', { name: 'Далее', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Запустить официальный сеанс' })).toBeDisabled();
 

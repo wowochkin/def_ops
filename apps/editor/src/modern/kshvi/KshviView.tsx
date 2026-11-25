@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   ExerciseClient, KshviHttpError,
   type AdminOverview,
@@ -17,7 +17,9 @@ import {
 import { LibraryView, type LibraryExercise } from './LibraryView';
 import { LoginPanel,roleNames } from './LoginPanel';
 import { readWorkspaceReference, WORKSPACE_EXERCISE_KEY, WORKSPACE_SESSION_KEY, writeWorkspaceReference } from './workspace-session';
-import { PreparationWorkspace } from './preparation/PreparationWorkspace';
+import { libraryPrimaryAction, stateLabel } from './library-actions';
+import { ExercisePreparation } from './preparation/PreparationWorkspace';
+import type { PreparationStep } from './preparation/preparation-steps';
 import { ConductWorkspace } from './conduct/ConductWorkspace';
 import { ReplayWorkspace } from './replay/ReplayWorkspace';
 import { ReviewWorkspace } from './assessment/ReviewWorkspace';
@@ -25,6 +27,9 @@ import { ArchiveWorkspace } from './archive/ArchiveWorkspace';
 import { AdminWorkspace } from './admin/AdminWorkspace';
 import { BrowserExpositionApp } from './exposition/browser-entry';
 import './kshvi.css';
+
+type WorkspaceScope = object;
+type Scoped<T> = { scope: WorkspaceScope; value: T };
 
 type KshviSection = 'library' | 'preparation' | 'conduct' | 'replay' | 'review' | 'archive' | 'exposition' | 'admin';
 const SECTION_KEY = 'def_ops.kshvi.section';
@@ -136,33 +141,87 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   const [reload, setReload] = useState(0);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [comparison, setComparison] = useState<ExerciseCard | null>(null);
-  const [selectedExercise, setSelectedExercise] = useState<LibraryExercise | null>(() => readWorkspaceReference(WORKSPACE_EXERCISE_KEY));
-  const [session, setSession] = useState<ExerciseSession | null>(() => readWorkspaceReference(WORKSPACE_SESSION_KEY));
+  const [authGeneration, setAuthGeneration] = useState(0);
+  const scope = useMemo<WorkspaceScope>(() => ({}), [
+    client, authenticated, authGeneration, role, serverUserId, JSON.stringify([...authorities].sort()),
+  ]);
+  const activeScope = useRef<WorkspaceScope | null>(scope);
+  useLayoutEffect(() => {
+    activeScope.current = scope;
+    return () => { activeScope.current = null; };
+  }, [scope]);
+  const [comparisonResponse, setComparison] = useState<Scoped<ExerciseCard> | null>(null);
+  const comparison = comparisonResponse?.scope === scope ? comparisonResponse.value : null;
+  const [exerciseId, setExerciseId] = useState(() => readWorkspaceReference<{ id: string }>(WORKSPACE_EXERCISE_KEY)?.id ?? null);
+  const [lastSessionId, setLastSessionId] = useState(() => readWorkspaceReference<{ id: string }>(WORKSPACE_SESSION_KEY)?.id ?? null);
+  const [exerciseResponse, setExerciseResponse] = useState<Scoped<ExerciseCard> | null>(null);
+  const selectedExercise = exerciseResponse?.scope === scope && exerciseResponse.value.id === exerciseId ? exerciseResponse.value : null;
+  const [sessionResponse, setSessionResponse] = useState<Scoped<ExerciseSession> | null>(null);
+  const session = selectedExercise && sessionResponse?.scope === scope && sessionResponse.value.exerciseId === selectedExercise.id
+    ? sessionResponse.value : null;
+  const [preparationStep, setPreparationStep] = useState<PreparationStep>('environment');
   const [replayFrame, setReplayFrame] = useState<ReplayFrame | null>(null);
   const [debrief, setDebrief] = useState<DebriefRecord | null>(null);
   const [archiveRecord, setArchiveRecord] = useState<ArchiveRecord | null>(null);
   const [exposition, setExposition] = useState<ExpositionRecord | null>(null);
   const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
 
-  useEffect(() => { writeWorkspaceReference(WORKSPACE_EXERCISE_KEY, selectedExercise); }, [selectedExercise]);
-  useEffect(() => { writeWorkspaceReference(WORKSPACE_SESSION_KEY, session); }, [session]);
+  function setSession(value: ExerciseSession | null): void {
+    if (activeScope.current !== scope) return;
+    setLastSessionId(value?.id ?? null);
+    setSessionResponse(value ? { scope, value } : null);
+  }
+
+  function receiveCard(card: ExerciseCard): void {
+    if (activeScope.current !== scope) return;
+    setExerciseResponse(previous => {
+      if (previous?.scope !== scope || previous.value.id !== card.id) return previous;
+      if (previous.value.revision > card.revision && card.payloadAccess === 'FULL') return previous;
+      return { scope, value: card };
+    });
+  }
+
+  function clearSelection(): void {
+    setExerciseId(null);
+    setExerciseResponse(null);
+    setLastSessionId(null);
+    setSessionResponse(null);
+    setReplayFrame(null);
+    setDebrief(null);
+    setArchiveRecord(null);
+    setExposition(null);
+  }
+
+  useEffect(() => { writeWorkspaceReference(WORKSPACE_EXERCISE_KEY, exerciseId ? { id: exerciseId } : null); }, [exerciseId]);
+  useEffect(() => { writeWorkspaceReference(WORKSPACE_SESSION_KEY, lastSessionId ? { id: lastSessionId } : null); }, [lastSessionId]);
+
   useEffect(() => {
+    if (!authenticated || authChecking || !exerciseId || selectedExercise || !can('exercise:read')) return;
     let current = true;
-    const exercise = readWorkspaceReference<LibraryExercise>(WORKSPACE_EXERCISE_KEY);
-    const activeSession = readWorkspaceReference<ExerciseSession>(WORKSPACE_SESSION_KEY);
-    if (exercise) {
-      void client.getCard(exercise.id).then(card => {
-        if (current) setSelectedExercise(card);
-      }).catch(() => {
-        if (current) { setSelectedExercise(null); setSession(null); }
-      });
-      if (activeSession) void client.getSession(exercise.id, activeSession.id).then(confirmed => {
-        if (current) setSession(confirmed);
-      }).catch(() => { if (current) setSession(null); });
-    }
+    void client.getCard(exerciseId).then(card => {
+      if (current && activeScope.current === scope) setExerciseResponse({ scope, value: card });
+    }).catch(() => {
+      if (current && activeScope.current === scope) {
+        setExerciseId(null);
+        setExerciseResponse(null);
+        setLastSessionId(null);
+        setSessionResponse(null);
+        setError('Не удалось подтвердить доступ к выбранному учению. Откройте его снова из библиотеки.');
+      }
+    });
     return () => { current = false; };
-  }, [client]);
+  }, [authenticated, authChecking, can, client, exerciseId, scope, selectedExercise]);
+
+  useEffect(() => {
+    if (!selectedExercise || !lastSessionId || session) return;
+    let current = true;
+    void client.getSession(selectedExercise.id, lastSessionId).then(value => {
+      if (current && activeScope.current === scope) setSessionResponse({ scope, value });
+    }).catch(() => {
+      if (current && activeScope.current === scope) setLastSessionId(null);
+    });
+    return () => { current = false; };
+  }, [client, lastSessionId, scope, selectedExercise, session]);
 
   useEffect(() => {
     if (providedAuthorities) return;
@@ -182,7 +241,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
         if(!current)return;
         if(Array.isArray(participant.authorities))setServerAuthorities(participant.authorities);
         setServerUserId(participant.userId);setLocalMode(participant.localMode===true);
-        if(participant.activeRole){setServerRole(participant.activeRole);setAuthenticated(true);}else setAuthenticated(false);
+        if(participant.activeRole){setServerRole(participant.activeRole);setAuthGeneration(value => value + 1);setAuthenticated(true);}else setAuthenticated(false);
       }catch{if(current)setAuthenticated(false);}
       finally{if(current)setAuthChecking(false);}
     })();
@@ -294,45 +353,77 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   async function compare(item: LibraryExercise): Promise<void> {
     setBusy(true);
     setError('');
-    try { setComparison(await client.getCard(item.id)); }
+    try {
+      const value = await client.getCard(item.id);
+      if (activeScope.current === scope) setComparison({ scope, value });
+    }
     catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
   }
 
-  function openWorkflow(item: LibraryExercise): void {
-    setSelectedExercise(item);
-    setSession(null);
+  function selectExercise(card: ExerciseCard, next: KshviSection, step: PreparationStep = 'environment', confirmedSession: ExerciseSession | null = null): void {
+    if (activeScope.current !== scope) return;
+    setExerciseId(card.id);
+    setExerciseResponse({ scope, value: card });
+    setSession(confirmedSession);
+    setPreparationStep(step);
     setReplayFrame(null);
     setDebrief(null);
-    setArchiveRecord(null);
-    setExposition(null);
-    selectTab('preparation');
+    if (card.id !== selectedExercise?.id) {
+      setArchiveRecord(null);
+      setExposition(null);
+    }
+    selectTab(next);
   }
 
-  async function openSession(item: LibraryExercise): Promise<void> {
-    if (!item.lastSessionId) return;
+  async function openCardSession(card: ExerciseCard): Promise<void> {
+    if (!card.lastSessionId) throw new Error('У учения пока нет серверного сеанса.');
+    const confirmed = await client.getSession(card.id, card.lastSessionId);
+    if (confirmed.state === 'COMPLETED') selectExercise(card, 'review', 'launch', confirmed);
+    else if (confirmed.state === 'ACTIVE' || confirmed.state === 'PAUSED') selectExercise(card, 'conduct', 'launch', confirmed);
+    else {
+      selectExercise(card, 'replay', 'launch', confirmed);
+      setNotice(`Последний сеанс: ${stateLabel(confirmed.state).toLocaleLowerCase('ru')}.`);
+    }
+  }
+
+  async function openLibraryItem(item: LibraryExercise, lastSession = false): Promise<void> {
     setBusy(true);
     setError('');
     try {
-      setSelectedExercise(item);
-      setSession(await client.getSession(item.id, item.lastSessionId));
-      selectTab('conduct');
-    } catch (cause) { setError(errorText(cause)); }
-    finally { setBusy(false); }
+      const card = await client.getCard(item.id);
+      if (activeScope.current !== scope) return;
+      const action = libraryPrimaryAction(card);
+      if (lastSession || action.id === 'CONDUCT' || action.id === 'DEBRIEF') await openCardSession(card);
+      else if (action.id === 'ARCHIVE') selectExercise(card, 'archive');
+      else selectExercise(card, 'preparation', action.id === 'START' || card.state === 'APPROVED' ? 'launch' : 'environment');
+    } catch (cause) {
+      if (activeScope.current === scope) setError(errorText(cause));
+    } finally { setBusy(false); }
+  }
+
+  async function copyExercise(item: LibraryExercise): Promise<void> {
+    await perform(async () => {
+      const copy = await client.copy(item.id);
+      if (item.state === 'ARCHIVED') selectExercise(copy, 'preparation');
+    }, 'Копия создана и подтверждена сервером');
   }
 
   async function startOfficialSession(): Promise<void> {
-    if (!selectedExercise || !can('exercise:conduct')) return;
+    if (!selectedExercise || !can('exercise:conduct') || busy) return;
     if (selectedExercise.state !== 'SEALED') {
-      setError('Официальный сеанс запускается только после фиксации сценария SEALED');
+      setError('Запуск доступен после серверной фиксации сценария.');
       return;
     }
     setBusy(true);
     setError('');
     try {
+      if (selectedExercise.lastSessionId) {
+        await openCardSession(selectedExercise);
+        return;
+      }
       const started = await client.createSession(selectedExercise.id, { revision: selectedExercise.revision });
-      setSession(started);
-      selectTab('conduct');
+      selectExercise({ ...selectedExercise, lastSessionId: started.id, lastSessionState: started.state }, 'conduct', 'launch', started);
     } catch (cause) { setError(errorText(cause)); }
     finally { setBusy(false); }
   }
@@ -352,12 +443,8 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
   async function handleHandover(): Promise<void> {
     try { await client.logout(); }
     finally {
-      setSession(null);
-      setSelectedExercise(null);
-      setReplayFrame(null);
-      setDebrief(null);
-      setArchiveRecord(null);
-      setExposition(null);
+      activeScope.current = null;
+      clearSelection();
       setServerAuthorities([]);
       setServerRole('UNKNOWN');
       setAuthenticated(false);setLocalMode(false);
@@ -380,9 +467,10 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     setError('');
     try {
       const archive = await client.createArchive(selectedExercise.id, session.id);
-      await client.archive(selectedExercise.id, selectedExercise.revision);
+      const card = await client.archive(selectedExercise.id, selectedExercise.revision);
+      if (activeScope.current !== scope) return;
       setArchiveRecord(archive);
-      setSelectedExercise({ ...selectedExercise, state: 'ARCHIVED' });
+      receiveCard(card);
       setReload(value => value + 1);
       selectTab('archive');
     } catch (cause) { setError(errorText(cause)); }
@@ -417,11 +505,11 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
     error={error}
     onFiltersChange={next => { setComparison(null); setNotice(''); setFilters(next); }}
     onCreate={!archiveMode && can('exercise:create') ? create : undefined}
-    onCopy={can('exercise:copy') ? item => void perform(() => client.copy(item.id), 'Копия создана и подтверждена сервером') : undefined}
+    onCopy={can('exercise:copy') ? item => void copyExercise(item) : undefined}
     onCompare={can('exercise:read') ? item => void compare(item) : undefined}
     onArchive={!archiveMode && can('exercise:archive') ? item => void perform(() => client.archive(item.id, item.revision), 'Учение архивировано на сервере') : undefined}
-    onOpenSession={can('exercise:read') ? item => void openSession(item) : undefined}
-    onOpenWorkflow={!archiveMode && can('exercise:read') ? openWorkflow : undefined}
+    onOpenSession={can('exercise:read') ? item => void openLibraryItem(item, true) : undefined}
+    onPrimaryAction={can('exercise:read') ? item => void openLibraryItem(item) : undefined}
   />;
 
   if(!providedAuthorities&&authChecking)return <section className="modern-kshvi" aria-label="Командно-штабные военные игры"><h1>КШВИ</h1><p role="status">Проверяем вход в систему…</p></section>;
@@ -434,15 +522,16 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
       setServerAuthorities(participant.authorities);
       setServerUserId(participant.userId);
       setServerRole(participant.activeRole);
+      setAuthGeneration(value => value + 1);
       setAuthenticated(true);
       setReload(value => value + 1);
     }} />
   </section>;
 
-  return <section className="modern-kshvi" aria-label="Командно-штабные военные игры">
+  return <section className={activeTab === 'preparation' && selectedExercise ? 'modern-kshvi kshvi-in-preparation' : 'modern-kshvi'} aria-label="Командно-штабные военные игры">
     <header className="kshvi-heading">
       <div><p className="kshvi-kicker">Современный режим · полный цикл</p><h1>КШВИ</h1>
-        <p>Библиотека, подготовка, серверное проведение, реплей, разбор, архив и экспозиция.</p></div>
+        <p className="kshvi-overview">Библиотека, подготовка, серверное проведение, реплей, разбор, архив и экспозиция.</p></div>
       <div className="kshvi-authority">{localMode&&<p className="kshvi-local-mode">Локальный режим · {serverUserId} · {roleNames[role]??'Роль не выбрана'}</p>}<span>Официальное состояние</span><strong>Подтверждает сервер</strong></div>
     </header>
     <nav className="kshvi-tabs" aria-label="Разделы КШВИ">
@@ -455,26 +544,35 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
 
     {activeTab === 'library' && library(false)}
     {activeTab === 'archive' && <>
-      {archiveRecord && <ArchiveWorkspace archiveId={archiveRecord.archiveId} manifestSha256={archiveRecord.manifestSha256} mode={archiveRecord.mode} missing={archiveRecord.missing} onExport={() => void exportArchive()} />}
+      {selectedExercise?.state === 'ARCHIVED' && <section className="kshvi-session-card">
+        <h2>Архив · {selectedExercise.title}</h2>
+        <p>Редакция {selectedExercise.revision} · {stateLabel(selectedExercise.state)}</p>
+        {!archiveRecord && <p>Откройте сохранённые редакции из карточки архива. Пакет сеанса в этом окне не открыт.</p>}
+      </section>}
+      {selectedExercise?.state === 'ARCHIVED' && archiveRecord && <ArchiveWorkspace archiveId={archiveRecord.archiveId} manifestSha256={archiveRecord.manifestSha256} mode={archiveRecord.mode} missing={archiveRecord.missing} onExport={() => void exportArchive()} />}
       {library(true)}
     </>}
     {comparison && (activeTab === 'library' || activeTab === 'archive') && <RevisionCompare key={comparison.id} card={comparison} onClose={() => setComparison(null)} />}
-    {activeTab === 'preparation' && <>
-      {!selectedExercise && <LocalEditor />}
-      <section className="kshvi-official-preparation" aria-labelledby="kshvi-preparation-title">
-        <h2 id="kshvi-preparation-title">Подготовка официального сеанса</h2>
-        {selectedExercise
-          ? <p>{selectedExercise.title} · редакция {selectedExercise.revision}</p>
-          : <p>Выберите «Рабочий цикл» в карточке учения библиотеки.</p>}
-        <PreparationWorkspace
-          client={client} exerciseId={selectedExercise?.id} revision={selectedExercise?.revision}
-          authorId={serverUserId} truthRole={role} onRevision={updated => setSelectedExercise(updated)}
-          exerciseState={selectedExercise?.state}
-          canStartOfficial={!busy && can('exercise:conduct') && selectedExercise?.state === 'SEALED'}
-          onStartOfficial={() => void startOfficialSession()}
-        />
+    {activeTab === 'preparation' && (selectedExercise ? <ExercisePreparation
+      key={`${selectedExercise.id}-${preparationStep}`}
+      card={selectedExercise} client={client} role={role} userId={serverUserId} initialStep={preparationStep}
+      canRevise={can('exercise:revise')}
+      canStart={!busy && can('exercise:conduct') && selectedExercise.state === 'SEALED' && !selectedExercise.lastSessionId}
+      onCard={receiveCard}
+      onAccessLost={() => {
+        if (activeScope.current !== scope) return;
+        clearSelection();
+        setError('Доступ к выбранному учению изменился. Откройте его снова из библиотеки.');
+      }}
+      onStart={() => void startOfficialSession()}
+    /> : exerciseId && can('exercise:read') ? <p role="status">Загружаем карточку учения с сервера…</p> : <>
+      <section className="kshvi-empty">
+        <h2>Подготовка официального сеанса</h2>
+        <p>Откройте карточку учения из библиотеки.</p>
+        <button type="button" onClick={() => selectTab('library')}>Открыть библиотеку</button>
       </section>
-    </>}
+      <LocalEditor />
+    </>)}
     {activeTab === 'conduct' && <section className="kshvi-conduct-container">
       {session && selectedExercise ? <>
         <section className="kshvi-session-card" aria-label="Подтверждённое состояние сеанса"><h2>Сеанс {session.id}</h2><dl>
@@ -484,7 +582,7 @@ export function KshviView({ client: providedClient, authorities: providedAuthori
           <div><dt>Подтверждённая ревизия мира</dt><dd>{session.confirmedRevision}</dd></div>
         </dl><p>Источник: сервер. Изменение браузера не считается совершившимся до подтверждения команды.</p></section>
         <ConductWorkspace role={role} canReadTruth={can('TRUTH_READ')} onExecute={executeCommand} onHandover={handleHandover} />
-      </> : <section><h2>Проведение</h2><p>Откройте рабочий цикл учения и запустите серверный сеанс из подготовки. Обзорные панели ниже не являются официальным миром.</p><ConductWorkspace /></section>}
+      </> : <section><h2>Проведение</h2><p>Откройте проведение из карточки учения в библиотеке. Обзорные панели ниже не являются официальным миром.</p><ConductWorkspace /></section>}
     </section>}
     {activeTab === 'replay' && (session && replayFrame ? <ReplayWorkspace
       initialFrame={replayFrame} maxSequence={replayFrame.maxSequence} canReadTruth={can('TRUTH_READ')}

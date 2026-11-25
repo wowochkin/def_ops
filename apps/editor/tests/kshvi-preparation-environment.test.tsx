@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ExerciseClient } from '../src/modern/kshvi/kshvi-api';
-import { PreparationWorkspace } from '../src/modern/kshvi/preparation/PreparationWorkspace';
+import { EnvironmentMapPreparation } from '../src/modern/kshvi/preparation/EnvironmentMapPreparation';
 
 vi.mock('maplibre-gl', () => ({
   Map: class { on() {} addControl() {} remove() {} fitBounds() {} getSource() {} addSource() {} addLayer() {} },
@@ -18,7 +18,7 @@ const snapshot = {
   elevation: { adjustmentM: 0, algorithmVersion: 1 }, algorithmVersions: { snapshot: 1, weather: 1 }, autonomy: 'INCOMPLETE', limitations: [],
 };
 const card = {
-  id: '11111111-1111-4111-8111-111111111111', title: 'Учение', revision: 1, state: 'DRAFT', validation: 'NOT_RUN',
+  id: '11111111-1111-4111-8111-111111111111', title: 'Учение', revision: 1, payloadAccess: 'FULL', state: 'DRAFT', validation: 'NOT_RUN',
   revisions: [{ id: 'r1', revision: 1, payload: { intent: 'Проверка' } }], sessions: [],
 };
 
@@ -35,7 +35,7 @@ it('подключает выбор среды к фактической под�
     throw new Error(`Неожиданный запрос ${init?.method ?? 'GET'} ${url}`);
   });
   const onRevision = vi.fn();
-  render(<PreparationWorkspace client={new ExerciseClient({ fetch: fetcher })} exerciseId={card.id} revision={1} authorId="local-leader" truthRole="DIRECTOR" onRevision={onRevision} />);
+  render(<EnvironmentMapPreparation client={new ExerciseClient({ fetch: fetcher })} exerciseId={card.id} revision={1} authorId="local-leader" truthRole="DIRECTOR" onRevision={onRevision} />);
   expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();
   fireEvent.click(await screen.findByRole('button', { name: 'Зафиксировать среду и открыть карту' }));
 
