@@ -34,6 +34,7 @@ type ExercisePreparationProps = {
 
 export function ExercisePreparation({ card, client, role, userId = '', initialStep, canRevise, canReadTruth = false, canApproveMap = false, canStart, onCard, acceptsCardResponse, onAccessLost, onPendingChange, navigationPrompt, onStart, onCartography }: ExercisePreparationProps) {
   const preparation = usePreparationDraft(client, card);
+  const [activeStep, setActiveStep] = useState(initialStep);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [conflict, setConflict] = useState<{ reason: string; refreshed: boolean } | null>(null);
@@ -122,7 +123,8 @@ export function ExercisePreparation({ card, client, role, userId = '', initialSt
     role={role}
     userId={userId}
     onCard={onCard}
-    initialStep={initialStep}
+    initialStep={activeStep}
+    onStepChange={setActiveStep}
     saving={applying}
     dirty={dirty || environmentStatus.dirty}
     onSave={canEdit && !conflict && !environmentStatus.dirty ? () => void save() : undefined}
@@ -136,6 +138,7 @@ export function ExercisePreparation({ card, client, role, userId = '', initialSt
         locked={!!conflict || saving || dirty} savePreparation={preparation.save} onRevision={onCard} onAccessLost={onAccessLost}
         onConflict={reason => { setConflict({ reason, refreshed: false }); void refreshConflict(reason); }}
         onPendingChange={markEnvironment} acceptsCardResponse={acceptsCardResponse} onCartography={onCartography}
+        initialMapOnly={activeStep === 'initialMap'} onOpenInitialMap={() => setActiveStep('initialMap')}
         onMapChange={map => preparation.setDraft(draft => ({ ...draft, initialMap: map, initialMapStatus: 'DRAFT' }))} />
       {canEdit && legacySnapshotId && !preparation.draft.environmentSnapshotId && !conflict && !applying && !environmentStatus.dirty
         && <button type="button" onClick={() => {
@@ -195,13 +198,16 @@ type WorkspaceProps = {
   onValidate?(): void;
   launchLocked?: boolean;
   onDraftChange?(draft: PreparationDraft): void;
+  onStepChange?(step: PreparationStep): void;
 };
 
 export function PreparationWorkspace({
   card, client, draft = null, confirmedDraft = null, role = '', userId = '', onCard, initialStep = 'environment',
-  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial, onLaunchAction, onValidate, launchLocked = false, onDraftChange,
+  dirty = false, saving = false, environment, feedback, onSave, onStartOfficial, onLaunchAction, onValidate, launchLocked = false, onDraftChange, onStepChange,
 }: WorkspaceProps) {
   const [step, setStep] = useState(initialStep);
+  useLayoutEffect(() => setStep(initialStep), [initialStep]);
+  function goToStep(next: PreparationStep) { setStep(next); onStepChange?.(next); }
   const contentId = useId();
   const index = stepIndex(step);
   const current = preparationSteps[index]!;
@@ -213,7 +219,7 @@ export function PreparationWorkspace({
       <nav className="preparation-steps" aria-label="Этапы подготовки">
         {preparationSteps.map(item => <button key={item.id} type="button" aria-label={item.label}
           aria-description={states ? stateLabel(states[item.id]) : undefined} aria-controls={contentId}
-          aria-current={step === item.id ? 'step' : undefined} onClick={() => setStep(item.id)}>
+          aria-current={step === item.id ? 'step' : undefined} onClick={() => goToStep(item.id)}>
           <strong>{item.label}</strong>
           {states && <span>{stateLabel(states[item.id])}</span>}
         </button>)}
@@ -228,7 +234,7 @@ export function PreparationWorkspace({
           : card.payloadAccess === 'FULL' ? 'Не удалось восстановить черновик текущей редакции. Повторно откройте учение из библиотеки.'
             : 'Интерфейс и сервер КШВИ разных версий. Обновите серверные службы приложения и повторите подключение.'}
       </p>}
-      {environment && <div hidden={step !== 'environment'}>{environment}</div>}
+      {environment && <div hidden={step !== 'environment' && step !== 'initialMap'}>{environment}</div>}
       {step === 'environment' && !environment && draft && <section className="preparation-empty">
         {draft.environmentSnapshotId ? <>
           {dirty
@@ -236,7 +242,10 @@ export function PreparationWorkspace({
             : <p>Снимок среды связан с черновиком. Проверьте состояние исходной карты перед запуском.</p>}
         </> : <p>Снимок среды отсутствует. Изменение среды доступно автору редактируемой редакции.</p>}
       </section>}
-      {step === 'forces' && draft && <ForcesStep draft={draft} onChange={onDraftChange} onOpenMap={() => setStep('environment')} client={client} />}
+      {step === 'initialMap' && !environment && draft && !draft.environmentSnapshotId && <section className="preparation-empty">
+        <p>Сначала сформируйте и зафиксируйте среду</p>
+      </section>}
+      {step === 'forces' && draft && <ForcesStep draft={draft} onChange={onDraftChange} onOpenMap={() => goToStep('initialMap')} client={client} />}
       {step === 'events' && draft && card && client && onCard
         ? <EventsWorkspace card={card} draft={draft} client={client} onCard={onCard} />
         : step === 'events' && <p className="preparation-empty">Для работы с событиями требуется серверное подключение.</p>}
@@ -244,14 +253,14 @@ export function PreparationWorkspace({
         ? <ReadinessWorkspace card={card} draft={draft} client={client} actorId={userId} onCard={onCard} />
         : step === 'readiness' && <p className="preparation-empty">Для работы с готовностью требуется серверное подключение.</p>}
       {step === 'launch' && card
-        ? <LaunchChecklist card={card} draft={draft ?? emptyPreparationDraft(card.updatedAt)} onAction={onLaunchAction} onStart={onStartOfficial} onValidate={onValidate} onOpenStep={setStep} launchLocked={launchLocked} />
+        ? <LaunchChecklist card={card} draft={draft ?? emptyPreparationDraft(card.updatedAt)} onAction={onLaunchAction} onStart={onStartOfficial} onValidate={onValidate} onOpenStep={goToStep} launchLocked={launchLocked} />
         : step === 'launch' && <p className="preparation-empty">Не удалось восстановить условия запуска из текущей редакции.</p>}
     </div>
 
     <footer className="preparation-footer">
-      <button type="button" aria-controls={contentId} disabled={index === 0} onClick={() => setStep(preparationSteps[index - 1]!.id)}>Назад</button>
+      <button type="button" aria-controls={contentId} disabled={index === 0} onClick={() => goToStep(preparationSteps[index - 1]!.id)}>Назад</button>
       <div>{onSave && <button type="button" disabled={!dirty || saving} onClick={onSave}>Сохранить черновик</button>}</div>
-      <button type="button" aria-controls={contentId} disabled={index === preparationSteps.length - 1} onClick={() => setStep(preparationSteps[index + 1]!.id)}>Далее</button>
+      <button type="button" aria-controls={contentId} disabled={index === preparationSteps.length - 1} onClick={() => goToStep(preparationSteps[index + 1]!.id)}>Далее</button>
     </footer>
   </section>;
 }

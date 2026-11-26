@@ -8,6 +8,7 @@ import type { ReadinessState } from '../forces/readiness';
 import type { ReadinessStage } from '../forces/readiness-stage';
 import type { SupplyPlan } from '../logistics/supply-request';
 import { initialMapHash, type InitialSituationMap } from './initial-map';
+import type { ScenarioSide } from './sides';
 import { INITIAL_MAP_LAYER_IDS } from './initial-map-layers';
 import { validateInitialMap } from './initial-map-validation';
 
@@ -17,6 +18,7 @@ export type PreparationDraft = Readonly<{
   environmentSnapshotId: string | null;
   initialMap: InitialSituationMap | null;
   initialMapStatus: 'DRAFT' | 'MAPPED' | 'APPROVED';
+  sides?: readonly ScenarioSide[];
   forces: readonly ScenarioForce[];
   equipment: readonly EquipmentHolding[];
   formation: FormationPlan | null;
@@ -107,6 +109,7 @@ const id: Check = (value, path) => { if (typeof value !== 'string' || !value.tri
 const date: Check = (value, path) => {
   if (typeof value !== 'string' || !Number.isFinite(Date.parse(value))) invalid(path);
 };
+const openDate: Check = (value, path) => { if (value !== '') date(value, path); };
 const hash: Check = (value, path) => { if (typeof value !== 'string' || !/^[0-9a-f]{64}$/.test(value)) invalid(path); };
 const boolean = oneOf(true, false);
 const number: Check = (value, path) => { if (typeof value !== 'number' || !Number.isFinite(value)) invalid(path); };
@@ -166,7 +169,7 @@ const marker = object({
     LineString: object({ type: oneOf('LineString'), coordinates: array(position, 2) }),
     Polygon: object({ type: oneOf('Polygon'), coordinates: array(ring, 1) }),
   })),
-  name: optional(string), sourceId: string, authorId: string, eventId: string, validFrom: date, validUntil: date, state: oneOf('OBSERVED', 'ASSUMED', 'PLANNED', 'UNKNOWN'),
+  name: optional(string), sourceId: string, authorId: string, eventId: string, validFrom: date, validUntil: openDate, state: oneOf('OBSERVED', 'ASSUMED', 'PLANNED', 'UNKNOWN'),
   confidence: nullable(fraction), uncertainty: object({ radiusM: nullable(nonnegative), note: string }),
   visibility: object({ sideIds: optional(ids), instanceIds: optional(ids), roles: optional(ids), staffOnly: optional(boolean) }),
   links: object({ forceId: optional(id), taskId: optional(id), documentId: optional(id), linkedMarkerIds: optional(ids) }),
@@ -179,12 +182,14 @@ const marker = object({
   loadTonnes: optional(nonnegative), crossingCapacityTonnes: optional(nonnegative), speedKph: optional(nonnegative), crossingMinutes: optional(nonnegative), passable: optional(boolean),
   routeId: optional(nullable(id)), offRoadJustification: optional(string), geometryRequired: optional(boolean),
 });
+const side = object({ id, name: id, country: optional(nullable(id)), color: oneOf('red', 'blue') });
 const initialMap = object({
   schemaVersion: oneOf(1), id, revision: positiveInt, state: oneOf('DRAFT', 'APPROVED'), sha256: optional(hash),
   environment: object({ snapshotId: id, manifestSha256: hash, bounds }), bounds,
   initialOperationalAt: date, timeZone: id, weatherFrameRef: id, terrainStateRef: id,
   symbolSet: object({ id, revision: positiveInt, sha256: hash }), attribution: array(string),
   layers: array(object({ id: oneOf(...INITIAL_MAP_LAYER_IDS), independent: oneOf(true) })), markers: array(marker), history: array(marker),
+  sides: optional(array(side)),
 });
 
 const source = object({ sourceId: id, revision: positiveInt, sha256: hash, note: optional(string) });
@@ -317,7 +322,7 @@ const readinessState = object({
 
 const shape = object({
   schemaVersion: oneOf(1), environmentSnapshotId: nullable(id), initialMap: nullable(initialMap),
-  initialMapStatus: oneOf('DRAFT', 'MAPPED', 'APPROVED'), forces: array(force), equipment: array(equipment),
+  initialMapStatus: oneOf('DRAFT', 'MAPPED', 'APPROVED'), sides: optional(array(side)), forces: array(force), equipment: array(equipment),
   formation: nullable(formation), logistics: nullable(logistics), autonomy: nullable(autonomy),
   readinessStage: nullable(readinessStage), readinessStates: array(readinessState), updatedAt: date,
 } satisfies Record<keyof PreparationDraft, Check>);

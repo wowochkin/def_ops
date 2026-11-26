@@ -42,7 +42,10 @@ export function ForceEditor({ draft, force, onApply, onDelete, onOpenMap }: {
     </div>
     <div className="force-editor-grid">
       <label>Название подразделения<input value={form.identity.type} onChange={event => patchIdentity('type', event.target.value)} /></label>
-      <label>Сторона силы<input value={form.identity.sideId} onChange={event => patchIdentity('sideId', event.target.value)} /></label>
+      <label>Сторона силы{draft.sides?.length ? <select value={form.identity.sideId} onChange={event => patchIdentity('sideId', event.target.value)}>
+        <option value="">Без стороны</option>
+        {draft.sides.map(side => <option key={side.id} value={side.id}>{side.name}{side.country ? ` · ${side.country}` : ''}</option>)}
+      </select> : <input value={form.identity.sideId} onChange={event => patchIdentity('sideId', event.target.value)} />}</label>
       <label>Инстанция силы<input value={form.identity.nodeId} onChange={event => patchIdentity('nodeId', event.target.value)} /></label>
       <label>Организационный уровень<input value={form.identity.organizationalLevel} onChange={event => patchIdentity('organizationalLevel', event.target.value)} /></label>
       <label>Род войск<input value={form.identity.service} onChange={event => patchIdentity('service', event.target.value)} /></label>

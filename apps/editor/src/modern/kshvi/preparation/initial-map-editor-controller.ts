@@ -14,6 +14,9 @@ export type EditorHistory = Readonly<{
 export type InitialMapEditorAction =
   | Readonly<{ type: 'BEGIN_DRAW'; marker: MapMarker; geometryKind: DrawingKind }>
   | Readonly<{ type: 'APPEND_VERTEX'; point: Position }>
+  | Readonly<{ type: 'DELETE_PENDING_VERTEX'; index?: number }>
+  | Readonly<{ type: 'MOVE_PENDING_VERTEX'; index: number; point: Position }>
+  | Readonly<{ type: 'DELETE_VERTEX'; markerId: string; vertex: number; ring?: number }>
   | Readonly<{ type: 'FINISH_DRAW' }>
   | Readonly<{ type: 'CANCEL_DRAW' }>
   | Readonly<{ type: 'CREATE_POINT'; marker: MapMarker }>
@@ -91,6 +94,19 @@ export function applyInitialMapAction(history: EditorHistory, action: InitialMap
     if (points.length && same(points[points.length - 1], action.point)) return history;
     return { ...history, pending: { ...history.pending, points: history.pending.geometryKind === 'POINT' ? [[...action.point] as Position] : [...points, [...action.point] as Position] } };
   }
+  if (action.type === 'DELETE_PENDING_VERTEX') {
+    if (!history.pending) throw new Error('Незавершённое нанесение не найдено');
+    const index = action.index ?? history.pending.points.length - 1;
+    if (!Number.isSafeInteger(index) || index < 0 || index >= history.pending.points.length) throw new Error('Вершина не найдена');
+    return { ...history, pending: { ...history.pending, points: history.pending.points.filter((_, current) => current !== index) } };
+  }
+  if (action.type === 'MOVE_PENDING_VERTEX') {
+    if (!history.pending) throw new Error('Незавершённое нанесение не найдено');
+    if (!Number.isSafeInteger(action.index) || action.index < 0 || action.index >= history.pending.points.length) throw new Error('Вершина не найдена');
+    checkPoint(action.point, map);
+    const points = history.pending.points.map((point, index) => index === action.index ? [...action.point] as Position : point);
+    return { ...history, pending: { ...history.pending, points } };
+  }
   if (action.type === 'FINISH_DRAW') {
     const pending = history.pending;
     if (!pending) return history;
@@ -132,6 +148,19 @@ export function applyInitialMapAction(history: EditorHistory, action: InitialMap
     if (geometry.type === 'Polygon' && (action.vertex === 0 || action.vertex === points.length - 1)) {
       points[0] = action.point; points[points.length - 1] = action.point;
     }
+    const nextGeometry: MapGeometry = geometry.type === 'LineString' ? { ...geometry, coordinates: points }
+      : { ...geometry, coordinates: geometry.coordinates.map((ring, index) => index === (action.ring ?? 0) ? points : ring) };
+    return applyInitialMapAction(history, { type: 'UPDATE_ATTRIBUTES', markerId: marker.id, patch: { geometry: nextGeometry } });
+  }
+  if (action.type === 'DELETE_VERTEX') {
+    const marker = map.markers.find(item => item.id === action.markerId);
+    if (!marker?.geometry) throw new Error('Объект с геометрией не найден');
+    const geometry = structuredClone(marker.geometry) as MapGeometry;
+    if (geometry.type === 'Point') throw new Error('У точечного объекта нет удаляемых вершин');
+    const points = geometry.type === 'LineString' ? [...geometry.coordinates] : [...(geometry.coordinates[action.ring ?? 0] ?? [])];
+    if (!Number.isSafeInteger(action.vertex) || action.vertex < 0 || action.vertex >= points.length) throw new Error('Вершина не найдена');
+    points.splice(action.vertex, 1);
+    if (geometry.type === 'Polygon') points[points.length - 1] = points[0];
     const nextGeometry: MapGeometry = geometry.type === 'LineString' ? { ...geometry, coordinates: points }
       : { ...geometry, coordinates: geometry.coordinates.map((ring, index) => index === (action.ring ?? 0) ? points : ring) };
     return applyInitialMapAction(history, { type: 'UPDATE_ATTRIBUTES', markerId: marker.id, patch: { geometry: nextGeometry } });

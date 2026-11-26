@@ -11,10 +11,11 @@ export function preparationStepStates(
   const launch = card.state === 'SEALED' ? 'CONFIRMED'
     : card.validation === 'ERROR' ? 'HAS_ERRORS'
     : card.state === 'APPROVED' && card.validation === 'OK' ? 'READY_FOR_REVIEW' : 'NEEDS_DATA';
-  if (!draft) return { environment: 'UNAVAILABLE', forces: 'UNAVAILABLE', events: 'UNAVAILABLE', readiness: 'UNAVAILABLE', launch };
+  if (!draft) return { environment: 'UNAVAILABLE', forces: 'UNAVAILABLE', initialMap: 'UNAVAILABLE', events: 'UNAVAILABLE', readiness: 'UNAVAILABLE', launch };
   return {
-    environment: draft.environmentSnapshotId || draft.initialMap ? 'DATA_PRESENT' : 'NOT_STARTED',
+    environment: draft.environmentSnapshotId ? 'DATA_PRESENT' : 'NOT_STARTED',
     forces: draft.forces.length || draft.equipment.length || draft.formation || draft.logistics ? 'DATA_PRESENT' : 'NOT_STARTED',
+    initialMap: draft.initialMap ? 'DATA_PRESENT' : 'NOT_STARTED',
     events: draft.autonomy ? 'DATA_PRESENT' : 'NOT_STARTED',
     readiness: draft.readinessStage || draft.readinessStates.length ? 'DATA_PRESENT' : 'NOT_STARTED',
     launch,

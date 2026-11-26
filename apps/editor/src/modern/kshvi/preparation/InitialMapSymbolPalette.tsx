@@ -33,6 +33,8 @@ export function InitialMapSymbolPalette({ symbols, selectedId, onSelect, disable
     <p role="status">Найдено {matches.length} · показано {Math.min(limit, matches.length)}</p>
     <div className="initial-editor-symbols">{matches.slice(0, limit).map(symbol => <button type="button" key={symbol.id}
       aria-pressed={selectedId === symbol.id} disabled={disabled || !['MAPPED', 'VERIFIED', 'APPROVED'].includes(symbol.status)}
+      draggable={!disabled && ['MAPPED', 'VERIFIED', 'APPROVED'].includes(symbol.status)}
+      onDragStart={event => { event.dataTransfer.setData('application/x-kshvi-symbol', symbol.id); event.dataTransfer.effectAllowed = 'copy'; }}
       title={`${symbol.name}. ${symbol.status === 'APPROVED' ? symbol.purpose : 'Черновое нанесение: знак ещё не утверждён'}`} onClick={() => onSelect(symbol)}>
       <img alt="" width={64} height={56} src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSymbol(symbol, { width: 96, height: 80 }))}`} />
       <span>{symbol.name}</span><small>{symbol.source.symbolNumber ?? symbol.code} · {kindLabel[symbol.kind]}</small>

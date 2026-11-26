@@ -10,10 +10,24 @@ import { InitialMapEditor } from '../src/modern/kshvi/preparation/InitialMapEdit
 import { createInitialSituationMap, type MapMarker } from '../../../packages/kshvi/src/scenario/initial-map';
 
 vi.mock('../src/modern/kshvi/preparation/InitialMapCanvas', () => ({
-  InitialMapCanvas: ({ map, interaction }: { map?: { markers: readonly { id: string }[] }; interaction?: { onPoint(point: readonly [number, number]): void; drawing?: { points: readonly unknown[] } | null } }) => <div aria-label="Графический порт">
+  InitialMapCanvas: ({ map, interaction, onDropSymbol }: {
+    map?: { markers: readonly { id: string }[] };
+    interaction?: {
+      onPoint(point: readonly [number, number]): void;
+      onMovePendingVertex?(index: number, point: readonly [number, number]): void;
+      drawing?: { points: readonly unknown[] } | null;
+    };
+    onDropSymbol?(id: string, point: readonly [number, number]): void;
+  }) => <div aria-label="Графический порт">
     {interaction?.drawing && <span>Режим нанесения включён · {interaction.drawing.points.length}</span>}
     {map?.markers.map(marker => <span key={marker.id}>{marker.id}</span>)}
-    {interaction && <button type="button" onClick={() => interaction.onPoint([0.5, 0.5])}>Точка графического порта</button>}
+    {interaction && <button type="button" data-index="0" onClick={event => {
+      const index = Number(event.currentTarget.dataset.index);
+      event.currentTarget.dataset.index = String(index + 1);
+      interaction.onPoint([index / 10 + 0.1, 0.5]);
+    }}>Точка графического порта</button>}
+    {interaction?.onMovePendingVertex && <button type="button" onClick={() => interaction.onMovePendingVertex!(0, [0.6, 0.6])}>Переместить первую вершину</button>}
+    {onDropSymbol && <button type="button" onClick={() => onDropSymbol((window as unknown as { dropSymbolId: string }).dropSymbolId, [0.5, 0.5])}>Бросок знака</button>}
   </div>,
 }));
 
@@ -33,6 +47,7 @@ it('одинаково фильтрует холст и список и позв
     symbol: { id: symbol.id, version: symbol.version, sideId: 'other', status: symbol.status, sourceDocument: symbol.source.sourceDocument, sourcePage: symbol.source.page! } };
   render(<InitialMapEditor map={{ ...map, markers: [secret], history: [secret] }} symbols={symbolSet.symbols} audiences={[
     { instanceId: 'instance-a', sideId: 'a', role: 'TRAINEE', label: 'Учебная группа' },
+    { instanceId: 'instance-b', sideId: 'b', role: 'TRAINEE', label: 'Другая группа' },
   ]} truthAuthorized={false} role="AUTHOR" authorId="author" forces={[]} client={{} as never} snapshot={{} as never}
     onChange={vi.fn()} onSave={vi.fn()} canEdit />);
   expect(screen.getByRole('option', { name: 'Учебная группа' })).toBeTruthy();
@@ -42,7 +57,7 @@ it('одинаково фильтрует холст и список и позв
   expect(screen.queryByText('Закрытое название')).toBeNull();
 });
 
-it('не сохраняет точку с незаполненными атрибутами и показывает русскую диагностику', () => {
+it('создаёт точку с автоматическими атрибутами без обязательных полей', () => {
   const map = createInitialSituationMap({ id: 'draft-editor', revision: 1,
     environment: { snapshotId: 'snapshot', manifestSha256: 'a'.repeat(64), bounds: [0, 0, 1, 1] },
     initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
@@ -55,8 +70,12 @@ it('не сохраняет точку с незаполненными атри�
   fireEvent.click(screen.getByRole('button', { name: new RegExp(symbol.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }));
   expect(screen.getByText('Режим нанесения включён · 0')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Точка графического порта' }));
-  expect(onChange).not.toHaveBeenCalled();
-  expect(screen.getByRole('alert').textContent).toContain('Укажите источник отметки');
+  const saved = onChange.mock.calls.at(-1)![0];
+  expect(saved.markers[0]).toMatchObject({
+    sourceId: 'manual:initial-situation', eventId: 'manual:initial-situation', authorId: 'author',
+    validFrom: map.initialOperationalAt, validUntil: '', state: 'UNKNOWN', confidence: null,
+    links: {}, uncertainty: { radiusM: null, note: '' },
+  });
 });
 
 it.each(['Кнопка', 'Escape', 'Отменить действие'])('%s закрывает незавершённую форму целиком', method => {
@@ -65,12 +84,12 @@ it.each(['Кнопка', 'Escape', 'Отменить действие'])('%s з�
     initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
     symbolSet: { id: symbolSet.id, revision: 1, sha256: 'b'.repeat(64) }, attribution: ['test'] });
   const onChange = vi.fn(), onPendingChange = vi.fn();
-  const symbol = symbolSet.symbols.find(item => item.kind === 'POINT')!;
+  const symbol = symbolSet.symbols.find(item => item.kind === 'LINE')!;
   render(<InitialMapEditor map={map} symbols={[symbol]} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
     client={{} as never} snapshot={{} as never} onChange={onChange} onSave={vi.fn()} onPendingChange={onPendingChange} canEdit />);
   fireEvent.click(screen.getByText(symbol.name));
   fireEvent.click(screen.getByRole('button', {name:'Точка графического порта'}));
-  expect(screen.getByRole('alert')).toBeTruthy();
+  expect(screen.getByText('Режим нанесения включён · 1')).toBeTruthy();
   if (method === 'Escape') fireEvent.keyDown(window, {key:'Escape'});
   else fireEvent.click(screen.getByRole('button', {name:method === 'Кнопка' ? 'Отменить нанесение' : method}));
   expect(screen.queryByLabelText('Название объекта')).toBeNull();
@@ -80,7 +99,7 @@ it.each(['Кнопка', 'Escape', 'Отменить действие'])('%s з�
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it('инспектор передаёт явные атрибуты и не придумывает отсутствующие силы', () => {
+it('инспектор показывает системные поля только для чтения и не требует силу', () => {
   const onChange = vi.fn();
   const symbol = symbolSet.symbols.find(item => item.kind === 'POINT')!;
   render(<MapObjectInspector value={{ id: 'object', revision: 1, kind: 'TASK', layerId: 'REFERENCE', truth: 'PRIVATE', geometry: null,
@@ -88,12 +107,25 @@ it('инспектор передаёт явные атрибуты и не пр
     uncertainty: { radiusM: null, note: '' }, visibility: { staffOnly: true }, links: {}, sideId: '',
     symbol: { id: symbol.id, version: symbol.version, sideId: '', status: symbol.status, sourceDocument: symbol.source.sourceDocument, sourcePage: symbol.source.page! },
   }} symbol={symbol} layers={['REFERENCE']} forces={[]} audiences={[]} onChange={onChange} />);
-  expect(screen.getByText('Силы в этой редакции не заданы')).toBeTruthy();
-  expect((screen.getByLabelText('Связанная сила') as HTMLSelectElement).value).toBe('');
-  fireEvent.change(screen.getByLabelText('Источник объекта'), { target: { value: 'user-source' } });
-  expect(onChange.mock.calls.at(-1)![0]).toMatchObject({ sourceId: 'user-source', geometry: null, links: {} });
+  expect(screen.queryByLabelText('Связанная сила')).toBeNull();
+  expect((screen.getByLabelText('Источник объекта') as HTMLInputElement).readOnly).toBe(true);
   fireEvent.change(screen.getByLabelText('Название объекта'), { target: { value: 'Учебный объект' } });
   expect(onChange.mock.calls.at(-1)![0]).toMatchObject({ name: 'Учебный объект' });
+});
+
+it('выносит календарь инспектора из прокручиваемой панели атрибутов', () => {
+  const symbol = symbolSet.symbols.find(item => item.kind === 'POINT')!;
+  const { container } = render(<MapObjectInspector value={{ id: 'object', revision: 1, kind: 'TASK', layerId: 'REFERENCE', truth: 'PRIVATE', geometry: null,
+    sourceId: 'manual:initial-situation', authorId: 'author', eventId: 'manual:initial-situation', validFrom: '', validUntil: '', state: 'UNKNOWN', confidence: null,
+    uncertainty: { radiusM: null, note: '' }, visibility: { staffOnly: true }, links: {}, sideId: '',
+    symbol: { id: symbol.id, version: symbol.version, sideId: '', status: symbol.status, sourceDocument: symbol.source.sourceDocument, sourcePage: symbol.source.page! },
+  }} symbol={symbol} layers={['REFERENCE']} forces={[]} audiences={[]} onChange={vi.fn()} />);
+  fireEvent.click(screen.getByText('Дополнительные параметры'));
+  fireEvent.click(screen.getByLabelText('Окончание действия объекта, UTC'));
+  const dialog = screen.getByRole('dialog', { name: 'Дата и время: Окончание действия объекта, UTC' });
+  expect(container.contains(dialog)).toBe(false);
+  fireEvent.keyDown(dialog, { key: 'Escape' });
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 it('строит пустые проекции из состава участников, не из отметок', () => {
@@ -137,4 +169,74 @@ it('заменяет исходную надпись и сохраняет её 
   expect(svg).toContain(`fill="${inscription.fill}"`);
   expect(JSON.stringify(symbol)).toBe(original);
   expect(markerImageId(markerSymbol)).not.toBe(markerImageId({ ...markerSymbol, labels: {} }));
+});
+
+it('не показывает одиночный фильтр, состав участников и импорт GeoJSON', () => {
+  const map = createInitialSituationMap({ id: 'single-view-editor', revision: 1,
+    environment: { snapshotId: 'snapshot', manifestSha256: 'a'.repeat(64), bounds: [0, 0, 1, 1] },
+    initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
+    symbolSet: { id: symbolSet.id, revision: 1, sha256: 'b'.repeat(64) }, attribution: ['test'] });
+  render(<InitialMapEditor map={map} symbols={symbolSet.symbols} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
+    client={{} as never} snapshot={{} as never} onChange={vi.fn()} onSave={vi.fn()} canEdit />);
+  expect(screen.queryByLabelText('Проекция карты')).toBeNull();
+  expect(screen.queryByLabelText('Вид обстановки')).toBeNull();
+  expect(screen.queryByText('Состав участников редакции')).toBeNull();
+  expect(screen.queryByText('Импорт GeoJSON')).toBeNull();
+});
+
+it('Enter завершает маршрут, Backspace удаляет последнюю вершину, первая вершина перемещается', () => {
+  const map = createInitialSituationMap({ id: 'keyboard-editor', revision: 1,
+    environment: { snapshotId: 'snapshot', manifestSha256: 'a'.repeat(64), bounds: [0, 0, 1, 1] },
+    initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
+    symbolSet: { id: symbolSet.id, revision: 1, sha256: 'b'.repeat(64) }, attribution: ['test'] });
+  const onChange = vi.fn();
+  const symbol = symbolSet.symbols.find(item => item.kind === 'LINE')!;
+  render(<InitialMapEditor map={map} symbols={[symbol]} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
+    client={{} as never} snapshot={{} as never} onChange={onChange} onSave={vi.fn()} canEdit />);
+  fireEvent.click(screen.getByText(symbol.name));
+  const point = screen.getByRole('button', { name: 'Точка графического порта' });
+  fireEvent.click(point); fireEvent.click(point); fireEvent.click(point);
+  fireEvent.keyDown(window, { key: 'Backspace' });
+  expect(screen.getByText('Режим нанесения включён · 2')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Переместить первую вершину' }));
+  fireEvent.keyDown(window, { key: 'Enter' });
+  const saved = onChange.mock.calls.at(-1)![0];
+  expect(saved.markers[0].geometry.coordinates).toEqual([[0.6, 0.6], [0.2, 0.5]]);
+});
+
+it('перетаскивание знака из палитры создаёт точку на координатах карты', () => {
+  const map = createInitialSituationMap({ id: 'drop-editor', revision: 1,
+    environment: { snapshotId: 'snapshot', manifestSha256: 'a'.repeat(64), bounds: [0, 0, 1, 1] },
+    initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
+    symbolSet: { id: symbolSet.id, revision: 1, sha256: 'b'.repeat(64) }, attribution: ['test'] });
+  const onChange = vi.fn();
+  const symbol = symbolSet.symbols.find(item => item.kind === 'POINT')!;
+  (window as unknown as { dropSymbolId: string }).dropSymbolId = symbol.id;
+  render(<InitialMapEditor map={map} symbols={[symbol]} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
+    client={{} as never} snapshot={{} as never} onChange={onChange} onSave={vi.fn()} canEdit />);
+  fireEvent.click(screen.getByRole('button', { name: 'Бросок знака' }));
+  const saved = onChange.mock.calls.at(-1)![0];
+  expect(saved.markers[0].geometry).toEqual({ type: 'Point', coordinates: [0.5, 0.5] });
+});
+
+it('повторная проверка заменяет прежний результат', () => {
+  const map = createInitialSituationMap({ id: 'validation-editor', revision: 1,
+    environment: { snapshotId: 'snapshot', manifestSha256: 'a'.repeat(64), bounds: [0, 0, 1, 1] },
+    initialOperationalAt: '2030-01-01T00:00:00Z', timeZone: 'UTC', weatherFrameRef: 'weather', terrainStateRef: 'terrain',
+    symbolSet: { id: symbolSet.id, revision: 1, sha256: 'b'.repeat(64) }, attribution: ['test'] });
+  const symbol = symbolSet.symbols[0];
+  const invalid: MapMarker = { id: 'invalid', revision: 1, kind: 'TASK', layerId: 'REFERENCE', truth: 'PRIVATE',
+    geometry: { type: 'Point', coordinates: [0.5, 0.5] }, sourceId: '', authorId: 'author', eventId: 'manual:initial-situation',
+    validFrom: map.initialOperationalAt, validUntil: '', state: 'UNKNOWN', confidence: null,
+    uncertainty: { radiusM: null, note: '' }, visibility: { staffOnly: true }, links: {}, sideId: 'blue',
+    symbol: { id: symbol.id, version: symbol.version, sideId: 'blue', status: 'APPROVED', sourceDocument: 'test', sourcePage: 1 } };
+  const view = render(<InitialMapEditor map={map} symbols={symbolSet.symbols} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
+    client={{} as never} snapshot={{} as never} onChange={vi.fn()} onSave={vi.fn()} canEdit />);
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить карту' }));
+  expect(screen.getByText('Проверка завершена: ошибок и предупреждений нет')).toBeTruthy();
+  view.rerender(<InitialMapEditor map={{ ...map, markers: [invalid], history: [] }} symbols={symbolSet.symbols} audiences={[]} truthAuthorized role="DIRECTOR" authorId="author" forces={[]}
+    client={{} as never} snapshot={{} as never} onChange={vi.fn()} onSave={vi.fn()} canEdit />);
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить карту' }));
+  expect(screen.getByRole('alert').textContent).toContain('Укажите источник отметки');
+  expect(screen.queryByText('Проверка завершена: ошибок и предупреждений нет')).toBeNull();
 });

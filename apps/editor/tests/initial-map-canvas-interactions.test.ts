@@ -6,7 +6,8 @@ it('при отзыве редактирования в середине пер�
   const onMove = vi.fn();
   let disabled = false;
   const interactions = () => ({ disabled, drawing: null, selectedIds: ['object'], onMove, onPoint: vi.fn(),
-    onFinish: vi.fn(), onSelect: vi.fn(), onSelectBox: vi.fn(), onMoveVertex: vi.fn() });
+    onFinish: vi.fn(), onSelect: vi.fn(), onSelectBox: vi.fn(), onMoveVertex: vi.fn(),
+    onDeletePendingVertex: vi.fn(), onMovePendingVertex: vi.fn(), onDeleteVertex: vi.fn() });
   const canvas = {
     on: (event: string, handler: any) => listeners.set(event, handler), off: (event: string) => listeners.delete(event),
     getLayer: () => ({}), queryRenderedFeatures: () => [{ properties: { id: 'object' }, layer: { id: 'kshvi-initial-points' } }],

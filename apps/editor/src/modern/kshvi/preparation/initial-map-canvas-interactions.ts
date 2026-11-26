@@ -6,6 +6,7 @@ import type { MapEditorInteractions } from './InitialMapEditor';
 const objectLayers = ['kshvi-initial-points', 'kshvi-initial-point-icons', 'kshvi-initial-lines', 'kshvi-initial-areas', 'kshvi-initial-line-icons', 'kshvi-initial-area-icons'];
 type Drag = { kind: 'objects'; ids: readonly string[]; point: Position }
   | { kind: 'vertex'; id: string; vertex: number; ring: number }
+  | { kind: 'pendingVertex'; vertex: number; ring: number }
   | { kind: 'box'; x: number; y: number };
 
 export function attachEditorInteractions(canvas: MapLibreMap, getInteraction: () => MapEditorInteractions | undefined, getMap: () => InitialSituationMap | undefined): () => void {
@@ -29,12 +30,30 @@ export function attachEditorInteractions(canvas: MapLibreMap, getInteraction: ()
   };
   const doubleClick = (event: MapMouseEvent) => {
     const config = getInteraction();
-    if (config?.drawing && !config.disabled) { event.preventDefault(); config.onFinish(); }
+    if (!config || config.disabled) return;
+    const vertex = hit(event, true)?.properties;
+    if (config.drawing) {
+      event.preventDefault();
+      if (vertex?.markerId === 'pending') config.onDeletePendingVertex(Number(vertex.vertex));
+      else config.onFinish();
+      return;
+    }
+    if (vertex && typeof vertex.markerId === 'string') {
+      event.preventDefault();
+      config.onDeleteVertex(vertex.markerId, Number(vertex.vertex), Number(vertex.ring));
+    }
   };
   const mouseDown = (event: MapMouseEvent) => {
     const config = getInteraction();
-    if (!config || config.disabled || config.drawing || event.originalEvent.button !== 0) return;
+    if (!config || config.disabled || event.originalEvent.button !== 0) return;
     const vertex = hit(event, true)?.properties;
+    if (config.drawing) {
+      if (vertex?.markerId === 'pending') {
+        drag = { kind: 'pendingVertex', vertex: Number(vertex.vertex), ring: Number(vertex.ring) };
+        event.preventDefault(); restorePan = canvas.dragPan.isEnabled(); canvas.dragPan.disable();
+      }
+      return;
+    }
     const feature = hit(event)?.properties;
     if (vertex && typeof vertex.markerId === 'string') {
       drag = { kind: 'vertex', id: vertex.markerId, vertex: Number(vertex.vertex), ring: Number(vertex.ring) };
@@ -61,7 +80,9 @@ export function attachEditorInteractions(canvas: MapLibreMap, getInteraction: ()
     clear(); canvas.getCanvas().style.cursor = '';
     if (!previous || !config || config.disabled) return;
     const visible = new Set(getMap()?.markers.map(marker => marker.id));
-    if (previous.kind === 'vertex' && visible.has(previous.id)) {
+    if (previous.kind === 'pendingVertex') {
+      config.onMovePendingVertex(previous.vertex, point(event)); ignoreClickUntil = performance.now() + 200;
+    } else if (previous.kind === 'vertex' && visible.has(previous.id)) {
       config.onMoveVertex(previous.id, previous.vertex, previous.ring, point(event)); ignoreClickUntil = performance.now() + 200;
     } else if (previous.kind === 'objects' && previous.ids.every(id => visible.has(id))) {
       const destination = point(event), lon = destination[0] - previous.point[0], lat = destination[1] - previous.point[1];
@@ -106,7 +127,12 @@ export function updateEditorOverlays(canvas: MapLibreMap, map: InitialSituationM
   const features: GeoJSON.Feature[] = [];
   if (pending?.points.length) {
     const icon = pending.geometryKind === 'POINT' ? markerImageId(pending.marker.symbol) : '';
-    for (const position of pending.points) features.push({ type: 'Feature', properties: icon && canvas.hasImage(icon) ? { icon } : {}, geometry: { type: 'Point', coordinates: [...position] } });
+    for (const [index, position] of pending.points.entries()) features.push({
+      type: 'Feature', properties: {
+        markerId: 'pending', vertex: index, ring: 0, ...(icon && canvas.hasImage(icon) ? { icon } : {}),
+      },
+      geometry: { type: 'Point', coordinates: [...position] },
+    });
     if (pending.points.length > 1) {
       const points = pending.points.map(position => [...position]);
       if (pending.geometryKind === 'AREA') points.push([...points[0]]);

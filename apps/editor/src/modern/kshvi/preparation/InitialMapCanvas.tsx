@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 import type { Bounds, EnvironmentSnapshot } from '../../../../../../packages/kshvi/src/environment/provider';
-import type { InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
+import type { InitialSituationMap, Position } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { getSymbol, renderSymbol } from '@def-ops/tactical-symbols';
 import type { KshviClient } from '../kshvi-api';
 import { loadEnvironmentStyles } from './snapshot-map-style';
@@ -19,7 +19,7 @@ async function ensureSymbolImages(canvas: MapLibreMap, map: InitialSituationMap)
     if (seen.has(imageId)) continue;
     seen.add(imageId);
     try {
-      const symbol = editedSymbol(getSymbol(marker.symbol.id), marker.symbol);
+      const symbol = editedSymbol(getSymbol(marker.symbol.id), marker.symbol, map.sides?.find(side => side.id === marker.sideId));
       if (canvas.hasImage(imageId)) continue;
       const image = new Image();
       image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderSymbol(symbol, { width: 80, height: 80 }))}`;
@@ -51,8 +51,9 @@ export function annotationFont(style: StyleSpecification): string[] | null {
   return null;
 }
 
-export function InitialMapCanvas({ client, snapshot, map, interaction }: {
+export function InitialMapCanvas({ client, snapshot, map, interaction, onDropSymbol }: {
   client: KshviClient; snapshot: EnvironmentSnapshot; map?: InitialSituationMap; interaction?: MapEditorInteractions;
+  onDropSymbol?(symbolId: string, point: Position): void;
 }) {
   const [style, setStyle] = useState<StyleSpecification | null>(null);
   const [error, setError] = useState('');
@@ -69,14 +70,15 @@ export function InitialMapCanvas({ client, snapshot, map, interaction }: {
   return <>
     {error && <p role="alert">Топографическая карта недоступна: {error}</p>}
     {style && <EnvironmentMapPreview style={style} bounds={snapshot.region.bounds} map={map} interaction={interaction}
-      label="Карта исходной обстановки" />}
+      onDropSymbol={onDropSymbol} label="Карта исходной обстановки" />}
   </>;
 }
 
 export type WeatherMapPoint = Readonly<{ lon: number; lat: number; value: number }>;
 
-export function EnvironmentMapPreview({ style, bounds, map, weatherRasters, interaction, label = 'Предпросмотр выбранных слоёв' }: {
-  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherRasters?: readonly WeatherRaster[]; interaction?: MapEditorInteractions; label?: string;
+export function EnvironmentMapPreview({ style, bounds, map, weatherRasters, interaction, onDropSymbol, label = 'Предпросмотр выбранных слоёв' }: {
+  style: StyleSpecification; bounds: Bounds; map?: InitialSituationMap; weatherRasters?: readonly WeatherRaster[]; interaction?: MapEditorInteractions;
+  onDropSymbol?(symbolId: string, point: Position): void; label?: string;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<MapLibreMap | null>(null);
@@ -231,7 +233,17 @@ export function EnvironmentMapPreview({ style, bounds, map, weatherRasters, inte
     if (canvas && map) void ensureSymbolImages(canvas, drawingSymbols(map)).then(updateMarkers);
   }, [map, interaction]);
 
-  return <section className="kshvi-environment-map" aria-label={label}>
+  function handleDrop(event: DragEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    if (!onDropSymbol || !instance.current || !container.current) return;
+    const symbolId = event.dataTransfer.getData('application/x-kshvi-symbol');
+    if (!symbolId) return;
+    const rect = container.current.getBoundingClientRect();
+    const { lng, lat } = instance.current.unproject([event.clientX - rect.left, event.clientY - rect.top]);
+    onDropSymbol(symbolId, [lng, lat]);
+  }
+
+  return <section className="kshvi-environment-map" aria-label={label} onDragOver={event => event.preventDefault()} onDrop={handleDrop}>
     <div ref={container} className="kshvi-environment-map-canvas" />
     <button className="kshvi-fit-region" type="button" onClick={() => { if (instance.current) fit(instance.current); }}>Область целиком</button>
     {error && <p role="alert">Топографическая карта недоступна: {error}</p>}

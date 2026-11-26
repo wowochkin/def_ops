@@ -107,3 +107,23 @@ it('повторный щелчок перемещает черновую точ
   expect(history.present.markers[0].geometry).toEqual({ type: 'Point', coordinates: [0.6, 0.6] });
   expect(undo(history).present.markers).toHaveLength(0);
 });
+
+it('удаляет и перемещает вершины незавершённого маршрута', () => {
+  let history = applyInitialMapAction(createEditorHistory(emptyMap()), { type: 'BEGIN_DRAW', marker: marker('pending-line'), geometryKind: 'LINE' });
+  for (const point of [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]] as const) history = applyInitialMapAction(history, { type: 'APPEND_VERTEX', point });
+  history = applyInitialMapAction(history, { type: 'DELETE_PENDING_VERTEX', index: 1 });
+  expect(history.pending?.points).toEqual([[0.1, 0.1], [0.3, 0.3]]);
+  history = applyInitialMapAction(history, { type: 'MOVE_PENDING_VERTEX', index: 1, point: [0.4, 0.4] });
+  expect(history.pending?.points).toEqual([[0.1, 0.1], [0.4, 0.4]]);
+  history = applyInitialMapAction(history, { type: 'DELETE_PENDING_VERTEX' });
+  expect(history.pending?.points).toEqual([[0.1, 0.1]]);
+});
+
+it('удаляет вершину сохранённой линии и не оставляет неправильную геометрию', () => {
+  let history = applyInitialMapAction(createEditorHistory(emptyMap()), { type: 'BEGIN_DRAW', marker: marker('saved-line'), geometryKind: 'LINE' });
+  for (const point of [[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]] as const) history = applyInitialMapAction(history, { type: 'APPEND_VERTEX', point });
+  history = applyInitialMapAction(history, { type: 'FINISH_DRAW' });
+  history = applyInitialMapAction(history, { type: 'DELETE_VERTEX', markerId: 'saved-line', vertex: 1 });
+  expect(history.present.markers[0].geometry).toEqual({ type: 'LineString', coordinates: [[0.1, 0.1], [0.3, 0.3]] });
+  expect(() => applyInitialMapAction(history, { type: 'DELETE_VERTEX', markerId: 'saved-line', vertex: 1 })).toThrow();
+});

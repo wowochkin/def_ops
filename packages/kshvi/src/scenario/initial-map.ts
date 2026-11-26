@@ -1,6 +1,7 @@
 import { canonicalJson } from '../events/canonical';
 import { hashCanonical } from './initial-map-hash';
 import { INITIAL_MAP_LAYER_IDS, type MapLayerId } from './initial-map-layers';
+import type { ScenarioSide } from './sides';
 import { validateInitialMap, type InitialMapIssue, type InitialMapValidationInput } from './initial-map-validation';
 
 export { INITIAL_MAP_LAYER_IDS } from './initial-map-layers';
@@ -83,6 +84,7 @@ export type InitialSituationMap = Readonly<{
   terrainStateRef: string;
   symbolSet: Readonly<{ id: string; revision: number; sha256: string }>;
   attribution: readonly string[];
+  sides?: readonly ScenarioSide[];
   layers: readonly InitialMapLayer[];
   markers: readonly MapMarker[];
   history: readonly MapMarker[];
@@ -142,6 +144,7 @@ export function createInitialSituationMap(input: Readonly<{
   terrainStateRef: string;
   symbolSet: InitialSituationMap['symbolSet'];
   attribution: readonly string[];
+  sides?: readonly ScenarioSide[];
 }>): InitialSituationMap {
   if (!input.id.trim() || !Number.isSafeInteger(input.revision) || input.revision < 1) throw new Error('MAP_REVISION_INVALID');
   return deepFreeze({
@@ -157,6 +160,7 @@ export function createInitialSituationMap(input: Readonly<{
     terrainStateRef: input.terrainStateRef,
     symbolSet: clone(input.symbolSet),
     attribution: [...input.attribution],
+    ...(input.sides ? { sides: clone(input.sides) } : {}),
     layers: createLayers(),
     markers: [],
     history: [],

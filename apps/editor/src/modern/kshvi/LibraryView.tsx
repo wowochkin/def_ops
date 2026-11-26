@@ -1,6 +1,9 @@
 import { useId, useState, type FormEvent } from 'react';
 import { exerciseStates, libraryPrimaryAction, stateLabel, type LibraryPrimaryAction } from './library-actions';
 import { DateTimeField } from '../DateTimeField';
+import { emptyPreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import { defaultScenarioSides, type ScenarioSide } from '../../../../../packages/kshvi/src/scenario/sides';
+import { ExerciseSidesEditor } from './ExerciseSidesEditor';
 import type {
   CreateExerciseInput,
   ExerciseFilters,
@@ -58,6 +61,7 @@ export function LibraryView({
   const [newScale, setNewScale] = useState<ExerciseScale>('operational');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
+  const [sides, setSides] = useState<readonly ScenarioSide[]>(defaultScenarioSides);
 
   function submitFilters(event: FormEvent): void {
     event.preventDefault();
@@ -81,11 +85,16 @@ export function LibraryView({
         scale: newScale,
         startsAt: startsAt ? new Date(startsAt).toISOString() : null,
         endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        payload: JSON.parse(JSON.stringify({ preparation: {
+          ...emptyPreparationDraft(startsAt ? new Date(startsAt).toISOString() : new Date().toISOString()),
+          sides: sides.map(side => ({ ...side })),
+        } })) as CreateExerciseInput['payload'],
       });
       setCreating(false);
       setTitle('');
       setStartsAt('');
       setEndsAt('');
+      setSides(defaultScenarioSides());
     } catch (cause) {
       setCreateError(cause instanceof Error ? cause.message : 'Не удалось создать учение');
     } finally {
@@ -122,6 +131,7 @@ export function LibraryView({
         <DateTimeField id={`${uid}-new-start`} label="Начало" value={startsAt} onChange={setStartsAt} />
         <DateTimeField id={`${uid}-new-end`} label="Окончание" value={endsAt} onChange={setEndsAt} />
       </div>
+      <ExerciseSidesEditor value={sides} onChange={setSides} />
       <p className="kshvi-form-note">Новый проект получит первую редакцию. Датами можно дополнить карточку позже; неизвестные сроки не подставляются автоматически.</p>
       <button className="kshvi-primary" type="submit" disabled={saving || busy}>{saving ? 'Ждём подтверждение сервера…' : 'Сохранить на сервере'}</button>
       {createError && <p role="alert" className="kshvi-error">{createError}</p>}

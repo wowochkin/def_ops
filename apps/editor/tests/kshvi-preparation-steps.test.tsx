@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ExerciseClient, type ExerciseCard } from '../src/modern/kshvi/kshvi-api';
 import { ExercisePreparation } from '../src/modern/kshvi/preparation/PreparationWorkspace';
@@ -26,6 +26,9 @@ it('показывает один шаг и ведёт от среды до за
 
   expect(await screen.findByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeTruthy();
   expect(screen.getByRole('button', { name: /Среда/ }).getAttribute('aria-current')).toBe('step');
+  const steps = screen.getByRole('navigation', { name: 'Этапы подготовки' });
+  expect(within(steps).getAllByRole('button').map(item => item.getAttribute('aria-label')))
+    .toEqual(['Среда', 'Силы и МТО', 'Исходная обстановка', 'События', 'Готовность', 'Запуск']);
   expect(screen.queryByRole('heading', { name: 'Материально-техническое обеспечение' })).toBeNull();
   expect(screen.queryByRole('heading', { name: 'Библиотека событий' })).toBeNull();
 
@@ -33,6 +36,9 @@ it('показывает один шаг и ведёт от среды до за
   expect(screen.getByRole('heading', { name: 'Силы и МТО' })).toBeTruthy();
   expect(screen.queryByRole('heading', { name: 'Карта и погода исходной обстановки' })).toBeNull();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
+  expect(screen.getByRole('button', { name: 'Исходная обстановка' }).getAttribute('aria-current')).toBe('step');
+  expect(screen.getByText('Сначала сформируйте и зафиксируйте среду')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
   expect(screen.getByRole('heading', { name: 'События' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Далее' }));

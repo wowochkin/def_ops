@@ -96,7 +96,8 @@ function validateGeometry(geometry: MapGeometry | null | undefined, bounds: Boun
 }
 
 function timeIssues(validFrom: string, validUntil: string, objectId: string): InitialMapIssue[] {
-  if (!validFrom || !validUntil) return [issue('TIME_REQUIRED', 'Укажите оперативный период действия', objectId)];
+  if (!validFrom) return [issue('TIME_REQUIRED', 'Укажите начало действия объекта или открытый период', objectId)];
+  if (!validUntil) return [];
   const from = Date.parse(validFrom);
   const until = Date.parse(validUntil);
   if (!Number.isFinite(from) || !Number.isFinite(until)) return [issue('TIME_INVALID', 'Оперативное время должно быть датой с часовым поясом', objectId)];
@@ -107,11 +108,6 @@ function timeIssues(validFrom: string, validUntil: string, objectId: string): In
 function hasVisibility(marker: MapMarker): boolean {
   const visibility = marker.visibility;
   return Boolean(visibility?.staffOnly || visibility?.sideIds?.length || visibility?.instanceIds?.length || visibility?.roles?.length);
-}
-
-function hasLink(marker: MapMarker): boolean {
-  const links = marker.links;
-  return Boolean(links && (links.forceId || links.taskId || links.documentId || links.linkedMarkerIds?.length));
 }
 
 function geometryBounds(geometry: MapGeometry): Bounds {
@@ -176,14 +172,10 @@ export function validateInitialMap(input: InitialMapValidationInput): InitialMap
     if (!marker.eventId) output.push(issue('EVENT_REFERENCE_REQUIRED', 'Укажите событие или основание отметки', marker.id));
     output.push(...timeIssues(marker.validFrom, marker.validUntil, marker.id));
     if (!hasVisibility(marker)) output.push(issue('VISIBILITY_REQUIRED', 'Задайте явную область видимости', marker.id));
-    if (!hasLink(marker)) output.push(issue('LINK_REQUIRED', 'Свяжите отметку с силой, задачей, документом или другой отметкой', marker.id));
     if (!marker.layerId) output.push(issue('LAYER_REQUIRED', 'Выберите независимый слой отметки', marker.id));
     if (!['OBSERVED', 'ASSUMED', 'PLANNED', 'UNKNOWN'].includes(marker.state)) output.push(issue('MARKER_STATE_INVALID', 'Укажите состояние достоверности отметки', marker.id));
     if ((marker.confidence === null || marker.confidence === undefined) && marker.state !== 'UNKNOWN') output.push(issue('CONFIDENCE_REQUIRED', 'Укажите достоверность либо состояние UNKNOWN', marker.id));
     if (marker.confidence !== null && marker.confidence !== undefined && (marker.confidence < 0 || marker.confidence > 1)) output.push(issue('CONFIDENCE_INVALID', 'Достоверность должна быть от 0 до 1', marker.id));
-    if (!marker.uncertainty || ((marker.uncertainty.radiusM === null || marker.uncertainty.radiusM === undefined) && !marker.uncertainty.note?.trim())) {
-      output.push(issue('UNCERTAINTY_REQUIRED', 'Укажите неопределённость числом, районом или пояснением', marker.id));
-    }
     if (!marker.symbol) {
       output.push(issue('SYMBOL_REQUIRED', 'Назначьте отметке утверждённый знак', marker.id));
     } else {

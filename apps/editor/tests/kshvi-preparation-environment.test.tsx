@@ -62,7 +62,9 @@ it('подключает выбор среды к фактической под�
   fireEvent.click(await screen.findByRole('button', { name: 'Открыть исходную обстановку' }));
 
   expect(await screen.findByRole('heading', { name: 'Карта исходной обстановки' })).toBeTruthy();
-  expect(screen.getAllByTitle(snapshot.id).length).toBeGreaterThan(0);
+  expect(screen.getByRole('button', { name: 'Исходная обстановка' }).getAttribute('aria-current')).toBe('step');
+  expect(screen.getByRole('button', { name: /Среда/ }).getAttribute('aria-current')).toBeNull();
+  expect(requests.some(request => request.url.endsWith(`/environment/snapshots/${snapshot.id}`))).toBe(true);
   expect(onRevision).toHaveBeenCalledWith(expect.objectContaining({ revision: 2 }));
   const revisionRequest = requests.find(request => request.url.endsWith('/preparation'));
   expect(JSON.parse(String(revisionRequest?.init?.body))).toMatchObject({ expectedRevision: 1, draft: { environmentSnapshotId: snapshot.id } });

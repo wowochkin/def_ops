@@ -183,13 +183,13 @@ describe('PREP-13/14 и ENV-12–15: версионная карта', () => {
     expect(initialMapHash(roundTrip.map!)).toBe(initialMapHash(readyMap()));
   });
 
-  it('не принимает импорт без источника, времени, видимости и связи', () => {
+  it('не принимает импорт без источника, времени и видимости', () => {
     const imported = importInitialMap({
       type: 'FeatureCollection',
       features: [{ type: 'Feature', geometry: null, properties: { id: 'broken', kind: 'FORCE' } }],
     }, { bounds: [0, 0, 1, 1] });
     expect(imported.issues.map(issue => issue.code)).toEqual(expect.arrayContaining([
-      'POSITION_UNKNOWN', 'SOURCE_REQUIRED', 'AUTHOR_REQUIRED', 'TIME_REQUIRED', 'VISIBILITY_REQUIRED', 'LINK_REQUIRED',
+      'POSITION_UNKNOWN', 'SOURCE_REQUIRED', 'AUTHOR_REQUIRED', 'TIME_REQUIRED', 'VISIBILITY_REQUIRED',
     ]));
     expect(imported.markers[0].geometry).toBeNull();
   });
@@ -263,7 +263,7 @@ describe('NF-19: устойчивость согласованного импо�
     malformed.markers = [{ id: '', kind: 'FORCE', geometry: { type: 'Point', coordinates: null } }];
     const result = importInitialMap(JSON.stringify(malformed), { bounds: [0, 0, 1, 1] });
     expect(result.issues.map(issue => issue.code)).toEqual(expect.arrayContaining([
-      'OBJECT_ID_REQUIRED', 'INVALID_GEOMETRY', 'UNCERTAINTY_REQUIRED', 'SYMBOL_REQUIRED', 'MAP_LAYER_REQUIRED',
+      'OBJECT_ID_REQUIRED', 'INVALID_GEOMETRY', 'SYMBOL_REQUIRED', 'MAP_LAYER_REQUIRED',
     ]));
   });
 });

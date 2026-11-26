@@ -3,6 +3,7 @@ import type { AtlasMeta, EnvironmentSelection, EnvironmentSnapshot, EnvironmentW
 import { approveInitialMap, createInitialSituationMap, type ApprovedInitialMap, type InitialSituationMap } from '../../../../../../packages/kshvi/src/scenario/initial-map';
 import { hashCanonical } from '../../../../../../packages/kshvi/src/scenario/initial-map-hash';
 import type { PreparationDraft } from '@def-ops/kshvi/preparation-draft';
+import type { ScenarioSide } from '../../../../../../packages/kshvi/src/scenario/sides';
 import type { SymbolSet } from '../../../../../../packages/tactical-symbols/src/model';
 import type { EnvironmentImpact } from '../../../../../../services/kshvi/src/store/environment-revision';
 import { isExerciseAccessLost, KshviHttpError, type ExerciseCard, type KshviClient } from '../kshvi-api';
@@ -10,10 +11,9 @@ import { initialMapAudiences } from './initial-map-audiences';
 import { InitialMapCanvas } from './InitialMapCanvas';
 import { EnvironmentSelectionEditor } from './EnvironmentSelectionEditor';
 import { InitialMapEditor } from './InitialMapEditor';
-import { ParticipantRosterEditor } from './ParticipantRosterEditor';
 
 function makeInitialMap(exerciseId: string, revision: number, snapshot: EnvironmentSnapshot, weather: EnvironmentWeather,
-  symbols: SymbolSet, startsAt: string | null): InitialSituationMap | null {
+  symbols: SymbolSet, startsAt: string | null, sides?: readonly ScenarioSide[]): InitialSituationMap | null {
   const at = snapshot.operationalTime?.operationalAt ?? weather.scenario?.start ?? startsAt;
   if (!at) return null;
   return createInitialSituationMap({
@@ -24,6 +24,7 @@ function makeInitialMap(exerciseId: string, revision: number, snapshot: Environm
     terrainStateRef: snapshot.atlases.find(atlas => atlas.elevations.contentRef)?.elevations.contentRef?.path ?? 'UNKNOWN: высотный кадр не зафиксирован',
     symbolSet: { id: symbols.id, revision: 1, sha256: hashCanonical(symbols) },
     attribution: [...snapshot.atlases.map(atlas => atlas.attribution), snapshot.weather.attribution],
+    sides,
   });
 }
 
@@ -47,19 +48,21 @@ type Props = {
   onMapChange(map: InitialSituationMap): void;
   onCartography?(): void;
   acceptsCardResponse?(): boolean;
+  initialMapOnly?: boolean;
+  onOpenInitialMap?(): void;
 };
 
 export function EnvironmentMapPreparation({
   client, card, draft, revision, legacySnapshotId, truthRole, canEdit, locked, savePreparation, onRevision,
   authorId = '', canReadTruth = false, canApproveMap = false,
-  onAccessLost, onConflict, onPendingChange, onCartography, acceptsCardResponse, onMapChange,
+  onAccessLost, onConflict, onPendingChange, onCartography, acceptsCardResponse, onMapChange, initialMapOnly = false, onOpenInitialMap,
 }: Props) {
   const [atlases, setAtlases] = useState<readonly AtlasMeta[] | null>(null);
   const [symbols, setSymbols] = useState<SymbolSet | null>(null);
   const [snapshotRef, setSnapshotRef] = useState<{ snapshot: EnvironmentSnapshot; weather: EnvironmentWeather } | null>(null);
   const [loadsError, setLoadsError] = useState('');
   const [editOpen, setEditOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(initialMapOnly);
   const [mapEdit, setMapEdit] = useState<InitialSituationMap | null>(null);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,9 +73,7 @@ export function EnvironmentMapPreparation({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [mapPending, setMapPending] = useState(false);
-  const [rosterPending, setRosterPending] = useState({ dirty: false, busy: false });
   const markMapPending = useCallback((value: boolean) => setMapPending(value), []);
-  const markRosterPending = useCallback((dirty: boolean, busy: boolean) => setRosterPending(previous => previous.dirty === dirty && previous.busy === busy ? previous : { dirty, busy }), []);
   const snapshotId = draft.environmentSnapshotId ?? legacySnapshotId ?? null;
   const current = snapshotRef?.snapshot.id === snapshotId ? snapshotRef : null;
 
@@ -80,8 +81,12 @@ export function EnvironmentMapPreparation({
     alive.current = true;
     return () => { alive.current = false; };
   }, []);
-  useLayoutEffect(() => { onPendingChange(dirty || mapPending || rosterPending.dirty, busy || rosterPending.busy); }, [onPendingChange, dirty, busy, mapPending, rosterPending]);
+  useLayoutEffect(() => { onPendingChange(dirty || mapPending, busy); }, [onPendingChange, dirty, busy, mapPending]);
   useLayoutEffect(() => () => onPendingChange(false, false), [onPendingChange]);
+  useEffect(() => {
+    setMapOpen(initialMapOnly);
+    if (initialMapOnly) setEditOpen(false);
+  }, [initialMapOnly]);
 
   useEffect(() => {
     if (!canEdit) return;
@@ -129,7 +134,7 @@ export function EnvironmentMapPreparation({
   }
 
   async function saveMap(map: InitialSituationMap) {
-    if (operation.current || !canEdit || card.state === 'SEALED' || rosterPending.busy || rosterPending.dirty) throw new Error('Сначала завершите текущую операцию подготовки');
+    if (operation.current || !canEdit || card.state === 'SEALED') throw new Error('Сначала завершите текущую операцию подготовки');
     operation.current = true; setBusy(true); setError('');
     try {
       const next = await savePreparation({ ...draft, initialMap: map, initialMapStatus: map.markers.some(marker => marker.geometry) ? 'MAPPED' : 'DRAFT' });
@@ -140,7 +145,7 @@ export function EnvironmentMapPreparation({
   }
 
   async function run(action: () => Promise<void>) {
-    if (operation.current || locked || !canEdit || rosterPending.busy || rosterPending.dirty || mapPending) return;
+    if (operation.current || locked || !canEdit || mapPending) return;
     operation.current = true;
     setBusy(true);
     setError('');
@@ -217,51 +222,51 @@ export function EnvironmentMapPreparation({
   })));
   const savedMap = draft.initialMap ?? (sealedMap?.environment.snapshotId === snapshotId ? sealedMap : undefined);
   const map = mapEdit?.environment.snapshotId === current?.snapshot.id ? mapEdit
-    : savedMap ?? (mapOpen && current && symbols ? makeInitialMap(card.id, revision, current.snapshot, current.weather, symbols, card.startsAt) : null);
-  const editing = (canEdit || dirty || busy) && (!snapshotId || editOpen);
+    : savedMap ?? (mapOpen && current && symbols ? makeInitialMap(card.id, revision, current.snapshot, current.weather, symbols, card.startsAt, draft.sides) : null);
+  const editing = (canEdit || dirty || busy) && !initialMapOnly && (!snapshotId || editOpen);
   return <section className="kshvi-environment-preparation" aria-labelledby="environment-preparation-title">
-    <h2 id="environment-preparation-title">Карта и погода исходной обстановки</h2>
+    {!initialMapOnly && <>
+      <h2 id="environment-preparation-title">Карта и погода исходной обстановки</h2>
+      {current && <section className="kshvi-environment-snapshot" aria-label="Сохранённый снимок среды">
+        <h3>{current.snapshot.region.name}</h3>
+        <p>Рамка WGS 84 · {current.snapshot.region.bounds.map(value => value.toFixed(4)).join(' · ')}</p>
+        <p>Идентификатор и SHA-256 манифеста <code title={current.snapshot.id}>{current.snapshot.manifestSha256}</code></p>
+        <ul aria-label="Наборы снимка">{current.snapshot.atlases.map(atlas => <li key={atlas.id}>
+          {atlas.meta.name} · z{atlas.meta.minzoom}–{atlas.meta.maxzoom} · {atlas.attribution}
+        </li>)}</ul>
+        <p>Погода · {current.weather.dataset?.name ?? current.weather.attribution}
+          {current.snapshot.operationalTime && <> · {new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short',
+            timeZone: current.snapshot.operationalTime.timeZone }).format(new Date(current.snapshot.operationalTime.operationalAt))}
+            {' · '}{current.snapshot.operationalTime.timeZone}</>}</p>
+        {!!current.snapshot.limitations.length && <ul>{current.snapshot.limitations.map(message => <li key={message}>{message}</li>)}</ul>}
+        <div className="kshvi-environment-actions">
+          {canEdit && !editOpen && <button type="button" disabled={locked} onClick={() => { setEditOpen(true); setMapOpen(false); }}>Сменить среду</button>}
+          {!mapOpen && <button type="button" disabled={busy || editOpen} onClick={onOpenInitialMap ?? (() => setMapOpen(true))}>Открыть исходную обстановку</button>}
+          {editOpen && <button type="button" disabled={busy} onClick={() => {
+            setEditOpen(false); setDirty(false); setCandidate(null); setImpact(null); setError('');
+          }}>Отменить подбор</button>}
+        </div>
+      </section>}
+      {!current && snapshotId && loadsError && canEdit && !editOpen
+        && <button type="button" disabled={locked} onClick={() => setEditOpen(true)}>Выбрать замену снимку</button>}
+      {editing && atlases === null && !loadsError && <p role="status">Загружаем доступные наборы…</p>}
+      {editing && atlases && <EnvironmentSelectionEditor client={client} atlases={atlases}
+        current={current?.snapshot ?? null} currentWeather={current?.weather ?? null}
+        initialAt={savedMap?.initialOperationalAt ?? card.startsAt} initialTimeZone={savedMap?.timeZone}
+        busy={busy} locked={locked || !canEdit} impact={impact} candidate={candidate} onEdit={onEdit}
+        onPrepare={selection => void prepare(selection)} onFix={() => void fix()} onCartography={onCartography} />}
+    </>}
+    {initialMapOnly && !snapshotId && <p className="preparation-empty">Сначала сформируйте и зафиксируйте среду</p>}
     {snapshotId && !current && !loadsError && <p role="status">Загружаем сохранённый снимок…</p>}
-    {current && <section className="kshvi-environment-snapshot" aria-label="Сохранённый снимок среды">
-      <h3>{current.snapshot.region.name}</h3>
-      <p>Рамка WGS 84 · {current.snapshot.region.bounds.map(value => value.toFixed(4)).join(' · ')}</p>
-      <p>Идентификатор и SHA-256 манифеста <code title={current.snapshot.id}>{current.snapshot.manifestSha256}</code></p>
-      <ul aria-label="Наборы снимка">{current.snapshot.atlases.map(atlas => <li key={atlas.id}>
-        {atlas.meta.name} · z{atlas.meta.minzoom}–{atlas.meta.maxzoom} · {atlas.attribution}
-      </li>)}</ul>
-      <p>Погода · {current.weather.dataset?.name ?? current.weather.attribution}
-        {current.snapshot.operationalTime && <> · {new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short',
-          timeZone: current.snapshot.operationalTime.timeZone }).format(new Date(current.snapshot.operationalTime.operationalAt))}
-          {' · '}{current.snapshot.operationalTime.timeZone}</>}</p>
-      {!!current.snapshot.limitations.length && <ul>{current.snapshot.limitations.map(message => <li key={message}>{message}</li>)}</ul>}
-      <div className="kshvi-environment-actions">
-        {canEdit && !editOpen && <button type="button" disabled={locked} onClick={() => { setEditOpen(true); setMapOpen(false); }}>Сменить среду</button>}
-        {!mapOpen && <button type="button" disabled={busy || editOpen} onClick={() => setMapOpen(true)}>Открыть исходную обстановку</button>}
-        {editOpen && <button type="button" disabled={busy} onClick={() => {
-          setEditOpen(false); setDirty(false); setCandidate(null); setImpact(null); setError('');
-        }}>Отменить подбор</button>}
-      </div>
-    </section>}
-    {!current && snapshotId && loadsError && canEdit && !editOpen
-      && <button type="button" disabled={locked} onClick={() => setEditOpen(true)}>Выбрать замену снимку</button>}
-    {editing && atlases === null && !loadsError && <p role="status">Загружаем доступные наборы…</p>}
-    {editing && atlases && <EnvironmentSelectionEditor client={client} atlases={atlases}
-      current={current?.snapshot ?? null} currentWeather={current?.weather ?? null}
-      initialAt={savedMap?.initialOperationalAt ?? card.startsAt} initialTimeZone={savedMap?.timeZone}
-      busy={busy} locked={locked || !canEdit} impact={impact} candidate={candidate} onEdit={onEdit}
-      onPrepare={selection => void prepare(selection)} onFix={() => void fix()} onCartography={onCartography} />}
     {notice && <p role="status">{notice}</p>}
     {(error || loadsError) && <p role="alert" className="kshvi-error">{error || loadsError}</p>}
     {mapOpen && current && <>
       <h3>Карта исходной обстановки</h3>
-      <ParticipantRosterEditor client={client} exerciseId={card.id} revision={revision}
-        disabled={!canEdit || card.state === 'SEALED' || locked || dirty || busy || mapPending}
-        onRevision={onRevision} onError={commandError} onPendingChange={markRosterPending} acceptsCardResponse={acceptsCardResponse} />
       {map && symbols ? <>
         {symbols.status !== 'APPROVED' && <p role="alert">Набор знаков ещё не утверждён методистом.</p>}
         <InitialMapEditor map={map} client={client} snapshot={current.snapshot} symbols={symbols.symbols} audiences={audiences}
           truthAuthorized={canReadTruth} role={truthRole} authorId={authorId} endsAt={card.endsAt} forces={draft.forces}
-          canEdit={canEdit && card.state !== 'SEALED'} busy={busy || rosterPending.busy || rosterPending.dirty}
+          canEdit={canEdit && card.state !== 'SEALED'} busy={busy}
           saved={!locked && ['MAPPED', 'APPROVED'].includes(draft.initialMapStatus)}
           onPendingChange={markMapPending} onSave={saveMap} onApprove={canApproveMap ? approveOnServer : undefined}
           onChange={next => {
